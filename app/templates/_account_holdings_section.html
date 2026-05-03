@@ -56,21 +56,28 @@
             </div>
             {% for position in positions %}
             {% set _pct = ((position.value or 0) / _holdings_total * 100) if _holdings_total else 0 %}
+            {# Strip the verbose fund suffixes ("UCITS ETF", "Accumulation",
+               etc.) so the second-row label fits on one line in most cases.
+               Replace is end-anchored implicitly because these terms only
+               appear as suffixes in fund names. #}
+            {% set _short_name = position.holding_name
+                 | replace(' UCITS ETF', '')
+                 | replace(' UCITS', '')
+                 | replace(' Accumulation', '')
+                 | replace(' Acc', '')
+                 | replace(' Distributing', '')
+                 | trim %}
             <div class="holdings-row" role="row">
               <button type="button" class="holdings-row-summary" data-holding-toggle aria-expanded="false" aria-controls="holding-body-{{ position.id }}">
-                <span class="holdings-summary-id">
-                  {% if position.ticker %}
-                    <span class="holdings-summary-ticker">{{ position.ticker }}</span>
-                    <span class="holdings-summary-name">{{ position.holding_name }}</span>
-                  {% else %}
-                    <span class="holdings-summary-ticker">{{ position.holding_name }}</span>
-                  {% endif %}
-                </span>
-                <span class="holdings-summary-figures">
+                <span class="holdings-summary-top">
+                  <span class="holdings-summary-ticker">{{ position.ticker or _short_name }}</span>
+                  <span class="holdings-summary-pct">{{ '{:.1f}'.format(_pct) }}%</span>
                   <span class="holdings-summary-value">£{{ '{:,.2f}'.format(position.value or 0) }}</span>
-                  <span class="holdings-summary-pct">{{ '{:.1f}'.format(_pct) }}% of pot</span>
+                  <span class="holdings-summary-chevron" aria-hidden="true">▾</span>
                 </span>
-                <span class="holdings-summary-chevron" aria-hidden="true">▾</span>
+                {% if position.ticker %}
+                <span class="holdings-summary-name">{{ _short_name }}</span>
+                {% endif %}
               </button>
               <div class="holdings-cell-name" role="cell" id="holding-body-{{ position.id }}">
                 {% if position.holding_catalogue_id %}

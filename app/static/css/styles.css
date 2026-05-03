@@ -1528,17 +1528,19 @@ button.button-danger:focus {
       "actions";
     row-gap: 0.55rem;
     column-gap: 1rem;
-    padding: 0.85rem 1rem;
+    padding: 0.6rem 0.85rem;
     border: 1px solid var(--border);
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.03);
   }
+  /* The summary button stacks two rows: the figures row (ticker / % / value
+     / chevron) on top, with the holding name spanning the full tile width
+     beneath. This frees up the name from a narrow column so most names
+     fit on a single line. */
   .holdings-row-summary {
     grid-area: summary;
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    align-items: center;
-    gap: 0.6rem;
+    display: block;
+    width: 100%;
     background: transparent;
     border: 0;
     padding: 0;
@@ -1548,11 +1550,11 @@ button.button-danger:focus {
     cursor: pointer;
     font: inherit;
   }
-  .holdings-summary-id {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    min-width: 0;
+  .holdings-summary-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    align-items: center;
+    gap: 0.7rem;
   }
   .holdings-summary-ticker {
     font-weight: 600;
@@ -1561,30 +1563,29 @@ button.button-danger:focus {
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  /* Full holding name — accent blue, allowed to wrap so long names aren't
-     truncated. There's plenty of vertical space in the collapsed tile. */
+  /* % of pot — prominent accent chip, since it's now the visible
+     allocation signal on mobile (the donut is gone). */
+  .holdings-summary-pct {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .holdings-summary-value {
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+  /* Full holding name — accent blue, full width below the figures row.
+     Small text, single line in most cases (suffixes already trimmed
+     server-side). Allowed to wrap if still too long. */
   .holdings-summary-name {
+    display: block;
+    margin-top: 0.3rem;
     font-size: 0.78rem;
     color: var(--accent);
     line-height: 1.3;
     word-break: break-word;
-  }
-  .holdings-summary-figures {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.15rem;
-    text-align: right;
-  }
-  .holdings-summary-value {
-    font-weight: 600;
-    font-size: 1rem;
-    white-space: nowrap;
-  }
-  .holdings-summary-pct {
-    font-size: 0.72rem;
-    color: var(--muted);
-    white-space: nowrap;
   }
   .holdings-summary-chevron {
     color: var(--muted);
@@ -2942,6 +2943,13 @@ button.button-danger:focus {
   display: none;
 }
 
+/* The "Show details" allocation list is mobile-only; desktop has the
+   full Allocation Snapshot section with donut + chips. Hide everywhere
+   by default and re-enable inside the mobile media query. */
+.acct-detail-allocation {
+  display: none;
+}
+
 /* Mobile-only account hero (Balance + 30d delta + Monthly).
    Hidden on desktop; visible at ≤640px. */
 .acct-hero-mobile {
@@ -3230,6 +3238,55 @@ button.button-danger:focus {
     border-radius: 8px;
     color: var(--muted);
     cursor: pointer;
+  }
+
+  /* Allocation list lives behind the same "Show details" toggle.
+     Hidden by default (rule above this media query); revealed when the
+     stats grid sibling has .show-secondary applied. */
+  .acct-detail-stats.show-secondary ~ .acct-detail-allocation {
+    display: block;
+    margin-top: 0.6rem;
+    padding: 0.85rem 1rem;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .acct-detail-allocation-title {
+    margin: 0 0 0.5rem;
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .acct-detail-allocation-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .acct-detail-allocation-list li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.6rem;
+    align-items: baseline;
+    font-size: 0.85rem;
+  }
+  .acct-allocation-name {
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .acct-allocation-pct {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .acct-allocation-value {
+    color: var(--muted);
+    font-size: 0.78rem;
+    white-space: nowrap;
   }
 
   .budget-row {

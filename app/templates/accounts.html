@@ -564,6 +564,20 @@
         </div>
         {% endif %}
       </div>
+      {% if allocation_rows %}
+      <div class="acct-detail-allocation" data-detail-allocation>
+        <p class="acct-detail-allocation-title">Allocation</p>
+        <ul class="acct-detail-allocation-list">
+          {% for row in allocation_rows %}
+          <li>
+            <span class="acct-allocation-name">{{ row.bucket }}</span>
+            <span class="acct-allocation-pct">{{ '{:.1f}'.format(row.percentage) }}%</span>
+            <span class="acct-allocation-value">£{{ '{:,.0f}'.format(row.value) }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
       <button type="button" class="btn-link text-sm text-muted acct-detail-toggle" data-detail-toggle aria-expanded="false">
         Show details
       </button>
