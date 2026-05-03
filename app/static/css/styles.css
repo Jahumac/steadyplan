@@ -1528,19 +1528,21 @@ button.button-danger:focus {
       "actions";
     row-gap: 0.55rem;
     column-gap: 1rem;
-    padding: 0.6rem 0.85rem;
+    padding: 0.5rem 0.75rem;
     border: 1px solid var(--border);
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.03);
   }
-  /* The summary button stacks two rows: the figures row (ticker / % / value
-     / chevron) on top, with the holding name spanning the full tile width
-     beneath. This frees up the name from a narrow column so most names
-     fit on a single line. */
+  /* Two-column flex: ticker/%/name stacked on the left, value+chevron on
+     the right. Compact, no wasted vertical rhythm — single line per item
+     keeps the tile short. */
   .holdings-row-summary {
     grid-area: summary;
-    display: block;
+    display: flex;
     width: 100%;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.75rem;
     background: transparent;
     border: 0;
     padding: 0;
@@ -1550,42 +1552,48 @@ button.button-danger:focus {
     cursor: pointer;
     font: inherit;
   }
-  .holdings-summary-top {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto auto;
+  .holdings-summary-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .holdings-summary-right {
+    display: flex;
     align-items: center;
-    gap: 0.7rem;
+    gap: 0.5rem;
+    flex-shrink: 0;
   }
   .holdings-summary-ticker {
     font-weight: 600;
     font-size: 0.95rem;
+    line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  /* % of pot — prominent accent chip, since it's now the visible
-     allocation signal on mobile (the donut is gone). */
+  /* % of pot — accent-coloured signal, sits directly under the ticker. */
   .holdings-summary-pct {
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     font-weight: 600;
     color: var(--accent);
+    line-height: 1.2;
     white-space: nowrap;
+  }
+  /* Holding name — full width below ticker/%, accent-coloured. Server
+     trims verbose suffixes (USD/UCITS ETF/Accumulation), so most names
+     fit on a single line. */
+  .holdings-summary-name {
+    font-size: 0.75rem;
+    color: var(--accent);
+    line-height: 1.25;
+    word-break: break-word;
   }
   .holdings-summary-value {
     font-weight: 600;
     font-size: 0.95rem;
     white-space: nowrap;
-  }
-  /* Full holding name — accent blue, full width below the figures row.
-     Small text, single line in most cases (suffixes already trimmed
-     server-side). Allowed to wrap if still too long. */
-  .holdings-summary-name {
-    display: block;
-    margin-top: 0.3rem;
-    font-size: 0.78rem;
-    color: var(--accent);
-    line-height: 1.3;
-    word-break: break-word;
   }
   .holdings-summary-chevron {
     color: var(--muted);
@@ -2943,12 +2951,6 @@ button.button-danger:focus {
   display: none;
 }
 
-/* The "Show details" allocation list is mobile-only; desktop has the
-   full Allocation Snapshot section with donut + chips. Hide everywhere
-   by default and re-enable inside the mobile media query. */
-.acct-detail-allocation {
-  display: none;
-}
 
 /* Mobile-only account hero (Balance + 30d delta + Monthly).
    Hidden on desktop; visible at ≤640px. */
@@ -3204,11 +3206,13 @@ button.button-danger:focus {
   }
 
   /* Gap-trick grid: 1px coloured gaps between tiles render as separators
-     regardless of which tiles are display:none. This avoids :nth-child
-     pattern breaks when an odd number of hero-duplicate tiles are hidden. */
+     regardless of which tiles are display:none. auto-fit collapses to a
+     single column when only one tile is visible (e.g. before "Show
+     details" expands the secondary tiles), so the right side is never an
+     awkward empty box. */
   .acct-detail-stats {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 1px;
     background: var(--border);
     overflow: hidden;
@@ -3240,54 +3244,6 @@ button.button-danger:focus {
     cursor: pointer;
   }
 
-  /* Allocation list lives behind the same "Show details" toggle.
-     Hidden by default (rule above this media query); revealed when the
-     stats grid sibling has .show-secondary applied. */
-  .acct-detail-stats.show-secondary ~ .acct-detail-allocation {
-    display: block;
-    margin-top: 0.6rem;
-    padding: 0.85rem 1rem;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-  }
-  .acct-detail-allocation-title {
-    margin: 0 0 0.5rem;
-    font-size: 0.7rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .acct-detail-allocation-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-  .acct-detail-allocation-list li {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    gap: 0.6rem;
-    align-items: baseline;
-    font-size: 0.85rem;
-  }
-  .acct-allocation-name {
-    color: var(--text);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .acct-allocation-pct {
-    color: var(--accent);
-    font-weight: 600;
-  }
-  .acct-allocation-value {
-    color: var(--muted);
-    font-size: 0.78rem;
-    white-space: nowrap;
-  }
 
   .budget-row {
     flex-wrap: wrap;

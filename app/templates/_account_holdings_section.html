@@ -66,18 +66,26 @@
                  | replace(' Accumulation', '')
                  | replace(' Acc', '')
                  | replace(' Distributing', '')
+                 | replace(' USD', '')
+                 | replace(' GBP', '')
+                 | replace(' EUR', '')
+                 | replace('(USD)', '')
+                 | replace('(GBP)', '')
+                 | replace('(Acc)', '')
                  | trim %}
             <div class="holdings-row" role="row">
               <button type="button" class="holdings-row-summary" data-holding-toggle aria-expanded="false" aria-controls="holding-body-{{ position.id }}">
-                <span class="holdings-summary-top">
+                <span class="holdings-summary-left">
                   <span class="holdings-summary-ticker">{{ position.ticker or _short_name }}</span>
                   <span class="holdings-summary-pct">{{ '{:.1f}'.format(_pct) }}%</span>
+                  {% if position.ticker %}
+                  <span class="holdings-summary-name">{{ _short_name }}</span>
+                  {% endif %}
+                </span>
+                <span class="holdings-summary-right">
                   <span class="holdings-summary-value">£{{ '{:,.2f}'.format(position.value or 0) }}</span>
                   <span class="holdings-summary-chevron" aria-hidden="true">▾</span>
                 </span>
-                {% if position.ticker %}
-                <span class="holdings-summary-name">{{ _short_name }}</span>
-                {% endif %}
               </button>
               <div class="holdings-cell-name" role="cell" id="holding-body-{{ position.id }}">
                 {% if position.holding_catalogue_id %}
