@@ -1519,9 +1519,22 @@ button.button-danger:focus {
     cursor: pointer;
     font: inherit;
   }
+  .holdings-summary-id {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
   .holdings-summary-ticker {
     font-weight: 600;
     font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .holdings-summary-name {
+    font-size: 0.78rem;
+    color: var(--muted);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1649,14 +1662,12 @@ button.button-danger:focus {
     width: 100%;
   }
 
-  /* On mobile, the per-holding chips duplicate info already shown in the
-     Holdings list above. Keep only the donut for a quick visual recap. */
+  /* On mobile the Allocation Snapshot is redundant — the chip list duplicates
+     the Holdings list above and the donut alone has no labels to map slices
+     back to holdings. Hide the entire panel; desktop keeps it. */
   @media (max-width: 640px) {
-    .allocation-list {
+    .allocation-panel {
       display: none;
-    }
-    .allocation-layout {
-      justify-items: center;
     }
   }
 
@@ -2892,7 +2903,9 @@ button.button-danger:focus {
 /* Account detail overflow menu.
    Desktop: trigger hidden, menu items render inline (acts like the
    original badge-row). Mobile: trigger button visible, menu items
-   collapsed into a popover that opens beneath the trigger. */
+   expand inline below the trigger — pushing the rest of the page
+   down — rather than as an overlay. This avoids off-screen popovers
+   on narrow viewports. */
 .acct-overflow {
   display: contents;
 }
@@ -2903,32 +2916,32 @@ button.button-danger:focus {
   display: contents;
 }
 @media (max-width: 640px) {
+  /* Allow the menu to wrap onto its own line within the badge-row. */
+  .section-header .badge-row {
+    flex-wrap: wrap;
+  }
   .acct-overflow {
-    display: inline-block;
-    position: relative;
+    display: contents;
   }
   .acct-overflow-trigger {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 2.2rem;
+    min-width: 2.4rem;
     font-size: 1.1rem;
     line-height: 1;
   }
   .acct-overflow-menu {
     display: none;
-    position: absolute;
-    top: calc(100% + 0.4rem);
-    right: 0;
-    min-width: 12rem;
+    flex-basis: 100%;
+    width: 100%;
     flex-direction: column;
     gap: 0.4rem;
     padding: 0.6rem;
+    margin-top: 0.5rem;
     background: var(--panel-2);
     border: 1px solid var(--border);
     border-radius: 10px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-    z-index: 20;
   }
   .acct-overflow.is-open .acct-overflow-menu {
     display: flex;
@@ -2938,6 +2951,14 @@ button.button-danger:focus {
     width: 100%;
     text-align: center;
   }
+}
+
+/* Suppress the default blue/grey tap-highlight rectangle on touch devices —
+   it's distracting on tappable summaries, donut canvases, and badge buttons.
+   CSS :active states still fire, so deliberate feedback (e.g. button press)
+   continues to work. */
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ── Holdings catalogue table ─────────────────────────────────────── */
