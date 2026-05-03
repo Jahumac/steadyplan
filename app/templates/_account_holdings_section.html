@@ -43,6 +43,9 @@
 
         {% if positions %}
           {# ── Holdings list: one responsive component (grid) for both desktop and mobile. All sizing lives in the `.holdings-*` CSS block. #}
+          {% set _ht = namespace(total=0) %}
+          {% for _p in positions %}{% set _ht.total = _ht.total + (_p.value or 0) %}{% endfor %}
+          {% set _holdings_total = _ht.total %}
           <div class="holdings-list" role="table" aria-label="Portfolio holdings">
             <div class="holdings-row holdings-row-head" role="row">
               <div role="columnheader">Holding</div>
@@ -52,6 +55,7 @@
               <div role="columnheader"></div>
             </div>
             {% for position in positions %}
+            {% set _pct = ((position.value or 0) / _holdings_total * 100) if _holdings_total else 0 %}
             <div class="holdings-row" role="row">
               <button type="button" class="holdings-row-summary" data-holding-toggle aria-expanded="false" aria-controls="holding-body-{{ position.id }}">
                 <span class="holdings-summary-id">
@@ -62,7 +66,10 @@
                     <span class="holdings-summary-ticker">{{ position.holding_name }}</span>
                   {% endif %}
                 </span>
-                <span class="holdings-summary-value">£{{ '{:,.2f}'.format(position.value or 0) }}</span>
+                <span class="holdings-summary-figures">
+                  <span class="holdings-summary-value">£{{ '{:,.2f}'.format(position.value or 0) }}</span>
+                  <span class="holdings-summary-pct">{{ '{:.1f}'.format(_pct) }}% of pot</span>
+                </span>
                 <span class="holdings-summary-chevron" aria-hidden="true">▾</span>
               </button>
               <div class="holdings-cell-name" role="cell" id="holding-body-{{ position.id }}">
