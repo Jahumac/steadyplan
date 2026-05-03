@@ -420,18 +420,58 @@
 
     {% else %}
       {# ── View mode ──────────────────────────────────────────────────────── #}
+      {# Mobile-only hero: merges Balance + 30-day delta + Monthly into a
+         single condensed card so the top of the screen is more useful at a
+         glance than the original 3-tile strip. Desktop continues to use the
+         stats grid below. #}
+      {% set _bal = effective_values[selected.id] or 0 %}
+      {% set _hist_len = account_daily_values | length %}
+      {% set _hero_scb = contrib_breakdowns.get(selected.id, {}) %}
+      <div class="acct-hero-mobile">
+        <div class="acct-hero-row">
+          <div class="acct-hero-balance">
+            <span class="acct-hero-label">Balance</span>
+            <strong class="acct-hero-value">£{{ '{:,.2f}'.format(_bal) }}</strong>
+            {% if _hist_len >= 2 %}
+              {% set _bidx = 0 if _hist_len <= 30 else _hist_len - 31 %}
+              {% set _baseline = account_daily_values[_bidx] %}
+              {% if _baseline %}
+                {% set _delta = _bal - _baseline %}
+                {% set _pct = (_delta / _baseline * 100) %}
+                {% set _window = _hist_len - 1 if _hist_len <= 30 else 30 %}
+                <span class="acct-hero-delta {% if _delta >= 0 %}gain{% else %}loss{% endif %}">
+                  {{ '+' if _delta >= 0 else '−' }}£{{ '{:,.2f}'.format(_delta | abs) }}
+                  ({{ '+' if _pct >= 0 else '' }}{{ '{:.2f}'.format(_pct) }}%)
+                  · {{ _window }}d
+                </span>
+              {% endif %}
+            {% endif %}
+          </div>
+          <div class="acct-hero-monthly">
+            {% if _hero_scb.get('total_into_pot', 0) != (selected.monthly_contribution or 0) and _hero_scb.get('total_into_pot', 0) > 0 %}
+              <span class="acct-hero-label">Into pot / mo</span>
+              <strong style="color:var(--accent-2)">£{{ '{:,.2f}'.format(_hero_scb.total_into_pot) }}</strong>
+              <small class="text-muted">you pay £{{ '{:,.2f}'.format(selected.monthly_contribution or 0) }}</small>
+            {% else %}
+              <span class="acct-hero-label">Monthly</span>
+              <strong>£{{ '{:,.2f}'.format(selected.monthly_contribution or 0) }}</strong>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
       <div class="acct-detail-stats" data-detail-stats>
-        <div class="acct-detail-stat">
+        <div class="acct-detail-stat acct-detail-stat-hero-dup">
           <span>Balance</span>
           <strong>£{{ '{:,.2f}'.format(effective_values[selected.id]) }}</strong>
         </div>
-        <div class="acct-detail-stat">
+        <div class="acct-detail-stat acct-detail-stat-hero-dup">
           {% set scb = contrib_breakdowns.get(selected.id, {}) %}
           {% if scb.get('total_into_pot', 0) != (selected.monthly_contribution or 0) and scb.get('total_into_pot', 0) > 0 %}
           <span>You pay</span>
           <strong>£{{ '{:,.2f}'.format(selected.monthly_contribution or 0) }}</strong>
         </div>
-        <div class="acct-detail-stat">
+        <div class="acct-detail-stat acct-detail-stat-hero-dup">
           <span>Into pot</span>
           <strong style="color:var(--accent-2)">£{{ '{:,.2f}'.format(scb.total_into_pot) }}</strong>
           {% else %}
