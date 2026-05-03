@@ -52,8 +52,14 @@
               <div role="columnheader"></div>
             </div>
             {% for position in positions %}
+            {% set _summary_label = position.ticker or position.holding_name %}
             <div class="holdings-row" role="row">
-              <div class="holdings-cell-name" role="cell">
+              <button type="button" class="holdings-row-summary" data-holding-toggle aria-expanded="false" aria-controls="holding-body-{{ position.id }}">
+                <span class="holdings-summary-ticker">{{ _summary_label }}</span>
+                <span class="holdings-summary-value">£{{ '{:,.2f}'.format(position.value or 0) }}</span>
+                <span class="holdings-summary-chevron" aria-hidden="true">▾</span>
+              </button>
+              <div class="holdings-cell-name" role="cell" id="holding-body-{{ position.id }}">
                 {% if position.holding_catalogue_id %}
                   <a href="/holdings/{{ position.holding_catalogue_id }}" class="link-accent"><strong>{{ position.holding_name }}</strong></a>
                 {% else %}

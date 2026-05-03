@@ -1479,16 +1479,24 @@ button.button-danger:focus {
   margin-bottom: 0.2rem;
 }
 
+/* The collapsed summary row is mobile-only — hidden on desktop. */
+.holdings-row-summary {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .holdings-row-head {
     display: none;
   }
   .holdings-row {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     grid-template-areas:
-      "name     value"
-      "units    price"
-      "actions  actions";
+      "summary"
+      "name"
+      "units"
+      "price"
+      "value"
+      "actions";
     row-gap: 0.55rem;
     column-gap: 1rem;
     padding: 0.85rem 1rem;
@@ -1496,10 +1504,63 @@ button.button-danger:focus {
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.03);
   }
+  .holdings-row-summary {
+    grid-area: summary;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 0.6rem;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+  }
+  .holdings-summary-ticker {
+    font-weight: 600;
+    font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .holdings-summary-value {
+    font-weight: 600;
+    font-size: 1rem;
+    white-space: nowrap;
+  }
+  .holdings-summary-chevron {
+    color: var(--muted);
+    font-size: 0.85rem;
+    transition: transform 0.18s ease;
+  }
+  .holdings-row.is-expanded .holdings-summary-chevron {
+    transform: rotate(180deg);
+  }
+  /* Cells collapsed by default; revealed when the row is expanded. */
+  .holdings-cell-name,
+  .holdings-cell-units,
+  .holdings-cell-price,
+  .holdings-cell-value,
+  .holdings-cell-actions {
+    display: none;
+  }
+  .holdings-row.is-expanded .holdings-cell-name,
+  .holdings-row.is-expanded .holdings-cell-units,
+  .holdings-row.is-expanded .holdings-cell-price,
+  .holdings-row.is-expanded .holdings-cell-value,
+  .holdings-row.is-expanded .holdings-cell-actions {
+    display: block;
+  }
+  .holdings-row.is-expanded .holdings-cell-actions {
+    display: flex;
+  }
   .holdings-cell-name    { grid-area: name;    text-align: left; }
   .holdings-cell-units   { grid-area: units;   text-align: left; }
   .holdings-cell-price   { grid-area: price;   text-align: left; }
-  .holdings-cell-value   { grid-area: value;   font-size: 1.05rem; text-align: right; }
+  .holdings-cell-value   { grid-area: value;   font-size: 1.05rem; text-align: left; }
   .holdings-cell-actions { grid-area: actions; padding-top: 0.5rem; border-top: 1px solid rgba(51, 65, 85, 0.3); }
   .holdings-label        { display: block; }
 }
@@ -1586,6 +1647,17 @@ button.button-danger:focus {
 
   .allocation-list {
     width: 100%;
+  }
+
+  /* On mobile, the per-holding chips duplicate info already shown in the
+     Holdings list above. Keep only the donut for a quick visual recap. */
+  @media (max-width: 640px) {
+    .allocation-list {
+      display: none;
+    }
+    .allocation-layout {
+      justify-items: center;
+    }
   }
 
   .settings-form input,
@@ -2812,6 +2884,62 @@ button.button-danger:focus {
   font-weight: 600;
 }
 
+/* "Show details" toggle is mobile-only — hidden on desktop. */
+.acct-detail-toggle {
+  display: none;
+}
+
+/* Account detail overflow menu.
+   Desktop: trigger hidden, menu items render inline (acts like the
+   original badge-row). Mobile: trigger button visible, menu items
+   collapsed into a popover that opens beneath the trigger. */
+.acct-overflow {
+  display: contents;
+}
+.acct-overflow-trigger {
+  display: none;
+}
+.acct-overflow-menu {
+  display: contents;
+}
+@media (max-width: 640px) {
+  .acct-overflow {
+    display: inline-block;
+    position: relative;
+  }
+  .acct-overflow-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.2rem;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+  .acct-overflow-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    min-width: 12rem;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.6rem;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    z-index: 20;
+  }
+  .acct-overflow.is-open .acct-overflow-menu {
+    display: flex;
+  }
+  .acct-overflow-menu .badge,
+  .acct-overflow-menu button.badge {
+    width: 100%;
+    text-align: center;
+  }
+}
+
 /* ── Holdings catalogue table ─────────────────────────────────────── */
 
 /* Collapsible catalogue details */
@@ -2896,16 +3024,44 @@ button.button-danger:focus {
   }
 
   .acct-detail-stats {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   .acct-detail-stat {
-    border-right: none;
+    border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
+    min-width: 0;
   }
 
-  .acct-detail-stat:last-child {
+  /* Right-edge tiles (every 2nd) drop their right border. */
+  .acct-detail-stat:nth-child(2n) {
+    border-right: none;
+  }
+  /* Bottom-row tiles drop their bottom border. */
+  .acct-detail-stat:last-child,
+  .acct-detail-stat:nth-last-child(2):nth-child(2n+1) {
     border-bottom: none;
+  }
+
+  /* Secondary stats are hidden until the user taps "Show details". */
+  .acct-detail-stat-secondary {
+    display: none;
+  }
+  .acct-detail-stats.show-secondary .acct-detail-stat-secondary {
+    display: flex;
+  }
+  .acct-detail-toggle {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 0.55rem 0.75rem;
+    margin-top: 0.4rem;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
   }
 
   .budget-row {

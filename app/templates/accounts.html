@@ -111,19 +111,24 @@
       </div>
       <div class="badge-row">
         <a class="badge" href="/accounts/">← Back</a>
-        {% if detail_mode != 'edit' %}<a class="badge" href="/accounts/{{ selected.id }}?mode=edit">Edit</a>{% endif %}
-        {% if detail_mode != 'edit' and selected.valuation_mode == 'holdings' %}<button type="button" class="badge" id="top-add-holding">+ Add holding</button>{% endif %}
-        <form method="post" class="form-reset" style="display:inline;">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <input type="hidden" name="form_name" value="delete_account">
-          <button type="submit" class="badge badge-danger"
-            data-confirm="This will permanently remove {{ selected.name }} and all its holdings. Shelly can't undo this one."
-            data-confirm-title="Delete {{ selected.name }}?"
-            data-confirm-ok="Yes, delete it"
-            data-confirm-cancel="Keep it">
-            Delete
-          </button>
-        </form>
+        <div class="acct-overflow" data-overflow>
+          <button type="button" class="badge acct-overflow-trigger" data-overflow-trigger aria-haspopup="true" aria-expanded="false" aria-label="More actions">⋯</button>
+          <div class="acct-overflow-menu" data-overflow-menu>
+            {% if detail_mode != 'edit' %}<a class="badge" href="/accounts/{{ selected.id }}?mode=edit">Edit</a>{% endif %}
+            {% if detail_mode != 'edit' and selected.valuation_mode == 'holdings' %}<button type="button" class="badge" id="top-add-holding">+ Add holding</button>{% endif %}
+            <form method="post" class="form-reset" style="display:inline;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="form_name" value="delete_account">
+              <button type="submit" class="badge badge-danger"
+                data-confirm="This will permanently remove {{ selected.name }} and all its holdings. Shelly can't undo this one."
+                data-confirm-title="Delete {{ selected.name }}?"
+                data-confirm-ok="Yes, delete it"
+                data-confirm-cancel="Keep it">
+                Delete
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -415,7 +420,7 @@
 
     {% else %}
       {# ── View mode ──────────────────────────────────────────────────────── #}
-      <div class="acct-detail-stats">
+      <div class="acct-detail-stats" data-detail-stats>
         <div class="acct-detail-stat">
           <span>Balance</span>
           <strong>£{{ '{:,.2f}'.format(effective_values[selected.id]) }}</strong>
@@ -444,7 +449,7 @@
           {% endif %}
         </div>
         {% endif %}
-        <div class="acct-detail-stat">
+        <div class="acct-detail-stat acct-detail-stat-secondary">
           <span>Growth rate</span>
           <strong>
             {% if selected.growth_mode == 'custom' and selected.growth_rate_override is not none %}
@@ -455,7 +460,7 @@
           </strong>
         </div>
         {% if selected.platform_fee_pct or selected.platform_fee_flat or selected.fund_fee_pct %}
-        <div class="acct-detail-stat">
+        <div class="acct-detail-stat acct-detail-stat-secondary">
           <span>Platform fee</span>
           <strong class="text-danger">
             {%- if selected.platform_fee_pct %}{{ '{:.3f}'.format(selected.platform_fee_pct) }}%{% if selected.platform_fee_cap %} (capped £{{ '{:,.0f}'.format(selected.platform_fee_cap) }}/yr){% endif %}{% endif %}
@@ -463,23 +468,23 @@
             {%- if not selected.platform_fee_pct and not selected.platform_fee_flat %}0%{% endif %}
           </strong>
         </div>
-        <div class="acct-detail-stat">
+        <div class="acct-detail-stat acct-detail-stat-secondary">
           <span>Fund fee (OCF)</span>
           <strong class="text-danger">{{ '{:.3f}'.format(selected.fund_fee_pct or 0) }}%</strong>
         </div>
         {% elif selected.annual_fee_pct %}
-        <div class="acct-detail-stat">
+        <div class="acct-detail-stat acct-detail-stat-secondary">
           <span>Annual fee</span>
           <strong class="text-danger">{{ '{:.3f}'.format(selected.annual_fee_pct) }}%</strong>
         </div>
         {% endif %}
         {% if selected.contribution_fee_pct %}
-        <div class="acct-detail-stat">
+        <div class="acct-detail-stat acct-detail-stat-secondary">
           <span>Contribution fee</span>
           <strong class="text-danger">{{ '{:.3f}'.format(selected.contribution_fee_pct) }}% per contribution</strong>
         </div>
         {% endif %}
-        <div class="acct-detail-stat">
+        <div class="acct-detail-stat acct-detail-stat-secondary">
           <span>Valuation</span>
           <strong>{% if selected.valuation_mode == 'holdings' %}From holdings{% elif selected.valuation_mode == 'premium_bonds' %}Premium Bonds{% else %}Manual{% endif %}</strong>
         </div>
@@ -520,6 +525,9 @@
         </div>
         {% endif %}
       </div>
+      <button type="button" class="btn-link text-sm text-muted acct-detail-toggle" data-detail-toggle aria-expanded="false">
+        Show details
+      </button>
 
       {% if selected.tags %}
       <div class="badge-row mt-075">
@@ -540,43 +548,6 @@
       {% endif %}
 
       {% if selected.valuation_mode == 'holdings' %}
-      <section class="panel mt-1">
-        <h3 class="section-title">Allocation Snapshot</h3>
-        {% if allocation_rows %}
-          {% set palette = ['#38bdf8', '#22c55e', '#f59e0b', '#f97316', '#a78bfa', '#ef4444', '#14b8a6', '#eab308'] %}
-          <div class="allocation-layout">
-            <div class="allocation-chart-card">
-              <canvas id="allocChart" width="210" height="210" role="img" aria-label="Allocation breakdown doughnut chart"
-                data-palette='{{ palette | list | tojson | safe }}'
-                data-labels='{{ allocation_rows | map(attribute="bucket") | list | tojson | safe }}'
-                data-values='{{ allocation_rows | map(attribute="value") | list | tojson | safe }}'
-                data-pcts='{{ allocation_rows | map(attribute="percentage") | list | tojson | safe }}'
-                data-total='£{{ "{:,.2f}".format(allocation_total) }}'></canvas>
-            </div>
-            <div class="allocation-list">
-              {% for row in allocation_rows %}
-              {% set color = palette[loop.index0 % (palette|length)] %}
-              <div class="allocation-item" data-index="{{ loop.index0 }}">
-                <div class="allocation-item-top">
-                  <div class="flex flex-center gap-05">
-                    <span class="alloc-dot" data-color="{{ color }}"></span>
-                    <strong>{{ row.bucket }}</strong>
-                  </div>
-                  <span>{{ '{:.1f}'.format(row.percentage) }}%</span>
-                </div>
-                <small>£{{ '{:,.2f}'.format(row.value) }}</small>
-                <div class="progress" role="progressbar" aria-valuenow="{{ row.percentage|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ row.bucket }} allocation">
-                  <div class="progress-bar" data-pct="{{ row.percentage }}" data-color="{{ color }}"></div>
-                </div>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-        {% else %}
-          <p class="helper-text">No allocation data yet. Add some holdings and Shelly will break down the numbers for you.</p>
-        {% endif %}
-      </section>
-
       <section class="panel mt-1">
         <div class="section-header">
           <div>
@@ -619,6 +590,43 @@
       </section>
 
       {% include '_account_holdings_section.html' %}
+
+      <section class="panel mt-1">
+        <h3 class="section-title">Allocation Snapshot</h3>
+        {% if allocation_rows %}
+          {% set palette = ['#38bdf8', '#22c55e', '#f59e0b', '#f97316', '#a78bfa', '#ef4444', '#14b8a6', '#eab308'] %}
+          <div class="allocation-layout">
+            <div class="allocation-chart-card">
+              <canvas id="allocChart" width="210" height="210" role="img" aria-label="Allocation breakdown doughnut chart"
+                data-palette='{{ palette | list | tojson | safe }}'
+                data-labels='{{ allocation_rows | map(attribute="bucket") | list | tojson | safe }}'
+                data-values='{{ allocation_rows | map(attribute="value") | list | tojson | safe }}'
+                data-pcts='{{ allocation_rows | map(attribute="percentage") | list | tojson | safe }}'
+                data-total='£{{ "{:,.2f}".format(allocation_total) }}'></canvas>
+            </div>
+            <div class="allocation-list">
+              {% for row in allocation_rows %}
+              {% set color = palette[loop.index0 % (palette|length)] %}
+              <div class="allocation-item" data-index="{{ loop.index0 }}">
+                <div class="allocation-item-top">
+                  <div class="flex flex-center gap-05">
+                    <span class="alloc-dot" data-color="{{ color }}"></span>
+                    <strong>{{ row.bucket }}</strong>
+                  </div>
+                  <span>{{ '{:.1f}'.format(row.percentage) }}%</span>
+                </div>
+                <small>£{{ '{:,.2f}'.format(row.value) }}</small>
+                <div class="progress" role="progressbar" aria-valuenow="{{ row.percentage|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ row.bucket }} allocation">
+                  <div class="progress-bar" data-pct="{{ row.percentage }}" data-color="{{ color }}"></div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% else %}
+          <p class="helper-text">No allocation data yet. Add some holdings and Shelly will break down the numbers for you.</p>
+        {% endif %}
+      </section>
       {% endif %}
 
       {# ── Contribution overrides ──────────────────────────────────────────── #}

@@ -149,6 +149,47 @@
       });
     });
 
+    // 0c. Holdings row collapse/expand on mobile
+    document.querySelectorAll('[data-holding-toggle]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var row = btn.closest('.holdings-row');
+        if (!row) return;
+        var expanded = row.classList.toggle('is-expanded');
+        btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      });
+    });
+
+    // 0d. Account detail "Show details" toggle (mobile)
+    document.querySelectorAll('[data-detail-toggle]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var stats = btn.parentElement.querySelector('[data-detail-stats]');
+        if (!stats) return;
+        var shown = stats.classList.toggle('show-secondary');
+        btn.setAttribute('aria-expanded', shown ? 'true' : 'false');
+        btn.textContent = shown ? 'Hide details' : 'Show details';
+      });
+    });
+
+    // 0e. Account detail overflow menu (mobile ⋯)
+    document.querySelectorAll('[data-overflow-trigger]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var wrap = btn.closest('[data-overflow]');
+        if (!wrap) return;
+        var open = wrap.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    });
+    document.addEventListener('click', function(e) {
+      document.querySelectorAll('[data-overflow].is-open').forEach(function(wrap) {
+        if (!wrap.contains(e.target)) {
+          wrap.classList.remove('is-open');
+          var trig = wrap.querySelector('[data-overflow-trigger]');
+          if (trig) trig.setAttribute('aria-expanded', 'false');
+        }
+      });
+    });
+
     // 1. All [data-confirm] elements
     document.querySelectorAll('[data-confirm]').forEach(function (el) {
       el.addEventListener('click', function (e) {
