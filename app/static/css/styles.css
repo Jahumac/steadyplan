@@ -1534,22 +1534,23 @@ button.button-danger:focus {
       "actions";
     row-gap: 0.5rem;
     column-gap: 1rem;
-    padding: 0.4rem 0.65rem;
+    padding: 0.7rem 0.85rem;
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 12px;
     background: rgba(255, 255, 255, 0.03);
   }
-  /* Compact two-row tile: row 1 = TICKER + % (left) and VALUE + chevron
-     (right) on a single baseline; row 2 = the holding name. % sitting
-     inline with the ticker reads as "this asset is 42% of the pot" rather
-     than a stray line. */
+  /* Two-row card: row 1 carries the headline (TICKER + % on the left,
+     VALUE + chevron on the right, all on a shared baseline); row 2 is
+     the holding name pushed below with a clear vertical gap. The whole
+     summary is one tappable button — pressing anywhere on the tile
+     toggles expansion. */
   .holdings-row-summary {
     grid-area: summary;
     display: flex;
     width: 100%;
     justify-content: space-between;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.65rem;
     background: transparent;
     border: 0;
     padding: 0;
@@ -1562,47 +1563,49 @@ button.button-danger:focus {
   .holdings-summary-left {
     display: flex;
     flex-direction: column;
-    gap: 0.1rem;
+    gap: 0.4rem;
     min-width: 0;
-    flex: 1;
+    flex: 1 1 auto;
   }
   .holdings-summary-head {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 0.5rem;
     min-width: 0;
   }
   .holdings-summary-right {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
     flex-shrink: 0;
+    /* Anchor the value to the top of the tile so it lines up with the
+       ticker; the holding name flows below on the left only. */
+    align-self: flex-start;
   }
   .holdings-summary-ticker {
-    font-weight: 600;
-    font-size: 0.95rem;
+    font-weight: 700;
+    font-size: 1.05rem;
     line-height: 1.15;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  /* % of pot — accent-coloured pill sitting next to the ticker. Reads as
-     "ticker · share of pot" on the same line. */
+  /* % of pot — small accent pill next to the ticker. */
   .holdings-summary-pct {
     font-size: 0.72rem;
     font-weight: 600;
     color: var(--accent);
-    line-height: 1.15;
+    line-height: 1;
     white-space: nowrap;
-    padding: 0.05rem 0.4rem;
-    background: rgba(56, 189, 248, 0.1);
+    padding: 0.2rem 0.5rem;
+    background: rgba(56, 189, 248, 0.12);
     border-radius: 999px;
   }
-  /* Holding name — second row of the tile, muted so it recedes behind the
-     ticker/value. Server-trimmed of verbose suffixes (USD / UCITS ETF /
-     Accumulation), so most names fit on one line. */
+  /* Holding name — muted second row, sits below the ticker with a real
+     gap so the two don't read as one squashed line. Server-trimmed of
+     verbose suffixes (USD / UCITS ETF / Accumulation). */
   .holdings-summary-name {
-    font-size: 0.72rem;
+    font-size: 0.78rem;
     color: var(--muted);
     line-height: 1.2;
     overflow: hidden;
@@ -1610,14 +1613,14 @@ button.button-danger:focus {
     white-space: nowrap;
   }
   .holdings-summary-value {
-    font-weight: 600;
-    font-size: 0.95rem;
+    font-weight: 700;
+    font-size: 1.05rem;
     line-height: 1.15;
     white-space: nowrap;
   }
   .holdings-summary-chevron {
     color: var(--muted);
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     transition: transform 0.18s ease;
   }
   .holdings-row.is-expanded .holdings-summary-chevron {
@@ -1631,7 +1634,6 @@ button.button-danger:focus {
   .holdings-cell-actions {
     display: none;
   }
-  .holdings-row.is-expanded .holdings-cell-name,
   .holdings-row.is-expanded .holdings-cell-units,
   .holdings-row.is-expanded .holdings-cell-price,
   .holdings-row.is-expanded .holdings-cell-value,
@@ -1641,6 +1643,9 @@ button.button-danger:focus {
   .holdings-row.is-expanded .holdings-cell-actions {
     display: flex;
   }
+  /* Holding name cell stays hidden even when expanded — the summary
+     already shows the full name, so a giant accent-blue duplicate in the
+     body just clutters the form. */
   .holdings-cell-name    { grid-area: name;    text-align: left; }
   .holdings-cell-units   { grid-area: units;   text-align: left; }
   .holdings-cell-price   { grid-area: price;   text-align: left; }
@@ -1657,6 +1662,13 @@ button.button-danger:focus {
 @media (max-width: 768px) {
   .page-shell {
     padding: 1rem;
+  }
+
+  /* Trim panel side padding on phones so child cards/tiles get a couple
+     more pixels of breathing room from the screen edge. The 1.5rem default
+     made the holding tiles feel like they were touching the panel border. */
+  .panel {
+    padding: 1rem 0.85rem 1.15rem;
   }
 
   input[type="text"],
