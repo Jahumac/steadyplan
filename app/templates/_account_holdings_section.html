@@ -141,6 +141,32 @@
             </div>
             {% endfor %}
           </div>
+
+          {# Performance shortcuts. The compact mobile tile dropped its
+             clickable holding-name link, so we surface a plain link list
+             below the tiles for navigation to each holding's performance
+             page. Only renders for positions wired to a catalogue entry
+             (auto-priced tickers); manual/pension holdings have no page. #}
+          {% set _hp = namespace(any=false) %}
+          {% for _p in positions %}{% if _p.holding_catalogue_id %}{% set _hp.any = true %}{% endif %}{% endfor %}
+          {% if _hp.any %}
+          <div class="holdings-perf-links">
+            <p class="holdings-perf-eyebrow">View performance</p>
+            <ul class="holdings-perf-list">
+              {% for position in positions %}
+                {% if position.holding_catalogue_id %}
+                <li>
+                  <a href="/holdings/{{ position.holding_catalogue_id }}" class="holdings-perf-link">
+                    <span class="holdings-perf-name">{{ position.holding_name }}</span>
+                    {% if position.ticker %}<span class="holdings-perf-ticker">{{ position.ticker }}</span>{% endif %}
+                    <span class="holdings-perf-arrow" aria-hidden="true">→</span>
+                  </a>
+                </li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
         {% endif %}
 
         {# ── Inline add-holding bar ──────────────────────────────────────── #}

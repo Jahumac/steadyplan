@@ -1482,6 +1482,77 @@ button.button-danger:focus {
   flex-wrap: nowrap;
 }
 
+/* Performance link list under the holdings tiles. The mobile tile is
+   compact and no longer carries a clickable holding name, so this is the
+   way users get from an account view into a holding's performance page. */
+.holdings-perf-links {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(51, 65, 85, 0.4);
+}
+
+.holdings-perf-eyebrow {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.holdings-perf-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.holdings-perf-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  background: rgba(56, 189, 248, 0.04);
+  border: 1px solid rgba(56, 189, 248, 0.12);
+  color: var(--accent);
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.holdings-perf-link:hover,
+.holdings-perf-link:focus {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.holdings-perf-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.holdings-perf-ticker {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.holdings-perf-arrow {
+  flex-shrink: 0;
+  color: var(--accent);
+  font-size: 0.95rem;
+  opacity: 0.7;
+}
+
 .holdings-cash-panel {
   background: var(--surface-2);
   padding: 1rem;
