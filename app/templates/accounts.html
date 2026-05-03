@@ -110,6 +110,7 @@
         <h2>{{ selected.name }}</h2>
       </div>
       <div class="badge-row">
+        <a class="badge" href="/accounts/">← Back</a>
         {% if detail_mode != 'edit' %}<a class="badge" href="/accounts/{{ selected.id }}?mode=edit">Edit</a>{% endif %}
         {% if detail_mode != 'edit' and selected.valuation_mode == 'holdings' %}<button type="button" class="badge" id="top-add-holding">+ Add holding</button>{% endif %}
         <form method="post" class="form-reset" style="display:inline;">
@@ -294,19 +295,19 @@
             <div class="acct-budget-flags acct-budget-flags-flush">
               <label class="acct-flag-row">
                 <input type="hidden" name="include_in_budget" value="0">
-                <div class="acct-flag-header">
+                <input type="checkbox" name="include_in_budget" value="1" {% if selected.include_in_budget is none or selected.include_in_budget %}checked{% endif %}>
+                <div class="acct-flag-text">
                   <span class="acct-flag-title">Include in budget</span>
-                  <input type="checkbox" name="include_in_budget" value="1" {% if selected.include_in_budget is none or selected.include_in_budget %}checked{% endif %}>
+                  <small class="acct-flag-desc">Show this account's contribution in the Investments &amp; Savings section of your budget.</small>
                 </div>
-                <small class="acct-flag-desc">Show this account's contribution in the Investments &amp; Savings section of your budget.</small>
               </label>
               <label class="acct-flag-row acct-flag-nested">
                 <input type="hidden" name="pre_salary" value="0">
-                <div class="acct-flag-header">
+                <input type="checkbox" name="pre_salary" value="1" {% if selected.pre_salary %}checked{% endif %}>
+                <div class="acct-flag-text">
                   <span class="acct-flag-title">Outside take-home pay</span>
-                  <input type="checkbox" name="pre_salary" value="1" {% if selected.pre_salary %}checked{% endif %}>
+                  <small class="acct-flag-desc">Tick if this money doesn't come from your take-home — either it leaves <strong>before</strong> your salary hits your account (e.g. salary sacrifice / workplace pension) or it arrives from <strong>outside</strong> your salary (e.g. cashback, gifts, refunds, dividends reinvested). Shown in Budget for visibility but not subtracted from take-home. Tick alongside <em>Include in budget</em>.</small>
                 </div>
-                <small class="acct-flag-desc">Tick if this money doesn't come from your take-home — either it leaves <strong>before</strong> your salary hits your account (e.g. salary sacrifice / workplace pension) or it arrives from <strong>outside</strong> your salary (e.g. cashback, gifts, refunds, dividends reinvested). Shown in Budget for visibility but not subtracted from take-home. Tick alongside <em>Include in budget</em>.</small>
               </label>
             </div>
           </div>

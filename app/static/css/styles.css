@@ -746,13 +746,21 @@ body.is-back-online .site-header {
 }
 
 .acct-budget-flags {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
   padding: 0.85rem 1rem 0.95rem;
   background: rgba(255,255,255,0.025);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 10px;
+}
+.acct-budget-flags .acct-flag-heading {
+  grid-column: 1 / -1;
+}
+@media (max-width: 640px) {
+  .acct-budget-flags {
+    grid-template-columns: 1fr;
+  }
 }
 
 .acct-flag-heading {
@@ -765,10 +773,10 @@ body.is-back-online .site-header {
 }
 
 .acct-flag-row {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.4rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.7rem;
   padding: 0.85rem 1rem;
   margin: 0;
   border-radius: 10px;
@@ -784,19 +792,19 @@ body.is-back-online .site-header {
   box-shadow: 0 4px 14px -8px rgba(0,0,0,0.4);
 }
 
-.acct-flag-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.7rem;
-}
-
 .acct-flag-row input[type="checkbox"] {
-  margin: 0;
+  margin: 0.15rem 0 0 0;
   width: 20px;
   height: 20px;
   flex-shrink: 0;
   cursor: pointer;
+}
+
+.acct-flag-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
 }
 
 .acct-flag-title {
@@ -809,7 +817,6 @@ body.is-back-online .site-header {
   font-size: 0.78rem;
   line-height: 1.45;
   color: var(--muted);
-  text-align: center;
 }
 
 .acct-flag-desc em {
