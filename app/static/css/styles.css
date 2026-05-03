@@ -24,6 +24,46 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
+/* Custom checkbox: dark like input fields when unchecked, blue when ticked.
+   Kills the OS-default tan tint everywhere. More-specific rules with their
+   own dimensions (.toggle-switch input, .tag-chip input) still override. */
+input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+input[type="checkbox"]:hover {
+  border-color: var(--accent);
+}
+input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 10px;
+  border: solid #0f172a;
+  border-width: 0 2px 2px 0;
+  transform: translate(-55%, -60%) rotate(45deg);
+}
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid rgba(56,189,248,0.45);
+  outline-offset: 2px;
+}
+
 /* Fee-fields section inside the account form. Kept narrow on phones so
    labels don't wrap awkwardly. */
 .fee-fields {
