@@ -1986,7 +1986,8 @@ button.button-danger:focus {
   .card .section-header h3,
   .panel .section-header h2,
   .panel .section-header h3 {
-    font-size: 1.9rem;
+    font-size: 1.45rem;
+    line-height: 1.2;
   }
 }
 
@@ -3146,9 +3147,10 @@ button.button-danger:focus {
 /* ── Global tile hover/touch feedback ────────────────────────────────────
    The user's brief: "every tile should highlight when you hover with the
    mouse or touch on mobile". Uniform subtle outline so the whole app feels
-   alive, not just a few cards. Applied to the major tile/panel classes —
-   the rule uses one shared transition and accent-tinted ring. */
-.panel,
+   alive, not just a few cards. NOT applied to .panel — panels are section
+   containers, and tapping any child propagates :active up to the panel,
+   producing a cyan ring that fights with inner tiles' own highlight (e.g.
+   the gold "active contribution" tile). Tile classes only. */
 .acct-card,
 .acct-detail-stat,
 .allocation-item,
@@ -3161,7 +3163,6 @@ button.button-danger:focus {
 }
 
 @media (hover: hover) {
-  .panel:hover,
   .acct-card:hover,
   .acct-detail-stat:hover,
   .allocation-item:hover,
@@ -3175,7 +3176,6 @@ button.button-danger:focus {
 
 /* :active fires on touch press (and desktop click-hold) — same accent ring
    so mobile users get the same "this tile registered your touch" cue. */
-.panel:active,
 .acct-card:active,
 .acct-detail-stat:active,
 .allocation-item:active,
