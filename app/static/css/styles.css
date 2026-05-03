@@ -3153,11 +3153,6 @@ button.button-danger:focus {
     font-size: 0.7rem;
     margin-top: 0.15rem;
   }
-  /* Hide the original Balance / Monthly / Into pot tiles on mobile —
-     the hero already covers them. */
-  .acct-detail-stat-hero-dup {
-    display: none;
-  }
 }
 
 /* ── Global tile hover/touch feedback ────────────────────────────────────

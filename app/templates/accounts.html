@@ -460,34 +460,6 @@
       </div>
 
       <div class="acct-detail-stats" data-detail-stats>
-        <div class="acct-detail-stat acct-detail-stat-hero-dup">
-          <span>Balance</span>
-          <strong>£{{ '{:,.2f}'.format(effective_values[selected.id]) }}</strong>
-        </div>
-        <div class="acct-detail-stat acct-detail-stat-hero-dup">
-          {% set scb = contrib_breakdowns.get(selected.id, {}) %}
-          {% if scb.get('total_into_pot', 0) != (selected.monthly_contribution or 0) and scb.get('total_into_pot', 0) > 0 %}
-          <span>You pay</span>
-          <strong>£{{ '{:,.2f}'.format(selected.monthly_contribution or 0) }}</strong>
-        </div>
-        <div class="acct-detail-stat acct-detail-stat-hero-dup">
-          <span>Into pot</span>
-          <strong style="color:var(--accent-2)">£{{ '{:,.2f}'.format(scb.total_into_pot) }}</strong>
-          {% else %}
-          <span>Monthly</span>
-          <strong>£{{ '{:,.2f}'.format(selected.monthly_contribution or 0) }}</strong>
-          {% endif %}
-        </div>
-        {% set _ty_logged = tax_year_logged.get(selected.id, 0) if tax_year_logged else 0 %}
-        {% if tax_advantaged_ids and selected.id in tax_advantaged_ids %}
-        <div class="acct-detail-stat" title="Extra contributions you've logged to this account this UK tax year, on top of the regular monthly amount">
-          <span>Logged {{ tax_year_label }}</span>
-          <strong>£{{ '{:,.2f}'.format(_ty_logged) }}</strong>
-          {% if _ty_logged == 0 %}
-          <small class="text-muted block mt-025"><a href="/allowance/" class="link-accent">Log a top-up →</a></small>
-          {% endif %}
-        </div>
-        {% endif %}
         <div class="acct-detail-stat acct-detail-stat-secondary">
           <span>Growth rate</span>
           <strong>
@@ -498,71 +470,27 @@
             {% endif %}
           </strong>
         </div>
-        {% if selected.platform_fee_pct or selected.platform_fee_flat or selected.fund_fee_pct %}
         <div class="acct-detail-stat acct-detail-stat-secondary">
           <span>Platform fee</span>
           <strong class="text-danger">
-            {%- if selected.platform_fee_pct %}{{ '{:.3f}'.format(selected.platform_fee_pct) }}%{% if selected.platform_fee_cap %} (capped £{{ '{:,.0f}'.format(selected.platform_fee_cap) }}/yr){% endif %}{% endif %}
-            {%- if selected.platform_fee_flat %}{% if selected.platform_fee_pct %} + {% endif %}£{{ '{:,.0f}'.format(selected.platform_fee_flat) }}/yr{% endif %}
-            {%- if not selected.platform_fee_pct and not selected.platform_fee_flat %}0%{% endif %}
+            {%- if selected.platform_fee_pct or selected.platform_fee_flat -%}
+              {%- if selected.platform_fee_pct %}{{ '{:.3f}'.format(selected.platform_fee_pct) }}%{% if selected.platform_fee_cap %} (capped £{{ '{:,.0f}'.format(selected.platform_fee_cap) }}/yr){% endif %}{% endif -%}
+              {%- if selected.platform_fee_flat %}{% if selected.platform_fee_pct %} + {% endif %}£{{ '{:,.0f}'.format(selected.platform_fee_flat) }}/yr{% endif -%}
+            {%- elif selected.annual_fee_pct -%}
+              {{ '{:.3f}'.format(selected.annual_fee_pct) }}%
+            {%- else -%}
+              0%
+            {%- endif -%}
           </strong>
         </div>
         <div class="acct-detail-stat acct-detail-stat-secondary">
           <span>Fund fee (OCF)</span>
           <strong class="text-danger">{{ '{:.3f}'.format(selected.fund_fee_pct or 0) }}%</strong>
         </div>
-        {% elif selected.annual_fee_pct %}
-        <div class="acct-detail-stat acct-detail-stat-secondary">
-          <span>Annual fee</span>
-          <strong class="text-danger">{{ '{:.3f}'.format(selected.annual_fee_pct) }}%</strong>
-        </div>
-        {% endif %}
-        {% if selected.contribution_fee_pct %}
-        <div class="acct-detail-stat acct-detail-stat-secondary">
-          <span>Contribution fee</span>
-          <strong class="text-danger">{{ '{:.3f}'.format(selected.contribution_fee_pct) }}% per contribution</strong>
-        </div>
-        {% endif %}
         <div class="acct-detail-stat acct-detail-stat-secondary">
           <span>Valuation</span>
           <strong>{% if selected.valuation_mode == 'holdings' %}From holdings{% elif selected.valuation_mode == 'premium_bonds' %}Premium Bonds{% else %}Manual{% endif %}</strong>
         </div>
-        {% if selected.valuation_mode not in ('holdings', 'premium_bonds') %}
-        {% set _eff_rate = selected.growth_rate_override if selected.growth_mode == 'custom' and selected.growth_rate_override else global_growth_rate %}
-        {% set _bal = effective_values[selected.id] or 0 %}
-        <div class="acct-detail-stat">
-          <span>Est. daily accrual</span>
-          <strong class="text-gain">£{{ '{:.2f}'.format(_bal * _eff_rate / 365) }}</strong>
-        </div>
-        <div class="acct-detail-stat">
-          <span>Est. monthly growth</span>
-          <strong class="text-gain">£{{ '{:,.2f}'.format(_bal * _eff_rate / 12) }}</strong>
-        </div>
-        {% endif %}
-        {% if selected.valuation_mode == 'premium_bonds' %}
-        {% set _pb_rate = selected.growth_rate_override if selected.growth_mode == 'custom' and selected.growth_rate_override else 0.033 %}
-        {% set _bal = effective_values[selected.id] or 0 %}
-        <div class="acct-detail-stat" title="Estimated annual prizes based on prize fund rate — not guaranteed">
-          <span>Prize fund rate</span>
-          <strong>{{ '{:.1f}'.format(_pb_rate * 100) }}% (est.)</strong>
-        </div>
-        <div class="acct-detail-stat" title="Prizes won this UK tax year">
-          <span>Prizes {{ tax_year_label }}</span>
-          <strong class="text-gain">£{{ '{:,.2f}'.format(pb_prizes_ty_total) }}</strong>
-        </div>
-        {% endif %}
-        {% if selected.goal_value %}
-        <div class="acct-detail-stat">
-          <span>Account goal</span>
-          <strong>£{{ '{:,.0f}'.format(selected.goal_value) }}</strong>
-        </div>
-        {% endif %}
-        {% if selected.owner %}
-        <div class="acct-detail-stat">
-          <span>Owner</span>
-          <strong>{{ selected.owner }}</strong>
-        </div>
-        {% endif %}
       </div>
       <button type="button" class="btn-link text-sm text-muted acct-detail-toggle" data-detail-toggle aria-expanded="false">
         Show details
