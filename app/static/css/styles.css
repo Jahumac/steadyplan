@@ -2111,6 +2111,22 @@ button.button-danger:focus {
   color: #fde68a;
 }
 
+/* On phones, the right-hand actions cluster (Active badge + Budget link)
+   eats roughly half the row width, leaving "Standard contribution from
+   Budget" or a date range to wrap onto 3-4 lines. Stack actions below the
+   info on narrow viewports so the text gets the full row width. */
+@media (max-width: 640px) {
+  .override-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.7rem 0.85rem;
+  }
+  .override-item > .flex {
+    justify-content: flex-end;
+  }
+}
+
 .override-badge {
   font-size: 0.75rem;
   padding: 0.2rem 0.55rem;
