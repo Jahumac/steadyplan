@@ -648,22 +648,17 @@ body.is-back-online .site-header {
   min-height: 0;
   border-radius: 50%;
   background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.7);
   font-size: 9px;
   line-height: 14px;
   text-align: center;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
   padding: 0;
   outline: none;
   user-select: none;
   display: block;
-}
-
-.tag-chip:hover .tag-delete {
-  opacity: 1;
 }
 
 .tag-chip .tag-delete:hover {
