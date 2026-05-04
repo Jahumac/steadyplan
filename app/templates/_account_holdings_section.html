@@ -128,6 +128,18 @@
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button type="submit" class="badge badge-sm">Save</button>
                 </form>
+                {% if (selected.wrapper_type or '') in ['Stocks & Shares ISA', 'Cash ISA', 'Lifetime ISA'] %}
+                {% set _isa_value = ((position.units or 0) * (position.price or 0)) if (position.units and position.price) else (position.value or 0) %}
+                <form method="post" action="/accounts/{{ selected.id }}/holdings/{{ position.id }}/log-isa-contribution" class="form-reset">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit"
+                          data-confirm="Log £{{ '{:,.2f}'.format(_isa_value) }} ({{ position.holding_name }}) against your {{ selected.wrapper_type }} allowance, dated today? Useful for free shares received from your broker."
+                          data-confirm-title="Log as ISA contribution?"
+                          data-confirm-ok="Yes, log it"
+                          data-confirm-cancel="Not now"
+                          class="badge badge-sm">Log to allowance</button>
+                </form>
+                {% endif %}
                 <form method="post" action="/accounts/{{ selected.id }}/holdings/{{ position.id }}/delete" class="form-reset">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button type="submit"

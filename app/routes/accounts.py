@@ -20,6 +20,7 @@ from app.models import (
     add_custom_tag,
     add_holding,
     add_holding_catalogue_item,
+    add_isa_contribution,
     create_account,
     delete_account,
     delete_custom_tag,
@@ -33,6 +34,7 @@ from app.models import (
     fetch_hidden_tags,
     hide_default_tag,
     tag_in_use_count,
+    fetch_holding,
     fetch_holding_catalogue,
     fetch_holding_totals_by_account,
     fetch_holdings_for_account,
@@ -593,6 +595,44 @@ def account_add_holding_manual(account_id):
         update_account({**dict(account), "valuation_mode": "holdings",
                         "last_updated": datetime.now(timezone.utc).isoformat()}, uid)
 
+    return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+
+@accounts_bp.route("/<int:account_id>/holdings/<int:holding_id>/log-isa-contribution", methods=["POST"])
+@login_required
+def log_holding_as_isa_contribution(account_id, holding_id):
+    """Log this holding's current value as an ISA contribution.
+
+    Useful when a broker hands you a free share inside an ISA — the share
+    landed in your account but Shelly's allowance ledger doesn't know
+    about it because no cash was deposited. One click here records the
+    value as a top-up against your £20k allowance.
+    """
+    uid = current_user.id
+    account = fetch_account(account_id, uid)
+    if not account:
+        return redirect(url_for("accounts.accounts"))
+
+    if (account.get("wrapper_type") or "") not in ISA_WRAPPER_TYPES:
+        flash("This shortcut only works for ISA accounts.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+    holding = fetch_holding(holding_id, uid)
+    if not holding or holding.get("account_id") != account_id:
+        flash("Holding not found.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+    units = float(holding.get("units") or 0)
+    price = float(holding.get("price") or 0)
+    value = round(units * price, 2) if units and price else float(holding.get("value") or 0)
+    if value <= 0:
+        flash("This holding has no value yet — set its units and price first.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+    today_iso = datetime.now().date().isoformat()
+    note = f"Free share: {holding.get('holding_name') or holding.get('ticker') or 'holding'}"
+    add_isa_contribution(uid, account_id, value, today_iso, note)
+    flash(f"Logged £{value:,.2f} against your ISA allowance.", "success")
     return redirect(url_for("accounts.account_detail", account_id=account_id))
 
 
