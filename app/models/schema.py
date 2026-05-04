@@ -8,6 +8,23 @@ from flask import current_app
 from ._conn import get_connection
 
 
+def _log_migration_error(exc: Exception) -> None:
+    """Log unexpected migration errors. Quietly ignores the expected
+    'duplicate column' / 'already exists' errors that fire whenever a
+    migration is re-run on a DB that already has the change applied —
+    those are normal and would otherwise spam the log every startup.
+    The SQLite exception message itself names the offending column/table.
+    """
+    msg = str(exc).lower()
+    if "duplicate column" in msg or "already exists" in msg:
+        return
+    try:
+        current_app.logger.warning("Migration step failed: %s", exc)
+    except Exception:
+        # current_app may not be available during very early init
+        pass
+
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -350,14 +367,14 @@ def _run_migrations(conn):
                 FOREIGN KEY(account_id) REFERENCES accounts(id)
             )
         """)
-    except Exception:
-        pass
+    except Exception as e:
+        _log_migration_error(e)
 
     for col in ["last_price REAL", "price_currency TEXT", "price_change_pct REAL", "price_updated_at TEXT"]:
         try:
             conn.execute(f"ALTER TABLE holding_catalogue ADD COLUMN {col}")
-        except Exception:
-            pass
+        except Exception as e:
+            _log_migration_error(e)
 
     # ── Multi-user migrations ─────────────────────────────────────────────
     # Add user_id to accounts (default 1 = first user, safe for existing DBs)
@@ -371,8 +388,8 @@ def _run_migrations(conn):
     ]:
         try:
             conn.execute(col_sql)
-        except Exception:
-            pass
+        except Exception as e:
+            _log_migration_error(e)
 
     # ── Assumptions table: recreate without CHECK (id=1), add user_id ─────
     if not conn.execute(
@@ -489,15 +506,15 @@ def _run_migrations(conn):
     ]:
         try:
             conn.execute(f"ALTER TABLE assumptions ADD COLUMN {col}")
-        except Exception:
-            pass
+        except Exception as e:
+            _log_migration_error(e)
 
     # ── Migrate current_age → date_of_birth ─────────────────────────────
     # Add date_of_birth column (TEXT, ISO format YYYY-MM-DD)
     try:
         conn.execute("ALTER TABLE assumptions ADD COLUMN date_of_birth TEXT")
-    except Exception:
-        pass
+    except Exception as e:
+        _log_migration_error(e)
 
     # One-time: convert existing current_age to approximate DOB
     if not conn.execute(
@@ -525,15 +542,15 @@ def _run_migrations(conn):
     # Options: 'birthday', 'end_of_year', 'end_of_tax_year'
     try:
         conn.execute("ALTER TABLE assumptions ADD COLUMN retirement_date_mode TEXT DEFAULT 'birthday'")
-    except Exception:
-        pass
+    except Exception as e:
+        _log_migration_error(e)
 
     # ── Tax band on assumptions ────────────────────────────────────────
     # Options: 'basic', 'higher', 'additional'
     try:
         conn.execute("ALTER TABLE assumptions ADD COLUMN tax_band TEXT DEFAULT 'basic'")
-    except Exception:
-        pass
+    except Exception as e:
+        _log_migration_error(e)
 
     # ── Pension / contribution / fee fields on accounts ────────────────
     for col in [
@@ -553,8 +570,8 @@ def _run_migrations(conn):
     ]:
         try:
             conn.execute(f"ALTER TABLE accounts ADD COLUMN {col}")
-        except Exception:
-            pass
+        except Exception as e:
+            _log_migration_error(e)
 
     # ── Migrate legacy annual_fee_pct → fund_fee_pct (one-time) ──────
     try:
@@ -569,8 +586,8 @@ def _run_migrations(conn):
                 "INSERT INTO schema_migrations (name) VALUES ('v4_split_fees')"
             )
             conn.commit()
-    except Exception:
-        pass
+    except Exception as e:
+        _log_migration_error(e)
 
     # ── One-time catalogue wipe ───────────────────────────────────────────
     if not conn.execute(
@@ -585,21 +602,21 @@ def _run_migrations(conn):
     # Drop old global unique index if it exists, then create per-user one
     try:
         conn.execute("DROP INDEX IF EXISTS idx_catalogue_ticker")
-    except Exception:
-        pass
+    except Exception as e:
+        _log_migration_error(e)
     try:
         conn.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_catalogue_ticker_user "
             "ON holding_catalogue(user_id, ticker) WHERE ticker IS NOT NULL AND ticker != ''"
         )
-    except Exception:
-        pass
+    except Exception as e:
+        _log_migration_error(e)
 
     # ── Auto-update prices toggle on assumptions ─────────────────────────
     try:
         conn.execute("ALTER TABLE assumptions ADD COLUMN auto_update_prices INTEGER DEFAULT 1")
-    except Exception:
-        pass
+    except Exception as e:
+        _log_migration_error(e)
 
     # ── Scheduler run tracking ────────────────────────────────────────────
     conn.execute("""
@@ -620,8 +637,8 @@ def _run_migrations(conn):
     ]:
         try:
             conn.execute(f"ALTER TABLE assumptions ADD COLUMN {col}")
-        except Exception:
-            pass
+        except Exception as e:
+            _log_migration_error(e)
 
     for col in [
         "annual_income REAL DEFAULT 0",
@@ -631,12 +648,12 @@ def _run_migrations(conn):
     ]:
         try:
             conn.execute(f"ALTER TABLE assumptions ADD COLUMN {col}")
-        except Exception:
-            pass
+        except Exception as e:
+            _log_migration_error(e)
     try:
         conn.execute("ALTER TABLE assumptions ADD COLUMN benchmark_rate REAL DEFAULT NULL")
-    except Exception:
-        pass
+    except Exception as e:
+        _log_migration_error(e)
 
     # ── Custom tags per user ─────────────────────────────────────────────
     conn.execute("""
@@ -698,8 +715,8 @@ def _run_migrations(conn):
     # ── cgt_disposals: add optional account_id ───────────────────────────
     try:
         conn.execute("ALTER TABLE cgt_disposals ADD COLUMN account_id INTEGER REFERENCES accounts(id)")
-    except Exception:
-        pass
+    except Exception as e:
+        _log_migration_error(e)
 
     # ── Debts tracker ────────────────────────────────────────────────────
     conn.execute("""
@@ -720,14 +737,14 @@ def _run_migrations(conn):
     # ── Debts: add start_date column ─────────────────────────────────────
     try:
         conn.execute("ALTER TABLE debts ADD COLUMN start_date TEXT")
-    except Exception:
-        pass
+    except Exception as e:
+        _log_migration_error(e)
 
     # ── budget_items: add linked_debt_id ─────────────────────────────────
     try:
         conn.execute("ALTER TABLE budget_items ADD COLUMN linked_debt_id INTEGER REFERENCES debts(id) ON DELETE SET NULL")
-    except Exception:
-        pass
+    except Exception as e:
+        _log_migration_error(e)
 
     # ── account_daily_snapshots: per-account daily values ─────────────────
     try:
@@ -741,8 +758,8 @@ def _run_migrations(conn):
                 UNIQUE(account_id, snapshot_date)
             )
         """)
-    except Exception:
-        pass
+    except Exception as e:
+        _log_migration_error(e)
 
 
     # ── ON DELETE CASCADE migrations ──────────────────────────────────────
@@ -864,8 +881,8 @@ def _run_migrations(conn):
     ]:
         try:
             conn.execute(f"ALTER TABLE accounts ADD COLUMN {col}")
-        except Exception:
-            pass
+        except Exception as e:
+            _log_migration_error(e)
 
 
 def _ensure_indexes(conn):
