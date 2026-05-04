@@ -1402,7 +1402,7 @@ button.button-danger:focus {
     6rem             /* units */
     7rem             /* price */
     7rem             /* value */
-    8.5rem;          /* actions (Save + Remove badges) */
+    minmax(8.5rem, 15rem); /* actions (Save + Log + Remove badges) */
   gap: 0.75rem;
   align-items: center;
   padding: 0.6rem 0.75rem;
@@ -1479,7 +1479,7 @@ button.button-danger:focus {
   display: flex;
   gap: 0.4rem;
   justify-content: flex-end;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 /* Performance link list under the holdings tiles. The mobile tile is
