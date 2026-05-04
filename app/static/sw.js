@@ -6,11 +6,12 @@
  *  - Page navigations: Network-first with offline fallback
  *  - API calls: Network-first, cache response for offline reads
  *
- * Cache name is stable (no version suffix) so cached pages are never
- * wiped when the app is updated.
+ * Cache name carries a version suffix — bump it on every deploy so old
+ * caches get cleaned up by the activate handler and clients pick up new
+ * CSS/JS instead of running stale shell assets indefinitely.
  */
 
-const CACHE_NAME = 'shelly-cache';
+const CACHE_NAME = 'shelly-cache-v2';
 
 /* App shell files to pre-cache on install */
 const APP_SHELL = [
