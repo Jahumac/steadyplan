@@ -884,6 +884,62 @@ def _run_migrations(conn):
         except Exception as e:
             _log_migration_error(e)
 
+    # ── v8: purge legacy soft-deleted accounts ──────────────────────────
+    # Delete now means really-delete (see app/models/accounts.py). Old
+    # soft-deleted accounts (is_active = 0) were still leaking their
+    # snapshot rows into net-worth and performance charts because those
+    # queries don't filter on is_active. Hard-delete them once so the
+    # charts stop showing deleted accounts. Runs only on the first startup
+    # after this migration is added; subsequent deletes go through the
+    # accounts.delete_account hard-delete path.
+    if not conn.execute(
+        "SELECT 1 FROM schema_migrations WHERE name = 'v8_purge_soft_deleted_accounts'"
+    ).fetchone():
+        try:
+            stale_ids = [
+                row["id"] for row in conn.execute(
+                    "SELECT id FROM accounts WHERE is_active = 0"
+                ).fetchall()
+            ]
+            child_tables = (
+                "holdings", "monthly_snapshots", "monthly_review_items",
+                "contribution_overrides", "isa_contributions",
+                "pension_contributions", "dividend_records",
+                "premium_bonds_prizes", "account_daily_snapshots",
+            )
+            for aid in stale_ids:
+                for tbl in child_tables:
+                    try:
+                        conn.execute(f"DELETE FROM {tbl} WHERE account_id = ?", (aid,))
+                    except Exception:
+                        pass  # table may not exist on older DBs
+                try:
+                    conn.execute(
+                        "UPDATE cgt_disposals SET account_id = NULL WHERE account_id = ?",
+                        (aid,),
+                    )
+                except Exception:
+                    pass
+                try:
+                    conn.execute(
+                        "UPDATE budget_items SET linked_account_id = NULL WHERE linked_account_id = ?",
+                        (aid,),
+                    )
+                except Exception:
+                    pass
+                conn.execute("DELETE FROM accounts WHERE id = ?", (aid,))
+            if stale_ids:
+                current_app.logger.warning(
+                    "Purged %d previously soft-deleted account(s): %s",
+                    len(stale_ids), stale_ids,
+                )
+            conn.execute(
+                "INSERT OR IGNORE INTO schema_migrations (name) VALUES ('v8_purge_soft_deleted_accounts')"
+            )
+            conn.commit()
+        except Exception as e:
+            _log_migration_error(e)
+
 
 def _ensure_indexes(conn):
     """Create performance indexes. All statements are idempotent (IF NOT EXISTS)."""
