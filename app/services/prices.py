@@ -58,6 +58,18 @@ _FALLBACK_FX = {"USD": 1.27, "EUR": 1.17}
 logger = logging.getLogger(__name__)
 _TWELVE_SYMBOL_CACHE = {}
 
+# Cap response size from upstream APIs. Real responses are <100KB; this guard
+# stops a misbehaving/hostile upstream from streaming us out of memory.
+_MAX_RESPONSE_BYTES = 5 * 1024 * 1024  # 5 MB
+
+
+def _read_capped(resp):
+    """Read an HTTP response with a hard byte cap to avoid memory exhaustion."""
+    data = resp.read(_MAX_RESPONSE_BYTES + 1)
+    if len(data) > _MAX_RESPONSE_BYTES:
+        raise RuntimeError(f"Response exceeded {_MAX_RESPONSE_BYTES} bytes")
+    return data
+
 
 def _twelve_request_json(url: str):
     """Make a Twelve Data API request with explicit headers and parse JSON.
@@ -78,7 +90,7 @@ def _twelve_request_json(url: str):
     )
     try:
         resp = urllib.request.urlopen(req, timeout=10)
-        return json.loads(resp.read())
+        return json.loads(_read_capped(resp))
     except urllib.error.HTTPError as e:
         body = ""
         try:
@@ -220,7 +232,7 @@ def _try_yahoo_http(symbol: str):
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
         })
         resp = urllib.request.urlopen(req, timeout=10)
-        data = json.loads(resp.read())
+        data = json.loads(_read_capped(resp))
 
         result = data.get("chart", {}).get("result")
         if not result:
@@ -270,7 +282,7 @@ def _try_yahoo_quote(symbol: str):
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
         })
         resp = urllib.request.urlopen(req, timeout=10)
-        data = json.loads(resp.read())
+        data = json.loads(_read_capped(resp))
 
         result = data.get("quoteResponse", {}).get("result")
         if not result or len(result) == 0:
@@ -364,7 +376,7 @@ def _search_yahoo(query: str):
         url = f"https://query2.finance.yahoo.com/v1/finance/search?q={encoded}&quotesCount=6&newsCount=0"
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         resp = urllib.request.urlopen(req, timeout=10)
-        data = json.loads(resp.read())
+        data = json.loads(_read_capped(resp))
         quotes = data.get("quotes", [])
 
         # Prefer London-listed results
@@ -409,7 +421,7 @@ def fetch_history(ticker: str, period: str = "1y"):
             url = f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}?range={http_range}&interval={http_interval}"
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
             resp = urllib.request.urlopen(req, timeout=10)
-            data = json.loads(resp.read())
+            data = json.loads(_read_capped(resp))
             result = data.get("chart", {}).get("result")
             if not result:
                 return None
