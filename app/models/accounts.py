@@ -5,7 +5,32 @@ a holding usually points to a catalogue entry that carries the live price)
 so they live together. fetch_latest_price_update lives here too because
 it joins the catalogue.
 """
+import sqlite3
+
 from ._conn import get_connection
+
+
+# Child tables that hold per-account rows. We delete from them explicitly
+# before removing the account because some were created with ON DELETE
+# CASCADE and others weren't (depends on the DB's migration history), so
+# relying on the cascade alone is unreliable.
+_ACCOUNT_CHILD_TABLES = (
+    "holdings",
+    "monthly_snapshots",
+    "monthly_review_items",
+    "contribution_overrides",
+    "isa_contributions",
+    "pension_contributions",
+    "dividend_records",
+    "premium_bonds_prizes",
+    "account_daily_snapshots",
+)
+
+# Tables that reference an account but should keep their rows (just nulled out).
+_ACCOUNT_NULLOUT_TABLES = (
+    ("cgt_disposals", "account_id"),
+    ("budget_items", "linked_account_id"),
+)
 
 
 # ── Accounts list ─────────────────────────────────────────────────────────────
@@ -152,21 +177,40 @@ def update_account(payload, user_id=None):
 
 
 def delete_account(account_id, user_id=None):
+    """Hard-delete an account and all its child rows.
+
+    Soft delete (is_active = 0) used to leave the account out of the
+    accounts list but its monthly_snapshots still contributed to net-worth
+    and performance charts (those queries don't filter is_active), so
+    "deleted" accounts kept showing up. Hard delete with explicit child
+    cleanup is the only way to actually remove an account.
+    """
     with get_connection() as conn:
         if user_id is not None:
-            conn.execute(
-                "UPDATE accounts SET is_active = 0 WHERE id = ? AND user_id = ?",
+            owned = conn.execute(
+                "SELECT 1 FROM accounts WHERE id = ? AND user_id = ?",
                 (account_id, user_id),
-            )
-        else:
-            conn.execute(
-                "UPDATE accounts SET is_active = 0 WHERE id = ?",
-                (account_id,),
-            )
-        conn.execute(
-            "DELETE FROM holdings WHERE account_id = ?",
-            (account_id,),
-        )
+            ).fetchone()
+            if not owned:
+                return
+
+        for table in _ACCOUNT_CHILD_TABLES:
+            try:
+                conn.execute(f"DELETE FROM {table} WHERE account_id = ?", (account_id,))
+            except sqlite3.OperationalError:
+                # Table may not exist on very old DBs that haven't been migrated.
+                pass
+
+        for table, column in _ACCOUNT_NULLOUT_TABLES:
+            try:
+                conn.execute(
+                    f"UPDATE {table} SET {column} = NULL WHERE {column} = ?",
+                    (account_id,),
+                )
+            except sqlite3.OperationalError:
+                pass
+
+        conn.execute("DELETE FROM accounts WHERE id = ?", (account_id,))
         conn.commit()
 
 
