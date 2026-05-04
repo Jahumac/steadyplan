@@ -10,9 +10,17 @@ def _load_or_create_secret_key():
     key_file = Path(__file__).resolve().parent.parent / "data" / "secret_key.txt"
     key_file.parent.mkdir(parents=True, exist_ok=True)
     if key_file.exists():
+        try:
+            os.chmod(key_file, 0o600)
+        except OSError:
+            pass
         return key_file.read_text().strip()
     key = secrets.token_hex(32)
     key_file.write_text(key)
+    try:
+        os.chmod(key_file, 0o600)
+    except OSError:
+        pass
     return key
 
 
