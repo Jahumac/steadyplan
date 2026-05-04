@@ -1682,15 +1682,14 @@ button.button-danger:focus {
     border-radius: 999px;
   }
   /* Holding name — muted second row, sits below the ticker with a real
-     gap so the two don't read as one squashed line. Server-trimmed of
-     verbose suffixes (USD / UCITS ETF / Accumulation). */
+     gap so the two don't read as one squashed line. Wraps across lines
+     so the full fund name is visible (server-trimmed of verbose suffixes
+     like USD / UCITS ETF / Accumulation to keep it tidy). */
   .holdings-summary-name {
     font-size: 0.78rem;
     color: var(--muted);
     line-height: 1.2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
   }
   .holdings-summary-value {
     font-weight: 700;
