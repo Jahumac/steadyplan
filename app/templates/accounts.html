@@ -213,7 +213,14 @@
                 </select>
               </label>
               <div data-manual-fields class="form-contents" {% if selected.valuation_mode == 'holdings' %}hidden{% endif %}>
-                <label><span>Current Balance</span><input type="number" step="any" name="current_value" value="{{ selected.current_value if selected.current_value is not none else '' }}"></label>
+                <label><span>Current Balance</span>
+                  <input type="number" step="any" name="current_value"
+                         {% if selected.valuation_mode == 'premium_bonds' or (selected.wrapper_type or '') | lower == 'premium bonds' %}max="50000"{% endif %}
+                         value="{{ selected.current_value if selected.current_value is not none else '' }}">
+                  {% if selected.valuation_mode == 'premium_bonds' or (selected.wrapper_type or '') | lower == 'premium bonds' %}
+                  <small class="form-hint">Capped at £50,000 — NS&amp;I's legal maximum per individual.</small>
+                  {% endif %}
+                </label>
               </div>
               {% if selected.valuation_mode == 'premium_bonds' %}
               <input type="hidden" name="growth_mode" value="custom">

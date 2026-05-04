@@ -413,16 +413,22 @@ def account_gross_growth_rate(account, assumptions):
 
 def _project_account_month_by_month(account, assumptions, month_count, rate):
     """Project account value month by month so budget overrides can apply."""
+    from .models.accounts import is_premium_bonds_account, PREMIUM_BONDS_MAX_BALANCE
     value = to_float(account["current_value"])
     monthly_rate = rate / 12.0
     current_age = current_age_from_assumptions(assumptions)
     is_lisa = account["wrapper_type"] == "Lifetime ISA"
+    is_pb = is_premium_bonds_account(account)
     months = max(int(month_count), 0)
 
     for idx in range(months):
         value *= (1 + monthly_rate)
         if not is_lisa or (current_age + idx / 12.0) < 50:
             value += projection_monthly_contribution(account, assumptions, idx)
+        # Premium Bonds can't compound past £50k — NS&I would pay overflow
+        # as cash prizes, so the balance line stays flat at the cap.
+        if is_pb and value > PREMIUM_BONDS_MAX_BALANCE:
+            value = PREMIUM_BONDS_MAX_BALANCE
     return value
 
 

@@ -10,6 +10,25 @@ import sqlite3
 from ._conn import get_connection
 
 
+# NS&I caps an individual's Premium Bonds holding at £50,000 — going above
+# is impossible in real life, so we clamp the stored balance to match.
+PREMIUM_BONDS_MAX_BALANCE = 50000.0
+
+
+def is_premium_bonds_account(account):
+    """True for accounts that represent Premium Bonds holdings.
+
+    Checks both the wrapper_type label and the valuation_mode flag because
+    older accounts may have one set but not the other.
+    """
+    if not account:
+        return False
+    return (
+        (account.get("valuation_mode") or "") == "premium_bonds"
+        or (account.get("wrapper_type") or "").lower() == "premium bonds"
+    )
+
+
 # Child tables that hold per-account rows. We delete from them explicitly
 # before removing the account because some were created with ON DELETE
 # CASCADE and others weren't (depends on the DB's migration history), so
@@ -105,6 +124,13 @@ def fetch_account(account_id, user_id=None):
 
 
 def update_account(payload, user_id=None):
+    # Cap Premium Bonds balance at the NS&I legal maximum. Applies to every
+    # write path (web edit form, monthly review, public API), so callers
+    # don't have to remember.
+    if is_premium_bonds_account(payload) and payload.get("current_value") is not None:
+        payload["current_value"] = min(
+            float(payload["current_value"]), PREMIUM_BONDS_MAX_BALANCE
+        )
     where = "WHERE id = ? AND user_id = ?" if user_id is not None else "WHERE id = ?"
     params_tail = (payload["id"], user_id) if user_id is not None else (payload["id"],)
     with get_connection() as conn:
@@ -215,6 +241,10 @@ def delete_account(account_id, user_id=None):
 
 
 def create_account(payload, user_id):
+    if is_premium_bonds_account(payload) and payload.get("current_value") is not None:
+        payload["current_value"] = min(
+            float(payload["current_value"]), PREMIUM_BONDS_MAX_BALANCE
+        )
     with get_connection() as conn:
         cursor = conn.execute(
             """
