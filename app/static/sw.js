@@ -11,7 +11,7 @@
  * CSS/JS instead of running stale shell assets indefinitely.
  */
 
-const CACHE_NAME = 'shelly-cache-v2';
+const CACHE_NAME = 'shelly-cache-v3';
 
 /* App shell files to pre-cache on install */
 const APP_SHELL = [
@@ -57,6 +57,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const hasAuthHeaders =
+    !!request.headers.get('Authorization') ||
+    !!request.headers.get('Cookie');
+
   /* Static assets: cache-first */
   if (url.pathname.startsWith('/static/')) {
     event.respondWith(cacheFirst(request));
@@ -65,18 +69,18 @@ self.addEventListener('fetch', (event) => {
 
   /* Page navigations: network-first with offline fallback */
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirstPage(request));
+    event.respondWith(hasAuthHeaders ? networkOnlyPage(request) : networkFirstPage(request));
     return;
   }
 
   /* API-style JSON calls: network-first, cache response */
   if (url.pathname.includes('/api/') || request.headers.get('Accept')?.includes('application/json')) {
-    event.respondWith(networkFirstAPI(request));
+    event.respondWith(hasAuthHeaders ? networkOnlyAPI(request) : networkFirstAPI(request));
     return;
   }
 
   /* Everything else: network-first */
-  event.respondWith(networkFirstPage(request));
+  event.respondWith(hasAuthHeaders ? networkOnlyPage(request) : networkFirstPage(request));
 });
 
 /* ── Strategies ───────────────────────────────────────────────────────── */
@@ -111,12 +115,21 @@ async function networkFirstPage(request) {
     }
     return response;
   } catch (e) {
-    /* ignoreVary: true bypasses Flask's Vary: Cookie header which would
-       otherwise cause a cache miss even when the same page is cached. */
-    const cached = await caches.match(request, { ignoreVary: true });
+    const cached = await caches.match(request);
     if (cached) return cached;
 
     /* Return an offline fallback page */
+    return new Response(offlineHTML(), {
+      status: 503,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    });
+  }
+}
+
+async function networkOnlyPage(request) {
+  try {
+    return await fetch(request);
+  } catch (e) {
     return new Response(offlineHTML(), {
       status: 503,
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
@@ -142,6 +155,17 @@ async function networkFirstAPI(request) {
     }
     const cached = await caches.match(request);
     if (cached) return cached;
+    return new Response(JSON.stringify({ error: 'Offline' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+async function networkOnlyAPI(request) {
+  try {
+    return await fetch(request);
+  } catch (e) {
     return new Response(JSON.stringify({ error: 'Offline' }), {
       status: 503,
       headers: { 'Content-Type': 'application/json' },

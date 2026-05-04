@@ -29,6 +29,8 @@ class Config:
     DATA_DIR = BASE_DIR / "data"
     DB_PATH = Path(os.environ["DB_PATH"]) if os.environ.get("DB_PATH") else DATA_DIR / "finance.db"
     SECRET_KEY = _load_or_create_secret_key()
+    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "0") == "1"
+    REMEMBER_COOKIE_SECURE = os.environ.get("REMEMBER_COOKIE_SECURE", "0") == "1"
     DEMO_READ_ONLY_USERNAME = os.environ.get("DEMO_READ_ONLY_USERNAME", "demo")
     DEMO_PUBLIC_LOGIN_ENABLED = os.environ.get("DEMO_PUBLIC_LOGIN_ENABLED", "0") == "1"
     WTF_CSRF_ENABLED = os.environ.get("WTF_CSRF_ENABLED", "1") != "0"

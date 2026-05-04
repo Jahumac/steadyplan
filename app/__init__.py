@@ -1,6 +1,7 @@
 from flask import Flask, redirect, url_for, send_from_directory, request, flash, jsonify
 from flask_login import LoginManager, current_user
 from flask_wtf.csrf import CSRFProtect
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .calculations import build_month_strip
 from .models import count_users, fetch_assumptions, get_user_by_id, init_db, close_db
@@ -26,6 +27,8 @@ from .routes.api import api_bp
 def create_app():
     app = Flask(__name__)
     app.config.from_object("app.config.Config")
+    if app.config.get("TRUST_PROXY_HEADERS", True):
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
     # ── Rate limiter ─────────────────────────────────────────────────────────
     if limiter is not None:
