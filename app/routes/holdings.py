@@ -185,7 +185,9 @@ def holding_detail(catalogue_id):
         try:
             assumptions = fetch_assumptions(current_user.id)
             raw_rate = (assumptions.get("benchmark_rate") if assumptions else None)
-            benchmark_rate = float(raw_rate) if raw_rate else 7.0  # % p.a.
+            # Stored as a decimal fraction (0.10 = 10%); convert to a
+            # percentage here because the chart math below divides by 100 again.
+            benchmark_rate = float(raw_rate) * 100 if raw_rate else 7.0  # % p.a.
 
             first_price = float(history_data[0]["price"])
             last_price = float(history_data[-1]["price"])
