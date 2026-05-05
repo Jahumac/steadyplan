@@ -330,6 +330,28 @@
       var ctx = canvas.getContext('2d');
       var chartInstance = null;
 
+      function parseYMD(s) {
+        if (!s) return null;
+        var parts = String(s).split('-');
+        if (parts.length < 3) return null;
+        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      }
+      function parseYM(s) {
+        if (!s) return null;
+        var parts = String(s).split('-');
+        if (parts.length < 2) return null;
+        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
+      }
+      function fmtDayMonth(d) {
+        return d ? d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '';
+      }
+      function fmtMonthYear(d) {
+        return d ? d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : '';
+      }
+      function fmtFull(d) {
+        return d ? d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+      }
+
       function getSlice(mode, range) {
         var src = mode === 'daily'
           ? { labels: dailyLabels, values: dailyValues, plan7: dailyPlan7, planG: dailyPlanG }
@@ -380,9 +402,13 @@
 
       function renderChart(mode, range) {
         var d = getSlice(mode, range);
+        var rawLabels = d.labels;
+        var displayLabels = rawLabels.map(function (s) {
+          return mode === 'daily' ? fmtDayMonth(parseYMD(s)) : fmtMonthYear(parseYM(s));
+        });
         if (typeof window.Chart === 'function') {
           if (chartInstance) {
-            chartInstance.data.labels = d.labels;
+            chartInstance.data.labels = displayLabels;
             chartInstance.data.datasets[0].data = d.values;
             if (chartInstance.data.datasets[1]) chartInstance.data.datasets[1].data = d.plan7;
             if (chartInstance.data.datasets[2]) {
@@ -412,27 +438,50 @@
               {
                 label: 'Plan (' + (globalRate * 100).toFixed(1) + '%)',
                 data: d.planG,
-                borderColor: c.accent3 + 'AA',
+                borderColor: c.accent5 + 'AA',
                 borderDash: [2, 5],
                 backgroundColor: 'transparent',
                 fill: false,
                 tension: 0.3,
                 pointRadius: 0,
                 pointHoverRadius: 4,
-                pointHoverBackgroundColor: c.accent3,
+                pointHoverBackgroundColor: c.accent5,
                 pointHoverBorderColor: c.textWhite,
                 pointHoverBorderWidth: 2,
                 borderWidth: 1.5,
                 hidden: !(d.planG && d.planG.length && globalRate && Math.abs(globalRate - 0.07) > 0.0001),
               },
             ];
+            var opts = lineOptions({
+              tooltip: polishedTooltip({
+                title: function (items) {
+                  var idx = items && items[0] ? items[0].dataIndex : -1;
+                  var raw = idx >= 0 ? rawLabels[idx] : '';
+                  if (mode === 'daily') return fmtFull(parseYMD(raw)) || raw;
+                  return fmtMonthYear(parseYM(raw)) || raw;
+                },
+                label: function(ctx2) {
+                  return ' ' + ctx2.dataset.label + ': £' + Math.round(ctx2.parsed.y).toLocaleString('en-GB');
+                }
+              }),
+              extraScales: {
+                x: { grid: { color: c.gridAlt }, ticks: { color: c.muted, maxRotation: 0, maxTicksLimit: 6 } },
+                y: { grid: { color: c.gridAlt }, ticks: { color: c.muted, callback: function(v) { return v >= 1000 ? '£' + (v/1000).toFixed(0) + 'k' : '£' + Math.round(v); } } }
+              },
+              extra: { interaction: { mode: 'index', intersect: false } }
+            });
+            if (opts.plugins && opts.plugins.legend) {
+              opts.plugins.legend.display = true;
+              opts.plugins.legend.labels = { color: c.muted, usePointStyle: true, pointStyle: 'line' };
+            }
             chartInstance = new Chart(ctx, {
               type: 'line',
+              plugins: [crosshairPlugin],
               data: {
-                labels: d.labels,
+                labels: displayLabels,
                 datasets: datasets
               },
-              options: lineOptions()
+              options: opts
             });
           }
         } else {

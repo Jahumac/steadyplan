@@ -536,11 +536,11 @@
         {% if has_daily or has_monthly %}
         {% if has_daily %}
         <div class="chart-range-pills">
-          <button class="chart-range-pill chart-range-pill-active" data-range="7" data-mode="daily">1W</button>
+          <button class="chart-range-pill" data-range="7" data-mode="daily">1W</button>
           <button class="chart-range-pill" data-range="30" data-mode="daily">1M</button>
           <button class="chart-range-pill" data-range="90" data-mode="daily">3M</button>
           <button class="chart-range-pill" data-range="180" data-mode="daily">6M</button>
-          <button class="chart-range-pill" data-range="365" data-mode="daily">1Y</button>
+          <button class="chart-range-pill chart-range-pill-active" data-range="365" data-mode="daily">1Y</button>
           {% if has_monthly %}<button class="chart-range-pill" data-range="0" data-mode="monthly">All</button>{% endif %}
         </div>
         {% else %}
@@ -583,7 +583,7 @@
           </div>
         </div>
         <p class="helper-text mt-075">
-          Actual vs plan for this account. Plan compounds at <strong>7% p.a.</strong> from the first snapshot; monthly view also includes contributions recorded via Monthly Review.
+          Actual vs plan for this account. Plan compounds at <strong>7% p.a.</strong> from the first snapshot. Large short-term “differences” are usually deposits/withdrawals or a price refresh, not true investment return.
         </p>
         {% else %}
         <p class="helper-text">No history yet. Update your account balance or run the price scheduler to start recording daily snapshots.</p>
