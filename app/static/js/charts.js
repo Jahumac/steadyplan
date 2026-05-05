@@ -319,17 +319,63 @@
       if (!canvas) return;
       var dailyLabels   = JSON.parse(canvas.dataset.dailyLabels   || '[]');
       var dailyValues   = JSON.parse(canvas.dataset.dailyValues   || '[]');
+      var dailyPlan7    = JSON.parse(canvas.dataset.dailyPlan7    || '[]');
+      var dailyPlanG    = JSON.parse(canvas.dataset.dailyPlanglobal || '[]');
       var monthlyLabels = JSON.parse(canvas.dataset.monthlyLabels || '[]');
       var monthlyValues = JSON.parse(canvas.dataset.monthlyValues || '[]');
+      var monthlyPlan7  = JSON.parse(canvas.dataset.monthlyPlan7  || '[]');
+      var monthlyPlanG  = JSON.parse(canvas.dataset.monthlyPlanglobal || '[]');
+      var globalRate    = parseFloat(canvas.dataset.globalRate || '0') || 0;
+      var goalValue     = parseFloat(canvas.dataset.goal || '0') || 0;
       var ctx = canvas.getContext('2d');
       var chartInstance = null;
 
       function getSlice(mode, range) {
         var src = mode === 'daily'
-          ? { labels: dailyLabels, values: dailyValues }
-          : { labels: monthlyLabels, values: monthlyValues };
+          ? { labels: dailyLabels, values: dailyValues, plan7: dailyPlan7, planG: dailyPlanG }
+          : { labels: monthlyLabels, values: monthlyValues, plan7: monthlyPlan7, planG: monthlyPlanG };
         if (!range || range <= 0 || range >= src.labels.length) return src;
-        return { labels: src.labels.slice(-range), values: src.values.slice(-range) };
+        return {
+          labels: src.labels.slice(-range),
+          values: src.values.slice(-range),
+          plan7:  src.plan7.slice(-range),
+          planG:  src.planG.slice(-range),
+        };
+      }
+
+      function fmtGBP(v) {
+        if (v == null || !isFinite(v)) return '—';
+        return '£' + Number(v).toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      }
+
+      function updateStats(slice) {
+        var lastActual = slice.values.length ? slice.values[slice.values.length - 1] : null;
+        var lastPlan7  = slice.plan7.length  ? slice.plan7[slice.plan7.length - 1]  : null;
+        var diff       = (lastActual != null && lastPlan7 != null) ? lastActual - lastPlan7 : null;
+
+        var elA = document.getElementById('acctStatActual');
+        var elP = document.getElementById('acctStatPlan7');
+        var elD = document.getElementById('acctStatDiff7');
+        var elG = document.getElementById('acctStatGoal');
+
+        if (elA) elA.textContent = fmtGBP(lastActual);
+        if (elP) elP.textContent = fmtGBP(lastPlan7);
+        if (elD) {
+          if (diff == null) { elD.textContent = '—'; elD.className = 'm-0 text-bold'; }
+          else {
+            elD.textContent = (diff >= 0 ? '+' : '') + fmtGBP(diff);
+            elD.className = 'm-0 text-bold ' + (diff >= 0 ? 'perf-positive' : 'perf-negative');
+          }
+        }
+
+        if (elG) {
+          if (!isFinite(goalValue) || goalValue <= 0 || lastActual == null) {
+            elG.textContent = '—';
+          } else {
+            var remaining = goalValue - lastActual;
+            elG.textContent = remaining > 0 ? fmtGBP(remaining) : 'goal hit';
+          }
+        }
       }
 
       function renderChart(mode, range) {
@@ -338,13 +384,53 @@
           if (chartInstance) {
             chartInstance.data.labels = d.labels;
             chartInstance.data.datasets[0].data = d.values;
+            if (chartInstance.data.datasets[1]) chartInstance.data.datasets[1].data = d.plan7;
+            if (chartInstance.data.datasets[2]) {
+              chartInstance.data.datasets[2].data = d.planG;
+              chartInstance.data.datasets[2].label = 'Plan (' + (globalRate * 100).toFixed(1) + '%)';
+              chartInstance.data.datasets[2].hidden = !(d.planG && d.planG.length && globalRate && Math.abs(globalRate - 0.07) > 0.0001);
+            }
             chartInstance.update();
           } else {
+            var datasets = [
+              lineDataset({ values: d.values, color: c.primary, fillAlphaHex: '22' }),
+              {
+                label: 'Plan (7%)',
+                data: d.plan7,
+                borderColor: c.muted + 'AA',
+                borderDash: [6, 5],
+                backgroundColor: 'transparent',
+                fill: false,
+                tension: 0.3,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                pointHoverBackgroundColor: c.muted,
+                pointHoverBorderColor: c.textWhite,
+                pointHoverBorderWidth: 2,
+                borderWidth: 1.5,
+              },
+              {
+                label: 'Plan (' + (globalRate * 100).toFixed(1) + '%)',
+                data: d.planG,
+                borderColor: c.accent3 + 'AA',
+                borderDash: [2, 5],
+                backgroundColor: 'transparent',
+                fill: false,
+                tension: 0.3,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                pointHoverBackgroundColor: c.accent3,
+                pointHoverBorderColor: c.textWhite,
+                pointHoverBorderWidth: 2,
+                borderWidth: 1.5,
+                hidden: !(d.planG && d.planG.length && globalRate && Math.abs(globalRate - 0.07) > 0.0001),
+              },
+            ];
             chartInstance = new Chart(ctx, {
               type: 'line',
               data: {
                 labels: d.labels,
-                datasets: [lineDataset({ values: d.values, color: c.primary, fillAlphaHex: '22' })]
+                datasets: datasets
               },
               options: lineOptions()
             });
@@ -352,6 +438,7 @@
         } else {
           drawFallback(canvas, d.values, c.primary);
         }
+        updateStats(d);
       }
 
       var pills = document.querySelectorAll('.chart-range-pill');

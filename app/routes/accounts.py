@@ -5,7 +5,6 @@ from flask_login import current_user, login_required
 
 from app.calculations import (
     ISA_WRAPPER_TYPES,
-    compound_value,
     contribution_breakdown,
     effective_account_value,
     is_pension_account,
@@ -13,7 +12,6 @@ from app.calculations import (
     uk_tax_year_end,
     uk_tax_year_label,
     uk_tax_year_start,
-    years_to_reach_target,
 )
 from app.models import (
     CATEGORY_OPTIONS,
@@ -40,7 +38,6 @@ from app.models import (
     fetch_holding_catalogue,
     fetch_holding_totals_by_account,
     fetch_holdings_for_account,
-    fetch_account_snapshot_history,
     fetch_isa_contributions,
     fetch_pension_contributions,
     fetch_prizes,
@@ -52,7 +49,7 @@ from app.models import (
     fetch_assumptions,
     fetch_latest_price_update,
     fetch_account_daily_snapshots,
-    fetch_account_daily_baselines,
+    fetch_monthly_performance_data_by_account,
     save_account_daily_snapshots,
     save_daily_snapshot,
     update_account,
@@ -120,60 +117,6 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     # Tax-year logged contributions per account: sum of isa/pension contributions
     # logged against each account this UK tax year. Empty for taxable (GIA) accounts.
     today = date.today()
-    baselines = fetch_account_daily_baselines(user_id) or {}
-    perf7 = {}
-    for row in rows:
-        goal = float(row.get("goal_value") or 0) if "goal_value" in row.keys() else 0.0
-        if goal <= 0:
-            continue
-        aid = int(row["id"])
-        actual = float(effective_values.get(aid) or 0)
-        baseline = baselines.get(aid)
-        baseline_date = baseline.get("snapshot_date") if baseline else None
-        baseline_value = float(baseline.get("value") or 0) if baseline else actual
-        expected = compound_value(baseline_value, 0.07, baseline_date or today, today)
-        gap_vs_expected = actual - expected
-        gap_vs_goal = goal - actual
-        eta_years = years_to_reach_target(actual, goal, 0.07)
-        eta_date = None
-        if eta_years is not None:
-            try:
-                from datetime import timedelta
-                eta_date = (today + timedelta(days=int(eta_years * 365.25))).isoformat()
-            except Exception:
-                eta_date = None
-        implied_rate = None
-        try:
-            from datetime import datetime as _dt
-            import math
-            if baseline_date:
-                years = (_dt.fromisoformat(today.isoformat()).date() - _dt.fromisoformat(baseline_date[:10]).date()).days / 365.25
-            else:
-                years = 0.0
-            if years > 0 and baseline_value > 0 and actual > 0:
-                implied_rate = (math.exp(math.log(actual / baseline_value) / years) - 1.0)
-        except Exception:
-            implied_rate = None
-
-        _wt = (row.get("wrapper_type") or "").lower()
-        _cat = (row.get("category") or "").lower()
-        cash_like = ("cash isa" in _wt) or (_cat in ("cash", "savings")) or (float(row.get("cash_interest_rate") or 0) > 0)
-        perf7[aid] = {
-            "annual_rate": 0.07,
-            "goal": goal,
-            "actual": actual,
-            "baseline_date": baseline_date,
-            "baseline_value": baseline_value,
-            "expected": expected,
-            "gap_vs_expected": gap_vs_expected,
-            "gap_vs_goal": gap_vs_goal,
-            "actual_pct": min((actual / goal), 1.0) if goal else 0.0,
-            "expected_pct": min((expected / goal), 1.0) if goal else 0.0,
-            "eta_date": eta_date,
-            "implied_rate": implied_rate,
-            "cash_like": cash_like,
-            "cash_rate": float(row.get("cash_interest_rate") or 0.0),
-        }
     ty_start_iso = uk_tax_year_start(today).isoformat()
     ty_end_iso = uk_tax_year_end(today).isoformat()
     tax_year_logged = {}
@@ -217,15 +160,60 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     overrides = fetch_contribution_overrides(selected["id"]) if selected else []
     account_monthly_labels = []
     account_monthly_values = []
+    account_monthly_plan7 = []
+    account_monthly_planglobal = []
     account_daily_labels = []
     account_daily_values = []
+    account_daily_plan7 = []
+    account_daily_planglobal = []
     if selected:
-        history = fetch_account_snapshot_history(selected["id"], limit=36)
-        account_monthly_labels = [m for (m, _) in history]
-        account_monthly_values = [round(float(v or 0), 2) for (_, v) in history]
+        global_rate = float(assumptions["annual_growth_rate"]) if assumptions and assumptions.get("annual_growth_rate") else 0.05
+
+        monthly_rows = (fetch_monthly_performance_data_by_account(user_id).get(int(selected["id"])) or {}).get("rows", [])
+        if monthly_rows:
+            account_monthly_labels = [m for (m, _b, _c) in monthly_rows][-36:]
+            balances = [float(b or 0) for (_m, b, _c) in monthly_rows][-36:]
+            contribs = [float(c or 0) for (_m, _b, c) in monthly_rows][-36:]
+            account_monthly_values = [round(v, 2) for v in balances]
+
+            def _plan(bals, cfs, rate):
+                if not bals:
+                    return []
+                start = float(bals[0] or 0)
+                out = [round(start, 2)]
+                cur = start
+                mr = float(rate or 0) / 12.0
+                for i in range(1, len(bals)):
+                    cur = cur * (1 + mr) + float(cfs[i] or 0)
+                    out.append(round(cur, 2))
+                return out
+
+            account_monthly_plan7 = _plan(balances, contribs, 0.07)
+            account_monthly_planglobal = _plan(balances, contribs, global_rate)
+
         daily_history = fetch_account_daily_snapshots(selected["id"], limit=365)
         account_daily_labels = [d for (d, _) in daily_history]
         account_daily_values = [round(v, 2) for (_, v) in daily_history]
+        if account_daily_labels and account_daily_values:
+            try:
+                from datetime import datetime as _dt
+                base_date = _dt.fromisoformat(account_daily_labels[0][:10]).date()
+                base_val = float(account_daily_values[0] or 0)
+
+                def _daily_plan(rate):
+                    r = float(rate or 0)
+                    out = []
+                    for ds in account_daily_labels:
+                        d = _dt.fromisoformat(ds[:10]).date()
+                        years = max(0.0, (d - base_date).days / 365.25)
+                        out.append(round(base_val * ((1 + r) ** years), 2))
+                    return out
+
+                account_daily_plan7 = _daily_plan(0.07)
+                account_daily_planglobal = _daily_plan(global_rate)
+            except Exception:
+                account_daily_plan7 = []
+                account_daily_planglobal = []
 
     edit_holding = None
     if edit_holding_id and positions:
@@ -314,9 +302,12 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         tax_band=assumptions["tax_band"] if assumptions and "tax_band" in assumptions else "basic",
         account_monthly_labels=account_monthly_labels,
         account_monthly_values=account_monthly_values,
+        account_monthly_plan7=account_monthly_plan7,
+        account_monthly_planglobal=account_monthly_planglobal,
         account_daily_labels=account_daily_labels,
         account_daily_values=account_daily_values,
-        perf7=perf7,
+        account_daily_plan7=account_daily_plan7,
+        account_daily_planglobal=account_daily_planglobal,
         global_growth_rate=float(assumptions["annual_growth_rate"]) if assumptions and assumptions["annual_growth_rate"] else 0.05,
         prices_stale=prices_stale,
         pb_prizes=pb_prizes,

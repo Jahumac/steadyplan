@@ -239,33 +239,3 @@ def fetch_account_daily_snapshots(account_id, limit=365):
             (account_id, limit),
         ).fetchall()
     return [(r["snapshot_date"], float(r["value"])) for r in reversed(rows)]
-
-
-def fetch_account_daily_baselines(user_id):
-    """Return per-account baseline (oldest snapshot_date + value) for a user.
-
-    Output: {account_id: {"snapshot_date": "YYYY-MM-DD", "value": float}}
-    """
-    with get_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT s.account_id, s.snapshot_date, s.value
-            FROM account_daily_snapshots s
-            JOIN (
-                SELECT account_id, MIN(snapshot_date) AS min_date
-                FROM account_daily_snapshots
-                WHERE user_id = ?
-                GROUP BY account_id
-            ) m
-            ON m.account_id = s.account_id AND m.min_date = s.snapshot_date
-            WHERE s.user_id = ?
-            """,
-            (user_id, user_id),
-        ).fetchall()
-    return {
-        int(r["account_id"]): {
-            "snapshot_date": r["snapshot_date"],
-            "value": float(r["value"] or 0),
-        }
-        for r in rows
-    }
