@@ -142,6 +142,22 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
                 eta_date = (today + timedelta(days=int(eta_years * 365.25))).isoformat()
             except Exception:
                 eta_date = None
+        implied_rate = None
+        try:
+            from datetime import datetime as _dt
+            import math
+            if baseline_date:
+                years = (_dt.fromisoformat(today.isoformat()).date() - _dt.fromisoformat(baseline_date[:10]).date()).days / 365.25
+            else:
+                years = 0.0
+            if years > 0 and baseline_value > 0 and actual > 0:
+                implied_rate = (math.exp(math.log(actual / baseline_value) / years) - 1.0)
+        except Exception:
+            implied_rate = None
+
+        _wt = (row.get("wrapper_type") or "").lower()
+        _cat = (row.get("category") or "").lower()
+        cash_like = ("cash isa" in _wt) or (_cat in ("cash", "savings")) or (float(row.get("cash_interest_rate") or 0) > 0)
         perf7[aid] = {
             "annual_rate": 0.07,
             "goal": goal,
@@ -154,6 +170,9 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
             "actual_pct": min((actual / goal), 1.0) if goal else 0.0,
             "expected_pct": min((expected / goal), 1.0) if goal else 0.0,
             "eta_date": eta_date,
+            "implied_rate": implied_rate,
+            "cash_like": cash_like,
+            "cash_rate": float(row.get("cash_interest_rate") or 0.0),
         }
     ty_start_iso = uk_tax_year_start(today).isoformat()
     ty_end_iso = uk_tax_year_end(today).isoformat()

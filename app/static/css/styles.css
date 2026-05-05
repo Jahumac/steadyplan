@@ -3040,6 +3040,9 @@ button.button-danger:focus {
   padding-top: 0.65rem;
   border-top: 1px solid rgba(51,65,85,0.35);
 }
+.acct-perf7-empty .acct-perf7-sub {
+  opacity: 0.9;
+}
 .acct-perf7-row {
   display: flex;
   align-items: baseline;
