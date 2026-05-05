@@ -362,6 +362,112 @@
       el.style.width = pct + '%';
     });
 
+    // 8b. Per-account 7% target performance
+    (function initPerf7() {
+      function parseNum(v) {
+        var n = parseFloat(v);
+        return isFinite(n) ? n : 0;
+      }
+
+      function fmtGBP(n) {
+        var abs = Math.abs(n);
+        return '£' + abs.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      function yearsBetween(a, b) {
+        var ms = b.getTime() - a.getTime();
+        var days = ms / (1000 * 60 * 60 * 24);
+        return days > 0 ? (days / 365.25) : 0;
+      }
+
+      function compound(p, r, years) {
+        return p * Math.pow(1 + r, years);
+      }
+
+      function calcHoldingsCurrent() {
+        var section = document.getElementById('holdings-section');
+        if (!section) return null;
+
+        var total = 0;
+        var unitInputs = section.querySelectorAll('input[name="units"][form]');
+        unitInputs.forEach(function (u) {
+          var formId = u.getAttribute('form');
+          if (!formId) return;
+          var p = section.querySelector('input[name="price"][form="' + formId + '"]');
+          var units = parseNum(u.value);
+          var price = p ? parseNum(p.value) : 0;
+          total += units * price;
+        });
+
+        var cash = section.querySelector('input[name="uninvested_cash"]');
+        if (cash) total += parseNum(cash.value);
+
+        return total;
+      }
+
+      function bindInputs(updateFn) {
+        var manual = document.querySelector('input[name="current_value"]');
+        if (manual) {
+          manual.addEventListener('input', updateFn);
+          manual.addEventListener('change', updateFn);
+        }
+
+        var section = document.getElementById('holdings-section');
+        if (section) {
+          section.querySelectorAll('input[name="units"][form], input[name="price"][form], input[name="uninvested_cash"]').forEach(function (inp) {
+            inp.addEventListener('input', updateFn);
+            inp.addEventListener('change', updateFn);
+          });
+        }
+      }
+
+      document.querySelectorAll('[data-perf7]').forEach(function (box) {
+        var rate = parseNum(box.dataset.perf7Rate || '0.07');
+        var goal = parseNum(box.dataset.perf7Goal || '0');
+        var baselineValue = parseNum(box.dataset.perf7BaselineValue || '0');
+        var baselineDateStr = (box.dataset.perf7BaselineDate || '').slice(0, 10);
+        var initialActual = parseNum(box.dataset.perf7InitialActual || '0');
+
+        if (!goal || goal <= 0) return;
+
+        function computeActual() {
+          var manual = document.querySelector('input[name="current_value"]');
+          if (manual && manual.offsetParent !== null) {
+            return parseNum(manual.value);
+          }
+          var holdings = calcHoldingsCurrent();
+          if (holdings !== null) return holdings;
+          return initialActual;
+        }
+
+        function update() {
+          var now = new Date();
+          var baseDate = baselineDateStr ? new Date(baselineDateStr + 'T00:00:00') : now;
+          var years = yearsBetween(baseDate, now);
+          var expected = compound(baselineValue, rate, years);
+          var actual = computeActual();
+          var gap = actual - expected;
+
+          var gapEl = box.querySelector('[data-perf7-gap]');
+          if (gapEl) gapEl.textContent = (gap >= 0 ? '+' : '−') + fmtGBP(gap);
+
+          var expEl = box.querySelector('[data-perf7-expected]');
+          if (expEl) expEl.textContent = 'Expected ' + fmtGBP(expected);
+
+          var bar = box.querySelector('[data-perf7-bar]');
+          if (bar) {
+            var actualPct = Math.max(0, Math.min(100, (actual / goal) * 100));
+            var expectedPct = Math.max(0, Math.min(100, (expected / goal) * 100));
+            bar.style.setProperty('--perf7-actual', actualPct.toFixed(2) + '%');
+            bar.style.setProperty('--perf7-expected', expectedPct.toFixed(2) + '%');
+          }
+        }
+
+        update();
+        bindInputs(update);
+      });
+    })();
+
     // 9. CSV Import Preview
     (function initCsvPreview() {
       var selectBtn   = document.getElementById('select-all-btn');

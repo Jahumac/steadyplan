@@ -5,6 +5,7 @@ from flask_login import current_user, login_required
 
 from app.calculations import (
     ISA_WRAPPER_TYPES,
+    compound_value,
     contribution_breakdown,
     effective_account_value,
     is_pension_account,
@@ -12,6 +13,7 @@ from app.calculations import (
     uk_tax_year_end,
     uk_tax_year_label,
     uk_tax_year_start,
+    years_to_reach_target,
 )
 from app.models import (
     CATEGORY_OPTIONS,
@@ -50,6 +52,7 @@ from app.models import (
     fetch_assumptions,
     fetch_latest_price_update,
     fetch_account_daily_snapshots,
+    fetch_account_daily_baselines,
     save_account_daily_snapshots,
     save_daily_snapshot,
     update_account,
@@ -117,6 +120,41 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     # Tax-year logged contributions per account: sum of isa/pension contributions
     # logged against each account this UK tax year. Empty for taxable (GIA) accounts.
     today = date.today()
+    baselines = fetch_account_daily_baselines(user_id) or {}
+    perf7 = {}
+    for row in rows:
+        goal = float(row.get("goal_value") or 0) if "goal_value" in row.keys() else 0.0
+        if goal <= 0:
+            continue
+        aid = int(row["id"])
+        actual = float(effective_values.get(aid) or 0)
+        baseline = baselines.get(aid)
+        baseline_date = baseline.get("snapshot_date") if baseline else None
+        baseline_value = float(baseline.get("value") or 0) if baseline else actual
+        expected = compound_value(baseline_value, 0.07, baseline_date or today, today)
+        gap_vs_expected = actual - expected
+        gap_vs_goal = goal - actual
+        eta_years = years_to_reach_target(actual, goal, 0.07)
+        eta_date = None
+        if eta_years is not None:
+            try:
+                from datetime import timedelta
+                eta_date = (today + timedelta(days=int(eta_years * 365.25))).isoformat()
+            except Exception:
+                eta_date = None
+        perf7[aid] = {
+            "annual_rate": 0.07,
+            "goal": goal,
+            "actual": actual,
+            "baseline_date": baseline_date,
+            "baseline_value": baseline_value,
+            "expected": expected,
+            "gap_vs_expected": gap_vs_expected,
+            "gap_vs_goal": gap_vs_goal,
+            "actual_pct": min((actual / goal), 1.0) if goal else 0.0,
+            "expected_pct": min((expected / goal), 1.0) if goal else 0.0,
+            "eta_date": eta_date,
+        }
     ty_start_iso = uk_tax_year_start(today).isoformat()
     ty_end_iso = uk_tax_year_end(today).isoformat()
     tax_year_logged = {}
@@ -259,6 +297,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         account_monthly_values=account_monthly_values,
         account_daily_labels=account_daily_labels,
         account_daily_values=account_daily_values,
+        perf7=perf7,
         global_growth_rate=float(assumptions["annual_growth_rate"]) if assumptions and assumptions["annual_growth_rate"] else 0.05,
         prices_stale=prices_stale,
         pb_prizes=pb_prizes,

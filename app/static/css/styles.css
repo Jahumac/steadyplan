@@ -3035,6 +3035,67 @@ button.button-danger:focus {
   margin-top: 0.1rem;
 }
 
+.acct-perf7 {
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(51,65,85,0.35);
+}
+.acct-perf7-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.acct-perf7-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.acct-perf7-gap {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.acct-perf7-bar {
+  --perf7-actual: 0%;
+  --perf7-expected: 0%;
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(148,163,184,0.15);
+  overflow: hidden;
+  margin-top: 0.45rem;
+}
+.acct-perf7-bar-compact {
+  height: 6px;
+  margin-top: 0.35rem;
+}
+.acct-perf7-bar::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--perf7-actual);
+  background: rgba(56, 189, 248, 0.35);
+}
+.acct-perf7-bar::after {
+  content: "";
+  position: absolute;
+  left: var(--perf7-expected);
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  transform: translateX(-1px);
+  background: rgba(245, 158, 11, 0.85);
+  border-radius: 2px;
+}
+.acct-perf7-sub {
+  font-size: 0.75rem;
+  margin-top: 0.4rem;
+}
+
 .acct-card-foot {
   display: flex;
   justify-content: space-between;

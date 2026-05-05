@@ -411,6 +411,55 @@ def account_gross_growth_rate(account, assumptions):
     return to_float(assumptions["annual_growth_rate"]) if assumptions else 0.0
 
 
+def compound_value(principal, annual_rate, start_date, end_date):
+    """Compound a principal at an annual rate between two dates.
+
+    Uses fractional years computed from day-count / 365.25.
+    """
+    from datetime import date as _date, datetime as _dt
+
+    if principal is None:
+        principal = 0.0
+    p = float(principal or 0.0)
+    r = float(annual_rate or 0.0)
+
+    if isinstance(start_date, str):
+        try:
+            start_date = _dt.fromisoformat(start_date[:10]).date()
+        except Exception:
+            start_date = None
+    if isinstance(end_date, str):
+        try:
+            end_date = _dt.fromisoformat(end_date[:10]).date()
+        except Exception:
+            end_date = None
+
+    if not isinstance(start_date, _date) or not isinstance(end_date, _date):
+        return p
+
+    days = (end_date - start_date).days
+    if days <= 0:
+        return p
+    years = days / 365.25
+    return p * ((1.0 + r) ** years)
+
+
+def years_to_reach_target(current_value, target_value, annual_rate):
+    """Return years to grow from current_value to target_value at annual_rate, or None."""
+    import math
+
+    cur = float(current_value or 0.0)
+    tgt = float(target_value or 0.0)
+    r = float(annual_rate or 0.0)
+
+    if cur <= 0 or tgt <= 0 or tgt <= cur or r <= 0:
+        return None
+    try:
+        return math.log(tgt / cur) / math.log(1.0 + r)
+    except Exception:
+        return None
+
+
 def _project_account_month_by_month(account, assumptions, month_count, rate):
     """Project account value month by month so budget overrides can apply."""
     from .models.accounts import is_premium_bonds_account, PREMIUM_BONDS_MAX_BALANCE

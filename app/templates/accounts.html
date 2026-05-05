@@ -74,6 +74,22 @@
       <div class="acct-balance">£{{ '{:,.0f}'.format(val) }}</div>
       <div class="acct-name">{{ account.name }}</div>
       <div class="acct-provider">{{ account.provider }}{% if account.owner %} · {{ account.owner }}{% endif %}</div>
+      {% set p7 = perf7.get(account.id) if perf7 else None %}
+      {% if p7 %}
+      {% set _p7_gap = p7.gap_vs_expected %}
+      <div class="acct-perf7" title="7% annual growth target: expected = baseline × (1.07)^(years elapsed). Gap = actual − expected. Goal is the account’s own ‘Account Goal’ value.">
+        <div class="acct-perf7-row">
+          <span class="acct-perf7-title">7% target</span>
+          <span class="acct-perf7-gap {% if _p7_gap >= 0 %}text-gain{% else %}text-loss{% endif %}">
+            {{ '+' if _p7_gap >= 0 else '−' }}£{{ '{:,.0f}'.format(_p7_gap | abs) }}
+          </span>
+        </div>
+        <div class="acct-perf7-bar" style="--perf7-actual: {{ '{:.2f}'.format((p7.actual_pct or 0) * 100) }}%; --perf7-expected: {{ '{:.2f}'.format((p7.expected_pct or 0) * 100) }}%;"></div>
+        <div class="acct-perf7-sub text-muted">
+          £{{ '{:,.0f}'.format(p7.actual) }} now · £{{ '{:,.0f}'.format(p7.expected) }} @7% · £{{ '{:,.0f}'.format(p7.goal) }} goal · {% if p7.gap_vs_goal > 0 %}£{{ '{:,.0f}'.format(p7.gap_vs_goal) }} to goal{% else %}goal hit{% endif %}{% if p7.eta_date %} · ETA {{ p7.eta_date[:7] }}{% endif %}
+        </div>
+      </div>
+      {% endif %}
     </div>
     <div class="acct-card-foot">
       {% set cb = contrib_breakdowns.get(account.id, {}) %}
@@ -467,6 +483,24 @@
       </div>
 
       <div class="acct-detail-stats" data-detail-stats>
+        {% set p7 = perf7.get(selected.id) if perf7 else None %}
+        {% if p7 %}
+        {% set _p7_gap = p7.gap_vs_expected %}
+        <div class="acct-detail-stat acct-detail-stat-secondary" data-perf7
+             data-perf7-rate="{{ p7.annual_rate }}"
+             data-perf7-goal="{{ p7.goal }}"
+             data-perf7-baseline-date="{{ p7.baseline_date or '' }}"
+             data-perf7-baseline-value="{{ p7.baseline_value }}"
+             data-perf7-initial-actual="{{ p7.actual }}"
+             title="7% annual growth target: expected = baseline × (1.07)^(years elapsed). Gap = actual − expected. Baseline is the oldest saved daily snapshot for this account.">
+          <span>7% target gap</span>
+          <strong class="{% if _p7_gap >= 0 %}text-gain{% else %}text-loss{% endif %}">
+            <span data-perf7-gap>{{ '+' if _p7_gap >= 0 else '−' }}£{{ '{:,.2f}'.format(_p7_gap | abs) }}</span>
+          </strong>
+          <div class="acct-perf7-bar acct-perf7-bar-compact" data-perf7-bar style="--perf7-actual: {{ '{:.2f}'.format((p7.actual_pct or 0) * 100) }}%; --perf7-expected: {{ '{:.2f}'.format((p7.expected_pct or 0) * 100) }}%;"></div>
+          <small class="text-muted" style="margin-top:0.15rem" data-perf7-expected>Expected £{{ '{:,.2f}'.format(p7.expected) }}</small>
+        </div>
+        {% endif %}
         <div class="acct-detail-stat acct-detail-stat-secondary">
           <span>Growth rate</span>
           <strong>
