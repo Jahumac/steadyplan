@@ -395,3 +395,80 @@ def delete_contribution_override(override_id, user_id=None):
         else:
             conn.execute("DELETE FROM contribution_overrides WHERE id = ?", (override_id,))
         conn.commit()
+
+
+# ── Cash flow events (transfers/withdrawals) ──────────────────────────────────
+
+def add_cash_flow_event(payload, user_id):
+    """Insert a cash flow event for an account.
+
+    payload:
+      account_id (int)
+      event_date (YYYY-MM-DD)
+      amount (signed float, + deposit, - withdrawal/transfer out)
+      kind (text)
+      counterparty_account_id (optional int)
+      note (optional text)
+    """
+    account_id = int(payload["account_id"])
+    with get_connection() as conn:
+        if not _account_belongs_to_user(conn, account_id, user_id):
+            return None
+        counterparty = payload.get("counterparty_account_id")
+        if counterparty:
+            try:
+                counterparty = int(counterparty)
+            except (TypeError, ValueError):
+                counterparty = None
+        cursor = conn.execute(
+            """
+            INSERT INTO cash_flow_events
+              (user_id, account_id, event_date, amount, kind, counterparty_account_id, note, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                account_id,
+                payload["event_date"],
+                float(payload["amount"] or 0),
+                payload.get("kind") or "transfer",
+                counterparty,
+                payload.get("note") or "",
+                datetime.now(timezone.utc).isoformat(),
+            ),
+        )
+        conn.commit()
+        return cursor.lastrowid
+
+
+def fetch_cash_flow_events_for_account(account_id, user_id, from_date=None, to_date=None, limit=200):
+    with get_connection() as conn:
+        if not _account_belongs_to_user(conn, account_id, user_id):
+            return []
+        params = [user_id, account_id]
+        where = "WHERE user_id = ? AND account_id = ?"
+        if from_date:
+            where += " AND event_date >= ?"
+            params.append(from_date)
+        if to_date:
+            where += " AND event_date <= ?"
+            params.append(to_date)
+        params.append(int(limit))
+        return conn.execute(
+            f"""
+            SELECT * FROM cash_flow_events
+            {where}
+            ORDER BY event_date DESC, id DESC
+            LIMIT ?
+            """,
+            tuple(params),
+        ).fetchall()
+
+
+def delete_cash_flow_event(event_id, user_id):
+    with get_connection() as conn:
+        conn.execute(
+            "DELETE FROM cash_flow_events WHERE id = ? AND user_id = ?",
+            (event_id, user_id),
+        )
+        conn.commit()

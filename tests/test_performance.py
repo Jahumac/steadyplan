@@ -58,3 +58,54 @@ def test_performance_plan_uses_recorded_monthly_contributions():
 
     assert perf["projected_values"] == [1000, 1000, 1100]
     assert perf["vs_plan"] == 0
+
+
+def test_performance_by_account_cash_isa_cash_events_adjust_plan(auth_client, app, make_user):
+    uid, _, _ = make_user()
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT OR IGNORE INTO assumptions (user_id, annual_growth_rate) VALUES (?, 0)",
+                (uid,),
+            )
+            cash_isa = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
+                VALUES (?, 'Cash ISA', 'Cash ISA', 2000, 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2020-04-01', 3000)",
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2020-05-01', 2000)",
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO account_daily_snapshots (user_id, account_id, snapshot_date, value) VALUES (?, ?, '2020-04-01', 3000)",
+                (uid, cash_isa),
+            )
+            conn.execute(
+                "INSERT INTO account_daily_snapshots (user_id, account_id, snapshot_date, value) VALUES (?, ?, '2020-05-01', 2000)",
+                (uid, cash_isa),
+            )
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, created_at)
+                VALUES (?, ?, '2020-04-15', -1000, 'transfer_out', 'Moved out', '2020-04-15T00:00:00+00:00')
+                """,
+                (uid, cash_isa),
+            )
+            conn.commit()
+
+    resp = auth_client.get("/performance/", follow_redirects=True)
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Cash ISA" in html
+    assert "+£0" in html

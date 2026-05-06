@@ -521,7 +521,6 @@
       </p>
       {% endif %}
 
-      {% if selected.valuation_mode == 'holdings' %}
       <section class="panel mt-1">
         <div class="section-header">
           <div>
@@ -586,6 +585,14 @@
             <p class="text-muted m-0 text-sm-2">Goal remaining</p>
             <p id="acctStatGoal" class="m-0 text-bold">—</p>
           </div>
+          <div class="perf-stat">
+            <p class="text-muted m-0 text-sm-2">Goal ETA @7%</p>
+            <p class="m-0 text-bold">{% if goal_eta_7 %}{{ goal_eta_7 }}{% else %}—{% endif %}</p>
+          </div>
+          <div class="perf-stat">
+            <p class="text-muted m-0 text-sm-2">Goal ETA @{{ '{:.1f}'.format(global_growth_rate * 100) }}%</p>
+            <p class="m-0 text-bold">{% if goal_eta_global %}{{ goal_eta_global }}{% else %}—{% endif %}</p>
+          </div>
         </div>
         <p class="helper-text mt-075">
           Actual vs plan for this account. The plan compounds at <strong>7% p.a.</strong> and credits contributions on your Monthly Update due date (salary day shifted for weekends, plus settlement). It uses your Budget overrides / Monthly Review entries and includes LISA bonus, tax relief, and employer match where applicable.
@@ -593,8 +600,95 @@
         {% else %}
         <p class="helper-text">No history yet. Update your account balance or run the price scheduler to start recording daily snapshots.</p>
         {% endif %}
+
+        {% if (selected.wrapper_type or '') | lower == 'cash isa' %}
+        <div class="mt-1">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Cash Flow</p>
+              <h4 class="m-0">Transfers & withdrawals</h4>
+            </div>
+          </div>
+          <p class="helper-text mt-05">Log money moved out of this Cash ISA so the “plan” line doesn’t treat it as being behind. This doesn’t change your balances — it only improves tracking.</p>
+          <form method="post" action="/accounts/{{ selected.id }}/cash-events/add" class="mt-075">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-grid form-grid-4">
+              <div class="form-field">
+                <label>Date</label>
+                <input type="date" name="cash_event_date" value="{{ (now_date.isoformat() if now_date is defined else '') }}">
+              </div>
+              <div class="form-field">
+                <label>Type</label>
+                <select name="cash_event_kind">
+                  <option value="transfer_out">Transfer out</option>
+                  <option value="withdrawal">Withdrawal</option>
+                  <option value="deposit">Deposit</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Amount (£)</label>
+                <input type="number" name="cash_event_amount" step="0.01" min="0" placeholder="0.00">
+              </div>
+              <div class="form-field">
+                <label>To account (optional)</label>
+                <select name="cash_event_to_account_id">
+                  <option value="">—</option>
+                  {% for a in accounts %}
+                    {% if a.id != selected.id %}
+                      <option value="{{ a.id }}">{{ a.name }}</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+            <div class="form-field mt-05">
+              <label>Note (optional)</label>
+              <input type="text" name="cash_event_note" placeholder="e.g. moved to Premium Bonds">
+            </div>
+            <button class="btn btn-primary mt-05" type="submit">Save cash flow event</button>
+          </form>
+
+          {% if cash_flow_events %}
+          <div class="table-scroll mt-075">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th class="num">Amount</th>
+                  <th>Note</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for e in cash_flow_events[:10] %}
+                <tr>
+                  <td>{{ (e.event_date or '')[:10] }}</td>
+                  <td>{{ e.kind }}</td>
+                  <td class="num">
+                    {% set amt = (e.amount or 0) | float %}
+                    <span class="{% if amt < 0 %}perf-negative{% else %}perf-positive{% endif %}">
+                      {% if amt >= 0 %}+{% endif %}£{{ '{:,.2f}'.format(amt) }}
+                    </span>
+                  </td>
+                  <td>{{ e.note }}</td>
+                  <td class="num">
+                    <form method="post" action="/accounts/{{ selected.id }}/cash-events/{{ e.id }}/delete">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="btn btn-danger btn-xs" type="submit">Remove</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
       </section>
 
+      {% if selected.valuation_mode == 'holdings' %}
       {% include '_account_holdings_section.html' %}
 
       <section class="panel mt-1 allocation-panel">

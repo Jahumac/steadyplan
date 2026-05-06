@@ -255,3 +255,49 @@ def fetch_account_daily_snapshot_values_for_date(user_id, snapshot_date):
             (user_id, snapshot_date),
         ).fetchall()
     return {int(r["account_id"]): float(r["value"] or 0) for r in rows}
+
+
+def fetch_account_daily_snapshot_points_on_or_before_date(user_id, snapshot_date):
+    """Return {account_id: {snapshot_date, value}} for latest snapshots on/before date."""
+    if not snapshot_date:
+        return {}
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT account_id, snapshot_date, value
+            FROM account_daily_snapshots
+            WHERE user_id = ? AND snapshot_date <= ?
+            ORDER BY account_id ASC, snapshot_date DESC
+            """,
+            (user_id, snapshot_date),
+        ).fetchall()
+    out = {}
+    for r in rows:
+        aid = int(r["account_id"])
+        if aid in out:
+            continue
+        out[aid] = {"snapshot_date": r["snapshot_date"], "value": float(r["value"] or 0)}
+    return out
+
+
+def fetch_account_daily_snapshot_points_on_or_after_date(user_id, snapshot_date):
+    """Return {account_id: {snapshot_date, value}} for earliest snapshots on/after date."""
+    if not snapshot_date:
+        return {}
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT account_id, snapshot_date, value
+            FROM account_daily_snapshots
+            WHERE user_id = ? AND snapshot_date >= ?
+            ORDER BY account_id ASC, snapshot_date ASC
+            """,
+            (user_id, snapshot_date),
+        ).fetchall()
+    out = {}
+    for r in rows:
+        aid = int(r["account_id"])
+        if aid in out:
+            continue
+        out[aid] = {"snapshot_date": r["snapshot_date"], "value": float(r["value"] or 0)}
+    return out

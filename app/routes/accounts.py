@@ -32,6 +32,9 @@ from app.models import (
     fetch_all_accounts,
     fetch_catalogue_with_prices,
     fetch_contribution_overrides,
+    fetch_cash_flow_events_for_account,
+    add_cash_flow_event,
+    delete_cash_flow_event,
     fetch_custom_tags,
     fetch_hidden_tags,
     hide_default_tag,
@@ -160,6 +163,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     catalogue_rows = fetch_catalogue_with_prices(user_id)
     catalogue_prices = {row["id"]: {"price": row["last_price"], "currency": row["price_currency"]} for row in catalogue_rows if row["last_price"]}
     overrides = fetch_contribution_overrides(selected["id"]) if selected else []
+    cash_flow_events = []
     account_monthly_labels = []
     account_monthly_values = []
     account_monthly_plan7 = []
@@ -168,8 +172,17 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     account_daily_values = []
     account_daily_plan7 = []
     account_daily_planglobal = []
+    goal_eta_7 = None
+    goal_eta_global = None
     if selected:
         global_rate = float(assumptions["annual_growth_rate"]) if assumptions and assumptions.get("annual_growth_rate") else 0.05
+        wrapper = (selected.get("wrapper_type") or "").strip().lower()
+        if wrapper == "cash isa":
+            cash_flow_events = fetch_cash_flow_events_for_account(
+                int(selected["id"]),
+                user_id,
+                limit=200,
+            )
 
         monthly_rows = (fetch_monthly_performance_data_by_account(user_id).get(int(selected["id"])) or {}).get("rows", [])
         if monthly_rows:
@@ -187,6 +200,20 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
                     into_pot_contribs.append(float(effective_monthly_contribution(adjusted, assumptions) or 0))
                 else:
                     into_pot_contribs.append(0.0)
+
+            if wrapper == "cash isa" and cash_flow_events:
+                month_event_totals = {}
+                for e in cash_flow_events:
+                    ds = (e.get("event_date") or "")[:10]
+                    if len(ds) >= 7:
+                        mk = ds[:7]
+                        try:
+                            month_event_totals[mk] = month_event_totals.get(mk, 0.0) + float(e.get("amount") or 0)
+                        except (TypeError, ValueError):
+                            continue
+                for i, mk in enumerate(account_monthly_labels):
+                    if i < len(into_pot_contribs):
+                        into_pot_contribs[i] = float(into_pot_contribs[i] or 0) + float(month_event_totals.get(mk, 0.0) or 0)
 
             def _plan(bals, cfs_into_pot, rate):
                 if not bals:
@@ -279,6 +306,25 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
                                 m += 1
                         events.sort(key=lambda e: e[0])
                     event_idx = 0
+
+                    cash_events = []
+                    if wrapper == "cash isa" and cash_flow_events:
+                        for e in cash_flow_events:
+                            try:
+                                d = _dt.fromisoformat(str(e.get("event_date") or "")[:10]).date()
+                            except Exception:
+                                continue
+                            if d <= base_date or d > last_date:
+                                continue
+                            try:
+                                amt = float(e.get("amount") or 0)
+                            except (TypeError, ValueError):
+                                continue
+                            if amt:
+                                cash_events.append((d, amt))
+                        cash_events.sort(key=lambda x: x[0])
+                    cash_idx = 0
+
                     for ds in account_daily_labels[1:]:
                         d = _dt.fromisoformat(ds[:10]).date()
                         step = prev + timedelta(days=1)
@@ -287,6 +333,9 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
                             while event_idx < len(events) and events[event_idx][0] == step:
                                 cur += events[event_idx][1]
                                 event_idx += 1
+                            while cash_idx < len(cash_events) and cash_events[cash_idx][0] == step:
+                                cur += cash_events[cash_idx][1]
+                                cash_idx += 1
                             step += timedelta(days=1)
                         out.append(round(cur, 2))
                         prev = d
@@ -297,6 +346,43 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
             except Exception:
                 account_daily_plan7 = []
                 account_daily_planglobal = []
+
+        try:
+            goal = float(selected.get("goal_value") or 0)
+        except (TypeError, ValueError):
+            goal = 0.0
+        current_eff = float(effective_values.get(int(selected["id"]), 0) or 0)
+        if goal > 0 and current_eff > 0 and current_eff < goal:
+            base_account = dict(selected)
+            monthly_into_pot = float(effective_monthly_contribution(base_account, assumptions) or 0)
+
+            def _months_to_goal(current, monthly, annual_rate, target, max_months=1200):
+                if current >= target:
+                    return 0
+                if monthly <= 0 and annual_rate <= 0:
+                    return None
+                v = float(current)
+                mr = float(annual_rate) / 12.0
+                for i in range(1, max_months + 1):
+                    v = v * (1 + mr) + float(monthly)
+                    if v >= target:
+                        return i
+                return None
+
+            def _eta_label(months):
+                if months is None:
+                    return None
+                if months <= 0:
+                    return "goal hit"
+                today = date.today()
+                y = today.year
+                m = today.month + int(months)
+                y += (m - 1) // 12
+                m = (m - 1) % 12 + 1
+                return date(y, m, 1).strftime("%b %Y")
+
+            goal_eta_7 = _eta_label(_months_to_goal(current_eff, monthly_into_pot, 0.07, goal))
+            goal_eta_global = _eta_label(_months_to_goal(current_eff, monthly_into_pot, global_rate, goal))
 
     edit_holding = None
     if edit_holding_id and positions:
@@ -352,6 +438,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         accounts=rows,
         selected=selected,
         detail_mode=detail_mode,
+        now_date=today,
         holdings_totals=holdings_totals,
         effective_values=effective_values,
         total_value=sum(effective_values.values()),
@@ -392,11 +479,76 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         account_daily_plan7=account_daily_plan7,
         account_daily_planglobal=account_daily_planglobal,
         global_growth_rate=float(assumptions["annual_growth_rate"]) if assumptions and assumptions["annual_growth_rate"] else 0.05,
+        goal_eta_7=goal_eta_7,
+        goal_eta_global=goal_eta_global,
         prices_stale=prices_stale,
+        cash_flow_events=cash_flow_events,
         pb_prizes=pb_prizes,
         pb_prizes_ty_total=pb_prizes_ty_total,
         pb_month_options=pb_month_options,
     )
+
+
+@accounts_bp.route("/<int:account_id>/cash-events/add", methods=["POST"])
+@login_required
+def add_cash_event(account_id):
+    uid = current_user.id
+    acc = fetch_account(account_id, uid)
+    if not acc:
+        flash("Account not found.", "error")
+        return redirect(url_for("accounts.accounts"))
+
+    wrapper = (acc.get("wrapper_type") or "").strip().lower()
+    if wrapper != "cash isa":
+        flash("Cash flow events are only available for Cash ISA accounts.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+    event_date = (request.form.get("cash_event_date") or "").strip()
+    kind = (request.form.get("cash_event_kind") or "transfer_out").strip()
+    note = (request.form.get("cash_event_note") or "").strip()
+    to_account_id = request.form.get("cash_event_to_account_id") or ""
+
+    amt_raw = request.form.get("cash_event_amount") or ""
+    try:
+        amt = float(amt_raw)
+    except (TypeError, ValueError):
+        amt = 0.0
+    amt = abs(amt)
+    if not event_date or amt <= 0:
+        flash("Enter a date and a positive amount.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id) + "#acctMonthlyChart")
+
+    signed = amt
+    if kind in ("transfer_out", "withdrawal"):
+        signed = -amt
+
+    payload = {
+        "account_id": account_id,
+        "event_date": event_date[:10],
+        "amount": signed,
+        "kind": kind,
+        "counterparty_account_id": int(to_account_id) if str(to_account_id).isdigit() else None,
+        "note": note,
+    }
+    added = add_cash_flow_event(payload, uid)
+    if not added:
+        flash("Could not save cash flow event.", "error")
+    else:
+        flash("Cash flow event saved.", "success")
+    return redirect(url_for("accounts.account_detail", account_id=account_id) + "#acctMonthlyChart")
+
+
+@accounts_bp.route("/<int:account_id>/cash-events/<int:event_id>/delete", methods=["POST"])
+@login_required
+def delete_cash_event(account_id, event_id):
+    uid = current_user.id
+    acc = fetch_account(account_id, uid)
+    if not acc:
+        flash("Account not found.", "error")
+        return redirect(url_for("accounts.accounts"))
+    delete_cash_flow_event(event_id, uid)
+    flash("Cash flow event removed.", "success")
+    return redirect(url_for("accounts.account_detail", account_id=account_id) + "#acctMonthlyChart")
 
 
 @accounts_bp.route("/", methods=["GET", "POST"])

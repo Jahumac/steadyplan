@@ -202,6 +202,18 @@ CREATE TABLE IF NOT EXISTS contribution_overrides (
     FOREIGN KEY(account_id) REFERENCES accounts(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS cash_flow_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    event_date TEXT NOT NULL,
+    amount REAL NOT NULL,
+    kind TEXT NOT NULL DEFAULT 'transfer',
+    counterparty_account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL,
+    note TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS isa_contributions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -962,6 +974,8 @@ def _ensure_indexes(conn):
         "CREATE INDEX IF NOT EXISTS idx_budget_entries_item ON budget_entries(budget_item_id)",
         "CREATE INDEX IF NOT EXISTS idx_budget_sections_user_id ON budget_sections(user_id)",
         "CREATE INDEX IF NOT EXISTS idx_contribution_overrides_account ON contribution_overrides(account_id)",
+        "CREATE INDEX IF NOT EXISTS idx_cash_flow_events_account_date ON cash_flow_events(account_id, event_date)",
+        "CREATE INDEX IF NOT EXISTS idx_cash_flow_events_user_date ON cash_flow_events(user_id, event_date)",
         "CREATE INDEX IF NOT EXISTS idx_isa_contributions_user ON isa_contributions(user_id, contribution_date)",
         "CREATE INDEX IF NOT EXISTS idx_isa_contributions_account ON isa_contributions(account_id)",
         "CREATE INDEX IF NOT EXISTS idx_pension_contributions_user ON pension_contributions(user_id, contribution_date)",
@@ -996,4 +1010,3 @@ def init_db():
         _run_migrations(conn)
         _ensure_indexes(conn)
         conn.commit()
-

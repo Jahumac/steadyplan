@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 from flask import Blueprint, render_template
 from flask_login import current_user, login_required
@@ -15,8 +15,10 @@ from app.calculations import (
 from app.models import (
     fetch_all_accounts,
     fetch_all_active_overrides,
-    fetch_account_daily_snapshot_values_for_date,
+    fetch_account_daily_snapshot_points_on_or_after_date,
+    fetch_account_daily_snapshot_points_on_or_before_date,
     fetch_assumptions,
+    fetch_cash_flow_events_for_account,
     fetch_daily_snapshots,
     fetch_holding_totals_by_account,
     fetch_monthly_review,
@@ -94,9 +96,6 @@ def performance():
             end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
         except ValueError:
             end_date = None
-
-        start_acct_values = fetch_account_daily_snapshot_values_for_date(uid, start_date_str)
-        end_acct_values = fetch_account_daily_snapshot_values_for_date(uid, end_date_str)
 
         # Walk day-by-day from start to end, applying daily compound growth and
         # adding the month-specific contribution on the review-ready date
@@ -215,51 +214,101 @@ def performance():
 
     # Per-account "ahead/behind" using the same end-date as the portfolio chart.
     account_breakdown = []
-    if has_data and start_date and end_date and end_acct_values and start_acct_values:
+    if has_data and start_date and end_date:
+        start_pts_before = fetch_account_daily_snapshot_points_on_or_before_date(uid, start_date_str)
+        start_pts_after = fetch_account_daily_snapshot_points_on_or_after_date(uid, start_date_str)
+        end_pts = fetch_account_daily_snapshot_points_on_or_before_date(uid, end_date_str)
+
         salary_day = 28
         try:
             salary_day = int((assumptions or {}).get("salary_day") or 28)
         except (TypeError, ValueError):
             salary_day = 28
         salary_day = max(1, min(31, salary_day))
+
         today = datetime.now().date()
         daily_rate = (1 + assumed_rate) ** (1 / 365.25) - 1
 
-        y, m = start_date.year, start_date.month
-        end_y, end_m = end_date.year, end_date.month
-        month_keys = []
-        while (y, m) <= (end_y, end_m):
-            month_keys.append(f"{y:04d}-{m:02d}")
-            if m == 12:
-                y, m = y + 1, 1
-            else:
-                m += 1
-
-        month_credit_dates = {mk: review_ready_date(int(mk[:4]), int(mk[5:7]), salary_day) for mk in month_keys}
-
         for a in accounts:
             aid = int(a["id"])
-            if aid not in start_acct_values or aid not in end_acct_values:
-                continue
-            start_val = float(start_acct_values[aid] or 0)
-            end_val = float(end_acct_values[aid] or 0)
-            if start_val <= 0 and end_val <= 0:
+            end_pt = end_pts.get(aid)
+
+            # Show the row even if this account has no snapshot history yet.
+            # This commonly happens for Premium Bonds / manual accounts if the
+            # user hasn't run a refresh since creating the account.
+            if not end_pt:
+                cv = None
+                if a.get("valuation_mode") == "holdings":
+                    cv = float(holding_totals.get(a["id"], 0))
+                else:
+                    cv = to_float(a.get("current_value"))
+                account_breakdown.append({
+                    "account_id": aid,
+                    "account_name": a["name"],
+                    "actual_end": cv,
+                    "plan_end": None,
+                    "diff": None,
+                    "untracked": True,
+                })
                 continue
 
-            value = start_val
-            cur = start_date
+            try:
+                end_d = datetime.strptime(end_pt["snapshot_date"], "%Y-%m-%d").date()
+            except ValueError:
+                continue
+            end_val = float(end_pt["value"] or 0)
+
+            base_pt = start_pts_before.get(aid) or start_pts_after.get(aid)
+            if base_pt:
+                try:
+                    base_d = datetime.strptime(base_pt["snapshot_date"], "%Y-%m-%d").date()
+                except ValueError:
+                    base_d = end_d
+                base_val = float(base_pt["value"] or 0)
+            else:
+                base_d = end_d
+                base_val = end_val
+
+            value = base_val
+            cur = base_d
             events = []
-            for mk in month_keys:
-                cd = month_credit_dates[mk]
-                if not (cd <= today and cd <= end_date and cd > start_date):
-                    continue
-                active_overrides, items_by_acc = month_ctx(mk)
-                amt = into_pot_for_account_month(a, mk, active_overrides, items_by_acc)
-                if amt > 0:
-                    events.append((cd, amt))
+
+            y, m = cur.year, cur.month
+            end_y, end_m = end_d.year, end_d.month
+            while (y, m) <= (end_y, end_m):
+                mk = f"{y:04d}-{m:02d}"
+                cd = review_ready_date(y, m, salary_day)
+                if cd <= today and cd <= end_d and cd > base_d:
+                    active_overrides, items_by_acc = month_ctx(mk)
+                    amt = into_pot_for_account_month(a, mk, active_overrides, items_by_acc)
+                    if amt > 0:
+                        events.append((cd, amt))
+                if m == 12:
+                    y, m = y + 1, 1
+                else:
+                    m += 1
+
+            wrapper = (a.get("wrapper_type") or "").strip().lower()
+            if wrapper == "cash isa":
+                from_date = (base_d + timedelta(days=1)).isoformat()
+                to_date = end_d.isoformat()
+                for e in fetch_cash_flow_events_for_account(aid, uid, from_date=from_date, to_date=to_date, limit=500):
+                    try:
+                        ed = datetime.strptime(str(e.get("event_date") or "")[:10], "%Y-%m-%d").date()
+                    except Exception:
+                        continue
+                    if ed <= base_d or ed > end_d or ed > today:
+                        continue
+                    try:
+                        amt = float(e.get("amount") or 0)
+                    except (TypeError, ValueError):
+                        continue
+                    if amt:
+                        events.append((ed, amt))
             events.sort(key=lambda e: e[0])
             idx = 0
-            while cur < end_date:
+
+            while cur < end_d:
                 nxt = cur + timedelta(days=1)
                 value *= (1 + daily_rate)
                 while idx < len(events) and events[idx][0] == nxt:
@@ -275,8 +324,10 @@ def performance():
                 "actual_end": end_val,
                 "plan_end": plan_end,
                 "diff": diff,
+                "untracked": False,
             })
-        account_breakdown.sort(key=lambda r: -abs(r["diff"]))
+
+        account_breakdown.sort(key=lambda r: (1 if r.get("untracked") else 0, -(abs(r["diff"]) if r.get("diff") is not None else 0.0)))
 
     return render_template(
         "performance.html",

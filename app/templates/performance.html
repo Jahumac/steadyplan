@@ -171,7 +171,7 @@
       <p class="eyebrow">Breakdown</p>
       <h3>By Account</h3>
     </div>
-    <small class="text-muted">{{ account_breakdown | length }} tracked</small>
+    <small class="text-muted">{{ account_breakdown | length }} accounts</small>
   </div>
   <div class="table-scroll">
   <table class="data-table">
@@ -188,18 +188,25 @@
       {% set diff = ap.diff %}
       <tr data-href="/accounts/{{ ap.account_id }}#acctMonthlyChart">
         <td>{{ ap.account_name }}</td>
-        <td class="num"><strong>£{{ '{:,.0f}'.format(ap.actual_end) }}</strong></td>
-        <td class="num">£{{ '{:,.0f}'.format(ap.plan_end) }}</td>
+        <td class="num">{% if ap.actual_end is not none %}<strong>£{{ '{:,.0f}'.format(ap.actual_end) }}</strong>{% else %}—{% endif %}</td>
+        <td class="num">{% if ap.plan_end is not none %}£{{ '{:,.0f}'.format(ap.plan_end) }}{% else %}—{% endif %}</td>
         <td class="num">
-          <strong class="{% if diff >= 0 %}perf-positive{% else %}perf-negative{% endif %}">
-            {% if diff >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(diff) }}
-          </strong>
+          {% if diff is not none %}
+            <strong class="{% if diff >= 0 %}perf-positive{% else %}perf-negative{% endif %}">
+              {% if diff >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(diff) }}
+            </strong>
+          {% else %}
+            —
+          {% endif %}
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
   </div>
+  <p class="helper-text mt-075">
+    Transfers between accounts will usually show as “behind” in the account you withdrew from and “ahead” in the account you moved into. For Cash ISA, you can log withdrawals/transfers on the account page so the plan line stays meaningful.
+  </p>
 </section>
 {% elif account_perf %}
 <section class="card">
