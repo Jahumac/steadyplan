@@ -12,6 +12,7 @@ from app.calculations import (
     uk_tax_year_end,
     uk_tax_year_label,
     uk_tax_year_start,
+    _resolve_contribution_day,
 )
 from app.models import (
     CATEGORY_OPTIONS,
@@ -197,16 +198,45 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         if account_daily_labels and account_daily_values:
             try:
                 from datetime import datetime as _dt
+                from datetime import timedelta
+
                 base_date = _dt.fromisoformat(account_daily_labels[0][:10]).date()
                 base_val = float(account_daily_values[0] or 0)
+
+                salary_day = 0
+                try:
+                    salary_day = int((assumptions or {}).get("salary_day") or 0)
+                except (TypeError, ValueError):
+                    salary_day = 0
+                contrib_day = salary_day
+                try:
+                    pd = int((selected.get("pension_contribution_day") or 0))
+                    if pd > 0:
+                        contrib_day = pd
+                except (TypeError, ValueError):
+                    pass
+
+                cb_sel = contrib_breakdowns.get(int(selected["id"]), {}) if contrib_breakdowns else {}
+                monthly_into_pot = float(cb_sel.get("total_into_pot", 0) or 0)
 
                 def _daily_plan(rate):
                     r = float(rate or 0)
                     out = []
-                    for ds in account_daily_labels:
+                    cur = base_val
+                    prev = base_date
+                    out.append(round(cur, 2))
+                    for ds in account_daily_labels[1:]:
                         d = _dt.fromisoformat(ds[:10]).date()
-                        years = max(0.0, (d - base_date).days / 365.25)
-                        out.append(round(base_val * ((1 + r) ** years), 2))
+                        step = prev + timedelta(days=1)
+                        while step <= d:
+                            cur *= (1 + (r / 365.25))
+                            if contrib_day and monthly_into_pot > 0 and step > base_date:
+                                resolved = _resolve_contribution_day(step.year, step.month, max(1, min(31, contrib_day)))
+                                if step.day == resolved:
+                                    cur += monthly_into_pot
+                            step += timedelta(days=1)
+                        out.append(round(cur, 2))
+                        prev = d
                     return out
 
                 account_daily_plan7 = _daily_plan(0.07)
