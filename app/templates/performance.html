@@ -114,7 +114,7 @@
 
   {% if monthly_contribution_total is not none and monthly_contribution_total > 0 %}
   <p class="helper-text mt-075">
-    Plan uses your per-account contribution settings, adjusted by any contribution overrides and Monthly Review entries, and credits them on your salary day. It compounds at {{ assumed_rate_pct }}% p.a.
+    Plan uses your per-account contribution settings, adjusted by any contribution overrides and Monthly Review entries, and credits them on your Monthly Update due date (salary day shifted for weekends, plus settlement). It compounds at {{ assumed_rate_pct }}% p.a.
     {% if planned_monthly_avg is not none %}Over the period shown, that’s an average of £{{ '{:,.0f}'.format(planned_monthly_avg) }}/mo.{% endif %}
     The figure above includes tax relief, LISA bonus, employer match — the *full* amount landing in each pot, not what comes out of your bank.
     Short-term dips are normal — review yearly to see if you're still on track.
@@ -164,7 +164,44 @@
 </section>
 
 {# ── By Account ────────────────────────────────────────────────────── #}
-{% if account_perf %}
+{% if account_breakdown %}
+<section class="card">
+  <div class="section-header mb-075">
+    <div>
+      <p class="eyebrow">Breakdown</p>
+      <h3>By Account</h3>
+    </div>
+    <small class="text-muted">{{ account_breakdown | length }} tracked</small>
+  </div>
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Account</th>
+        <th class="num">Actual</th>
+        <th class="num">Should be</th>
+        <th class="num">Difference</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ap in account_breakdown %}
+      {% set diff = ap.diff %}
+      <tr data-href="/accounts/{{ ap.account_id }}#acctMonthlyChart">
+        <td>{{ ap.account_name }}</td>
+        <td class="num"><strong>£{{ '{:,.0f}'.format(ap.actual_end) }}</strong></td>
+        <td class="num">£{{ '{:,.0f}'.format(ap.plan_end) }}</td>
+        <td class="num">
+          <strong class="{% if diff >= 0 %}perf-positive{% else %}perf-negative{% endif %}">
+            {% if diff >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(diff) }}
+          </strong>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% elif account_perf %}
 <section class="card">
   <div class="section-header mb-075">
     <div>

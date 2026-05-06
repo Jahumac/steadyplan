@@ -13,7 +13,7 @@ from app.calculations import (
     uk_tax_year_end,
     uk_tax_year_label,
     uk_tax_year_start,
-    _resolve_contribution_day,
+    review_ready_date,
 )
 from app.models import (
     CATEGORY_OPTIONS,
@@ -251,24 +251,42 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
                     cur = base_val
                     prev = base_date
                     out.append(round(cur, 2))
+                    today = datetime.now().date()
+
+                    last_date = _dt.fromisoformat(account_daily_labels[-1][:10]).date()
+                    events = []
+                    if contrib_day:
+                        y, m = base_date.year, base_date.month
+                        end_y, end_m = last_date.year, last_date.month
+                        while (y, m) <= (end_y, end_m):
+                            mk = f"{y:04d}-{m:02d}"
+                            credit_date = review_ready_date(y, m, max(1, min(31, contrib_day)))
+                            if credit_date > base_date and credit_date <= today and credit_date <= last_date:
+                                personal = override_for_month(mk)
+                                if personal is None:
+                                    personal = personal_by_month.get(mk)
+                                if personal is None:
+                                    personal = float(base_account.get("monthly_contribution") or 0)
+                                if personal and personal > 0:
+                                    adjusted = dict(base_account)
+                                    adjusted["monthly_contribution"] = float(personal)
+                                    amt = float(effective_monthly_contribution(adjusted, assumptions) or 0)
+                                    if amt > 0:
+                                        events.append((credit_date, amt))
+                            if m == 12:
+                                y, m = y + 1, 1
+                            else:
+                                m += 1
+                        events.sort(key=lambda e: e[0])
+                    event_idx = 0
                     for ds in account_daily_labels[1:]:
                         d = _dt.fromisoformat(ds[:10]).date()
                         step = prev + timedelta(days=1)
                         while step <= d:
                             cur *= (1 + (r / 365.25))
-                            if contrib_day and step > base_date:
-                                resolved = _resolve_contribution_day(step.year, step.month, max(1, min(31, contrib_day)))
-                                if step.day == resolved:
-                                    mk = f"{step.year:04d}-{step.month:02d}"
-                                    personal = override_for_month(mk)
-                                    if personal is None:
-                                        personal = personal_by_month.get(mk)
-                                    if personal is None:
-                                        personal = float(base_account.get("monthly_contribution") or 0)
-                                    if personal and personal > 0:
-                                        adjusted = dict(base_account)
-                                        adjusted["monthly_contribution"] = personal
-                                        cur += float(effective_monthly_contribution(adjusted, assumptions) or 0)
+                            while event_idx < len(events) and events[event_idx][0] == step:
+                                cur += events[event_idx][1]
+                                event_idx += 1
                             step += timedelta(days=1)
                         out.append(round(cur, 2))
                         prev = d

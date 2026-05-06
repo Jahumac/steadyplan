@@ -239,3 +239,19 @@ def fetch_account_daily_snapshots(account_id, limit=365):
             (account_id, limit),
         ).fetchall()
     return [(r["snapshot_date"], float(r["value"])) for r in reversed(rows)]
+
+
+def fetch_account_daily_snapshot_values_for_date(user_id, snapshot_date):
+    """Return {account_id: value} for a user's per-account snapshots on one date."""
+    if not snapshot_date:
+        return {}
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT account_id, value
+            FROM account_daily_snapshots
+            WHERE user_id = ? AND snapshot_date = ?
+            """,
+            (user_id, snapshot_date),
+        ).fetchall()
+    return {int(r["account_id"]): float(r["value"] or 0) for r in rows}

@@ -4,9 +4,9 @@ from flask import Blueprint, render_template
 from flask_login import current_user, login_required
 
 from app.calculations import (
-    _resolve_contribution_day,
     contribution_breakdown,
     effective_monthly_contribution,
+    review_ready_date,
     to_float,
     uk_tax_year_start,
     uk_tax_year_end,
@@ -15,6 +15,7 @@ from app.calculations import (
 from app.models import (
     fetch_all_accounts,
     fetch_all_active_overrides,
+    fetch_account_daily_snapshot_values_for_date,
     fetch_assumptions,
     fetch_daily_snapshots,
     fetch_holding_totals_by_account,
@@ -94,8 +95,12 @@ def performance():
         except ValueError:
             end_date = None
 
+        start_acct_values = fetch_account_daily_snapshot_values_for_date(uid, start_date_str)
+        end_acct_values = fetch_account_daily_snapshot_values_for_date(uid, end_date_str)
+
         # Walk day-by-day from start to end, applying daily compound growth and
-        # adding the month-specific contribution on the salary day.
+        # adding the month-specific contribution on the review-ready date
+        # (salary day, shifted for weekends, plus settlement).
         # Sample on snapshot days so the plan line aligns with the actual line.
         plan_by_date = {}
         if start_date and end_date:
@@ -109,35 +114,63 @@ def performance():
             today = datetime.now().date()
             daily_rate = (1 + assumed_rate) ** (1 / 365.25) - 1
 
-            def month_total_for(mk):
+            month_ctx_cache = {}
+            def month_ctx(mk):
+                if mk in month_ctx_cache:
+                    return month_ctx_cache[mk]
                 active_overrides = fetch_all_active_overrides(mk, uid)
                 review = fetch_monthly_review(mk, uid)
                 items_by_acc = {}
                 if review:
                     for it in fetch_monthly_review_items(review["id"]):
-                        items_by_acc[it["account_id"]] = it
+                        items_by_acc[int(it["account_id"])] = it
+                month_ctx_cache[mk] = (active_overrides or {}, items_by_acc)
+                return month_ctx_cache[mk]
 
+            def into_pot_for_account_month(a, mk, active_overrides, items_by_acc):
+                aid = int(a["id"])
+                personal = None
+                ov = (active_overrides or {}).get(aid)
+                if ov is not None:
+                    personal = float(ov.get("override_amount") or 0)
+                elif aid in (items_by_acc or {}):
+                    personal = float((items_by_acc[aid] or {}).get("expected_contribution") or 0)
+                if personal is not None:
+                    if personal <= 0:
+                        return 0.0
+                    adjusted = dict(a)
+                    adjusted["monthly_contribution"] = personal
+                    return float(effective_monthly_contribution(adjusted, assumptions) or 0)
+                return float(effective_monthly_contribution(a, assumptions) or 0)
+
+            def month_total_for(mk):
+                active_overrides, items_by_acc = month_ctx(mk)
                 total = 0.0
                 for a in accounts:
-                    aid = a["id"]
-                    personal = None
-                    ov = active_overrides.get(aid)
-                    if ov is not None:
-                        personal = float(ov.get("override_amount") or 0)
-                    elif aid in items_by_acc:
-                        personal = float(items_by_acc[aid]["expected_contribution"] or 0)
-
-                    if personal is not None:
-                        if personal <= 0:
-                            continue
-                        adjusted = dict(a)
-                        adjusted["monthly_contribution"] = personal
-                        total += effective_monthly_contribution(adjusted, assumptions)
-                    else:
-                        total += effective_monthly_contribution(a, assumptions)
+                    total += into_pot_for_account_month(a, mk, active_overrides, items_by_acc)
                 return total
 
-            month_amount_cache = {}
+            month_amount_cache = {}   # mk -> portfolio total
+
+            # Pre-build contribution events so month_key and credit_date don't
+            # drift when the review-ready date lands in the next month.
+            events = []  # (credit_date, mk, amount)
+            y, m = start_date.year, start_date.month
+            end_y, end_m = end_date.year, end_date.month
+            while (y, m) <= (end_y, end_m):
+                mk = f"{y:04d}-{m:02d}"
+                credit_date = review_ready_date(y, m, salary_day)
+                if credit_date <= today and credit_date <= end_date and credit_date > start_date:
+                    amt = month_total_for(mk)
+                    month_amount_cache[mk] = amt
+                    if amt > 0:
+                        events.append((credit_date, mk, amt))
+                if m == 12:
+                    y, m = y + 1, 1
+                else:
+                    m += 1
+            events.sort(key=lambda e: e[0])
+            event_idx = 0
 
             value = start_val
             plan_by_date[start_date] = value
@@ -145,14 +178,9 @@ def performance():
             while cur < end_date:
                 nxt = cur + timedelta(days=1)
                 value *= (1 + daily_rate)
-
-                mk = f"{nxt.year:04d}-{nxt.month:02d}"
-                invest_day = _resolve_contribution_day(nxt.year, nxt.month, salary_day)
-                invest_date = date(nxt.year, nxt.month, invest_day)
-                if invest_date == nxt and invest_date <= today and invest_date > start_date:
-                    if mk not in month_amount_cache:
-                        month_amount_cache[mk] = month_total_for(mk)
-                    value += month_amount_cache[mk]
+                while event_idx < len(events) and events[event_idx][0] == nxt:
+                    value += events[event_idx][2]
+                    event_idx += 1
 
                 cur = nxt
                 plan_by_date[cur] = value
@@ -185,6 +213,71 @@ def performance():
             account_perf.append({"account_id": a["id"], "account_name": a["name"], "current_value": cv})
     account_perf.sort(key=lambda x: -x["current_value"])
 
+    # Per-account "ahead/behind" using the same end-date as the portfolio chart.
+    account_breakdown = []
+    if has_data and start_date and end_date and end_acct_values and start_acct_values:
+        salary_day = 28
+        try:
+            salary_day = int((assumptions or {}).get("salary_day") or 28)
+        except (TypeError, ValueError):
+            salary_day = 28
+        salary_day = max(1, min(31, salary_day))
+        today = datetime.now().date()
+        daily_rate = (1 + assumed_rate) ** (1 / 365.25) - 1
+
+        y, m = start_date.year, start_date.month
+        end_y, end_m = end_date.year, end_date.month
+        month_keys = []
+        while (y, m) <= (end_y, end_m):
+            month_keys.append(f"{y:04d}-{m:02d}")
+            if m == 12:
+                y, m = y + 1, 1
+            else:
+                m += 1
+
+        month_credit_dates = {mk: review_ready_date(int(mk[:4]), int(mk[5:7]), salary_day) for mk in month_keys}
+
+        for a in accounts:
+            aid = int(a["id"])
+            if aid not in start_acct_values or aid not in end_acct_values:
+                continue
+            start_val = float(start_acct_values[aid] or 0)
+            end_val = float(end_acct_values[aid] or 0)
+            if start_val <= 0 and end_val <= 0:
+                continue
+
+            value = start_val
+            cur = start_date
+            events = []
+            for mk in month_keys:
+                cd = month_credit_dates[mk]
+                if not (cd <= today and cd <= end_date and cd > start_date):
+                    continue
+                active_overrides, items_by_acc = month_ctx(mk)
+                amt = into_pot_for_account_month(a, mk, active_overrides, items_by_acc)
+                if amt > 0:
+                    events.append((cd, amt))
+            events.sort(key=lambda e: e[0])
+            idx = 0
+            while cur < end_date:
+                nxt = cur + timedelta(days=1)
+                value *= (1 + daily_rate)
+                while idx < len(events) and events[idx][0] == nxt:
+                    value += events[idx][1]
+                    idx += 1
+                cur = nxt
+
+            plan_end = value
+            diff = end_val - plan_end
+            account_breakdown.append({
+                "account_id": aid,
+                "account_name": a["name"],
+                "actual_end": end_val,
+                "plan_end": plan_end,
+                "diff": diff,
+            })
+        account_breakdown.sort(key=lambda r: -abs(r["diff"]))
+
     return render_template(
         "performance.html",
         has_data=has_data,
@@ -196,6 +289,7 @@ def performance():
         planned_monthly_avg=planned_monthly_avg,
         contribution_breakdown_rows=contribution_breakdown_rows,
         account_perf=account_perf,
+        account_breakdown=account_breakdown,
         plan_value=plan_value,
         current_value=current_value,
         active_page="performance",

@@ -68,15 +68,15 @@ def _build_daily_contributions_cumulative(uid, daily_labels, accounts, assumptio
       3. No review yet → effective_monthly_contribution default; the month
          is added to pending_months so the UI can show "estimated".
 
-    Contributions land on the user's salary_day (clamped to 1-28 to avoid
-    short-month issues). Months strictly in the future are not counted.
+    Contributions land on the user's review-ready date (salary day shifted for
+    weekends, plus settlement). Months strictly in the future are not counted.
     """
     if not daily_labels:
         return [], []
 
     salary_day = 28
     try:
-        salary_day = max(1, min(28, int((assumptions or {}).get("salary_day") or 28)))
+        salary_day = max(1, min(31, int((assumptions or {}).get("salary_day") or 28)))
     except (TypeError, ValueError):
         pass
 
@@ -96,7 +96,7 @@ def _build_daily_contributions_cumulative(uid, daily_labels, accounts, assumptio
     end_y, end_m = today.year, today.month
     while (y, m) <= (end_y, end_m):
         mk = f"{y:04d}-{m:02d}"
-        invest_date = date(y, m, salary_day)
+        invest_date = review_ready_date(y, m, salary_day)
         # Only consider months whose investment date has actually arrived,
         # otherwise we'd inject contributions that haven't happened yet.
         if invest_date <= today and invest_date <= last_label_date:
