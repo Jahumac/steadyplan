@@ -2472,6 +2472,10 @@ button.button-danger:focus {
   background: rgba(56,189,248,0.04);
 }
 
+.data-table tbody tr[data-href] {
+  cursor: pointer;
+}
+
 /* ── panel (alias for .card without the card-specific borders on nested) ── */
 .panel {
   background: linear-gradient(180deg, var(--panel), var(--panel-2));

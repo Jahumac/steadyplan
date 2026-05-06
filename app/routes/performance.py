@@ -1,10 +1,27 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from flask import Blueprint, render_template
 from flask_login import current_user, login_required
 
-from app.calculations import contribution_breakdown, effective_monthly_contribution, to_float, uk_tax_year_start, uk_tax_year_end, uk_tax_year_label
-from app.models import fetch_all_accounts, fetch_assumptions, fetch_daily_snapshots, fetch_holding_totals_by_account, fetch_tax_year_contributions
+from app.calculations import (
+    _resolve_contribution_day,
+    contribution_breakdown,
+    effective_monthly_contribution,
+    to_float,
+    uk_tax_year_start,
+    uk_tax_year_end,
+    uk_tax_year_label,
+)
+from app.models import (
+    fetch_all_accounts,
+    fetch_all_active_overrides,
+    fetch_assumptions,
+    fetch_daily_snapshots,
+    fetch_holding_totals_by_account,
+    fetch_monthly_review,
+    fetch_monthly_review_items,
+    fetch_tax_year_contributions,
+)
 
 performance_bp = Blueprint("performance", __name__)
 
@@ -28,15 +45,20 @@ def performance():
     plan_value     = None
     current_value  = None
     monthly_contribution_total = None
+    planned_monthly_avg = None
     contribution_breakdown_rows = []
 
     if has_data:
         # Plan = where you should be if you'd been contributing on schedule and
-        # earning `assumed_rate` (mirrors the Projections page logic, but walked
-        # forward from the oldest snapshot to today instead of forward to
-        # retirement). Sum current monthly contributions across accounts (incl.
-        # tax relief, employer match, LISA bonus, contribution fees) — same as
-        # `effective_monthly_contribution` used in projections.
+        # earning `assumed_rate`.
+        #
+        # Unlike the old "flat £X/mo at month boundaries" approach, this matches
+        # how the rest of the app thinks about contributions:
+        # - overrides can skip or adjust months
+        # - monthly review (if present) is the source of truth for that month
+        # - otherwise we fall back to each account's default monthly contribution
+        # Contributions are credited on the user's salary day (resolved for short
+        # months/weekends), and are only counted once their date has arrived.
         monthly_contribution_total = sum(
             effective_monthly_contribution(a, assumptions) for a in accounts
         )
@@ -73,21 +95,70 @@ def performance():
             end_date = None
 
         # Walk day-by-day from start to end, applying daily compound growth and
-        # adding the monthly contribution at each calendar-month boundary.
+        # adding the month-specific contribution on the salary day.
         # Sample on snapshot days so the plan line aligns with the actual line.
         plan_by_date = {}
         if start_date and end_date:
-            daily_rate = (1 + assumed_rate) ** (1 / 365) - 1
+            salary_day = 28
+            try:
+                salary_day = int((assumptions or {}).get("salary_day") or 28)
+            except (TypeError, ValueError):
+                salary_day = 28
+            salary_day = max(1, min(31, salary_day))
+
+            today = datetime.now().date()
+            daily_rate = (1 + assumed_rate) ** (1 / 365.25) - 1
+
+            def month_total_for(mk):
+                active_overrides = fetch_all_active_overrides(mk, uid)
+                review = fetch_monthly_review(mk, uid)
+                items_by_acc = {}
+                if review:
+                    for it in fetch_monthly_review_items(review["id"]):
+                        items_by_acc[it["account_id"]] = it
+
+                total = 0.0
+                for a in accounts:
+                    aid = a["id"]
+                    personal = None
+                    ov = active_overrides.get(aid)
+                    if ov is not None:
+                        personal = float(ov.get("override_amount") or 0)
+                    elif aid in items_by_acc:
+                        personal = float(items_by_acc[aid]["expected_contribution"] or 0)
+
+                    if personal is not None:
+                        if personal <= 0:
+                            continue
+                        adjusted = dict(a)
+                        adjusted["monthly_contribution"] = personal
+                        total += effective_monthly_contribution(adjusted, assumptions)
+                    else:
+                        total += effective_monthly_contribution(a, assumptions)
+                return total
+
+            month_amount_cache = {}
+
             value = start_val
             plan_by_date[start_date] = value
             cur = start_date
             while cur < end_date:
                 nxt = cur + timedelta(days=1)
                 value *= (1 + daily_rate)
-                if (nxt.year, nxt.month) != (cur.year, cur.month):
-                    value += monthly_contribution_total
+
+                mk = f"{nxt.year:04d}-{nxt.month:02d}"
+                invest_day = _resolve_contribution_day(nxt.year, nxt.month, salary_day)
+                invest_date = date(nxt.year, nxt.month, invest_day)
+                if invest_date == nxt and invest_date <= today and invest_date > start_date:
+                    if mk not in month_amount_cache:
+                        month_amount_cache[mk] = month_total_for(mk)
+                    value += month_amount_cache[mk]
+
                 cur = nxt
                 plan_by_date[cur] = value
+
+            if month_amount_cache:
+                planned_monthly_avg = sum(month_amount_cache.values()) / max(1, len(month_amount_cache))
 
         for date_str, val in daily_snapshots:
             try:
@@ -111,7 +182,7 @@ def performance():
         else:
             cv = to_float(a.get("current_value"))
         if cv > 0:
-            account_perf.append({"account_name": a["name"], "current_value": cv})
+            account_perf.append({"account_id": a["id"], "account_name": a["name"], "current_value": cv})
     account_perf.sort(key=lambda x: -x["current_value"])
 
     return render_template(
@@ -122,6 +193,7 @@ def performance():
         daily_plan=daily_plan,
         assumed_rate_pct=round(assumed_rate * 100, 1),
         monthly_contribution_total=monthly_contribution_total,
+        planned_monthly_avg=planned_monthly_avg,
         contribution_breakdown_rows=contribution_breakdown_rows,
         account_perf=account_perf,
         plan_value=plan_value,

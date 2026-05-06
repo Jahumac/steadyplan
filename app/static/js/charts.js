@@ -419,7 +419,26 @@
             chartInstance.update();
           } else {
             var datasets = [
-              lineDataset({ values: d.values, color: c.primary, fillAlphaHex: '22' }),
+              (function() {
+                var gradient = ctx.createLinearGradient(0, 0, 0, canvas.height || 220);
+                gradient.addColorStop(0, c.accent2 + '33');
+                gradient.addColorStop(1, c.accent2 + '00');
+                return {
+                  label: 'Actual',
+                  data: d.values,
+                  borderColor: c.accent2,
+                  backgroundColor: gradient,
+                  borderWidth: 2,
+                  pointRadius: 0,
+                  pointHoverRadius: 4,
+                  pointBackgroundColor: c.accent2,
+                  pointHoverBackgroundColor: c.accent2,
+                  pointHoverBorderColor: c.textWhite,
+                  pointHoverBorderWidth: 2,
+                  fill: true,
+                  tension: 0.25,
+                };
+              })(),
               {
                 label: 'Plan (7%)',
                 data: d.plan7,
@@ -470,10 +489,6 @@
               },
               extra: { interaction: { mode: 'index', intersect: false } }
             });
-            if (opts.plugins && opts.plugins.legend) {
-              opts.plugins.legend.display = true;
-              opts.plugins.legend.labels = { color: c.muted, usePointStyle: true, pointStyle: 'line' };
-            }
             chartInstance = new Chart(ctx, {
               type: 'line',
               plugins: [crosshairPlugin],
@@ -485,7 +500,7 @@
             });
           }
         } else {
-          drawFallback(canvas, d.values, c.primary);
+          drawFallback(canvas, d.values, c.accent2);
         }
         updateStats(d);
       }

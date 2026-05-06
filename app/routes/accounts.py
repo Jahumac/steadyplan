@@ -7,6 +7,7 @@ from app.calculations import (
     ISA_WRAPPER_TYPES,
     contribution_breakdown,
     effective_account_value,
+    effective_monthly_contribution,
     is_pension_account,
     to_float,
     uk_tax_year_end,
@@ -174,10 +175,20 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         if monthly_rows:
             account_monthly_labels = [m for (m, _b, _c) in monthly_rows][-36:]
             balances = [float(b or 0) for (_m, b, _c) in monthly_rows][-36:]
-            contribs = [float(c or 0) for (_m, _b, c) in monthly_rows][-36:]
+            personal_contribs = [float(c or 0) for (_m, _b, c) in monthly_rows][-36:]
             account_monthly_values = [round(v, 2) for v in balances]
 
-            def _plan(bals, cfs, rate):
+            base_account = dict(selected)
+            into_pot_contribs = []
+            for personal in personal_contribs:
+                if personal and personal > 0:
+                    adjusted = dict(base_account)
+                    adjusted["monthly_contribution"] = float(personal)
+                    into_pot_contribs.append(float(effective_monthly_contribution(adjusted, assumptions) or 0))
+                else:
+                    into_pot_contribs.append(0.0)
+
+            def _plan(bals, cfs_into_pot, rate):
                 if not bals:
                     return []
                 start = float(bals[0] or 0)
@@ -185,12 +196,12 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
                 cur = start
                 mr = float(rate or 0) / 12.0
                 for i in range(1, len(bals)):
-                    cur = cur * (1 + mr) + float(cfs[i] or 0)
+                    cur = cur * (1 + mr) + float(cfs_into_pot[i] or 0)
                     out.append(round(cur, 2))
                 return out
 
-            account_monthly_plan7 = _plan(balances, contribs, 0.07)
-            account_monthly_planglobal = _plan(balances, contribs, global_rate)
+            account_monthly_plan7 = _plan(balances, into_pot_contribs, 0.07)
+            account_monthly_planglobal = _plan(balances, into_pot_contribs, global_rate)
 
         daily_history = fetch_account_daily_snapshots(selected["id"], limit=365)
         account_daily_labels = [d for (d, _) in daily_history]
@@ -216,8 +227,23 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
                 except (TypeError, ValueError):
                     pass
 
-                cb_sel = contrib_breakdowns.get(int(selected["id"]), {}) if contrib_breakdowns else {}
-                monthly_into_pot = float(cb_sel.get("total_into_pot", 0) or 0)
+                def override_for_month(mk):
+                    for ov in overrides or []:
+                        if (ov.get("from_month") or "") <= mk <= (ov.get("to_month") or ""):
+                            try:
+                                return float(ov.get("override_amount") or 0)
+                            except (TypeError, ValueError):
+                                return 0.0
+                    return None
+
+                personal_by_month = {}
+                for (mk, _bal, contrib) in monthly_rows or []:
+                    try:
+                        personal_by_month[str(mk)] = float(contrib or 0)
+                    except (TypeError, ValueError):
+                        personal_by_month[str(mk)] = 0.0
+
+                base_account = dict(selected)
 
                 def _daily_plan(rate):
                     r = float(rate or 0)
@@ -230,10 +256,19 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
                         step = prev + timedelta(days=1)
                         while step <= d:
                             cur *= (1 + (r / 365.25))
-                            if contrib_day and monthly_into_pot > 0 and step > base_date:
+                            if contrib_day and step > base_date:
                                 resolved = _resolve_contribution_day(step.year, step.month, max(1, min(31, contrib_day)))
                                 if step.day == resolved:
-                                    cur += monthly_into_pot
+                                    mk = f"{step.year:04d}-{step.month:02d}"
+                                    personal = override_for_month(mk)
+                                    if personal is None:
+                                        personal = personal_by_month.get(mk)
+                                    if personal is None:
+                                        personal = float(base_account.get("monthly_contribution") or 0)
+                                    if personal and personal > 0:
+                                        adjusted = dict(base_account)
+                                        adjusted["monthly_contribution"] = personal
+                                        cur += float(effective_monthly_contribution(adjusted, assumptions) or 0)
                             step += timedelta(days=1)
                         out.append(round(cur, 2))
                         prev = d
