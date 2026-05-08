@@ -172,11 +172,18 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     account_daily_values = []
     account_daily_plan7 = []
     account_daily_planglobal = []
-    goal_eta_7 = None
-    goal_eta_global = None
+    goal_eta = None
+    goal_eta_rate = None
     if selected:
         global_rate = float(assumptions["annual_growth_rate"]) if assumptions and assumptions.get("annual_growth_rate") else 0.05
         wrapper = (selected.get("wrapper_type") or "").strip().lower()
+        try:
+            if selected.get("growth_mode") == "custom" and selected.get("growth_rate_override") is not None:
+                goal_eta_rate = float(selected.get("growth_rate_override") or 0)
+        except (TypeError, ValueError):
+            goal_eta_rate = None
+        if goal_eta_rate is None or goal_eta_rate <= 0:
+            goal_eta_rate = global_rate
         if wrapper == "cash isa":
             cash_flow_events = fetch_cash_flow_events_for_account(
                 int(selected["id"]),
@@ -381,8 +388,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
                 m = (m - 1) % 12 + 1
                 return date(y, m, 1).strftime("%b %Y")
 
-            goal_eta_7 = _eta_label(_months_to_goal(current_eff, monthly_into_pot, 0.07, goal))
-            goal_eta_global = _eta_label(_months_to_goal(current_eff, monthly_into_pot, global_rate, goal))
+            goal_eta = _eta_label(_months_to_goal(current_eff, monthly_into_pot, goal_eta_rate, goal))
 
     edit_holding = None
     if edit_holding_id and positions:
@@ -479,8 +485,8 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         account_daily_plan7=account_daily_plan7,
         account_daily_planglobal=account_daily_planglobal,
         global_growth_rate=float(assumptions["annual_growth_rate"]) if assumptions and assumptions["annual_growth_rate"] else 0.05,
-        goal_eta_7=goal_eta_7,
-        goal_eta_global=goal_eta_global,
+        goal_eta=goal_eta,
+        goal_eta_rate=goal_eta_rate,
         prices_stale=prices_stale,
         cash_flow_events=cash_flow_events,
         pb_prizes=pb_prizes,

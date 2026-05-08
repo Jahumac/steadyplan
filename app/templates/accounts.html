@@ -41,6 +41,49 @@
       £{{ '{:,.0f}'.format(total_into_pot_monthly) }}<span class="change-chip-label">into pots</span>
     </span>
   </div>
+  <details class="mt-075">
+    <summary class="link-accent">Where does £{{ '{:,.0f}'.format(total_personal_monthly) }} “from you” come from?</summary>
+    <p class="helper-text mt-05">This total is the sum of each active account’s “Your Monthly Contribution” setting. For salary sacrifice / workplace pensions this is your pre-tax amount (so it may not match your bank transfers).</p>
+    <div class="table-scroll mt-05">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th class="num">From you</th>
+            <th class="num">Tax/bonus/employer</th>
+            <th class="num">Into pot</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for account in accounts %}
+            {% set cb = contrib_breakdowns.get(account.id, {}) %}
+            {% set personal = (cb.personal or 0) %}
+            {% set into_pot = (cb.total_into_pot or 0) %}
+            {% set uplift = into_pot - personal %}
+            {% if personal > 0 or into_pot > 0 %}
+            <tr>
+              <td>
+                <span>{{ account.name }}</span>
+                {% if account.pre_salary %}<span class="badge badge-meta" style="font-size:0.7rem;margin-left:6px">outside take-home</span>{% endif %}
+              </td>
+              <td class="num">£{{ '{:,.0f}'.format(personal) }}</td>
+              <td class="num">{% if uplift > 0 %}+£{{ '{:,.0f}'.format(uplift) }}{% else %}—{% endif %}</td>
+              <td class="num"><strong>£{{ '{:,.0f}'.format(into_pot) }}</strong></td>
+            </tr>
+            {% endif %}
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td><strong>Total</strong></td>
+            <td class="num"><strong>£{{ '{:,.0f}'.format(total_personal_monthly) }}</strong></td>
+            <td class="num"><strong>{% if _uplift_monthly > 0 %}+£{{ '{:,.0f}'.format(_uplift_monthly) }}{% else %}—{% endif %}</strong></td>
+            <td class="num"><strong>£{{ '{:,.0f}'.format(total_into_pot_monthly) }}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </details>
   {% endif %}
 </section>
 
@@ -529,7 +572,7 @@
             <div class="perf-legend mt-025">
               <span class="perf-legend-dot" style="background:var(--accent-2)"></span><span>Actual</span>
               <span class="perf-legend-dot" style="background:var(--muted);opacity:0.6"></span><span>Plan (7%)</span>
-              <span class="perf-legend-dot" style="background:var(--accent-5);opacity:0.75"></span><span>Plan (global rate)</span>
+              <span class="perf-legend-dot" style="background:var(--accent-5);opacity:0.75"></span><span>Plan ({{ '{:.1f}'.format(global_growth_rate * 100) }}%)</span>
             </div>
           </div>
           <a class="badge badge-meta" href="/performance/export.xlsx?account_id={{ selected.id }}">Download report</a>
@@ -586,12 +629,9 @@
             <p id="acctStatGoal" class="m-0 text-bold">—</p>
           </div>
           <div class="perf-stat">
-            <p class="text-muted m-0 text-sm-2">Goal ETA @7%</p>
-            <p class="m-0 text-bold">{% if goal_eta_7 %}{{ goal_eta_7 }}{% else %}—{% endif %}</p>
-          </div>
-          <div class="perf-stat">
-            <p class="text-muted m-0 text-sm-2">Goal ETA @{{ '{:.1f}'.format(global_growth_rate * 100) }}%</p>
-            <p class="m-0 text-bold">{% if goal_eta_global %}{{ goal_eta_global }}{% else %}—{% endif %}</p>
+            {% set _goal_target = (selected.goal_value or 0) | float %}
+            <p class="text-muted m-0 text-sm-2">Goal ETA{% if _goal_target > 0 %} @{{ '{:.1f}'.format(goal_eta_rate * 100) }}%{% endif %}</p>
+            <p class="m-0 text-bold">{% if goal_eta %}{{ goal_eta }}{% else %}—{% endif %}</p>
           </div>
         </div>
         <p class="helper-text mt-075">
