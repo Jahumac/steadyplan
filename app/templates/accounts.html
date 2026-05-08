@@ -28,12 +28,18 @@
     {% endcall %}
     {% call hero_stat('Holdings tracked') %}<strong>{{ accounts | selectattr('valuation_mode', 'equalto', 'holdings') | list | length }}</strong>{% endcall %}
   </div>
-  {% set _uplift_monthly = total_into_pot_monthly - total_personal_monthly %}
+  {% set _personal_total = total_personal_monthly + (total_personal_outside_monthly or 0) %}
+  {% set _uplift_monthly = total_into_pot_monthly - _personal_total %}
   {% if _uplift_monthly > 0 %}
   <div class="change-breakdown">
     <span class="change-chip change-chip-contrib">
       £{{ '{:,.0f}'.format(total_personal_monthly) }}<span class="change-chip-label">from you</span>
     </span>
+    {% if total_personal_outside_monthly %}
+    <span class="change-chip change-chip-market-pos">
+      £{{ '{:,.0f}'.format(total_personal_outside_monthly) }}<span class="change-chip-label">outside take-home</span>
+    </span>
+    {% endif %}
     <span class="change-chip change-chip-market-pos">
       +£{{ '{:,.0f}'.format(_uplift_monthly) }}<span class="change-chip-label">tax + employer</span>
     </span>
@@ -43,13 +49,13 @@
   </div>
   <details class="mt-075">
     <summary class="link-accent">Where does £{{ '{:,.0f}'.format(total_personal_monthly) }} “from you” come from?</summary>
-    <p class="helper-text mt-05">This total is the sum of each active account’s “Your Monthly Contribution” setting. For salary sacrifice / workplace pensions this is your pre-tax amount (so it may not match your bank transfers).</p>
+    <p class="helper-text mt-05">“From you” is the sum of each active account’s “Your Monthly Contribution” setting, excluding accounts marked <em>Outside take-home pay</em> (like cashback). Salary sacrifice pensions are also outside take-home.</p>
     <div class="table-scroll mt-05">
       <table class="data-table">
         <thead>
           <tr>
             <th>Account</th>
-            <th class="num">From you</th>
+            <th class="num">Personal</th>
             <th class="num">Tax/bonus/employer</th>
             <th class="num">Into pot</th>
           </tr>
@@ -76,7 +82,7 @@
         <tfoot>
           <tr>
             <td><strong>Total</strong></td>
-            <td class="num"><strong>£{{ '{:,.0f}'.format(total_personal_monthly) }}</strong></td>
+            <td class="num"><strong>£{{ '{:,.0f}'.format(_personal_total) }}</strong></td>
             <td class="num"><strong>{% if _uplift_monthly > 0 %}+£{{ '{:,.0f}'.format(_uplift_monthly) }}{% else %}—{% endif %}</strong></td>
             <td class="num"><strong>£{{ '{:,.0f}'.format(total_into_pot_monthly) }}</strong></td>
           </tr>

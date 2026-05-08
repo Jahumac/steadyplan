@@ -449,7 +449,16 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         effective_values=effective_values,
         total_value=sum(effective_values.values()),
         total_monthly=sum(float(r["monthly_contribution"] or 0) for r in rows),
-        total_personal_monthly=sum(float(b.get("personal", 0) or 0) for b in contrib_breakdowns.values()),
+        total_personal_monthly=sum(
+            float(contrib_breakdowns.get(int(r["id"]), {}).get("personal", 0) or 0)
+            for r in rows
+            if not int(r.get("pre_salary") or 0)
+        ),
+        total_personal_outside_monthly=sum(
+            float(contrib_breakdowns.get(int(r["id"]), {}).get("personal", 0) or 0)
+            for r in rows
+            if int(r.get("pre_salary") or 0)
+        ),
         total_into_pot_monthly=sum(float(b.get("total_into_pot", 0) or 0) for b in contrib_breakdowns.values()),
         contrib_breakdowns=contrib_breakdowns,
         active_page="accounts",
