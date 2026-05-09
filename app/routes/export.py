@@ -658,6 +658,13 @@ def _write_annual_summary_sheet(ws, months, month_labels, db_sections, items, mo
 
     _title_cell(ws, 1, "Shelly Finance — Annual Budget Summary", total_col)
     ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}").font = _SUBTITLE_FONT
+    note = ws.cell(
+        row=3,
+        column=1,
+        value="How to edit: change values in the monthly tabs (e.g. “May 2026”) in the Amount column. This Summary is calculated — clicking a cell will show a formula like ='May 2026'!$D$14.",
+    )
+    note.font = _SUBTITLE_FONT
+    ws.merge_cells(start_row=3, start_column=1, end_row=3, end_column=total_col)
 
     _header_row(ws, 4, ["Item ID", "Item", "Notes"] + month_labels + ["Total"])
     month_row_map = _budget_month_row_map(db_sections, items)
@@ -737,6 +744,37 @@ def _write_annual_summary_sheet(ws, months, month_labels, db_sections, items, mo
         surplus_cells.append(f"={col_letter}{income_row}-{col_letter}{expense_row}")
     surplus_total = f"=SUM({month_start_letter}{surplus_row}:{month_end_letter}{surplus_row})"
     _data_row(ws, surplus_row, ["", "Surplus", ""] + surplus_cells + [surplus_total], bold=True, num_formats=num_formats)
+
+
+def _write_budget_export_guide_sheet(ws, start_year):
+    _set_col_width(ws, 1, 110)
+    ty_label = f"{start_year}/{str(start_year + 1)[-2:]}"
+    _title_cell(ws, 1, f"Shelly Finance — Export Guide (Tax Year {ty_label})", 1)
+    ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}").font = _SUBTITLE_FONT
+
+    lines = [
+        "Workflow (recommended):",
+        "1) Edit numbers in the monthly tabs (Apr … Mar). Use the Amount column — those are the inputs.",
+        "2) The Summary tab is calculated from the month tabs. It updates automatically when you edit a month.",
+        "3) Investment Tracking shows (a) what your budget plans to contribute and (b) what you actually logged in Shelly (ISA/Pension top-ups).",
+        "",
+        "If you click a cell in Summary and see something like ='May 2026'!$D$14:",
+        "- That’s normal: it means the value is linked to the May sheet.",
+        "- If you overwrite that formula, it becomes a manual value and will no longer stay in sync with the monthly sheets.",
+        "",
+        "Legend (Investment Tracking):",
+        "- Personal: money you plan to pay in (from budget lines linked to accounts).",
+        "- Tax relief: added for relief-at-source pensions/SIPPs (25% uplift on net; logged pension rows are treated as gross).",
+        "- LISA bonus: 25% bonus on LISA personal contributions until the £4,000/year cap (bonus does not count toward ISA allowance).",
+        "- Employer: workplace pension employer contributions.",
+        "- Allowance basis: ISA uses personal only; Pension uses gross into-pot (personal + relief + employer).",
+    ]
+    r = 4
+    for t in lines:
+        cell = ws.cell(row=r, column=1, value=t)
+        cell.font = _DATA_FONT
+        cell.alignment = Alignment(wrap_text=True, vertical="top")
+        r += 1
 
 
 def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month_entry_maps, assumptions):
@@ -956,6 +994,66 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
     ws.cell(row=wrapper_table_start + 3, column=2, value=_sum_col("M", pension_acc_rows)).number_format = GBP
     ws.cell(row=wrapper_table_start + 3, column=3, value=_sum_col("N", pension_acc_rows)).number_format = GBP
 
+    row += 2
+    _header_row(ws, row, ["Monthly totals — what each column includes", "", "", "", "", "", ""])
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=7)
+    row += 1
+    info = ws.cell(
+        row=row,
+        column=1,
+        value="Personal is the sum of your linked budget lines (by account). Tax relief is 25% of the pension/SIPP lines that are relief-at-source. LISA bonus is calculated with a running £4k/year cap. Employer is your pension employer contribution (or logged employer payments).",
+    )
+    info.font = _SUBTITLE_FONT
+    info.alignment = Alignment(wrap_text=True, vertical="top")
+    ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=7)
+    row += 2
+
+    _header_row(ws, row, ["Account", "Wrapper", "Budget source (example)", "Personal", "Tax relief", "LISA bonus", "Employer/mo"])
+    row += 1
+    item_name_map = {int(it["id"]): (it.get("name") or "") for it in items}
+    first_month_sheet = month_sheet_names[0] if month_sheet_names else ""
+    for aid, acc in sorted(account_map.items(), key=lambda kv: kv[1].get("name") or ""):
+        item_ids = account_to_item_ids.get(aid) or []
+        wrapper = (acc.get("wrapper_type") or "").strip()
+        is_pension = is_pension_account(acc)
+        method = (acc.get("contribution_method") or "standard").strip().lower()
+        relief_at_source = ("SIPP" in wrapper) or (is_pension and method != "salary_sacrifice")
+        is_lisa = wrapper in LISA_WRAPPER_TYPES
+        employer_m = float(acc.get("employer_contribution") or 0.0) if is_pension else 0.0
+
+        if not item_ids and employer_m <= 0 and float(isa_logged_by_account.get(aid, 0.0) or 0) <= 0 and float(pension_logged_personal_gross_by_account.get(aid, 0.0) or 0) <= 0 and float(pension_logged_employer_by_account.get(aid, 0.0) or 0) <= 0:
+            continue
+
+        example = "—"
+        if item_ids and first_month_sheet:
+            parts = []
+            for item_id in item_ids[:2]:
+                src_row = item_row_map.get(int(item_id))
+                nm = item_name_map.get(int(item_id), "") or f"Item {item_id}"
+                if src_row:
+                    parts.append(f"{nm}: '{first_month_sheet}'!D{src_row}")
+                else:
+                    parts.append(nm)
+            if len(item_ids) > 2:
+                parts.append(f"+{len(item_ids) - 2} more")
+            example = "; ".join(parts)
+
+        _data_row(
+            ws,
+            row,
+            [
+                acc.get("name") or "",
+                wrapper or "—",
+                example,
+                "Yes" if item_ids else "—",
+                "25% of personal" if relief_at_source else "—",
+                "25% (cap £4k/yr)" if is_lisa else "—",
+                employer_m if employer_m > 0 else "—",
+            ],
+            num_formats={7: GBP},
+        )
+        row += 1
+
     row += 1
     _header_row(ws, row, ["Month", "Personal", "Tax relief", "LISA bonus", "Employer", "Total into pot", "Running total"])
     row += 1
@@ -1158,9 +1256,11 @@ def export_budget_annual():
             carry = em
 
     wb = Workbook()
-    # First sheet: Summary
-    ws_sum = wb.active
-    ws_sum.title = "Summary"
+    ws_guide = wb.active
+    ws_guide.title = "Guide"
+    _write_budget_export_guide_sheet(ws_guide, start_year)
+
+    ws_sum = wb.create_sheet("Summary")
     _write_annual_summary_sheet(ws_sum, months, month_labels, db_sections, items, month_entry_maps)
 
     # 12 month sheets (re-uses the monthly format with hidden item_id column A)
