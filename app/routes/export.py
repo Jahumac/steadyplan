@@ -525,7 +525,7 @@ def _budget_month_row_map(db_sections, items):
     return out
 
 
-def _write_budget_month_sheet(ws, title_text, db_sections, items, entry_map, item_id_col=False):
+def _write_budget_month_sheet(ws, title_text, db_sections, items, entry_map, item_id_col=False, linked_accounts=None, active_overrides=None, prior_entry_map=None):
     """Render one month's budget into `ws`. Returns a dict of section_key → total.
 
     If item_id_col is True, an extra hidden column A carries the budget_item_id
@@ -550,6 +550,9 @@ def _write_budget_month_sheet(ws, title_text, db_sections, items, entry_map, ite
     section_total_cell_refs = {}
     amount_col = 3 + col_offset
     amount_col_letter = get_column_letter(amount_col)
+    linked_accounts = linked_accounts or {}
+    active_overrides = active_overrides or {}
+    prior_entry_map = prior_entry_map or {}
 
     for sec in db_sections:
         section_items = [it for it in items if it["section"] == sec["key"]]
@@ -563,7 +566,17 @@ def _write_budget_month_sheet(ws, title_text, db_sections, items, entry_map, ite
         sec_total = 0.0
         item_start_row = row
         for item in section_items:
-            amount = float(entry_map[item["id"]]["amount"]) if item["id"] in entry_map else float(item["default_amount"] or 0)
+            linked = linked_accounts.get(int(item["linked_account_id"])) if item.get("linked_account_id") else None
+            if item["id"] in entry_map:
+                amount = float(entry_map[item["id"]]["amount"] or 0)
+            elif linked and int(linked["id"]) in active_overrides:
+                amount = float((active_overrides[int(linked["id"])] or {}).get("override_amount") or 0)
+            elif linked:
+                amount = float(linked.get("monthly_contribution") or 0)
+            elif item["id"] in prior_entry_map:
+                amount = float(prior_entry_map[item["id"]]["amount"] or 0)
+            else:
+                amount = float(item["default_amount"] or 0)
             vals = ([item["id"]] if item_id_col else []) + [item["name"], item["notes"] or "", amount]
             _data_row(ws, row, vals, num_formats={3 + col_offset: GBP})
             sec_total += amount
@@ -616,16 +629,27 @@ def export_budget():
 
     db_sections = fetch_budget_sections(uid)
     items = fetch_budget_items(uid)
+    accounts = fetch_all_accounts(uid)
+    account_map = {int(a["id"]): dict(a) for a in accounts}
     entries = fetch_budget_entries(month_key, uid)
     entry_map = {e["budget_item_id"]: e for e in entries}
-    if not entry_map:
-        prior = fetch_prior_month_budget_entries(month_key, uid)
-        entry_map = {e["budget_item_id"]: e for e in prior}
+    prior = fetch_prior_month_budget_entries(month_key, uid)
+    prior_entry_map = {e["budget_item_id"]: e for e in prior}
+    active_overrides = fetch_all_active_overrides(month_key, uid) or {}
 
     wb = Workbook()
     ws = wb.active
     ws.title = f"Budget {month_key}"
-    _write_budget_month_sheet(ws, f"Shelly Finance — Budget for {month_label}", db_sections, items, entry_map)
+    _write_budget_month_sheet(
+        ws,
+        f"Shelly Finance — Budget for {month_label}",
+        db_sections,
+        items,
+        entry_map,
+        linked_accounts=account_map,
+        active_overrides=active_overrides,
+        prior_entry_map=prior_entry_map,
+    )
 
     buf = BytesIO()
     wb.save(buf)
@@ -1264,6 +1288,7 @@ def export_budget_annual():
     items = fetch_budget_items(uid)
     accounts = fetch_all_accounts(uid)
     assumptions = fetch_assumptions(uid)
+    account_map = {int(a["id"]): dict(a) for a in accounts}
 
     months = _tax_year_months(start_year)
     month_labels = []
@@ -1291,8 +1316,11 @@ def export_budget_annual():
     # 12 month sheets (re-uses the monthly format with hidden item_id column A)
     for mk, label in zip(months, month_labels):
         ws = wb.create_sheet(label)
+        active_overrides = fetch_all_active_overrides(mk, uid) or {}
         _write_budget_month_sheet(ws, f"Shelly Finance — Budget for {label}", db_sections, items,
-                                  month_entry_maps[mk], item_id_col=True)
+                                  month_entry_maps[mk], item_id_col=True,
+                                  linked_accounts=account_map,
+                                  active_overrides=active_overrides)
 
     # Investment Tracking
     ws_inv = wb.create_sheet("Investment Tracking")
