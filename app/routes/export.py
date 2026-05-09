@@ -17,7 +17,9 @@ from app.calculations import (
     _safe_get,
     account_gross_growth_rate,
     account_growth_rate,
+    add_months_to_key,
     compute_performance_series,
+    contribution_override_for_month,
     contribution_breakdown,
     current_age_from_assumptions,
     effective_account_value,
@@ -269,12 +271,19 @@ def export_projections():
         acc_platform_cap = to_float(_safe_get(acc, "platform_fee_cap", 0))
         acc_fund_pct = to_float(_safe_get(acc, "fund_fee_pct", 0))
         acc_contribution_fee_pct = to_float(_safe_get(acc, "contribution_fee_pct", 0))
+        start_month = _safe_get(acc, "_projection_start_month")
+        first_month_override = None
+        if start_month:
+            first_month_override = contribution_override_for_month(acc, start_month)
+        contribution_account = dict(acc)
+        if first_month_override is not None:
+            contribution_account["monthly_contribution"] = first_month_override
         acc_monthly = projection_monthly_contribution(acc, assumptions, 0)
         acc_current = to_float(acc["current_value"])
         acc_projected = projected_account_value(acc, assumptions)
         acc_projected_no_fees = projected_account_value_no_fees(acc, assumptions)
         acc_fee_impact = acc_projected_no_fees - acc_projected
-        acc_breakdown = contribution_breakdown(acc, assumptions)
+        acc_breakdown = contribution_breakdown(contribution_account, assumptions)
         acc_contrib_fee_monthly = to_float(acc_breakdown.get("contribution_fee", 0))
         acc_total_months_for_fees = int(exact_years * 12)
         acc_total_contrib_fees = acc_contrib_fee_monthly * acc_total_months_for_fees
@@ -295,6 +304,8 @@ def export_projections():
             ("Current value", acc_current, GBP),
             ("You pay (monthly)", acc_breakdown["personal"], GBP),
         ]
+        if first_month_override is not None and abs(to_float(acc.get("monthly_contribution", 0)) - to_float(first_month_override)) > 0.005:
+            summary_rows.append(("Account setting (monthly)", to_float(acc.get("monthly_contribution", 0)), GBP))
         if has_contrib_fee:
             summary_rows.append(("Contribution fee deducted (monthly)", -acc_contrib_fee_monthly, GBP))
         summary_rows += [
@@ -346,18 +357,32 @@ def export_projections():
 
         is_lisa = acc.get("wrapper_type") == "Lifetime ISA"
         prev_val = acc_current
+
+        def _month_breakdown(month_index):
+            mk = add_months_to_key(start_month, month_index) if start_month else None
+            override = contribution_override_for_month(acc, mk) if mk else None
+            ca = dict(acc)
+            if override is not None:
+                ca["monthly_contribution"] = override
+            return contribution_breakdown(ca, assumptions)
+
         for yr in range(0, whole_years + 1):
             age = int(current_age + yr)
             val = projected_account_value_at_year(acc, assumptions, yr)
             if yr == 0:
                 contrib_this_year = 0
                 contrib_fee_this_year = 0
-            elif is_lisa and (current_age + yr) > 50:
-                contrib_this_year = 0
-                contrib_fee_this_year = 0
             else:
-                contrib_this_year = acc_monthly * 12
-                contrib_fee_this_year = acc_contrib_fee_monthly * 12
+                start_idx = (yr - 1) * 12
+                end_idx = yr * 12
+                contrib_this_year = 0.0
+                contrib_fee_this_year = 0.0
+                for mi in range(start_idx, end_idx):
+                    if is_lisa and (current_age + mi / 12.0) >= 50:
+                        continue
+                    b = _month_breakdown(mi)
+                    contrib_this_year += float(b.get("total_into_pot") or 0)
+                    contrib_fee_this_year += float(b.get("contribution_fee") or 0)
             growth_this_year = (val - prev_val - contrib_this_year) if yr > 0 else 0
             year_label = f"{curr_year + yr} (today)" if yr == 0 else curr_year + yr
 
