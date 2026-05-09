@@ -554,6 +554,7 @@ def _write_budget_month_sheet(ws, title_text, db_sections, items, entry_map, ite
     linked_accounts = linked_accounts or {}
     active_overrides = active_overrides or {}
     prior_entry_map = prior_entry_map or {}
+    pre_salary_amount_refs = []
 
     for sec in db_sections:
         section_items = [it for it in items if it["section"] == sec["key"]]
@@ -580,6 +581,8 @@ def _write_budget_month_sheet(ws, title_text, db_sections, items, entry_map, ite
                 amount = float(item["default_amount"] or 0)
             vals = ([item["id"]] if item_id_col else []) + [item["name"], item["notes"] or "", amount]
             _data_row(ws, row, vals, num_formats={3 + col_offset: GBP})
+            if linked and int(linked.get("pre_salary") or 0):
+                pre_salary_amount_refs.append(f"{amount_col_letter}{row}")
             sec_total += amount
             row += 1
         item_end_row = row - 1
@@ -614,7 +617,14 @@ def _write_budget_month_sheet(ws, title_text, db_sections, items, entry_map, ite
     _data_row(ws, row, row_vals, num_formats={3 + col_offset: GBP})
     row += 1
 
-    row_vals = ([""] if item_id_col else []) + ["Surplus", "", f"={income_cell_ref}-{expenses_cell_ref}"]
+    pre_salary_row = row
+    pre_salary_cell_ref = f"{amount_col_letter}{pre_salary_row}"
+    pre_salary_formula = f"=SUM({', '.join(pre_salary_amount_refs)})" if pre_salary_amount_refs else "=0"
+    row_vals = ([""] if item_id_col else []) + ["Outside take-home (not from pocket)", "", pre_salary_formula]
+    _data_row(ws, row, row_vals, num_formats={3 + col_offset: GBP})
+    row += 1
+
+    row_vals = ([""] if item_id_col else []) + ["Surplus", "", f"={income_cell_ref}-{expenses_cell_ref}+{pre_salary_cell_ref}"]
     _data_row(ws, row, row_vals, bold=True, num_formats={3 + col_offset: GBP})
     row += 1
 
@@ -695,7 +705,7 @@ def _resolved_month_map(month_key, uid, carry_forward):
     return entry_map
 
 
-def _write_annual_summary_sheet(ws, months, month_labels, db_sections, items, month_entry_maps):
+def _write_annual_summary_sheet(ws, months, month_labels, db_sections, items, month_entry_maps, pre_salary_item_ids=None):
     n_months = len(months)
     total_col = 4 + n_months
     _set_col_width(ws, 1, 8)
@@ -718,6 +728,8 @@ def _write_annual_summary_sheet(ws, months, month_labels, db_sections, items, mo
 
     _header_row(ws, 4, ["Item ID", "Item", "Notes"] + month_labels + ["Total"])
     month_row_map = _budget_month_row_map(db_sections, items)
+    pre_salary_item_ids = set(int(x) for x in (pre_salary_item_ids or []))
+    pre_salary_item_rows = []
 
     month_start_col = 4
     month_end_col = 3 + n_months
@@ -750,6 +762,8 @@ def _write_annual_summary_sheet(ws, months, month_labels, db_sections, items, mo
                 [item_id, item["name"], item["notes"] or ""] + month_cells + [total_formula],
                 num_formats=num_formats,
             )
+            if item_id in pre_salary_item_ids:
+                pre_salary_item_rows.append(row)
             row += 1
         item_end_row = row - 1
 
@@ -787,11 +801,21 @@ def _write_annual_summary_sheet(ws, months, month_labels, db_sections, items, mo
     _data_row(ws, expense_row, ["", "Total Expenses", ""] + expense_cells + [expense_total], num_formats=num_formats)
     row += 1
 
+    outside_row = row
+    outside_cells = []
+    for c in range(month_start_col, month_end_col + 1):
+        col_letter = get_column_letter(c)
+        refs = [f"{col_letter}{r}" for r in pre_salary_item_rows]
+        outside_cells.append(f"=SUM({', '.join(refs)})" if refs else "=0")
+    outside_total = f"=SUM({month_start_letter}{outside_row}:{month_end_letter}{outside_row})"
+    _data_row(ws, outside_row, ["", "Outside take-home (not from pocket)", ""] + outside_cells + [outside_total], num_formats=num_formats)
+    row += 1
+
     surplus_row = row
     surplus_cells = []
     for c in range(month_start_col, month_end_col + 1):
         col_letter = get_column_letter(c)
-        surplus_cells.append(f"={col_letter}{income_row}-{col_letter}{expense_row}")
+        surplus_cells.append(f"={col_letter}{income_row}-{col_letter}{expense_row}+{col_letter}{outside_row}")
     surplus_total = f"=SUM({month_start_letter}{surplus_row}:{month_end_letter}{surplus_row})"
     _data_row(ws, surplus_row, ["", "Surplus", ""] + surplus_cells + [surplus_total], bold=True, num_formats=num_formats)
 
@@ -807,6 +831,7 @@ def _write_budget_export_guide_sheet(ws, start_year):
         "1) Edit numbers in the monthly tabs (Apr … Mar). Use the Amount column — those are the inputs.",
         "2) The Summary tab is calculated from the month tabs. It updates automatically when you edit a month.",
         "3) Investment Tracking shows (a) what your budget plans to contribute and (b) what you actually logged in Shelly (ISA/Pension top-ups).",
+        "4) Rows marked as Outside take-home pay (e.g. cashback, salary sacrifice) are added back in Surplus so they don’t reduce take-home cashflow.",
         "",
         "If you click a cell in Summary and see something like ='May 2026'!$D$14:",
         "- That’s normal: it means the value is linked to the May sheet.",
@@ -1312,7 +1337,14 @@ def export_budget_annual():
     _write_budget_export_guide_sheet(ws_guide, start_year)
 
     ws_sum = wb.create_sheet("Summary")
-    _write_annual_summary_sheet(ws_sum, months, month_labels, db_sections, items, month_entry_maps)
+    pre_salary_item_ids = {
+        int(it["id"])
+        for it in items
+        if it.get("linked_account_id")
+        and int(it["linked_account_id"]) in account_map
+        and int(account_map[int(it["linked_account_id"])].get("pre_salary") or 0)
+    }
+    _write_annual_summary_sheet(ws_sum, months, month_labels, db_sections, items, month_entry_maps, pre_salary_item_ids=pre_salary_item_ids)
 
     # 12 month sheets (re-uses the monthly format with hidden item_id column A)
     for mk, label in zip(months, month_labels):
