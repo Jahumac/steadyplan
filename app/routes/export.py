@@ -485,6 +485,21 @@ def _income_key(db_sections):
     return income_section["key"] if income_section else (db_sections[0]["key"] if db_sections else "income")
 
 
+def _budget_month_row_map(db_sections, items):
+    row = 4
+    out = {}
+    for sec in db_sections:
+        section_items = [it for it in items if it["section"] == sec["key"]]
+        if not section_items:
+            continue
+        row += 1
+        for it in section_items:
+            out[int(it["id"])] = row
+            row += 1
+        row += 2
+    return out
+
+
 def _write_budget_month_sheet(ws, title_text, db_sections, items, entry_map, item_id_col=False):
     """Render one month's budget into `ws`. Returns a dict of section_key → total.
 
@@ -507,6 +522,9 @@ def _write_budget_month_sheet(ws, title_text, db_sections, items, entry_map, ite
 
     row = 4
     section_totals = {}
+    section_total_cell_refs = {}
+    amount_col = 3 + col_offset
+    amount_col_letter = get_column_letter(amount_col)
 
     for sec in db_sections:
         section_items = [it for it in items if it["section"] == sec["key"]]
@@ -518,26 +536,48 @@ def _write_budget_month_sheet(ws, title_text, db_sections, items, entry_map, ite
         row += 1
 
         sec_total = 0.0
+        item_start_row = row
         for item in section_items:
             amount = float(entry_map[item["id"]]["amount"]) if item["id"] in entry_map else float(item["default_amount"] or 0)
             vals = ([item["id"]] if item_id_col else []) + [item["name"], item["notes"] or "", amount]
             _data_row(ws, row, vals, num_formats={3 + col_offset: GBP})
             sec_total += amount
             row += 1
+        item_end_row = row - 1
 
-        total_vals = ([""] if item_id_col else []) + ["", "Section total", sec_total]
+        total_formula = f"=SUM({amount_col_letter}{item_start_row}:{amount_col_letter}{item_end_row})" if item_end_row >= item_start_row else "=0"
+        total_vals = ([""] if item_id_col else []) + ["", "Section total", total_formula]
         _data_row(ws, row, total_vals, bold=True, num_formats={3 + col_offset: GBP})
         section_totals[sec["key"]] = sec_total
+        section_total_cell_refs[sec["key"]] = f"{amount_col_letter}{row}"
         row += 2
 
     total_income = section_totals.get(_income_key(db_sections), 0)
     total_expenses = sum(v for k, v in section_totals.items() if k != _income_key(db_sections))
     surplus = total_income - total_expenses
 
-    for label, val in [("Total Income", total_income), ("Total Expenses", total_expenses), ("Surplus", surplus)]:
-        row_vals = ([""] if item_id_col else []) + [label, "", val]
-        _data_row(ws, row, row_vals, bold=(label == "Surplus"), num_formats={3 + col_offset: GBP})
-        row += 1
+    income_key = _income_key(db_sections)
+    income_ref = section_total_cell_refs.get(income_key)
+    expense_refs = [ref for k, ref in section_total_cell_refs.items() if k != income_key]
+
+    total_income_formula = f"={income_ref}" if income_ref else "=0"
+    total_expenses_formula = f"=SUM({', '.join(expense_refs)})" if expense_refs else "=0"
+
+    income_row = row
+    income_cell_ref = f"{amount_col_letter}{income_row}"
+    row_vals = ([""] if item_id_col else []) + ["Total Income", "", total_income_formula]
+    _data_row(ws, row, row_vals, num_formats={3 + col_offset: GBP})
+    row += 1
+
+    expenses_row = row
+    expenses_cell_ref = f"{amount_col_letter}{expenses_row}"
+    row_vals = ([""] if item_id_col else []) + ["Total Expenses", "", total_expenses_formula]
+    _data_row(ws, row, row_vals, num_formats={3 + col_offset: GBP})
+    row += 1
+
+    row_vals = ([""] if item_id_col else []) + ["Surplus", "", f"={income_cell_ref}-{expenses_cell_ref}"]
+    _data_row(ws, row, row_vals, bold=True, num_formats={3 + col_offset: GBP})
+    row += 1
 
     return section_totals
 
@@ -606,154 +646,482 @@ def _resolved_month_map(month_key, uid, carry_forward):
 
 
 def _write_annual_summary_sheet(ws, months, month_labels, db_sections, items, month_entry_maps):
-    """Write a wide 'items × 12 months + Total' matrix."""
     n_months = len(months)
-    _set_col_width(ws, 1, 30)
-    _set_col_width(ws, 2, 20)
-    for col in range(3, 3 + n_months):
+    total_col = 4 + n_months
+    _set_col_width(ws, 1, 8)
+    _set_col_width(ws, 2, 30)
+    _set_col_width(ws, 3, 20)
+    for col in range(4, total_col):
         _set_col_width(ws, col, 12)
-    _set_col_width(ws, 3 + n_months, 14)
+    _set_col_width(ws, total_col, 14)
+    ws.column_dimensions["A"].hidden = True
 
-    _title_cell(ws, 1, "Shelly Finance — Annual Budget Summary", 3 + n_months)
+    _title_cell(ws, 1, "Shelly Finance — Annual Budget Summary", total_col)
     ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}").font = _SUBTITLE_FONT
 
-    _header_row(ws, 4, ["Item", "Notes"] + month_labels + ["Total"])
+    _header_row(ws, 4, ["Item ID", "Item", "Notes"] + month_labels + ["Total"])
+    month_row_map = _budget_month_row_map(db_sections, items)
+
+    month_start_col = 4
+    month_end_col = 3 + n_months
+    month_start_letter = get_column_letter(month_start_col)
+    month_end_letter = get_column_letter(month_end_col)
+
     row = 5
-    month_totals = [0.0] * n_months
-    section_totals_per_month = {sec["key"]: [0.0] * n_months for sec in db_sections}
+    section_total_rows = {}
+    num_formats = {c: GBP for c in range(month_start_col, total_col + 1)}
 
     for sec in db_sections:
         section_items = [it for it in items if it["section"] == sec["key"]]
         if not section_items:
             continue
 
-        _header_row(ws, row, [sec["label"], ""] + [""] * n_months + [""])
+        _header_row(ws, row, ["", sec["label"], ""] + [""] * n_months + [""])
         row += 1
 
+        item_start_row = row
         for item in section_items:
-            row_amounts = []
-            for i, month_key in enumerate(months):
-                entry_map = month_entry_maps[month_key]
-                amt = float(entry_map[item["id"]]["amount"]) if item["id"] in entry_map else float(item["default_amount"] or 0)
-                row_amounts.append(amt)
-                month_totals[i] += amt
-                section_totals_per_month[sec["key"]][i] += amt
-            item_total = sum(row_amounts)
-            num_formats = {c: GBP for c in range(3, 4 + n_months)}
-            _data_row(ws, row, [item["name"], item["notes"] or ""] + row_amounts + [item_total], num_formats=num_formats)
+            item_id = int(item["id"])
+            src_row = month_row_map.get(item_id)
+            month_cells = []
+            for sheet_name in month_labels:
+                month_cells.append(f"='{sheet_name}'!$D${src_row}" if src_row else "0")
+            total_formula = f"=SUM({month_start_letter}{row}:{month_end_letter}{row})"
+            _data_row(
+                ws,
+                row,
+                [item_id, item["name"], item["notes"] or ""] + month_cells + [total_formula],
+                num_formats=num_formats,
+            )
             row += 1
+        item_end_row = row - 1
 
-        sec_totals = section_totals_per_month[sec["key"]]
-        num_formats = {c: GBP for c in range(3, 4 + n_months)}
-        _data_row(ws, row, ["", "Section total"] + sec_totals + [sum(sec_totals)],
-                  bold=True, num_formats=num_formats)
+        month_totals = []
+        for c in range(month_start_col, month_end_col + 1):
+            col_letter = get_column_letter(c)
+            month_totals.append(
+                f"=SUM({col_letter}{item_start_row}:{col_letter}{item_end_row})" if item_end_row >= item_start_row else "=0"
+            )
+        total_formula = f"=SUM({get_column_letter(total_col)}{item_start_row}:{get_column_letter(total_col)}{item_end_row})" if item_end_row >= item_start_row else "=0"
+        _data_row(ws, row, ["", "Section total", ""] + month_totals + [total_formula], bold=True, num_formats=num_formats)
+        section_total_rows[sec["key"]] = row
         row += 2
 
-    # Overall summary
     income_key = _income_key(db_sections)
-    income_by_month = section_totals_per_month.get(income_key, [0.0] * n_months)
-    expense_by_month = [sum(section_totals_per_month[k][i] for k in section_totals_per_month if k != income_key)
-                        for i in range(n_months)]
-    surplus_by_month = [income_by_month[i] - expense_by_month[i] for i in range(n_months)]
+    income_total_row = section_total_rows.get(income_key)
+    expense_total_rows = [r for k, r in section_total_rows.items() if k != income_key]
 
-    num_formats = {c: GBP for c in range(3, 4 + n_months)}
-    for label, series in [("Total Income", income_by_month),
-                          ("Total Expenses", expense_by_month),
-                          ("Surplus", surplus_by_month)]:
-        _data_row(ws, row, [label, ""] + series + [sum(series)],
-                  bold=(label == "Surplus"), num_formats=num_formats)
-        row += 1
+    income_row = row
+    income_cells = []
+    for c in range(month_start_col, month_end_col + 1):
+        col_letter = get_column_letter(c)
+        income_cells.append(f"={col_letter}{income_total_row}" if income_total_row else "=0")
+    income_total = f"=SUM({month_start_letter}{income_row}:{month_end_letter}{income_row})"
+    _data_row(ws, income_row, ["", "Total Income", ""] + income_cells + [income_total], num_formats=num_formats)
+    row += 1
+
+    expense_row = row
+    expense_cells = []
+    for c in range(month_start_col, month_end_col + 1):
+        col_letter = get_column_letter(c)
+        refs = [f"{col_letter}{r}" for r in expense_total_rows]
+        expense_cells.append(f"=SUM({', '.join(refs)})" if refs else "=0")
+    expense_total = f"=SUM({month_start_letter}{expense_row}:{month_end_letter}{expense_row})"
+    _data_row(ws, expense_row, ["", "Total Expenses", ""] + expense_cells + [expense_total], num_formats=num_formats)
+    row += 1
+
+    surplus_row = row
+    surplus_cells = []
+    for c in range(month_start_col, month_end_col + 1):
+        col_letter = get_column_letter(c)
+        surplus_cells.append(f"={col_letter}{income_row}-{col_letter}{expense_row}")
+    surplus_total = f"=SUM({month_start_letter}{surplus_row}:{month_end_letter}{surplus_row})"
+    _data_row(ws, surplus_row, ["", "Surplus", ""] + surplus_cells + [surplus_total], bold=True, num_formats=num_formats)
 
 
 def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month_entry_maps, assumptions):
-    """Planned (budget) vs Actual (logged) vs Allowance per wrapper, plus per-account detail."""
     _set_col_width(ws, 1, 26)
-    _set_col_width(ws, 2, 16)
+    _set_col_width(ws, 2, 18)
     _set_col_width(ws, 3, 16)
     _set_col_width(ws, 4, 16)
     _set_col_width(ws, 5, 16)
-    _set_col_width(ws, 6, 12)
+    _set_col_width(ws, 6, 16)
+    _set_col_width(ws, 7, 16)
+    _set_col_width(ws, 8, 16)
+    _set_col_width(ws, 9, 16)
+    _set_col_width(ws, 10, 16)
+    _set_col_width(ws, 11, 16)
+    _set_col_width(ws, 12, 16)
+    _set_col_width(ws, 13, 18)
+    _set_col_width(ws, 14, 18)
+    _set_col_width(ws, 15, 16)
 
     ty_label = f"{start_year}/{str(start_year + 1)[-2:]}"
-    _title_cell(ws, 1, f"Shelly Finance — Investment Tracking (Tax Year {ty_label})", 6)
+    _title_cell(ws, 1, f"Shelly Finance — Investment Tracking (Tax Year {ty_label})", 15)
     ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}").font = _SUBTITLE_FONT
 
-    account_map = {int(a["id"]): dict(a) for a in accounts}
+    isa_allowance = float(assumptions["isa_allowance"]) if assumptions and assumptions.get("isa_allowance") else 20000.0
+    lisa_allowance = float(assumptions["lisa_allowance"]) if assumptions and assumptions.get("lisa_allowance") else 4000.0
+    pension_allowance = float(assumptions["pension_annual_allowance"]) if assumptions and assumptions.get("pension_annual_allowance") else 60000.0
 
-    # Planned per account = sum across 12 months of linked budget item amounts
+    month_keys = list(month_entry_maps.keys())
+    month_sheet_names = []
+    for mk in month_keys:
+        d = datetime.strptime(mk, "%Y-%m")
+        month_sheet_names.append(f"{_MONTH_NAMES[d.month - 1]} {d.year}")
+
+    db_sections = fetch_budget_sections(uid)
+    item_row_map = _budget_month_row_map(db_sections, items)
+
     linked_items = [it for it in items if it.get("linked_account_id")]
-    planned_per_account = {}
+    account_to_item_ids = {}
     for it in linked_items:
         aid = int(it["linked_account_id"])
-        total = 0.0
-        for mk, entry_map in month_entry_maps.items():
-            total += float(entry_map[it["id"]]["amount"]) if it["id"] in entry_map else float(it["default_amount"] or 0)
-        planned_per_account[aid] = planned_per_account.get(aid, 0.0) + total
+        account_to_item_ids.setdefault(aid, []).append(int(it["id"]))
 
-    # Actual logged contributions in the tax year
     ty_start_iso = date(start_year, 4, 6).isoformat()
     ty_end_iso = date(start_year + 1, 4, 5).isoformat()
     isa_logs = fetch_isa_contributions(uid, ty_start_iso, ty_end_iso) or []
     pension_logs = fetch_pension_contributions(uid, ty_start_iso, ty_end_iso) or []
 
-    actual_per_account = {}
-    for row in list(isa_logs) + list(pension_logs):
-        aid = int(row["account_id"])
-        actual_per_account[aid] = actual_per_account.get(aid, 0.0) + float(row["amount"] or 0)
+    isa_logged_by_account = {}
+    for r in isa_logs:
+        aid = int(r["account_id"])
+        isa_logged_by_account[aid] = isa_logged_by_account.get(aid, 0.0) + float(r["amount"] or 0)
 
-    # ── Wrapper rollup ───────────────────────────────────────────────────────
-    isa_allowance = float(assumptions["isa_allowance"]) if assumptions and assumptions.get("isa_allowance") else 20000.0
-    lisa_allowance = float(assumptions["lisa_allowance"]) if assumptions and assumptions.get("lisa_allowance") else 4000.0
-    pension_allowance = float(assumptions["pension_allowance"]) if assumptions and assumptions.get("pension_allowance") else 60000.0
+    pension_logged_personal_gross_by_account = {}
+    pension_logged_employer_by_account = {}
+    for r in pension_logs:
+        aid = int(r["account_id"])
+        kind = (r.get("kind") or "personal").strip().lower()
+        amt = float(r["amount"] or 0)
+        if kind == "employer":
+            pension_logged_employer_by_account[aid] = pension_logged_employer_by_account.get(aid, 0.0) + amt
+        else:
+            pension_logged_personal_gross_by_account[aid] = pension_logged_personal_gross_by_account.get(aid, 0.0) + amt
 
-    def _sum(pred):
-        planned = sum(planned_per_account.get(aid, 0.0) for aid in account_map if pred(account_map[aid]))
-        actual = sum(actual_per_account.get(aid, 0.0) for aid in account_map if pred(account_map[aid]))
-        return planned, actual
+    def _sum_formula(refs):
+        refs = [r for r in refs if r]
+        if not refs:
+            return "0"
+        if len(refs) == 1:
+            return f"={refs[0]}"
+        return f"=SUM({', '.join(refs)})"
 
-    isa_planned, isa_actual = _sum(lambda a: (a.get("wrapper_type") or "") in ISA_WRAPPER_TYPES)
-    lisa_planned, lisa_actual = _sum(lambda a: (a.get("wrapper_type") or "") in LISA_WRAPPER_TYPES)
-    pension_planned, pension_actual = _sum(lambda a: is_pension_account(a))
+    def _planned_personal_formula_for_account(aid):
+        item_ids = account_to_item_ids.get(aid) or []
+        refs = []
+        for item_id in item_ids:
+            src_row = item_row_map.get(int(item_id))
+            if not src_row:
+                continue
+            for sheet_name in month_sheet_names:
+                refs.append(f"'{sheet_name}'!$D${src_row}")
+        return _sum_formula(refs)
 
-    _header_row(ws, 4, ["Wrapper", "Planned (budget)", "Logged (actuals)", "Allowance", "Remaining", "% Used"])
+    account_map = {int(a["id"]): dict(a) for a in accounts}
 
-    def _pct(used, allowance):
-        return (used / allowance * 100.0) if allowance > 0 else 0.0
-
+    wrapper_table_start = 4
+    _header_row(ws, wrapper_table_start, ["Wrapper", "Planned (allowance basis)", "Logged (allowance basis)", "Allowance", "Remaining", "% Used"])
     PCT = '0.0"%"'
-    rows_data = [
-        ("ISA (all)", isa_planned, isa_actual, isa_allowance),
-        ("  of which LISA", lisa_planned, lisa_actual, lisa_allowance),
-        ("Pension", pension_planned, pension_actual, pension_allowance),
+
+    wrapper_rows = [
+        ("ISA (all)", isa_allowance),
+        ("  of which LISA", lisa_allowance),
+        ("Pension", pension_allowance),
     ]
-    row = 5
-    for label, planned, actual, allowance in rows_data:
-        used = max(planned, actual)  # show worst-case usage for "remaining"
-        remaining = max(allowance - used, 0.0)
-        _data_row(ws, row, [label, planned, actual, allowance, remaining, _pct(used, allowance)],
-                  num_formats={2: GBP, 3: GBP, 4: GBP, 5: GBP, 6: PCT})
-        row += 1
+    for i, (label, allowance) in enumerate(wrapper_rows):
+        r = wrapper_table_start + 1 + i
+        remaining_formula = f"=MAX($D{r}-MAX($B{r},$C{r}),0)"
+        pct_formula = f"=IF($D{r}>0,MAX($B{r},$C{r})/$D{r},0)"
+        _data_row(ws, r, [label, 0, 0, float(allowance), remaining_formula, pct_formula], num_formats={2: GBP, 3: GBP, 4: GBP, 5: GBP, 6: PCT})
 
-    # ISA allowance note (LISA sits inside ISA £20k)
-    note = ws.cell(row=row + 1, column=1,
-                   value="Note: LISA contributions (£4k cap) count toward the overall ISA £20k allowance.")
+    note_row = wrapper_table_start + 5
+    note = ws.cell(row=note_row, column=1, value="Note: LISA personal contributions count toward the overall ISA £20k allowance. The 25% LISA bonus does not.")
     note.font = _SUBTITLE_FONT
-    ws.merge_cells(start_row=row + 1, start_column=1, end_row=row + 1, end_column=6)
-    row += 3
+    ws.merge_cells(start_row=note_row, start_column=1, end_row=note_row, end_column=15)
 
-    # ── Per-account detail ────────────────────────────────────────────────────
-    _header_row(ws, row, ["Account", "Wrapper", "Planned (annual)", "Logged (annual)", "Diff (Logged − Planned)", ""])
+    row = note_row + 2
+    per_account_header_row = row
+    _header_row(ws, per_account_header_row, [
+        "Account",
+        "Wrapper",
+        "Planned personal (budget)",
+        "Planned tax relief",
+        "Planned LISA bonus",
+        "Planned employer",
+        "Planned into pot",
+        "Logged personal",
+        "Logged tax relief",
+        "Logged LISA bonus",
+        "Logged employer",
+        "Logged into pot",
+        "Allowance basis (planned)",
+        "Allowance basis (logged)",
+        "Diff (Logged − Planned)",
+    ])
     row += 1
 
+    isa_acc_rows = []
+    lisa_acc_rows = []
+    pension_acc_rows = []
     for aid, acc in sorted(account_map.items(), key=lambda kv: kv[1].get("name") or ""):
-        planned = planned_per_account.get(aid, 0.0)
-        actual = actual_per_account.get(aid, 0.0)
-        if planned == 0 and actual == 0:
+        has_budget = bool(account_to_item_ids.get(aid))
+        has_isa_logs = float(isa_logged_by_account.get(aid, 0.0) or 0) > 0
+        has_pension_logs = float(pension_logged_personal_gross_by_account.get(aid, 0.0) or 0) > 0 or float(pension_logged_employer_by_account.get(aid, 0.0) or 0) > 0
+        has_employer_plan = float(acc.get("employer_contribution") or 0) > 0
+        if not (has_budget or has_isa_logs or has_pension_logs or has_employer_plan):
             continue
-        wrapper = acc.get("wrapper_type") or "—"
-        _data_row(ws, row, [acc.get("name") or "", wrapper, planned, actual, actual - planned, ""],
-                  num_formats={3: GBP, 4: GBP, 5: GBP})
+
+        wrapper = (acc.get("wrapper_type") or "").strip()
+        is_isa = wrapper in ISA_WRAPPER_TYPES
+        is_lisa = wrapper in LISA_WRAPPER_TYPES
+        is_pension = is_pension_account(acc)
+        method = (acc.get("contribution_method") or "standard").strip().lower()
+        relief_at_source = ("SIPP" in wrapper) or (is_pension and method != "salary_sacrifice")
+
+        planned_personal_cell = f"C{row}"
+        planned_personal = _planned_personal_formula_for_account(aid)
+        planned_tax_relief = f"={planned_personal_cell}*0.25" if relief_at_source else 0
+        planned_lisa_bonus = f"=MIN({planned_personal_cell},$D{wrapper_table_start + 2})*0.25" if is_lisa else 0
+        planned_employer = (float(acc.get("employer_contribution") or 0) * 12.0) if is_pension else 0.0
+        planned_into_pot = f"={planned_personal_cell}+D{row}+E{row}+F{row}"
+
+        logged_isa_personal = float(isa_logged_by_account.get(aid, 0.0) or 0.0)
+        pension_gross = float(pension_logged_personal_gross_by_account.get(aid, 0.0) or 0.0)
+        pension_employer = float(pension_logged_employer_by_account.get(aid, 0.0) or 0.0)
+
+        logged_personal = logged_isa_personal
+        logged_tax_relief = 0.0
+        logged_employer = 0.0
+        if is_pension:
+            if relief_at_source and pension_gross > 0:
+                logged_personal = pension_gross * 0.8
+                logged_tax_relief = pension_gross * 0.2
+            else:
+                logged_personal = pension_gross
+                logged_tax_relief = 0.0
+            logged_employer = pension_employer
+
+        logged_personal_cell = f"H{row}"
+        logged_lisa_bonus = f"=MIN({logged_personal_cell},$D{wrapper_table_start + 2})*0.25" if is_lisa else 0
+        logged_into_pot = f"={logged_personal_cell}+I{row}+J{row}+K{row}"
+
+        allowance_basis_planned = f"=G{row}" if is_pension else (f"={planned_personal_cell}" if is_isa else 0)
+        allowance_basis_logged = f"=L{row}" if is_pension else (f"={logged_personal_cell}" if is_isa else 0)
+        diff_formula = f"=N{row}-M{row}"
+
+        _data_row(
+            ws,
+            row,
+            [
+                acc.get("name") or "",
+                wrapper or "—",
+                planned_personal,
+                planned_tax_relief,
+                planned_lisa_bonus,
+                planned_employer,
+                planned_into_pot,
+                logged_personal,
+                logged_tax_relief,
+                logged_lisa_bonus,
+                logged_employer,
+                logged_into_pot,
+                allowance_basis_planned,
+                allowance_basis_logged,
+                diff_formula,
+            ],
+            num_formats={
+                3: GBP, 4: GBP, 5: GBP, 6: GBP, 7: GBP,
+                8: GBP, 9: GBP, 10: GBP, 11: GBP, 12: GBP,
+                13: GBP, 14: GBP, 15: GBP,
+            },
+        )
+        if is_isa:
+            isa_acc_rows.append(row)
+        if is_lisa:
+            lisa_acc_rows.append(row)
+        if is_pension:
+            pension_acc_rows.append(row)
         row += 1
+
+    def _sum_col(col_letter, rows_):
+        refs = [f"{col_letter}{r}" for r in rows_]
+        return _sum_formula(refs)
+
+    ws.cell(row=wrapper_table_start + 1, column=2, value=_sum_col("M", isa_acc_rows)).number_format = GBP
+    ws.cell(row=wrapper_table_start + 1, column=3, value=_sum_col("N", isa_acc_rows)).number_format = GBP
+    ws.cell(row=wrapper_table_start + 2, column=2, value=_sum_col("M", lisa_acc_rows)).number_format = GBP
+    ws.cell(row=wrapper_table_start + 2, column=3, value=_sum_col("N", lisa_acc_rows)).number_format = GBP
+    ws.cell(row=wrapper_table_start + 3, column=2, value=_sum_col("M", pension_acc_rows)).number_format = GBP
+    ws.cell(row=wrapper_table_start + 3, column=3, value=_sum_col("N", pension_acc_rows)).number_format = GBP
+
+    row += 1
+    _header_row(ws, row, ["Month", "Personal", "Tax relief", "LISA bonus", "Employer", "Total into pot", "Running total"])
+    row += 1
+
+    ws.column_dimensions["P"].hidden = True
+    ws.column_dimensions["Q"].hidden = True
+
+    pension_employer_monthly = 0.0
+    for acc in account_map.values():
+        if is_pension_account(acc):
+            pension_employer_monthly += float(acc.get("employer_contribution") or 0.0)
+
+    lisa_item_ids = []
+    pension_relief_item_ids = []
+    all_linked_item_ids = [int(it["id"]) for it in linked_items]
+    for it in linked_items:
+        aid = int(it["linked_account_id"])
+        acc = account_map.get(aid, {})
+        wrapper = (acc.get("wrapper_type") or "").strip()
+        is_pension = is_pension_account(acc)
+        method = (acc.get("contribution_method") or "standard").strip().lower()
+        relief_at_source = ("SIPP" in wrapper) or (is_pension and method != "salary_sacrifice")
+        if wrapper in LISA_WRAPPER_TYPES:
+            lisa_item_ids.append(int(it["id"]))
+        if relief_at_source:
+            pension_relief_item_ids.append(int(it["id"]))
+
+    planned_running_total_cell = None
+    lisa_running_personal_cell = None
+    for idx, (mk, sheet_name) in enumerate(zip(month_keys, month_sheet_names)):
+        r = row + idx
+        month_label = datetime.strptime(mk, "%Y-%m").strftime("%b %Y")
+
+        personal_refs = []
+        for item_id in all_linked_item_ids:
+            src_row = item_row_map.get(int(item_id))
+            if src_row:
+                personal_refs.append(f"'{sheet_name}'!$D${src_row}")
+        personal_formula = _sum_formula(personal_refs)
+
+        tax_refs = []
+        for item_id in pension_relief_item_ids:
+            src_row = item_row_map.get(int(item_id))
+            if src_row:
+                tax_refs.append(f"'{sheet_name}'!$D${src_row}")
+        tax_formula = f"=0.25*SUM({', '.join(tax_refs)})" if tax_refs else "0"
+
+        lisa_refs = []
+        for item_id in lisa_item_ids:
+            src_row = item_row_map.get(int(item_id))
+            if src_row:
+                lisa_refs.append(f"'{sheet_name}'!$D${src_row}")
+        lisa_personal_formula = _sum_formula(lisa_refs)
+
+        lisa_personal_cell = f"P{r}"
+        lisa_running_cell = f"Q{r}"
+        if idx == 0:
+            lisa_running_formula = f"={lisa_personal_cell}"
+        else:
+            lisa_running_formula = f"={lisa_running_personal_cell}+{lisa_personal_cell}"
+
+        bonus_formula = f"=MIN(MAX($D{wrapper_table_start + 2}-IF({lisa_running_cell}-{lisa_personal_cell}<0,0,{lisa_running_cell}-{lisa_personal_cell}),0),{lisa_personal_cell})*0.25"
+
+        total_formula = f"=B{r}+C{r}+D{r}+E{r}"
+        if planned_running_total_cell:
+            running_formula = f"={planned_running_total_cell}+F{r}"
+        else:
+            running_formula = f"=F{r}"
+
+        _data_row(
+            ws,
+            r,
+            [month_label, personal_formula, tax_formula, bonus_formula, pension_employer_monthly, total_formula, running_formula],
+            num_formats={2: GBP, 3: GBP, 4: GBP, 5: GBP, 6: GBP, 7: GBP},
+        )
+        ws.cell(row=r, column=16, value=lisa_personal_formula).number_format = GBP
+        ws.cell(row=r, column=17, value=lisa_running_formula).number_format = GBP
+
+        planned_running_total_cell = f"G{r}"
+        lisa_running_personal_cell = lisa_running_cell
+
+    row = row + len(month_keys) + 2
+    _header_row(ws, row, ["Month (logged)", "Personal", "Tax relief", "LISA bonus", "Employer", "Total into pot", "Running total"])
+    row += 1
+
+    isa_personal_by_month = {mk: 0.0 for mk in month_keys}
+    lisa_personal_by_month_logged = {mk: 0.0 for mk in month_keys}
+    pension_personal_net_by_month = {mk: 0.0 for mk in month_keys}
+    pension_tax_relief_by_month = {mk: 0.0 for mk in month_keys}
+    pension_employer_by_month = {mk: 0.0 for mk in month_keys}
+
+    for rlog in isa_logs:
+        ds = str(rlog.get("contribution_date") or "")[:10]
+        try:
+            d = datetime.strptime(ds, "%Y-%m-%d").date()
+        except Exception:
+            continue
+        mk = f"{d.year:04d}-{d.month:02d}"
+        if mk not in isa_personal_by_month:
+            continue
+        aid = int(rlog["account_id"])
+        amt = float(rlog["amount"] or 0)
+        isa_personal_by_month[mk] += amt
+        acc = account_map.get(aid, {})
+        if (acc.get("wrapper_type") or "") in LISA_WRAPPER_TYPES:
+            lisa_personal_by_month_logged[mk] += amt
+
+    for rlog in pension_logs:
+        ds = str(rlog.get("contribution_date") or "")[:10]
+        try:
+            d = datetime.strptime(ds, "%Y-%m-%d").date()
+        except Exception:
+            continue
+        mk = f"{d.year:04d}-{d.month:02d}"
+        if mk not in pension_employer_by_month:
+            continue
+        aid = int(rlog["account_id"])
+        acc = account_map.get(aid, {})
+        wrapper = (acc.get("wrapper_type") or "").strip()
+        is_pension = is_pension_account(acc)
+        method = (acc.get("contribution_method") or "standard").strip().lower()
+        relief_at_source = ("SIPP" in wrapper) or (is_pension and method != "salary_sacrifice")
+        kind = (rlog.get("kind") or "personal").strip().lower()
+        amt = float(rlog["amount"] or 0)
+        if kind == "employer":
+            pension_employer_by_month[mk] += amt
+        else:
+            if relief_at_source:
+                pension_personal_net_by_month[mk] += amt * 0.8
+                pension_tax_relief_by_month[mk] += amt * 0.2
+            else:
+                pension_personal_net_by_month[mk] += amt
+
+    logged_running_total_cell = None
+    logged_lisa_running_cell = None
+    for idx, mk in enumerate(month_keys):
+        r = row + idx
+        month_label = datetime.strptime(mk, "%Y-%m").strftime("%b %Y")
+        personal_val = float(isa_personal_by_month.get(mk, 0.0) or 0.0) + float(pension_personal_net_by_month.get(mk, 0.0) or 0.0)
+        tax_val = float(pension_tax_relief_by_month.get(mk, 0.0) or 0.0)
+        employer_val = float(pension_employer_by_month.get(mk, 0.0) or 0.0)
+
+        lisa_personal_cell = f"P{r}"
+        lisa_running_cell = f"Q{r}"
+        ws.cell(row=r, column=16, value=float(lisa_personal_by_month_logged.get(mk, 0.0) or 0.0)).number_format = GBP
+        if idx == 0:
+            ws.cell(row=r, column=17, value=f"={lisa_personal_cell}").number_format = GBP
+        else:
+            ws.cell(row=r, column=17, value=f"={logged_lisa_running_cell}+{lisa_personal_cell}").number_format = GBP
+
+        bonus_formula = f"=MIN(MAX($D{wrapper_table_start + 2}-IF({lisa_running_cell}-{lisa_personal_cell}<0,0,{lisa_running_cell}-{lisa_personal_cell}),0),{lisa_personal_cell})*0.25"
+        total_formula = f"=B{r}+C{r}+D{r}+E{r}"
+        if logged_running_total_cell:
+            running_formula = f"={logged_running_total_cell}+F{r}"
+        else:
+            running_formula = f"=F{r}"
+
+        _data_row(
+            ws,
+            r,
+            [month_label, personal_val, tax_val, bonus_formula, employer_val, total_formula, running_formula],
+            num_formats={2: GBP, 3: GBP, 4: GBP, 5: GBP, 6: GBP, 7: GBP},
+        )
+
+        logged_running_total_cell = f"G{r}"
+        logged_lisa_running_cell = lisa_running_cell
 
 
 @export_bp.route("/budget/annual-export.xlsx")
