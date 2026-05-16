@@ -647,7 +647,6 @@
         <p class="helper-text">No history yet. Update your account balance or run the price scheduler to start recording daily snapshots.</p>
         {% endif %}
 
-        {% if (selected.wrapper_type or '') | lower == 'cash isa' %}
         <section class="panel panel-sm mt-1">
           <div class="section-header">
             <div>
@@ -655,7 +654,7 @@
               <h3>Transfers &amp; withdrawals</h3>
             </div>
           </div>
-          <p class="helper-text">Log money moved in/out so the plan line stays accurate. This doesn’t change your balances — it only improves tracking.</p>
+          <p class="helper-text">Track deposits, withdrawals and transfers. For Cash ISA, this also stops the plan line treating transfers out as “being behind”.</p>
 
           <form method="post" action="/accounts/{{ selected.id }}/cash-events/add" class="settings-form mt-075">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -668,8 +667,8 @@
                 <span>Type</span>
                 <select name="cash_event_kind">
                   <option value="transfer_out">Transfer out</option>
-                  <option value="withdrawal">Withdrawal</option>
                   <option value="deposit">Deposit</option>
+                  <option value="withdrawal">Withdrawal</option>
                 </select>
               </label>
               <label>
@@ -736,7 +735,6 @@
           <p class="helper-text mt-075">No cash flow events logged yet.</p>
           {% endif %}
         </section>
-        {% endif %}
       </section>
 
       {% if selected.valuation_mode == 'holdings' %}

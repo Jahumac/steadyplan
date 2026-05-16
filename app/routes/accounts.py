@@ -184,12 +184,11 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
             goal_eta_rate = None
         if goal_eta_rate is None or goal_eta_rate <= 0:
             goal_eta_rate = global_rate
-        if wrapper == "cash isa":
-            cash_flow_events = fetch_cash_flow_events_for_account(
-                int(selected["id"]),
-                user_id,
-                limit=200,
-            )
+        cash_flow_events = fetch_cash_flow_events_for_account(
+            int(selected["id"]),
+            user_id,
+            limit=200,
+        )
 
         monthly_rows = (fetch_monthly_performance_data_by_account(user_id).get(int(selected["id"])) or {}).get("rows", [])
         if monthly_rows:
@@ -513,11 +512,6 @@ def add_cash_event(account_id):
         flash("Account not found.", "error")
         return redirect(url_for("accounts.accounts"))
 
-    wrapper = (acc.get("wrapper_type") or "").strip().lower()
-    if wrapper != "cash isa":
-        flash("Cash flow events are only available for Cash ISA accounts.", "error")
-        return redirect(url_for("accounts.account_detail", account_id=account_id))
-
     event_date = (request.form.get("cash_event_date") or "").strip()
     kind = (request.form.get("cash_event_kind") or "transfer_out").strip()
     note = (request.form.get("cash_event_note") or "").strip()
@@ -546,6 +540,27 @@ def add_cash_event(account_id):
         "note": note,
     }
     added = add_cash_flow_event(payload, uid)
+    if added and kind == "transfer_out":
+        counterparty_id = payload.get("counterparty_account_id")
+        if counterparty_id and int(counterparty_id) != int(account_id):
+            dest = fetch_account(int(counterparty_id), uid)
+            if dest:
+                src_name = (acc.get("name") or "").strip() or "Source"
+                dest_name = (dest.get("name") or "").strip() or "Destination"
+                dest_note = note or f"Transfer from {src_name}"
+                if not note:
+                    payload["note"] = f"Transfer to {dest_name}"
+                add_cash_flow_event(
+                    {
+                        "account_id": int(counterparty_id),
+                        "event_date": payload["event_date"],
+                        "amount": abs(amt),
+                        "kind": "deposit",
+                        "counterparty_account_id": int(account_id),
+                        "note": dest_note,
+                    },
+                    uid,
+                )
     if not added:
         flash("Could not save cash flow event.", "error")
     else:

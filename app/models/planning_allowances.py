@@ -420,6 +420,8 @@ def add_cash_flow_event(payload, user_id):
                 counterparty = int(counterparty)
             except (TypeError, ValueError):
                 counterparty = None
+        if counterparty and not _account_belongs_to_user(conn, counterparty, user_id):
+            counterparty = None
         cursor = conn.execute(
             """
             INSERT INTO cash_flow_events
