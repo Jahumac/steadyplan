@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, send_from_directory, request, flash, jsonify
+from flask import Flask, redirect, url_for, send_from_directory, request, flash, jsonify, make_response
 from flask_login import LoginManager, current_user
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -82,6 +82,54 @@ def create_app():
     def api_ping():
         return jsonify({"ok": True})
 
+    @app.route("/offline")
+    def offline_page():
+        html = """<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offline · Shelly</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header-row">
+      <h1 class="site-logo">
+        <img src="/static/icons/icon-192.png" alt="" class="site-logo-icon" aria-hidden="true">
+        <span>Shelly</span>
+      </h1>
+    </div>
+    <nav>
+      <a href="/login">Log in</a>
+    </nav>
+  </header>
+  <main class="page-shell">
+    <div class="flash-msg flash-info">
+      <span>You’re offline — for privacy, Shelly doesn’t store your financial pages for offline viewing.</span>
+      <span></span>
+    </div>
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1rem;">
+      <h2 style="margin:0 0 0.25rem;font-size:1.15rem;">Connect to continue</h2>
+      <p style="margin:0.35rem 0 1rem;color:var(--muted);">
+        Reconnect to the internet and reload to access your dashboard.
+      </p>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+        <button type="button" class="badge badge-primary-action" onclick="location.reload()">Retry</button>
+        <a href="/login" class="badge">Go to login</a>
+      </div>
+      <p style="margin:0.9rem 0 0;color:var(--muted);font-size:0.9rem;">
+        Project: <a href="https://github.com/Jahumac/shelly-finance" rel="noopener noreferrer" target="_blank" style="color:var(--accent);">github.com/Jahumac/shelly-finance</a>
+      </p>
+    </div>
+  </main>
+</body>
+</html>"""
+        response = make_response(html)
+        response.headers["Content-Type"] = "text/html; charset=utf-8"
+        return response
+
     with app.app_context():
         init_db()
         if not app.config.get("TESTING"):
@@ -99,7 +147,7 @@ def create_app():
     @app.before_request
     def redirect_to_setup_if_needed():
         # Allow the setup page, login page, and static assets through
-        if request.endpoint in ("auth.setup", "auth.login", "static", "service_worker", "api_ping", None):
+        if request.endpoint in ("auth.setup", "auth.login", "static", "service_worker", "api_ping", "offline_page", None):
             return
         # API clients get a JSON error instead of an HTML redirect to /setup.
         if request.path.startswith("/api/"):
@@ -193,6 +241,13 @@ def create_app():
     def set_security_headers(response):
         if request.is_secure or request.headers.get("X-Forwarded-Proto") == "https":
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+
+        try:
+            if current_user.is_authenticated and not request.path.startswith("/static/") and request.path != "/sw.js":
+                response.headers["Cache-Control"] = "no-store"
+                response.headers["Pragma"] = "no-cache"
+        except Exception:
+            pass
 
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "SAMEORIGIN"

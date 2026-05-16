@@ -11,7 +11,7 @@
  * CSS/JS instead of running stale shell assets indefinitely.
  */
 
-const CACHE_NAME = 'shelly-cache-v3';
+const CACHE_NAME = 'shelly-cache-v5';
 
 /* App shell files to pre-cache on install */
 const APP_SHELL = [
@@ -27,7 +27,12 @@ const APP_SHELL = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(APP_SHELL);
+      return cache.addAll(APP_SHELL).then(async () => {
+        try {
+          const resp = await fetch('/offline', { cache: 'reload' });
+          if (resp.ok) await cache.put('/offline', resp);
+        } catch (e) {}
+      });
     })
   );
   self.skipWaiting();
@@ -57,42 +62,47 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  const hasAuthHeaders =
-    !!request.headers.get('Authorization') ||
-    !!request.headers.get('Cookie');
+  const safeNavPaths = new Set(['/login', '/setup', '/demo', '/offline']);
 
   /* Static assets: cache-first */
   if (url.pathname.startsWith('/static/')) {
-    event.respondWith(cacheFirst(request));
+    event.respondWith(cacheFirstStatic(request));
     return;
   }
 
   /* Page navigations: network-first with offline fallback */
   if (request.mode === 'navigate') {
-    event.respondWith(hasAuthHeaders ? networkOnlyPage(request) : networkFirstPage(request));
+    event.respondWith(safeNavPaths.has(url.pathname) ? networkFirstPage(request) : networkOnlyPage(request));
     return;
   }
 
-  /* API-style JSON calls: network-first, cache response */
+  /* API-style JSON calls: never cached */
   if (url.pathname.includes('/api/') || request.headers.get('Accept')?.includes('application/json')) {
-    event.respondWith(hasAuthHeaders ? networkOnlyAPI(request) : networkFirstAPI(request));
+    event.respondWith(networkOnlyAPI(request));
     return;
   }
 
-  /* Everything else: network-first */
-  event.respondWith(hasAuthHeaders ? networkOnlyPage(request) : networkFirstPage(request));
+  /* Everything else: never cached */
+  event.respondWith(networkOnlyPage(request));
 });
 
 /* ── Strategies ───────────────────────────────────────────────────────── */
 
-async function cacheFirst(request) {
-  const cached = await caches.match(request);
+function _staticCacheKey(request) {
+  const url = new URL(request.url);
+  url.search = '';
+  return new Request(url.toString(), { method: 'GET' });
+}
+
+async function cacheFirstStatic(request) {
+  const key = _staticCacheKey(request);
+  const cached = await caches.match(key);
   if (cached) {
     /* Revalidate in background */
     fetch(request)
       .then((response) => {
         if (response.ok) {
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, response));
+          caches.open(CACHE_NAME).then((cache) => cache.put(key, response));
         }
       })
       .catch(() => {});
@@ -101,7 +111,7 @@ async function cacheFirst(request) {
   const response = await fetch(request);
   if (response.ok) {
     const cache = await caches.open(CACHE_NAME);
-    cache.put(request, response.clone());
+    cache.put(key, response.clone());
   }
   return response;
 }
@@ -118,11 +128,7 @@ async function networkFirstPage(request) {
     const cached = await caches.match(request);
     if (cached) return cached;
 
-    /* Return an offline fallback page */
-    return new Response(offlineHTML(), {
-      status: 503,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    });
+    return await offlinePage();
   }
 }
 
@@ -130,10 +136,7 @@ async function networkOnlyPage(request) {
   try {
     return await fetch(request);
   } catch (e) {
-    return new Response(offlineHTML(), {
-      status: 503,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    });
+    return await offlinePage();
   }
 }
 
@@ -173,6 +176,15 @@ async function networkOnlyAPI(request) {
   }
 }
 
+async function offlinePage() {
+  const cached = await caches.match('/offline');
+  if (cached) return cached;
+  return new Response(offlineHTML(), {
+    status: 503,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  });
+}
+
 /* ── Offline fallback HTML ────────────────────────────────────────────── */
 function offlineHTML() {
   return `<!DOCTYPE html>
@@ -210,7 +222,10 @@ function offlineHTML() {
   <div class="offline-card">
     <div class="offline-icon">🐢</div>
     <h1>You're offline</h1>
-    <p>This page hasn't been cached yet. Connect to the internet, open the app and visit this page, then it will work offline next time.</p>
+    <p>For privacy, Shelly doesn't store your financial pages for offline viewing. Connect to the internet to access your dashboard.</p>
+    <p style="margin-top:0.5rem;font-size:0.9rem;">
+      <a href="https://github.com/Jahumac/shelly-finance" rel="noopener noreferrer" target="_blank" style="color:#38bdf8;">github.com/Jahumac/shelly-finance</a>
+    </p>
     <button onclick="location.reload()">Try Again</button>
   </div>
 </body>
