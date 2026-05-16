@@ -648,35 +648,36 @@
         {% endif %}
 
         {% if (selected.wrapper_type or '') | lower == 'cash isa' %}
-        <div class="mt-1">
+        <section class="panel panel-sm mt-1">
           <div class="section-header">
             <div>
               <p class="eyebrow">Cash Flow</p>
-              <h4 class="m-0">Transfers & withdrawals</h4>
+              <h3>Transfers &amp; withdrawals</h3>
             </div>
           </div>
-          <p class="helper-text mt-05">Log money moved out of this Cash ISA so the “plan” line doesn’t treat it as being behind. This doesn’t change your balances — it only improves tracking.</p>
-          <form method="post" action="/accounts/{{ selected.id }}/cash-events/add" class="mt-075">
+          <p class="helper-text">Log money moved in/out so the plan line stays accurate. This doesn’t change your balances — it only improves tracking.</p>
+
+          <form method="post" action="/accounts/{{ selected.id }}/cash-events/add" class="settings-form mt-075">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="form-grid form-grid-4">
-              <div class="form-field">
-                <label>Date</label>
+            <div class="form-grid">
+              <label>
+                <span>Date</span>
                 <input type="date" name="cash_event_date" value="{{ (now_date.isoformat() if now_date is defined else '') }}">
-              </div>
-              <div class="form-field">
-                <label>Type</label>
+              </label>
+              <label>
+                <span>Type</span>
                 <select name="cash_event_kind">
                   <option value="transfer_out">Transfer out</option>
                   <option value="withdrawal">Withdrawal</option>
                   <option value="deposit">Deposit</option>
                 </select>
-              </div>
-              <div class="form-field">
-                <label>Amount (£)</label>
+              </label>
+              <label>
+                <span>Amount (£)</span>
                 <input type="number" name="cash_event_amount" step="0.01" min="0" placeholder="0.00">
-              </div>
-              <div class="form-field">
-                <label>To account (optional)</label>
+              </label>
+              <label>
+                <span>To account (optional)</span>
                 <select name="cash_event_to_account_id">
                   <option value="">—</option>
                   {% for a in accounts %}
@@ -685,17 +686,19 @@
                     {% endif %}
                   {% endfor %}
                 </select>
-              </div>
+              </label>
             </div>
-            <div class="form-field mt-05">
-              <label>Note (optional)</label>
+            <label class="mt-05">
+              <span>Note (optional)</span>
               <input type="text" name="cash_event_note" placeholder="e.g. moved to Premium Bonds">
+            </label>
+            <div class="badge-row mt-075">
+              <button type="submit">Save cash flow event</button>
             </div>
-            <button class="btn btn-primary mt-05" type="submit">Save cash flow event</button>
           </form>
 
           {% if cash_flow_events %}
-          <div class="table-scroll mt-075">
+          <div class="table-scroll mt-1">
             <table class="data-table">
               <thead>
                 <tr>
@@ -703,7 +706,7 @@
                   <th>Type</th>
                   <th class="num">Amount</th>
                   <th>Note</th>
-                  <th></th>
+                  <th class="num">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -721,7 +724,7 @@
                   <td class="num">
                     <form method="post" action="/accounts/{{ selected.id }}/cash-events/{{ e.id }}/delete">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                      <button class="btn btn-danger btn-xs" type="submit">Remove</button>
+                      <button class="badge badge-danger badge-sm" type="submit">Remove</button>
                     </form>
                   </td>
                 </tr>
@@ -729,8 +732,10 @@
               </tbody>
             </table>
           </div>
+          {% else %}
+          <p class="helper-text mt-075">No cash flow events logged yet.</p>
           {% endif %}
-        </div>
+        </section>
         {% endif %}
       </section>
 
