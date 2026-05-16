@@ -31,17 +31,17 @@ def _ensure_account_contribution_items(conn, user_id):
             [(user_id, k, l, o) for k, l, o in missing],
         )
 
-    investment_section = conn.execute(
+    invest_sections = conn.execute(
         """
         SELECT key FROM budget_sections
         WHERE user_id = ?
           AND (lower(key) LIKE '%invest%' OR lower(key) LIKE '%saving%')
         ORDER BY sort_order, id
-        LIMIT 1
         """,
         (user_id,),
-    ).fetchone()
-    section_key = investment_section["key"] if investment_section else "investment"
+    ).fetchall()
+    invest_keys = [row["key"] for row in invest_sections] if invest_sections else []
+    section_key = invest_keys[0] if invest_keys else "investment"
 
     accounts = conn.execute(
         """
@@ -104,20 +104,25 @@ def _ensure_account_contribution_items(conn, user_id):
                     (sort_row["max_sort"] or -1) + 1,
                 ),
             )
-        # Retire any old unlinked items in the investment section with the same name —
-        # they were created manually before auto-linking existed and are now duplicates.
-        conn.execute(
-            """
-            UPDATE budget_items
-            SET is_active = 0
-            WHERE user_id = ?
-              AND section = ?
-              AND linked_account_id IS NULL
-              AND is_active = 1
-              AND name = ?
-            """,
-            (user_id, section_key, account["name"]),
-        )
+        # Retire any old unlinked items in investment/saving sections with the same
+        # name — they were created manually before auto-linking existed and are now
+        # duplicates. This runs across all invest/saving section keys so a legacy
+        # item living under "saving" doesn't keep showing up when the linked item
+        # is created under "investment" (or vice versa).
+        if invest_keys:
+            placeholders = ", ".join("?" for _ in invest_keys)
+            conn.execute(
+                f"""
+                UPDATE budget_items
+                SET is_active = 0
+                WHERE user_id = ?
+                  AND section IN ({placeholders})
+                  AND linked_account_id IS NULL
+                  AND is_active = 1
+                  AND name = ?
+                """,
+                (user_id, *invest_keys, account["name"]),
+            )
     conn.commit()
 
     linked_rows = conn.execute(
