@@ -105,17 +105,6 @@ def _ensure_account_contribution_items(conn, user_id):
                     (sort_row["max_sort"] or -1) + 1,
                 ),
             )
-        else:
-            # Mirror the account's monthly_contribution onto the linked
-            # budget_item's default_amount the same way debts sync
-            # monthly_payment. Per-month tweaks live in budget_entries /
-            # contribution_overrides; the base default should always reflect
-            # the account. The name is left alone so a user-friendly rename
-            # in Budget Setup survives.
-            conn.execute(
-                "UPDATE budget_items SET default_amount = ? WHERE id = ?",
-                (amount, existing["id"]),
-            )
         # Retire any old unlinked items in the investment section with the same name —
         # they were created manually before auto-linking existed and are now duplicates.
         conn.execute(
@@ -129,6 +118,41 @@ def _ensure_account_contribution_items(conn, user_id):
               AND name = ?
             """,
             (user_id, section_key, account["name"]),
+        )
+    conn.commit()
+
+    linked_rows = conn.execute(
+        """
+        SELECT bi.id AS budget_item_id,
+               bi.default_amount AS old_default_amount,
+               bi.linked_account_id AS account_id,
+               a.monthly_contribution AS monthly_contribution
+        FROM budget_items bi
+        JOIN accounts a ON a.id = bi.linked_account_id
+        WHERE bi.user_id = ?
+          AND bi.is_active = 1
+          AND bi.linked_account_id IS NOT NULL
+          AND a.user_id = bi.user_id
+          AND a.is_active = 1
+          AND COALESCE(a.include_in_budget, 1) = 1
+        """,
+        (user_id,),
+    ).fetchall()
+
+    for row in linked_rows:
+        new_amount = float(row["monthly_contribution"] or 0)
+        old_amount = float(row["old_default_amount"] or 0)
+        if abs(old_amount - new_amount) < 0.005:
+            continue
+        conn.execute(
+            "UPDATE budget_items SET default_amount = ? WHERE id = ?",
+            (new_amount, row["budget_item_id"]),
+        )
+        from datetime import date
+        today_key = date.today().strftime("%Y-%m")
+        conn.execute(
+            "DELETE FROM budget_entries WHERE budget_item_id = ? AND month_key >= ? AND abs(amount - ?) < 0.005",
+            (row["budget_item_id"], today_key, old_amount),
         )
     conn.commit()
 
