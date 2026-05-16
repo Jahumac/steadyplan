@@ -158,6 +158,40 @@ def _ensure_account_contribution_items(conn, user_id):
             "DELETE FROM budget_entries WHERE budget_item_id = ? AND month_key >= ? AND abs(amount - ?) < 0.005",
             (row["budget_item_id"], today_key, old_amount),
         )
+        conn.execute(
+            """
+            DELETE FROM contribution_overrides
+            WHERE account_id = ?
+              AND reason = 'from budget'
+              AND from_month = to_month
+              AND from_month >= ?
+              AND abs(override_amount - ?) < 0.005
+            """,
+            (row["account_id"], today_key, old_amount),
+        )
+    conn.commit()
+
+    from datetime import date
+    today_key = date.today().strftime("%Y-%m")
+    conn.execute(
+        """
+        DELETE FROM contribution_overrides
+        WHERE reason = 'from budget'
+          AND from_month = to_month
+          AND from_month >= ?
+          AND account_id IN (SELECT id FROM accounts WHERE user_id = ? AND is_active = 1)
+          AND NOT EXISTS (
+              SELECT 1
+              FROM budget_items bi
+              JOIN budget_entries be ON be.budget_item_id = bi.id
+              WHERE bi.user_id = ?
+                AND bi.is_active = 1
+                AND bi.linked_account_id = contribution_overrides.account_id
+                AND be.month_key = contribution_overrides.from_month
+          )
+        """,
+        (today_key, user_id, user_id),
+    )
     conn.commit()
 
 
