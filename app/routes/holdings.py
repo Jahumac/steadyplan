@@ -9,6 +9,7 @@ from app.models import (
     add_holding,
     add_holding_catalogue_item,
     delete_holding_catalogue_item,
+    fetch_account,
     fetch_all_accounts,
     fetch_assumptions,
     fetch_catalogue_holding,
@@ -52,10 +53,15 @@ def holdings_list():
             cat_id = request.form.get("catalogue_id", "").strip()
             if name:
                 if cat_id:
+                    existing = fetch_catalogue_holding(int(cat_id))
+                    if not existing or existing.get("user_id") != uid:
+                        flash("Instrument not found.", "error")
+                        return redirect("/holdings/")
+
                     update_holding_catalogue_item({
                         "id": int(cat_id), "holding_name": name, "ticker": ticker,
                         "asset_type": asset_type, "bucket": bucket, "notes": notes,
-                    })
+                    }, uid)
                     flash(f"{name} updated.", "success")
                     return redirect(f"/holdings/{cat_id}")
                 else:
@@ -71,7 +77,7 @@ def holdings_list():
             if cat_id:
                 item = fetch_catalogue_holding(int(cat_id))
                 if item and item.get("user_id") == uid:
-                    delete_holding_catalogue_item(int(cat_id))
+                    delete_holding_catalogue_item(int(cat_id), uid)
                     flash("Instrument removed.", "success")
             return redirect("/holdings/")
 
@@ -113,6 +119,9 @@ def add_to_account(catalogue_id):
     if not account_id or units <= 0:
         flash("Please select an account and enter a valid unit count.", "error")
         return redirect(f"/holdings/{catalogue_id}")
+    if not fetch_account(account_id, uid):
+        flash("Account not found.", "error")
+        return redirect(f"/holdings/{catalogue_id}")
 
     last_price = float(item.get("last_price") or 0)
     currency = item.get("price_currency") or "GBP"
@@ -132,7 +141,7 @@ def add_to_account(catalogue_id):
         "units": units,
         "price": price,
         "notes": notes,
-    })
+    }, uid)
     flash(f"{item['holding_name']} added to account.", "success")
     return redirect(f"/accounts/{account_id}")
 

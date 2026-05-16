@@ -44,6 +44,21 @@ def two_users(app, make_user, client):
                    VALUES (?, 'VUSA', 'VUSA', 5000, 100, 50)""",
                 (bob_account,),
             ).lastrowid
+            # Catalogue holding
+            alice_catalogue = conn.execute(
+                """
+                INSERT INTO holding_catalogue (user_id, holding_name, ticker, asset_type, bucket, is_active)
+                VALUES (?, 'Alice instrument', 'ALICE', 'ETF', 'Global Equity', 1)
+                """,
+                (alice_uid,),
+            ).lastrowid
+            bob_catalogue = conn.execute(
+                """
+                INSERT INTO holding_catalogue (user_id, holding_name, ticker, asset_type, bucket, is_active)
+                VALUES (?, 'Bob instrument', 'BOB', 'ETF', 'Global Equity', 1)
+                """,
+                (bob_uid,),
+            ).lastrowid
             # Budget item
             alice_budget = conn.execute(
                 "INSERT INTO budget_items (user_id, name, section, default_amount, is_active) VALUES (?, 'Rent', 'fixed', 1000, 1)",
@@ -57,9 +72,9 @@ def two_users(app, make_user, client):
 
     return {
         "alice": {"uid": alice_uid, "goal": alice_goal, "account": alice_account,
-                  "holding": alice_holding, "budget": alice_budget},
+                  "holding": alice_holding, "catalogue": alice_catalogue, "budget": alice_budget},
         "bob": {"uid": bob_uid, "goal": bob_goal, "account": bob_account,
-                "holding": bob_holding, "budget": bob_budget},
+                "holding": bob_holding, "catalogue": bob_catalogue, "budget": bob_budget},
     }
 
 
@@ -231,6 +246,60 @@ def test_alice_cannot_delete_bobs_holding_via_route(app, client, two_users):
     with app.app_context():
         from app.models import fetch_holding
         assert fetch_holding(two_users["bob"]["holding"]) is not None
+
+
+def test_alice_cannot_add_holding_to_bobs_account_via_holdings_route(app, client, two_users):
+    _login_as(client, "alice")
+    with app.app_context():
+        from app.models import get_connection
+        with get_connection() as conn:
+            before = conn.execute(
+                "SELECT COUNT(*) AS c FROM holdings WHERE account_id = ?",
+                (two_users["bob"]["account"],),
+            ).fetchone()["c"]
+
+    resp = client.post(
+        f"/holdings/{two_users['alice']['catalogue']}/add-to-account",
+        data={"account_id": two_users["bob"]["account"], "units": "1", "price": "1.0"},
+        follow_redirects=False,
+    )
+    assert resp.status_code in (200, 302)
+
+    with app.app_context():
+        from app.models import get_connection
+        with get_connection() as conn:
+            after = conn.execute(
+                "SELECT COUNT(*) AS c FROM holdings WHERE account_id = ?",
+                (two_users["bob"]["account"],),
+            ).fetchone()["c"]
+    assert after == before
+
+
+def test_alice_cannot_update_bobs_catalogue_item_via_route(app, client, two_users):
+    _login_as(client, "alice")
+    resp = client.post(
+        "/holdings/",
+        data={
+            "form_name": "catalogue",
+            "catalogue_id": two_users["bob"]["catalogue"],
+            "catalogue_holding_name": "HACKED",
+            "catalogue_ticker": "BOB",
+            "catalogue_asset_type": "ETF",
+            "catalogue_bucket": "Global Equity",
+            "catalogue_notes": "",
+        },
+        follow_redirects=False,
+    )
+    assert resp.status_code in (200, 302)
+
+    with app.app_context():
+        from app.models import get_connection
+        with get_connection() as conn:
+            row = conn.execute(
+                "SELECT holding_name FROM holding_catalogue WHERE id = ?",
+                (two_users["bob"]["catalogue"],),
+            ).fetchone()
+    assert row["holding_name"] == "Bob instrument"
 
 
 def test_alice_cannot_delete_bobs_budget_item_via_route(app, client, two_users):

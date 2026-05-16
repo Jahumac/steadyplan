@@ -701,7 +701,7 @@ def _add_holding_by_ticker(uid, account_id, ticker, units):
         "holding_name": name, "ticker": ticker, "asset_type": asset_type,
         "bucket": "Global Equity", "value": round(units * price_gbp, 2),
         "units": units, "price": price_gbp, "notes": "",
-    })
+    }, uid)
     return {"name": name, "ticker": ticker, "units": units, "price_gbp": price_gbp,
             "value": round(units * price_gbp, 2)}
 
@@ -726,7 +726,7 @@ def _add_holding_manual(uid, account_id, name, ticker, asset_type, units, price)
         "holding_name": name, "ticker": ticker, "asset_type": asset_type,
         "bucket": "Other", "value": round(units * price, 2),
         "units": units, "price": price, "notes": "",
-    })
+    }, uid)
     return {"name": name, "ticker": ticker, "units": units, "price_gbp": price,
             "value": round(units * price, 2)}
 

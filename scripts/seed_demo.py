@@ -285,20 +285,20 @@ def seed(username="demo"):
         vfeg_cid, vfeg_price = cat_ids["VFEG"]
         vhvg_val = round(isa_val * 0.80, 2)
         vfeg_val = round(isa_val * 0.20, 2)
-        add_holding({"account_id": isa_id, "holding_catalogue_id": vhvg_cid, "holding_name": "Vanguard FTSE Developed World ETF", "ticker": "VHVG", "asset_type": "ETF", "bucket": "Equities", "value": vhvg_val, "units": round(vhvg_val / vhvg_price, 4), "price": vhvg_price, "notes": ""})
-        add_holding({"account_id": isa_id, "holding_catalogue_id": vfeg_cid, "holding_name": "Vanguard FTSE Emerging Markets ETF", "ticker": "VFEG", "asset_type": "ETF", "bucket": "Equities", "value": vfeg_val, "units": round(vfeg_val / vfeg_price, 4), "price": vfeg_price, "notes": ""})
+        add_holding({"account_id": isa_id, "holding_catalogue_id": vhvg_cid, "holding_name": "Vanguard FTSE Developed World ETF", "ticker": "VHVG", "asset_type": "ETF", "bucket": "Equities", "value": vhvg_val, "units": round(vhvg_val / vhvg_price, 4), "price": vhvg_price, "notes": ""}, uid)
+        add_holding({"account_id": isa_id, "holding_catalogue_id": vfeg_cid, "holding_name": "Vanguard FTSE Emerging Markets ETF", "ticker": "VFEG", "asset_type": "ETF", "bucket": "Equities", "value": vfeg_val, "units": round(vfeg_val / vfeg_price, 4), "price": vfeg_price, "notes": ""}, uid)
 
         # LISA: 100% VWRP
         lisa_val = ACCOUNT_HISTORY["Moneybox LISA"][-1]
         vwrp_cid, vwrp_price = cat_ids["VWRP"]
-        add_holding({"account_id": lisa_id, "holding_catalogue_id": vwrp_cid, "holding_name": "Vanguard FTSE All-World ETF", "ticker": "VWRP", "asset_type": "ETF", "bucket": "Equities", "value": lisa_val, "units": round(lisa_val / vwrp_price, 4), "price": vwrp_price, "notes": ""})
+        add_holding({"account_id": lisa_id, "holding_catalogue_id": vwrp_cid, "holding_name": "Vanguard FTSE All-World ETF", "ticker": "VWRP", "asset_type": "ETF", "bucket": "Equities", "value": lisa_val, "units": round(lisa_val / vwrp_price, 4), "price": vwrp_price, "notes": ""}, uid)
 
         # SIPP: 80% VHVG, 20% VFEG
         sipp_val = ACCOUNT_HISTORY["Vanguard SIPP"][-1]
         vhvg_sipp_val = round(sipp_val * 0.80, 2)
         vfeg_sipp_val = round(sipp_val * 0.20, 2)
-        add_holding({"account_id": sipp_id, "holding_catalogue_id": vhvg_cid, "holding_name": "Vanguard FTSE Developed World ETF", "ticker": "VHVG", "asset_type": "ETF", "bucket": "Equities", "value": vhvg_sipp_val, "units": round(vhvg_sipp_val / vhvg_price, 4), "price": vhvg_price, "notes": ""})
-        add_holding({"account_id": sipp_id, "holding_catalogue_id": vfeg_cid, "holding_name": "Vanguard FTSE Emerging Markets ETF", "ticker": "VFEG", "asset_type": "ETF", "bucket": "Equities", "value": vfeg_sipp_val, "units": round(vfeg_sipp_val / vfeg_price, 4), "price": vfeg_price, "notes": ""})
+        add_holding({"account_id": sipp_id, "holding_catalogue_id": vhvg_cid, "holding_name": "Vanguard FTSE Developed World ETF", "ticker": "VHVG", "asset_type": "ETF", "bucket": "Equities", "value": vhvg_sipp_val, "units": round(vhvg_sipp_val / vhvg_price, 4), "price": vhvg_price, "notes": ""}, uid)
+        add_holding({"account_id": sipp_id, "holding_catalogue_id": vfeg_cid, "holding_name": "Vanguard FTSE Emerging Markets ETF", "ticker": "VFEG", "asset_type": "ETF", "bucket": "Equities", "value": vfeg_sipp_val, "units": round(vfeg_sipp_val / vfeg_price, 4), "price": vfeg_price, "notes": ""}, uid)
 
         print("  ✓ Holdings")
 

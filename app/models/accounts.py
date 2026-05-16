@@ -483,9 +483,9 @@ def fetch_first_position_for_catalogue_holding(catalogue_id, user_id):
         ).fetchone()
 
 
-def update_holding_catalogue_item(payload):
+def update_holding_catalogue_item(payload, user_id):
     with get_connection() as conn:
-        conn.execute(
+        cursor = conn.execute(
             """
             UPDATE holding_catalogue
             SET holding_name = ?,
@@ -494,6 +494,7 @@ def update_holding_catalogue_item(payload):
                 bucket = ?,
                 notes = ?
             WHERE id = ?
+              AND user_id = ?
             """,
             (
                 payload["holding_name"],
@@ -502,18 +503,21 @@ def update_holding_catalogue_item(payload):
                 payload["bucket"],
                 payload.get("notes", ""),
                 payload["id"],
+                user_id,
             ),
         )
         conn.commit()
+        return cursor.rowcount > 0
 
 
-def delete_holding_catalogue_item(catalogue_id):
+def delete_holding_catalogue_item(catalogue_id, user_id):
     with get_connection() as conn:
-        conn.execute(
-            "UPDATE holding_catalogue SET is_active = 0 WHERE id = ?",
-            (catalogue_id,),
+        cursor = conn.execute(
+            "UPDATE holding_catalogue SET is_active = 0 WHERE id = ? AND user_id = ?",
+            (catalogue_id, user_id),
         )
         conn.commit()
+        return cursor.rowcount > 0
 
 
 def fetch_holding_totals_by_account(user_id):
@@ -531,12 +535,13 @@ def fetch_holding_totals_by_account(user_id):
         return {row["account_id"]: row["holdings_total"] for row in rows}
 
 
-def add_holding(payload):
+def add_holding(payload, user_id):
     with get_connection() as conn:
-        conn.execute(
+        cursor = conn.execute(
             """
             INSERT INTO holdings (account_id, holding_catalogue_id, holding_name, ticker, asset_type, bucket, value, units, price, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            WHERE EXISTS (SELECT 1 FROM accounts WHERE id = ? AND user_id = ?)
             """,
             (
                 payload["account_id"],
@@ -549,9 +554,12 @@ def add_holding(payload):
                 payload["units"],
                 payload["price"],
                 payload["notes"],
+                payload["account_id"],
+                user_id,
             ),
         )
         conn.commit()
+        return cursor.rowcount > 0
 
 
 def fetch_holding(holding_id, user_id=None):
