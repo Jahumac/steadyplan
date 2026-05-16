@@ -15,6 +15,7 @@ from app.models import (
     delete_budget_items_by_section,
     delete_budget_section,
     delete_debt,
+    fetch_account,
     fetch_all_accounts,
     fetch_all_debts,
     fetch_budget_entries,
@@ -26,6 +27,7 @@ from app.models import (
     fetch_debt,
     fetch_months_with_budget_entries,
     fetch_prior_month_budget_entries,
+    update_account,
     update_budget_item,
     update_budget_section,
     update_debt,
@@ -77,6 +79,23 @@ def _sync_linked_override(item_id, month_key, amount, user_id):
     upsert_single_month_contribution_override(
         int(linked), month_key, float(amount or 0), user_id, reason="from budget"
     )
+
+    today_key = _default_month_key()
+    if month_key < today_key:
+        return
+
+    account = fetch_account(int(linked), user_id)
+    if not account:
+        return
+    try:
+        current = float(account.get("monthly_contribution") or 0)
+    except (TypeError, ValueError):
+        current = 0.0
+    desired = float(amount or 0)
+    if abs(current - desired) < 0.005:
+        return
+
+    update_account({**dict(account), "monthly_contribution": desired}, user_id)
 
 
 def _month_label(month_key):
