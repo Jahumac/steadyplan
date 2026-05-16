@@ -49,7 +49,6 @@ def _ensure_account_contribution_items(conn, user_id):
         FROM accounts
         WHERE user_id = ?
           AND is_active = 1
-          AND COALESCE(monthly_contribution, 0) > 0
           AND COALESCE(include_in_budget, 1) = 1
         ORDER BY id ASC
         """,
