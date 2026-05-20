@@ -237,6 +237,32 @@ def fetch_contribution_overrides(account_id):
         ).fetchall()
 
 
+def fetch_contribution_overrides_for_reason(account_id, user_id, reason):
+    with get_connection() as conn:
+        if not _account_belongs_to_user(conn, account_id, user_id):
+            return []
+        return conn.execute(
+            """
+            SELECT * FROM contribution_overrides
+            WHERE account_id = ? AND reason = ?
+            ORDER BY from_month ASC
+            """,
+            (account_id, reason),
+        ).fetchall()
+
+
+def delete_contribution_overrides_for_reason(account_id, user_id, reason):
+    with get_connection() as conn:
+        if not _account_belongs_to_user(conn, account_id, user_id):
+            return 0
+        cur = conn.execute(
+            "DELETE FROM contribution_overrides WHERE account_id = ? AND reason = ?",
+            (account_id, reason),
+        )
+        conn.commit()
+        return cur.rowcount or 0
+
+
 def fetch_all_active_overrides(month_key, user_id):
     """Return overrides active for a given month, keyed by account_id."""
     with get_connection() as conn:

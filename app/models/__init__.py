@@ -151,6 +151,8 @@ from .planning import (
     fetch_isa_overrides_for_tax_year,
     fetch_assumptions,
     fetch_contribution_overrides,
+    fetch_contribution_overrides_for_reason,
+    delete_contribution_overrides_for_reason,
     fetch_cash_flow_events_for_account,
     fetch_custom_tags,
     fetch_hidden_tags,

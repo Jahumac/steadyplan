@@ -2009,6 +2009,166 @@
       recalc();
     })();
 
+    (function initProjectionAccountDetails() {
+      var blocks = Array.from(document.querySelectorAll('[data-proj-account]'));
+      if (!blocks.length) return;
+
+      function fmtGBP(v) {
+        var n = Math.round(parseFloat(v) || 0);
+        return '£' + n.toLocaleString('en-GB');
+      }
+
+      function renderSeries(container, points, mode) {
+        if (!container) return;
+        if (!points || !points.length) {
+          container.innerHTML = '<p class="helper-text m-0">No projection data yet.</p>';
+          return;
+        }
+        var head = mode === 'monthly'
+          ? '<tr><th>Month</th><th class="num">Age</th><th class="num">Projected</th></tr>'
+          : '<tr><th>Point</th><th class="num">Age</th><th class="num">Projected</th></tr>';
+        var rows = points.map(function(p) {
+          var label = (p && p.label) ? String(p.label) : '';
+          var age = (p && p.age !== null && p.age !== undefined) ? (parseFloat(p.age).toFixed(2)) : '';
+          var val = fmtGBP(p && p.value);
+          return '<tr><td>' + label + '</td><td class="num">' + age + '</td><td class="num"><strong>' + val + '</strong></td></tr>';
+        }).join('');
+        container.innerHTML =
+          '<div class="proj-series-scroll table-scroll">' +
+            '<table class="data-table">' +
+              '<thead>' + head + '</thead>' +
+              '<tbody>' + rows + '</tbody>' +
+            '</table>' +
+          '</div>';
+      }
+
+      function setModeActive(details, mode) {
+        details.querySelectorAll('[data-proj-mode-btn]').forEach(function(btn) {
+          btn.classList.toggle('is-active', btn.dataset.mode === mode);
+        });
+      }
+
+      async function loadSeries(details, mode) {
+        var container = details.querySelector('[data-proj-series]');
+        if (!container) return;
+        var accountId = details.dataset.accountId;
+        var key = accountId + '|' + mode;
+        details._seriesCache = details._seriesCache || {};
+        if (details._seriesCache[key]) {
+          renderSeries(container, details._seriesCache[key], mode);
+          return;
+        }
+        container.innerHTML = '<p class="helper-text m-0">Loading…</p>';
+        try {
+          var resp = await fetch('/projections/api/account-series?account_id=' + encodeURIComponent(accountId) + '&mode=' + encodeURIComponent(mode));
+          var data = await resp.json();
+          if (!resp.ok || !data.ok) throw new Error((data && data.error) || 'Request failed');
+          details._seriesCache[key] = data.points || [];
+          renderSeries(container, details._seriesCache[key], mode);
+        } catch (e) {
+          container.innerHTML = '<p class="helper-text m-0" style="color:var(--danger);">Could not load projection.</p>';
+        }
+      }
+
+      function buildScheduleRow(startAge, amount) {
+        var row = document.createElement('div');
+        row.className = 'proj-schedule-row';
+        row.innerHTML =
+          '<label><span>Start age</span><input type="number" min="0" step="1" data-age value="' + (startAge !== null && startAge !== undefined ? startAge : '') + '"></label>' +
+          '<label><span>£ / month</span><input type="number" min="0" step="10" data-amount value="' + (amount !== null && amount !== undefined ? amount : '') + '"></label>' +
+          '<button type="button" class="badge badge-meta" data-remove>Remove</button>';
+        var rm = row.querySelector('[data-remove]');
+        if (rm) rm.addEventListener('click', function() { row.remove(); });
+        return row;
+      }
+
+      async function loadSchedule(details) {
+        var rowsEl = details.querySelector('[data-proj-schedule-rows]');
+        var statusEl = details.querySelector('[data-proj-schedule-status]');
+        if (!rowsEl) return;
+        rowsEl.innerHTML = '';
+        if (statusEl) statusEl.textContent = '';
+        try {
+          var resp = await fetch('/projections/api/account-schedule?account_id=' + encodeURIComponent(details.dataset.accountId));
+          var data = await resp.json();
+          if (!resp.ok || !data.ok) throw new Error((data && data.error) || 'Request failed');
+          if (!data.has_dob) {
+            if (statusEl) statusEl.textContent = 'Add your date of birth in Settings to use age-based schedules.';
+            return;
+          }
+          (data.rules || []).forEach(function(r) {
+            var age = r && r.start_age !== null && r.start_age !== undefined ? Math.round(parseFloat(r.start_age)) : '';
+            var amt = r && r.amount !== null && r.amount !== undefined ? parseFloat(r.amount) : '';
+            rowsEl.appendChild(buildScheduleRow(age, amt));
+          });
+          if (!rowsEl.children.length) {
+            rowsEl.appendChild(buildScheduleRow('', ''));
+          }
+        } catch (e) {
+          if (statusEl) statusEl.textContent = 'Could not load schedule.';
+        }
+      }
+
+      async function saveSchedule(details) {
+        var rowsEl = details.querySelector('[data-proj-schedule-rows]');
+        var statusEl = details.querySelector('[data-proj-schedule-status]');
+        if (!rowsEl) return;
+        var rules = [];
+        rowsEl.querySelectorAll('.proj-schedule-row').forEach(function(row) {
+          var ageEl = row.querySelector('input[data-age]');
+          var amtEl = row.querySelector('input[data-amount]');
+          var age = ageEl ? parseFloat(ageEl.value) : NaN;
+          var amt = amtEl ? parseFloat(amtEl.value) : NaN;
+          if (!isFinite(age) || age <= 0) return;
+          if (!isFinite(amt) || amt < 0) amt = 0;
+          rules.push({ start_age: age, amount: amt });
+        });
+        if (statusEl) statusEl.textContent = 'Saving…';
+        try {
+          var resp = await fetch('/projections/api/account-schedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ account_id: parseInt(details.dataset.accountId), rules: rules })
+          });
+          var data = await resp.json();
+          if (!resp.ok || !data.ok) throw new Error((data && data.error) || 'Request failed');
+          if (statusEl) statusEl.textContent = 'Saved. Refreshing…';
+          window.location.reload();
+        } catch (e) {
+          if (statusEl) statusEl.textContent = 'Save failed.';
+        }
+      }
+
+      blocks.forEach(function(details) {
+        details.addEventListener('toggle', function() {
+          if (!details.open) return;
+          setModeActive(details, 'yearly');
+          loadSeries(details, 'yearly');
+          loadSchedule(details);
+        });
+        details.querySelectorAll('[data-proj-mode-btn]').forEach(function(btn) {
+          btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var mode = btn.dataset.mode || 'yearly';
+            setModeActive(details, mode);
+            loadSeries(details, mode);
+          });
+        });
+        var addBtn = details.querySelector('[data-proj-schedule-add]');
+        if (addBtn) {
+          addBtn.addEventListener('click', function() {
+            var rowsEl = details.querySelector('[data-proj-schedule-rows]');
+            if (!rowsEl) return;
+            rowsEl.appendChild(buildScheduleRow('', ''));
+          });
+        }
+        var saveBtn = details.querySelector('[data-proj-schedule-save]');
+        if (saveBtn) {
+          saveBtn.addEventListener('click', function() { saveSchedule(details); });
+        }
+      });
+    })();
+
     // 20. Instrument Lookup Logic
     (function initHoldingsLookup() {
       var input = document.getElementById('instrument-search-input');

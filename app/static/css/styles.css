@@ -2615,6 +2615,113 @@ button.button-danger:focus {
 .proj-row-right { gap: 1.5rem; }
 .proj-row-current { font-size: 0.82rem; }
 
+.proj-acc {
+  border: none;
+}
+
+.proj-acc-summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.proj-acc-summary::-webkit-details-marker { display: none; }
+.proj-acc-summary::marker { content: ""; }
+
+.proj-acc[open] .proj-acc-summary {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(56,189,248,0.28);
+}
+
+.proj-acc-caret {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-left: 0.25rem;
+  transition: transform 0.15s ease;
+}
+
+.proj-acc[open] .proj-acc-caret {
+  transform: rotate(180deg);
+}
+
+.proj-acc-detail {
+  margin-top: 0.5rem;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+}
+
+.proj-acc-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.badge-meta.is-active {
+  border-color: rgba(56,189,248,0.45);
+  background: rgba(56,189,248,0.10);
+  color: var(--accent);
+}
+
+.proj-acc-series {
+  margin-top: 0.75rem;
+}
+
+.proj-series-scroll {
+  max-height: 320px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid rgba(51,65,85,0.55);
+  border-radius: 10px;
+}
+
+.proj-acc-schedule {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(51,65,85,0.55);
+}
+
+.proj-schedule-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.proj-schedule-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.proj-schedule-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.proj-schedule-row label span {
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.proj-schedule-row input {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 0.9rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.proj-schedule-row input[type="number"] { width: 8.5rem; }
+.proj-schedule-row input[data-age] { width: 6.5rem; }
+
 .budget-amount-input {
   width: 110px;
   background: var(--panel-2);

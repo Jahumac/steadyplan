@@ -103,36 +103,63 @@
   <p class="helper-text">What each account could be worth at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, government bonuses, and employer contributions).</p>
   <div class="budget-rows">
     {% for row in account_rows %}
-    <div class="budget-row">
-      <div class="budget-row-left">
-        <span class="budget-row-name">{{ row.name }}</span>
-        <span class="budget-row-note">{{ row.wrapper_type }} · {{ '{:.1f}'.format(row.growth_rate * 100) }}% net
-          {%- if row.annual_fee_pct %} <span style="color:var(--muted);">({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
-          {%- set gross_into_pot = row.effective_contribution + row.contribution_fee %}
-          {%- if row.effective_contribution != row.monthly_contribution or row.contribution_fee > 0 %} · you pay £{{ '{:,.2f}'.format(row.monthly_contribution) }}
-            {%- if row.tax_relief %} + £{{ '{:,.2f}'.format(row.tax_relief) }} tax relief{% endif %}
-            {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} govt bonus{% endif %}
-            {%- if row.employer %} + £{{ '{:,.2f}'.format(row.employer) }} employer{% endif %}
-            {%- if row.contribution_fee > 0 %} − £{{ '{:,.2f}'.format(row.contribution_fee) }} contribution fee{% endif %}
-            = £{{ '{:,.2f}'.format(row.effective_contribution) }}/mo into pot
-          {%- else %} · £{{ '{:,.0f}'.format(row.monthly_contribution) }}/mo
-          {%- endif %}
-        </span>
-        {% if row.self_assessment > 0 %}
-        <span class="budget-row-note" style="color:var(--accent-3);">Plus £{{ '{:,.2f}'.format(row.self_assessment) }}/mo reclaimable via self-assessment</span>
-        {% endif %}
-        {% if row.contribution_fee > 0 %}
-        <span class="budget-row-note text-danger">{{ '{:.2f}'.format(row.contribution_fee_pct) }}% contribution fee costs £{{ '{:,.2f}'.format(row.contribution_fee) }}/mo — £{{ '{:,.0f}'.format(row.contribution_fee * 12) }}/yr</span>
-        {% endif %}
-        {% if row.fee_impact > 0 %}
-        <span class="budget-row-note text-danger">Annual fees cost £{{ '{:,.0f}'.format(row.fee_impact) }} in lost growth over the period</span>
-        {% endif %}
+    <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}">
+      <summary class="budget-row proj-acc-summary">
+        <div class="budget-row-left">
+          <span class="budget-row-name">{{ row.name }}</span>
+          <span class="budget-row-note">{{ row.wrapper_type }} · {{ '{:.1f}'.format(row.growth_rate * 100) }}% net
+            {%- if row.annual_fee_pct %} <span style="color:var(--muted);">({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
+            {%- if row.effective_contribution != row.monthly_contribution or row.contribution_fee > 0 %} · you pay £{{ '{:,.2f}'.format(row.monthly_contribution) }}
+              {%- if row.tax_relief %} + £{{ '{:,.2f}'.format(row.tax_relief) }} tax relief{% endif %}
+              {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} govt bonus{% endif %}
+              {%- if row.employer %} + £{{ '{:,.2f}'.format(row.employer) }} employer{% endif %}
+              {%- if row.contribution_fee > 0 %} − £{{ '{:,.2f}'.format(row.contribution_fee) }} contribution fee{% endif %}
+              = £{{ '{:,.2f}'.format(row.effective_contribution) }}/mo into pot
+            {%- else %} · £{{ '{:,.0f}'.format(row.monthly_contribution) }}/mo
+            {%- endif %}
+          </span>
+          {% if row.self_assessment > 0 %}
+          <span class="budget-row-note" style="color:var(--accent-3);">Plus £{{ '{:,.2f}'.format(row.self_assessment) }}/mo reclaimable via self-assessment</span>
+          {% endif %}
+          {% if row.contribution_fee > 0 %}
+          <span class="budget-row-note text-danger">{{ '{:.2f}'.format(row.contribution_fee_pct) }}% contribution fee costs £{{ '{:,.2f}'.format(row.contribution_fee) }}/mo — £{{ '{:,.0f}'.format(row.contribution_fee * 12) }}/yr</span>
+          {% endif %}
+          {% if row.fee_impact > 0 %}
+          <span class="budget-row-note text-danger">Annual fees cost £{{ '{:,.0f}'.format(row.fee_impact) }} in lost growth over the period</span>
+          {% endif %}
+        </div>
+        <div class="budget-row-right proj-row-right">
+          <span class="muted-cell proj-row-current">now £{{ '{:,.0f}'.format(row.current_value) }}</span>
+          <strong class="text-accent-2">£{{ '{:,.0f}'.format(row.projected_value) }}</strong>
+          <span class="proj-acc-caret" aria-hidden="true">▾</span>
+        </div>
+      </summary>
+      <div class="proj-acc-detail">
+        <div class="proj-acc-toolbar">
+          <div class="badge-row">
+            <button type="button" class="badge badge-meta is-active" data-proj-mode-btn data-mode="yearly">Yearly</button>
+            <button type="button" class="badge badge-meta" data-proj-mode-btn data-mode="monthly">Monthly</button>
+          </div>
+        </div>
+        <div class="proj-acc-series" data-proj-series aria-live="polite"></div>
+
+        <div class="proj-acc-schedule">
+          <div class="section-header mb-05" style="padding:0;border:none;">
+            <div>
+              <p class="eyebrow">Contribution schedule</p>
+              <h3 style="margin:0;font-size:1rem;">Change contributions at certain ages</h3>
+            </div>
+          </div>
+          <p class="helper-text m-0">Add rows like “from age 50 → £600/mo”. This saves to your plan and updates projections.</p>
+          <div class="proj-schedule-rows" data-proj-schedule-rows></div>
+          <div class="badge-row mt-075">
+            <button type="button" class="badge badge-meta" data-proj-schedule-add>+ Add row</button>
+            <button type="button" class="badge badge-primary-action" data-proj-schedule-save>Save schedule</button>
+          </div>
+          <div class="helper-text mt-05" data-proj-schedule-status></div>
+        </div>
       </div>
-      <div class="budget-row-right proj-row-right">
-        <span class="muted-cell proj-row-current">now £{{ '{:,.0f}'.format(row.current_value) }}</span>
-        <strong class="text-accent-2">£{{ '{:,.0f}'.format(row.projected_value) }}</strong>
-      </div>
-    </div>
+    </details>
     {% endfor %}
     <div class="budget-row" style="border-top:1px solid var(--border); margin-top:0.25rem; padding-top:0.75rem;">
       <div class="budget-row-left">

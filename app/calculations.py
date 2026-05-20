@@ -189,13 +189,43 @@ def projection_start_month_key(assumptions=None, today=None):
 def contribution_override_for_month(account, month_key):
     """Return a personal monthly contribution override for account/month, if any."""
     overrides = _safe_get(account, "_contribution_overrides", []) or []
+    best = None
+    best_span = None
+
+    def _mk_to_i(mk):
+        try:
+            y, m = mk.split("-")
+            return int(y) * 12 + int(m)
+        except (ValueError, AttributeError):
+            return None
+
     for override in overrides:
         try:
-            if override["from_month"] <= month_key <= override["to_month"]:
-                return to_float(override["override_amount"])
+            from_m = override["from_month"]
+            to_m = override["to_month"]
+            if not (from_m <= month_key <= to_m):
+                continue
+            span = None
+            fi = _mk_to_i(from_m)
+            ti = _mk_to_i(to_m)
+            if fi is not None and ti is not None:
+                span = max(ti - fi, 0)
+            if best is None:
+                best = override
+                best_span = span
+                continue
+            if best_span is None:
+                if span is not None:
+                    best = override
+                    best_span = span
+                continue
+            if span is not None and span < best_span:
+                best = override
+                best_span = span
         except (KeyError, TypeError):
             continue
-    return None
+
+    return to_float(best["override_amount"]) if best is not None else None
 
 
 def projection_monthly_contribution(account, assumptions=None, month_index=0):
@@ -497,6 +527,7 @@ def projected_accounts(accounts, assumptions):
         projected = projected_account_value(account, assumptions)
         proj_no_fees = projected_account_value_no_fees(account, assumptions)
         rows.append({
+            "account_id": account.get("id"),
             "name": account["name"],
             "provider": account["provider"],
             "wrapper_type": account["wrapper_type"],
