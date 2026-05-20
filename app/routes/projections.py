@@ -7,8 +7,10 @@ from flask_login import current_user, login_required
 from app.calculations import (
     add_months_to_key,
     age_from_dob,
+    contribution_override_for_month,
     current_age_from_assumptions,
     effective_account_value,
+    projection_monthly_contribution,
     projected_account_value,
     projected_account_value_at_month,
     projected_account_value_at_year,
@@ -131,37 +133,56 @@ def api_account_series():
     exact_years = years_to_retirement(current_age, retirement_age, assumptions)
     months_total = int(exact_years * 12)
     points = []
+    is_lisa = a.get("wrapper_type") == "Lifetime ISA"
 
     if mode == "yearly":
         whole_years = int(exact_years)
         for yr in range(0, whole_years + 1):
             val = projected_account_value_at_year(a, assumptions, yr)
-            mk = add_months_to_key(start_month, int(yr * 12))
             label = "Today" if yr == 0 else f"Age {int(current_age + yr)}"
+            contrib_idx = 0 if yr == 0 else (yr - 1) * 12
+            mk = add_months_to_key(start_month, contrib_idx)
+            override = contribution_override_for_month(a, mk)
+            personal = override if override is not None else to_float(a.get("monthly_contribution", 0))
+            applied_personal = 0.0 if (is_lisa and (current_age + contrib_idx / 12.0) >= 50) else personal
             points.append({
                 "label": label,
                 "value": round(val, 0),
                 "age": round(current_age + yr, 2),
                 "month_key": mk,
+                "personal_monthly": round(applied_personal, 2),
+                "into_pot_monthly": round(projection_monthly_contribution(a, assumptions, contrib_idx), 2) if not (is_lisa and (current_age + contrib_idx / 12.0) >= 50) else 0.0,
             })
         if exact_years > whole_years:
             val = projected_account_value(a, assumptions)
             mk = add_months_to_key(start_month, months_total)
+            last_idx = max(months_total - 1, 0)
+            last_mk = add_months_to_key(start_month, last_idx)
+            override = contribution_override_for_month(a, last_mk)
+            personal = override if override is not None else to_float(a.get("monthly_contribution", 0))
+            applied_personal = 0.0 if (is_lisa and (current_age + last_idx / 12.0) >= 50) else personal
             points.append({
                 "label": f"Age {int(retirement_age)}",
                 "value": round(val, 0),
                 "age": round(retirement_age, 2),
                 "month_key": mk,
+                "personal_monthly": round(applied_personal, 2),
+                "into_pot_monthly": round(projection_monthly_contribution(a, assumptions, last_idx), 2) if not (is_lisa and (current_age + last_idx / 12.0) >= 50) else 0.0,
             })
     else:
         for idx in range(0, months_total + 1):
             mk = add_months_to_key(start_month, idx)
             val = projected_account_value_at_month(a, assumptions, idx)
+            override = contribution_override_for_month(a, mk)
+            personal = override if override is not None else to_float(a.get("monthly_contribution", 0))
+            applied_personal = 0.0 if (is_lisa and (current_age + idx / 12.0) >= 50) else personal
             points.append({
                 "label": mk,
                 "value": round(val, 0),
                 "age": round(current_age + idx / 12.0, 2),
                 "month_key": mk,
+                "personal_monthly": round(applied_personal, 2),
+                "into_pot_monthly": round(projection_monthly_contribution(a, assumptions, idx), 2) if not (is_lisa and (current_age + idx / 12.0) >= 50) else 0.0,
             })
 
     return jsonify({"ok": True, "points": points})

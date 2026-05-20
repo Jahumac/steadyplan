@@ -2024,14 +2024,23 @@
           container.innerHTML = '<p class="helper-text m-0">No projection data yet.</p>';
           return;
         }
+        function fmtAge(age) {
+          var a = parseFloat(age);
+          if (!isFinite(a) || a <= 0) return '';
+          var y = Math.floor(a);
+          var m = Math.round((a - y) * 12);
+          if (m >= 12) { y += 1; m = 0; }
+          return m === 0 ? (y + 'y') : (y + 'y ' + m + 'm');
+        }
         var head = mode === 'monthly'
-          ? '<tr><th>Month</th><th class="num">Age</th><th class="num">Projected</th></tr>'
-          : '<tr><th>Point</th><th class="num">Age</th><th class="num">Projected</th></tr>';
+          ? '<tr><th>Month</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Projected</th></tr>'
+          : '<tr><th>Point</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Projected</th></tr>';
         var rows = points.map(function(p) {
           var label = (p && p.label) ? String(p.label) : '';
-          var age = (p && p.age !== null && p.age !== undefined) ? (parseFloat(p.age).toFixed(2)) : '';
+          var age = fmtAge(p && p.age);
+          var pay = fmtGBP(p && p.personal_monthly);
           var val = fmtGBP(p && p.value);
-          return '<tr><td>' + label + '</td><td class="num">' + age + '</td><td class="num"><strong>' + val + '</strong></td></tr>';
+          return '<tr><td>' + label + '</td><td class="num">' + age + '</td><td class="num">' + pay + '</td><td class="num"><strong>' + val + '</strong></td></tr>';
         }).join('');
         container.innerHTML =
           '<div class="proj-series-scroll table-scroll">' +
