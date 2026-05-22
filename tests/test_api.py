@@ -234,6 +234,26 @@ def test_isa_contribution_rejects_foreign_account(app, client, token):
     assert resp.status_code == 404
 
 
+def test_isa_contribution_rejects_invalid_date(app, client, token):
+    with app.app_context():
+        from app.models import get_connection, get_user_by_username
+        uid = get_user_by_username("apiuser").id
+        with get_connection() as conn:
+            aid = conn.execute(
+                "INSERT INTO accounts (user_id, name, wrapper_type, is_active) "
+                "VALUES (?, 'My ISA', 'Stocks & Shares ISA', 1)",
+                (uid,),
+            ).lastrowid
+            conn.commit()
+    resp = client.post(
+        "/api/v1/contributions/isa",
+        json={"account_id": aid, "amount": 500, "date": "2026-02-31"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "bad_request"
+
+
 def test_pension_contribution_rejects_bad_kind(app, client, token):
     resp = client.post(
         "/api/v1/contributions/pension",
