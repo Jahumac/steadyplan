@@ -18,7 +18,7 @@ from pathlib import Path
 
 from app.extensions import limiter
 from app.calculations import effective_account_value, is_price_stale
-from app.utils import valid_month_key
+from app.utils import valid_date, valid_month_key
 from app.models import (
     add_dividend_record,
     add_isa_contribution,
@@ -283,15 +283,15 @@ def log_isa_contribution():
     payload = request.get_json(silent=True) or {}
     account_id = payload.get("account_id")
     amount = _parse_amount(payload.get("amount"))
-    date = (payload.get("date") or "").strip()
+    contribution_date = valid_date(payload.get("date"))
 
-    if amount is None or not account_id or not date:
+    if amount is None or not account_id or not contribution_date:
         return _err("bad_request",
                     "account_id, amount (>= 0), and date (YYYY-MM-DD) required", 400)
     if fetch_account(int(account_id), g.api_user.id) is None:
         return _err("not_found", "Account not found", 404)
 
-    add_isa_contribution(g.api_user.id, int(account_id), amount, date,
+    add_isa_contribution(g.api_user.id, int(account_id), amount, contribution_date,
                          payload.get("note"))
     return jsonify({"ok": True}), 201
 
@@ -302,10 +302,10 @@ def log_pension_contribution():
     payload = request.get_json(silent=True) or {}
     account_id = payload.get("account_id")
     amount = _parse_amount(payload.get("amount"))
-    date = (payload.get("date") or "").strip()
+    contribution_date = valid_date(payload.get("date"))
     kind = (payload.get("kind") or "personal").strip()
 
-    if amount is None or not account_id or not date:
+    if amount is None or not account_id or not contribution_date:
         return _err("bad_request",
                     "account_id, amount (>= 0), and date (YYYY-MM-DD) required", 400)
     if kind not in ("personal", "employer", "salary_sacrifice"):
@@ -315,7 +315,7 @@ def log_pension_contribution():
         return _err("not_found", "Account not found", 404)
 
     add_pension_contribution(g.api_user.id, int(account_id), amount, kind,
-                             date, payload.get("note"))
+                             contribution_date, payload.get("note"))
     return jsonify({"ok": True}), 201
 
 
@@ -325,15 +325,15 @@ def log_dividend():
     payload = request.get_json(silent=True) or {}
     account_id = payload.get("account_id")
     amount = _parse_amount(payload.get("amount"))
-    date = (payload.get("date") or "").strip()
+    dividend_date = valid_date(payload.get("date"))
 
-    if amount is None or not account_id or not date:
+    if amount is None or not account_id or not dividend_date:
         return _err("bad_request",
                     "account_id, amount (>= 0), and date (YYYY-MM-DD) required", 400)
     if fetch_account(int(account_id), g.api_user.id) is None:
         return _err("not_found", "Account not found", 404)
 
-    add_dividend_record(g.api_user.id, int(account_id), amount, date,
+    add_dividend_record(g.api_user.id, int(account_id), amount, dividend_date,
                         payload.get("note"))
     return jsonify({"ok": True}), 201
 
