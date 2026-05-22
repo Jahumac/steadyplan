@@ -31,6 +31,10 @@ def run_backup(db_path: Path, data_dir: Path, retention_days: int = DEFAULT_RETE
     """
     backup_dir = data_dir / "backups"
     backup_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        os.chmod(backup_dir, 0o700)
+    except OSError as e:
+        logger.warning(f"Failed to secure backup directory permissions for {backup_dir}: {e}")
 
     dest = backup_path_for(data_dir)
     tmp = dest.with_suffix(".db.tmp")
@@ -47,6 +51,10 @@ def run_backup(db_path: Path, data_dir: Path, retention_days: int = DEFAULT_RETE
 
     # Atomic rename so a half-written file never appears as a daily backup.
     os.replace(tmp, dest)
+    try:
+        os.chmod(dest, 0o600)
+    except OSError as e:
+        logger.warning(f"Failed to secure backup file permissions for {dest}: {e}")
 
     _prune_old_backups(backup_dir, retention_days)
     _update_latest_symlink(backup_dir, dest)
