@@ -36,9 +36,16 @@ def optional_int(value, default=None):
 
 
 def valid_month_key(raw):
-    """Return the YYYY-MM portion of raw if it looks valid, else None."""
-    s = (raw or "")[:7]
-    return s if _MONTH_KEY_RE.match(s) else None
+    """Return raw if it is a real YYYY-MM calendar month, else None."""
+    s = (raw or "").strip()
+    if not _MONTH_KEY_RE.fullmatch(s):
+        return None
+    try:
+        year, month = s.split("-")
+        date(int(year), int(month), 1)
+    except (TypeError, ValueError):
+        return None
+    return s
 
 
 def valid_date(raw):
