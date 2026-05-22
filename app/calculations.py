@@ -116,11 +116,17 @@ def contribution_breakdown(account, assumptions=None):
                 self_assessment = gross * (band_rate - 0.20)
 
     elif is_lisa:
-        # 25% government bonus, capped at £4,000/year personal contributions
-        annual_personal = personal * 12
-        eligible = min(annual_personal, LISA_ANNUAL_CAP)
-        government_bonus = (eligible * LISA_BONUS_RATE) / 12  # monthly equivalent
-        method_label = "Government bonus (25%)"
+        if current_age_from_assumptions(assumptions) >= 50:
+            # Lifetime ISA contributions and government bonuses stop from age 50.
+            personal = 0.0
+            government_bonus = 0.0
+            method_label = "LISA contributions stop at age 50"
+        else:
+            # 25% government bonus, capped at £4,000/year personal contributions
+            annual_personal = personal * 12
+            eligible = min(annual_personal, LISA_ANNUAL_CAP)
+            government_bonus = (eligible * LISA_BONUS_RATE) / 12  # monthly equivalent
+            method_label = "Government bonus (25%)"
 
     gross_into_pot = personal + tax_relief + government_bonus + employer
 
