@@ -125,3 +125,58 @@ def test_isa_projection_includes_next_april_for_early_month_salary_day():
     assert usage["months"] == 0
     assert usage["total_months"] == 12
     assert usage["projected_isa"] == 1200
+
+
+def test_isa_usage_excludes_regular_lisa_contributions_after_age_50():
+    accounts = [
+        {
+            "id": 1,
+            "name": "LISA",
+            "wrapper_type": "Lifetime ISA",
+            "monthly_contribution": 100,
+        }
+    ]
+
+    usage = calculate_isa_usage(
+        accounts,
+        ad_hoc_contributions=[],
+        today=date(2026, 10, 1),
+        salary_day=28,
+        lisa_contributions_allowed=False,
+    )
+
+    assert usage["lisa_used"] == 0
+    assert usage["projected_lisa"] == 0
+    assert usage["isa_used"] == 0
+    assert usage["projected_isa"] == 0
+
+
+def test_isa_usage_keeps_recorded_lisa_contributions_after_age_50():
+    accounts = [
+        {
+            "id": 1,
+            "name": "LISA",
+            "wrapper_type": "Lifetime ISA",
+            "monthly_contribution": 100,
+        }
+    ]
+    ad_hoc = [
+        {
+            "account_id": 1,
+            "wrapper_type": "Lifetime ISA",
+            "amount": 250,
+        }
+    ]
+
+    usage = calculate_isa_usage(
+        accounts,
+        ad_hoc_contributions=ad_hoc,
+        today=date(2026, 10, 1),
+        salary_day=28,
+        lisa_contributions_allowed=False,
+    )
+
+    assert usage["lisa_used"] == 250
+    assert usage["projected_lisa"] == 250
+    assert usage["isa_used"] == 250
+    assert usage["projected_isa"] == 250
