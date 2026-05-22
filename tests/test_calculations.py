@@ -1,6 +1,13 @@
 from datetime import date, datetime
 import pytest
-from app.calculations import age_from_dob, to_float, contribution_breakdown
+from app.calculations import (
+    age_from_dob,
+    calculate_isa_usage,
+    contribution_breakdown,
+    full_year_contribution_months,
+    months_in_tax_year,
+    to_float,
+)
 
 def test_age_from_dob():
     # Test cases: (dob_str, today, expected_age)
@@ -91,3 +98,30 @@ def test_contribution_breakdown_lisa_stops_from_age_50():
     assert breakdown["government_bonus"] == 0
     assert breakdown["total_into_pot"] == 0
     assert breakdown["method_label"] == "LISA contributions stop at age 50"
+
+
+def test_full_tax_year_has_12_contribution_months_for_early_month_salary_day():
+    assert months_in_tax_year(date(2027, 4, 4), salary_day=1) == 12
+    assert full_year_contribution_months(salary_day=1) == 12
+
+
+def test_isa_projection_includes_next_april_for_early_month_salary_day():
+    accounts = [
+        {
+            "id": 1,
+            "name": "ISA",
+            "wrapper_type": "Stocks & Shares ISA",
+            "monthly_contribution": 100,
+        }
+    ]
+
+    usage = calculate_isa_usage(
+        accounts,
+        ad_hoc_contributions=[],
+        today=date(2026, 4, 6),
+        salary_day=1,
+    )
+
+    assert usage["months"] == 0
+    assert usage["total_months"] == 12
+    assert usage["projected_isa"] == 1200

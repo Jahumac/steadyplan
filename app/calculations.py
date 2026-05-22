@@ -741,8 +741,7 @@ def months_in_tax_year(today=None, salary_day=0):
 
 
 def full_year_contribution_months(salary_day=0):
-    contribution_day = salary_day if salary_day >= 1 else 1
-    return 12 if contribution_day >= 6 else 11
+    return 12
 
 
 def _resolve_contribution_day(year, month, nominal_day):
