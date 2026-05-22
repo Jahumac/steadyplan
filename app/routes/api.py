@@ -13,7 +13,7 @@ Versioning: mounted at /api/v1. Breaking changes go under /api/v2.
 from functools import wraps
 
 from flask import Blueprint, current_app, g, jsonify, request
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from app.extensions import limiter
@@ -231,6 +231,18 @@ def _parse_amount(raw):
     return value if value >= 0 else None
 
 
+def _parse_api_month_key(raw):
+    month_key = (raw or "").strip()
+    parsed = valid_month_key(month_key)
+    if not parsed or month_key != parsed:
+        return None
+    try:
+        date.fromisoformat(f"{month_key}-01")
+    except ValueError:
+        return None
+    return month_key
+
+
 @api_bp.route("/accounts/<int:account_id>/balance", methods=["POST"])
 @api_auth_required
 def update_account_balance(account_id):
@@ -252,7 +264,13 @@ def update_account_balance(account_id):
     update_payload["last_updated"] = datetime.now(timezone.utc).isoformat()
     update_account(update_payload, g.api_user.id)
 
-    month_key = payload.get("month") or datetime.now().strftime("%Y-%m")
+    raw_month = payload.get("month")
+    if raw_month is None:
+        month_key = datetime.now().strftime("%Y-%m")
+    else:
+        month_key = _parse_api_month_key(raw_month)
+    if month_key is None:
+        return _err("bad_request", "month must be YYYY-MM", 400)
     upsert_monthly_snapshot(account_id, month_key, balance)
 
     return jsonify({"ok": True, "account_id": account_id,
