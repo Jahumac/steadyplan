@@ -2149,12 +2149,31 @@
       }
 
       blocks.forEach(function(details) {
-        details.addEventListener('toggle', function() {
-          if (!details.open) return;
+        function onOpen() {
+          if (details._projLoadedForOpen) return;
+          details._projLoadedForOpen = true;
           setModeActive(details, 'yearly');
           loadSeries(details, 'yearly');
           loadSchedule(details);
+        }
+
+        details.addEventListener('toggle', function() {
+          if (!details.open) {
+            details._projLoadedForOpen = false;
+            return;
+          }
+          onOpen();
         });
+
+        var summary = details.querySelector('summary');
+        if (summary) {
+          summary.addEventListener('click', function() {
+            setTimeout(function() {
+              if (details.open) onOpen();
+            }, 0);
+          });
+        }
+
         details.querySelectorAll('[data-proj-mode-btn]').forEach(function(btn) {
           btn.addEventListener('click', function(e) {
             e.preventDefault();
@@ -2174,6 +2193,10 @@
         var saveBtn = details.querySelector('[data-proj-schedule-save]');
         if (saveBtn) {
           saveBtn.addEventListener('click', function() { saveSchedule(details); });
+        }
+
+        if (details.open) {
+          onOpen();
         }
       });
     })();
