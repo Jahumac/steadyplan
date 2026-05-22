@@ -828,7 +828,15 @@ def _contribution_month_keys(today, salary_day):
     return keys
 
 
-def calculate_isa_usage(accounts, ad_hoc_contributions, today=None, salary_day=0, isa_overrides=None, review_contributions=None):
+def calculate_isa_usage(
+    accounts,
+    ad_hoc_contributions,
+    today=None,
+    salary_day=0,
+    isa_overrides=None,
+    review_contributions=None,
+    lisa_contributions_allowed=True,
+):
     """Auto-calculate ISA and LISA usage for the current tax year.
 
     accounts: list of account dicts (need wrapper_type, monthly_contribution)
@@ -840,6 +848,9 @@ def calculate_isa_usage(accounts, ad_hoc_contributions, today=None, salary_day=0
                    has account_id, month_key, expected_contribution, is_skipped).
                    When present, a finalised review item replaces the per-account
                    default for that month — the review is the user's confirmed truth.
+    lisa_contributions_allowed: when false, ignore regular scheduled LISA
+                   contributions (used once the user is age 50+), but keep
+                   recorded ad-hoc/review contributions as historical truth.
 
     Returns dict with keys: isa_used, lisa_used, monthly_isa, monthly_lisa,
     adhoc_isa, adhoc_lisa, projected_isa, projected_lisa, breakdown.
@@ -892,10 +903,14 @@ def calculate_isa_usage(accounts, ad_hoc_contributions, today=None, salary_day=0
             wt = ""
         if wt not in ISA_WRAPPER_TYPES:
             continue
-        try:
-            monthly = float(acc["monthly_contribution"] or 0)
-        except (KeyError, TypeError):
+        is_lisa_account = wt in LISA_WRAPPER_TYPES
+        if is_lisa_account and not lisa_contributions_allowed:
             monthly = 0.0
+        else:
+            try:
+                monthly = float(acc["monthly_contribution"] or 0)
+            except (KeyError, TypeError):
+                monthly = 0.0
         # Sum actual amounts month by month, respecting overrides
         total = sum(_effective_monthly(acc["id"], monthly, mk) for mk in month_keys)
         projected = monthly * total_months

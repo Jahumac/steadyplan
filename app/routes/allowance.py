@@ -67,10 +67,13 @@ def allowance_overview():
         ty_start_date.strftime("%Y-%m"),
         ty_end_date.strftime("%Y-%m"),
     )
+    # LISA age warning — contributions stop at 50; warn at 49+
+    current_age = current_age_from_assumptions(assumptions) if assumptions else 0
     usage = calculate_isa_usage(
         accounts, ad_hoc, now_date, salary_day,
         isa_overrides=isa_overrides,
         review_contributions=review_contribs,
+        lisa_contributions_allowed=(not current_age or current_age < 50),
     )
 
     isa_allowance = float(assumptions["isa_allowance"]) if assumptions else 20000
@@ -78,8 +81,6 @@ def allowance_overview():
 
     has_lisa = any("Lifetime" in (a.get("wrapper_type") or "") or "LISA" in (a.get("wrapper_type") or "") for a in accounts)
 
-    # LISA age warning — contributions stop at 50; warn at 49+
-    current_age = current_age_from_assumptions(assumptions) if assumptions else 0
     lisa_age_warning = current_age >= 49 if current_age else False
     lisa_months_remaining = max(0, round((50 - current_age) * 12)) if lisa_age_warning else 0
 

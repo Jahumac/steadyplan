@@ -10,6 +10,7 @@ from app.calculations import (
     allowance_progress,
     calculate_isa_usage,
     calculate_pension_usage,
+    current_age_from_assumptions,
     effective_account_value,
     effective_monthly_contribution,
     goal_current_value,
@@ -252,10 +253,12 @@ def overview():
         ty_start_date.strftime("%Y-%m"),
         ty_end_date.strftime("%Y-%m"),
     )
+    current_age = current_age_from_assumptions(assumptions) if assumptions else 0
     isa_usage = calculate_isa_usage(
         raw_accounts, ad_hoc, now_date, salary_day,
         isa_overrides=isa_overrides,
         review_contributions=review_contribs,
+        lisa_contributions_allowed=(not current_age or current_age < 50),
     )
     isa_used = isa_usage["isa_used"]
     lisa_used = isa_usage["lisa_used"]
