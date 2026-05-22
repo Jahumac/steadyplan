@@ -446,6 +446,11 @@
         }
         if (sr) sr.textContent = savingsRate.toFixed(1) + '%';
 
+        var psNote = document.getElementById('pre-salary-note');
+        var psAmt  = document.getElementById('pre-salary-total');
+        if (psNote) psNote.style.display = preSalaryTotal > 0 ? '' : 'none';
+        if (psAmt) psAmt.textContent = fmtGBP(preSalaryTotal);
+
         // Update section totals
         Object.keys(sectionTotals).forEach(function(k) {
           var el = document.getElementById('total-' + k);

@@ -139,29 +139,49 @@ def _build_monthly_data(month_key, user_id):
                     continue
 
             linked_account = account_map.get(item["linked_account_id"]) if item["linked_account_id"] else None
+            is_linked_account = linked_account is not None
+            is_linked_debt = linked_debt is not None
+
             if item["id"] in entry_map:
                 amount = float(entry_map[item["id"]]["amount"] or 0)
-            elif linked_account and linked_account["id"] in active_overrides:
+                source = "manual_override"
+            elif is_linked_account and linked_account["id"] in active_overrides:
                 amount = float(active_overrides[linked_account["id"]]["override_amount"] or 0)
-            elif linked_account:
+                source = "manual_override"
+            elif is_linked_account:
                 amount = float(linked_account["monthly_contribution"] or 0)
+                source = "linked_account"
+            elif is_linked_debt:
+                amount = float(linked_debt.get("monthly_payment") or 0)
+                source = "linked_debt"
             elif item["id"] in prior_entry_map:
                 amount = float(prior_entry_map[item["id"]]["amount"] or 0)
-            else:
-                amount = float(item["default_amount"] or 0)
-            # Track whether amount came from the current month or was inherited
-            if item["id"] in entry_map:
-                source = "current"
-            elif linked_account and linked_account["id"] in active_overrides:
-                source = "override"
-            elif linked_account:
-                source = "linked"
-            elif linked_debt:
-                source = "debt"
-            elif item["id"] in prior_entry_map:
                 source = "inherited"
             else:
+                amount = float(item["default_amount"] or 0)
                 source = "default"
+
+            if source == "default":
+                source_label = "default"
+                source_title = "Using the default amount — change it to save for this month"
+            elif source == "inherited":
+                source_label = "prev month"
+                source_title = "Carried forward from the last month you edited"
+            elif source == "manual_override":
+                source_label = "this month"
+                source_title = "Saved for this month"
+                if is_linked_account:
+                    ln = (linked_account.get("name") or "linked account").strip()
+                    source_title = f"Saved for this month (linked account · {ln})"
+                elif is_linked_debt:
+                    source_title = "Saved for this month (linked debt)"
+            elif source == "linked_account":
+                ln = (linked_account.get("name") or "—").strip()
+                source_label = f"linked account · {ln}"
+                source_title = "Pulled from your linked account's monthly contribution"
+            else:  # linked_debt
+                source_label = "linked debt"
+                source_title = "Pulled from your Debts page — update the monthly payment there to change this amount"
 
             linked_account_name = None
             pre_salary = False
@@ -174,10 +194,12 @@ def _build_monthly_data(month_key, user_id):
                 "name": item["name"],
                 "notes": item["notes"],
                 "amount": amount,
-                "linked": item["linked_account_id"] is not None,
+                "linked_account": item["linked_account_id"] is not None,
                 "linked_account_name": linked_account_name,
                 "linked_debt": linked_debt is not None,
                 "source": source,
+                "source_label": source_label,
+                "source_title": source_title,
                 "pre_salary": pre_salary,
             })
         section_total = sum(i["amount"] for i in section_items)
@@ -210,6 +232,7 @@ def _build_monthly_data(month_key, user_id):
     summary = {
         "total_income": total_income,
         "total_expenses": total_expenses,
+        "pre_salary_total": pre_salary_total,
         "surplus": surplus,
         "savings_rate": savings_rate,
     }

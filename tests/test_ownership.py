@@ -550,7 +550,7 @@ def test_account_override_shows_in_linked_budget_month(app, two_users):
         sections, _ = _build_monthly_data("2026-07", two_users["alice"]["uid"])
         row = next(row for section in sections for row in section["rows"])
         assert row["amount"] == 250
-        assert row["source"] == "override"
+        assert row["source"] == "manual_override"
 
 
 def test_linked_budget_second_edit_replaces_not_duplicates(app, two_users):
@@ -672,7 +672,7 @@ def test_linked_budget_items_do_not_inherit_prior_month_one_offs(app, two_users)
         sections, _ = _build_monthly_data("2026-06", two_users["alice"]["uid"])
         row = next(row for section in sections for row in section["rows"])
         assert row["amount"] == 1000
-        assert row["source"] == "linked"
+        assert row["source"] == "linked_account"
 
 
 def test_accounts_with_monthly_contributions_auto_appear_in_budget(app, two_users):
@@ -695,4 +695,4 @@ def test_accounts_with_monthly_contributions_auto_appear_in_budget(app, two_user
         sections, _ = _build_monthly_data("2026-04", two_users["alice"]["uid"])
         row = next(row for section in sections for row in section["rows"] if row["name"] == "Premium Bonds")
         assert row["amount"] == 10
-        assert row["source"] == "linked"
+        assert row["source"] == "linked_account"

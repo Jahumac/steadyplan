@@ -57,6 +57,12 @@
   </div>
 </section>
 
+{% if summary.pre_salary_total %}
+<p class="helper-text" id="pre-salary-note">
+  <strong id="pre-salary-total">£{{ '{:,.0f}'.format(summary.pre_salary_total) }}</strong> is marked outside take-home. It is shown in the relevant section for visibility, but not deducted again from Left over.
+</p>
+{% endif %}
+
 {# ── Budget toolbar ──────────────────────────────────────────────────────── #}
 <div class="budget-toolbar">
   <div class="badge-row">
@@ -85,27 +91,16 @@
   </div>
 </div>
 
-{# ── Section colour map ──────────────────────────────────────────────────── #}
-{% set section_colors = {
-  'income': '--accent-2',
-  'fixed': '--accent',
-  'debt': '--accent-6',
-  'investment': '--accent-5',
-  'saving': '--accent-5',
-  'discretionary': '--accent-3'
-} %}
-
 {# ── Budget sections ──────────────────────────────────────────────────────── #}
 <div class="budget-container" data-month-key="{{ month_key }}" data-income-key="{{ income_key }}">
 {% for section in sections %}
-{% set sec_color = section_colors.get(section.key, '--accent-7') %}
-<section class="panel mb-1 budget-section-panel" style="--sec-color: var({{ sec_color }})">
+<section class="panel mb-1 budget-section-panel" data-sec="{{ section.key }}">
   <div class="section-header">
     <div>
-      <p class="eyebrow" style="color: var({{ sec_color }})">{{ section.key | replace('_', ' ') | upper }}</p>
+      <p class="eyebrow budget-section-eyebrow">{{ section.key | replace('_', ' ') | upper }}</p>
       <h3>{{ section.label }}</h3>
     </div>
-    <strong class="budget-section-total" id="total-{{ section.key }}" style="color: var({{ sec_color }})">
+    <strong class="budget-section-total" id="total-{{ section.key }}">
       £{{ '{:,.2f}'.format(section.total) }}
     </strong>
   </div>
@@ -115,7 +110,7 @@
   {% elif 'debt' in section.key %}
   <p class="helper-text helper-text-section">Minimum payments and extra chunks you're throwing at debt — every pound here gets you closer to freedom.</p>
   {% elif 'invest' in section.key or 'saving' in section.key %}
-  <p class="helper-text helper-text-section">Pay yourself first! Items marked <em>linked</em> pull their amount from your account's monthly contribution. Edit the number here to adjust <strong>this month only</strong> — to change all future months, update the contribution in the account's settings.</p>
+  <p class="helper-text helper-text-section">Pay yourself first! Items marked <em>linked account</em> pull their amount from your account's monthly contribution. Edit the number here to adjust <strong>this month only</strong> — to change all future months, update the contribution in the account's settings.</p>
   {% elif 'fixed' in section.key or 'expense' in section.key %}
   <p class="helper-text helper-text-section">The essentials — bills, rent, subscriptions. These tend to stay steady month to month.</p>
   {% elif 'discretionary' in section.key or 'variable' in section.key or 'personal' in section.key %}
@@ -130,14 +125,10 @@
         <span class="budget-row-name">{{ item.name }}</span>
         {% if item.pre_salary %}
           <span class="budget-pill budget-pill-pre-salary" title="Doesn't come from your take-home — either leaves before salary arrives (e.g. salary sacrifice) or arrives from outside it (e.g. cashback). Shown for visibility but not subtracted from take-home.">outside take-home</span>
-        {% elif item.linked %}
-          <span class="budget-pill" title="Uses {{ item.linked_account_name or 'the account' }}'s normal monthly contribution unless you save a one-month change">linked · {{ item.linked_account_name or '—' }}</span>
-        {% elif item.linked_debt %}
-          <span class="budget-pill budget-pill-debt" title="Pulled from your Debts page — update the monthly payment there to change this amount">debt</span>
         {% endif %}
-        {% if item.source == 'inherited' %}<span class="budget-row-source" data-source="inherited" title="Carried forward from the last month you edited">prev month</span>{% endif %}
-        {% if item.source == 'default' %}<span class="budget-row-source" data-source="default" title="Using the default amount — change it to save for this month">default</span>{% endif %}
-        {% if item.source == 'override' %}<span class="budget-row-source" data-source="override" title="Using a contribution override for this month">override</span>{% endif %}
+        {% if item.source_label %}
+          <span class="budget-row-source" data-source="{{ item.source }}" title="{{ item.source_title }}">{{ item.source_label }}</span>
+        {% endif %}
         {% if item.notes %}<span class="budget-row-note">{{ item.notes }}</span>{% endif %}
       </div>
       <div class="budget-row-right">
