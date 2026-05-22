@@ -131,24 +131,43 @@
   <div class="section-header mb-05">
     <p class="eyebrow">What if you paid more?</p>
   </div>
-  <p class="helper-text mb-075">See how much time and interest you'd save by increasing your monthly payment.</p>
+  <p class="helper-text mb-075">See how much time and interest you'd save with a one-off overpayment, a recurring monthly overpayment, or both.</p>
+  {% if selected_debt.overpayment_examples %}
+  <div class="badge-row mb-075" style="gap:0.4rem;flex-wrap:wrap;">
+    {% for ex in selected_debt.overpayment_examples %}
+      <span class="badge badge-soft">+£{{ '{:,.0f}'.format(ex.extra_monthly) }}/mo saves {{ ex.months_saved }} month{{ '' if ex.months_saved == 1 else 's' }} · £{{ '{:,.0f}'.format(ex.interest_saved) }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
   <div class="settings-form" style="max-width:420px;">
-    <label>
-      <span>Extra monthly payment (£)</span>
-      <input type="number" step="10" min="0" placeholder="e.g. 100"
-             id="extra-{{ selected_debt.id }}"
-             data-balance="{{ selected_debt.current_balance }}"
-             data-payment="{{ selected_debt.monthly_payment }}"
-             data-apr="{{ selected_debt.apr }}"
-             data-months="{{ selected_debt.months_remaining }}"
-             data-interest="{{ selected_debt.total_interest or 0 }}"
-             data-name="{{ selected_debt.name }}"
-             class="debt-whatif-input">
-    </label>
+    <div class="form-grid">
+      <label>
+        <span>Extra monthly payment (£)</span>
+        <input type="number" step="10" min="0" placeholder="e.g. 100"
+               id="extra-{{ selected_debt.id }}"
+               data-debt-id="{{ selected_debt.id }}"
+               data-balance="{{ selected_debt.current_balance }}"
+               data-payment="{{ selected_debt.monthly_payment }}"
+               data-apr="{{ selected_debt.apr }}"
+               data-months="{{ selected_debt.months_remaining }}"
+               data-interest="{{ selected_debt.total_interest or 0 }}"
+               data-name="{{ selected_debt.name }}"
+               class="debt-whatif-input debt-whatif-field">
+      </label>
+      <label>
+        <span>One-off overpayment now (£)</span>
+        <input type="number" step="10" min="0" placeholder="e.g. 500"
+               id="oneoff-{{ selected_debt.id }}"
+               data-debt-id="{{ selected_debt.id }}"
+               class="debt-whatif-field">
+      </label>
+    </div>
     <div class="badge-row" style="gap:0.4rem;flex-wrap:wrap;">
       <button type="button" class="badge badge-outline debt-quick-btn" data-target="extra-{{ selected_debt.id }}" data-amount="50">+£50</button>
       <button type="button" class="badge badge-outline debt-quick-btn" data-target="extra-{{ selected_debt.id }}" data-amount="100">+£100</button>
       <button type="button" class="badge badge-outline debt-quick-btn" data-target="extra-{{ selected_debt.id }}" data-amount="200">+£200</button>
+      <button type="button" class="badge badge-outline debt-quick-btn" data-target="oneoff-{{ selected_debt.id }}" data-amount="500">£500 now</button>
+      <button type="button" class="badge badge-outline debt-quick-btn" data-target="oneoff-{{ selected_debt.id }}" data-amount="1000">£1k now</button>
       <button type="button" class="badge badge-outline debt-quick-btn" data-target="extra-{{ selected_debt.id }}" data-amount="{{ selected_debt.monthly_payment }}">Double payments</button>
     </div>
     <div class="badge-row mt-075">
@@ -171,6 +190,10 @@
     <div class="whatif-result-item">
       <span>Total interest (new)</span>
       <strong id="wi-int-new-{{ selected_debt.id }}" class="stat-negative-text">—</strong>
+    </div>
+    <div class="whatif-result-item">
+      <span>New monthly payment</span>
+      <strong id="wi-payment-new-{{ selected_debt.id }}">—</strong>
     </div>
   </div>
 </section>
