@@ -33,6 +33,8 @@ def create_app():
     # ── Rate limiter ─────────────────────────────────────────────────────────
     if limiter is not None:
         limiter.init_app(app)
+    if app.config.get("RATELIMIT_STORAGE_WARNING") and not app.config.get("TESTING"):
+        app.logger.warning(app.config["RATELIMIT_STORAGE_WARNING"])
 
     # ── Session cookie security ──────────────────────────────────────────────
     app.config.setdefault("SESSION_COOKIE_HTTPONLY", True)

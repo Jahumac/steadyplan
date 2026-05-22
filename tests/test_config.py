@@ -7,6 +7,8 @@ def _load_config(monkeypatch, **env):
         "SESSION_COOKIE_SECURE",
         "REMEMBER_COOKIE_SECURE",
         "SECRET_KEY",
+        "RATELIMIT_STORAGE_URI",
+        "WEB_CONCURRENCY",
     }
     for key in keys:
         monkeypatch.delenv(key, raising=False)
@@ -45,3 +47,36 @@ def test_cookie_secure_env_overrides_production_default(monkeypatch):
 
     assert config.SESSION_COOKIE_SECURE is False
     assert config.REMEMBER_COOKIE_SECURE is False
+
+
+def test_single_worker_default_keeps_memory_rate_limiter_honest(monkeypatch):
+    config = _load_config(monkeypatch, SECRET_KEY="test-secret")
+
+    assert config.WEB_CONCURRENCY == 1
+    assert config.RATELIMIT_STORAGE_URI == "memory://"
+    assert config.RATELIMIT_STORAGE_WARNING is None
+
+
+def test_memory_rate_limiter_warns_with_multiple_workers(monkeypatch):
+    config = _load_config(
+        monkeypatch,
+        SECRET_KEY="test-secret",
+        WEB_CONCURRENCY="2",
+        RATELIMIT_STORAGE_URI="memory://",
+    )
+
+    assert config.WEB_CONCURRENCY == 2
+    assert "memory://" in config.RATELIMIT_STORAGE_WARNING
+    assert "WEB_CONCURRENCY=1" in config.RATELIMIT_STORAGE_WARNING
+
+
+def test_shared_rate_limit_storage_allows_multiple_workers(monkeypatch):
+    config = _load_config(
+        monkeypatch,
+        SECRET_KEY="test-secret",
+        WEB_CONCURRENCY="2",
+        RATELIMIT_STORAGE_URI="redis://redis:6379/0",
+    )
+
+    assert config.WEB_CONCURRENCY == 2
+    assert config.RATELIMIT_STORAGE_WARNING is None

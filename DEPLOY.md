@@ -106,6 +106,27 @@ REMEMBER_COOKIE_SECURE=1
 
 Only override them back to `0` if you deliberately run over plain HTTP. If Shelly sits behind a trusted reverse proxy and you need client IP/protocol headers honoured, also set `TRUST_PROXY_HEADERS=1`; leave it unset for direct access.
 
+### Rate-limit storage and workers
+
+Shelly defaults to one Gunicorn worker:
+
+```text
+WEB_CONCURRENCY=1
+RATELIMIT_STORAGE_URI=memory://
+```
+
+That keeps the built-in login/API rate limits honest for a small self-hosted SQLite app. The `memory://` limiter is process-local; if you run multiple workers, each worker has its own limit bucket.
+
+Only set `WEB_CONCURRENCY` above `1` if you also configure shared rate-limit storage, for example Redis:
+
+```yaml
+environment:
+  - WEB_CONCURRENCY=2
+  - RATELIMIT_STORAGE_URI=redis://redis:6379/0
+```
+
+If Shelly sees `WEB_CONCURRENCY>1` with `RATELIMIT_STORAGE_URI=memory://`, it logs a startup warning.
+
 ---
 
 ## Updating

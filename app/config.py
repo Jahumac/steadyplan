@@ -14,6 +14,26 @@ def _app_env():
     return os.environ.get("APP_ENV", os.environ.get("FLASK_ENV", "development")).strip().lower()
 
 
+def _env_int(name, default):
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+def _ratelimit_storage_warning(storage_uri, worker_count):
+    if (storage_uri or "").strip().lower() == "memory://" and worker_count > 1:
+        return (
+            "RATELIMIT_STORAGE_URI=memory:// is process-local. With multiple "
+            "Gunicorn workers, login/API rate limits are tracked separately per "
+            "worker. Set WEB_CONCURRENCY=1 or use shared storage such as Redis."
+        )
+    return None
+
+
 def _load_or_create_secret_key():
     env_key = os.environ.get("SECRET_KEY")
     if env_key:
@@ -50,6 +70,8 @@ class Config:
     TESTING = os.environ.get("FLASK_TESTING", "0") == "1"
     TWELVE_DATA_API_KEY = os.environ.get("TWELVE_DATA_API_KEY")
     RATELIMIT_STORAGE_URI = os.environ.get("RATELIMIT_STORAGE_URI", "memory://")
+    WEB_CONCURRENCY = _env_int("WEB_CONCURRENCY", 1)
+    RATELIMIT_STORAGE_WARNING = _ratelimit_storage_warning(RATELIMIT_STORAGE_URI, WEB_CONCURRENCY)
     TRUST_PROXY_HEADERS = os.environ.get("TRUST_PROXY_HEADERS", "0") == "1"
     MANUAL_REFRESH_COOLDOWN_SECONDS = int(os.environ.get("MANUAL_REFRESH_COOLDOWN_SECONDS", "180"))
     # Cap upload size — budget Excel files and CSV imports are well under 1 MB
