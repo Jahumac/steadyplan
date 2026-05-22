@@ -818,10 +818,10 @@
       // No page guard — each section checks for its own elements.
 
       // ── Amortization helpers ──────────────────────────────────────────
-      function buildSchedule(balance, payment, apr) {
+      function buildSchedule(balance, payment, apr, oneOff) {
         var r = apr / 100 / 12;
         var rows = [];
-        var bal = balance;
+        var bal = Math.max(balance - (oneOff || 0), 0);
         for (var i = 1; i <= 600 && bal > 0.005; i++) {
           var interest  = r > 0 ? bal * r : 0;
           var principal = Math.min(payment - interest, bal);
@@ -908,18 +908,13 @@
 
       // ── What-if summary stats (updates as you type) ──────────────────
       function monthsToPayoff(balance, payment, apr) {
-        if (balance <= 0) return 0;
-        if (payment <= 0) return null;
-        var r = apr / 100 / 12;
-        if (r === 0) return Math.ceil(balance / payment);
-        if (payment <= balance * r) return null;
-        return Math.ceil(-Math.log(1 - balance * r / payment) / Math.log(1 + r));
+        var rows = buildSchedule(balance, payment, apr, 0);
+        return rows.length ? rows.length : null;
       }
 
-      function totalInterest(balance, payment, apr, months) {
-        if (apr === 0) return 0;
-        if (months === null) return null;
-        return Math.max(payment * months - balance, 0);
+      function totalInterestFromSchedule(rows) {
+        if (!rows || !rows.length) return 0;
+        return rows.reduce(function(sum, row) { return sum + row.interest; }, 0);
       }
 
       function addMonths(months) {
@@ -930,22 +925,28 @@
 
       function fmtRound(v) { return '£' + Math.round(v).toLocaleString('en-GB'); }
 
-      document.querySelectorAll('.debt-whatif-input').forEach(function(input) {
-        input.addEventListener('input', function() {
-          var id           = input.id.replace('extra-', '');
+      document.querySelectorAll('.debt-whatif-field').forEach(function(field) {
+        field.addEventListener('input', function() {
+          var id           = field.dataset.debtId;
+          var input        = document.getElementById('extra-' + id);
+          var oneOffInput  = document.getElementById('oneoff-' + id);
+          if (!input) return;
           var balance      = parseFloat(input.dataset.balance)   || 0;
           var payment      = parseFloat(input.dataset.payment)   || 0;
           var apr          = parseFloat(input.dataset.apr)       || 0;
           var origMonths   = parseInt(input.dataset.months)      || 0;
           var origInterest = parseFloat(input.dataset.interest)  || 0;
           var extra        = parseFloat(input.value)             || 0;
+          var oneOff       = oneOffInput ? (parseFloat(oneOffInput.value) || 0) : 0;
           var result       = document.getElementById('result-' + id);
 
-          if (extra <= 0) { if (result) result.style.display = 'none'; return; }
+          if (extra <= 0 && oneOff <= 0) { if (result) result.style.display = 'none'; return; }
 
           var newPayment  = payment + extra;
-          var newMonths   = monthsToPayoff(balance, newPayment, apr);
-          var newInterest = newMonths !== null ? totalInterest(balance, newPayment, apr, newMonths) : null;
+          var sched       = buildSchedule(balance, newPayment, apr, oneOff);
+          var clearedNow  = Math.max(balance - oneOff, 0) <= 0;
+          var newMonths   = clearedNow ? 0 : (sched.length ? sched.length : null);
+          var newInterest = newMonths !== null ? totalInterestFromSchedule(sched) : null;
           var monthsSaved = newMonths !== null ? Math.max(origMonths - newMonths, 0) : null;
           var intSaved    = newInterest !== null ? Math.max(origInterest - newInterest, 0) : null;
 
@@ -954,10 +955,12 @@
           var mSavedEl = document.getElementById('wi-months-saved-' + id);
           var iSavedEl = document.getElementById('wi-int-saved-' + id);
           var iNewEl   = document.getElementById('wi-int-new-' + id);
-          if (dateEl)   dateEl.textContent   = newMonths !== null ? addMonths(newMonths) : 'Cannot pay off';
+          var pNewEl   = document.getElementById('wi-payment-new-' + id);
+          if (dateEl)   dateEl.textContent   = newMonths !== null ? (newMonths === 0 ? 'Now' : addMonths(newMonths)) : 'Cannot pay off';
           if (mSavedEl) mSavedEl.textContent = monthsSaved !== null ? monthsSaved + ' month' + (monthsSaved === 1 ? '' : 's') : '—';
           if (iSavedEl) iSavedEl.textContent = intSaved    !== null ? fmtRound(intSaved) : '—';
           if (iNewEl)   iNewEl.textContent   = newInterest !== null ? fmtRound(newInterest) : '—';
+          if (pNewEl)   pNewEl.textContent   = fmtRound(newPayment) + '/mo';
         });
       });
 
@@ -984,15 +987,17 @@
           var payment  = parseFloat(whatifInput.dataset.payment)  || 0;
           var apr      = parseFloat(whatifInput.dataset.apr)      || 0;
           var extra    = parseFloat(whatifInput.value)            || 0;
+          var oneOffEl = document.getElementById('oneoff-' + (whatifInput.dataset.debtId || ''));
+          var oneOff   = oneOffEl ? (parseFloat(oneOffEl.value) || 0) : 0;
           if (balance <= 0 || payment <= 0) return;
 
-          var sched = buildSchedule(balance, payment + extra, apr);
+          var sched = buildSchedule(balance, payment + extra, apr, oneOff);
           _curSchedule = sched;
           _curExtra    = extra;
 
           if (schedTitle) {
-            schedTitle.textContent = extra > 0
-              ? 'Recalculated · +£' + extra.toLocaleString('en-GB') + '/mo extra'
+            schedTitle.textContent = (extra > 0 || oneOff > 0)
+              ? 'Recalculated · ' + (extra > 0 ? '+£' + extra.toLocaleString('en-GB') + '/mo' : '') + (extra > 0 && oneOff > 0 ? ' · ' : '') + (oneOff > 0 ? '£' + oneOff.toLocaleString('en-GB') + ' now' : '')
               : 'Month by month (current payment)';
           }
           if (schedHint) schedHint.style.display = 'none';

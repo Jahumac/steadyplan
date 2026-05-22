@@ -128,6 +128,59 @@ def debt_payoff_date(months):
     return date(year, month, 1)
 
 
+def debt_overpayment_scenario(
+    balance,
+    monthly_payment,
+    apr,
+    extra_monthly=0,
+    one_off_overpayment=0,
+):
+    """Compare the current debt plan with an overpayment scenario.
+
+    ``extra_monthly`` increases every future regular payment. ``one_off`` is
+    applied immediately to principal before the new schedule is calculated.
+    Interest is calculated from amortisation schedules so final partial payments
+    are handled accurately.
+    """
+    balance = float(balance or 0)
+    monthly_payment = float(monthly_payment or 0)
+    apr = float(apr or 0)
+    extra_monthly = max(float(extra_monthly or 0), 0.0)
+    one_off_overpayment = max(float(one_off_overpayment or 0), 0.0)
+
+    baseline_months = debt_months_remaining(balance, monthly_payment, apr)
+    baseline_interest = debt_total_interest(balance, monthly_payment, apr, baseline_months)
+
+    scenario_balance = max(balance - one_off_overpayment, 0.0)
+    new_monthly_payment = monthly_payment + extra_monthly
+    new_months = debt_months_remaining(scenario_balance, new_monthly_payment, apr)
+    new_interest = debt_total_interest(scenario_balance, new_monthly_payment, apr, new_months)
+
+    if baseline_months is None or new_months is None or baseline_interest is None or new_interest is None:
+        months_saved = None
+        interest_saved = None
+    else:
+        months_saved = max(baseline_months - new_months, 0)
+        interest_saved = max(round(baseline_interest - new_interest, 2), 0.0)
+
+    return {
+        "balance": round(balance, 2),
+        "scenario_balance": round(scenario_balance, 2),
+        "baseline_months": baseline_months,
+        "new_months": new_months,
+        "months_saved": months_saved,
+        "baseline_interest": baseline_interest,
+        "new_interest": new_interest,
+        "interest_saved": interest_saved,
+        "monthly_payment": round(monthly_payment, 2),
+        "extra_monthly": round(extra_monthly, 2),
+        "new_monthly_payment": round(new_monthly_payment, 2),
+        "one_off_overpayment": round(min(one_off_overpayment, balance), 2),
+        "baseline_payoff_date": debt_payoff_date(baseline_months),
+        "new_payoff_date": debt_payoff_date(new_months),
+    }
+
+
 def _add_months(d, n):
     """Add n months to a date, clamping to the last day of the target month."""
     month = d.month - 1 + n
@@ -250,6 +303,12 @@ def build_debt_card(debt):
     interest = debt_total_interest(balance, payment, apr, months)
     payoff = debt_payoff_date(months)
     paid_off_pct = ((original - balance) / original * 100) if original > 0 else 0
+    overpayment_examples = []
+    if balance > 0 and payment > 0 and months is not None:
+        for extra in (50, 100, 200):
+            scenario = debt_overpayment_scenario(balance, payment, apr, extra_monthly=extra)
+            if scenario["months_saved"] and scenario["interest_saved"]:
+                overpayment_examples.append(scenario)
 
     return {
         "id": debt["id"],
@@ -269,4 +328,5 @@ def build_debt_card(debt):
         "paid_off_pct": max(0, min(100, paid_off_pct)),
         "total_cost": (balance + interest) if interest is not None else None,
         "monthly_interest": balance * (apr / 100 / 12) if apr > 0 else 0,
+        "overpayment_examples": overpayment_examples,
     }
