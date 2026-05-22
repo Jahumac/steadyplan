@@ -18,6 +18,7 @@ from pathlib import Path
 
 from app.extensions import limiter
 from app.calculations import effective_account_value, is_price_stale
+from app.services.backups import list_backups
 from app.utils import valid_date, valid_month_key
 from app.models import (
     add_dividend_record,
@@ -392,16 +393,9 @@ def health():
     try:
         data_dir = Path(current_app.config.get("DATA_DIR",
                         Path(current_app.config["DB_PATH"]).parent))
-        backup_dir = data_dir / "backups"
-        if backup_dir.exists():
-            backups = sorted(backup_dir.glob("finance-*.db"))
-            backups = [p for p in backups if not p.is_symlink()]
-            if backups:
-                newest = backups[-1]
-                mtime = datetime.fromtimestamp(newest.stat().st_mtime).isoformat()
-                status["checks"]["last_backup"] = mtime
-            else:
-                status["checks"]["last_backup"] = "none"
+        backups = list_backups(data_dir)
+        if backups:
+            status["checks"]["last_backup"] = backups[-1].get("modified") or "none"
         else:
             status["checks"]["last_backup"] = "none"
     except Exception:

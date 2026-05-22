@@ -237,6 +237,42 @@
 <section class="panel mt-1">
   <div class="section-header">
     <div>
+      <p class="eyebrow">Backups</p>
+      <h3>SQLite backups</h3>
+    </div>
+    {% if current_user.is_authenticated and current_user.is_admin %}
+    <form method="post" action="/settings/backups/run" style="margin:0;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="badge badge-primary-action">Create backup now</button>
+    </form>
+    {% endif %}
+  </div>
+  <table class="data-table">
+    <tbody>
+      <tr>
+        <td>Backup files</td>
+        <td class="num">{{ diagnostics.backups.count if diagnostics and diagnostics.backups and diagnostics.backups.count is not none else 0 }}</td>
+      </tr>
+      <tr>
+        <td>Latest backup</td>
+        <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_name %}{{ diagnostics.backups.latest_name }}{% else %}None yet{% endif %}</td>
+      </tr>
+      <tr>
+        <td>Latest modified</td>
+        <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_modified %}{{ (diagnostics.backups.latest_modified or '')[:19] }}{% else %}—{% endif %}</td>
+      </tr>
+      <tr>
+        <td>Latest size</td>
+        <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_size_human %}{{ diagnostics.backups.latest_size_human }}{% else %}—{% endif %}</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="helper-text">Backups are stored under Shelly’s data volume (data/backups).</p>
+</section>
+
+<section class="panel mt-1">
+  <div class="section-header">
+    <div>
       <p class="eyebrow">Prices</p>
       <h3>Latest Instruments</h3>
     </div>
@@ -333,6 +369,16 @@
   <p class="helper-text text-danger" style="margin-top:0.5rem;">
     This cannot be undone. Shelly means it — once it's gone, it's gone. <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="" class="shelly-inline-icon shelly-icon-xs">
   </p>
+  <p class="helper-text" style="margin-top:0.5rem;">
+    Before wiping data, create a backup from <a class="link-accent" href="/settings/?mode=diagnostics">Diagnostics</a>.
+  </p>
+  {% if current_user.is_authenticated and current_user.is_admin %}
+  <form method="post" action="/settings/backups/run" style="margin:0.75rem 0 0 0;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="next" value="/settings/#danger-zone">
+    <button type="submit" class="badge badge-meta">Create backup now</button>
+  </form>
+  {% endif %}
 
   <div id="reset-confirm" style="margin-top:1rem;">
     <button type="button" class="badge badge-danger" id="reset-reveal-btn">

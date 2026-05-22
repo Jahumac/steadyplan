@@ -73,3 +73,64 @@ def test_list_backups_returns_empty_when_no_dir(tmp_path):
     from app.services.backups import list_backups
 
     assert list_backups(tmp_path) == []
+
+
+def test_diagnostics_renders_backup_panel_when_no_backups_exist(app, client, make_user, tmp_path):
+    app.config["DATA_DIR"] = tmp_path
+    uid, username, password = make_user(username="diag-admin", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/settings/?mode=diagnostics")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "SQLite backups" in body
+    assert "None yet" in body
+
+
+def test_admin_can_run_manual_backup_from_settings(app, client, make_user, tmp_path):
+    app.config["DATA_DIR"] = tmp_path
+    uid, username, password = make_user(username="backup-admin", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.post("/settings/backups/run", data={}, follow_redirects=True)
+    assert resp.status_code == 200
+    backups = sorted((tmp_path / "backups").glob("finance-*.db"))
+    backups = [p for p in backups if not p.is_symlink()]
+    assert backups
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Backup created:" in body
+    # Do not leak full server paths in UI
+    assert str(tmp_path) not in body
+
+
+def test_non_admin_cannot_run_manual_backup(app, client, make_user, tmp_path):
+    app.config["DATA_DIR"] = tmp_path
+    uid, username, password = make_user(username="backup-nonadmin", is_admin=False)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.post("/settings/backups/run", data={}, follow_redirects=True)
+    assert resp.status_code == 200
+    backup_dir = tmp_path / "backups"
+    assert not backup_dir.exists()
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Admin only" in body
+
+
+def test_diagnostics_shows_latest_backup_metadata(app, client, make_user, tmp_path):
+    from app.services.backups import run_backup
+    from pathlib import Path
+
+    app.config["DATA_DIR"] = tmp_path
+    with app.app_context():
+        db_path = Path(app.config["DB_PATH"])
+        dest = run_backup(db_path, tmp_path)
+
+    uid, username, password = make_user(username="diag-admin-2", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/settings/?mode=diagnostics")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert dest.name in body
+    assert "Latest size" in body
+    assert str(dest) not in body

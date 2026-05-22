@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.calculations import current_age_from_assumptions
+from app.services.backups import list_backups, run_backup
 from app.utils import optional_float, optional_int, valid_date
 from app.models import (
     fetch_assumptions,
@@ -15,6 +17,35 @@ from app.models import (
 )
 
 settings_bp = Blueprint("settings", __name__)
+
+
+def _human_bytes(n):
+    try:
+        n = float(n or 0)
+    except (TypeError, ValueError):
+        n = 0.0
+    units = ["B", "KB", "MB", "GB", "TB"]
+    i = 0
+    while n >= 1024 and i < len(units) - 1:
+        n /= 1024.0
+        i += 1
+    if i == 0:
+        return f"{int(n)} {units[i]}"
+    return f"{n:.1f} {units[i]}"
+
+
+def _backup_diagnostics():
+    db_path = Path(current_app.config["DB_PATH"])
+    data_dir = Path(current_app.config.get("DATA_DIR", db_path.parent))
+    backups = list_backups(data_dir)
+    latest = backups[-1] if backups else None
+    return {
+        "count": len(backups),
+        "latest": latest,
+        "latest_name": latest["name"] if latest else None,
+        "latest_modified": latest["modified"] if latest else None,
+        "latest_size_human": _human_bytes(latest["size_bytes"]) if latest else None,
+    }
 
 
 @settings_bp.route("/", methods=["GET", "POST"])
@@ -171,6 +202,11 @@ def settings():
             except (ValueError, TypeError):
                 stale_count += 1
         diagnostics["catalogue_stale_2d_count_in_sample"] = stale_count
+        try:
+            diagnostics["backups"] = _backup_diagnostics()
+        except Exception:
+            current_app.logger.exception("Failed to load backup diagnostics")
+            diagnostics["backups"] = {"count": 0, "latest": None}
 
     return render_template(
         "settings.html",
@@ -180,6 +216,26 @@ def settings():
         page_mode=page_mode,
         active_page="settings",
     )
+
+
+@settings_bp.route("/backups/run", methods=["POST"])
+@login_required
+def run_backup_now():
+    if not getattr(current_user, "is_admin", False):
+        flash("Admin only: you can't run a server backup from here.", "error")
+        return redirect(url_for("settings.settings", mode="diagnostics"))
+
+    db_path = Path(current_app.config["DB_PATH"])
+    data_dir = Path(current_app.config.get("DATA_DIR", db_path.parent))
+    try:
+        dest = run_backup(db_path, data_dir)
+        flash(f"Backup created: {dest.name}", "success")
+    except Exception:
+        current_app.logger.exception("Manual backup failed")
+        flash("Backup failed. Check server logs for details.", "error")
+
+    next_url = request.form.get("next") or request.referrer
+    return redirect(next_url or url_for("settings.settings", mode="diagnostics"))
 
 
 @settings_bp.route("/reset", methods=["POST"])
