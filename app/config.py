@@ -3,6 +3,17 @@ import secrets
 from pathlib import Path
 
 
+def _env_flag(name, default=False):
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _app_env():
+    return os.environ.get("APP_ENV", os.environ.get("FLASK_ENV", "development")).strip().lower()
+
+
 def _load_or_create_secret_key():
     env_key = os.environ.get("SECRET_KEY")
     if env_key:
@@ -29,8 +40,10 @@ class Config:
     DATA_DIR = BASE_DIR / "data"
     DB_PATH = Path(os.environ["DB_PATH"]) if os.environ.get("DB_PATH") else DATA_DIR / "finance.db"
     SECRET_KEY = _load_or_create_secret_key()
-    SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "0") == "1"
-    REMEMBER_COOKIE_SECURE = os.environ.get("REMEMBER_COOKIE_SECURE", "0") == "1"
+    APP_ENV = _app_env()
+    IS_PRODUCTION = APP_ENV in {"production", "prod"}
+    SESSION_COOKIE_SECURE = _env_flag("SESSION_COOKIE_SECURE", default=IS_PRODUCTION)
+    REMEMBER_COOKIE_SECURE = _env_flag("REMEMBER_COOKIE_SECURE", default=IS_PRODUCTION)
     DEMO_READ_ONLY_USERNAME = os.environ.get("DEMO_READ_ONLY_USERNAME", "demo")
     DEMO_PUBLIC_LOGIN_ENABLED = os.environ.get("DEMO_PUBLIC_LOGIN_ENABLED", "0") == "1"
     WTF_CSRF_ENABLED = os.environ.get("WTF_CSRF_ENABLED", "1") != "0"

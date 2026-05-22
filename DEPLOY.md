@@ -86,6 +86,26 @@ docker run -d \
 
 Then open **http://YOUR_UNRAID_IP:8000** in your browser.
 
+### Production security settings
+
+For a local/home-network HTTP deployment, Shelly keeps secure cookies disabled by default so login works at `http://YOUR_UNRAID_IP:8000`.
+
+If you publish Shelly behind HTTPS, set production mode so browser cookies are marked Secure:
+
+```yaml
+environment:
+  - APP_ENV=production
+```
+
+Production mode defaults these to enabled:
+
+```text
+SESSION_COOKIE_SECURE=1
+REMEMBER_COOKIE_SECURE=1
+```
+
+Only override them back to `0` if you deliberately run over plain HTTP. If Shelly sits behind a trusted reverse proxy and you need client IP/protocol headers honoured, also set `TRUST_PROXY_HEADERS=1`; leave it unset for direct access.
+
 ---
 
 ## Updating

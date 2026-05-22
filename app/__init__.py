@@ -34,7 +34,7 @@ def create_app():
     if limiter is not None:
         limiter.init_app(app)
 
-    # ── Secure session cookies (auto-detect HTTPS) ───────────────────────
+    # ── Session cookie security ──────────────────────────────────────────────
     app.config.setdefault("SESSION_COOKIE_HTTPONLY", True)
     app.config.setdefault("SESSION_COOKIE_SAMESITE", "Lax")
     app.config.setdefault("REMEMBER_COOKIE_HTTPONLY", True)
