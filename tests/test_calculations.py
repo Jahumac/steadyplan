@@ -60,3 +60,34 @@ def test_contribution_breakdown_salary_sacrifice():
     assert breakdown["employer"] == 500
     assert breakdown["tax_relief"] == 0
     assert breakdown["total_into_pot"] == 1500
+
+
+def test_contribution_breakdown_lisa_bonus_before_age_50():
+    account = {
+        "monthly_contribution": 100,
+        "wrapper_type": "Lifetime ISA",
+        "contribution_method": "standard",
+    }
+    assumptions = {"current_age": 40}
+
+    breakdown = contribution_breakdown(account, assumptions)
+
+    assert breakdown["personal"] == 100
+    assert breakdown["government_bonus"] == 25
+    assert breakdown["total_into_pot"] == 125
+
+
+def test_contribution_breakdown_lisa_stops_from_age_50():
+    account = {
+        "monthly_contribution": 100,
+        "wrapper_type": "Lifetime ISA",
+        "contribution_method": "standard",
+    }
+    assumptions = {"current_age": 50}
+
+    breakdown = contribution_breakdown(account, assumptions)
+
+    assert breakdown["personal"] == 0
+    assert breakdown["government_bonus"] == 0
+    assert breakdown["total_into_pot"] == 0
+    assert breakdown["method_label"] == "LISA contributions stop at age 50"
