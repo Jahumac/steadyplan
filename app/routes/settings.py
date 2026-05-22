@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -46,6 +47,31 @@ def _backup_diagnostics():
         "latest_modified": latest["modified"] if latest else None,
         "latest_size_human": _human_bytes(latest["size_bytes"]) if latest else None,
     }
+
+
+def _safe_next_settings_url(raw):
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    if not raw.startswith("/"):
+        return None
+    if raw.startswith("//"):
+        return None
+    parts = urlsplit(raw)
+    if parts.scheme or parts.netloc:
+        return None
+    if parts.path not in {"/settings", "/settings/"}:
+        return None
+    if parts.query and parts.query != "mode=diagnostics":
+        return None
+    if parts.fragment and parts.fragment != "danger-zone":
+        return None
+    out = parts.path
+    if parts.query:
+        out += "?" + parts.query
+    if parts.fragment:
+        out += "#" + parts.fragment
+    return out
 
 
 @settings_bp.route("/", methods=["GET", "POST"])
@@ -234,7 +260,7 @@ def run_backup_now():
         current_app.logger.exception("Manual backup failed")
         flash("Backup failed. Check server logs for details.", "error")
 
-    next_url = request.form.get("next") or request.referrer
+    next_url = _safe_next_settings_url(request.form.get("next"))
     return redirect(next_url or url_for("settings.settings", mode="diagnostics"))
 
 

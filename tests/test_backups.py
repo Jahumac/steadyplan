@@ -103,6 +103,39 @@ def test_admin_can_run_manual_backup_from_settings(app, client, make_user, tmp_p
     assert str(tmp_path) not in body
 
 
+def test_admin_manual_backup_safe_next_redirects_locally(app, client, make_user, tmp_path):
+    app.config["DATA_DIR"] = tmp_path
+    uid, username, password = make_user(username="backup-admin-next", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.post("/settings/backups/run", data={"next": "/settings/#danger-zone"}, follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers.get("Location") == "/settings/#danger-zone"
+    backups = sorted((tmp_path / "backups").glob("finance-*.db"))
+    backups = [p for p in backups if not p.is_symlink()]
+    assert backups
+
+
+def test_admin_manual_backup_rejects_external_next(app, client, make_user, tmp_path):
+    app.config["DATA_DIR"] = tmp_path
+    uid, username, password = make_user(username="backup-admin-badnext", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.post("/settings/backups/run", data={"next": "https://example.com/phish"}, follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers.get("Location", "").endswith("/settings/?mode=diagnostics")
+
+
+def test_admin_manual_backup_rejects_protocol_relative_next(app, client, make_user, tmp_path):
+    app.config["DATA_DIR"] = tmp_path
+    uid, username, password = make_user(username="backup-admin-badnext2", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.post("/settings/backups/run", data={"next": "//example.com/phish"}, follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers.get("Location", "").endswith("/settings/?mode=diagnostics")
+
+
 def test_non_admin_cannot_run_manual_backup(app, client, make_user, tmp_path):
     app.config["DATA_DIR"] = tmp_path
     uid, username, password = make_user(username="backup-nonadmin", is_admin=False)
