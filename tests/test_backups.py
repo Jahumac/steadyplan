@@ -17,6 +17,21 @@ def test_backup_creates_file(app, tmp_path):
     assert dest.stat().st_size > 0
 
 
+def test_backup_directory_and_file_are_private(app, tmp_path):
+    from app.services.backups import run_backup
+
+    with app.app_context():
+        db_path = Path(app.config["DB_PATH"])
+        from app.models import create_user
+        create_user("backup-private-user", "password123")
+
+    dest = run_backup(db_path, tmp_path)
+    backup_dir = tmp_path / "backups"
+
+    assert backup_dir.stat().st_mode & 0o777 == 0o700
+    assert dest.stat().st_mode & 0o777 == 0o600
+
+
 def test_backup_is_a_readable_sqlite_db(app, tmp_path):
     import sqlite3
 
