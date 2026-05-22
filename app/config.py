@@ -37,6 +37,7 @@ class Config:
     TESTING = os.environ.get("FLASK_TESTING", "0") == "1"
     TWELVE_DATA_API_KEY = os.environ.get("TWELVE_DATA_API_KEY")
     RATELIMIT_STORAGE_URI = os.environ.get("RATELIMIT_STORAGE_URI", "memory://")
+    TRUST_PROXY_HEADERS = os.environ.get("TRUST_PROXY_HEADERS", "0") == "1"
     MANUAL_REFRESH_COOLDOWN_SECONDS = int(os.environ.get("MANUAL_REFRESH_COOLDOWN_SECONDS", "180"))
     # Cap upload size — budget Excel files and CSV imports are well under 1 MB
     # in practice, so 16 MB is generous while still bounding memory use.
