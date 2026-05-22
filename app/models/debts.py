@@ -98,15 +98,23 @@ def debt_months_remaining(balance, monthly_payment, apr):
 
 
 def debt_total_interest(balance, monthly_payment, apr, months=None):
-    """Total interest paid over the life of the debt."""
+    """Total interest paid over the life of the debt.
+
+    Uses the amortisation schedule rather than ``monthly_payment * months`` so
+    the final partial payment is handled accurately.
+    """
+    if balance <= 0:
+        return 0.0
+    if monthly_payment <= 0:
+        return None
     if apr == 0:
         return 0.0
     if months is None:
         months = debt_months_remaining(balance, monthly_payment, apr)
     if months is None:
         return None
-    total_paid = monthly_payment * months
-    return max(total_paid - balance, 0)
+    schedule = amortisation_schedule(balance, apr, monthly_payment, max_months=months)
+    return round(sum(row["interest"] for row in schedule), 2)
 
 
 def debt_payoff_date(months):
