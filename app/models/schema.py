@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS monthly_snapshots (
 
 CREATE TABLE IF NOT EXISTS allowance_tracking (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     tax_year TEXT NOT NULL,
     isa_used REAL DEFAULT 0,
     lisa_used REAL DEFAULT 0,

@@ -224,6 +224,15 @@ def _user_export_payload(user_id):
             "SELECT * FROM pension_carry_forward WHERE user_id = ? ORDER BY tax_year ASC, id ASC",
             (user_id,),
         )
+        allowance_tracking = _select_rows(
+            conn,
+            """
+            SELECT * FROM allowance_tracking
+            WHERE user_id = ?
+            ORDER BY tax_year ASC, id ASC
+            """,
+            (user_id,),
+        )
 
         contribution_overrides = []
         premium_bonds_prizes = []
@@ -282,6 +291,7 @@ def _user_export_payload(user_id):
             "dividend_records": dividend_records,
             "cgt_disposals": cgt_disposals,
             "pension_carry_forward": pension_carry_forward,
+            "allowance_tracking": allowance_tracking,
             "premium_bonds_prizes": premium_bonds_prizes,
         },
     }
