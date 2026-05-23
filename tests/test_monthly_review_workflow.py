@@ -43,6 +43,8 @@ def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_u
     html = resp.get_data(as_text=True)
     assert "Monthly review" in html
     assert "Work down the page: confirm expected contributions" in html
+    assert "To do:" in html
+    assert "Holdings snapshot from holdings" in html
     assert "Quick checklist" not in html
     assert "Monthly Update Guide" not in html
     assert "How this works" not in html

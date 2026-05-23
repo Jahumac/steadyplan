@@ -28,6 +28,10 @@
       <p class="eyebrow">Monthly review</p>
       <h2 class="hero-value">{{ month_label }}</h2>
       <p class="hero-subtitle">Work down the page: confirm expected contributions, update holdings or manual balances, log Premium Bonds if needed, then add a note and mark the month reviewed.</p>
+      {% if review.status != 'complete' %}
+        {% set remaining_accounts = total_accounts - accounts_updated %}
+        <p class="helper-text m-0">To do: {{ unconfirmed_count }} contribution{{ '' if unconfirmed_count == 1 else 's' }} to confirm · {{ remaining_accounts }} account{{ '' if remaining_accounts == 1 else 's' }} not updated</p>
+      {% endif %}
     </div>
     <div class="hero-actions-col">
       {% if review.status == 'complete' %}
@@ -53,7 +57,7 @@
         <dialog id="confirm-complete-dialog" class="confirm-dialog">
           <div class="confirm-dialog-content">
             <h3>Mark {{ month_label }} reviewed?</h3>
-            <p>Shelly will snapshot your net worth for this month. You can still tweak values afterwards if needed.</p>
+            <p>Shelly will snapshot updated account values for this month. Holdings snapshot from holdings; manual and Premium Bonds snapshot only if you updated their balance.</p>
             {% if unupdated_manual_names %}
             <p class="helper-text" style="color: var(--accent-3);">⚠ {{ unupdated_manual_names | length }} manual account{{ 's' if unupdated_manual_names | length != 1 else '' }} haven't had their balance updated this month ({{ unupdated_manual_names | join(', ') }}).</p>
             {% endif %}
