@@ -179,6 +179,7 @@ from .planning import (
     save_daily_snapshot,
     update_assumptions,
     update_monthly_review,
+    update_monthly_review_notes,
     set_contribution_confirmed,
     mark_review_item_updated,
     fetch_tax_year_contributions,

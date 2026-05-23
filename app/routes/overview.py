@@ -52,6 +52,11 @@ from app.models import (
     fetch_tax_year_contributions,
 )
 from app.services.data_health import build_data_health_summary
+from app.services.monthly_review_checklist import (
+    MONTHLY_REVIEW_CHECKLIST_ITEMS,
+    checked_count as _mr_checked_count,
+    parse_monthly_review_notes as _parse_mr_notes,
+)
 
 overview_bp = Blueprint("overview", __name__)
 
@@ -578,6 +583,27 @@ def overview():
 
     data_health_summary = build_data_health_summary(uid)
 
+    mr_review = fetch_monthly_review(current_month_key, uid)
+    if mr_review is None:
+        mr_status = "Not started"
+        mr_badge_class = "badge badge-meta"
+        mr_checked = 0
+    else:
+        mr_status = "Complete" if mr_review.get("status") == "complete" else "In progress"
+        mr_badge_class = "badge badge-complete" if mr_review.get("status") == "complete" else "badge badge-meta"
+        parsed = _parse_mr_notes(mr_review.get("notes"))
+        mr_checked = _mr_checked_count(parsed.get("checked"))
+
+    monthly_review_card = {
+        "month_key": current_month_key,
+        "month_label": datetime(now_date.year, now_date.month, 1).strftime("%B %Y"),
+        "status": mr_status,
+        "badge_class": mr_badge_class,
+        "checked": mr_checked,
+        "total": len(MONTHLY_REVIEW_CHECKLIST_ITEMS),
+        "href": f"/monthly-review/?month={current_month_key}",
+    }
+
     # Render the response and ensure it's not cached by the browser
     resp = make_response(render_template(
         "overview.html",
@@ -606,6 +632,7 @@ def overview():
         active_page="overview",
         current_month_num=now.month,
         data_health_summary=data_health_summary,
+        monthly_review_card=monthly_review_card,
     ))
     resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     resp.headers["Pragma"] = "no-cache"

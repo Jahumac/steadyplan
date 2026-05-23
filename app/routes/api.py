@@ -19,6 +19,10 @@ from pathlib import Path
 from app.extensions import limiter
 from app.calculations import effective_account_value, is_price_stale
 from app.services.backups import list_backups
+from app.services.monthly_review_checklist import (
+    encode_monthly_review_notes,
+    parse_monthly_review_notes,
+)
 from app.utils import valid_date, valid_month_key
 from app.models import (
     add_dividend_record,
@@ -362,7 +366,13 @@ def complete_monthly_review(month_key):
         upsert_monthly_snapshot(acc["id"], month_key, balance)
         snapshots_taken += 1
 
-    update_monthly_review(review["id"], "complete", notes, g.api_user.id)
+    existing = parse_monthly_review_notes(review.get("notes"))
+    notes_to_save = (
+        encode_monthly_review_notes(notes, existing.get("checked"))
+        if existing.get("is_structured")
+        else notes
+    )
+    update_monthly_review(review["id"], "complete", notes_to_save, g.api_user.id)
 
     return jsonify({
         "ok": True,

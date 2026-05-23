@@ -50,6 +50,7 @@ from .planning_reviews import (
     fetch_monthly_review_items,
     ensure_monthly_review_items,
     update_monthly_review,
+    update_monthly_review_notes,
     update_monthly_review_item,
     set_contribution_confirmed,
     mark_review_item_updated,

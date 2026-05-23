@@ -103,6 +103,62 @@
   {% endif %}
 </section>
 
+<section class="card mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Monthly review</p>
+      <h2>Quick checklist</h2>
+      <p class="helper-text m-0">A calm check-in to keep your data fresh. Tick what you've reviewed, add a note if needed.</p>
+    </div>
+    <div class="badge-row">
+      <span class="badge badge-meta">{{ monthly_review_checked_count }}/{{ monthly_review_total_checks }} checked</span>
+      {% if review.status == 'complete' %}
+        <span class="badge badge-complete">✓ Completed</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <form method="post" class="form-reset">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="form_name" value="save_review_checklist">
+    <input type="hidden" name="month" value="{{ month_key }}">
+
+    <div class="simple-list">
+      {% for item in monthly_review_checklist_items %}
+        <div class="simple-list-item">
+          <label class="flex flex-center gap-075" style="cursor:pointer;">
+            <input type="checkbox"
+                   name="monthly_review_check"
+                   value="{{ item.key }}"
+                   {% if item.key in monthly_review_checked %}checked{% endif %}
+                   {% if review.status == 'complete' %}disabled{% endif %}>
+            <span>{{ item.label }}</span>
+          </label>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-075">
+      <label for="monthly_review_notes" class="helper-text">Notes (optional)</label>
+      <textarea id="monthly_review_notes"
+                name="monthly_review_notes"
+                class="input-standard input-full"
+                rows="3"
+                placeholder="Anything worth remembering from this month?"
+                {% if review.status == 'complete' %}disabled{% endif %}>{{ monthly_review_notes }}</textarea>
+    </div>
+
+    <div class="flex flex-between flex-wrap gap-05 mt-075">
+      <button type="submit" class="badge badge-meta" {% if review.status == 'complete' %}disabled{% endif %}>Save</button>
+      {% if review.status == 'complete' %}
+        <p class="helper-text m-0">This month is locked. Reopen it above if you need to edit.</p>
+      {% else %}
+        <p class="helper-text m-0">Saving the checklist does not change projections — it just helps you keep track.</p>
+      {% endif %}
+    </div>
+  </form>
+</section>
+
 {% if review.status != 'complete' %}
 <section class="card mb-1">
   <div class="section-header">

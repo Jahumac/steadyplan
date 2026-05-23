@@ -136,6 +136,19 @@ def update_monthly_review(review_id, status, notes, user_id=None):
         conn.commit()
 
 
+def update_monthly_review_notes(review_id, notes, user_id):
+    with get_connection() as conn:
+        conn.execute(
+            """
+            UPDATE monthly_reviews
+            SET notes = ?, updated_at = datetime('now')
+            WHERE id = ? AND user_id = ?
+            """,
+            (notes, review_id, user_id),
+        )
+        conn.commit()
+
+
 def update_monthly_review_item(payload):
     with get_connection() as conn:
         conn.execute(

@@ -131,6 +131,23 @@
 </section>
 {% endif %}
 
+{% if monthly_review_card %}
+<section class="card mb-1">
+  <div class="flex flex-center flex-wrap gap-075">
+    <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="" class="shelly-inline-icon shelly-icon-sm">
+    <div style="flex:1; min-width:220px;">
+      <p class="eyebrow m-0">Monthly review</p>
+      <strong>{{ monthly_review_card.month_label }}</strong>
+      <p class="helper-text" style="margin:0.15rem 0 0;">
+        Status: {{ monthly_review_card.status }} · Checklist: {{ monthly_review_card.checked }}/{{ monthly_review_card.total }}
+      </p>
+    </div>
+    <span class="{{ monthly_review_card.badge_class }}">{{ monthly_review_card.status }}</span>
+    <a href="{{ monthly_review_card.href }}" class="badge badge-meta">Open</a>
+  </div>
+</section>
+{% endif %}
+
 {% if next_action and steps_done >= 4 %}
 <section class="card next-action-card mb-1">
   <div class="flex flex-center flex-wrap gap-075">
