@@ -54,9 +54,12 @@ from app.models import (
     fetch_assumptions,
     fetch_latest_price_update,
     fetch_account_daily_snapshots,
+    fetch_monthly_review,
+    mark_review_item_updated,
     fetch_monthly_performance_data_by_account,
     save_account_daily_snapshots,
     save_daily_snapshot,
+    upsert_monthly_snapshot,
     update_account,
     update_catalogue_price,
     update_holding,
@@ -78,6 +81,19 @@ BUCKET_OPTIONS = [
 
 
 accounts_bp = Blueprint("accounts", __name__)
+
+
+def _safe_next_accounts(raw):
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    if not raw.startswith("/"):
+        return None
+    if raw.startswith("//"):
+        return None
+    if raw.startswith("/accounts") or raw.startswith("/monthly-review"):
+        return raw
+    return None
 
 
 def _account_payload_from_form(form):
@@ -852,6 +868,53 @@ def account_detail(account_id):
 @login_required
 def account_add_position(account_id):
     """Legacy route — redirect to account detail which now has an inline add form."""
+    return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+
+@accounts_bp.route("/<int:account_id>/balance", methods=["POST"])
+@login_required
+def update_balance(account_id):
+    uid = current_user.id
+    account = fetch_account(account_id, uid)
+    if not account:
+        flash("Account not found.", "error")
+        return redirect(url_for("accounts.accounts"))
+
+    raw_balance = request.form.get("current_value")
+    new_balance = optional_float(raw_balance, default=None)
+    if new_balance is None or new_balance < 0:
+        flash("Please enter a valid balance (number ≥ 0).", "error")
+        nxt = _safe_next_accounts(request.form.get("next"))
+        if nxt:
+            return redirect(nxt)
+        return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+    if (account.get("wrapper_type") or "").lower() == "premium bonds":
+        new_balance = min(float(new_balance), 50000.0)
+
+    month_key = valid_month_key(request.form.get("month_key")) or date.today().strftime("%Y-%m")
+
+    payload = dict(account)
+    payload["current_value"] = float(new_balance)
+    payload["last_updated"] = datetime.now(timezone.utc).isoformat()
+    update_account(payload, uid)
+
+    upsert_monthly_snapshot(account_id, month_key, float(new_balance))
+
+    holdings_totals = fetch_holding_totals_by_account(uid)
+    accounts = fetch_all_accounts(uid)
+    acct_vals = [(a["id"], effective_account_value(a, holdings_totals)) for a in accounts]
+    save_daily_snapshot(uid, sum(v for _, v in acct_vals))
+    save_account_daily_snapshots(uid, acct_vals)
+
+    review = fetch_monthly_review(month_key, uid)
+    if review is not None:
+        mark_review_item_updated(review["id"], account_id, "balance_updated")
+
+    flash(f"{account['name']} balance updated.", "success")
+    nxt = _safe_next_accounts(request.form.get("next"))
+    if nxt:
+        return redirect(nxt)
     return redirect(url_for("accounts.account_detail", account_id=account_id))
 
 
