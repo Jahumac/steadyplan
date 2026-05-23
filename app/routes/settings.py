@@ -596,17 +596,17 @@ def settings():
 @login_required
 def run_backup_now():
     if not getattr(current_user, "is_admin", False):
-        flash("Admin only: you can't run a server backup from here.", "error")
+        flash("Admin only: you can't create a whole-instance SQLite backup from here.", "error")
         return redirect(url_for("settings.settings", mode="diagnostics"))
 
     db_path = Path(current_app.config["DB_PATH"])
     data_dir = Path(current_app.config.get("DATA_DIR", db_path.parent))
     try:
         dest = run_backup(db_path, data_dir)
-        flash(f"Backup created: {dest.name}", "success")
+        flash(f"SQLite backup created: {dest.name}", "success")
     except Exception:
         current_app.logger.exception("Manual backup failed")
-        flash("Backup failed. Check server logs for details.", "error")
+        flash("SQLite backup failed. Check server logs for details.", "error")
 
     next_url = _safe_next_settings_url(request.form.get("next"))
     return redirect(next_url or url_for("settings.settings", mode="diagnostics"))
@@ -639,7 +639,7 @@ def validate_restore_backup_upload():
             "export_schema_version": None,
             "exported_at": None,
             "counts": {},
-            "errors": ["Please choose a .json backup file to upload."],
+            "errors": ["Please choose a .json export file to upload."],
             "warnings": [],
         }
     else:
@@ -696,21 +696,21 @@ def commit_restore_backup():
     ):
         _delete_staged_restore_file(expected_token)
         _clear_restore_staging_session()
-        flash("This restore preview has expired. Please upload the backup again.", "error")
+        flash("This restore preview has expired. Please upload the export file again.", "error")
         return redirect(url_for("settings.settings"))
 
     json_bytes = _read_staged_restore_file(restore_token)
     if not json_bytes:
         _delete_staged_restore_file(restore_token)
         _clear_restore_staging_session()
-        flash("Restore file could not be read. Please upload the backup again.", "error")
+        flash("Restore file could not be read. Please upload the export file again.", "error")
         return redirect(url_for("settings.settings"))
 
     result = validate_restore_backup_json(json_bytes)
     if not result.get("valid"):
         _delete_staged_restore_file(restore_token)
         _clear_restore_staging_session()
-        flash("That backup is not valid. No data has been changed.", "error")
+        flash("That restore file is not valid. No data has been changed.", "error")
         uid = current_user.id
         assumptions = fetch_assumptions(uid)
         computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
@@ -728,7 +728,7 @@ def commit_restore_backup():
     confirm_checked = request.form.get("confirm_replace") == "1"
     confirm_phrase = request.form.get("confirm_phrase", "").strip()
     if not confirm_checked or confirm_phrase != "RESTORE":
-        flash("To restore, tick the checkbox and type RESTORE to confirm.", "error")
+        flash("To restore and overwrite data, tick the checkbox and type RESTORE to confirm.", "error")
         uid = current_user.id
         assumptions = fetch_assumptions(uid)
         computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
@@ -748,7 +748,7 @@ def commit_restore_backup():
     except Exception:
         _delete_staged_restore_file(restore_token)
         _clear_restore_staging_session()
-        flash("Backup file could not be parsed. No data has been changed.", "error")
+        flash("Export file could not be parsed. No data has been changed.", "error")
         return redirect(url_for("settings.settings"))
 
     try:
@@ -758,7 +758,7 @@ def commit_restore_backup():
         current_app.logger.info("Restore blocked by validation for user_id=%s", current_user.id)
         _delete_staged_restore_file(restore_token)
         _clear_restore_staging_session()
-        flash("That backup is not valid. No data has been changed.", "error")
+        flash("That restore file is not valid. No data has been changed.", "error")
         uid = current_user.id
         assumptions = fetch_assumptions(uid)
         computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
@@ -782,7 +782,7 @@ def commit_restore_backup():
     _delete_staged_restore_file(restore_token)
     _clear_restore_staging_session()
     _cleanup_restore_staging()
-    flash("Restore complete. Your data has been replaced.", "success")
+    flash("Restore complete. This user's data has been overwritten.", "success")
 
     uid = current_user.id
     assumptions = fetch_assumptions(uid)

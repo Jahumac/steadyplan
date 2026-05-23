@@ -52,7 +52,7 @@ def test_invalid_backup_does_not_show_restore_action(app, client, make_user):
         follow_redirects=True,
     )
     body = resp.data.decode("utf-8")
-    assert "This export cannot be restored yet. No data has been changed." in body
+    assert "Restore file is not valid. Checking did not change your data." in body
     assert "/settings/restore/commit" not in body
 
 
@@ -100,7 +100,7 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
         follow_redirects=True,
     )
     body_validate = resp_validate.data.decode("utf-8")
-    assert "This export looks valid. No data has been changed." in body_validate
+    assert "Restore file looks valid. Checking did not change your data." in body_validate
     assert "Type RESTORE" in body_validate
     token = _extract_restore_token(body_validate)
 
@@ -111,7 +111,7 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
         follow_redirects=True,
     )
     body_missing = resp_missing_confirm.data.decode("utf-8")
-    assert "To restore, tick the checkbox and type RESTORE to confirm." in body_missing
+    assert "To restore and overwrite data, tick the checkbox and type RESTORE to confirm." in body_missing
     after = _count_user_accounts(app, uid1)
     assert after == before
 
@@ -121,7 +121,7 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
         follow_redirects=True,
     )
     body_wrong = resp_wrong_phrase.data.decode("utf-8")
-    assert "To restore, tick the checkbox and type RESTORE to confirm." in body_wrong
+    assert "To restore and overwrite data, tick the checkbox and type RESTORE to confirm." in body_wrong
     assert _count_user_accounts(app, uid1) == before
 
     resp_ok = client.post(
@@ -130,7 +130,7 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
         follow_redirects=True,
     )
     body_ok = resp_ok.data.decode("utf-8")
-    assert "Restore complete. Your data has been replaced." in body_ok
+    assert "Restore complete. This user's data has been overwritten." in body_ok
 
     with app.app_context():
         from app.models import get_connection
@@ -181,7 +181,7 @@ def test_restore_commit_revalidates_before_writing(app, client, make_user):
         follow_redirects=True,
     )
     body = resp_commit.data.decode("utf-8")
-    assert "That backup is not valid. No data has been changed." in body
+    assert "That restore file is not valid. No data has been changed." in body
     after = _count_user_accounts(app, uid)
     assert after == before
 
@@ -226,7 +226,7 @@ def test_restore_commit_rejects_expired_staged_token_and_deletes_file(app, clien
         follow_redirects=True,
     )
     body = resp_commit.data.decode("utf-8")
-    assert "This restore preview has expired. Please upload the backup again." in body
+    assert "This restore preview has expired. Please upload the export file again." in body
     after = _count_user_accounts(app, uid)
     assert after == before
 
@@ -298,7 +298,7 @@ def test_restore_token_is_session_bound(app, make_user):
         follow_redirects=True,
     )
     body = resp_commit.data.decode("utf-8")
-    assert "This restore preview has expired. Please upload the backup again." in body
+    assert "This restore preview has expired. Please upload the export file again." in body
     after = _count_user_accounts(app, uid)
     assert after == before
 
@@ -313,7 +313,7 @@ def test_malformed_restore_token_cannot_access_files(app, client, make_user):
         follow_redirects=True,
     )
     body = resp.data.decode("utf-8")
-    assert "This restore preview has expired. Please upload the backup again." in body
+    assert "This restore preview has expired. Please upload the export file again." in body
 
 
 def test_restore_commit_failure_rolls_back_and_shows_safe_error(app, client, make_user, monkeypatch):

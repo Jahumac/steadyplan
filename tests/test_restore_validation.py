@@ -383,8 +383,8 @@ def test_restore_validate_route_valid_upload_shows_valid_result_and_no_db_writes
     after = _count_rows(app)
     assert resp.status_code == 200
     body = resp.data.decode("utf-8")
-    assert "Validate an export file" in body
-    assert "This export looks valid. No data has been changed." in body
+    assert "Validate a restore file" in body
+    assert "Restore file looks valid. Checking did not change your data." in body
     assert "Export schema version" in body
     assert before == after
 
@@ -404,7 +404,7 @@ def test_restore_validate_route_corrupt_json_shows_errors_and_no_db_writes(app, 
 
     assert resp.status_code == 200
     body = resp.data.decode("utf-8")
-    assert "This export cannot be restored yet. No data has been changed." in body
+    assert "Restore file is not valid. Checking did not change your data." in body
     assert "Invalid JSON" in body
     assert before == after
 
@@ -424,8 +424,8 @@ def test_restore_validate_route_missing_file_shows_friendly_error_and_no_db_writ
 
     assert resp.status_code == 200
     body = resp.data.decode("utf-8")
-    assert "This export cannot be restored yet. No data has been changed." in body
-    assert "Please choose a .json backup file to upload." in body
+    assert "Restore file is not valid. Checking did not change your data." in body
+    assert "Please choose a .json export file to upload." in body
     assert before == after
 
 

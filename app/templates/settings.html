@@ -243,7 +243,7 @@
     {% if current_user.is_authenticated and current_user.is_admin %}
     <form method="post" action="/settings/backups/run" style="margin:0;">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="badge badge-primary-action">Create backup now</button>
+      <button type="submit" class="badge badge-primary-action">Create SQLite backup now</button>
     </form>
     {% endif %}
   </div>
@@ -267,7 +267,7 @@
       </tr>
     </tbody>
   </table>
-  <p class="helper-text">These are whole-instance SQLite backups stored under Shelly’s data volume (data/backups). For per-user exports, use Settings → Download JSON export.</p>
+  <p class="helper-text">These are whole-instance SQLite backups stored under the app's data volume (data/backups). For per-user exports, use Settings → Download JSON export.</p>
 </section>
 
 <section class="panel mt-1">
@@ -360,31 +360,31 @@
     </div>
     <a class="badge badge-primary-action" href="/settings/export.json">Download JSON export</a>
   </div>
-  <p class="helper-text">Downloads a JSON export of the current user's data only. Keep this somewhere safe.</p>
+  <p class="helper-text">Downloads a JSON export of this user's data only. It does not include other users or the full server database. Keep it somewhere safe.</p>
 </section>
 
 <section class="panel mt-1">
   <div class="section-header">
     <div>
       <p class="eyebrow">Restore</p>
-      <h3>Validate an export file</h3>
+      <h3>Validate a restore file</h3>
     </div>
   </div>
-  <p class="helper-text">Upload a Shelly JSON export to validate that it can be restored. This does not change your data.</p>
+  <p class="helper-text">Upload a JSON export file to check that it can be restored. Checking a restore file does not change your data.</p>
   <form method="post" action="/settings/restore/validate" enctype="multipart/form-data" style="margin:0.75rem 0 0 0;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
       <input type="file" name="backup_file" accept=".json,application/json" class="input-standard" style="max-width:22rem;">
-      <button type="submit" class="badge badge-primary-action">Validate export</button>
+      <button type="submit" class="badge badge-primary-action">Validate restore file</button>
     </div>
   </form>
 
   {% if restore_check_result %}
     <div style="margin-top:0.75rem;">
       {% if restore_check_result.valid %}
-        <div class="flash-msg flash-success"><span>This export looks valid. No data has been changed.</span><span></span></div>
+        <div class="flash-msg flash-success"><span>Restore file looks valid. Checking did not change your data.</span><span></span></div>
       {% else %}
-        <div class="flash-msg flash-error"><span>This export cannot be restored yet. No data has been changed.</span><span></span></div>
+        <div class="flash-msg flash-error"><span>Restore file is not valid. Checking did not change your data.</span><span></span></div>
       {% endif %}
 
       <table class="data-table" style="margin-top:0.75rem;">
@@ -431,20 +431,20 @@
 
       {% if restore_check_result.valid and restore_token %}
         <div style="margin-top:0.75rem;padding:0.9rem;border:1px solid var(--border);border-radius:12px;background:var(--panel);">
-          <div style="font-weight:600;margin-bottom:0.25rem;">Restore from this export</div>
+          <div style="font-weight:600;margin-bottom:0.25rem;">Restore from this export (overwrites data)</div>
           <p class="helper-text" style="margin:0.25rem 0 0.75rem 0;">
-            This will overwrite the current user's data with the contents of this export.
+            Restoring overwrites all data for this user with the contents of this export file. Any changes made since this export was created will be lost.
           </p>
           <form method="post" action="/settings/restore/commit" style="margin:0;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="restore_token" value="{{ restore_token }}">
             <label class="text-sm" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
               <input type="checkbox" name="confirm_replace" value="1">
-              <span>I understand this will overwrite my data</span>
+              <span>I understand this will overwrite all data for this user</span>
             </label>
             <div style="margin-top:0.6rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
               <input type="text" name="confirm_phrase" class="input-standard" placeholder="Type RESTORE" style="max-width:12rem;text-transform:uppercase;">
-              <button type="submit" class="badge badge-danger">Restore now</button>
+              <button type="submit" class="badge badge-danger">Restore (overwrites data)</button>
             </div>
           </form>
         </div>
@@ -493,16 +493,14 @@
   <div class="section-header">
     <div>
       <p class="eyebrow danger-eyebrow">Danger Zone</p>
-      <h3>Delete user data</h3>
+      <h3>Delete all data for this user</h3>
     </div>
   </div>
   <p class="helper-text">
-    Sometimes you just need a clean slate. This will permanently delete <strong>everything</strong> for this user —
-    accounts, holdings, goals, budget, monthly reviews, assumptions — the lot.
-    Your login stays, but the data doesn't.
+    This permanently deletes all data for this user: accounts, holdings, goals, budget, monthly reviews, and assumptions. Your login stays, but the data does not.
   </p>
   <p class="helper-text text-danger" style="margin-top:0.5rem;">
-    This permanently deletes your data for this user and cannot be undone. Export a backup before continuing.
+    This cannot be undone. Download a JSON export before continuing.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
     Before deleting, download a JSON export above and/or create a whole-instance SQLite backup from <a class="link-accent" href="/settings/?mode=diagnostics">Diagnostics</a>.
@@ -511,7 +509,7 @@
   <form method="post" action="/settings/backups/run" style="margin:0.75rem 0 0 0;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="next" value="/settings/#danger-zone">
-    <button type="submit" class="badge badge-meta">Create backup now</button>
+    <button type="submit" class="badge badge-meta">Create SQLite backup now</button>
   </form>
   {% endif %}
 
@@ -525,7 +523,7 @@
     <form method="post" action="/settings/reset" id="reset-form-el">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <p class="text-sm" style="margin-bottom:0.75rem;">
-        Type <strong>RESET</strong> below to confirm deleting this user's data.
+        Type <strong>RESET</strong> below to confirm. This permanently deletes all data for this user.
       </p>
       <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
         <input type="text" name="confirm_reset" id="reset-input"

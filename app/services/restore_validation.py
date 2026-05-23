@@ -53,7 +53,7 @@ def validate_restore_backup_json(json_bytes):
     payload = None
 
     if not isinstance(json_bytes, (bytes, bytearray)):
-        errors.append("Backup must be provided as bytes.")
+        errors.append("Export file must be provided as bytes.")
         return {
             "valid": False,
             "export_schema_version": None,
@@ -66,7 +66,7 @@ def validate_restore_backup_json(json_bytes):
     try:
         payload = json.loads(json_bytes.decode("utf-8"))
     except Exception:
-        errors.append("Invalid JSON: could not parse backup file.")
+        errors.append("Invalid JSON: could not parse export file.")
         return {
             "valid": False,
             "export_schema_version": None,

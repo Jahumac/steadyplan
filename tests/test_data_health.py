@@ -249,7 +249,7 @@ def test_settings_still_mentions_backup_restore(app, client, make_user):
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "Download JSON export" in html
-    assert "Validate an export file" in html
+    assert "Validate a restore file" in html
 
 
 def test_overview_data_health_quiet_when_no_warnings(app, client, make_user):
