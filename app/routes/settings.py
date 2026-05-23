@@ -1,5 +1,8 @@
 import json
+import os
+import re
 import secrets
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -22,6 +25,9 @@ from app.models import (
 )
 
 settings_bp = Blueprint("settings", __name__)
+
+RESTORE_STAGING_TTL_SECONDS = 60 * 60
+_RESTORE_TOKEN_RE = re.compile(r"^[A-Za-z0-9_-]{20,}$")
 
 
 def _human_bytes(n):
@@ -88,13 +94,50 @@ def _restore_staging_dir():
     return data_dir / "restore_staging"
 
 
+def _restore_staging_path(token):
+    if not token or not _RESTORE_TOKEN_RE.fullmatch(token):
+        return None
+    staging_dir = _restore_staging_dir().resolve()
+    path = (staging_dir / f"{token}.json").resolve()
+    try:
+        path.relative_to(staging_dir)
+    except Exception:
+        return None
+    return path
+
+
+def _cleanup_restore_staging(now_ts=None):
+    now_ts = float(now_ts if now_ts is not None else time.time())
+    staging_dir = _restore_staging_dir()
+    try:
+        if not staging_dir.exists():
+            return 0
+        staging_dir_resolved = staging_dir.resolve()
+        deleted = 0
+        for p in staging_dir.glob("*.json"):
+            try:
+                if p.is_symlink() or not p.is_file():
+                    continue
+                rp = p.resolve()
+                rp.relative_to(staging_dir_resolved)
+                age = now_ts - rp.stat().st_mtime
+                if age >= RESTORE_STAGING_TTL_SECONDS:
+                    rp.unlink()
+                    deleted += 1
+            except Exception:
+                continue
+        return deleted
+    except Exception:
+        return 0
+
+
 def _delete_staged_restore_file(token):
     if not token:
         return
     try:
-        p = _restore_staging_dir() / f"{token}.json"
-        if p.exists():
-            p.unlink()
+        path = _restore_staging_path(token)
+        if path and path.exists():
+            path.unlink()
     except Exception:
         current_app.logger.exception("Failed to delete staged restore file")
 
@@ -103,19 +146,62 @@ def _stage_restore_file(json_bytes):
     token = secrets.token_urlsafe(24)
     staging_dir = _restore_staging_dir()
     staging_dir.mkdir(parents=True, exist_ok=True)
-    path = staging_dir / f"{token}.json"
-    path.write_bytes(json_bytes)
-    return token
+    now_ts = time.time()
+    for _ in range(5):
+        token = secrets.token_urlsafe(24)
+        path = _restore_staging_path(token)
+        if not path:
+            continue
+        try:
+            fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "wb") as f:
+                f.write(json_bytes)
+                f.flush()
+                os.fsync(f.fileno())
+            try:
+                os.utime(path, (now_ts, now_ts))
+            except Exception:
+                pass
+            return token
+        except FileExistsError:
+            continue
+    raise RuntimeError("Failed to stage restore file.")
 
 
 def _read_staged_restore_file(token):
     if not token:
         return None
-    path = _restore_staging_dir() / f"{token}.json"
+    path = _restore_staging_path(token)
+    if not path:
+        return None
     try:
         return path.read_bytes()
     except Exception:
         return None
+
+
+def _clear_restore_staging_session():
+    session.pop("restore_staged_token", None)
+    session.pop("restore_staged_at", None)
+    session.pop("restore_staged_user_id", None)
+
+
+def _is_staged_restore_expired(token, staged_at_ts, now_ts=None):
+    now_ts = float(now_ts if now_ts is not None else time.time())
+    try:
+        staged_at_ts = float(staged_at_ts)
+    except Exception:
+        return True
+    if now_ts - staged_at_ts >= RESTORE_STAGING_TTL_SECONDS:
+        return True
+    path = _restore_staging_path(token)
+    if not path or not path.exists():
+        return True
+    try:
+        age = now_ts - path.stat().st_mtime
+        return age >= RESTORE_STAGING_TTL_SECONDS
+    except Exception:
+        return True
 
 
 def _user_export_payload(user_id):
@@ -541,9 +627,11 @@ def export_user_data():
 @settings_bp.route("/restore/validate", methods=["POST"])
 @login_required
 def validate_restore_backup_upload():
+    _cleanup_restore_staging()
     uploaded = request.files.get("backup_file")
-    prior_token = session.pop("restore_staged_token", None)
+    prior_token = session.get("restore_staged_token")
     _delete_staged_restore_file(prior_token)
+    _clear_restore_staging_session()
     restore_token = None
     if not uploaded or not getattr(uploaded, "filename", ""):
         result = {
@@ -573,6 +661,8 @@ def validate_restore_backup_upload():
             if result.get("valid"):
                 restore_token = _stage_restore_file(json_bytes)
                 session["restore_staged_token"] = restore_token
+                session["restore_staged_at"] = time.time()
+                session["restore_staged_user_id"] = current_user.id
 
     uid = current_user.id
     assumptions = fetch_assumptions(uid)
@@ -592,23 +682,34 @@ def validate_restore_backup_upload():
 @settings_bp.route("/restore/commit", methods=["POST"])
 @login_required
 def commit_restore_backup():
+    _cleanup_restore_staging()
     restore_token = request.form.get("restore_token", "").strip()
     expected_token = session.get("restore_staged_token")
-    if not restore_token or not expected_token or restore_token != expected_token:
-        flash("Restore session expired. Please upload the backup again.", "error")
+    expected_user_id = session.get("restore_staged_user_id")
+    staged_at = session.get("restore_staged_at")
+    if (
+        not restore_token
+        or not expected_token
+        or restore_token != expected_token
+        or expected_user_id != current_user.id
+        or _is_staged_restore_expired(restore_token, staged_at)
+    ):
+        _delete_staged_restore_file(expected_token)
+        _clear_restore_staging_session()
+        flash("This restore preview has expired. Please upload the backup again.", "error")
         return redirect(url_for("settings.settings"))
 
     json_bytes = _read_staged_restore_file(restore_token)
     if not json_bytes:
         _delete_staged_restore_file(restore_token)
-        session.pop("restore_staged_token", None)
+        _clear_restore_staging_session()
         flash("Restore file could not be read. Please upload the backup again.", "error")
         return redirect(url_for("settings.settings"))
 
     result = validate_restore_backup_json(json_bytes)
     if not result.get("valid"):
         _delete_staged_restore_file(restore_token)
-        session.pop("restore_staged_token", None)
+        _clear_restore_staging_session()
         flash("That backup is not valid. No data has been changed.", "error")
         uid = current_user.id
         assumptions = fetch_assumptions(uid)
@@ -646,7 +747,7 @@ def commit_restore_backup():
         payload = json.loads(json_bytes.decode("utf-8"))
     except Exception:
         _delete_staged_restore_file(restore_token)
-        session.pop("restore_staged_token", None)
+        _clear_restore_staging_session()
         flash("Backup file could not be parsed. No data has been changed.", "error")
         return redirect(url_for("settings.settings"))
 
@@ -656,7 +757,7 @@ def commit_restore_backup():
     except RestoreValidationError as e:
         current_app.logger.info("Restore blocked by validation for user_id=%s", current_user.id)
         _delete_staged_restore_file(restore_token)
-        session.pop("restore_staged_token", None)
+        _clear_restore_staging_session()
         flash("That backup is not valid. No data has been changed.", "error")
         uid = current_user.id
         assumptions = fetch_assumptions(uid)
@@ -674,12 +775,13 @@ def commit_restore_backup():
     except Exception:
         current_app.logger.exception("Restore failed for user_id=%s", current_user.id)
         _delete_staged_restore_file(restore_token)
-        session.pop("restore_staged_token", None)
+        _clear_restore_staging_session()
         flash("Restore failed. Your data was not changed.", "error")
         return redirect(url_for("settings.settings"))
 
     _delete_staged_restore_file(restore_token)
-    session.pop("restore_staged_token", None)
+    _clear_restore_staging_session()
+    _cleanup_restore_staging()
     flash("Restore complete. Your data has been replaced.", "success")
 
     uid = current_user.id
