@@ -1193,6 +1193,7 @@ button.button-danger:focus {
   gap: 0.75rem;
   flex-wrap: wrap;
   margin-top: 0.25rem;
+}
 .holding-update-field {
   display: flex;
   flex-direction: column;
