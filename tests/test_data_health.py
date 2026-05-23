@@ -182,9 +182,7 @@ def test_healthy_user_gets_good_status(app, setup_healthy_user):
     with app.app_context():
         summary = build_data_health_summary(setup_healthy_user)
         assert summary["overall_status"] == HEALTH_STATUS_GOOD
-        # Should only have Info items like backup/restore
-        for item in summary["health_items"]:
-            assert item["status"] == HEALTH_STATUS_INFO
+        assert all(item["status"] == HEALTH_STATUS_INFO for item in summary["health_items"])
 
 def test_stale_account_data_produces_warning(app, setup_stale_account_user):
     with app.app_context():
@@ -229,3 +227,78 @@ def test_data_health_summary_no_db_writes(app, setup_healthy_user):
         for table in tables:
             res = conn.execute(f"SELECT COUNT(*) as c FROM {table}").fetchone()
             assert initial_counts[table] == res["c"], f"Table {table} was written to!"
+
+
+def test_overview_does_not_render_backup_restore_data_health_item(app, client, make_user):
+    uid, username, password = make_user(username="dh-no-backup", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Backup and restore available" not in html
+    assert "You can export your data or restore from a backup" not in html
+    assert "icons/shelly/Health.png" not in html
+
+
+def test_settings_still_mentions_backup_restore(app, client, make_user):
+    _, username, password = make_user(username="dh-settings-backup", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/settings/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Download a JSON backup" in html
+    assert "Check a backup file" in html
+
+
+def test_overview_data_health_quiet_when_no_warnings(app, client, make_user):
+    uid, username, password = make_user(username="dh-quiet", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        month_key = date.today().strftime("%Y-%m")
+        today_str = date.today().strftime("%Y-%m-%d")
+        with get_connection() as conn:
+            aid = conn.execute(
+                "INSERT INTO accounts (user_id, name, current_value, is_active, valuation_mode) "
+                "VALUES (?, 'Cash', 1000, 1, 'manual')",
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes) "
+                "VALUES (?, 'Goal', 10000, '', '', '')",
+                (uid,),
+            )
+            conn.execute(
+                "INSERT OR IGNORE INTO assumptions (user_id, annual_growth_rate, retirement_age, current_age, retirement_goal_value, isa_allowance, lisa_allowance, dividend_allowance, target_dev_pct, target_em_pct, emergency_fund_target, dashboard_name, updated_at) "
+                "VALUES (?, 0.07, 65, 40, 1500000, 20000, 4000, 500, 0.9, 0.1, 3000, 'Shelly', datetime('now'))",
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO budget_items (user_id, name, section, default_amount, sort_order, is_active) "
+                "VALUES (?, 'Rent', 'fixed', 500, 0, 1)",
+                (uid,),
+            )
+            bid = conn.execute("SELECT id FROM budget_items WHERE user_id = ? LIMIT 1", (uid,)).fetchone()["id"]
+            conn.execute(
+                "INSERT INTO budget_entries (month_key, budget_item_id, amount) VALUES (?, ?, 500)",
+                (month_key, bid),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, 1000, ?)",
+                (month_key + "-01", aid, month_key),
+            )
+            conn.execute(
+                "INSERT INTO account_daily_snapshots (user_id, account_id, snapshot_date, value) VALUES (?, ?, ?, 1000)",
+                (uid, aid, today_str),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Looks good" in html
+    assert 'class="data-health-items' not in html

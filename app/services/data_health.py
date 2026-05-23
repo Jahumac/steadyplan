@@ -145,14 +145,6 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
                 "link": "/budget",
             })
 
-        # --- Check 5: Backup/Restore Info ---
-        health_items.append({
-            "status": HEALTH_STATUS_INFO,
-            "title": "Backup and restore available",
-            "explanation": "You can export your data or restore from a backup in the Settings section.",
-            "link": "/settings#backup-restore",
-        })
-
     summary_message = "Looks good!"
     if overall_status == HEALTH_STATUS_WARNING:
         summary_message = "Worth checking."

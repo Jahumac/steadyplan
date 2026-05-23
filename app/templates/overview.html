@@ -109,14 +109,15 @@
 {% if data_health_summary %}
 <section class="card data-health-summary mb-1">
   <div class="flex flex-center flex-wrap gap-075">
-    <img src="{{ url_for('static', filename='icons/shelly/Health.png') }}" alt="" class="shelly-inline-icon shelly-icon-sm">
     <div style="flex:1; min-width:200px;">
       <p class="eyebrow m-0">Data Health</p>
       <h3 class="m-0">{{ data_health_summary.summary_message }}</h3>
     </div>
   </div>
+  {% set warnings = data_health_summary.health_items | selectattr('status', 'equalto', 'warning') | list %}
+  {% if warnings %}
   <ul class="data-health-items mt-075">
-    {% for item in data_health_summary.health_items %}
+    {% for item in warnings %}
     <li class="data-health-item data-health-item-{{ item.status }}">
       <span class="data-health-status-icon"></span>
       <div>
@@ -128,6 +129,7 @@
     </li>
     {% endfor %}
   </ul>
+  {% endif %}
 </section>
 {% endif %}
 
