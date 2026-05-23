@@ -41,6 +41,7 @@ from app.models import (
     fetch_holding_totals_by_account,
     fetch_isa_contributions,
     fetch_isa_overrides_for_tax_year,
+    fetch_pension_overrides_for_tax_year,
     fetch_monthly_review,
     fetch_monthly_review_items,
     fetch_pension_contributions,
@@ -49,7 +50,7 @@ from app.models import (
     fetch_or_create_monthly_review,
     fetch_primary_goal,
     fetch_daily_snapshots,
-    fetch_tax_year_contributions,
+    fetch_completed_tax_year_contributions,
 )
 from app.services.data_health import build_data_health_summary
 from app.services.monthly_review_checklist import (
@@ -254,7 +255,7 @@ def overview():
     ty_end = ty_end_date.isoformat()
     ad_hoc = fetch_isa_contributions(uid, ty_start, ty_end)
     isa_overrides = fetch_isa_overrides_for_tax_year(uid, ty_start, ty_end)
-    review_contribs = fetch_tax_year_contributions(
+    review_contribs = fetch_completed_tax_year_contributions(
         uid,
         ty_start_date.strftime("%Y-%m"),
         ty_end_date.strftime("%Y-%m"),
@@ -270,7 +271,21 @@ def overview():
     lisa_used = isa_usage["lisa_used"]
 
     pension_contribs = fetch_pension_contributions(uid, ty_start, ty_end)
-    pension_usage = calculate_pension_usage(raw_accounts, pension_contribs, assumptions, now_date, salary_day)
+    pension_overrides = fetch_pension_overrides_for_tax_year(uid, ty_start, ty_end)
+    pension_review_contribs = fetch_completed_tax_year_contributions(
+        uid,
+        ty_start_date.strftime("%Y-%m"),
+        ty_end_date.strftime("%Y-%m"),
+    )
+    pension_usage = calculate_pension_usage(
+        raw_accounts,
+        pension_contribs,
+        assumptions,
+        now_date,
+        salary_day,
+        pension_overrides=pension_overrides,
+        review_contributions=pension_review_contribs,
+    )
     pension_limits = pension_allowance_limits(dict(assumptions) if assumptions else {})
     pension_allowance = pension_limits["effective_allowance"]
 

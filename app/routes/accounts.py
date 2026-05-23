@@ -230,18 +230,8 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         if monthly_rows:
             account_monthly_labels = [m for (m, _b, _c) in monthly_rows][-36:]
             balances = [float(b or 0) for (_m, b, _c) in monthly_rows][-36:]
-            personal_contribs = [float(c or 0) for (_m, _b, c) in monthly_rows][-36:]
+            into_pot_contribs = [float(c or 0) for (_m, _b, c) in monthly_rows][-36:]
             account_monthly_values = [round(v, 2) for v in balances]
-
-            base_account = dict(selected)
-            into_pot_contribs = []
-            for personal in personal_contribs:
-                if personal and personal > 0:
-                    adjusted = dict(base_account)
-                    adjusted["monthly_contribution"] = float(personal)
-                    into_pot_contribs.append(float(effective_monthly_contribution(adjusted, assumptions) or 0))
-                else:
-                    into_pot_contribs.append(0.0)
 
             if wrapper == "cash isa" and cash_flow_events:
                 month_event_totals = {}

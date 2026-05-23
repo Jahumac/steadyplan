@@ -109,3 +109,77 @@ def test_performance_by_account_cash_isa_cash_events_adjust_plan(auth_client, ap
     html = resp.get_data(as_text=True)
     assert "Cash ISA" in html
     assert "+£0" in html
+
+
+def test_performance_cash_flow_uses_into_pot_for_sipp(app, make_user):
+    uid, _, _ = make_user()
+
+    with app.app_context():
+        from app.calculations import compute_performance_series
+        from app.models import fetch_monthly_performance_data, get_connection
+
+        with get_connection() as conn:
+            sipp = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, category, monthly_contribution, contribution_method, is_active)
+                VALUES (?, 'SIPP', 'SIPP', 'Pension', 800, 'standard', 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, month_key, balance) VALUES ('2026-04-01', ?, '2026-04', 1000)",
+                (sipp,),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, month_key, balance) VALUES ('2026-05-01', ?, '2026-05', 2000)",
+                (sipp,),
+            )
+            conn.commit()
+
+        monthly_data = fetch_monthly_performance_data(uid)
+        assert monthly_data == [
+            ("2026-04", 1000.0, 1000.0, 0),
+            ("2026-05", 2000.0, 1000.0, 0),
+        ]
+
+        perf = compute_performance_series(monthly_data, assumed_rate=0, assumed_monthly=0)
+        assert perf["total_market_gain"] == 0.0
+
+
+def test_performance_draft_review_does_not_change_cash_flow(app, make_user):
+    uid, _, _ = make_user()
+
+    with app.app_context():
+        from app.models import fetch_monthly_performance_data, get_connection
+
+        with get_connection() as conn:
+            sipp = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, category, monthly_contribution, contribution_method, is_active)
+                VALUES (?, 'SIPP', 'SIPP', 'Pension', 800, 'standard', 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, month_key, balance) VALUES ('2026-04-01', ?, '2026-04', 1000)",
+                (sipp,),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, month_key, balance) VALUES ('2026-05-01', ?, '2026-05', 2000)",
+                (sipp,),
+            )
+            review_id = conn.execute(
+                "INSERT INTO monthly_reviews (user_id, month_key, status) VALUES (?, '2026-05', 'in_progress')",
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO monthly_review_items (review_id, account_id, expected_contribution, contribution_confirmed)
+                VALUES (?, ?, 0, 1)
+                """,
+                (review_id, sipp),
+            )
+            conn.commit()
+
+        monthly_data = fetch_monthly_performance_data(uid)
+        assert monthly_data[1][2] == 1000.0

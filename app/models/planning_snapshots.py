@@ -1,6 +1,7 @@
 """Portfolio snapshots: monthly, daily, and performance history."""
 from datetime import datetime
 from ._conn import get_connection
+from app.calculations import effective_monthly_contribution
 
 
 # ── Monthly snapshots ─────────────────────────────────────────────────────────
@@ -84,9 +85,50 @@ def fetch_monthly_performance_data(user_id):
             (user_id,),
         ).fetchall()
         accounts = conn.execute(
-            "SELECT id FROM accounts WHERE user_id = ? AND is_active = 1 ORDER BY id ASC",
+            "SELECT * FROM accounts WHERE user_id = ? AND is_active = 1 ORDER BY id ASC",
             (user_id,),
         ).fetchall()
+        assumptions_row = conn.execute(
+            "SELECT * FROM assumptions WHERE user_id = ?",
+            (user_id,),
+        ).fetchone()
+        assumptions = dict(assumptions_row) if assumptions_row else {}
+
+        overrides = conn.execute(
+            """
+            SELECT co.account_id, co.from_month, co.to_month, co.override_amount
+            FROM contribution_overrides co
+            JOIN accounts a ON a.id = co.account_id
+            WHERE a.user_id = ?
+            ORDER BY co.account_id, co.from_month
+            """,
+            (user_id,),
+        ).fetchall()
+        overrides_by_account = {}
+        for ov in overrides:
+            overrides_by_account.setdefault(int(ov["account_id"]), []).append(
+                (ov["from_month"], ov["to_month"], float(ov["override_amount"] or 0))
+            )
+
+        review_map = {}
+        if months:
+            min_mk = months[0]["month_key"]
+            max_mk = months[-1]["month_key"]
+            review_rows = conn.execute(
+                """
+                SELECT mr.month_key, mri.account_id, mri.expected_contribution
+                FROM monthly_reviews mr
+                JOIN monthly_review_items mri ON mri.review_id = mr.id
+                WHERE mr.user_id = ?
+                  AND mr.status = 'complete'
+                  AND mri.contribution_confirmed = 1
+                  AND mr.month_key >= ?
+                  AND mr.month_key <= ?
+                """,
+                (user_id, min_mk, max_mk),
+            ).fetchall()
+            for rr in review_rows:
+                review_map[(int(rr["account_id"]), rr["month_key"])] = float(rr["expected_contribution"] or 0)
         rows = []
         for month in months:
             month_key = month["month_key"]
@@ -116,22 +158,37 @@ def fetch_monthly_performance_data(user_id):
             if accounts_with_value == 0:
                 continue
 
-            contrib = conn.execute(
-                """
-                SELECT COALESCE(SUM(mri.expected_contribution), 0) AS total_contribution
-                FROM monthly_reviews mr
-                JOIN monthly_review_items mri ON mri.review_id = mr.id
-                JOIN accounts a ON a.id = mri.account_id
-                WHERE mr.user_id = ?
-                  AND mr.month_key = ?
-                  AND a.user_id = ?
-                """,
-                (user_id, month_key, user_id),
-            ).fetchone()
+            total_contribution = 0.0
+            for account in accounts:
+                aid = int(account["id"])
+                default_personal = float(account.get("monthly_contribution") or 0)
+
+                personal = None
+                for from_m, to_m, amt in overrides_by_account.get(aid, []):
+                    if from_m <= month_key <= to_m:
+                        personal = float(amt or 0)
+                        break
+
+                if personal == 0.0:
+                    continue
+
+                rkey = (aid, month_key)
+                if rkey in review_map:
+                    personal = float(review_map[rkey] or 0)
+
+                if personal is None:
+                    personal = default_personal
+
+                if personal <= 0:
+                    continue
+
+                adjusted = dict(account)
+                adjusted["monthly_contribution"] = personal
+                total_contribution += float(effective_monthly_contribution(adjusted, assumptions) or 0)
             rows.append({
                 "month_key": month_key,
                 "total_balance": total_balance,
-                "total_contribution": float(contrib["total_contribution"] or 0) if contrib else 0.0,
+                "total_contribution": total_contribution,
                 "carried_forward_count": carried_forward,
             })
     return [
@@ -147,27 +204,90 @@ def fetch_monthly_performance_data_by_account(user_id):
             SELECT
                 a.id AS account_id,
                 a.name AS account_name,
+                a.monthly_contribution,
+                a.wrapper_type,
+                a.category,
+                a.employer_contribution,
+                a.contribution_method,
+                a.contribution_fee_pct,
+                a.pre_salary,
                 ms.month_key,
-                ms.balance AS balance,
-                COALESCE(mri.expected_contribution, 0) AS contribution
+                ms.balance AS balance
             FROM monthly_snapshots ms
             JOIN accounts a ON a.id = ms.account_id
-            LEFT JOIN monthly_reviews mr ON mr.month_key = ms.month_key AND mr.user_id = ?
-            LEFT JOIN monthly_review_items mri
-                   ON mri.review_id = mr.id AND mri.account_id = ms.account_id
             WHERE ms.month_key IS NOT NULL
               AND a.user_id = ?
             ORDER BY a.name ASC, ms.month_key ASC
             """,
-            (user_id, user_id),
+            (user_id,),
         ).fetchall()
+
+        assumptions_row = conn.execute(
+            "SELECT * FROM assumptions WHERE user_id = ?",
+            (user_id,),
+        ).fetchone()
+        assumptions = dict(assumptions_row) if assumptions_row else {}
+
+        overrides = conn.execute(
+            """
+            SELECT co.account_id, co.from_month, co.to_month, co.override_amount
+            FROM contribution_overrides co
+            JOIN accounts a ON a.id = co.account_id
+            WHERE a.user_id = ?
+            ORDER BY co.account_id, co.from_month
+            """,
+            (user_id,),
+        ).fetchall()
+        overrides_by_account = {}
+        for ov in overrides:
+            overrides_by_account.setdefault(int(ov["account_id"]), []).append(
+                (ov["from_month"], ov["to_month"], float(ov["override_amount"] or 0))
+            )
+
+        review_rows = conn.execute(
+            """
+            SELECT mr.month_key, mri.account_id, mri.expected_contribution
+            FROM monthly_reviews mr
+            JOIN monthly_review_items mri ON mri.review_id = mr.id
+            WHERE mr.user_id = ?
+              AND mr.status = 'complete'
+              AND mri.contribution_confirmed = 1
+            """,
+            (user_id,),
+        ).fetchall()
+        review_map = {}
+        for rr in review_rows:
+            review_map[(int(rr["account_id"]), rr["month_key"])] = float(rr["expected_contribution"] or 0)
 
     out = {}
     for r in rows:
         aid = int(r["account_id"])
         if aid not in out:
             out[aid] = {"account_name": r["account_name"], "rows": []}
-        out[aid]["rows"].append((r["month_key"], float(r["balance"] or 0), float(r["contribution"] or 0)))
+
+        month_key = r["month_key"]
+        default_personal = float(r.get("monthly_contribution") or 0)
+        personal = None
+        for from_m, to_m, amt in overrides_by_account.get(aid, []):
+            if from_m <= month_key <= to_m:
+                personal = float(amt or 0)
+                break
+        if personal == 0.0:
+            contrib = 0.0
+        else:
+            rk = (aid, month_key)
+            if rk in review_map:
+                personal = float(review_map[rk] or 0)
+            if personal is None:
+                personal = default_personal
+            if personal <= 0:
+                contrib = 0.0
+            else:
+                adjusted = dict(r)
+                adjusted["monthly_contribution"] = personal
+                contrib = float(effective_monthly_contribution(adjusted, assumptions) or 0)
+
+        out[aid]["rows"].append((month_key, float(r["balance"] or 0), float(contrib or 0)))
     return out
 
 

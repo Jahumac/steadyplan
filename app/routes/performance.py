@@ -120,7 +120,7 @@ def performance():
                 active_overrides = fetch_all_active_overrides(mk, uid)
                 review = fetch_monthly_review(mk, uid)
                 items_by_acc = {}
-                if review:
+                if review and (review.get("status") == "complete"):
                     for it in fetch_monthly_review_items(review["id"]):
                         items_by_acc[int(it["account_id"])] = it
                 month_ctx_cache[mk] = (active_overrides or {}, items_by_acc)

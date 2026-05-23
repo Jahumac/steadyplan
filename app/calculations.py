@@ -1011,7 +1011,15 @@ def is_pension_account(account):
     return (cat == "pension") or ("pension" in wt) or ("sipp" in wt)
 
 
-def calculate_pension_usage(accounts, ad_hoc_contributions, assumptions=None, today=None, salary_day=0):
+def calculate_pension_usage(
+    accounts,
+    ad_hoc_contributions,
+    assumptions=None,
+    today=None,
+    salary_day=0,
+    pension_overrides=None,
+    review_contributions=None,
+):
     today = today or date.today()
     months = months_in_tax_year(today, salary_day)
     total_months = full_year_contribution_months(salary_day)
@@ -1024,6 +1032,30 @@ def calculate_pension_usage(accounts, ad_hoc_contributions, assumptions=None, to
 
     assumptions = assumptions or {}
 
+    override_map = {}
+    for ov in (pension_overrides or []):
+        aid = ov["account_id"]
+        override_map.setdefault(aid, []).append(
+            (ov["from_month"], ov["to_month"], float(ov["override_amount"]))
+        )
+
+    review_amount_map = {}
+    for rc in (review_contributions or []):
+        key = (rc["account_id"], rc["month_key"])
+        if rc["is_skipped"]:
+            review_amount_map[key] = 0.0
+        else:
+            review_amount_map[key] = float(rc["expected_contribution"] or 0)
+
+    def _effective_personal_for_month(account_id, default_personal, month_key):
+        rkey = (account_id, month_key)
+        if rkey in review_amount_map:
+            return review_amount_map[rkey]
+        for from_m, to_m, amount in override_map.get(account_id, []):
+            if from_m <= month_key <= to_m:
+                return amount
+        return default_personal
+
     for acc in accounts:
         if not is_pension_account(acc):
             continue
@@ -1034,31 +1066,48 @@ def calculate_pension_usage(accounts, ad_hoc_contributions, assumptions=None, to
             acc_day = 0
         if not acc_day:
             acc_day = salary_day
-        acc_months = months_in_tax_year(today, acc_day)
+        month_keys = _contribution_month_keys(today, acc_day)
+        acc_months = len(month_keys)
         acc_total_months = full_year_contribution_months(acc_day)
 
-        b = contribution_breakdown(acc, assumptions)
+        baseline = contribution_breakdown(acc, assumptions)
+        monthly_total = float(baseline.get("total_into_pot") or 0)
 
-        monthly_total = float(b.get("total_into_pot") or 0)
-        monthly_employer = float(b.get("employer") or 0)
-        monthly_personal_net = float(b.get("personal") or 0)
-        monthly_tax_relief = float(b.get("tax_relief") or 0)
+        total = 0.0
+        personal_total = 0.0
+        employer_total = 0.0
 
+        default_personal = float(_safe_get(acc, "monthly_contribution") or 0)
         method = (_safe_get(acc, "contribution_method") or "")
 
-        if method == "salary_sacrifice":
-            monthly_personal_gross = 0.0
-            monthly_employer_gross = monthly_total
-        else:
-            monthly_personal_gross = max(0.0, (monthly_personal_net + monthly_tax_relief))
-            monthly_employer_gross = max(0.0, monthly_employer)
+        for mk in month_keys:
+            personal = float(_effective_personal_for_month(int(acc["id"]), default_personal, mk) or 0)
+            if personal <= 0:
+                continue
+            adjusted = dict(acc)
+            adjusted["monthly_contribution"] = personal
+            b = contribution_breakdown(adjusted, assumptions)
+            m_total = float(b.get("total_into_pot") or 0)
+            m_employer = float(b.get("employer") or 0)
+            m_personal_net = float(b.get("personal") or 0)
+            m_tax_relief = float(b.get("tax_relief") or 0)
 
-        total = monthly_total * acc_months
+            if method == "salary_sacrifice":
+                m_personal_gross = 0.0
+                m_employer_gross = m_total
+            else:
+                m_personal_gross = max(0.0, (m_personal_net + m_tax_relief))
+                m_employer_gross = max(0.0, m_employer)
+
+            total += m_total
+            personal_total += m_personal_gross
+            employer_total += m_employer_gross
+
         projected = monthly_total * acc_total_months
 
         used_total += total
-        used_personal += monthly_personal_gross * acc_months
-        used_employer += monthly_employer_gross * acc_months
+        used_personal += personal_total
+        used_employer += employer_total
         projected_total += projected
 
         breakdown.append({
@@ -1066,8 +1115,8 @@ def calculate_pension_usage(accounts, ad_hoc_contributions, assumptions=None, to
             "account_name": _safe_get(acc, "name"),
             "wrapper_type": (_safe_get(acc, "wrapper_type") or ""),
             "monthly_total": monthly_total,
-            "monthly_personal": monthly_personal_gross,
-            "monthly_employer": monthly_employer_gross,
+            "monthly_personal": 0.0,
+            "monthly_employer": 0.0,
             "months": acc_months,
             "total_months": acc_total_months,
             "monthly_sum": total,

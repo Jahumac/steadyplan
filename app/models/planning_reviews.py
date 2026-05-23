@@ -218,6 +218,43 @@ def fetch_tax_year_contributions(user_id, from_month, to_month):
         ).fetchall()
 
 
+def fetch_completed_tax_year_contributions(user_id, from_month, to_month):
+    """Return per-account contribution data for completed monthly reviews only.
+
+    Draft reviews (not_started / in_progress) are excluded so they cannot affect
+    allowance/performance truth. Unconfirmed rows are excluded unless the month
+    was explicitly skipped (override_amount = 0).
+    """
+    with get_connection() as conn:
+        return conn.execute(
+            """
+            SELECT
+                a.id AS account_id,
+                a.name AS account_name,
+                a.wrapper_type,
+                mr.month_key,
+                mri.expected_contribution,
+                mri.contribution_confirmed,
+                CASE WHEN co.id IS NOT NULL THEN 1 ELSE 0 END AS is_skipped
+            FROM monthly_review_items mri
+            JOIN monthly_reviews mr ON mr.id = mri.review_id
+            JOIN accounts a ON a.id = mri.account_id
+            LEFT JOIN contribution_overrides co
+                   ON co.account_id = mri.account_id
+                  AND mr.month_key >= co.from_month
+                  AND mr.month_key <= co.to_month
+                  AND co.override_amount = 0
+            WHERE mr.user_id = ?
+              AND mr.status = 'complete'
+              AND mr.month_key >= ?
+              AND mr.month_key <= ?
+              AND (mri.contribution_confirmed = 1 OR co.id IS NOT NULL)
+            ORDER BY a.name ASC, mr.month_key ASC
+            """,
+            (user_id, from_month, to_month),
+        ).fetchall()
+
+
 def mark_review_item_updated(review_id, account_id, field):
     """Mark holdings_updated or balance_updated = 1 for a review item."""
     if field == "holdings_updated":

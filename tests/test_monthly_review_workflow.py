@@ -125,6 +125,143 @@ def test_mark_complete_does_not_wipe_saved_monthly_review_notes(app, client, mak
     assert parsed["checked"] == set()
 
 
+def test_mark_complete_skips_unupdated_manual_and_premium_bonds_snapshots(app, client, make_user):
+    uid, username, password = make_user(username="mr-snap-safe", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = "2026-04"
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            holdings_acc = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, valuation_mode, current_value, is_active)
+                VALUES (?, 'Holdings', 'holdings', 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            manual_acc = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, valuation_mode, current_value, is_active)
+                VALUES (?, 'Manual', 'manual', 1234, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            pb_acc = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, valuation_mode, current_value, is_active)
+                VALUES (?, 'PB', 'Premium Bonds', 'premium_bonds', 5678, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO holdings (account_id, holding_name, ticker, value, units, price)
+                VALUES (?, 'VUSA', 'VUSA', 1000, 10, 100)
+                """,
+                (holdings_acc,),
+            )
+            conn.commit()
+
+    resp = client.post(
+        "/monthly-review/",
+        data={"form_name": "mark_complete", "month": month_key},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+
+    with app.app_context():
+        from app.models import get_connection
+        with get_connection() as conn:
+            rows = conn.execute(
+                """
+                SELECT account_id FROM monthly_snapshots
+                WHERE month_key = ?
+                ORDER BY account_id ASC
+                """,
+                (month_key,),
+            ).fetchall()
+            snapped = [int(r["account_id"]) for r in rows]
+
+    assert holdings_acc in snapped
+    assert manual_acc not in snapped
+    assert pb_acc not in snapped
+
+
+def test_confirm_import_marks_holdings_updated_for_touched_accounts_only(app, client, make_user):
+    from datetime import date
+
+    uid, username, password = make_user(username="mr-csv-holdings", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            a1 = conn.execute(
+                "INSERT INTO accounts (user_id, name, valuation_mode, is_active) VALUES (?, 'A1', 'holdings', 1)",
+                (uid,),
+            ).lastrowid
+            a2 = conn.execute(
+                "INSERT INTO accounts (user_id, name, valuation_mode, is_active) VALUES (?, 'A2', 'holdings', 1)",
+                (uid,),
+            ).lastrowid
+            h1 = conn.execute(
+                "INSERT INTO holdings (account_id, holding_name, ticker, value, units, price) VALUES (?, 'AAA', 'AAA', 10, 1, 10)",
+                (a1,),
+            ).lastrowid
+            h2 = conn.execute(
+                "INSERT INTO holdings (account_id, holding_name, ticker, value, units, price) VALUES (?, 'BBB', 'BBB', 20, 2, 10)",
+                (a2,),
+            ).lastrowid
+            conn.commit()
+
+    with client.session_transaction() as sess:
+        sess["csv_import"] = {
+            "platform": "generic",
+            "matched": [
+                {"holding_id": h1, "new_units": 3, "new_price": 11},
+                {"holding_id": h2, "new_units": 4, "new_price": 12},
+            ],
+        }
+
+    resp = client.post(
+        "/monthly-review/confirm-import",
+        data={
+            "apply_holding_id": [str(h1)],
+            f"units_{h1}": "3",
+            f"price_{h1}": "11",
+        },
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+
+    month_key = date.today().strftime("%Y-%m")
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            review = conn.execute(
+                "SELECT id FROM monthly_reviews WHERE user_id = ? AND month_key = ?",
+                (uid, month_key),
+            ).fetchone()
+            assert review is not None
+            flags = conn.execute(
+                """
+                SELECT account_id, holdings_updated
+                FROM monthly_review_items
+                WHERE review_id = ?
+                """,
+                (int(review["id"]),),
+            ).fetchall()
+            flags_by_account = {int(r["account_id"]): int(r["holdings_updated"] or 0) for r in flags}
+
+    assert flags_by_account.get(a1) == 1
+    assert flags_by_account.get(a2) == 0
+
+
 def test_update_monthly_review_notes_enforces_ownership(app, make_user):
     uid1, _, _ = make_user(username="mr-own-a", password="password123")
     uid2, _, _ = make_user(username="mr-own-b", password="password123")

@@ -139,11 +139,21 @@ def monthly_review():
                 flash(f"{account['name']} balance updated to £{new_balance:,.2f}.", "success")
         elif form_name == "mark_complete":
             review = fetch_or_create_monthly_review(month_key, uid)
+            ensure_monthly_review_items(review["id"], uid)
+            items = fetch_monthly_review_items(review["id"])
+            items_by_account = {int(it["account_id"]): it for it in items}
             all_accounts = fetch_all_accounts(uid)
             holdings_totals = fetch_holding_totals_by_account(uid)
             for acc in all_accounts:
-                balance = effective_account_value(acc, holdings_totals)
-                upsert_monthly_snapshot(acc["id"], month_key, balance)
+                aid = int(acc["id"])
+                if acc.get("valuation_mode") == "holdings":
+                    balance = effective_account_value(acc, holdings_totals)
+                    upsert_monthly_snapshot(aid, month_key, balance)
+                    continue
+                it = items_by_account.get(aid)
+                if it and int(it.get("balance_updated") or 0) == 1:
+                    balance = effective_account_value(acc, holdings_totals)
+                    upsert_monthly_snapshot(aid, month_key, balance)
             update_monthly_review(review["id"], "complete", (review.get("notes") or ""), uid)
         elif form_name == "save_review_notes":
             review = fetch_or_create_monthly_review(month_key, uid)
@@ -529,6 +539,7 @@ def confirm_import():
 
     updated = 0
     skipped = 0
+    touched_account_ids = set()
 
     for hid_str in selected_ids:
         if hid_str not in allowed:
@@ -563,9 +574,17 @@ def confirm_import():
             "notes": holding["notes"] or "",
         }, current_user.id)
         updated += 1
+        touched_account_ids.add(int(holding["account_id"]))
 
     # Clear session data after successful apply
     session.pop("csv_import", None)
+
+    if updated and touched_account_ids:
+        month_key = default_month_key()
+        review = fetch_or_create_monthly_review(month_key, current_user.id)
+        ensure_monthly_review_items(review["id"], current_user.id)
+        for aid in touched_account_ids:
+            mark_review_item_updated(review["id"], aid, "holdings_updated")
 
     if updated:
         flash(f"Updated {updated} holding{'s' if updated != 1 else ''} from CSV import.", "success")

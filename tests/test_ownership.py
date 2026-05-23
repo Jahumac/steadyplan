@@ -356,6 +356,64 @@ def test_alice_cannot_add_allowance_rows_for_bobs_account(app, client, two_users
     assert (isa, pensions, dividends, cgt) == (0, 0, 0, 0)
 
 
+def test_allowance_post_routes_reject_wrong_account_types(app, client, make_user):
+    uid, username, password = make_user(username="allowance-types", password="password123")
+    _login_as(client, username, password)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            taxable = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, category, current_value, is_active)
+                VALUES (?, 'Taxable', 'General Investment Account', 'Taxable', 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            isa = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, category, current_value, is_active)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 'ISA', 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            pension = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, category, current_value, is_active)
+                VALUES (?, 'Pension', 'SIPP', 'Pension', 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+    client.post(
+        "/allowance/add",
+        data={"account_id": taxable, "amount": "100", "contribution_date": "2026-04-10"},
+        follow_redirects=True,
+    )
+    client.post(
+        "/allowance/pension/add",
+        data={"account_id": isa, "amount": "100", "kind": "personal", "contribution_date": "2026-04-10"},
+        follow_redirects=True,
+    )
+    client.post(
+        "/allowance/dividend/add",
+        data={"account_id": pension, "amount": "100", "dividend_date": "2026-04-10"},
+        follow_redirects=True,
+    )
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            isa_rows = conn.execute("SELECT COUNT(*) AS c FROM isa_contributions WHERE user_id = ?", (uid,)).fetchone()["c"]
+            pension_rows = conn.execute("SELECT COUNT(*) AS c FROM pension_contributions WHERE user_id = ?", (uid,)).fetchone()["c"]
+            dividend_rows = conn.execute("SELECT COUNT(*) AS c FROM dividend_records WHERE user_id = ?", (uid,)).fetchone()["c"]
+
+    assert (int(isa_rows), int(pension_rows), int(dividend_rows)) == (0, 0, 0)
+
+
 def test_allowance_fetches_do_not_join_cross_user_accounts(app, two_users):
     from app.models import (
         fetch_cgt_disposals,

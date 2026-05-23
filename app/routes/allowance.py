@@ -32,10 +32,12 @@ from app.models import (
     fetch_cgt_disposals,
     fetch_isa_contributions,
     fetch_isa_overrides_for_tax_year,
+    fetch_pension_overrides_for_tax_year,
     fetch_pension_carry_forward,
     fetch_pension_contributions,
     fetch_dividend_records,
     fetch_tax_year_contributions,
+    fetch_completed_tax_year_contributions,
     upsert_pension_carry_forward,
 )
 
@@ -62,7 +64,7 @@ def allowance_overview():
     ty_end = ty_end_date.isoformat()
     ad_hoc = fetch_isa_contributions(uid, ty_start, ty_end)
     isa_overrides = fetch_isa_overrides_for_tax_year(uid, ty_start, ty_end)
-    review_contribs = fetch_tax_year_contributions(
+    review_contribs = fetch_completed_tax_year_contributions(
         uid,
         ty_start_date.strftime("%Y-%m"),
         ty_end_date.strftime("%Y-%m"),
@@ -88,7 +90,21 @@ def allowance_overview():
     isa_accounts = [a for a in accounts if (a["wrapper_type"] or "") in ISA_WRAPPER_TYPES]
 
     pension_contribs = fetch_pension_contributions(uid, ty_start, ty_end)
-    pension_usage = calculate_pension_usage(accounts, pension_contribs, assumptions, now_date, salary_day)
+    pension_overrides = fetch_pension_overrides_for_tax_year(uid, ty_start, ty_end)
+    pension_review_contribs = fetch_completed_tax_year_contributions(
+        uid,
+        ty_start_date.strftime("%Y-%m"),
+        ty_end_date.strftime("%Y-%m"),
+    )
+    pension_usage = calculate_pension_usage(
+        accounts,
+        pension_contribs,
+        assumptions,
+        now_date,
+        salary_day,
+        pension_overrides=pension_overrides,
+        review_contributions=pension_review_contribs,
+    )
     pension_limits = pension_allowance_limits(dict(assumptions) if assumptions else {})
     pension_accounts = [a for a in accounts if is_pension_account(dict(a))]
 
@@ -184,7 +200,8 @@ def add_contribution():
         flash("Please enter a valid date.", "error")
         return redirect(url_for("allowance.allowance_overview"))
 
-    if not fetch_account(account_id, uid):
+    acc = fetch_account(account_id, uid)
+    if not acc or (acc.get("wrapper_type") or "") not in ISA_WRAPPER_TYPES:
         flash("Please select one of your ISA accounts.", "error")
         return redirect(url_for("allowance.allowance_overview"))
 
@@ -223,7 +240,8 @@ def add_pension_topup():
     if kind not in ("personal", "employer"):
         kind = "personal"
 
-    if not fetch_account(account_id, uid):
+    acc = fetch_account(account_id, uid)
+    if not acc or not is_pension_account(dict(acc)):
         flash("Please select one of your pension accounts.", "error")
         return redirect(url_for("allowance.allowance_overview"))
 
@@ -258,7 +276,8 @@ def add_dividend():
         flash("Please enter a valid date.", "error")
         return redirect(url_for("allowance.allowance_overview"))
 
-    if not fetch_account(account_id, uid):
+    acc = fetch_account(account_id, uid)
+    if not acc or (acc.get("wrapper_type") or "") in ISA_WRAPPER_TYPES or is_pension_account(dict(acc)):
         flash("Please select one of your taxable accounts.", "error")
         return redirect(url_for("allowance.allowance_overview"))
 

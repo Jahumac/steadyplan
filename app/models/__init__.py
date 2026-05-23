@@ -150,6 +150,7 @@ from .planning import (
     fetch_account_snapshot_history,
     fetch_all_active_overrides,
     fetch_isa_overrides_for_tax_year,
+    fetch_pension_overrides_for_tax_year,
     fetch_assumptions,
     fetch_contribution_overrides,
     fetch_contribution_overrides_for_reason,
@@ -183,6 +184,7 @@ from .planning import (
     set_contribution_confirmed,
     mark_review_item_updated,
     fetch_tax_year_contributions,
+    fetch_completed_tax_year_contributions,
     upsert_allowance_tracking,
     upsert_monthly_snapshot,
 )

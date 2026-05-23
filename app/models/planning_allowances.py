@@ -328,6 +328,31 @@ def fetch_isa_overrides_for_tax_year(user_id, ty_start, ty_end):
         ).fetchall()
 
 
+def fetch_pension_overrides_for_tax_year(user_id, ty_start, ty_end):
+    """Return all contribution overrides that overlap the tax year, for pension accounts only.
+
+    Returns list of rows with account_id, from_month, to_month, override_amount.
+    """
+    with get_connection() as conn:
+        return conn.execute(
+            """
+            SELECT co.account_id, co.from_month, co.to_month, co.override_amount
+            FROM contribution_overrides co
+            JOIN accounts a ON a.id = co.account_id
+            WHERE a.user_id = ?
+              AND co.from_month <= ?
+              AND co.to_month >= ?
+              AND (
+                    LOWER(COALESCE(a.category, '')) = 'pension'
+                 OR LOWER(COALESCE(a.wrapper_type, '')) LIKE '%pension%'
+                 OR LOWER(COALESCE(a.wrapper_type, '')) LIKE '%sipp%'
+              )
+            ORDER BY co.account_id, co.from_month
+            """,
+            (user_id, ty_end[:7], ty_start[:7]),
+        ).fetchall()
+
+
 def create_contribution_override(payload, user_id=None):
     with get_connection() as conn:
         if user_id is not None and not _account_belongs_to_user(conn, payload["account_id"], user_id):

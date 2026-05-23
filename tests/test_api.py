@@ -298,7 +298,7 @@ def test_complete_monthly_review_success(app, client, token):
     assert resp.status_code == 200
     body = resp.get_json()
     assert body["status"] == "complete"
-    assert body["snapshots_taken"] == 2
+    assert body["snapshots_taken"] == 0
 
     # Verify the review is actually marked complete in the DB
     with app.app_context():
@@ -307,6 +307,50 @@ def test_complete_monthly_review_success(app, client, token):
         review = fetch_or_create_monthly_review("2026-04", uid)
         assert review["status"] == "complete"
         assert review["notes"] == "done from phone"
+
+
+def test_complete_monthly_review_takes_snapshots_for_updated_manual_accounts(app, client, token):
+    with app.app_context():
+        from app.models import (
+            ensure_monthly_review_items,
+            fetch_or_create_monthly_review,
+            get_connection,
+            get_user_by_username,
+        )
+
+        uid = get_user_by_username("apiuser").id
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO accounts (user_id, name, current_value, is_active) "
+                "VALUES (?, 'A', 1000, 1)",
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO accounts (user_id, name, current_value, is_active) "
+                "VALUES (?, 'B', 2000, 1)",
+                (uid,),
+            )
+            conn.commit()
+
+        review = fetch_or_create_monthly_review("2026-04", uid)
+        ensure_monthly_review_items(review["id"], uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE monthly_review_items SET balance_updated = 1 "
+                "WHERE review_id = ?",
+                (review["id"],),
+            )
+            conn.commit()
+
+    resp = client.post(
+        "/api/v1/monthly-review/2026-04/complete",
+        json={"notes": "done from phone"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["status"] == "complete"
+    assert body["snapshots_taken"] == 2
 
 
 def test_complete_monthly_review_preserves_existing_structured_checklist(app, client, token):

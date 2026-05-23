@@ -39,8 +39,10 @@ from app.models import (
     fetch_holdings_for_account,
     fetch_latest_price_update,
     fetch_or_create_monthly_review,
+    fetch_monthly_review_items,
     fetch_user_by_api_token,
     get_connection,
+    ensure_monthly_review_items,
     update_account,
     update_monthly_review,
     upsert_monthly_snapshot,
@@ -357,14 +359,25 @@ def complete_monthly_review(month_key):
 
     uid = g.api_user.id
     review = fetch_or_create_monthly_review(month_key, uid)
+    ensure_monthly_review_items(review["id"], uid)
+    items = fetch_monthly_review_items(review["id"])
+    items_by_account = {int(it["account_id"]): it for it in items}
     accounts = fetch_all_accounts(uid)
     holdings_totals = fetch_holding_totals_by_account(uid)
 
     snapshots_taken = 0
     for acc in accounts:
-        balance = effective_account_value(acc, holdings_totals)
-        upsert_monthly_snapshot(acc["id"], month_key, balance)
-        snapshots_taken += 1
+        aid = int(acc["id"])
+        if acc.get("valuation_mode") == "holdings":
+            balance = effective_account_value(acc, holdings_totals)
+            upsert_monthly_snapshot(aid, month_key, balance)
+            snapshots_taken += 1
+            continue
+        it = items_by_account.get(aid)
+        if it and int(it.get("balance_updated") or 0) == 1:
+            balance = effective_account_value(acc, holdings_totals)
+            upsert_monthly_snapshot(aid, month_key, balance)
+            snapshots_taken += 1
 
     existing = parse_monthly_review_notes(review.get("notes"))
     notes_to_save = (
