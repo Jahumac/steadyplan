@@ -308,6 +308,54 @@ def test_restore_validation_uniqueness_distinct_values_pass(exported_json_bytes)
     assert result["valid"] is True
 
 
+def test_restore_validation_missing_debts_name_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["debts"] = [{"id": 1}]
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("Missing debts[0].name." in e for e in result["errors"])
+
+
+def test_restore_validation_missing_accounts_name_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["accounts"][0].pop("name", None)
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("Missing accounts[0].name." in e for e in result["errors"])
+
+
+def test_restore_validation_missing_goals_required_fields_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["goals"] = [{"name": "G1"}]
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("Invalid goals[0].target_value" in e for e in result["errors"])
+
+
+def test_restore_validation_missing_budget_required_fields_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["budget"]["sections"] = [{"id": 1, "key": "income"}]
+    payload["budget"]["items"] = [{"id": 1, "name": "Salary"}]
+    payload["budget"]["entries"] = [{"id": 1, "budget_item_id": 1}]
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    errs = "\n".join(result["errors"])
+    assert "Missing budget.sections[0].label." in errs
+    assert "Missing budget.items[0].section." in errs
+    assert "Missing budget.entries[0].month_key." in errs
+
+
+def test_restore_validation_missing_planning_history_required_fields_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["planning"]["cash_flow_events"][0].pop("event_date", None)
+    payload["history"]["monthly_snapshots"] = [{"id": 1, "account_id": payload["accounts"][0]["id"]}]
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    errs = "\n".join(result["errors"])
+    assert "Missing planning.cash_flow_events[0].event_date." in errs
+    assert "Missing history.monthly_snapshots[0].snapshot_date." in errs
+
+
 def test_restore_validation_unknown_extra_keys_ignored(exported_json_bytes):
     payload = json.loads(exported_json_bytes.decode("utf-8"))
     payload["some_future_key"] = {"nested": True}

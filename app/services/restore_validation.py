@@ -32,6 +32,10 @@ def _non_empty_str(x):
     return s if s else None
 
 
+def _is_number(x):
+    return isinstance(x, (int, float)) and not isinstance(x, bool)
+
+
 def validate_restore_backup_json(json_bytes):
     """Validate a Shelly Finance export payload for dry-run restore.
 
@@ -252,7 +256,7 @@ def validate_restore_backup_json(json_bytes):
                 errors.append(f"Invalid {key} (must be an array).")
 
     account_ids = set()
-    for a in accounts or []:
+    for idx, a in enumerate(accounts or []):
         if not _is_mapping(a):
             errors.append("Invalid accounts entry (must be an object).")
             continue
@@ -264,10 +268,12 @@ def validate_restore_backup_json(json_bytes):
             errors.append(f"Duplicate accounts[].id: {aid}.")
             continue
         account_ids.add(aid)
+        if _non_empty_str(a.get("name")) is None:
+            errors.append(f"Missing accounts[{idx}].name.")
 
     catalogue_ids = set()
     seen_catalogue_tickers = set()
-    for c in holding_catalogue or []:
+    for idx, c in enumerate(holding_catalogue or []):
         if not _is_mapping(c):
             errors.append("Invalid holding_catalogue entry (must be an object).")
             continue
@@ -279,6 +285,8 @@ def validate_restore_backup_json(json_bytes):
             errors.append(f"Duplicate holding_catalogue[].id: {cid}.")
             continue
         catalogue_ids.add(cid)
+        if _non_empty_str(c.get("holding_name")) is None:
+            errors.append(f"Missing holding_catalogue[{idx}].holding_name.")
         ticker = _non_empty_str(c.get("ticker"))
         if ticker:
             if ticker in seen_catalogue_tickers:
@@ -287,7 +295,7 @@ def validate_restore_backup_json(json_bytes):
                 seen_catalogue_tickers.add(ticker)
 
     debt_ids = set()
-    for d in debts or []:
+    for idx, d in enumerate(debts or []):
         if not _is_mapping(d):
             errors.append("Invalid debts entry (must be an object).")
             continue
@@ -299,9 +307,14 @@ def validate_restore_backup_json(json_bytes):
             errors.append(f"Duplicate debts[].id: {did}.")
             continue
         debt_ids.add(did)
+        if _non_empty_str(d.get("name")) is None:
+            errors.append(f"Missing debts[{idx}].name.")
+        for key in ("current_balance", "monthly_payment"):
+            if key in d and d.get(key) is None:
+                errors.append(f"Invalid debts[{idx}].{key} (must not be null).")
 
     budget_item_ids = set()
-    for bi in budget_items or []:
+    for idx, bi in enumerate(budget_items or []):
         if not _is_mapping(bi):
             errors.append("Invalid budget.items entry (must be an object).")
             continue
@@ -313,6 +326,10 @@ def validate_restore_backup_json(json_bytes):
             errors.append(f"Duplicate budget.items[].id: {bid}.")
             continue
         budget_item_ids.add(bid)
+        if _non_empty_str(bi.get("name")) is None:
+            errors.append(f"Missing budget.items[{idx}].name.")
+        if _non_empty_str(bi.get("section")) is None:
+            errors.append(f"Missing budget.items[{idx}].section.")
 
         linked_account_id = bi.get("linked_account_id")
         if linked_account_id is not None:
@@ -328,7 +345,7 @@ def validate_restore_backup_json(json_bytes):
             elif linked_debt_id not in debt_ids:
                 errors.append("Invalid budget.items[].linked_debt_id (references missing debt).")
 
-    for h in holdings or []:
+    for idx, h in enumerate(holdings or []):
         if not _is_mapping(h):
             errors.append("Invalid holdings entry (must be an object).")
             continue
@@ -338,6 +355,8 @@ def validate_restore_backup_json(json_bytes):
             continue
         if aid not in account_ids:
             errors.append("Invalid holdings[].account_id (references missing account).")
+        if _non_empty_str(h.get("holding_name")) is None:
+            errors.append(f"Missing holdings[{idx}].holding_name.")
         cid = h.get("holding_catalogue_id")
         if cid is not None:
             if not isinstance(cid, int):
@@ -345,10 +364,12 @@ def validate_restore_backup_json(json_bytes):
             elif cid not in catalogue_ids:
                 errors.append("Invalid holdings[].holding_catalogue_id (references missing holding_catalogue).")
 
-    for be in budget_entries or []:
+    for idx, be in enumerate(budget_entries or []):
         if not _is_mapping(be):
             errors.append("Invalid budget.entries entry (must be an object).")
             continue
+        if _non_empty_str(be.get("month_key")) is None:
+            errors.append(f"Missing budget.entries[{idx}].month_key.")
         bid = be.get("budget_item_id")
         if not isinstance(bid, int):
             errors.append("Invalid budget.entries[].budget_item_id (must be an integer).")
@@ -356,10 +377,12 @@ def validate_restore_backup_json(json_bytes):
         if bid not in budget_item_ids:
             errors.append("Invalid budget.entries[].budget_item_id (references missing budget item).")
 
-    for ms in monthly_snapshots or []:
+    for idx, ms in enumerate(monthly_snapshots or []):
         if not _is_mapping(ms):
             errors.append("Invalid history.monthly_snapshots entry (must be an object).")
             continue
+        if _non_empty_str(ms.get("snapshot_date")) is None:
+            errors.append(f"Missing history.monthly_snapshots[{idx}].snapshot_date.")
         aid = ms.get("account_id")
         if not isinstance(aid, int):
             errors.append("Invalid history.monthly_snapshots[].account_id (must be an integer).")
@@ -367,10 +390,14 @@ def validate_restore_backup_json(json_bytes):
         if aid not in account_ids:
             errors.append("Invalid history.monthly_snapshots[].account_id (references missing account).")
 
-    for ads in account_daily_snapshots or []:
+    for idx, ads in enumerate(account_daily_snapshots or []):
         if not _is_mapping(ads):
             errors.append("Invalid history.account_daily_snapshots entry (must be an object).")
             continue
+        if _non_empty_str(ads.get("snapshot_date")) is None:
+            errors.append(f"Missing history.account_daily_snapshots[{idx}].snapshot_date.")
+        if not _is_number(ads.get("value")):
+            errors.append(f"Invalid history.account_daily_snapshots[{idx}].value (must be a number).")
         aid = ads.get("account_id")
         if not isinstance(aid, int):
             errors.append("Invalid history.account_daily_snapshots[].account_id (must be an integer).")
@@ -378,10 +405,16 @@ def validate_restore_backup_json(json_bytes):
         if aid not in account_ids:
             errors.append("Invalid history.account_daily_snapshots[].account_id (references missing account).")
 
-    for co in contribution_overrides or []:
+    for idx, co in enumerate(contribution_overrides or []):
         if not _is_mapping(co):
             errors.append("Invalid planning.contribution_overrides entry (must be an object).")
             continue
+        if _non_empty_str(co.get("from_month")) is None:
+            errors.append(f"Missing planning.contribution_overrides[{idx}].from_month.")
+        if _non_empty_str(co.get("to_month")) is None:
+            errors.append(f"Missing planning.contribution_overrides[{idx}].to_month.")
+        if not _is_number(co.get("override_amount")):
+            errors.append(f"Invalid planning.contribution_overrides[{idx}].override_amount (must be a number).")
         aid = co.get("account_id")
         if not isinstance(aid, int):
             errors.append("Invalid planning.contribution_overrides[].account_id (must be an integer).")
@@ -389,10 +422,16 @@ def validate_restore_backup_json(json_bytes):
         if aid not in account_ids:
             errors.append("Invalid planning.contribution_overrides[].account_id (references missing account).")
 
-    for cfe in cash_flow_events or []:
+    for idx, cfe in enumerate(cash_flow_events or []):
         if not _is_mapping(cfe):
             errors.append("Invalid planning.cash_flow_events entry (must be an object).")
             continue
+        if _non_empty_str(cfe.get("event_date")) is None:
+            errors.append(f"Missing planning.cash_flow_events[{idx}].event_date.")
+        if not _is_number(cfe.get("amount")):
+            errors.append(f"Invalid planning.cash_flow_events[{idx}].amount (must be a number).")
+        if "kind" in cfe and _non_empty_str(cfe.get("kind")) is None:
+            errors.append(f"Invalid planning.cash_flow_events[{idx}].kind (must be a non-empty string).")
         aid = cfe.get("account_id")
         if not isinstance(aid, int):
             errors.append("Invalid planning.cash_flow_events[].account_id (must be an integer).")
@@ -408,7 +447,7 @@ def validate_restore_backup_json(json_bytes):
 
     monthly_review_ids = set()
     seen_review_month_keys = set()
-    for mr in monthly_reviews or []:
+    for idx, mr in enumerate(monthly_reviews or []):
         if not _is_mapping(mr):
             errors.append("Invalid history.monthly_reviews entry (must be an object).")
             continue
@@ -422,7 +461,7 @@ def validate_restore_backup_json(json_bytes):
         monthly_review_ids.add(mrid)
         mk = _non_empty_str(mr.get("month_key"))
         if not mk:
-            errors.append("Invalid history.monthly_reviews[].month_key (must be a non-empty string).")
+            errors.append(f"Missing history.monthly_reviews[{idx}].month_key.")
         elif mk in seen_review_month_keys:
             errors.append(f"Duplicate history.monthly_reviews[].month_key: {mk}.")
         else:
@@ -443,40 +482,62 @@ def validate_restore_backup_json(json_bytes):
         elif aid not in account_ids:
             errors.append("Invalid history.monthly_review_items[].account_id (references missing account).")
 
-    for ic in isa_contributions or []:
+    for idx, ic in enumerate(isa_contributions or []):
         if not _is_mapping(ic):
             errors.append("Invalid planning.isa_contributions entry (must be an object).")
             continue
+        if _non_empty_str(ic.get("contribution_date")) is None:
+            errors.append(f"Missing planning.isa_contributions[{idx}].contribution_date.")
+        if not _is_number(ic.get("amount")):
+            errors.append(f"Invalid planning.isa_contributions[{idx}].amount (must be a number).")
         aid = ic.get("account_id")
         if not isinstance(aid, int):
             errors.append("Invalid planning.isa_contributions[].account_id (must be an integer).")
         elif aid not in account_ids:
             errors.append("Invalid planning.isa_contributions[].account_id (references missing account).")
 
-    for pc in pension_contributions or []:
+    for idx, pc in enumerate(pension_contributions or []):
         if not _is_mapping(pc):
             errors.append("Invalid planning.pension_contributions entry (must be an object).")
             continue
+        if _non_empty_str(pc.get("contribution_date")) is None:
+            errors.append(f"Missing planning.pension_contributions[{idx}].contribution_date.")
+        if not _is_number(pc.get("amount")):
+            errors.append(f"Invalid planning.pension_contributions[{idx}].amount (must be a number).")
+        if "kind" in pc and _non_empty_str(pc.get("kind")) is None:
+            errors.append(f"Invalid planning.pension_contributions[{idx}].kind (must be a non-empty string).")
         aid = pc.get("account_id")
         if not isinstance(aid, int):
             errors.append("Invalid planning.pension_contributions[].account_id (must be an integer).")
         elif aid not in account_ids:
             errors.append("Invalid planning.pension_contributions[].account_id (references missing account).")
 
-    for dr in dividend_records or []:
+    for idx, dr in enumerate(dividend_records or []):
         if not _is_mapping(dr):
             errors.append("Invalid planning.dividend_records entry (must be an object).")
             continue
+        if _non_empty_str(dr.get("dividend_date")) is None:
+            errors.append(f"Missing planning.dividend_records[{idx}].dividend_date.")
+        if not _is_number(dr.get("amount")):
+            errors.append(f"Invalid planning.dividend_records[{idx}].amount (must be a number).")
         aid = dr.get("account_id")
         if not isinstance(aid, int):
             errors.append("Invalid planning.dividend_records[].account_id (must be an integer).")
         elif aid not in account_ids:
             errors.append("Invalid planning.dividend_records[].account_id (references missing account).")
 
-    for cd in cgt_disposals or []:
+    for idx, cd in enumerate(cgt_disposals or []):
         if not _is_mapping(cd):
             errors.append("Invalid planning.cgt_disposals entry (must be an object).")
             continue
+        if _non_empty_str(cd.get("disposal_date")) is None:
+            errors.append(f"Missing planning.cgt_disposals[{idx}].disposal_date.")
+        if _non_empty_str(cd.get("asset_name")) is None:
+            errors.append(f"Missing planning.cgt_disposals[{idx}].asset_name.")
+        if not _is_number(cd.get("proceeds")):
+            errors.append(f"Invalid planning.cgt_disposals[{idx}].proceeds (must be a number).")
+        if not _is_number(cd.get("cost_basis")):
+            errors.append(f"Invalid planning.cgt_disposals[{idx}].cost_basis (must be a number).")
         if "account_id" in cd:
             aid = cd.get("account_id")
             if aid is not None and not isinstance(aid, int):
@@ -485,19 +546,22 @@ def validate_restore_backup_json(json_bytes):
                 errors.append("Invalid planning.cgt_disposals[].account_id (references missing account).")
 
     seen_carry_forward_tax_years = set()
-    for pcf in pension_carry_forward or []:
+    for idx, pcf in enumerate(pension_carry_forward or []):
         if not _is_mapping(pcf):
             errors.append("Invalid planning.pension_carry_forward entry (must be an object).")
             continue
         ty = _non_empty_str(pcf.get("tax_year"))
         if not ty:
-            errors.append("Invalid planning.pension_carry_forward[].tax_year (must be a non-empty string).")
-        elif ty in seen_carry_forward_tax_years:
-            errors.append(f"Duplicate planning.pension_carry_forward[].tax_year: {ty}.")
-        else:
-            seen_carry_forward_tax_years.add(ty)
+            errors.append(f"Missing planning.pension_carry_forward[{idx}].tax_year.")
+        if not _is_number(pcf.get("unused_allowance")):
+            errors.append(f"Invalid planning.pension_carry_forward[{idx}].unused_allowance (must be a number).")
+        if ty:
+            if ty in seen_carry_forward_tax_years:
+                errors.append(f"Duplicate planning.pension_carry_forward[].tax_year: {ty}.")
+            else:
+                seen_carry_forward_tax_years.add(ty)
 
-    for pb in premium_bonds_prizes or []:
+    for idx, pb in enumerate(premium_bonds_prizes or []):
         if not _is_mapping(pb):
             errors.append("Invalid planning.premium_bonds_prizes entry (must be an object).")
             continue
@@ -508,7 +572,25 @@ def validate_restore_backup_json(json_bytes):
             errors.append("Invalid planning.premium_bonds_prizes[].account_id (references missing account).")
         mk = _non_empty_str(pb.get("month_key"))
         if not mk:
-            errors.append("Invalid planning.premium_bonds_prizes[].month_key (must be a non-empty string).")
+            errors.append(f"Missing planning.premium_bonds_prizes[{idx}].month_key.")
+        if "prize_amount" in pb and not _is_number(pb.get("prize_amount")):
+            errors.append(f"Invalid planning.premium_bonds_prizes[{idx}].prize_amount (must be a number).")
+
+    for idx, at in enumerate(allowance_tracking or []):
+        if not _is_mapping(at):
+            errors.append("Invalid planning.allowance_tracking entry (must be an object).")
+            continue
+        if _non_empty_str(at.get("tax_year")) is None:
+            errors.append(f"Missing planning.allowance_tracking[{idx}].tax_year.")
+
+    for idx, g in enumerate(goals or []):
+        if not _is_mapping(g):
+            errors.append("Invalid goals entry (must be an object).")
+            continue
+        if _non_empty_str(g.get("name")) is None:
+            errors.append(f"Missing goals[{idx}].name.")
+        if not _is_number(g.get("target_value")):
+            errors.append(f"Invalid goals[{idx}].target_value (must be a number).")
 
     seen_pb_prizes = set()
     for pb in premium_bonds_prizes or []:
@@ -524,14 +606,16 @@ def validate_restore_backup_json(json_bytes):
                 seen_pb_prizes.add(key)
 
     seen_portfolio_snapshot_dates = set()
-    for pds in portfolio_daily_snapshots or []:
+    for idx, pds in enumerate(portfolio_daily_snapshots or []):
         if not _is_mapping(pds):
             errors.append("Invalid history.portfolio_daily_snapshots entry (must be an object).")
             continue
         sd = _non_empty_str(pds.get("snapshot_date"))
         if not sd:
-            errors.append("Invalid history.portfolio_daily_snapshots[].snapshot_date (must be a non-empty string).")
+            errors.append(f"Missing history.portfolio_daily_snapshots[{idx}].snapshot_date.")
             continue
+        if "total_value" in pds and not _is_number(pds.get("total_value")):
+            errors.append(f"Invalid history.portfolio_daily_snapshots[{idx}].total_value (must be a number).")
         if sd in seen_portfolio_snapshot_dates:
             errors.append(f"Duplicate history.portfolio_daily_snapshots[].snapshot_date: {sd}.")
         else:
@@ -564,14 +648,16 @@ def validate_restore_backup_json(json_bytes):
                 seen_budget_entry_keys.add(key)
 
     seen_budget_section_keys = set()
-    for bs in budget_sections or []:
+    for idx, bs in enumerate(budget_sections or []):
         if not _is_mapping(bs):
             errors.append("Invalid budget.sections entry (must be an object).")
             continue
         key = _non_empty_str(bs.get("key"))
         if not key:
-            errors.append("Invalid budget.sections[].key (must be a non-empty string).")
+            errors.append(f"Missing budget.sections[{idx}].key.")
             continue
+        if _non_empty_str(bs.get("label")) is None:
+            errors.append(f"Missing budget.sections[{idx}].label.")
         if key in seen_budget_section_keys:
             errors.append(f"Duplicate budget.sections[].key: {key}.")
         else:
