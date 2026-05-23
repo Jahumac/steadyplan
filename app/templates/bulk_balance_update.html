@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Update balances · Shelly{% endblock %}
+{% block content %}
+
+<section class="card mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Accounts</p>
+      <h2>Update balances</h2>
+      <p class="helper-text m-0">Enter new balances for any accounts you want to update. Leave others blank to keep them unchanged.</p>
+    </div>
+    <div class="badge-row">
+      {% if next_url %}
+        <a class="badge badge-meta" href="{{ next_url }}">Back</a>
+      {% else %}
+        <a class="badge badge-meta" href="/accounts/">Back</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if accounts %}
+  <form method="post" class="form-reset">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="month_key" value="{{ month_key }}">
+    {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+
+    <div class="table-scroll mt-05">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th class="num">Current</th>
+            <th class="num">New balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for account in accounts %}
+          <tr>
+            <td>
+              <strong>{{ account.name }}</strong>
+              <div class="helper-text">
+                {% if account.provider %}{{ account.provider }} · {% endif %}{{ account.wrapper_type or 'Account' }}
+              </div>
+            </td>
+            <td class="num">£{{ '{:,.2f}'.format(account.current_value or 0) }}</td>
+            <td class="num">
+              <input
+                class="input-standard"
+                type="number"
+                step="0.01"
+                inputmode="decimal"
+                name="balance_{{ account.id }}"
+                value="{{ raw_by_id.get(account.id) or '' }}"
+                placeholder="—"
+                style="max-width: 10rem;"
+              >
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="badge-row mt-075">
+      <button type="submit" class="badge badge-primary-action">Save updates</button>
+      <span class="helper-text">Month: {{ month_key }}</span>
+    </div>
+  </form>
+  {% else %}
+    <p class="helper-text m-0">No eligible accounts found.</p>
+  {% endif %}
+</section>
+
+{% endblock %}

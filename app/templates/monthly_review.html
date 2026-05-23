@@ -125,7 +125,7 @@
               {% if review.status == 'complete' %}disabled{% endif %}>{{ monthly_review_notes }}</textarea>
     <div class="badge-row mt-075">
       <button type="submit" class="badge badge-meta" {% if review.status == 'complete' %}disabled{% endif %}>Save note</button>
-      <a href="/accounts/" class="badge badge-meta">Update account balances</a>
+      <a href="/accounts/balances/bulk?month_key={{ month_key }}&next=/monthly-review/?month={{ month_key }}" class="badge badge-meta">Update account balances</a>
       <a href="/goals/" class="badge badge-meta">Review goals</a>
       <a href="/budget/debts/" class="badge badge-meta">Review debts</a>
       <a href="/settings/?mode=edit" class="badge badge-meta">Review assumptions</a>

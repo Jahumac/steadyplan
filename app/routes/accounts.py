@@ -96,6 +96,26 @@ def _safe_next_accounts(raw):
     return None
 
 
+def _recompute_user_daily_snapshots(user_id):
+    holdings_totals = fetch_holding_totals_by_account(user_id)
+    accounts = fetch_all_accounts(user_id)
+    acct_vals = [(a["id"], effective_account_value(a, holdings_totals)) for a in accounts]
+    save_daily_snapshot(user_id, sum(v for _, v in acct_vals))
+    save_account_daily_snapshots(user_id, acct_vals)
+
+
+def _apply_balance_update_for_account(account, user_id, new_balance, month_key):
+    if (account.get("wrapper_type") or "").lower() == "premium bonds":
+        new_balance = min(float(new_balance), 50000.0)
+
+    payload = dict(account)
+    payload["current_value"] = float(new_balance)
+    payload["last_updated"] = datetime.now(timezone.utc).isoformat()
+    update_account(payload, user_id)
+    upsert_monthly_snapshot(int(account["id"]), month_key, float(new_balance))
+    return float(new_balance)
+
+
 def _account_payload_from_form(form):
     return {
         "name": form.get("name", ""),
@@ -889,23 +909,9 @@ def update_balance(account_id):
             return redirect(nxt)
         return redirect(url_for("accounts.account_detail", account_id=account_id))
 
-    if (account.get("wrapper_type") or "").lower() == "premium bonds":
-        new_balance = min(float(new_balance), 50000.0)
-
     month_key = valid_month_key(request.form.get("month_key")) or date.today().strftime("%Y-%m")
-
-    payload = dict(account)
-    payload["current_value"] = float(new_balance)
-    payload["last_updated"] = datetime.now(timezone.utc).isoformat()
-    update_account(payload, uid)
-
-    upsert_monthly_snapshot(account_id, month_key, float(new_balance))
-
-    holdings_totals = fetch_holding_totals_by_account(uid)
-    accounts = fetch_all_accounts(uid)
-    acct_vals = [(a["id"], effective_account_value(a, holdings_totals)) for a in accounts]
-    save_daily_snapshot(uid, sum(v for _, v in acct_vals))
-    save_account_daily_snapshots(uid, acct_vals)
+    _apply_balance_update_for_account(account, uid, float(new_balance), month_key)
+    _recompute_user_daily_snapshots(uid)
 
     review = fetch_monthly_review(month_key, uid)
     if review is not None:
@@ -916,6 +922,91 @@ def update_balance(account_id):
     if nxt:
         return redirect(nxt)
     return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+
+@accounts_bp.route("/balances/bulk", methods=["GET", "POST"])
+@login_required
+def bulk_balance_update():
+    uid = current_user.id
+    month_key = valid_month_key(request.values.get("month_key")) or date.today().strftime("%Y-%m")
+    nxt = _safe_next_accounts(request.values.get("next"))
+
+    all_accounts = fetch_all_accounts(uid)
+    accounts = [
+        dict(a)
+        for a in all_accounts
+        if int(a.get("is_active") or 0) == 1 and a.get("valuation_mode") != "holdings"
+    ]
+    accounts.sort(key=lambda a: ((a.get("wrapper_type") or "").lower(), (a.get("name") or "").lower()))
+
+    if request.method == "POST":
+        updates = {}
+        raw_by_id = {}
+        for key, raw in request.form.items():
+            if not key.startswith("balance_"):
+                continue
+            suffix = key[len("balance_"):]
+            try:
+                aid = int(suffix)
+            except ValueError:
+                continue
+            raw = (raw or "").strip()
+            if raw == "":
+                continue
+            raw_by_id[aid] = raw
+            value = optional_float(raw, default=None)
+            if value is None or value < 0:
+                flash("Please enter valid balances (number ≥ 0).", "error")
+                return render_template(
+                    "bulk_balance_update.html",
+                    month_key=month_key,
+                    next_url=nxt,
+                    accounts=accounts,
+                    raw_by_id=raw_by_id,
+                )
+            updates[aid] = float(value)
+
+        if not updates:
+            flash("No changes to save.", "info")
+            if nxt:
+                return redirect(nxt)
+            return redirect(url_for("accounts.bulk_balance_update", month_key=month_key))
+
+        accounts_by_id = {int(a["id"]): a for a in accounts}
+        for aid in updates.keys():
+            if aid not in accounts_by_id:
+                flash("Account not found.", "error")
+                return render_template(
+                    "bulk_balance_update.html",
+                    month_key=month_key,
+                    next_url=nxt,
+                    accounts=accounts,
+                    raw_by_id=raw_by_id,
+                )
+
+        for aid, value in updates.items():
+            acc = accounts_by_id[aid]
+            _apply_balance_update_for_account(acc, uid, value, month_key)
+
+        _recompute_user_daily_snapshots(uid)
+
+        review = fetch_monthly_review(month_key, uid)
+        if review is not None:
+            for aid in updates.keys():
+                mark_review_item_updated(review["id"], aid, "balance_updated")
+
+        flash(f"Updated {len(updates)} account balance{'s' if len(updates) != 1 else ''}.", "success")
+        if nxt:
+            return redirect(nxt)
+        return redirect(url_for("accounts.bulk_balance_update", month_key=month_key))
+
+    return render_template(
+        "bulk_balance_update.html",
+        month_key=month_key,
+        next_url=nxt,
+        accounts=accounts,
+        raw_by_id={},
+    )
 
 
 @accounts_bp.route("/<int:account_id>/holdings/add", methods=["POST"])
