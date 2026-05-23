@@ -300,5 +300,19 @@ def test_overview_data_health_quiet_when_no_warnings(app, client, make_user):
     resp = client.get("/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-    assert "Looks good" in html
-    assert 'class="data-health-items' not in html
+    assert "Data Health" not in html
+    assert "Looks good" not in html
+
+
+def test_overview_data_health_visible_when_warnings_exist(app, client, make_user):
+    _, username, password = make_user(username="dh-warn", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Data Health" in html
+    assert "Needs attention" in html
+    assert "/settings#accounts" in html
+    assert ">Review<" in html
+    assert "alert-warning" in html

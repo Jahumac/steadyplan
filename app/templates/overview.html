@@ -9,6 +9,10 @@
 {% set has_goal = goals_data | length > 0 %}
 {% set has_history = history_labels | length > 0 %}
 {% set steps_done = [has_profile, has_accounts, has_goal, has_history] | select | list | length %}
+{% set data_health_warnings = [] %}
+{% if data_health_summary and data_health_summary.health_items %}
+  {% set data_health_warnings = data_health_summary.health_items | selectattr('status', 'equalto', 'warning') | list %}
+{% endif %}
 
 {# ── Getting started (shown first for new users) ─────────────────────────── #}
 {% if steps_done < 4 %}
@@ -105,34 +109,6 @@
 </section>
 {% endfor %}
 
-{# ── Data Health Summary ──────────────────────────────────────────────────── #}
-{% if data_health_summary %}
-<section class="card data-health-summary mb-1">
-  <div class="flex flex-center flex-wrap gap-075">
-    <div style="flex:1; min-width:200px;">
-      <p class="eyebrow m-0">Data Health</p>
-      <h3 class="m-0">{{ data_health_summary.summary_message }}</h3>
-    </div>
-  </div>
-  {% set warnings = data_health_summary.health_items | selectattr('status', 'equalto', 'warning') | list %}
-  {% if warnings %}
-  <ul class="data-health-items mt-075">
-    {% for item in warnings %}
-    <li class="data-health-item data-health-item-{{ item.status }}">
-      <span class="data-health-status-icon"></span>
-      <div>
-        <strong>{{ item.title }}</strong>
-        <p class="helper-text m-0">{{ item.explanation }}
-          {% if item.link %}<a href="{{ item.link }}" class="link-accent">Learn more</a>{% endif %}
-        </p>
-      </div>
-    </li>
-    {% endfor %}
-  </ul>
-  {% endif %}
-</section>
-{% endif %}
-
 {% if monthly_review_card %}
 <section class="card mb-1">
   <div class="flex flex-center flex-wrap gap-075">
@@ -189,6 +165,22 @@
     {% endif %}
   </div>
 </section>
+
+{# ── Data Health (only when action is needed) ─────────────────────────────── #}
+{% if data_health_warnings %}
+<section class="card alert-banner alert-warning mb-1">
+  <div class="flex flex-center flex-wrap gap-075">
+    <div style="flex:1; min-width:200px;">
+      <p class="eyebrow m-0">Data Health</p>
+      <strong>Needs attention</strong>
+      <p class="helper-text m-0">
+        {{ data_health_warnings[0].title }}{% if data_health_warnings[0].explanation %} — {{ data_health_warnings[0].explanation }}{% endif %}
+      </p>
+    </div>
+    <a href="{{ data_health_warnings[0].link if data_health_warnings[0].link else '/settings/?mode=diagnostics' }}" class="badge badge-meta">Review</a>
+  </div>
+</section>
+{% endif %}
 
 {# ── Portfolio Value ───────────────────────────────────────────────────────── #}
 <section class="card mb-1">
