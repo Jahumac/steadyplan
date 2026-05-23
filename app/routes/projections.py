@@ -102,6 +102,96 @@ def _age_at_month_key(dob_str, month_key):
     return age_from_dob(dob_str, today=d)
 
 
+def _projection_assumption_summary(assumptions, accounts, account_rows, metrics):
+    if not assumptions:
+        return {"items_list": []}
+
+    retirement_mode = (assumptions.get("retirement_date_mode") or "birthday").strip()
+    if retirement_mode == "end_of_year":
+        retirement_mode_label = "End of the calendar year"
+    elif retirement_mode == "end_of_tax_year":
+        retirement_mode_label = "End of the tax year (5 April)"
+    else:
+        retirement_mode_label = "On your birthday"
+
+    global_growth = float(metrics.get("growth_rate") or 0)
+    has_custom_rates = any(
+        abs(float(r.get("growth_rate") or 0) - global_growth) > 1e-9
+        for r in (account_rows or [])
+    )
+
+    accounts_with_any_override = 0
+    accounts_with_schedule = 0
+    for a in accounts or []:
+        ovs = a.get("_contribution_overrides") or []
+        if ovs:
+            accounts_with_any_override += 1
+        if any((o.get("reason") == "schedule") for o in ovs):
+            accounts_with_schedule += 1
+
+    total_monthly_into_pot = float(metrics.get("total_monthly") or 0)
+    total_fee_impact = float(metrics.get("total_fee_impact") or 0)
+
+    items = []
+    growth_lines = [
+        f"Assumes {global_growth * 100:.1f}% annual growth.",
+        "Fees reduce net growth where configured.",
+    ]
+    if has_custom_rates:
+        growth_lines.insert(1, "Some accounts use custom growth rates that override the global rate.")
+    items.append({"title": "Growth & fees", "lines": growth_lines})
+
+    items.append({
+        "title": "Inflation",
+        "lines": [
+            "Projections are in nominal future pounds.",
+            "Shelly does not model inflation or convert to ‘today’s spending power’.",
+        ],
+    })
+
+    items.append({
+        "title": "Retirement timing",
+        "lines": [
+            f"Retirement age: {int(metrics.get('retirement_age') or 0)}.",
+            f"Years remaining: {float(metrics.get('years_remaining') or 0):.1f}.",
+            f"Date basis: {retirement_mode_label}.",
+        ],
+    })
+
+    contrib_lines = [
+        f"Assumes ~£{total_monthly_into_pot:,.0f}/mo continues going into your pots.",
+        "Includes tax relief, employer contributions, and bonuses where applicable.",
+    ]
+    if accounts_with_schedule > 0:
+        contrib_lines.append(f"Contribution schedules are set on {accounts_with_schedule} account(s).")
+    elif accounts_with_any_override > 0:
+        contrib_lines.append(f"One-off contribution overrides exist on {accounts_with_any_override} account(s).")
+    items.append({"title": "Contributions", "lines": contrib_lines})
+
+    items.append({
+        "title": "Pensions",
+        "lines": [
+            "Pension contributions may include tax relief and employer inputs based on your account settings.",
+            "Withdrawals and retirement tax are not modelled.",
+        ],
+    })
+
+    fee_lines = ["Fees are included where configured on each account."]
+    if total_fee_impact > 0:
+        fee_lines.insert(0, f"Estimated lifetime fee drag: £{total_fee_impact:,.0f}.")
+    items.append({"title": "Fees", "lines": fee_lines})
+
+    items.append({
+        "title": "Retirement spending",
+        "lines": [
+            "Retirement spending / drawdown is not modelled.",
+            "Shelly compares pot totals to targets, not lifetime retirement cashflow.",
+        ],
+    })
+
+    return {"items_list": items}
+
+
 @projections_bp.route("/api/account-series")
 @login_required
 def api_account_series():
@@ -334,9 +424,12 @@ def projections():
         "total_fee_impact": total_fee_impact,
     }
 
+    assumption_summary = _projection_assumption_summary(assumptions, accounts, account_rows, metrics)
+
     return render_template(
         "projections.html",
         metrics=metrics,
+        assumption_summary=assumption_summary,
         account_rows=account_rows,
         chart_labels=chart_labels,
         chart_values=chart_values,

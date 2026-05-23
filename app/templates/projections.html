@@ -19,7 +19,8 @@
     <div>
       <p class="eyebrow">Projections</p>
       <h2 class="hero-value">£{{ '{:,.0f}'.format(metrics.total_projected) }}</h2>
-      <p class="hero-subtitle">Projected at retirement · age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% annual growth</p>
+      <p class="hero-subtitle">Scenario estimate at retirement · age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% annual growth</p>
+      <p class="helper-text m-0">Based on your current plan and assumptions (not a guarantee). See what drives it below.</p>
     </div>
     <div class="hero-turtle-wrap">
       <img src="{{ url_for('static', filename='icons/shelly/Goals.png') }}" alt="" class="hero-turtle">
@@ -60,12 +61,32 @@
   <a class="badge badge-meta" href="/projections/export.xlsx">↓ Export (.xlsx)</a>
 </div>
 
+{% if assumption_summary and assumption_summary.items_list %}
+<section class="card mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Assumptions</p>
+      <h2>What drives this estimate</h2>
+    </div>
+    <a class="badge badge-sm" href="/settings/?mode=edit">Edit assumptions</a>
+  </div>
+  {% for item in assumption_summary.items_list %}
+    <div class="mb-075">
+      <strong>{{ item.title }}</strong>
+      {% for line in item.lines %}
+        <p class="helper-text m-0">{{ line }}</p>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</section>
+{% endif %}
+
 {# ── Summary cards ────────────────────────────────────────────────────────── #}
 <section class="card-grid mb-1">
   <div class="card stat-card">
     <h2>Projected at Retirement</h2>
     <p>£{{ '{:,.0f}'.format(metrics.total_projected) }}</p>
-    <small>At age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% annual growth</small>
+    <small>Scenario estimate · age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% annual growth</small>
   </div>
   <div class="card stat-card">
     <h2>Current Total</h2>

@@ -57,6 +57,10 @@
 </div>
 
 {% if goal_cards %}
+<p class="helper-text">Goal ETAs are approximate scenario estimates based on your current contributions and growth assumptions. Inflation and retirement withdrawals aren’t modelled.</p>
+{% endif %}
+
+{% if goal_cards %}
 <section class="card-grid goal-grid">
   {% for goal in goal_cards %}
     <a class="card goal-link-card" href="/goals/?mode=edit&goal_id={{ goal.id }}">
@@ -68,7 +72,7 @@
       </div>
 
       <p>£{{ '{:,.2f}'.format(goal.current) }} / £{{ '{:,.2f}'.format(goal.target) }}</p>
-      <div class="progress" role="progressbar" aria-valuenow="{{ (goal.progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ goal.name }} progress"><div class="progress-bar" style="width: {{ (goal.progress * 100)|round(1) }}%;"></div></div>
+      <div class="progress" role="progressbar" aria-valuenow="{{ (goal.progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ goal.name }} progress"><div class="progress-bar" data-pct="{{ (goal.progress * 100)|round(1) }}"></div></div>
       <small>{{ '{:.1f}'.format(goal.progress * 100) }}% complete · £{{ '{:,.2f}'.format(goal.remaining) }} remaining</small>
 
       {% if goal.projection %}
@@ -210,7 +214,7 @@
 
   {% else %}
     <p>£{{ '{:,.2f}'.format(selected_goal_card.item.current) }} / £{{ '{:,.2f}'.format(selected_goal_card.item.target) }}</p>
-    <div class="progress" role="progressbar" aria-valuenow="{{ (selected_goal_card.item.progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ selected_goal_card.item.name }} progress"><div class="progress-bar" style="width: {{ (selected_goal_card.item.progress * 100)|round(1) }}%;"></div></div>
+    <div class="progress" role="progressbar" aria-valuenow="{{ (selected_goal_card.item.progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ selected_goal_card.item.name }} progress"><div class="progress-bar" data-pct="{{ (selected_goal_card.item.progress * 100)|round(1) }}"></div></div>
     <small>{{ '{:.1f}'.format(selected_goal_card.item.progress * 100) }}% complete · £{{ '{:,.2f}'.format(selected_goal_card.item.remaining) }} remaining</small>
 
     {% if selected_goal_card.item.selected_tags %}

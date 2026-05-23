@@ -136,7 +136,7 @@
   </div>
   <div class="hero-strip">
     {% call hero_stat('Monthly contributions') %}<strong>£{{ '{:,.0f}'.format(metrics.monthly_total) }}</strong>{% endcall %}
-    {% call hero_stat('Projected at retirement') %}<strong>£{{ '{:,.0f}'.format(metrics.projected_total) }}</strong>{% endcall %}
+    {% call hero_stat('Projected at retirement') %}<strong>£{{ '{:,.0f}'.format(metrics.projected_total) }}</strong><small>estimate</small>{% endcall %}
     {% call hero_stat('Accounts') %}<strong>{{ accounts | length }}</strong>{% endcall %}
     {% call hero_stat('Tax Year ' ~ metrics.tax_year) %}<strong>{{ metrics.tax_year_days_left }} days left</strong>{% endcall %}
     {% if goals_data %}
@@ -246,7 +246,7 @@
       <strong>{{ g.name }}</strong>
       <span class="goal-progress-pct">{{ '{:.1f}'.format(g.progress * 100) }}%</span>
     </div>
-    <div class="progress" role="progressbar" aria-valuenow="{{ (g.progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ g.name }} progress"><div class="progress-bar" style="width: {{ [g.progress * 100, 100]|min }}%;"></div></div>
+    <div class="progress" role="progressbar" aria-valuenow="{{ (g.progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ g.name }} progress"><div class="progress-bar" data-pct="{{ [g.progress * 100, 100]|min }}"></div></div>
     <small class="text-muted">£{{ '{:,.0f}'.format(g.current) }} / £{{ '{:,.0f}'.format(g.target) }}{% if g.remaining > 0 %} · £{{ '{:,.0f}'.format(g.remaining) }} to go{% endif %}{% if g.goal_year %} · ~{{ g.goal_year }}{% endif %}</small>
   </div>
   {% endfor %}
@@ -258,7 +258,7 @@
   <div class="card allowance-card">
     <h2>ISA Allowance {{ metrics.tax_year }}</h2>
     <p>£{{ '{:,.0f}'.format(metrics.isa_used) }} <span class="allowance-denom">/ £{{ '{:,.0f}'.format(metrics.isa_allowance) }}</span></p>
-    <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.isa_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="ISA allowance used"><div class="progress-bar" style="width: {{ (metrics.isa_progress * 100)|round(1) }}%;"></div></div>
+    <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.isa_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="ISA allowance used"><div class="progress-bar" data-pct="{{ (metrics.isa_progress * 100)|round(1) }}"></div></div>
     <small>{{ '{:.1f}'.format(metrics.isa_progress * 100) }}% used · includes LISA · {{ metrics.tax_year_days_left }} days left in tax year</small>
     {% if metrics.projected_isa != metrics.isa_used %}
     <small class="block mt-025 text-muted">On track: £{{ '{:,.0f}'.format(metrics.projected_isa) }} / £{{ '{:,.0f}'.format(metrics.isa_allowance) }} by end of tax year</small>
@@ -272,7 +272,7 @@
   <div class="card allowance-card">
     <h2>LISA Allowance {{ metrics.tax_year }}</h2>
     <p>£{{ '{:,.0f}'.format(metrics.lisa_used) }} <span class="allowance-denom">/ £{{ '{:,.0f}'.format(metrics.lisa_allowance) }}</span></p>
-    <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.lisa_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="LISA allowance used"><div class="progress-bar" style="width: {{ (metrics.lisa_progress * 100)|round(1) }}%;"></div></div>
+    <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.lisa_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="LISA allowance used"><div class="progress-bar" data-pct="{{ (metrics.lisa_progress * 100)|round(1) }}"></div></div>
     <small>{{ '{:.1f}'.format(metrics.lisa_progress * 100) }}% used</small>
     <div class="mt-05">
       <a href="/allowance/#topup" class="badge badge-sm">View breakdown</a>
@@ -283,7 +283,7 @@
   <div class="card allowance-card">
     <h2>Pension Allowance {{ metrics.tax_year }}</h2>
     <p>£{{ '{:,.0f}'.format(metrics.pension_used) }} <span class="allowance-denom">/ £{{ '{:,.0f}'.format(metrics.pension_allowance) }}</span></p>
-    <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.pension_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="Pension allowance used"><div class="progress-bar" style="width: {{ (metrics.pension_progress * 100)|round(1) }}%;"></div></div>
+    <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.pension_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="Pension allowance used"><div class="progress-bar" data-pct="{{ (metrics.pension_progress * 100)|round(1) }}"></div></div>
     <small>
       {{ '{:.1f}'.format(metrics.pension_progress * 100) }}% used · Personal limit: £{{ '{:,.0f}'.format(metrics.pension_personal_limit) }}
     </small>
