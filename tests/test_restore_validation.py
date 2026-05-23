@@ -429,9 +429,9 @@ def test_restore_validate_route_missing_file_shows_friendly_error_and_no_db_writ
     assert before == after
 
 
-def test_no_restore_commit_route_added(app, client, make_user):
+def test_restore_commit_requires_staged_token(app, client, make_user):
     uid, username, password = make_user(username="restore-validate-no-commit", password="password123")
     _login(client, username, password)
 
     resp = client.post("/settings/restore/commit", data={}, follow_redirects=False)
-    assert resp.status_code == 404
+    assert resp.status_code in (302, 400)

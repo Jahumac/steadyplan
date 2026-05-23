@@ -429,6 +429,27 @@
       </table>
       {% endif %}
 
+      {% if restore_check_result.valid and restore_token %}
+        <div style="margin-top:0.75rem;padding:0.9rem;border:1px solid var(--border);border-radius:12px;background:var(--panel);">
+          <div style="font-weight:600;margin-bottom:0.25rem;">Restore from this backup</div>
+          <p class="helper-text" style="margin:0.25rem 0 0.75rem 0;">
+            This will replace your current Shelly Finance data with the contents of this backup.
+          </p>
+          <form method="post" action="/settings/restore/commit" style="margin:0;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="restore_token" value="{{ restore_token }}">
+            <label class="text-sm" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+              <input type="checkbox" name="confirm_replace" value="1">
+              <span>I understand this will overwrite my data</span>
+            </label>
+            <div style="margin-top:0.6rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+              <input type="text" name="confirm_phrase" class="input-standard" placeholder="Type RESTORE" style="max-width:12rem;text-transform:uppercase;">
+              <button type="submit" class="badge badge-danger">Restore now</button>
+            </div>
+          </form>
+        </div>
+      {% endif %}
+
       {% if restore_check_result.errors %}
         <div style="margin-top:0.75rem;">
           <div class="text-sm" style="font-weight:600;">Errors</div>
@@ -448,6 +469,19 @@
               <li class="text-sm">{{ w }}</li>
             {% endfor %}
           </ul>
+        </div>
+      {% endif %}
+
+      {% if restore_commit_result %}
+        <div style="margin-top:0.75rem;">
+          <div class="text-sm" style="font-weight:600;">Restore summary</div>
+          <table class="data-table" style="margin-top:0.35rem;">
+            <tbody>
+              <tr><td>Inserted accounts</td><td class="num">{{ restore_commit_result.inserted.accounts if restore_commit_result and restore_commit_result.inserted else 0 }}</td></tr>
+              <tr><td>Inserted holdings</td><td class="num">{{ restore_commit_result.inserted.holdings if restore_commit_result and restore_commit_result.inserted else 0 }}</td></tr>
+              <tr><td>Inserted goals</td><td class="num">{{ restore_commit_result.inserted.goals if restore_commit_result and restore_commit_result.inserted else 0 }}</td></tr>
+            </tbody>
+          </table>
         </div>
       {% endif %}
     </div>

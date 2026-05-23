@@ -1,14 +1,16 @@
 import json
+import secrets
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from flask import Blueprint, Response, current_app, flash, redirect, render_template, request, url_for
+from flask import Blueprint, Response, current_app, flash, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required
 
 from app.calculations import current_age_from_assumptions
 from app.services.backups import list_backups, run_backup
 from app.services.restore_validation import validate_restore_backup_json
+from app.services.restore_service import RestoreValidationError, restore_backup_for_user
 from app.utils import optional_float, optional_int, valid_date
 from app.models import (
     fetch_assumptions,
@@ -78,6 +80,42 @@ def _safe_next_settings_url(raw):
 
 def _select_rows(conn, sql, params):
     return [dict(r) for r in (conn.execute(sql, params).fetchall() or [])]
+
+
+def _restore_staging_dir():
+    db_path = Path(current_app.config["DB_PATH"])
+    data_dir = Path(current_app.config.get("DATA_DIR", db_path.parent))
+    return data_dir / "restore_staging"
+
+
+def _delete_staged_restore_file(token):
+    if not token:
+        return
+    try:
+        p = _restore_staging_dir() / f"{token}.json"
+        if p.exists():
+            p.unlink()
+    except Exception:
+        current_app.logger.exception("Failed to delete staged restore file")
+
+
+def _stage_restore_file(json_bytes):
+    token = secrets.token_urlsafe(24)
+    staging_dir = _restore_staging_dir()
+    staging_dir.mkdir(parents=True, exist_ok=True)
+    path = staging_dir / f"{token}.json"
+    path.write_bytes(json_bytes)
+    return token
+
+
+def _read_staged_restore_file(token):
+    if not token:
+        return None
+    path = _restore_staging_dir() / f"{token}.json"
+    try:
+        return path.read_bytes()
+    except Exception:
+        return None
 
 
 def _user_export_payload(user_id):
@@ -504,6 +542,9 @@ def export_user_data():
 @login_required
 def validate_restore_backup_upload():
     uploaded = request.files.get("backup_file")
+    prior_token = session.pop("restore_staged_token", None)
+    _delete_staged_restore_file(prior_token)
+    restore_token = None
     if not uploaded or not getattr(uploaded, "filename", ""):
         result = {
             "valid": False,
@@ -529,6 +570,9 @@ def validate_restore_backup_upload():
             }
         else:
             result = validate_restore_backup_json(json_bytes)
+            if result.get("valid"):
+                restore_token = _stage_restore_file(json_bytes)
+                session["restore_staged_token"] = restore_token
 
     uid = current_user.id
     assumptions = fetch_assumptions(uid)
@@ -541,6 +585,116 @@ def validate_restore_backup_upload():
         page_mode="view",
         active_page="settings",
         restore_check_result=result,
+        restore_token=restore_token,
+    )
+
+
+@settings_bp.route("/restore/commit", methods=["POST"])
+@login_required
+def commit_restore_backup():
+    restore_token = request.form.get("restore_token", "").strip()
+    expected_token = session.get("restore_staged_token")
+    if not restore_token or not expected_token or restore_token != expected_token:
+        flash("Restore session expired. Please upload the backup again.", "error")
+        return redirect(url_for("settings.settings"))
+
+    json_bytes = _read_staged_restore_file(restore_token)
+    if not json_bytes:
+        _delete_staged_restore_file(restore_token)
+        session.pop("restore_staged_token", None)
+        flash("Restore file could not be read. Please upload the backup again.", "error")
+        return redirect(url_for("settings.settings"))
+
+    result = validate_restore_backup_json(json_bytes)
+    if not result.get("valid"):
+        _delete_staged_restore_file(restore_token)
+        session.pop("restore_staged_token", None)
+        flash("That backup is not valid. No data has been changed.", "error")
+        uid = current_user.id
+        assumptions = fetch_assumptions(uid)
+        computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
+        return render_template(
+            "settings.html",
+            assumptions=assumptions,
+            computed_age=computed_age,
+            diagnostics=None,
+            page_mode="view",
+            active_page="settings",
+            restore_check_result=result,
+            restore_token=None,
+        )
+
+    confirm_checked = request.form.get("confirm_replace") == "1"
+    confirm_phrase = request.form.get("confirm_phrase", "").strip()
+    if not confirm_checked or confirm_phrase != "RESTORE":
+        flash("To restore, tick the checkbox and type RESTORE to confirm.", "error")
+        uid = current_user.id
+        assumptions = fetch_assumptions(uid)
+        computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
+        return render_template(
+            "settings.html",
+            assumptions=assumptions,
+            computed_age=computed_age,
+            diagnostics=None,
+            page_mode="view",
+            active_page="settings",
+            restore_check_result=result,
+            restore_token=restore_token,
+        )
+
+    try:
+        payload = json.loads(json_bytes.decode("utf-8"))
+    except Exception:
+        _delete_staged_restore_file(restore_token)
+        session.pop("restore_staged_token", None)
+        flash("Backup file could not be parsed. No data has been changed.", "error")
+        return redirect(url_for("settings.settings"))
+
+    try:
+        with get_connection() as conn:
+            restore_summary = restore_backup_for_user(current_user.id, payload, conn=conn)
+    except RestoreValidationError as e:
+        current_app.logger.info("Restore blocked by validation for user_id=%s", current_user.id)
+        _delete_staged_restore_file(restore_token)
+        session.pop("restore_staged_token", None)
+        flash("That backup is not valid. No data has been changed.", "error")
+        uid = current_user.id
+        assumptions = fetch_assumptions(uid)
+        computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
+        return render_template(
+            "settings.html",
+            assumptions=assumptions,
+            computed_age=computed_age,
+            diagnostics=None,
+            page_mode="view",
+            active_page="settings",
+            restore_check_result=e.validation_result,
+            restore_token=None,
+        )
+    except Exception:
+        current_app.logger.exception("Restore failed for user_id=%s", current_user.id)
+        _delete_staged_restore_file(restore_token)
+        session.pop("restore_staged_token", None)
+        flash("Restore failed. Your data was not changed.", "error")
+        return redirect(url_for("settings.settings"))
+
+    _delete_staged_restore_file(restore_token)
+    session.pop("restore_staged_token", None)
+    flash("Restore complete. Your data has been replaced.", "success")
+
+    uid = current_user.id
+    assumptions = fetch_assumptions(uid)
+    computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
+    return render_template(
+        "settings.html",
+        assumptions=assumptions,
+        computed_age=computed_age,
+        diagnostics=None,
+        page_mode="view",
+        active_page="settings",
+        restore_check_result=result,
+        restore_token=None,
+        restore_commit_result=restore_summary,
     )
 
 
