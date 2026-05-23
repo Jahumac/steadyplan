@@ -1,9 +1,15 @@
 # Shelly Finance — JSON Restore/Import (Design Note)
 
 ## Summary
-Shelly Finance supports a user-scoped JSON export at `GET /settings/export.json`. This note proposes a safe v1 restore/import feature that treats backups as **scenario-free data ownership tooling**: validate first, then **replace the current user’s data** in one transaction. No merge mode, no partial import, and no cross-user leakage.
+Shelly Finance supports a user-scoped JSON export at `GET /settings/export.json` and a safe v1 restore/import flow. Restore treats backups as **scenario-free data ownership tooling**: validate first, then **replace the current user’s data** in one transaction. No merge mode, no partial import, and no cross-user leakage.
 
-This is a design proposal only. It does not add routes, upload UI, or database writes.
+Implemented endpoints:
+- Validate (dry-run): `POST /settings/restore/validate` (no DB writes)
+- Commit restore: `POST /settings/restore/commit` (destructive; requires explicit confirmation)
+
+Key implementation modules:
+- `app/services/restore_validation.py` (validator)
+- `app/services/restore_service.py` (transactional restore writer)
 
 ## Current Export Shape (Schema v1)
 As of `export_schema_version == 1`, `/settings/export.json` returns a JSON object with the following top-level keys:
@@ -33,7 +39,7 @@ Notes:
 
 ## Proposed v1 Behaviour
 ### Restore Mode
-Recommended v1 mode: **replace-only** for the currently logged-in user.
+v1 mode: **replace-only** for the currently logged-in user.
 
 - Replace-only means: delete the current user’s Shelly Finance data and re-create it from the backup.
 - Merge is explicitly deferred (conflict resolution, duplicate detection, ID collisions, and reference reconciliation are too risky for v1).
@@ -48,14 +54,26 @@ Recommended v1 mode: **replace-only** for the currently logged-in user.
      - counts per section (accounts, holdings, goals, budget entries, snapshots, overrides, allowance rows, etc.)
      - warnings/errors (blocking)
    - No DB writes.
+   - If valid, the uploaded JSON is staged server-side (token + session-bound) so the user can commit without re-uploading.
 
 2. **Confirm restore**
    - Clear warning: “This will delete and replace your current Shelly Finance data.”
-   - Require explicit confirmation (typed phrase like `RESTORE` and/or checkbox).
+   - Requires explicit confirmation:
+     - checkbox `confirm_replace`
+     - typed phrase `RESTORE`
    - On confirm: perform replace restore in a single transaction.
+   - The staged file is re-validated before any DB writes.
 
 ### Placement
 Restore UI should live in Settings under a clearly labelled “Restore / Danger” area (near reset), with conservative copy about overwrite risk.
+
+### Staging security (implemented)
+To prevent path traversal and accidental long-lived files:
+- staged backups are stored under a dedicated staging directory
+- a non-guessable token selects the staged file (validated against a strict token regex)
+- the token is bound to the user’s session (session token + user_id + staged_at)
+- staged restore previews expire after 1 hour (TTL)
+- opportunistic cleanup removes expired staged files
 
 ## Schema / Versioning Rules
 ### Version gating
@@ -150,20 +168,11 @@ All foreign keys in imported rows must be rewritten using the maps.
 ### Deletion scope
 Deletion must be limited to `current_user.id` only (never touch other users). It should reuse the same user-scoped deletion behaviour as “Start fresh”.
 
-## Implementation Outline (Future Slice)
-This is a suggested breakdown for the coding bundle (not part of this slice):
+## Implementation Notes (v1)
+The restore writer ignores `user_id` values embedded in the backup, assigns ownership to the current user, remaps IDs, and performs all work in one transaction. Any validation or write failure results in a full rollback and a safe user-facing error.
 
-1. Add a restore service module:
-   - parse and validate export payload
-   - produce a normalized payload (types normalized, strings trimmed, etc.)
-2. Add a validation-only endpoint and UI preview (no writes).
-3. Add a commit endpoint that:
-   - requires typed confirmation
-   - performs replace restore in one transaction
-4. Add robust logging (without leaking file contents).
-
-## Test Plan (Future Slice)
-Add tests before shipping restore:
+## Test Plan (v1)
+Restore is covered by tests for:
 
 - Validation:
   - valid backup passes validation, returns expected counts
@@ -185,4 +194,3 @@ Add tests before shipping restore:
 - `allowance_tracking.user_id` may be nullable in some DBs due to legacy rows. Import must not assume NOT NULL and must always assign ownership during write.
 - `planning.cash_flow_events.counterparty_account_id` remapping: should v1 reject if the referenced account is missing from the file, or set it to NULL? Recommendation for v1: reject to keep integrity strict.
 - If export shape changes without a schema bump, import should treat this as invalid; exporter and importer must stay locked via `meta.export_schema_version`.
-

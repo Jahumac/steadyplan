@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- User JSON backup/export in Settings and a hardened JSON restore flow (validate preview + explicit confirmation, transactional, current-user scoped).
+- Overview Data Health panel (read-only) for stale/missing inputs.
+- Monthly Review workflow (lightweight check-in with notes, contribution confirm/skip, and month completion snapshot).
+- Manual account balance update workflow for regular use/monthly review.
+
+### Changed
+- Projection copy frames projections as scenario estimates.
+- Monthly Review contribution copy uses “Confirmed” (does not imply a financial transaction was recorded).
+
 ## [1.8.0] - 2026-04-20
 
 ### Added

@@ -42,8 +42,7 @@ Codes currently used: `missing_token`, `invalid_token`, `not_found`,
 ---
 
 ## Endpoints
-
-All endpoints are GET, require auth, and are scoped to the token's user.
+All endpoints are scoped to the token's user unless stated otherwise. Most are GET; a small set of POST endpoints exists for deliberate, user-scoped writes.
 
 ### `GET /me`
 Current user info.
@@ -84,7 +83,7 @@ Growth rate, retirement age, ISA/LISA allowances, etc.
 
 ### `GET /health`  _(no auth)_
 Liveness probe for uptime monitors. Returns 200 with DB status and last
-backup time, or 503 if the DB is unreachable.
+backup time (file presence only), or 503 if the DB is unreachable.
 ```json
 {
   "ok": true,
@@ -151,6 +150,4 @@ curl -H "Authorization: Bearer $TOKEN" https://shelly.example.com/api/v1/overvie
 Breaking changes will go under `/api/v2`. New fields may be added to
 existing responses without warning — clients must ignore unknown keys.
 
-Writes (POST/PUT/DELETE) are intentionally not exposed yet. Add them
-endpoint-by-endpoint when you have a concrete client need — it's easier to
-keep an API safe when it grows deliberately.
+Writes are intentionally kept small and endpoint-by-endpoint so the API stays safe as it grows.

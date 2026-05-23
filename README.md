@@ -19,6 +19,9 @@ It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, 
 ### Accounts & Holdings
 Track any combination of investment accounts: Stocks & Shares ISA, Cash ISA, Lifetime ISA, SIPP, Workplace Pension, GIA, and more. Each account can be valued manually (enter a balance) or built up from individual holdings with live price lookups via Twelve Data and Yahoo Finance (with automatic FX conversion for USD/EUR holdings).
 
+### Backup & Restore (JSON)
+Export a user-scoped JSON backup from **Settings**, and restore from a backup via a two-step flow: validate/dry-run preview first, then explicit confirmation to replace your data for the current user only.
+
 ### Broker CSV Import
 Import holdings directly from your broker's CSV export. Supported platforms:
 
@@ -34,7 +37,10 @@ Import holdings directly from your broker's CSV export. Supported platforms:
 Don't use any of these? Download the [CSV template](app/static/shelly-holdings-template.csv) and fill in your holdings manually.
 
 ### Monthly Review
-A guided monthly workflow to update your holdings and account balances. Upload a broker CSV or edit values manually, preview changes before applying, and mark the month as complete. Snapshots are saved so you can track how your portfolio changes over time.
+A lightweight monthly check-in to keep your numbers fresh: update account balances, review expected contributions (confirm/skip), add an optional note, and mark the month reviewed. Marking a month reviewed saves snapshots so you can track how your portfolio changes over time.
+
+### Data Health
+A small read-only panel on **Overview** highlights stale or missing inputs (e.g. no accounts, old snapshots, missing assumptions) to help you trust the numbers without changing any projections.
 
 ### Budget
 Monthly income, expenses and savings overview with auto-save. Navigate between months with arrows. Budget items can be linked directly to account contributions so your savings plan stays in sync.
@@ -43,7 +49,7 @@ Monthly income, expenses and savings overview with auto-save. Navigate between m
 Set savings targets and track progress. Goals can be linked to tagged accounts — e.g. tag your ISA accounts as "Retirement" and create a goal that tracks the combined balance.
 
 ### Retirement Projections
-Year-by-year and month-by-month projections based on current balances, monthly contributions and growth assumptions. Respects Lifetime ISA contribution rules (stops at age 50). Export projections to Excel (.xlsx) with per-account breakdowns.
+Year-by-year and month-by-month projections based on current balances, monthly contributions and growth assumptions. Projections are scenario estimates, not guarantees. Respects Lifetime ISA contribution rules (stops at age 50). Export projections to Excel (.xlsx) with per-account breakdowns.
 
 ### Granular Fee Tracking
 Accounts support detailed fee modelling: platform fee (% with optional £ cap), flat annual platform fee (£), and fund fee / OCF (%). Shelly combines these into an effective annual fee, subtracts it from your growth rate, and shows the lifetime cost of fees in both the app and Excel exports. All fee fields are optional — tucked behind an "Advanced: Fees" toggle so they don't clutter the setup for casual users. Projections show "with fees" vs "without fees" so you can see exactly what your broker and funds cost you over time.
@@ -224,6 +230,9 @@ data/
 ## Roadmap
 
 - Read‑only demo mode for public try‑outs (done).
+- JSON backup/export and restore flow (done).
+- Overview Data Health panel (done).
+- Monthly Review workflow and manual balance updates (done).
 - Better offline experience: cached read‑only views with clear “offline” indicators.
 - Diagnostics page: last scheduler run, Yahoo price fetch status, DB health.
 - Import UX: smarter column matching and validation hints.
