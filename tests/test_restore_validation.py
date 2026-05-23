@@ -1,0 +1,193 @@
+import json
+
+import pytest
+
+from app.services.restore_validation import validate_restore_backup_json
+
+
+def _login(client, username, password):
+    resp = client.post(
+        "/login",
+        data={"username": username, "password": password},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+
+
+def _count_rows(app):
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            tables = [
+                "accounts",
+                "holdings",
+                "holding_catalogue",
+                "goals",
+                "debts",
+                "budget_sections",
+                "budget_items",
+                "budget_entries",
+                "monthly_snapshots",
+                "portfolio_daily_snapshots",
+                "account_daily_snapshots",
+                "monthly_reviews",
+                "monthly_review_items",
+                "cash_flow_events",
+                "isa_contributions",
+                "pension_contributions",
+                "dividend_records",
+                "cgt_disposals",
+                "pension_carry_forward",
+                "allowance_tracking",
+                "contribution_overrides",
+                "premium_bonds_prizes",
+            ]
+            out = {}
+            for t in tables:
+                out[t] = int(conn.execute(f"SELECT COUNT(*) AS c FROM {t}").fetchone()["c"])
+            return out
+
+
+@pytest.fixture
+def exported_json_bytes(app, client, make_user):
+    uid, username, password = make_user(username="restore-validate", password="password123")
+    _login(client, username, password)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            a1 = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution)
+                VALUES (?, 'A1', 'isa', 1000, 100)
+                """,
+                (uid,),
+            ).lastrowid
+            a2 = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution)
+                VALUES (?, 'A2', 'cash', 2000, 200)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, counterparty_account_id)
+                VALUES (?, ?, '2026-06-15', 50, 'transfer', 'test', ?)
+                """,
+                (uid, a1, a2),
+            )
+            conn.execute(
+                """
+                INSERT INTO allowance_tracking (user_id, tax_year, isa_used, lisa_used, notes)
+                VALUES (?, '2026-27', 123, 45, 'mine')
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/settings/export.json")
+    assert resp.status_code == 200
+    return resp.data
+
+
+def test_restore_validation_valid_export_passes_and_no_db_writes(app, exported_json_bytes):
+    before = _count_rows(app)
+    result = validate_restore_backup_json(exported_json_bytes)
+    after = _count_rows(app)
+
+    assert result["valid"] is True
+    assert result["export_schema_version"] == 1
+    assert result["exported_at"]
+    assert result["counts"]["accounts"] >= 2
+    assert result["counts"]["planning"]["allowance_tracking"] >= 1
+    assert result["errors"] == []
+    assert before == after
+
+
+def test_restore_validation_corrupt_json_rejected_and_no_db_writes(app):
+    before = _count_rows(app)
+    result = validate_restore_backup_json(b"{")
+    after = _count_rows(app)
+    assert result["valid"] is False
+    assert any("Invalid JSON" in e for e in result["errors"])
+    assert before == after
+
+
+def test_restore_validation_missing_meta_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload.pop("meta", None)
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("meta" in e for e in result["errors"])
+
+
+def test_restore_validation_missing_schema_version_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["meta"].pop("export_schema_version", None)
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("Missing meta.export_schema_version" in e for e in result["errors"])
+
+
+def test_restore_validation_unsupported_future_schema_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["meta"]["export_schema_version"] = 999
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("Unsupported export_schema_version" in e for e in result["errors"])
+
+
+def test_restore_validation_missing_required_section_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload.pop("accounts", None)
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("Missing required top-level section: 'accounts'" in e for e in result["errors"])
+
+
+def test_restore_validation_invalid_field_type_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["accounts"] = {}
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("Invalid 'accounts'" in e for e in result["errors"])
+
+
+def test_restore_validation_invalid_account_reference_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    if payload["holdings"]:
+        payload["holdings"][0]["account_id"] = 999999
+    else:
+        payload["holdings"].append({"id": 1, "account_id": 999999})
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("holdings[].account_id" in e and "missing account" in e for e in result["errors"])
+
+
+def test_restore_validation_invalid_cash_flow_counterparty_reference_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["planning"]["cash_flow_events"].append(
+        {
+            "id": 999,
+            "account_id": payload["accounts"][0]["id"],
+            "event_date": "2026-06-15",
+            "amount": 10,
+            "kind": "transfer",
+            "note": "bad",
+            "counterparty_account_id": 123456789,
+        }
+    )
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("counterparty_account_id" in e and "missing account" in e for e in result["errors"])
+
+
+def test_restore_validation_unknown_extra_keys_ignored(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["some_future_key"] = {"nested": True}
+    payload["planning"]["some_future_planning_key"] = [{"x": 1}]
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is True
