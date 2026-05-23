@@ -127,6 +127,7 @@ CREATE TABLE IF NOT EXISTS monthly_snapshots (
 
 CREATE TABLE IF NOT EXISTS allowance_tracking (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     tax_year TEXT NOT NULL,
     isa_used REAL DEFAULT 0,
     lisa_used REAL DEFAULT 0,
@@ -510,6 +511,38 @@ def _run_migrations(conn):
         conn.execute(
             "INSERT INTO schema_migrations (name) VALUES ('v5_budget_sections_per_user')"
         )
+
+    # ── v9: allowance_tracking user ownership ────────────────────────────
+    if not conn.execute(
+        "SELECT 1 FROM schema_migrations WHERE name = 'v9_allowance_tracking_user'"
+    ).fetchone():
+        try:
+            conn.execute("ALTER TABLE allowance_tracking ADD COLUMN user_id INTEGER REFERENCES users(id)")
+        except Exception as e:
+            _log_migration_error(e)
+
+        try:
+            users = conn.execute("SELECT id FROM users ORDER BY id ASC").fetchall()
+            if len(users) == 1:
+                conn.execute(
+                    "UPDATE allowance_tracking SET user_id = ? WHERE user_id IS NULL",
+                    (users[0]["id"],),
+                )
+        except Exception as e:
+            _log_migration_error(e)
+
+        try:
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_allowance_tracking_user_tax_year "
+                "ON allowance_tracking(user_id, tax_year)"
+            )
+        except Exception as e:
+            _log_migration_error(e)
+
+        conn.execute(
+            "INSERT OR IGNORE INTO schema_migrations (name) VALUES ('v9_allowance_tracking_user')"
+        )
+        conn.commit()
 
     # ── Add salary_day and update_day to assumptions ────────────────────
     for col in [

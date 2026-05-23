@@ -6,15 +6,42 @@ from ._conn import get_connection
 # ── Allowance tracking row ────────────────────────────────────────────────────
 
 def fetch_allowance_tracking(user_id=None):
-    """Return the most recent allowance_tracking row.
-
-    user_id is accepted for API consistency but allowance_tracking is a
-    global table (one row per tax year).
-    """
+    """Return the most recent allowance_tracking row for a user."""
     with get_connection() as conn:
+        if not user_id:
+            return None
         return conn.execute(
-            "SELECT * FROM allowance_tracking ORDER BY id DESC LIMIT 1"
+            "SELECT * FROM allowance_tracking WHERE user_id = ? ORDER BY id DESC LIMIT 1",
+            (user_id,),
         ).fetchone()
+
+
+def upsert_allowance_tracking(user_id, tax_year, isa_used=0.0, lisa_used=0.0, notes=None):
+    """Insert or update a user's allowance tracking row for a tax year."""
+    with get_connection() as conn:
+        existing = conn.execute(
+            "SELECT id FROM allowance_tracking WHERE user_id = ? AND tax_year = ?",
+            (user_id, tax_year),
+        ).fetchone()
+        if existing:
+            conn.execute(
+                """
+                UPDATE allowance_tracking
+                SET isa_used = ?, lisa_used = ?, notes = ?
+                WHERE id = ? AND user_id = ?
+                """,
+                (isa_used, lisa_used, notes, existing["id"], user_id),
+            )
+        else:
+            conn.execute(
+                """
+                INSERT INTO allowance_tracking (user_id, tax_year, isa_used, lisa_used, notes)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (user_id, tax_year, isa_used, lisa_used, notes),
+            )
+        conn.commit()
+        return True
 
 
 # ── ISA contributions ─────────────────────────────────────────────────────────

@@ -392,22 +392,33 @@ def test_allowance_fetches_do_not_join_cross_user_accounts(app, two_users):
         assert cgt_rows[0]["account_name"] is None
 
 
-def test_user_reset_keeps_global_allowance_tracking(app, two_users):
+def test_user_reset_deletes_only_own_allowance_tracking(app, two_users):
     from app.models import get_connection, reset_all_user_data
     with app.app_context():
         with get_connection() as conn:
             conn.execute(
-                "INSERT INTO allowance_tracking (tax_year, isa_used, lisa_used, notes) VALUES ('2026/27', 123, 45, 'global')"
+                """
+                INSERT INTO allowance_tracking (user_id, tax_year, isa_used, lisa_used, notes)
+                VALUES (?, '2026/27', 123, 45, 'alice')
+                """,
+                (two_users["alice"]["uid"],),
+            )
+            conn.execute(
+                """
+                INSERT INTO allowance_tracking (user_id, tax_year, isa_used, lisa_used, notes)
+                VALUES (?, '2026/27', 999, 88, 'bob')
+                """,
+                (two_users["bob"]["uid"],),
             )
             conn.commit()
 
         reset_all_user_data(two_users["alice"]["uid"])
 
         with get_connection() as conn:
-            row = conn.execute("SELECT tax_year, isa_used, lisa_used FROM allowance_tracking").fetchone()
-        assert row["tax_year"] == "2026/27"
-        assert row["isa_used"] == 123
-        assert row["lisa_used"] == 45
+            rows = conn.execute(
+                "SELECT user_id, isa_used FROM allowance_tracking ORDER BY user_id ASC"
+            ).fetchall()
+        assert rows == [{"user_id": two_users["bob"]["uid"], "isa_used": 999}]
 
 
 # ── Budget → contribution_overrides back-sync ────────────────────────────────
