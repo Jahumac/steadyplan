@@ -392,6 +392,86 @@ def validate_restore_backup_json(json_bytes):
             elif cpid not in account_ids:
                 errors.append("Invalid planning.cash_flow_events[].counterparty_account_id (references missing account).")
 
+    monthly_review_ids = set()
+    for mr in monthly_reviews or []:
+        if not _is_mapping(mr):
+            errors.append("Invalid history.monthly_reviews entry (must be an object).")
+            continue
+        mrid = mr.get("id")
+        if not isinstance(mrid, int):
+            errors.append("Invalid history.monthly_reviews[].id (must be an integer).")
+            continue
+        if mrid in monthly_review_ids:
+            errors.append(f"Duplicate history.monthly_reviews[].id: {mrid}.")
+            continue
+        monthly_review_ids.add(mrid)
+
+    for mri in monthly_review_items or []:
+        if not _is_mapping(mri):
+            errors.append("Invalid history.monthly_review_items entry (must be an object).")
+            continue
+        rid = mri.get("review_id")
+        if not isinstance(rid, int):
+            errors.append("Invalid history.monthly_review_items[].review_id (must be an integer).")
+        elif rid not in monthly_review_ids:
+            errors.append("Invalid history.monthly_review_items[].review_id (references missing monthly review).")
+        aid = mri.get("account_id")
+        if not isinstance(aid, int):
+            errors.append("Invalid history.monthly_review_items[].account_id (must be an integer).")
+        elif aid not in account_ids:
+            errors.append("Invalid history.monthly_review_items[].account_id (references missing account).")
+
+    for ic in isa_contributions or []:
+        if not _is_mapping(ic):
+            errors.append("Invalid planning.isa_contributions entry (must be an object).")
+            continue
+        aid = ic.get("account_id")
+        if not isinstance(aid, int):
+            errors.append("Invalid planning.isa_contributions[].account_id (must be an integer).")
+        elif aid not in account_ids:
+            errors.append("Invalid planning.isa_contributions[].account_id (references missing account).")
+
+    for pc in pension_contributions or []:
+        if not _is_mapping(pc):
+            errors.append("Invalid planning.pension_contributions entry (must be an object).")
+            continue
+        aid = pc.get("account_id")
+        if not isinstance(aid, int):
+            errors.append("Invalid planning.pension_contributions[].account_id (must be an integer).")
+        elif aid not in account_ids:
+            errors.append("Invalid planning.pension_contributions[].account_id (references missing account).")
+
+    for dr in dividend_records or []:
+        if not _is_mapping(dr):
+            errors.append("Invalid planning.dividend_records entry (must be an object).")
+            continue
+        aid = dr.get("account_id")
+        if not isinstance(aid, int):
+            errors.append("Invalid planning.dividend_records[].account_id (must be an integer).")
+        elif aid not in account_ids:
+            errors.append("Invalid planning.dividend_records[].account_id (references missing account).")
+
+    for cd in cgt_disposals or []:
+        if not _is_mapping(cd):
+            errors.append("Invalid planning.cgt_disposals entry (must be an object).")
+            continue
+        if "account_id" in cd:
+            aid = cd.get("account_id")
+            if aid is not None and not isinstance(aid, int):
+                errors.append("Invalid planning.cgt_disposals[].account_id (must be integer or null).")
+            elif isinstance(aid, int) and aid not in account_ids:
+                errors.append("Invalid planning.cgt_disposals[].account_id (references missing account).")
+
+    for pb in premium_bonds_prizes or []:
+        if not _is_mapping(pb):
+            errors.append("Invalid planning.premium_bonds_prizes entry (must be an object).")
+            continue
+        aid = pb.get("account_id")
+        if not isinstance(aid, int):
+            errors.append("Invalid planning.premium_bonds_prizes[].account_id (must be an integer).")
+        elif aid not in account_ids:
+            errors.append("Invalid planning.premium_bonds_prizes[].account_id (references missing account).")
+
     counts = {
         "accounts": len(accounts or []),
         "holdings": len(holdings or []),
@@ -431,4 +511,3 @@ def validate_restore_backup_json(json_bytes):
         "errors": errors,
         "warnings": warnings,
     }
-

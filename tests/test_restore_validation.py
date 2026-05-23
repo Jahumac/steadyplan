@@ -186,6 +186,77 @@ def test_restore_validation_invalid_cash_flow_counterparty_reference_rejected(ex
     assert any("counterparty_account_id" in e and "missing account" in e for e in result["errors"])
 
 
+def test_restore_validation_invalid_isa_contributions_account_reference_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["planning"]["isa_contributions"].append(
+        {"id": 1, "account_id": 999999, "amount": 10, "contribution_date": "2026-06-01"}
+    )
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("planning.isa_contributions[].account_id" in e and "missing account" in e for e in result["errors"])
+
+
+def test_restore_validation_invalid_dividend_records_account_reference_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["planning"]["dividend_records"].append(
+        {"id": 1, "account_id": 999999, "amount": 3, "dividend_date": "2026-06-01"}
+    )
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("planning.dividend_records[].account_id" in e and "missing account" in e for e in result["errors"])
+
+
+def test_restore_validation_invalid_pension_contributions_account_reference_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["planning"]["pension_contributions"].append(
+        {"id": 1, "account_id": 999999, "amount": 20, "contribution_date": "2026-06-01", "kind": "personal"}
+    )
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("planning.pension_contributions[].account_id" in e and "missing account" in e for e in result["errors"])
+
+
+def test_restore_validation_invalid_premium_bonds_prizes_account_reference_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["planning"]["premium_bonds_prizes"].append(
+        {"id": 1, "account_id": 999999, "month_key": "2026-05", "prize_amount": 25}
+    )
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any(
+        "planning.premium_bonds_prizes[].account_id" in e and "missing account" in e
+        for e in result["errors"]
+    )
+
+
+def test_restore_validation_invalid_monthly_review_items_references_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["history"]["monthly_review_items"].append(
+        {"id": 1, "review_id": 999999, "account_id": payload["accounts"][0]["id"]}
+    )
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("history.monthly_review_items[].review_id" in e and "missing monthly review" in e for e in result["errors"])
+
+
+def test_restore_validation_account_linked_references_valid_pass(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    aid = payload["accounts"][0]["id"]
+
+    payload["planning"]["isa_contributions"].append(
+        {"id": 1, "account_id": aid, "amount": 10, "contribution_date": "2026-06-01"}
+    )
+    payload["planning"]["dividend_records"].append(
+        {"id": 1, "account_id": aid, "amount": 3, "dividend_date": "2026-06-01"}
+    )
+
+    payload["history"]["monthly_reviews"].append({"id": 123, "month_key": "2026-05"})
+    payload["history"]["monthly_review_items"].append({"id": 1, "review_id": 123, "account_id": aid})
+
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is True
+
+
 def test_restore_validation_unknown_extra_keys_ignored(exported_json_bytes):
     payload = json.loads(exported_json_bytes.decode("utf-8"))
     payload["some_future_key"] = {"nested": True}
