@@ -42,12 +42,16 @@ def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_u
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "Monthly review" in html
-    assert "Update anything that changed this month" in html
+    assert "Suggested monthly flow: update account balances" in html
     assert "Quick checklist" not in html
     assert "Monthly Update Guide" not in html
     assert "How this works" not in html
     assert "Backup/export checked" not in html
     assert "Expected Contributions" not in html
+    assert "Expected contributions" in html
+    assert "Confirm contributions that happened this month" in html
+    assert "To confirm" in html
+    assert "<p class=\"eyebrow\">Optional</p>" not in html
     assert "Update account balances" in html
     assert 'href="/accounts/' in html
     assert 'href="/goals/' in html

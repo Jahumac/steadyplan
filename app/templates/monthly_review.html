@@ -27,7 +27,7 @@
     <div>
       <p class="eyebrow">Monthly review</p>
       <h2 class="hero-value">{{ month_label }}</h2>
-      <p class="hero-subtitle">Update anything that changed this month, add a note if useful, then mark the month reviewed.</p>
+      <p class="hero-subtitle">Suggested monthly flow: update account balances, confirm any contributions or debt changes, add a note if useful, then mark the month reviewed.</p>
     </div>
     <div class="hero-actions-col">
       {% if review.status == 'complete' %}
@@ -136,8 +136,9 @@
 <section class="card mb-1">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Optional</p>
-      <h2>Contributions check</h2>
+      <p class="eyebrow">To confirm</p>
+      <h2>Expected contributions</h2>
+      <p class="helper-text m-0">Confirm contributions that happened this month so Shelly can treat them as real for tracking. Skip anything that did not happen.</p>
     </div>
   </div>
   {% if contribution_items %}
@@ -149,10 +150,13 @@
              data-account-id="{{ item.account_id }}">
           <div style="display:flex;align-items:center;gap:0.6rem;flex:1;min-width:0;">
             {% if review.status != 'complete' and not is_skipped %}
-            <input type="checkbox" class="contribution-cb"
-                   {% if item.contribution_confirmed %}checked{% endif %}
-                   title="Mark as confirmed"
-                   style="flex-shrink:0;width:1.1rem;height:1.1rem;cursor:pointer;">
+            <label class="flex flex-center gap-05" style="flex-shrink:0;cursor:pointer;">
+              <input type="checkbox" class="contribution-cb"
+                     {% if item.contribution_confirmed %}checked{% endif %}
+                     title="Confirm contribution happened"
+                     style="width:1.1rem;height:1.1rem;cursor:pointer;">
+              <span class="helper-text m-0">Confirm</span>
+            </label>
             {% endif %}
             <div style="min-width:0;">
               <strong>{{ item.account_name }}</strong>
@@ -163,6 +167,13 @@
           <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
             <div style="text-align:right;">
               <strong>£{{ '{:,.2f}'.format(item.expected_contribution) }}</strong>
+              {% if is_skipped %}
+                <p class="helper-text m-0">Skipped this month</p>
+              {% elif item.contribution_confirmed %}
+                <p class="helper-text m-0">Recorded</p>
+              {% else %}
+                <p class="helper-text m-0">Not confirmed</p>
+              {% endif %}
               {% set br = contribution_breakdowns.get(item.account_id) %}
               {% if br and br.total_into_pot > item.expected_contribution + 0.005 %}
                 {% set uplift = br.total_into_pot - item.expected_contribution %}
