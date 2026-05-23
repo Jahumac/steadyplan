@@ -130,7 +130,7 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
         follow_redirects=True,
     )
     body_ok = resp_ok.data.decode("utf-8")
-    assert "Restore complete. This user's data has been overwritten." in body_ok
+    assert "Restore complete. Data for this user has been overwritten." in body_ok
 
     with app.app_context():
         from app.models import get_connection

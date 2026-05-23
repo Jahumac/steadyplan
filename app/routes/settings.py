@@ -782,7 +782,7 @@ def commit_restore_backup():
     _delete_staged_restore_file(restore_token)
     _clear_restore_staging_session()
     _cleanup_restore_staging()
-    flash("Restore complete. This user's data has been overwritten.", "success")
+    flash("Restore complete. Data for this user has been overwritten.", "success")
 
     uid = current_user.id
     assumptions = fetch_assumptions(uid)
