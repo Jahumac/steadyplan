@@ -25,6 +25,13 @@ def _parse_iso_timestamp(raw):
         return None
 
 
+def _non_empty_str(x):
+    if not isinstance(x, str):
+        return None
+    s = x.strip()
+    return s if s else None
+
+
 def validate_restore_backup_json(json_bytes):
     """Validate a Shelly Finance export payload for dry-run restore.
 
@@ -259,6 +266,7 @@ def validate_restore_backup_json(json_bytes):
         account_ids.add(aid)
 
     catalogue_ids = set()
+    seen_catalogue_tickers = set()
     for c in holding_catalogue or []:
         if not _is_mapping(c):
             errors.append("Invalid holding_catalogue entry (must be an object).")
@@ -271,6 +279,12 @@ def validate_restore_backup_json(json_bytes):
             errors.append(f"Duplicate holding_catalogue[].id: {cid}.")
             continue
         catalogue_ids.add(cid)
+        ticker = _non_empty_str(c.get("ticker"))
+        if ticker:
+            if ticker in seen_catalogue_tickers:
+                errors.append(f"Duplicate holding_catalogue[].ticker: {ticker}.")
+            else:
+                seen_catalogue_tickers.add(ticker)
 
     debt_ids = set()
     for d in debts or []:
@@ -393,6 +407,7 @@ def validate_restore_backup_json(json_bytes):
                 errors.append("Invalid planning.cash_flow_events[].counterparty_account_id (references missing account).")
 
     monthly_review_ids = set()
+    seen_review_month_keys = set()
     for mr in monthly_reviews or []:
         if not _is_mapping(mr):
             errors.append("Invalid history.monthly_reviews entry (must be an object).")
@@ -405,6 +420,13 @@ def validate_restore_backup_json(json_bytes):
             errors.append(f"Duplicate history.monthly_reviews[].id: {mrid}.")
             continue
         monthly_review_ids.add(mrid)
+        mk = _non_empty_str(mr.get("month_key"))
+        if not mk:
+            errors.append("Invalid history.monthly_reviews[].month_key (must be a non-empty string).")
+        elif mk in seen_review_month_keys:
+            errors.append(f"Duplicate history.monthly_reviews[].month_key: {mk}.")
+        else:
+            seen_review_month_keys.add(mk)
 
     for mri in monthly_review_items or []:
         if not _is_mapping(mri):
@@ -462,6 +484,19 @@ def validate_restore_backup_json(json_bytes):
             elif isinstance(aid, int) and aid not in account_ids:
                 errors.append("Invalid planning.cgt_disposals[].account_id (references missing account).")
 
+    seen_carry_forward_tax_years = set()
+    for pcf in pension_carry_forward or []:
+        if not _is_mapping(pcf):
+            errors.append("Invalid planning.pension_carry_forward entry (must be an object).")
+            continue
+        ty = _non_empty_str(pcf.get("tax_year"))
+        if not ty:
+            errors.append("Invalid planning.pension_carry_forward[].tax_year (must be a non-empty string).")
+        elif ty in seen_carry_forward_tax_years:
+            errors.append(f"Duplicate planning.pension_carry_forward[].tax_year: {ty}.")
+        else:
+            seen_carry_forward_tax_years.add(ty)
+
     for pb in premium_bonds_prizes or []:
         if not _is_mapping(pb):
             errors.append("Invalid planning.premium_bonds_prizes entry (must be an object).")
@@ -471,12 +506,82 @@ def validate_restore_backup_json(json_bytes):
             errors.append("Invalid planning.premium_bonds_prizes[].account_id (must be an integer).")
         elif aid not in account_ids:
             errors.append("Invalid planning.premium_bonds_prizes[].account_id (references missing account).")
+        mk = _non_empty_str(pb.get("month_key"))
+        if not mk:
+            errors.append("Invalid planning.premium_bonds_prizes[].month_key (must be a non-empty string).")
+
+    seen_pb_prizes = set()
+    for pb in premium_bonds_prizes or []:
+        if not _is_mapping(pb):
+            continue
+        aid = pb.get("account_id")
+        mk = _non_empty_str(pb.get("month_key"))
+        if isinstance(aid, int) and mk:
+            key = (aid, mk)
+            if key in seen_pb_prizes:
+                errors.append(f"Duplicate planning.premium_bonds_prizes[] for account_id={aid}, month_key={mk}.")
+            else:
+                seen_pb_prizes.add(key)
+
+    seen_portfolio_snapshot_dates = set()
+    for pds in portfolio_daily_snapshots or []:
+        if not _is_mapping(pds):
+            errors.append("Invalid history.portfolio_daily_snapshots entry (must be an object).")
+            continue
+        sd = _non_empty_str(pds.get("snapshot_date"))
+        if not sd:
+            errors.append("Invalid history.portfolio_daily_snapshots[].snapshot_date (must be a non-empty string).")
+            continue
+        if sd in seen_portfolio_snapshot_dates:
+            errors.append(f"Duplicate history.portfolio_daily_snapshots[].snapshot_date: {sd}.")
+        else:
+            seen_portfolio_snapshot_dates.add(sd)
+
+    seen_account_daily = set()
+    for ads in account_daily_snapshots or []:
+        if not _is_mapping(ads):
+            continue
+        aid = ads.get("account_id")
+        sd = _non_empty_str(ads.get("snapshot_date"))
+        if isinstance(aid, int) and sd:
+            key = (aid, sd)
+            if key in seen_account_daily:
+                errors.append(f"Duplicate history.account_daily_snapshots[] for account_id={aid}, snapshot_date={sd}.")
+            else:
+                seen_account_daily.add(key)
+
+    seen_budget_entry_keys = set()
+    for be in budget_entries or []:
+        if not _is_mapping(be):
+            continue
+        mk = _non_empty_str(be.get("month_key"))
+        bid = be.get("budget_item_id")
+        if mk and isinstance(bid, int):
+            key = (mk, bid)
+            if key in seen_budget_entry_keys:
+                errors.append(f"Duplicate budget.entries[] for month_key={mk}, budget_item_id={bid}.")
+            else:
+                seen_budget_entry_keys.add(key)
+
+    seen_budget_section_keys = set()
+    for bs in budget_sections or []:
+        if not _is_mapping(bs):
+            errors.append("Invalid budget.sections entry (must be an object).")
+            continue
+        key = _non_empty_str(bs.get("key"))
+        if not key:
+            errors.append("Invalid budget.sections[].key (must be a non-empty string).")
+            continue
+        if key in seen_budget_section_keys:
+            errors.append(f"Duplicate budget.sections[].key: {key}.")
+        else:
+            seen_budget_section_keys.add(key)
+
 
     counts = {
         "accounts": len(accounts or []),
         "holdings": len(holdings or []),
         "holding_catalogue": len(holding_catalogue or []),
-        "goals": len(goals or []),
         "debts": len(debts or []),
         "budget": {
             "sections": len(budget_sections or []),

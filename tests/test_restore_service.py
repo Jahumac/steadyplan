@@ -404,15 +404,11 @@ def test_restore_service_invalid_or_unsupported_schema_writes_nothing(app, clien
     assert after == before
 
 
-def test_restore_service_failure_midway_rolls_back_completely(app, client, make_user):
+def test_restore_service_failure_midway_rolls_back_completely(app, client, make_user, monkeypatch):
     uid, username, password = make_user(username="restore-rollback", password="password123")
     _seed_exportable_data(app, uid, account_names=("A1", "A2"))
     _login(client, username, password)
     payload = _export_payload(client)
-
-    pb = payload.get("planning", {}).get("premium_bonds_prizes", [])
-    assert pb
-    pb.append(dict(pb[0]))
 
     _wipe_user_data(app, uid)
     with app.app_context():
@@ -433,6 +429,19 @@ def test_restore_service_failure_midway_rolls_back_completely(app, client, make_
             conn.commit()
 
     before = _count_user_rows(app, uid)
+    from app.services import restore_service as rs
+
+    call_count = {"n": 0}
+    original_insert_row = rs._insert_row
+
+    def _boom(*args, **kwargs):
+        call_count["n"] += 1
+        if call_count["n"] == 5:
+            raise sqlite3.IntegrityError("forced failure mid-restore")
+        return original_insert_row(*args, **kwargs)
+
+    monkeypatch.setattr(rs, "_insert_row", _boom)
+
     with pytest.raises(sqlite3.IntegrityError):
         with app.app_context():
             from app.models import get_connection

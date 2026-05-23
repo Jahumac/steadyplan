@@ -257,6 +257,57 @@ def test_restore_validation_account_linked_references_valid_pass(exported_json_b
     assert result["valid"] is True
 
 
+def test_restore_validation_duplicate_holding_catalogue_ticker_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["holding_catalogue"] = [
+        {"id": 1, "holding_name": "Global ETF", "ticker": "VWRA"},
+        {"id": 2, "holding_name": "Global ETF 2", "ticker": "VWRA"},
+    ]
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("Duplicate holding_catalogue[].ticker" in e for e in result["errors"])
+
+
+def test_restore_validation_duplicate_monthly_review_month_key_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["history"]["monthly_reviews"] = [
+        {"id": 1, "month_key": "2026-05"},
+        {"id": 2, "month_key": "2026-05"},
+    ]
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("Duplicate history.monthly_reviews[].month_key" in e for e in result["errors"])
+
+
+def test_restore_validation_duplicate_pension_carry_forward_tax_year_rejected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["planning"]["pension_carry_forward"] = [
+        {"id": 1, "tax_year": "2025-26", "unused_allowance": 1},
+        {"id": 2, "tax_year": "2025-26", "unused_allowance": 2},
+    ]
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is False
+    assert any("Duplicate planning.pension_carry_forward[].tax_year" in e for e in result["errors"])
+
+
+def test_restore_validation_uniqueness_distinct_values_pass(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["holding_catalogue"] = [
+        {"id": 1, "holding_name": "Global ETF", "ticker": "VWRA"},
+        {"id": 2, "holding_name": "UK ETF", "ticker": "VUKG"},
+    ]
+    payload["history"]["monthly_reviews"] = [
+        {"id": 1, "month_key": "2026-05"},
+        {"id": 2, "month_key": "2026-06"},
+    ]
+    payload["planning"]["pension_carry_forward"] = [
+        {"id": 1, "tax_year": "2024-25", "unused_allowance": 100},
+        {"id": 2, "tax_year": "2025-26", "unused_allowance": 200},
+    ]
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is True
+
+
 def test_restore_validation_unknown_extra_keys_ignored(exported_json_bytes):
     payload = json.loads(exported_json_bytes.decode("utf-8"))
     payload["some_future_key"] = {"nested": True}
