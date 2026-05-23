@@ -8,9 +8,20 @@ A self-hosted personal finance dashboard for UK investors 🐢. Track your accou
 
 ## Why shelly-finance?
 
-Most finance apps want your login credentials or send your data to the cloud. Shelly runs entirely on your machine (or home server) with a local SQLite database. No accounts to create with a third party, no API keys to hand over, no data leaving your network.
+Most finance apps want your login credentials or send your data to the cloud. Shelly runs entirely on your machine (or home server) with a local SQLite database. No bank/broker account linking and no third-party accounts required. You only need an external API key if you choose to enable optional automated price lookups.
 
 It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, GIAs — with GBP currency, UK tax year tracking, and CSV import from major UK brokers.
+
+---
+
+## Privacy Model (What Leaves Your Machine)
+
+- **Stays local:** Your financial database lives in `data/finance.db` (SQLite). Shelly does not sync your data to any cloud service.
+- **No bank/broker linking:** Shelly does not connect to your bank or broker via OAuth, screen scraping, or open banking flows.
+- **May leave the machine (optional):** If you enable live prices, Shelly sends **ticker symbols / identifiers** to external price sources (Yahoo Finance; optionally Twelve Data) to fetch prices. Your account balances and transaction history are not sent.
+- **Twelve Data API key is optional:** If `TWELVE_DATA_API_KEY` is not set, Shelly can still be used (manual balances, manual holdings values, and any Yahoo-backed lookups).
+- **If you want “air-gapped”:** You can run Shelly without any external price lookups by relying on manual balances / manual holdings values and avoiding ticker-based refreshes.
+- **Internet exposure:** Shelly is designed for home-network use. If you expose it beyond your LAN, use HTTPS behind a reverse proxy and add an extra auth layer (Authelia, OAuth proxy, basic auth, etc.).
 
 ---
 
@@ -44,7 +55,7 @@ Draft Monthly Review data supports editing, but **only completed Monthly Reviews
 Marking a month reviewed saves snapshots so you can track how your portfolio changes over time. Holdings-based accounts snapshot from holdings value; manual/Premium Bonds accounts snapshot only if their balance was updated in that review (to avoid silently recording stale values as truth).
 
 ### Data Health
-A small read-only panel on **Overview** highlights stale or missing inputs (e.g. no accounts, old snapshots, missing assumptions) to help you trust the numbers without changing any projections.
+If something needs attention (e.g. no accounts, stale snapshots, missing assumptions), Shelly surfaces a compact warning on **Overview**. Healthy status is kept out of the dashboard so Overview stays focused on your financial summary.
 
 ### Budget
 Monthly income, expenses and savings overview with auto-save. Navigate between months with arrows. Budget items can be linked directly to account contributions so your savings plan stays in sync.
@@ -72,15 +83,51 @@ Temporarily change a monthly contribution (e.g. parental leave, career break) wi
 
 ### PWA & Mobile
 - Install Shelly as a phone app — visit the URL in your mobile browser and tap "Add to Home Screen". Works full-screen with its own icon.
-- Offline-friendly app shell with a service worker; network-first for pages and API to keep data fresh.
+- Installable app shell (PWA) with a service worker for static assets (CSS/JS/icons).
+- **Privacy-first offline behaviour:** authenticated financial pages are not cached for offline viewing. If you're offline you'll see an offline page and can retry once reconnected.
 
 ### Install on Mobile
 - iOS (Safari): open the URL → Share → Add to Home Screen
 - Android (Chrome): open the URL → menu → Install app / Add to Home screen
 
-### Demo Mode (Read‑only)
-- Optional read‑only demo user for safe exploration (default username: `demo`). Any POST writes from the demo account are blocked.
-- Optional passwordless demo entry: set `DEMO_PUBLIC_LOGIN_ENABLED=1` and create the demo user, then use `/demo` (or the “Try demo” button on the login page).
+### Try Safely With Demo Data
+- Shelly includes a demo seed script that populates realistic UK investor data (accounts, holdings, goals, budget, history).
+- You can explore the full UI without entering real financial data.
+
+Seed demo data (local Python):
+
+```bash
+.venv/bin/python scripts/seed_demo.py --username demo
+```
+
+Seed demo data (Docker):
+
+```bash
+docker exec -it finance-dashboard python scripts/seed_demo.py --username demo
+```
+
+Enable a public read-only demo login:
+
+- Create a `demo` user (any password) and set `DEMO_PUBLIC_LOGIN_ENABLED=1`.
+- Then you can use `/demo` (or the “Try demo” button on the login page). The demo user is read-only: POST writes are blocked.
+
+---
+
+## Backup Strategy (Recommended)
+
+Shelly supports two complementary backup styles:
+
+1. **JSON export (per user)** — download from **Settings → Backup your data**. Best for portability (moving data between instances) and user-scoped restores.
+2. **Volume/SQLite backup (whole instance)** — back up the `data/` volume/directory that contains:
+   - `finance.db` (your SQLite database)
+   - `secret_key.txt` (Flask secret key; needed to keep sessions stable across restores)
+   - `backups/` (if you use the built-in SQLite backup tool from Diagnostics)
+
+Suggested simple routine for self-hosters:
+
+- Back up the `data/` volume on a schedule (NAS snapshot, rsync, borg, etc.).
+- Periodically download a JSON export for an additional “belt and braces” copy.
+- Before relying on backups, do a restore drill: validate a JSON backup in Settings, and (separately) restore a copy of `data/` into a test container.
 
 ---
 
@@ -121,6 +168,12 @@ docker compose up -d
 ```
 
 The app runs on port **8001** by default (mapped to port 8000 inside the container). Your database persists in the `data/` directory which is mounted as a volume.
+
+First boot:
+
+- On first visit you'll be redirected to `/setup` to create an admin account.
+- The database file is created/used inside the mounted `data/` volume (`data/finance.db`).
+- `TWELVE_DATA_API_KEY` is optional — you can run Shelly without it.
 
 To change the port, edit `docker-compose.yml`:
 

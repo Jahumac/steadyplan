@@ -39,6 +39,11 @@ Go to **http://localhost:8000** (or replace `localhost` with your server's IP).
 
 You'll see the setup screen the first time — create your account and you're in.
 
+First run notes:
+
+- Shelly stores its database and secret key under the mounted `/app/data` volume (your host path from `-v ...:/app/data`).
+- If you don't set any external price API keys, Shelly still runs normally (manual balances/manual holdings values, and any Yahoo-backed lookups you use).
+
 ---
 
 ## Option B — Docker Compose

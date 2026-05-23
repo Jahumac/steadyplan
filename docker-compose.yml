@@ -7,7 +7,8 @@ services:
     volumes:
       - ./data:/app/data
     environment:
-      - TWELVE_DATA_API_KEY=your_api_key_here
+      # Optional: enables Twelve Data price lookups. Leave unset to run without it.
+      # - TWELVE_DATA_API_KEY=your_api_key_here
       - RATELIMIT_STORAGE_URI=memory://  # Use redis://redis:6379/0 if WEB_CONCURRENCY > 1
       - WEB_CONCURRENCY=1
     restart: unless-stopped
