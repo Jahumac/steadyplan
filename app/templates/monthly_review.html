@@ -27,7 +27,7 @@
     <div>
       <p class="eyebrow">Monthly review</p>
       <h2 class="hero-value">{{ month_label }}</h2>
-      <p class="hero-subtitle">Suggested monthly flow: update account balances, confirm any contributions or debt changes, add a note if useful, then mark the month reviewed.</p>
+      <p class="hero-subtitle">Work down the page: confirm expected contributions, update holdings or manual balances, log Premium Bonds if needed, then add a note and mark the month reviewed.</p>
     </div>
     <div class="hero-actions-col">
       {% if review.status == 'complete' %}
@@ -125,7 +125,7 @@
               {% if review.status == 'complete' %}disabled{% endif %}>{{ monthly_review_notes }}</textarea>
     <div class="badge-row mt-075">
       <button type="submit" class="badge badge-meta" {% if review.status == 'complete' %}disabled{% endif %}>Save note</button>
-      <a href="/accounts/balances/bulk?month_key={{ month_key }}&next=/monthly-review/?month={{ month_key }}" class="badge badge-meta">Update account balances</a>
+      <a href="#manual-accounts" class="badge badge-meta">Update manual balances</a>
       <a href="/goals/" class="badge badge-meta">Review goals</a>
       <a href="/budget/debts/" class="badge badge-meta">Review debts</a>
       <a href="/settings/?mode=edit" class="badge badge-meta">Review assumptions</a>
@@ -138,7 +138,7 @@
     <div>
       <p class="eyebrow">To confirm</p>
       <h2>Expected contributions</h2>
-      <p class="helper-text m-0">Confirm expected contributions that happened this month. Skip anything that did not happen.</p>
+      <p class="helper-text m-0">Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or balances below where needed.</p>
     </div>
   </div>
   {% if contribution_items %}
@@ -214,6 +214,7 @@
     <div>
       <p class="eyebrow">Holdings</p>
       <h2>Holdings-Based Accounts</h2>
+      <p class="helper-text m-0">Update units or prices for investment accounts valued from holdings.</p>
     </div>
     {% if holdings_items and review.status != 'complete' %}
     <div class="badge-row">
@@ -302,11 +303,12 @@
   {% endif %}
 </section>
 
-<section class="card mb-1">
+<section class="card mb-1" id="manual-accounts">
   <div class="section-header">
     <div>
       <p class="eyebrow">Manual</p>
       <h2>Manual Accounts</h2>
+      <p class="helper-text m-0">Update balances for accounts that are valued manually.</p>
     </div>
   </div>
   {% if manual_items %}

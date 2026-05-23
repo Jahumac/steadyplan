@@ -96,6 +96,7 @@
 {% if accounts | length > 0 and page_mode != 'create' and not selected %}
 <div class="row-end">
   <a class="badge badge-primary-action" href="/accounts/?mode=create">+ Add account</a>
+  <a class="badge badge-meta" href="/accounts/balances/bulk?month_key={{ current_month_key }}">Update balances</a>
 </div>
 {% endif %}
 
