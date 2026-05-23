@@ -363,6 +363,97 @@
   <p class="helper-text">Download a JSON backup of your Shelly Finance data. Keep this somewhere safe.</p>
 </section>
 
+<section class="panel mt-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Restore</p>
+      <h3>Check a backup file</h3>
+    </div>
+  </div>
+  <p class="helper-text">Upload a Shelly Finance JSON export to check whether it can be restored. This does not change your data.</p>
+  <form method="post" action="/settings/restore/validate" enctype="multipart/form-data" style="margin:0.75rem 0 0 0;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+      <input type="file" name="backup_file" accept=".json,application/json" class="input-standard" style="max-width:22rem;">
+      <button type="submit" class="badge badge-primary-action">Check backup</button>
+    </div>
+  </form>
+
+  {% if restore_check_result %}
+    <div style="margin-top:0.75rem;">
+      {% if restore_check_result.valid %}
+        <div class="flash-msg flash-success"><span>This backup looks valid. No data has been changed.</span><span></span></div>
+      {% else %}
+        <div class="flash-msg flash-error"><span>This backup cannot be restored yet. No data has been changed.</span><span></span></div>
+      {% endif %}
+
+      <table class="data-table" style="margin-top:0.75rem;">
+        <tbody>
+          <tr>
+            <td>Export schema version</td>
+            <td class="num">{{ restore_check_result.export_schema_version if restore_check_result.export_schema_version is not none else '—' }}</td>
+          </tr>
+          <tr>
+            <td>Exported at</td>
+            <td class="num">{{ restore_check_result.exported_at if restore_check_result.exported_at else '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {% if restore_check_result.counts %}
+      <table class="data-table" style="margin-top:0.75rem;">
+        <tbody>
+          <tr><td>Accounts</td><td class="num">{{ restore_check_result.counts.accounts }}</td></tr>
+          <tr><td>Holdings</td><td class="num">{{ restore_check_result.counts.holdings }}</td></tr>
+          <tr><td>Holding catalogue</td><td class="num">{{ restore_check_result.counts.holding_catalogue }}</td></tr>
+          <tr><td>Goals</td><td class="num">{{ restore_check_result.counts.goals }}</td></tr>
+          <tr><td>Debts</td><td class="num">{{ restore_check_result.counts.debts }}</td></tr>
+          <tr><td>Budget sections</td><td class="num">{{ restore_check_result.counts.budget.sections }}</td></tr>
+          <tr><td>Budget items</td><td class="num">{{ restore_check_result.counts.budget.items }}</td></tr>
+          <tr><td>Budget entries</td><td class="num">{{ restore_check_result.counts.budget.entries }}</td></tr>
+          <tr><td>Monthly snapshots</td><td class="num">{{ restore_check_result.counts.history.monthly_snapshots }}</td></tr>
+          <tr><td>Portfolio daily snapshots</td><td class="num">{{ restore_check_result.counts.history.portfolio_daily_snapshots }}</td></tr>
+          <tr><td>Account daily snapshots</td><td class="num">{{ restore_check_result.counts.history.account_daily_snapshots }}</td></tr>
+          <tr><td>Monthly reviews</td><td class="num">{{ restore_check_result.counts.history.monthly_reviews }}</td></tr>
+          <tr><td>Monthly review items</td><td class="num">{{ restore_check_result.counts.history.monthly_review_items }}</td></tr>
+          <tr><td>Contribution overrides</td><td class="num">{{ restore_check_result.counts.planning.contribution_overrides }}</td></tr>
+          <tr><td>Cash flow events</td><td class="num">{{ restore_check_result.counts.planning.cash_flow_events }}</td></tr>
+          <tr><td>ISA contributions</td><td class="num">{{ restore_check_result.counts.planning.isa_contributions }}</td></tr>
+          <tr><td>Pension contributions</td><td class="num">{{ restore_check_result.counts.planning.pension_contributions }}</td></tr>
+          <tr><td>Dividend records</td><td class="num">{{ restore_check_result.counts.planning.dividend_records }}</td></tr>
+          <tr><td>CGT disposals</td><td class="num">{{ restore_check_result.counts.planning.cgt_disposals }}</td></tr>
+          <tr><td>Pension carry forward</td><td class="num">{{ restore_check_result.counts.planning.pension_carry_forward }}</td></tr>
+          <tr><td>Allowance tracking</td><td class="num">{{ restore_check_result.counts.planning.allowance_tracking }}</td></tr>
+          <tr><td>Premium Bonds prizes</td><td class="num">{{ restore_check_result.counts.planning.premium_bonds_prizes }}</td></tr>
+        </tbody>
+      </table>
+      {% endif %}
+
+      {% if restore_check_result.errors %}
+        <div style="margin-top:0.75rem;">
+          <div class="text-sm" style="font-weight:600;">Errors</div>
+          <ul style="margin:0.35rem 0 0 1.15rem;">
+            {% for e in restore_check_result.errors %}
+              <li class="text-sm">{{ e }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      {% if restore_check_result.warnings %}
+        <div style="margin-top:0.75rem;">
+          <div class="text-sm" style="font-weight:600;">Warnings</div>
+          <ul style="margin:0.35rem 0 0 1.15rem;">
+            {% for w in restore_check_result.warnings %}
+              <li class="text-sm">{{ w }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+
 {# ── Danger Zone · Reset ─────────────────────────────────────────────────── #}
 <section class="panel mt-1 danger-zone" id="danger-zone">
   <div class="section-header">

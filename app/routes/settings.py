@@ -8,6 +8,7 @@ from flask_login import current_user, login_required
 
 from app.calculations import current_age_from_assumptions
 from app.services.backups import list_backups, run_backup
+from app.services.restore_validation import validate_restore_backup_json
 from app.utils import optional_float, optional_int, valid_date
 from app.models import (
     fetch_assumptions,
@@ -497,6 +498,50 @@ def export_user_data():
     resp = Response(body, mimetype="application/json")
     resp.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
     return resp
+
+
+@settings_bp.route("/restore/validate", methods=["POST"])
+@login_required
+def validate_restore_backup_upload():
+    uploaded = request.files.get("backup_file")
+    if not uploaded or not getattr(uploaded, "filename", ""):
+        result = {
+            "valid": False,
+            "export_schema_version": None,
+            "exported_at": None,
+            "counts": {},
+            "errors": ["Please choose a .json backup file to upload."],
+            "warnings": [],
+        }
+    else:
+        try:
+            json_bytes = uploaded.read()
+        except Exception:
+            json_bytes = b""
+        if not json_bytes:
+            result = {
+                "valid": False,
+                "export_schema_version": None,
+                "exported_at": None,
+                "counts": {},
+                "errors": ["Uploaded file was empty or could not be read."],
+                "warnings": [],
+            }
+        else:
+            result = validate_restore_backup_json(json_bytes)
+
+    uid = current_user.id
+    assumptions = fetch_assumptions(uid)
+    computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
+    return render_template(
+        "settings.html",
+        assumptions=assumptions,
+        computed_age=computed_age,
+        diagnostics=None,
+        page_mode="view",
+        active_page="settings",
+        restore_check_result=result,
+    )
 
 
 @settings_bp.route("/reset", methods=["POST"])

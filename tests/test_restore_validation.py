@@ -1,4 +1,5 @@
 import json
+import io
 
 import pytest
 
@@ -191,3 +192,76 @@ def test_restore_validation_unknown_extra_keys_ignored(exported_json_bytes):
     payload["planning"]["some_future_planning_key"] = [{"x": 1}]
     result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
     assert result["valid"] is True
+
+
+def test_restore_validate_route_requires_login(client, make_user):
+    make_user(username="restore-validate-login-required", password="password123")
+    resp = client.post("/settings/restore/validate", data={}, follow_redirects=False)
+    assert resp.status_code in (302, 401)
+    if resp.status_code == 302:
+        assert "/login" in resp.headers.get("Location", "")
+
+
+def test_restore_validate_route_valid_upload_shows_valid_result_and_no_db_writes(app, client, exported_json_bytes):
+    before = _count_rows(app)
+    resp = client.post(
+        "/settings/restore/validate",
+        data={"backup_file": (io.BytesIO(exported_json_bytes), "backup.json")},
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+    after = _count_rows(app)
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8")
+    assert "Check a backup file" in body
+    assert "This backup looks valid. No data has been changed." in body
+    assert "Export schema version" in body
+    assert before == after
+
+
+def test_restore_validate_route_corrupt_json_shows_errors_and_no_db_writes(app, client, make_user):
+    uid, username, password = make_user(username="restore-validate-corrupt", password="password123")
+    _login(client, username, password)
+
+    before = _count_rows(app)
+    resp = client.post(
+        "/settings/restore/validate",
+        data={"backup_file": (io.BytesIO(b"{"), "backup.json")},
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+    after = _count_rows(app)
+
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8")
+    assert "This backup cannot be restored yet. No data has been changed." in body
+    assert "Invalid JSON" in body
+    assert before == after
+
+
+def test_restore_validate_route_missing_file_shows_friendly_error_and_no_db_writes(app, client, make_user):
+    uid, username, password = make_user(username="restore-validate-missing", password="password123")
+    _login(client, username, password)
+
+    before = _count_rows(app)
+    resp = client.post(
+        "/settings/restore/validate",
+        data={},
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+    after = _count_rows(app)
+
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8")
+    assert "This backup cannot be restored yet. No data has been changed." in body
+    assert "Please choose a .json backup file to upload." in body
+    assert before == after
+
+
+def test_no_restore_commit_route_added(app, client, make_user):
+    uid, username, password = make_user(username="restore-validate-no-commit", password="password123")
+    _login(client, username, password)
+
+    resp = client.post("/settings/restore/commit", data={}, follow_redirects=False)
+    assert resp.status_code == 404
