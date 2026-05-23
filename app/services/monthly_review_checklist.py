@@ -18,18 +18,23 @@ def parse_monthly_review_notes(raw_notes):
     raw_notes = "" if raw_notes is None else str(raw_notes)
     raw_notes = raw_notes.strip()
 
-    if raw_notes.startswith("{") and raw_notes.endswith("}"):
-        try:
-            data = json.loads(raw_notes)
-        except Exception:
-            data = None
-        if isinstance(data, dict) and data.get(_NOTES_SCHEMA_KEY) == _NOTES_SCHEMA_VERSION:
-            notes = (data.get("notes") or "").strip()
-            checked = data.get("checked") or []
-            if not isinstance(checked, list):
-                checked = []
-            checked_set = {str(k) for k in checked if k is not None}
-            return {"notes": notes, "checked": checked_set, "is_structured": True}
+    if _NOTES_SCHEMA_KEY in raw_notes:
+        if raw_notes.startswith("{") and raw_notes.endswith("}"):
+            try:
+                data = json.loads(raw_notes)
+            except Exception:
+                data = None
+            if isinstance(data, dict) and data.get(_NOTES_SCHEMA_KEY) == _NOTES_SCHEMA_VERSION:
+                notes_val = data.get("notes")
+                notes = notes_val.strip() if isinstance(notes_val, str) else ""
+
+                checked_val = data.get("checked")
+                checked = checked_val if isinstance(checked_val, list) else []
+                checked_set = {str(k) for k in checked if k is not None}
+
+                return {"notes": notes, "checked": checked_set, "is_structured": True}
+
+        return {"notes": "", "checked": set(), "is_structured": True}
 
     return {"notes": raw_notes, "checked": set(), "is_structured": False}
 
@@ -53,4 +58,3 @@ def encode_monthly_review_notes(notes, checked_keys):
 def checked_count(checked_keys):
     allowed = {i["key"] for i in MONTHLY_REVIEW_CHECKLIST_ITEMS}
     return sum(1 for k in (checked_keys or set()) if k in allowed)
-

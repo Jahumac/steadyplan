@@ -1,4 +1,7 @@
-from app.services.monthly_review_checklist import parse_monthly_review_notes
+from app.services.monthly_review_checklist import (
+    encode_monthly_review_notes,
+    parse_monthly_review_notes,
+)
 
 
 def test_overview_renders_monthly_review_card(auth_client):
@@ -116,3 +119,120 @@ def test_update_monthly_review_notes_enforces_ownership(app, make_user):
         assert still_a is not None
         assert still_a["notes"] == "alice-note"
 
+
+def test_plain_notes_saved_without_checks_stay_plain_text(app, client, make_user):
+    uid, username, password = make_user(username="mr-plain", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = "2026-04"
+    note = "Just plain text"
+    resp = client.post(
+        "/monthly-review/",
+        data={
+            "form_name": "save_review_checklist",
+            "month": month_key,
+            "monthly_review_notes": note,
+        },
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+
+    with app.app_context():
+        from app.models import fetch_monthly_review
+
+        review = fetch_monthly_review(month_key, uid)
+        assert review is not None
+        assert review["notes"] == note
+
+
+def test_malformed_internal_structured_notes_do_not_leak_json_to_ui(app, client, make_user):
+    uid, username, password = make_user(username="mr-malformed", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = "2026-04"
+    with app.app_context():
+        from app.models import fetch_or_create_monthly_review, get_connection
+
+        review = fetch_or_create_monthly_review(month_key, uid)
+        raw = '{"__shelly_monthly_review_notes_v":1,"notes":{"x":1},"checked":"nope"}'
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE monthly_reviews SET notes = ? WHERE id = ? AND user_id = ?",
+                (raw, review["id"], uid),
+            )
+            conn.commit()
+
+    resp = client.get(f"/monthly-review/?month={month_key}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "__shelly_monthly_review_notes_v" not in html
+
+
+def test_structured_notes_are_not_rendered_as_raw_json(app, client, make_user):
+    uid, username, password = make_user(username="mr-no-leak", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = "2026-04"
+    with app.app_context():
+        from app.models import fetch_or_create_monthly_review, get_connection
+
+        review = fetch_or_create_monthly_review(month_key, uid)
+        encoded = encode_monthly_review_notes("Hello", {"goals"})
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE monthly_reviews SET notes = ? WHERE id = ? AND user_id = ?",
+                (encoded, review["id"], uid),
+            )
+            conn.commit()
+
+    resp = client.get(f"/monthly-review/?month={month_key}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "__shelly_monthly_review_notes_v" not in html
+    assert "Hello" in html
+
+
+def test_invalid_json_like_notes_do_not_crash_and_show_as_text(app, client, make_user):
+    uid, username, password = make_user(username="mr-invalid-json", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = "2026-04"
+    with app.app_context():
+        from app.models import fetch_or_create_monthly_review, get_connection
+
+        review = fetch_or_create_monthly_review(month_key, uid)
+        raw = "{not json}"
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE monthly_reviews SET notes = ? WHERE id = ? AND user_id = ?",
+                (raw, review["id"], uid),
+            )
+            conn.commit()
+
+    resp = client.get(f"/monthly-review/?month={month_key}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert raw in html
+
+
+def test_corrupted_internal_json_like_notes_do_not_leak_marker(app, client, make_user):
+    uid, username, password = make_user(username="mr-corrupt-internal", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = "2026-04"
+    with app.app_context():
+        from app.models import fetch_or_create_monthly_review, get_connection
+
+        review = fetch_or_create_monthly_review(month_key, uid)
+        raw = '{"__shelly_monthly_review_notes_v":1,"notes":"x"'
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE monthly_reviews SET notes = ? WHERE id = ? AND user_id = ?",
+                (raw, review["id"], uid),
+            )
+            conn.commit()
+
+    resp = client.get(f"/monthly-review/?month={month_key}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "__shelly_monthly_review_notes_v" not in html
