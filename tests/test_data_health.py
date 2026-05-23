@@ -248,8 +248,8 @@ def test_settings_still_mentions_backup_restore(app, client, make_user):
     resp = client.get("/settings/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-    assert "Download a JSON backup" in html
-    assert "Check a backup file" in html
+    assert "Download JSON export" in html
+    assert "Validate an export file" in html
 
 
 def test_overview_data_health_quiet_when_no_warnings(app, client, make_user):

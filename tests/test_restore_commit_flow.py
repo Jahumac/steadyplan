@@ -52,7 +52,7 @@ def test_invalid_backup_does_not_show_restore_action(app, client, make_user):
         follow_redirects=True,
     )
     body = resp.data.decode("utf-8")
-    assert "This backup cannot be restored yet. No data has been changed." in body
+    assert "This export cannot be restored yet. No data has been changed." in body
     assert "/settings/restore/commit" not in body
 
 
@@ -100,7 +100,7 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
         follow_redirects=True,
     )
     body_validate = resp_validate.data.decode("utf-8")
-    assert "This backup looks valid. No data has been changed." in body_validate
+    assert "This export looks valid. No data has been changed." in body_validate
     assert "Type RESTORE" in body_validate
     token = _extract_restore_token(body_validate)
 
