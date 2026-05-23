@@ -420,6 +420,7 @@ def _run_migrations(conn):
                 retirement_goal_value REAL DEFAULT 1000000,
                 isa_allowance REAL DEFAULT 20000,
                 lisa_allowance REAL DEFAULT 4000,
+                dividend_allowance REAL DEFAULT 500,
                 target_dev_pct REAL DEFAULT 0.90,
                 target_em_pct REAL DEFAULT 0.10,
                 emergency_fund_target REAL DEFAULT 3000,
@@ -435,8 +436,8 @@ def _run_migrations(conn):
                 INSERT OR IGNORE INTO assumptions_new
                     (user_id, annual_growth_rate, retirement_age, current_age,
                      retirement_goal_value, isa_allowance, lisa_allowance,
-                     target_dev_pct, target_em_pct, emergency_fund_target,
-                     dashboard_name, updated_at)
+                     dividend_allowance, target_dev_pct, target_em_pct,
+                     emergency_fund_target, dashboard_name, updated_at)
                 SELECT
                     1,
                     COALESCE(annual_growth_rate, 0.07),
@@ -445,6 +446,7 @@ def _run_migrations(conn):
                     COALESCE(retirement_goal_value, 1000000),
                     COALESCE(isa_allowance, 20000),
                     COALESCE(lisa_allowance, 4000),
+                    COALESCE(dividend_allowance, 500),
                     COALESCE(target_dev_pct, 0.90),
                     COALESCE(target_em_pct, 0.10),
                     COALESCE(emergency_fund_target, 3000),

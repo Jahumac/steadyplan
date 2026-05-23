@@ -51,6 +51,7 @@ from app.models import (
     fetch_daily_snapshots,
     fetch_tax_year_contributions,
 )
+from app.services.data_health import build_data_health_summary
 
 overview_bp = Blueprint("overview", __name__)
 
@@ -575,6 +576,8 @@ def overview():
         uid, daily_labels, accounts, assumptions
     )
 
+    data_health_summary = build_data_health_summary(uid)
+
     # Render the response and ensure it's not cached by the browser
     resp = make_response(render_template(
         "overview.html",
@@ -602,6 +605,7 @@ def overview():
         allocation_values=allocation_values,
         active_page="overview",
         current_month_num=now.month,
+        data_health_summary=data_health_summary,
     ))
     resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     resp.headers["Pragma"] = "no-cache"

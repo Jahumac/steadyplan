@@ -1193,13 +1193,74 @@ button.button-danger:focus {
   gap: 0.75rem;
   flex-wrap: wrap;
   margin-top: 0.25rem;
-}
-
 .holding-update-field {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   min-width: 0;
+}
+
+/* ── Data Health Summary ──────────────────────────────────────────────────── */
+.data-health-summary {
+  border-left: 4px solid var(--accent);
+}
+
+.data-health-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.data-health-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.data-health-status-icon {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 0.4rem;
+  flex-shrink: 0;
+}
+
+.data-health-item-good .data-health-status-icon {
+  background-color: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+.data-health-item-warning .data-health-status-icon {
+  background-color: var(--error);
+  box-shadow: 0 0 8px var(--error);
+}
+
+.data-health-item-info .data-health-status-icon {
+  background-color: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.data-health-item strong {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.15rem;
+}
+
+.link-accent {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  margin-left: 0.25rem;
+}
+
+.link-accent:hover {
+  text-decoration: underline;
 }
 
 .holding-update-field span {

@@ -105,6 +105,32 @@
 </section>
 {% endfor %}
 
+{# ── Data Health Summary ──────────────────────────────────────────────────── #}
+{% if data_health_summary %}
+<section class="card data-health-summary mb-1">
+  <div class="flex flex-center flex-wrap gap-075">
+    <img src="{{ url_for('static', filename='icons/shelly/Health.png') }}" alt="" class="shelly-inline-icon shelly-icon-sm">
+    <div style="flex:1; min-width:200px;">
+      <p class="eyebrow m-0">Data Health</p>
+      <h3 class="m-0">{{ data_health_summary.summary_message }}</h3>
+    </div>
+  </div>
+  <ul class="data-health-items mt-075">
+    {% for item in data_health_summary.health_items %}
+    <li class="data-health-item data-health-item-{{ item.status }}">
+      <span class="data-health-status-icon"></span>
+      <div>
+        <strong>{{ item.title }}</strong>
+        <p class="helper-text m-0">{{ item.explanation }}
+          {% if item.link %}<a href="{{ item.link }}" class="link-accent">Learn more</a>{% endif %}
+        </p>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
 {% if next_action and steps_done >= 4 %}
 <section class="card next-action-card mb-1">
   <div class="flex flex-center flex-wrap gap-075">
