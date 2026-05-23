@@ -41,12 +41,7 @@ from app.models import (
     upsert_single_month_contribution_override,
 )
 from app.utils import optional_float, optional_int, valid_month_key
-from app.services.monthly_review_checklist import (
-    MONTHLY_REVIEW_CHECKLIST_ITEMS,
-    checked_count as _checked_count,
-    encode_monthly_review_notes,
-    parse_monthly_review_notes,
-)
+from app.services.monthly_review_checklist import parse_monthly_review_notes
 from app.services.csv_parsers import (
     count_csv_rows,
     detect_csv_headers,
@@ -150,13 +145,11 @@ def monthly_review():
                 balance = effective_account_value(acc, holdings_totals)
                 upsert_monthly_snapshot(acc["id"], month_key, balance)
             update_monthly_review(review["id"], "complete", (review.get("notes") or ""), uid)
-        elif form_name == "save_review_checklist":
+        elif form_name == "save_review_notes":
             review = fetch_or_create_monthly_review(month_key, uid)
-            notes_text = (request.form.get("monthly_review_notes") or "").strip()
-            checked_keys = set(request.form.getlist("monthly_review_check"))
-            encoded = encode_monthly_review_notes(notes_text, checked_keys)
-            update_monthly_review_notes(review["id"], encoded, uid)
-            flash("Monthly review saved.", "success")
+            notes_text = (request.form.get("notes") or "").strip()
+            update_monthly_review_notes(review["id"], notes_text, uid)
+            flash("Note saved.", "success")
         elif form_name == "reopen":
             review = fetch_monthly_review(month_key, uid)
             if review:
@@ -173,7 +166,6 @@ def monthly_review():
     items = fetch_monthly_review_items(review["id"])
     parsed_notes = parse_monthly_review_notes(review.get("notes"))
     monthly_review_notes = parsed_notes["notes"]
-    monthly_review_checked = parsed_notes["checked"]
 
     def _is_pb(item):
         return (item["valuation_mode"] == "premium_bonds"
@@ -327,10 +319,6 @@ def monthly_review():
         total_personal=total_personal,
         total_into_pot=total_into_pot,
         total_uplift=total_uplift,
-        monthly_review_checklist_items=MONTHLY_REVIEW_CHECKLIST_ITEMS,
-        monthly_review_checked=monthly_review_checked,
-        monthly_review_checked_count=_checked_count(monthly_review_checked),
-        monthly_review_total_checks=len(MONTHLY_REVIEW_CHECKLIST_ITEMS),
         monthly_review_notes=monthly_review_notes,
         active_page="monthly_review",
     )

@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
-{% block title %}Monthly Update · Shelly{% endblock %}
+{% block title %}Monthly review · Shelly{% endblock %}
 {% block content %}
 
 <div class="monthly-review-container" data-month-key="{{ month_key }}" style="display:none"></div>
 
 <nav class="subnav subnav-budget">
   <a href="/budget/">Budget Plan</a>
-  <a href="/monthly-review/" class="subnav-active">Monthly Update</a>
+  <a href="/monthly-review/" class="subnav-active">Monthly review</a>
   <a href="/allowance/">Allowances</a>
   <a href="/budget/trend/">Trend</a>
   <a href="/budget/debts/">Debts</a>
@@ -25,9 +25,9 @@
 <section class="card highlight mb-1 month-accent-{{ current_month_num }} review-hero-card">
   <div class="hero-top">
     <div>
-      <p class="eyebrow">Monthly Update</p>
+      <p class="eyebrow">Monthly review</p>
       <h2 class="hero-value">{{ month_label }}</h2>
-      <p class="hero-subtitle">Shelly's monthly check-in — update your numbers and lock in the snapshot</p>
+      <p class="hero-subtitle">Update anything that changed this month, add a note if useful, then mark the month reviewed.</p>
     </div>
     <div class="hero-actions-col">
       {% if review.status == 'complete' %}
@@ -47,18 +47,18 @@
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="form_name" value="mark_complete">
           <input type="hidden" name="month" value="{{ month_key }}">
-          <button type="button" class="badge badge-primary-action" id="mark-complete-btn">Mark as Complete</button>
+          <button type="button" class="badge badge-primary-action" id="mark-complete-btn">Mark month reviewed</button>
         </form>
 
         <dialog id="confirm-complete-dialog" class="confirm-dialog">
           <div class="confirm-dialog-content">
-            <h3>Lock in {{ month_label }}?</h3>
-            <p>Shelly will snapshot your net worth for this month. You can still tweak values afterwards — Shelly's thorough, not inflexible.</p>
+            <h3>Mark {{ month_label }} reviewed?</h3>
+            <p>Shelly will snapshot your net worth for this month. You can still tweak values afterwards if needed.</p>
             {% if unupdated_manual_names %}
             <p class="helper-text" style="color: var(--accent-3);">⚠ {{ unupdated_manual_names | length }} manual account{{ 's' if unupdated_manual_names | length != 1 else '' }} haven't had their balance updated this month ({{ unupdated_manual_names | join(', ') }}).</p>
             {% endif %}
             <div class="confirm-dialog-actions">
-              <button type="button" class="badge badge-primary-action" id="confirm-complete-yes">Yes, mark complete</button>
+              <button type="button" class="badge badge-primary-action" id="confirm-complete-yes">Yes, mark reviewed</button>
               <button type="button" class="badge" id="confirm-complete-no">Cancel</button>
             </div>
           </div>
@@ -84,7 +84,7 @@
       <strong>{{ (holdings_items | length) + (manual_items | length) + (premium_bonds_items | length) }}</strong>
     </div>
     <div class="hero-strip-stat">
-      <span>Expected contributions</span>
+      <span>Monthly in</span>
       <strong>£{{ '{:,.0f}'.format(total_personal) }}</strong>
     </div>
   </div>
@@ -106,114 +106,38 @@
 <section class="card mb-1">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Monthly review</p>
-      <h2>Quick checklist</h2>
-      <p class="helper-text m-0">A calm check-in to keep your data fresh. Tick what you've reviewed, add a note if needed.</p>
+      <p class="eyebrow">Notes</p>
+      <h2>Monthly note</h2>
+      <p class="helper-text m-0">Optional — a short reminder for your future self.</p>
     </div>
-    <div class="badge-row">
-      <span class="badge badge-meta">{{ monthly_review_checked_count }}/{{ monthly_review_total_checks }} checked</span>
-      {% if review.status == 'complete' %}
-        <span class="badge badge-complete">✓ Completed</span>
-      {% endif %}
-    </div>
+    {% if review.status == 'complete' %}
+      <span class="badge badge-meta">Locked</span>
+    {% endif %}
   </div>
-
   <form method="post" class="form-reset">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <input type="hidden" name="form_name" value="save_review_checklist">
+    <input type="hidden" name="form_name" value="save_review_notes">
     <input type="hidden" name="month" value="{{ month_key }}">
-
-    <div class="simple-list">
-      {% for item in monthly_review_checklist_items %}
-        <div class="simple-list-item">
-          <label class="flex flex-center gap-075" style="cursor:pointer;">
-            <input type="checkbox"
-                   name="monthly_review_check"
-                   value="{{ item.key }}"
-                   {% if item.key in monthly_review_checked %}checked{% endif %}
-                   {% if review.status == 'complete' %}disabled{% endif %}>
-            <span>{{ item.label }}</span>
-          </label>
-        </div>
-      {% endfor %}
-    </div>
-
-    <div class="mt-075">
-      <label for="monthly_review_notes" class="helper-text">Notes (optional)</label>
-      <textarea id="monthly_review_notes"
-                name="monthly_review_notes"
-                class="input-standard input-full"
-                rows="3"
-                placeholder="Anything worth remembering from this month?"
-                {% if review.status == 'complete' %}disabled{% endif %}>{{ monthly_review_notes }}</textarea>
-    </div>
-
-    <div class="flex flex-between flex-wrap gap-05 mt-075">
-      <button type="submit" class="badge badge-meta" {% if review.status == 'complete' %}disabled{% endif %}>Save</button>
-      {% if review.status == 'complete' %}
-        <p class="helper-text m-0">This month is locked. Reopen it above if you need to edit.</p>
-      {% else %}
-        <p class="helper-text m-0">Saving the checklist does not change projections — it just helps you keep track.</p>
-      {% endif %}
+    <textarea name="notes"
+              class="input-standard input-full"
+              rows="3"
+              placeholder="Anything worth remembering from this month?"
+              {% if review.status == 'complete' %}disabled{% endif %}>{{ monthly_review_notes }}</textarea>
+    <div class="badge-row mt-075">
+      <button type="submit" class="badge badge-meta" {% if review.status == 'complete' %}disabled{% endif %}>Save note</button>
+      <a href="/accounts/" class="badge badge-meta">Update account balances</a>
+      <a href="/goals/" class="badge badge-meta">Review goals</a>
+      <a href="/budget/debts/" class="badge badge-meta">Review debts</a>
+      <a href="/settings/?mode=edit" class="badge badge-meta">Review assumptions</a>
     </div>
   </form>
 </section>
 
-{% if review.status != 'complete' %}
 <section class="card mb-1">
   <div class="section-header">
     <div>
-      <p class="eyebrow">How this works</p>
-      <h2>Monthly Update Guide</h2>
-    </div>
-    <button type="button" class="badge badge-meta" id="guide-toggle">{{ 'Hide' if not assumptions or not assumptions.salary_day else 'Show' }}</button>
-  </div>
-  <div id="guide-panel" {% if assumptions and assumptions.salary_day %}class="hidden"{% endif %}>
-    <div class="guide-steps">
-      <div class="guide-step">
-        <div class="guide-step-num">1</div>
-        <div>
-          <strong>Wait for investments to settle</strong>
-          <p>After your contributions go in{% if assumptions and assumptions.salary_day %} (around the {{ assumptions.salary_day }}{{ 'st' if assumptions.salary_day in [1,21,31] else ('nd' if assumptions.salary_day in [2,22] else ('rd' if assumptions.salary_day in [3,23] else 'th')) }}){% endif %}, allow a couple of business days for settlement.
-          {% if review_ready_date %} <strong>This month you're good to update from {{ review_ready_date.strftime('%-d %B') }}.</strong>{% endif %}</p>
-        </div>
-      </div>
-      <div class="guide-step">
-        <div class="guide-step-num">2</div>
-        <div>
-          <strong>Update your holdings</strong>
-          <p>For each holdings-based account, update the <em>units</em> and <em>price</em> for every fund or ETF. You can type them in directly or use the ↻ button to fetch live prices.</p>
-        </div>
-      </div>
-      <div class="guide-step">
-        <div class="guide-step-num">3</div>
-        <div>
-          <strong>Update manual accounts</strong>
-          <p>For savings accounts, workplace pensions, or anything without individual holdings — just enter the total balance shown by your provider.</p>
-        </div>
-      </div>
-      <div class="guide-step">
-        <div class="guide-step-num">4</div>
-        <div>
-          <strong>Mark as complete</strong>
-          <p>Once everything's up to date, hit "Mark as Complete" and Shelly will snapshot your net worth for the month. Any one-off top-ups or bonuses? Log them on the <a href="/allowance/" class="link-accent">Allowances page</a> so your tax-year totals stay accurate.</p>
-        </div>
-      </div>
-    </div>
-    {% if not assumptions or not assumptions.salary_day %}
-    <p class="helper-text mt-075">
-      <strong>Tip:</strong> Tell Shelly your investment day in <a href="/settings/?mode=edit" class="link-accent">Settings</a> and he'll figure out when your investments have settled.
-    </p>
-    {% endif %}
-  </div>
-</section>
-{% endif %}
-
-<section class="card mb-1">
-  <div class="section-header">
-    <div>
-      <p class="eyebrow">Checklist</p>
-      <h2>Expected Contributions</h2>
+      <p class="eyebrow">Optional</p>
+      <h2>Contributions check</h2>
     </div>
   </div>
   {% if contribution_items %}

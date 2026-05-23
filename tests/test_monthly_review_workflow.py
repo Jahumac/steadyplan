@@ -33,18 +33,39 @@ def test_monthly_review_get_is_idempotent_for_user_month(app, client, make_user)
     assert int(c) == 1
 
 
-def test_monthly_review_checklist_and_notes_persist(app, client, make_user):
+def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_user):
     uid, username, password = make_user(username="mr-save", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
     month_key = "2026-04"
+    resp = client.get(f"/monthly-review/?month={month_key}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Monthly review" in html
+    assert "Update anything that changed this month" in html
+    assert "Quick checklist" not in html
+    assert "Monthly Update Guide" not in html
+    assert "How this works" not in html
+    assert "Backup/export checked" not in html
+    assert "Expected Contributions" not in html
+    assert "Update account balances" in html
+    assert 'href="/accounts/' in html
+    assert 'href="/goals/' in html
+    assert 'href="/budget/debts/' in html
+    assert 'href="/settings/?mode=edit"' in html
+
+def test_monthly_review_notes_persist(app, client, make_user):
+    uid, username, password = make_user(username="mr-save-note", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = "2026-04"
+    note = "Quick note for the month"
     resp = client.post(
         "/monthly-review/",
         data={
-            "form_name": "save_review_checklist",
+            "form_name": "save_review_notes",
             "month": month_key,
-            "monthly_review_check": ["goals", "budget"],
-            "monthly_review_notes": "Quick note for the month",
+            "notes": note,
         },
         follow_redirects=True,
     )
@@ -55,11 +76,7 @@ def test_monthly_review_checklist_and_notes_persist(app, client, make_user):
 
         review = fetch_monthly_review(month_key, uid)
         assert review is not None
-
-    parsed = parse_monthly_review_notes(review.get("notes"))
-    assert parsed["notes"] == "Quick note for the month"
-    assert "goals" in parsed["checked"]
-    assert "budget" in parsed["checked"]
+        assert review["notes"] == note
 
 
 def test_mark_complete_does_not_wipe_saved_monthly_review_notes(app, client, make_user):
@@ -71,10 +88,9 @@ def test_mark_complete_does_not_wipe_saved_monthly_review_notes(app, client, mak
     resp = client.post(
         "/monthly-review/",
         data={
-            "form_name": "save_review_checklist",
+            "form_name": "save_review_notes",
             "month": month_key,
-            "monthly_review_check": ["assumptions"],
-            "monthly_review_notes": "Keep an eye on assumptions",
+            "notes": "Keep an eye on assumptions",
         },
         follow_redirects=True,
     )
@@ -99,7 +115,7 @@ def test_mark_complete_does_not_wipe_saved_monthly_review_notes(app, client, mak
 
     parsed = parse_monthly_review_notes(review.get("notes"))
     assert parsed["notes"] == "Keep an eye on assumptions"
-    assert "assumptions" in parsed["checked"]
+    assert parsed["checked"] == set()
 
 
 def test_update_monthly_review_notes_enforces_ownership(app, make_user):
@@ -129,9 +145,9 @@ def test_plain_notes_saved_without_checks_stay_plain_text(app, client, make_user
     resp = client.post(
         "/monthly-review/",
         data={
-            "form_name": "save_review_checklist",
+            "form_name": "save_review_notes",
             "month": month_key,
-            "monthly_review_notes": note,
+            "notes": note,
         },
         follow_redirects=True,
     )
