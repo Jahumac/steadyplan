@@ -15,7 +15,7 @@
       <h2 class="hero-value">{{ platform_label }} Import</h2>
       <p class="hero-subtitle">Shelly matched your CSV against existing holdings. Review what's below, tick the ones you want, and confirm.</p>
     </div>
-    <a href="/monthly-review/" class="badge">Cancel</a>
+    <a href="{% if month_key %}/monthly-review/?month={{ month_key }}{% else %}/monthly-review/{% endif %}" class="badge">Cancel</a>
   </div>
   <div class="hero-strip">
     {% call hero_stat('Matched') %}<strong>{{ matched | length }}</strong>{% endcall %}
@@ -35,6 +35,7 @@
 {# ── Matched holdings ── #}
 <form method="post" action="/monthly-review/confirm-import">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if month_key %}<input type="hidden" name="month" value="{{ month_key }}">{% endif %}
 
   <section class="card mb-1">
     <div class="section-header">
@@ -120,7 +121,7 @@
 
       <div class="import-confirm-bar">
         <button type="submit" class="badge badge-primary-action">Apply Selected Updates</button>
-        <a href="/monthly-review/" class="badge">Cancel</a>
+        <a href="{% if month_key %}/monthly-review/?month={{ month_key }}{% else %}/monthly-review/{% endif %}" class="badge">Cancel</a>
       </div>
 
     {% else %}

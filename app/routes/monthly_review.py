@@ -455,33 +455,39 @@ def import_csv():
     """Parse an uploaded CSV and show a preview of changes."""
     platform = request.form.get("platform", "").strip()
     uploaded_file = request.files.get("csv_file")
+    selected_month_key = valid_month_key(request.form.get("month"))
+    review_url = (
+        url_for("monthly_review.monthly_review", month=selected_month_key)
+        if selected_month_key
+        else url_for("monthly_review.monthly_review")
+    )
 
     if not uploaded_file or uploaded_file.filename == "":
         flash("Please choose a CSV file to upload.", "error")
-        return redirect(url_for("monthly_review.monthly_review"))
+        return redirect(review_url)
 
     if platform not in PARSERS:
         flash("Please select a supported platform from the dropdown.", "error")
-        return redirect(url_for("monthly_review.monthly_review"))
+        return redirect(review_url)
 
     file_bytes = uploaded_file.read()
     if not file_bytes:
         flash("The uploaded file is empty.", "error")
-        return redirect(url_for("monthly_review.monthly_review"))
+        return redirect(review_url)
 
     try:
         parsed = PARSERS[platform](file_bytes)
     except ValueError as exc:
         flash(f"Could not parse CSV: {exc}", "error")
-        return redirect(url_for("monthly_review.monthly_review"))
+        return redirect(review_url)
     except Exception as e:
         current_app.logger.warning("monthly-review CSV import: parser %s failed: %s", platform, e)
         flash("An unexpected error occurred while reading the CSV. Check the file format.", "error")
-        return redirect(url_for("monthly_review.monthly_review"))
+        return redirect(review_url)
 
     if not parsed:
         flash("No holdings found in the CSV. Check you selected the right platform and file.", "error")
-        return redirect(url_for("monthly_review.monthly_review"))
+        return redirect(review_url)
 
     # Surface per-row sanity warnings (parsers themselves raise only on
     # totally-wrong formats; this catches subtler issues like 0-unit rows).
@@ -497,6 +503,7 @@ def import_csv():
     # Store parsed data in session so confirm step can re-validate
     session["csv_import"] = {
         "platform": platform,
+        "month_key": selected_month_key,
         "matched": [
             {
                 "holding_id": m["holding"]["id"],
@@ -515,6 +522,7 @@ def import_csv():
         csv_only=csv_only,
         db_only=db_only,
         csv_headers=csv_headers,
+        month_key=selected_month_key,
         active_page="monthly_review",
     )
 
@@ -523,15 +531,21 @@ def import_csv():
 @login_required
 def confirm_import():
     """Apply the confirmed CSV import changes."""
+    selected_month_key = valid_month_key(request.form.get("month"))
+
     # Collect selected holding_ids from form checkboxes
     selected_ids = set(request.form.getlist("apply_holding_id"))
 
     if not selected_ids:
         flash("No holdings were selected — nothing was updated.", "info")
+        if selected_month_key:
+            return redirect(url_for("monthly_review.monthly_review", month=selected_month_key))
         return redirect(url_for("monthly_review.monthly_review"))
 
     # Pull the saved import data from session for cross-validation
     import_data = session.get("csv_import", {})
+    session_month_key = valid_month_key(import_data.get("month_key"))
+    effective_month_key = selected_month_key or session_month_key
     allowed = {
         str(row["holding_id"]): row
         for row in import_data.get("matched", [])
@@ -580,7 +594,7 @@ def confirm_import():
     session.pop("csv_import", None)
 
     if updated and touched_account_ids:
-        month_key = default_month_key()
+        month_key = effective_month_key or default_month_key()
         review = fetch_or_create_monthly_review(month_key, current_user.id)
         ensure_monthly_review_items(review["id"], current_user.id)
         for aid in touched_account_ids:
@@ -591,4 +605,6 @@ def confirm_import():
     if skipped:
         flash(f"{skipped} holding{'s' if skipped != 1 else ''} could not be applied.", "info")
 
+    if effective_month_key:
+        return redirect(url_for("monthly_review.monthly_review", month=effective_month_key))
     return redirect(url_for("monthly_review.monthly_review"))

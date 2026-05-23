@@ -434,6 +434,7 @@
   <div id="csv-import-panel" class="hidden">
     <form method="post" action="/monthly-review/import-csv" enctype="multipart/form-data" class="csv-upload-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="month" value="{{ month_key }}">
       <label class="csv-upload-field">
         <span>Platform</span>
         <select name="platform" required>
