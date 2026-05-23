@@ -49,7 +49,7 @@ def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_u
     assert "Backup/export checked" not in html
     assert "Expected Contributions" not in html
     assert "Expected contributions" in html
-    assert "Confirm contributions that happened this month" in html
+    assert "Confirm expected contributions that happened this month" in html
     assert "To confirm" in html
     assert "<p class=\"eyebrow\">Optional</p>" not in html
     assert "Update account balances" in html

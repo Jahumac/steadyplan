@@ -138,7 +138,7 @@
     <div>
       <p class="eyebrow">To confirm</p>
       <h2>Expected contributions</h2>
-      <p class="helper-text m-0">Confirm contributions that happened this month so Shelly can treat them as real for tracking. Skip anything that did not happen.</p>
+      <p class="helper-text m-0">Confirm expected contributions that happened this month. Skip anything that did not happen.</p>
     </div>
   </div>
   {% if contribution_items %}
@@ -170,7 +170,7 @@
               {% if is_skipped %}
                 <p class="helper-text m-0">Skipped this month</p>
               {% elif item.contribution_confirmed %}
-                <p class="helper-text m-0">Recorded</p>
+                <p class="helper-text m-0">Confirmed</p>
               {% else %}
                 <p class="helper-text m-0">Not confirmed</p>
               {% endif %}
