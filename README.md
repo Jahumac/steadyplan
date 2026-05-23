@@ -37,7 +37,11 @@ Import holdings directly from your broker's CSV export. Supported platforms:
 Don't use any of these? Download the [CSV template](app/static/shelly-holdings-template.csv) and fill in your holdings manually.
 
 ### Monthly Review
-A lightweight monthly check-in to keep your numbers fresh: update account balances, review expected contributions (confirm/skip), add an optional note, and mark the month reviewed. Marking a month reviewed saves snapshots so you can track how your portfolio changes over time.
+A lightweight monthly check-in to keep your numbers fresh: update account balances, review expected contributions (confirm/skip), add an optional note, and mark the month reviewed.
+
+Draft Monthly Review data supports editing, but **only completed Monthly Reviews are treated as financial truth** for allowance and performance calculations.
+
+Marking a month reviewed saves snapshots so you can track how your portfolio changes over time. Holdings-based accounts snapshot from holdings value; manual/Premium Bonds accounts snapshot only if their balance was updated in that review (to avoid silently recording stale values as truth).
 
 ### Data Health
 A small read-only panel on **Overview** highlights stale or missing inputs (e.g. no accounts, old snapshots, missing assumptions) to help you trust the numbers without changing any projections.
@@ -55,7 +59,7 @@ Year-by-year and month-by-month projections based on current balances, monthly c
 Accounts support detailed fee modelling: platform fee (% with optional £ cap), flat annual platform fee (£), and fund fee / OCF (%). Shelly combines these into an effective annual fee, subtracts it from your growth rate, and shows the lifetime cost of fees in both the app and Excel exports. All fee fields are optional — tucked behind an "Advanced: Fees" toggle so they don't clutter the setup for casual users. Projections show "with fees" vs "without fees" so you can see exactly what your broker and funds cost you over time.
 
 ### Performance Tracking
-Track your actual portfolio returns over time using the modified Dietz method. Compare actual performance against a projected "on-plan" growth line.
+Track your actual portfolio returns over time using the modified Dietz method. Compare actual performance against a projected "on-plan" growth line. Contribution cash flow uses the effective “into pot” amount (tax relief, LISA bonus, employer contributions, minus any contribution fee) and only treats completed Monthly Reviews as confirmed truth.
 
 ### Tax Year Tracking
 ISA and Lifetime ISA allowance progress bars, tax year countdown, and automatic tax year labelling (April 6 boundary).

@@ -13,6 +13,14 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Projection copy frames projections as scenario estimates.
 - Monthly Review contribution copy uses “Confirmed” (does not imply a financial transaction was recorded).
+- Contribution truth hardening:
+  - Draft Monthly Reviews no longer affect allowance usage or performance cash-flow calculations.
+  - Completed Monthly Reviews are authoritative; completed review contributions count only when confirmed, or when an explicit skip override exists (override_amount = 0).
+  - Pension allowance usage now respects overrides and completed Monthly Review contributions (and counts the effective “into pot” amount).
+  - Performance contribution cash flow now uses effective “into pot” (tax relief / LISA bonus / employer match, net of any contribution fee).
+  - Monthly Review completion avoids writing fresh snapshots for manual/Premium Bonds accounts unless their balance was updated in that review.
+  - CSV holdings import marks touched accounts as holdings_updated for Monthly Review state.
+  - Allowance POST routes reject wrong account types (ISA/pension/dividend).
 
 ## [1.8.0] - 2026-04-20
 

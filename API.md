@@ -129,6 +129,10 @@ Log a dividend receipt.
 ### `POST /monthly-review/<YYYY-MM>/complete`
 Mark a month's review as complete. Takes a snapshot of every account's
 effective current value (same as the web UI's "mark complete" button).
+
+Snapshot rules on completion:
+- Holdings-based accounts: always snapshot from effective holdings value.
+- Manual/Premium Bonds accounts: snapshot only if their balance was updated in that review (prevents silently recording stale balances as fresh historical truth).
 ```json
 { "notes": "all good" }    ← notes optional
 ```

@@ -104,6 +104,22 @@ Every public symbol is re-exported from `__init__.py`. **Add a new function?** P
 - **CSRF**: enabled by default. The `/api/v1/*` blueprint is exempt because it uses Bearer-token auth instead of cookies.
 - **Migrations**: versioned via the `schema_migrations` table for one-shot data migrations; for additive column adds use the idempotent `try ALTER TABLE / except` pattern. Both already exist in `schema.py` — copy the nearest example.
 
+## Finance truth boundaries
+
+Monthly Review exists in two modes:
+
+- **Draft (not_started / in_progress):** supports editing and UI workflow only. Draft review rows must not change allowance usage or performance cash-flow truth.
+- **Complete:** authoritative truth for that month’s confirmed contributions and snapshot history.
+
+Contribution truth within a completed review is included only when the row is confirmed (`contribution_confirmed = 1`) or the month was explicitly skipped via a contribution override (`override_amount = 0`).
+
+Monthly snapshot truth on completion:
+
+- Holdings-based accounts snapshot from effective holdings value.
+- Manual/Premium Bonds accounts snapshot only if their balance was updated in that review (to avoid writing a fresh “truth” snapshot from a stale balance).
+
+Performance contribution cash flow uses the effective “into pot” amount (tax relief / government bonus / employer contributions, minus any contribution fee), not just the personal monthly payment.
+
 ## Known technical debt (tracked)
 - `fetch_assumptions(user_id)` can create a default assumptions row if missing (a DB write). Read-only reporting (e.g. Data Health) should avoid it and instead query assumptions read-only.
 - Monthly Review stores some state via `monthly_review_items` and notes encoding rather than a dedicated, cleanly typed domain model (intentionally migration-free MVP).
