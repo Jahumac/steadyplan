@@ -1,8 +1,9 @@
+import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
+from flask import Blueprint, Response, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.calculations import current_age_from_assumptions
@@ -72,6 +73,218 @@ def _safe_next_settings_url(raw):
     if parts.fragment:
         out += "#" + parts.fragment
     return out
+
+
+def _select_rows(conn, sql, params):
+    return [dict(r) for r in (conn.execute(sql, params).fetchall() or [])]
+
+
+def _user_export_payload(user_id):
+    exported_at = datetime.now(timezone.utc).isoformat()
+    with get_connection() as conn:
+        assumptions = fetch_assumptions(user_id)
+        accounts = _select_rows(
+            conn,
+            "SELECT * FROM accounts WHERE user_id = ? ORDER BY id ASC",
+            (user_id,),
+        )
+        account_ids = [int(a["id"]) for a in accounts]
+
+        holdings = _select_rows(
+            conn,
+            """
+            SELECT h.*, a.name AS account_name
+            FROM holdings h
+            JOIN accounts a ON a.id = h.account_id
+            WHERE a.user_id = ?
+            ORDER BY a.id ASC, h.id ASC
+            """,
+            (user_id,),
+        )
+        holding_catalogue = _select_rows(
+            conn,
+            "SELECT * FROM holding_catalogue WHERE user_id = ? ORDER BY id ASC",
+            (user_id,),
+        )
+        goals = _select_rows(
+            conn,
+            "SELECT * FROM goals WHERE user_id = ? ORDER BY id ASC",
+            (user_id,),
+        )
+        debts = _select_rows(
+            conn,
+            "SELECT * FROM debts WHERE user_id = ? ORDER BY id ASC",
+            (user_id,),
+        )
+
+        budget_sections = _select_rows(
+            conn,
+            "SELECT * FROM budget_sections WHERE user_id = ? ORDER BY sort_order ASC, id ASC",
+            (user_id,),
+        )
+        budget_items = _select_rows(
+            conn,
+            "SELECT * FROM budget_items WHERE user_id = ? ORDER BY section ASC, sort_order ASC, id ASC",
+            (user_id,),
+        )
+        budget_entries = _select_rows(
+            conn,
+            """
+            SELECT be.*
+            FROM budget_entries be
+            JOIN budget_items bi ON bi.id = be.budget_item_id
+            WHERE bi.user_id = ?
+            ORDER BY be.month_key ASC, be.budget_item_id ASC
+            """,
+            (user_id,),
+        )
+
+        monthly_snapshots = _select_rows(
+            conn,
+            """
+            SELECT ms.*
+            FROM monthly_snapshots ms
+            JOIN accounts a ON a.id = ms.account_id
+            WHERE a.user_id = ?
+            ORDER BY ms.month_key ASC, ms.account_id ASC
+            """,
+            (user_id,),
+        )
+        portfolio_daily_snapshots = _select_rows(
+            conn,
+            """
+            SELECT snapshot_date, total_value, created_at
+            FROM portfolio_daily_snapshots
+            WHERE user_id = ?
+            ORDER BY snapshot_date ASC
+            """,
+            (user_id,),
+        )
+        account_daily_snapshots = _select_rows(
+            conn,
+            """
+            SELECT account_id, snapshot_date, value
+            FROM account_daily_snapshots
+            WHERE user_id = ?
+            ORDER BY account_id ASC, snapshot_date ASC
+            """,
+            (user_id,),
+        )
+
+        monthly_reviews = _select_rows(
+            conn,
+            "SELECT * FROM monthly_reviews WHERE user_id = ? ORDER BY month_key ASC",
+            (user_id,),
+        )
+        monthly_review_items = _select_rows(
+            conn,
+            """
+            SELECT mri.*, mr.month_key
+            FROM monthly_review_items mri
+            JOIN monthly_reviews mr ON mr.id = mri.review_id
+            WHERE mr.user_id = ?
+            ORDER BY mr.month_key ASC, mri.account_id ASC, mri.id ASC
+            """,
+            (user_id,),
+        )
+
+        cash_flow_events = _select_rows(
+            conn,
+            """
+            SELECT *
+            FROM cash_flow_events
+            WHERE user_id = ?
+            ORDER BY event_date ASC, id ASC
+            """,
+            (user_id,),
+        )
+
+        isa_contributions = _select_rows(
+            conn,
+            "SELECT * FROM isa_contributions WHERE user_id = ? ORDER BY contribution_date ASC, id ASC",
+            (user_id,),
+        )
+        pension_contributions = _select_rows(
+            conn,
+            "SELECT * FROM pension_contributions WHERE user_id = ? ORDER BY contribution_date ASC, id ASC",
+            (user_id,),
+        )
+        dividend_records = _select_rows(
+            conn,
+            "SELECT * FROM dividend_records WHERE user_id = ? ORDER BY dividend_date ASC, id ASC",
+            (user_id,),
+        )
+        cgt_disposals = _select_rows(
+            conn,
+            "SELECT * FROM cgt_disposals WHERE user_id = ? ORDER BY disposal_date ASC, id ASC",
+            (user_id,),
+        )
+        pension_carry_forward = _select_rows(
+            conn,
+            "SELECT * FROM pension_carry_forward WHERE user_id = ? ORDER BY tax_year ASC, id ASC",
+            (user_id,),
+        )
+
+        contribution_overrides = []
+        premium_bonds_prizes = []
+        if account_ids:
+            placeholders = ", ".join("?" for _ in account_ids)
+            contribution_overrides = _select_rows(
+                conn,
+                f"""
+                SELECT * FROM contribution_overrides
+                WHERE account_id IN ({placeholders})
+                ORDER BY account_id ASC, from_month ASC, to_month ASC, id ASC
+                """,
+                tuple(account_ids),
+            )
+            premium_bonds_prizes = _select_rows(
+                conn,
+                f"""
+                SELECT p.*
+                FROM premium_bonds_prizes p
+                JOIN accounts a ON a.id = p.account_id
+                WHERE a.user_id = ?
+                ORDER BY p.month_key ASC, p.id ASC
+                """,
+                (user_id,),
+            )
+
+    return {
+        "meta": {
+            "exported_at": exported_at,
+            "export_schema_version": 1,
+            "app": "Shelly Finance",
+        },
+        "assumptions": dict(assumptions) if assumptions else {},
+        "accounts": accounts,
+        "holdings": holdings,
+        "holding_catalogue": holding_catalogue,
+        "goals": goals,
+        "debts": debts,
+        "budget": {
+            "sections": budget_sections,
+            "items": budget_items,
+            "entries": budget_entries,
+        },
+        "history": {
+            "monthly_snapshots": monthly_snapshots,
+            "portfolio_daily_snapshots": portfolio_daily_snapshots,
+            "account_daily_snapshots": account_daily_snapshots,
+            "monthly_reviews": monthly_reviews,
+            "monthly_review_items": monthly_review_items,
+        },
+        "planning": {
+            "contribution_overrides": contribution_overrides,
+            "cash_flow_events": cash_flow_events,
+            "isa_contributions": isa_contributions,
+            "pension_contributions": pension_contributions,
+            "dividend_records": dividend_records,
+            "cgt_disposals": cgt_disposals,
+            "pension_carry_forward": pension_carry_forward,
+            "premium_bonds_prizes": premium_bonds_prizes,
+        },
+    }
 
 
 @settings_bp.route("/", methods=["GET", "POST"])
@@ -262,6 +475,18 @@ def run_backup_now():
 
     next_url = _safe_next_settings_url(request.form.get("next"))
     return redirect(next_url or url_for("settings.settings", mode="diagnostics"))
+
+
+@settings_bp.route("/export.json", methods=["GET"])
+@login_required
+def export_user_data():
+    payload = _user_export_payload(current_user.id)
+    today = datetime.now(timezone.utc).date().isoformat()
+    filename = f"shelly-finance-export-{today}.json"
+    body = json.dumps(payload, indent=2, ensure_ascii=False)
+    resp = Response(body, mimetype="application/json")
+    resp.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return resp
 
 
 @settings_bp.route("/reset", methods=["POST"])
