@@ -161,9 +161,21 @@ def delete_user_route(user_id):
         return redirect(url_for("overview.overview"))
     if user_id == current_user.id:
         return redirect(url_for("auth.manage_users", error="You cannot delete your own account."))
+    target = get_user_by_id(user_id)
+    if target is None:
+        return redirect(url_for("auth.manage_users", error="User not found."))
+    confirm_username = request.form.get("confirm_username", "").strip()
+    if confirm_username != target.username:
+        return redirect(
+            url_for(
+                "auth.manage_users",
+                edit=user_id,
+                error="To delete this user, type their username exactly to confirm.",
+            )
+        )
     ok, err = delete_user(user_id)
     if not ok:
-        return redirect(url_for("auth.manage_users", error=err))
+        return redirect(url_for("auth.manage_users", edit=user_id, error=err))
     return redirect(url_for("auth.manage_users", success="User deleted."))
 
 
