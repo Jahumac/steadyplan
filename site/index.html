@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SteadyPlan · Self-hosted UK finance planning</title>
+  <meta name="description" content="SteadyPlan is a self-hosted UK finance cockpit for long-term planning. Track accounts, goals, budgets, ISA usage, and scenario estimates on your own server.">
+  <link rel="canonical" href="https://steadyplan.co.uk/">
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="./assets/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="site-header-inner">
+        <a class="brand" href="./index.html" aria-current="page">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <span>SteadyPlan</span>
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="./docs/index.html">Docs</a>
+          <a href="https://github.com/Jahumac/shelly-finance" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div>
+            <span class="badge">Canonical: steadyplan.co.uk</span>
+            <h1>Self-hosted UK finance planning, without handing over your data.</h1>
+            <p class="lead">
+              SteadyPlan is a self-hosted UK finance cockpit for long-term planning. Track accounts, investments, goals, budgets, ISA usage, pension planning, and scenario estimates from your own server.
+            </p>
+            <div class="cta-row">
+              <a class="btn btn-primary" href="./docs/index.html">View docs</a>
+              <a class="btn" href="https://github.com/Jahumac/shelly-finance" target="_blank" rel="noopener noreferrer">GitHub</a>
+              <a class="btn btn-ghost" href="./docs/index.html#demo" aria-disabled="true">Demo coming later</a>
+            </div>
+            <div class="hr"></div>
+            <p class="note small">
+              Secondary domain: <strong>steady-plan.co.uk</strong> (redirect/alias). The repository and container image are still published under the historical <code>shelly-finance</code> name during the transition.
+            </p>
+          </div>
+          <div class="card pad">
+            <p class="kicker">Screenshots</p>
+            <img class="screenshot" src="./assets/placeholder-screenshot.svg" alt="SteadyPlan screenshot placeholder">
+            <p class="muted small" style="margin:0.75rem 0 0 0;">
+              Real screenshots can be added later. This site is intentionally static and simple.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="grid-3">
+          <div class="card pad tile">
+            <h3>Self-hosted by design</h3>
+            <p>Run SteadyPlan on your own hardware. Safe default: home LAN or VPN-only.</p>
+          </div>
+          <div class="card pad tile">
+            <h3>Built for UK long-term planning</h3>
+            <p>UK-aware wrappers and tracking, with calm scenario estimates rather than promises.</p>
+          </div>
+          <div class="card pad tile">
+            <h3>Your data stays on your server</h3>
+            <p>Financial data is stored locally in a SQLite database. No cloud sync.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="split">
+          <div class="card pad">
+            <h2>Import, export, backup, restore</h2>
+            <p class="muted">
+              SteadyPlan supports broker CSV import, per-user JSON export/restore, and whole-instance SQLite backups.
+              The aim is clarity and control for cautious self-hosters.
+            </p>
+            <p class="muted">
+              Start with the docs:
+              <a href="./docs/install.html">Install</a>,
+              <a href="./docs/backups.html">Backups</a>,
+              <a href="./docs/reverse-proxy.html">Reverse proxy</a>,
+              <a href="./docs/privacy.html">Privacy</a>.
+            </p>
+          </div>
+          <div class="card pad">
+            <h2>Not financial advice</h2>
+            <p class="muted">
+              SteadyPlan is a tracking dashboard and scenario tool. It is not a trading app, bank, broker, or adviser.
+              Outputs are estimates based on your inputs.
+            </p>
+            <div class="hr"></div>
+            <h2>Runs well on Docker/Unraid</h2>
+            <p class="muted">
+              The common setup is Docker or Unraid with a host-mounted data directory. You control where data is stored and how it’s backed up.
+            </p>
+            <a class="btn" href="./docs/install.html">Install notes</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-row">
+        <div class="small">
+          <a href="https://github.com/Jahumac/shelly-finance" target="_blank" rel="noopener noreferrer">github.com/Jahumac/shelly-finance</a>
+          <span class="muted"> · SteadyPlan is open source and self-hosted.</span>
+        </div>
+        <div class="small muted">Not financial advice.</div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

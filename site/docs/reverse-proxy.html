@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SteadyPlan Docs · Reverse proxy</title>
+  <meta name="description" content="Reverse proxy guidance for SteadyPlan: LAN/VPN by default, HTTPS for public exposure, strong passwords, proxy auth, TRUST_PROXY_HEADERS.">
+  <link rel="canonical" href="https://steadyplan.co.uk/docs/reverse-proxy">
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="site-header-inner">
+        <a class="brand" href="../index.html">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <span>SteadyPlan</span>
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="./index.html">Docs</a>
+          <a href="https://github.com/Jahumac/shelly-finance" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <div class="card pad">
+        <p class="kicker"><a href="./index.html">Docs</a> · Reverse proxy</p>
+        <h1 style="margin:0 0 0.5rem 0;">Reverse proxy and public exposure</h1>
+        <p class="muted" style="margin:0;">
+          SteadyPlan contains sensitive personal financial data. Safest default is LAN/VPN-only. Public exposure is an admin choice and should be configured carefully.
+        </p>
+
+        <div class="hr"></div>
+        <h2>Recommended posture</h2>
+        <ul class="muted">
+          <li>Default: access SteadyPlan over home LAN or VPN only</li>
+          <li>If public: use HTTPS via a trusted reverse proxy or tunnel</li>
+          <li>Use strong passwords, and consider extra auth at the proxy/tunnel layer</li>
+        </ul>
+        <p class="note small">
+          This page is guidance, not an automated security audit.
+        </p>
+
+        <div class="hr"></div>
+        <h2>HTTPS options</h2>
+        <p class="muted">
+          Typical approaches include a reverse proxy with HTTPS (for example Nginx Proxy Manager) or a tunnel/VPN approach (for example Cloudflare Tunnel or Tailscale). Use the approach you already trust and maintain.
+        </p>
+
+        <div class="hr"></div>
+        <h2>Proxy headers</h2>
+        <p class="muted">
+          Only set <code>TRUST_PROXY_HEADERS=1</code> when SteadyPlan is behind a trusted reverse proxy that sets <code>X-Forwarded-For</code> and <code>X-Forwarded-Proto</code> correctly. Do not enable it if you access the container directly without a proxy.
+        </p>
+
+        <div class="hr"></div>
+        <h2>What this does not do</h2>
+        <p class="muted">
+          SteadyPlan does not attempt to detect your exposure status or configure your proxy for you. Treat public exposure like any other self-hosted web app: pick a secure pattern and configure it intentionally.
+        </p>
+
+        <div class="hr"></div>
+        <p class="muted small" style="margin:0;">
+          Next: <a href="./privacy.html">Privacy</a> · <a href="./backups.html">Backups</a> · <a href="./install.html">Install</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-row">
+        <div class="small">
+          <a href="https://github.com/Jahumac/shelly-finance" target="_blank" rel="noopener noreferrer">github.com/Jahumac/shelly-finance</a>
+          <span class="muted"> · SteadyPlan is open source and self-hosted.</span>
+        </div>
+        <div class="small muted">Not financial advice.</div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

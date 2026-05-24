@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SteadyPlan Docs · Privacy</title>
+  <meta name="description" content="Privacy notes for SteadyPlan: local SQLite database, no cloud sync, optional live price lookups, and keeping exports private.">
+  <link rel="canonical" href="https://steadyplan.co.uk/docs/privacy">
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="site-header-inner">
+        <a class="brand" href="../index.html">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <span>SteadyPlan</span>
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="./index.html">Docs</a>
+          <a href="https://github.com/Jahumac/shelly-finance" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <div class="card pad">
+        <p class="kicker"><a href="./index.html">Docs</a> · Privacy</p>
+        <h1 style="margin:0 0 0.5rem 0;">Privacy notes</h1>
+        <p class="muted" style="margin:0;">
+          SteadyPlan is self-hosted. Your data is stored on your server, and you decide how it is accessed and backed up.
+        </p>
+
+        <div class="hr"></div>
+        <h2>Local database</h2>
+        <p class="muted">
+          SteadyPlan stores financial data locally in a SQLite database under the app data directory. In Docker this is typically under <code>/app/data</code> inside the container, backed by a host-mounted volume.
+        </p>
+
+        <div class="hr"></div>
+        <h2>No cloud sync</h2>
+        <p class="muted">
+          SteadyPlan does not send account balances, budgets, goals, or history to a cloud service.
+        </p>
+
+        <div class="hr"></div>
+        <h2>Optional live price lookups</h2>
+        <p class="muted">
+          If you enable live price lookup, SteadyPlan may send ticker symbols/identifiers to external price sources. This is optional and depends on how you configure your instance.
+        </p>
+
+        <div class="hr"></div>
+        <h2>Exports contain sensitive data</h2>
+        <p class="muted">
+          Per-user JSON exports are portable and useful for backup/restore, but they contain financial data. Keep export files private and store them securely.
+        </p>
+
+        <div class="hr"></div>
+        <p class="muted small" style="margin:0;">
+          Next: <a href="./backups.html">Backups</a> · <a href="./reverse-proxy.html">Reverse proxy</a> · <a href="./install.html">Install</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-row">
+        <div class="small">
+          <a href="https://github.com/Jahumac/shelly-finance" target="_blank" rel="noopener noreferrer">github.com/Jahumac/shelly-finance</a>
+          <span class="muted"> · SteadyPlan is open source and self-hosted.</span>
+        </div>
+        <div class="small muted">Not financial advice.</div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

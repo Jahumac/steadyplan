@@ -1,0 +1,25 @@
+<svg width="1200" height="750" viewBox="0 0 1200 750" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SteadyPlan screenshot placeholder">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1200" y2="750" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2DD4BF" stop-opacity="0.28"/>
+      <stop offset="0.55" stop-color="#0B1220" stop-opacity="0.0"/>
+      <stop offset="1" stop-color="#38BDF8" stop-opacity="0.20"/>
+    </linearGradient>
+  </defs>
+  <rect x="18" y="18" width="1164" height="714" rx="22" fill="#0F172A" stroke="rgba(148,163,184,0.22)" stroke-width="2"/>
+  <rect x="18" y="18" width="1164" height="104" rx="22" fill="#111B2F"/>
+  <rect x="18" y="96" width="1164" height="26" fill="#111B2F"/>
+  <circle cx="62" cy="70" r="8" fill="#94A3B8" fill-opacity="0.35"/>
+  <circle cx="90" cy="70" r="8" fill="#94A3B8" fill-opacity="0.25"/>
+  <circle cx="118" cy="70" r="8" fill="#94A3B8" fill-opacity="0.18"/>
+  <rect x="156" y="56" width="240" height="28" rx="14" fill="rgba(148,163,184,0.12)" stroke="rgba(148,163,184,0.18)"/>
+  <rect x="56" y="170" width="520" height="92" rx="16" fill="rgba(17,27,47,0.85)" stroke="rgba(148,163,184,0.18)"/>
+  <rect x="624" y="170" width="520" height="92" rx="16" fill="rgba(17,27,47,0.85)" stroke="rgba(148,163,184,0.18)"/>
+  <rect x="56" y="290" width="1088" height="360" rx="18" fill="rgba(17,27,47,0.75)" stroke="rgba(148,163,184,0.18)"/>
+  <path d="M90 600 C 210 520, 260 540, 360 500 C 470 455, 520 520, 640 470 C 760 420, 820 460, 930 430 C 1010 408, 1060 425, 1110 395" stroke="#2DD4BF" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+  <path d="M90 610 C 210 560, 260 580, 360 540 C 470 500, 520 560, 640 510 C 760 470, 820 510, 930 480 C 1010 458, 1060 475, 1110 450" stroke="#38BDF8" stroke-width="4" stroke-linecap="round" opacity="0.55"/>
+  <rect x="56" y="170" width="1088" height="480" rx="18" fill="url(#g)"/>
+  <text x="90" y="220" fill="#E5E7EB" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial" font-size="24" font-weight="700">SteadyPlan</text>
+  <text x="90" y="252" fill="#94A3B8" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial" font-size="16">Screenshot placeholder — add real screenshots later</text>
+  <text x="90" y="344" fill="#94A3B8" font-family="ui-monospace, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New'" font-size="14">/site/assets/placeholder-screenshot.svg</text>
+</svg>

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SteadyPlan Docs · Install</title>
+  <meta name="description" content="Install SteadyPlan with Docker or Unraid. Links to the main README and DEPLOY guide.">
+  <link rel="canonical" href="https://steadyplan.co.uk/docs/install">
+  <meta name="color-scheme" content="dark">
+  <link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="site-header-inner">
+        <a class="brand" href="../index.html">
+          <span class="brand-dot" aria-hidden="true"></span>
+          <span>SteadyPlan</span>
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="./index.html">Docs</a>
+          <a href="https://github.com/Jahumac/shelly-finance" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <div class="card pad">
+        <p class="kicker"><a href="./index.html">Docs</a> · Install</p>
+        <h1 style="margin:0 0 0.5rem 0;">Install SteadyPlan</h1>
+        <p class="muted" style="margin:0;">
+          Most people run SteadyPlan on Docker or Unraid, with a host-mounted data directory. This page is a short overview; the repository docs contain the full detail.
+        </p>
+        <div class="hr"></div>
+
+        <h2>Docker (typical)</h2>
+        <p class="muted">
+          In Docker, SteadyPlan stores data under <code>/app/data</code> inside the container. You map that to a host path (for example on Unraid: <code>/mnt/user/appdata/steadyplan</code>).
+        </p>
+        <p class="note small">
+          Compatibility note: the container image is still published as <code>ghcr.io/jahumac/shelly-finance:latest</code> until a repo/package rename is done.
+        </p>
+        <pre>docker pull ghcr.io/jahumac/shelly-finance:latest</pre>
+
+        <h2>Unraid</h2>
+        <p class="muted">
+          If you use Unraid, map the app’s <code>/app/data</code> volume to your appdata share. For new installs, a common path is <code>/mnt/user/appdata/steadyplan</code>. Existing installs do not need to rename their data directory.
+        </p>
+
+        <div class="hr"></div>
+        <h2>Canonical guides</h2>
+        <ul class="muted">
+          <li><a href="https://github.com/Jahumac/shelly-finance/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> (overview and quick start)</li>
+          <li><a href="https://github.com/Jahumac/shelly-finance/blob/main/DEPLOY.md" target="_blank" rel="noopener noreferrer">DEPLOY.md</a> (Docker/Unraid/reverse proxy details)</li>
+        </ul>
+
+        <div class="hr"></div>
+        <p class="muted small" style="margin:0;">
+          Next: <a href="./backups.html">Backups</a> · <a href="./reverse-proxy.html">Reverse proxy</a> · <a href="./privacy.html">Privacy</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-row">
+        <div class="small">
+          <a href="https://github.com/Jahumac/shelly-finance" target="_blank" rel="noopener noreferrer">github.com/Jahumac/shelly-finance</a>
+          <span class="muted"> · SteadyPlan is open source and self-hosted.</span>
+        </div>
+        <div class="small muted">Not financial advice.</div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
