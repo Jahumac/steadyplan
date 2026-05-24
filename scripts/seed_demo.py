@@ -1,7 +1,7 @@
 """Populate the demo account with realistic UK investor data.
 
 Usage:
-    python scripts/seed_demo.py [--username demo]
+    python scripts/seed_demo.py [--username demo] [--password demo123] [--create-user]
 
 Creates 7 months of history (Oct 2025 – Apr 2026) with realistic accounts,
 holdings, goals, budget, and monthly reviews so the app looks compelling.
@@ -15,7 +15,7 @@ sys.path.insert(0, ".")
 
 from app import create_app
 from app.models import get_connection, init_db
-from app.models.users import get_user_by_username
+from app.models.users import create_user, get_user_by_username
 from app.models.accounts import (
     create_account,
     add_holding,
@@ -80,8 +80,7 @@ def seed(username="demo"):
 
         user = get_user_by_username(username)
         if user is None:
-            print(f"No user '{username}' found. Create the account first via the web UI.")
-            sys.exit(1)
+            raise RuntimeError(f"No user '{username}' found.")
         uid = user.id
         print(f"Seeding demo data for user '{username}' (id={uid})…")
 
@@ -126,7 +125,7 @@ def seed(username="demo"):
             "target_dev_pct": 0.80,
             "target_em_pct": 0.20,
             "emergency_fund_target": 6000,
-            "dashboard_name": "Alex",
+            "dashboard_name": "Alex (Demo)",
             "salary_day": 25,
             "update_day": 1,
             "retirement_date_mode": "birthday",
@@ -317,6 +316,20 @@ def seed(username="demo"):
             "selected_tags": "Emergency Fund",
             "notes": "3 months of living expenses.",
         }, uid)
+        create_goal({
+            "name": "Home deposit",
+            "target_value": 60000,
+            "goal_type": "savings",
+            "selected_tags": "Home deposit",
+            "notes": "Aiming for a 10% deposit on a modest place. Demo data only.",
+        }, uid)
+        create_goal({
+            "name": "Long-term goal",
+            "target_value": 20000,
+            "goal_type": "savings",
+            "selected_tags": "Long-term",
+            "notes": "A flexible long-term pot (renovations / career break). Demo data only.",
+        }, uid)
         print("  ✓ Goals")
 
         # ── Budget sections + items ───────────────────────────────────────────
@@ -478,5 +491,25 @@ def _seed_daily_snapshots(uid, account_ids):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Seed demo account with realistic data")
     parser.add_argument("--username", default="demo", help="Demo username (default: demo)")
+    parser.add_argument("--password", default="demo123", help="Password to use if creating the demo user")
+    parser.add_argument(
+        "--create-user",
+        action="store_true",
+        help="Create the user if missing (useful for local/demo screenshots)",
+    )
     args = parser.parse_args()
+    app = create_app()
+    with app.app_context():
+        init_db()
+        user = get_user_by_username(args.username)
+        if user is None:
+            if not args.create_user:
+                print(f"No user '{args.username}' found. Create the account first via the web UI, or pass --create-user.")
+                sys.exit(1)
+            create_user(args.username, args.password, is_admin=False)
+            user = get_user_by_username(args.username)
+        if user is None:
+            print(f"Failed to create user '{args.username}'.")
+            sys.exit(1)
+
     seed(args.username)

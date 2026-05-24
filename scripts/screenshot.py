@@ -44,11 +44,6 @@ DEFAULT_PAGES = [
     ("/settings/", "settings"),
 ]
 
-VIEWPORTS = [
-    ("desktop", 1280, 800),
-    ("mobile", 390, 844),
-]
-
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
@@ -59,6 +54,17 @@ def main():
                         help="Output directory (default: tests/screenshots/<timestamp>)")
     parser.add_argument("--page", action="append", default=None,
                         help="Page path to screenshot (can repeat; overrides defaults)")
+    parser.add_argument(
+        "--viewport",
+        action="append",
+        default=None,
+        choices=["desktop", "mobile"],
+        help="Which viewport(s) to capture (can repeat; default: both)",
+    )
+    parser.add_argument("--desktop-width", type=int, default=1440)
+    parser.add_argument("--desktop-height", type=int, default=1000)
+    parser.add_argument("--mobile-width", type=int, default=390)
+    parser.add_argument("--mobile-height", type=int, default=844)
     parser.add_argument("--full-page", action="store_true",
                         help="Capture full scrollable page instead of viewport")
     args = parser.parse_args()
@@ -76,10 +82,18 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     print(f"Screenshots → {out}")
 
+    viewports = [
+        ("desktop", args.desktop_width, args.desktop_height),
+        ("mobile", args.mobile_width, args.mobile_height),
+    ]
+    if args.viewport:
+        wanted = set(args.viewport)
+        viewports = [vp for vp in viewports if vp[0] in wanted]
+
     with sync_playwright() as p:
         browser = p.chromium.launch()
         try:
-            for vp_name, width, height in VIEWPORTS:
+            for vp_name, width, height in viewports:
                 ctx = browser.new_context(viewport={"width": width, "height": height})
                 page = ctx.new_page()
 
@@ -105,7 +119,7 @@ def main():
         finally:
             browser.close()
 
-    print(f"\n{len(pages) * len(VIEWPORTS)} screenshots saved.")
+    print(f"\n{len(pages) * len(viewports)} screenshots saved.")
 
 
 if __name__ == "__main__":
