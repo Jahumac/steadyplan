@@ -1377,7 +1377,14 @@ button.button-danger:focus {
    as historical reference. The canonical definitions live with the full
    margin scale near line 3820. */
 .panel-sm { padding: 1rem; }           /* nested / compact panels */
-.row-end { display: flex; justify-content: flex-end; margin-bottom: 1rem; }
+.row-end {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 1rem;
+}
 
 /* ── Inline add-holding bar ───────────────────────────────────────────────── */
 .add-holding-bar {
@@ -3497,6 +3504,20 @@ button.button-danger:focus {
   border-color: rgba(56,189,248,0.55);
 }
 
+@media (max-width: 480px) {
+  .instrument-search-bar {
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+  .instrument-search-bar input[type="text"] {
+    max-width: none;
+    width: 100%;
+  }
+  .instrument-search-bar .badge {
+    width: 100%;
+  }
+}
+
 .instrument-result-card {
   background: rgba(56,189,248,0.04);
   border: 1px solid rgba(56,189,248,0.2);
@@ -4192,6 +4213,26 @@ button.button-danger:focus {
   flex-shrink: 0;
 }
 
+@media (max-width: 480px) {
+  .user-row {
+    flex-wrap: wrap;
+    padding: 0.85rem 1rem;
+  }
+  .user-row-left {
+    min-width: 0;
+  }
+  .user-row-info {
+    min-width: 0;
+  }
+  .user-row-name {
+    overflow-wrap: anywhere;
+  }
+  .user-row-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
 /* ── Role badge ──────────────────────────────────────────────────────── */
 .user-role-badge {
   display: inline-flex;
@@ -4761,6 +4802,21 @@ button.button-danger:focus {
   }
 }
 
+@media (max-width: 480px) {
+  .page-shell {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  code {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
 /* ── CSV Import — upload form (inside monthly review card) ───────────────── */
 .csv-upload-form {
   display: grid;
@@ -5041,6 +5097,17 @@ button.button-danger:focus {
 }
 .period-btn:active {
   transform: translateY(1px);
+}
+
+@media (max-width: 480px) {
+  .period-selector {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .period-btn {
+    padding: 0.25rem 0.55rem;
+    font-size: 0.75rem;
+  }
 }
 
 /* Eyebrow (tiny uppercase label) */

@@ -181,38 +181,40 @@
       <h3>Overview</h3>
     </div>
   </div>
-  <table class="data-table">
-    <tbody>
-      <tr>
-        <td>Database</td>
-        <td class="num">{% if diagnostics and diagnostics.db_ok %}OK{% else %}Error{% endif %}</td>
-      </tr>
-      <tr>
-        <td>Scheduler last run</td>
-        <td class="num">
-          {% if diagnostics and diagnostics.scheduler_last_run %}
-            {{ diagnostics.scheduler_last_run.run_date }} {{ diagnostics.scheduler_last_run.slot }}
-          {% else %}
-            —
-          {% endif %}
-        </td>
-      </tr>
-      <tr>
-        <td>Latest portfolio snapshot</td>
-        <td class="num">
-          {% if diagnostics and diagnostics.latest_portfolio_snapshot %}
-            {{ diagnostics.latest_portfolio_snapshot.snapshot_date }} · £{{ '{:,.2f}'.format(diagnostics.latest_portfolio_snapshot.total_value or 0) }}
-          {% else %}
-            —
-          {% endif %}
-        </td>
-      </tr>
-      <tr>
-        <td>Latest price update (raw)</td>
-        <td class="num">{% if diagnostics and diagnostics.latest_price_update_utc %}{{ diagnostics.latest_price_update_utc }}{% else %}—{% endif %}</td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="table-scroll">
+    <table class="data-table">
+      <tbody>
+        <tr>
+          <td>Database</td>
+          <td class="num">{% if diagnostics and diagnostics.db_ok %}OK{% else %}Error{% endif %}</td>
+        </tr>
+        <tr>
+          <td>Scheduler last run</td>
+          <td class="num">
+            {% if diagnostics and diagnostics.scheduler_last_run %}
+              {{ diagnostics.scheduler_last_run.run_date }} {{ diagnostics.scheduler_last_run.slot }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Latest portfolio snapshot</td>
+          <td class="num">
+            {% if diagnostics and diagnostics.latest_portfolio_snapshot %}
+              {{ diagnostics.latest_portfolio_snapshot.snapshot_date }} · £{{ '{:,.2f}'.format(diagnostics.latest_portfolio_snapshot.total_value or 0) }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td>Latest price update (raw)</td>
+          <td class="num">{% if diagnostics and diagnostics.latest_price_update_utc %}{{ diagnostics.latest_price_update_utc }}{% else %}—{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </section>
 
 <section class="panel mt-1">
@@ -222,16 +224,18 @@
       <h3>Data</h3>
     </div>
   </div>
-  <table class="data-table">
-    <tbody>
-      <tr><td>Accounts</td><td class="num">{{ diagnostics.counts.accounts if diagnostics and diagnostics.counts else 0 }}</td></tr>
-      <tr><td>Holdings</td><td class="num">{{ diagnostics.counts.holdings if diagnostics and diagnostics.counts else 0 }}</td></tr>
-      <tr><td>Catalogue active</td><td class="num">{{ diagnostics.counts.catalogue_active if diagnostics and diagnostics.counts else 0 }}</td></tr>
-      <tr><td>Catalogue in use</td><td class="num">{{ diagnostics.catalogue_in_use_count if diagnostics else 0 }}</td></tr>
-      <tr><td>Portfolio daily snapshots</td><td class="num">{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</td></tr>
-      <tr><td>Stale prices (sample, &gt;2d/none)</td><td class="num">{{ diagnostics.catalogue_stale_2d_count_in_sample if diagnostics else 0 }}</td></tr>
-    </tbody>
-  </table>
+  <div class="table-scroll">
+    <table class="data-table">
+      <tbody>
+        <tr><td>Accounts</td><td class="num">{{ diagnostics.counts.accounts if diagnostics and diagnostics.counts else 0 }}</td></tr>
+        <tr><td>Holdings</td><td class="num">{{ diagnostics.counts.holdings if diagnostics and diagnostics.counts else 0 }}</td></tr>
+        <tr><td>Catalogue active</td><td class="num">{{ diagnostics.counts.catalogue_active if diagnostics and diagnostics.counts else 0 }}</td></tr>
+        <tr><td>Catalogue in use</td><td class="num">{{ diagnostics.catalogue_in_use_count if diagnostics else 0 }}</td></tr>
+        <tr><td>Portfolio daily snapshots</td><td class="num">{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</td></tr>
+        <tr><td>Stale prices (sample, &gt;2d/none)</td><td class="num">{{ diagnostics.catalogue_stale_2d_count_in_sample if diagnostics else 0 }}</td></tr>
+      </tbody>
+    </table>
+  </div>
 </section>
 
 <section class="panel mt-1">
@@ -247,26 +251,28 @@
     </form>
     {% endif %}
   </div>
-  <table class="data-table">
-    <tbody>
-      <tr>
-        <td>Backup files</td>
-        <td class="num">{{ diagnostics.backups.count if diagnostics and diagnostics.backups and diagnostics.backups.count is not none else 0 }}</td>
-      </tr>
-      <tr>
-        <td>Latest backup</td>
-        <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_name %}{{ diagnostics.backups.latest_name }}{% else %}None yet{% endif %}</td>
-      </tr>
-      <tr>
-        <td>Latest modified</td>
-        <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_modified %}{{ (diagnostics.backups.latest_modified or '')[:19] }}{% else %}—{% endif %}</td>
-      </tr>
-      <tr>
-        <td>Latest size</td>
-        <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_size_human %}{{ diagnostics.backups.latest_size_human }}{% else %}—{% endif %}</td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="table-scroll">
+    <table class="data-table">
+      <tbody>
+        <tr>
+          <td>Backup files</td>
+          <td class="num">{{ diagnostics.backups.count if diagnostics and diagnostics.backups and diagnostics.backups.count is not none else 0 }}</td>
+        </tr>
+        <tr>
+          <td>Latest backup</td>
+          <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_name %}{{ diagnostics.backups.latest_name }}{% else %}None yet{% endif %}</td>
+        </tr>
+        <tr>
+          <td>Latest modified</td>
+          <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_modified %}{{ (diagnostics.backups.latest_modified or '')[:19] }}{% else %}—{% endif %}</td>
+        </tr>
+        <tr>
+          <td>Latest size</td>
+          <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_size_human %}{{ diagnostics.backups.latest_size_human }}{% else %}—{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
   <p class="helper-text">
     These are whole-instance SQLite backups (a copy of the database for all users) stored under <code>data/backups</code> inside the app data directory (in Docker: <code>/app/data/backups</code>).
   </p>
