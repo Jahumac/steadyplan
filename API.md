@@ -1,4 +1,4 @@
-# Shelly Finance JSON API
+# SteadyPlan JSON API
 
 Bearer-token HTTP JSON API for external clients (Android, desktop, scripts).
 
@@ -144,7 +144,7 @@ Returns the review id, status, and how many account snapshots were taken.
 
 ```bash
 TOKEN=<your-token>
-curl -H "Authorization: Bearer $TOKEN" https://shelly.example.com/api/v1/overview
+curl -H "Authorization: Bearer $TOKEN" https://steadyplan.example.com/api/v1/overview
 ```
 
 ---

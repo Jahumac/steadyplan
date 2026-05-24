@@ -1,17 +1,16 @@
-## Shelly Finance Voice & Copy Guide
+## SteadyPlan Voice & Copy Guide
 
-This document defines the product voice, copy rules, and personality boundaries for Shelly Finance.
+This document defines the product voice, copy rules, and personality boundaries for SteadyPlan.
 It exists so future UI/copy work stays consistent, trustworthy, and UK-finance-aware.
 
 This is a guide for wording and tone only:
-- No rename has been made yet.
-- No UI copy has been changed by publishing this document.
+- It does not describe features or product direction changes.
 
 ---
 
 ## 1. Product Voice Summary
 
-Shelly should read like a calm, factual, UK-aware personal finance control panel.
+SteadyPlan should read like a calm, factual, UK-aware personal finance control panel.
 
 Primary feeling:
 - You’re in control; nothing is hidden; nothing is irreversible without confirmation.
@@ -21,13 +20,13 @@ Personality:
 
 ---
 
-## 2. Possible Public Identity Direction (Not Implemented)
+## 2. Product Identity Notes
 
-Current/internal identity:
-- Shelly Finance
+Product name:
+- SteadyPlan (formerly Shelly Finance)
 
-Candidate public name:
-- SteadyPlan
+Primary domain:
+- steadyplan.co.uk
 
 Tagline candidates:
 - Your plan. Your data. Your pace.
@@ -36,7 +35,6 @@ Tagline candidates:
 - Slow and steady, on your own server.
 
 Notes:
-- These are framing options only. No rename has been made in code, UI, or URLs.
 - Avoid names and taglines that imply regulated advice, broker services, or performance promises.
 
 ---

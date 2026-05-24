@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <Container version="2">
-  <Name>Shelly-Finance</Name>
+  <Name>SteadyPlan</Name>
   <Repository>ghcr.io/jahumac/shelly-finance:latest</Repository>
   <Registry>https://github.com/jahumac/shelly-finance/pkgs/container/shelly-finance</Registry>
   <Branch>
@@ -13,10 +13,10 @@
   <Support>https://github.com/jahumac/shelly-finance/issues</Support>
   <Project>https://github.com/jahumac/shelly-finance</Project>
   <Overview>
-    Shelly Finance is a self-hosted personal finance dashboard built for UK investors.
+    SteadyPlan is a self-hosted UK finance cockpit for long-term planning.
     Track your accounts (ISA, SIPP, LISA, GIA, pensions), holdings with live
-    prices, monthly budgets, savings goals and retirement projections — all
-    from your own machine. Your data never leaves your network.
+    prices, monthly budgets, savings goals and retirement scenario estimates —
+    all from your own machine. Your data stays on your own server.
 
     Features: live price updates with configurable schedules, custom tags,
     granular fee tracking, year-by-year and month-by-month projections,
@@ -31,8 +31,8 @@
   <DonateText/>
   <DonateLink/>
   <Requires/>
-  <Config Name="Web UI Port" Target="8000" Default="8001" Mode="tcp" Description="Port for the Shelly Finance web interface." Type="Port" Display="always" Required="true" Mask="false">8001</Config>
-  <Config Name="Data Directory" Target="/app/data" Default="/mnt/user/appdata/shelly-finance" Mode="rw" Description="Where Shelly stores its SQLite database and secret key. Back this up!" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/shelly-finance</Config>
+  <Config Name="Web UI Port" Target="8000" Default="8001" Mode="tcp" Description="Port for the SteadyPlan web interface." Type="Port" Display="always" Required="true" Mask="false">8001</Config>
+  <Config Name="Data Directory" Target="/app/data" Default="/mnt/user/appdata/steadyplan" Mode="rw" Description="Where SteadyPlan stores its SQLite database and secret key. For upgrades, you can keep an existing path such as /mnt/user/appdata/shelly-finance." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/steadyplan</Config>
   <Config Name="Demo Username (read-only)" Target="DEMO_READ_ONLY_USERNAME" Default="demo" Mode="" Description="Username treated as read-only; all writes are blocked for this user." Type="Variable" Display="advanced" Required="false" Mask="false">demo</Config>
   <Config Name="Enable Public Demo Login" Target="DEMO_PUBLIC_LOGIN_ENABLED" Default="0" Mode="" Description="If set to 1, adds a 'Try demo' button on the login page and enables /demo passwordless login for the demo user." Type="Variable" Display="advanced" Required="false" Mask="false">0</Config>
   <Config Name="Twelve Data API Key" Target="TWELVE_DATA_API_KEY" Default="" Mode="" Description="Optional API key from Twelve Data for more reliable live price updates. Get a free key at twelvedata.com" Type="Variable" Display="always" Required="false" Mask="true"></Config>

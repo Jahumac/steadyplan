@@ -1,10 +1,12 @@
-# Deploying Shelly
+# Deploying SteadyPlan
 
-Shelly runs as a Docker container. Your data stays on your machine — nothing is sent to the cloud.
+SteadyPlan runs as a Docker container. Your data stays on your machine — nothing is sent to the cloud.
+
+Compatibility note: the Docker image is still published under the historical name `ghcr.io/jahumac/shelly-finance:latest` until a separate repo/package rename task.
 
 ## Network posture (recommended)
-- Safe default: run Shelly on your home LAN or VPN only. Do not port-forward it to the public internet.
-- Optional public access: you can expose Shelly like any other self-hosted web app (reverse proxy + HTTPS, or a tunnel/VPN approach). Because Shelly contains sensitive financial data, treat public exposure as an advanced admin choice and configure it carefully (extra auth, strong passwords).
+- Safe default: run SteadyPlan on your home LAN or VPN only. Do not port-forward it to the public internet.
+- Optional public access: you can expose SteadyPlan like any other self-hosted web app (reverse proxy + HTTPS, or a tunnel/VPN approach). Because SteadyPlan contains sensitive financial data, treat public exposure as an advanced admin choice and configure it carefully (extra auth, strong passwords).
 - If you expose it publicly: use HTTPS on a reverse proxy (e.g. Nginx Proxy Manager), enable production cookie settings, and add an extra auth layer (Authelia, OAuth proxy, basic auth, etc.). Examples are common patterns, not requirements.
 
 ---
@@ -21,16 +23,18 @@ docker pull ghcr.io/jahumac/shelly-finance:latest
 
 ```bash
 docker run -d \
-  --name shelly \
+  --name steadyplan \
   --restart unless-stopped \
   -p 8000:8000 \
-  -v /path/to/shelly-data:/app/data \
+  -v /path/to/steadyplan-data:/app/data \
   ghcr.io/jahumac/shelly-finance:latest
 ```
 
-Replace `/path/to/shelly-data` with wherever you want Shelly to store its database. For example:
-- **Mac/Linux:** `~/shelly-data`
-- **Unraid:** `/mnt/user/appdata/shelly-finance`
+Replace `/path/to/steadyplan-data` with wherever you want SteadyPlan to store its database. For example:
+- **Mac/Linux:** `~/steadyplan-data`
+- **Unraid (new installs):** `/mnt/user/appdata/steadyplan`
+
+If you're upgrading an existing install, you can keep your current container name and data directory (for example `--name shelly`, `./data`, or `/mnt/user/appdata/shelly-finance`). No rename is required.
 
 What each flag does:
 - `-d` — runs in the background
@@ -46,8 +50,8 @@ You'll see the setup screen the first time — create your account and you're in
 
 First run notes:
 
-- Shelly stores its database and secret key under the mounted `/app/data` volume (your host path from `-v ...:/app/data`).
-- If you don't set any external price API keys, Shelly still runs normally (manual balances/manual holdings values, and any Yahoo-backed lookups you use).
+- SteadyPlan stores its database and secret key under the mounted `/app/data` volume (your host path from `-v ...:/app/data`).
+- If you don't set any external price API keys, SteadyPlan still runs normally (manual balances/manual holdings values, and any Yahoo-backed lookups you use).
 
 ---
 
@@ -57,9 +61,9 @@ If you cloned this repo, you can use the included `docker-compose.yml`. Otherwis
 
 ```yaml
 services:
-  shelly:
+  steadyplan:
     image: ghcr.io/jahumac/shelly-finance:latest
-    container_name: shelly
+    container_name: steadyplan
     ports:
       - "8000:8000"
     volumes:
@@ -79,7 +83,9 @@ docker compose up -d
 
 ### From Community Apps (recommended)
 
-Search for **Shelly** in the Unraid Community Apps store and click Install. Set the data path to `/mnt/user/appdata/shelly-finance` and pick your port.
+Search for **SteadyPlan** in the Unraid Community Apps store and click Install. If the listing hasn't been renamed yet, search for **Shelly Finance** (legacy) instead. For new installs, set the data path to `/mnt/user/appdata/steadyplan` and pick your port.
+
+If you're upgrading an existing install, you can keep your current data directory (for example `/mnt/user/appdata/shelly-finance`). No rename is required.
 
 ### Manual install via SSH
 
@@ -87,10 +93,10 @@ Search for **Shelly** in the Unraid Community Apps store and click Install. Set 
 ssh root@YOUR_UNRAID_IP
 docker pull ghcr.io/jahumac/shelly-finance:latest
 docker run -d \
-  --name shelly \
+  --name steadyplan \
   --restart unless-stopped \
   -p 8000:8000 \
-  -v /mnt/user/appdata/shelly-finance:/app/data \
+  -v /mnt/user/appdata/steadyplan:/app/data \
   ghcr.io/jahumac/shelly-finance:latest
 ```
 
@@ -98,9 +104,9 @@ Then open **http://YOUR_UNRAID_IP:8000** in your browser.
 
 ### Production security settings
 
-For a local/home-network HTTP deployment, Shelly keeps secure cookies disabled by default so login works at `http://YOUR_UNRAID_IP:8000`.
+For a local/home-network HTTP deployment, SteadyPlan keeps secure cookies disabled by default so login works at `http://YOUR_UNRAID_IP:8000`.
 
-If you publish Shelly behind HTTPS, set production mode so browser cookies are marked Secure:
+If you publish SteadyPlan behind HTTPS, set production mode so browser cookies are marked Secure:
 
 ```yaml
 environment:
@@ -114,11 +120,11 @@ SESSION_COOKIE_SECURE=1
 REMEMBER_COOKIE_SECURE=1
 ```
 
-Only override them back to `0` if you deliberately run over plain HTTP. If Shelly sits behind a trusted reverse proxy and you need client IP/protocol headers honoured, also set `TRUST_PROXY_HEADERS=1`; leave it unset for direct access.
+Only override them back to `0` if you deliberately run over plain HTTP. If SteadyPlan sits behind a trusted reverse proxy and you need client IP/protocol headers honoured, also set `TRUST_PROXY_HEADERS=1`; leave it unset for direct access.
 
 ### Rate-limit storage and workers
 
-Shelly defaults to one Gunicorn worker:
+SteadyPlan defaults to one Gunicorn worker:
 
 ```text
 WEB_CONCURRENCY=1
@@ -135,7 +141,7 @@ environment:
   - RATELIMIT_STORAGE_URI=redis://redis:6379/0
 ```
 
-If Shelly sees `WEB_CONCURRENCY>1` with `RATELIMIT_STORAGE_URI=memory://`, it logs a startup warning.
+If SteadyPlan sees `WEB_CONCURRENCY>1` with `RATELIMIT_STORAGE_URI=memory://`, it logs a startup warning.
 
 ---
 
@@ -145,13 +151,13 @@ Pull the latest image and recreate the container:
 
 ```bash
 docker pull ghcr.io/jahumac/shelly-finance:latest
-docker stop shelly
-docker rm shelly
+docker stop steadyplan
+docker rm steadyplan
 docker run -d \
-  --name shelly \
+  --name steadyplan \
   --restart unless-stopped \
   -p 8000:8000 \
-  -v /path/to/shelly-data:/app/data \
+  -v /path/to/steadyplan-data:/app/data \
   ghcr.io/jahumac/shelly-finance:latest
 ```
 
@@ -169,9 +175,9 @@ Your data is safe — it lives in the volume you mounted and is not touched by u
 ## Checking logs
 
 ```bash
-docker logs shelly
+docker logs steadyplan
 # or follow live:
-docker logs -f shelly
+docker logs -f steadyplan
 ```
 
 ---
@@ -183,11 +189,11 @@ If you prefer to build the image yourself rather than using the pre-built one:
 ```bash
 git clone https://github.com/Jahumac/shelly-finance.git
 cd shelly-finance
-docker build -t shelly .
+docker build -t steadyplan .
 docker run -d \
-  --name shelly \
+  --name steadyplan \
   --restart unless-stopped \
   -p 8000:8000 \
   -v ./data:/app/data \
-  shelly
+  steadyplan
 ```

@@ -1,16 +1,18 @@
-# shelly-finance
+# SteadyPlan (formerly Shelly Finance)
 
-A self-hosted personal finance dashboard for UK investors 🐢. Track your accounts, holdings, budget, goals and retirement projections — hosted on your own server/home network.
+A self-hosted personal finance cockpit for UK investors 🐢. Track your accounts, holdings, budget, goals and retirement scenario estimates — hosted on your own server/home network.
 
-Shelly Finance is not affiliated with Shelly smart-home products.
+Primary domain: **steadyplan.co.uk** (with **steady-plan.co.uk** as an optional redirect/secondary domain).
+
+Compatibility note: the GitHub repository and Docker image are still published under the historical `shelly-finance` name (e.g. `ghcr.io/jahumac/shelly-finance`) until a separate repo/package rename task.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue) ![Flask](https://img.shields.io/badge/Flask-3.x-green) ![SQLite](https://img.shields.io/badge/SQLite-local-lightgrey) ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ---
 
-## Why shelly-finance?
+## Why SteadyPlan?
 
-Most finance apps want your login credentials or send your data to the cloud. Shelly runs entirely on your machine (or home server) with a local SQLite database. No bank/broker account linking and no third-party accounts required. You only need an external API key if you choose to enable optional automated price lookups.
+Most finance apps want your login credentials or send your data to the cloud. SteadyPlan runs entirely on your machine (or home server) with a local SQLite database. No bank/broker account linking and no third-party accounts required. You only need an external API key if you choose to enable optional automated price lookups.
 
 It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, GIAs — with GBP currency, UK tax year tracking, and CSV import from major UK brokers.
 
@@ -18,15 +20,15 @@ It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, 
 
 ## Privacy Model (What Leaves Your Machine)
 
-- **Stays local:** Your financial database lives in `data/finance.db` (SQLite). Shelly does not sync your data to any cloud service.
-- **No bank/broker linking:** Shelly does not connect to your bank or broker via OAuth, screen scraping, or open banking flows.
-- **May leave the machine (optional):** If you enable live prices, Shelly sends **ticker symbols / identifiers** to external price sources (Yahoo Finance; optionally Twelve Data) to fetch prices. Your account balances and transaction history are not sent.
-- **Twelve Data API key is optional:** If `TWELVE_DATA_API_KEY` is not set, Shelly can still be used (manual balances, manual holdings values, and any Yahoo-backed lookups).
-- **If you want “air-gapped”:** You can run Shelly without any external price lookups by relying on manual balances / manual holdings values and avoiding ticker-based refreshes.
-- **Internet exposure:** Shelly is designed for home-network use. You can access it over LAN/VPN, or (optionally) expose it publicly through standard self-hosting patterns (reverse proxy + HTTPS, Cloudflare Tunnel, etc.). Because Shelly contains sensitive financial data, treat public exposure as an advanced admin choice and configure it carefully (extra auth, strong passwords).
+- **Stays local:** Your financial database lives in `data/finance.db` (SQLite). SteadyPlan does not sync your data to any cloud service.
+- **No bank/broker linking:** SteadyPlan does not connect to your bank or broker via OAuth, screen scraping, or open banking flows.
+- **May leave the machine (optional):** If you enable live prices, SteadyPlan sends **ticker symbols / identifiers** to external price sources (Yahoo Finance; optionally Twelve Data) to fetch prices. Your account balances and transaction history are not sent.
+- **Twelve Data API key is optional:** If `TWELVE_DATA_API_KEY` is not set, SteadyPlan can still be used (manual balances, manual holdings values, and any Yahoo-backed lookups).
+- **If you want “air-gapped”:** You can run SteadyPlan without any external price lookups by relying on manual balances / manual holdings values and avoiding ticker-based refreshes.
+- **Internet exposure:** SteadyPlan is designed for home-network use. You can access it over LAN/VPN, or (optionally) expose it publicly through standard self-hosting patterns (reverse proxy + HTTPS, Cloudflare Tunnel, etc.). Because SteadyPlan contains sensitive financial data, treat public exposure as an advanced admin choice and configure it carefully (extra auth, strong passwords).
 
 ### Network posture (recommended)
-- Safe default: run Shelly on your home LAN or VPN only. Do not port-forward it to the public internet.
+- Safe default: run SteadyPlan on your home LAN or VPN only. Do not port-forward it to the public internet.
 - Optional public access: use HTTPS on a reverse proxy (e.g. Nginx Proxy Manager) or a tunnel/VPN approach (e.g. Cloudflare Tunnel, Tailscale). Enable production cookie settings and add an extra auth layer.
 
 ---
@@ -61,7 +63,7 @@ Draft Monthly Review data supports editing, but **only completed Monthly Reviews
 Marking a month reviewed saves snapshots so you can track how your portfolio changes over time. Holdings-based accounts snapshot from holdings value; manual/Premium Bonds accounts snapshot only if their balance was updated in that review (to avoid silently recording stale values as truth).
 
 ### Data Health
-If something needs attention (e.g. no accounts, stale snapshots, missing assumptions), Shelly surfaces a compact warning on **Overview**. Healthy status is kept out of the dashboard so Overview stays focused on your financial summary.
+If something needs attention (e.g. no accounts, stale snapshots, missing assumptions), SteadyPlan surfaces a compact warning on **Overview**. Healthy status is kept out of the dashboard so Overview stays focused on your financial summary.
 
 ### Budget
 Monthly income, expenses and savings overview with auto-save. Navigate between months with arrows. Budget items can be linked directly to account contributions so your savings plan stays in sync.
@@ -73,7 +75,7 @@ Set savings targets and track progress. Goals can be linked to tagged accounts �
 Year-by-year and month-by-month projections based on current balances, monthly contributions and growth assumptions. Projections are scenario estimates, not guarantees. Respects Lifetime ISA contribution rules (stops at age 50). Export projections to Excel (.xlsx) with per-account breakdowns.
 
 ### Granular Fee Tracking
-Accounts support detailed fee modelling: platform fee (% with optional £ cap), flat annual platform fee (£), and fund fee / OCF (%). Shelly combines these into an effective annual fee, subtracts it from your growth rate, and shows the lifetime cost of fees in both the app and Excel exports. All fee fields are optional — tucked behind an "Advanced: Fees" toggle so they don't clutter the setup for casual users. Projections show "with fees" vs "without fees" so you can see exactly what your broker and funds cost you over time.
+Accounts support detailed fee modelling: platform fee (% with optional £ cap), flat annual platform fee (£), and fund fee / OCF (%). SteadyPlan combines these into an effective annual fee, subtracts it from your growth rate, and shows the lifetime cost of fees in both the app and Excel exports. All fee fields are optional — tucked behind an "Advanced: Fees" toggle so they don't clutter the setup for casual users. Projections show "with fees" vs "without fees" so you can see exactly what your broker and funds cost you over time.
 
 ### Performance Tracking
 Track your actual portfolio returns over time using the modified Dietz method. Compare actual performance against a projected "on-plan" growth line. Contribution cash flow uses the effective “into pot” amount (tax relief, LISA bonus, employer contributions, minus any contribution fee) and only treats completed Monthly Reviews as confirmed truth.
@@ -82,13 +84,13 @@ Track your actual portfolio returns over time using the modified Dietz method. C
 ISA and Lifetime ISA allowance progress bars, tax year countdown, and automatic tax year labelling (April 6 boundary).
 
 ### Multi-User Support
-Multiple users can share a single Shelly instance, each with their own accounts, budgets and data. Admin user manages access.
+Multiple users can share a single SteadyPlan instance, each with their own accounts, budgets and data. Admin user manages access.
 
 ### Contribution Overrides
 Temporarily change a monthly contribution (e.g. parental leave, career break) without losing your long-term plan.
 
 ### PWA & Mobile
-- Install Shelly as a phone app — visit the URL in your mobile browser and tap "Add to Home Screen". Works full-screen with its own icon.
+- Install SteadyPlan as a phone app — visit the URL in your mobile browser and tap "Add to Home Screen". Works full-screen with its own icon.
 - Installable app shell (PWA) with a service worker for static assets (CSS/JS/icons).
 - **Privacy-first offline behaviour:** authenticated financial pages are not cached for offline viewing. If you're offline you'll see an offline page and can retry once reconnected.
 
@@ -97,7 +99,7 @@ Temporarily change a monthly contribution (e.g. parental leave, career break) wi
 - Android (Chrome): open the URL → menu → Install app / Add to Home screen
 
 ### Try Safely With Demo Data
-- Shelly includes a demo seed script that populates realistic UK investor data (accounts, holdings, goals, budget, history).
+- SteadyPlan includes a demo seed script that populates realistic UK investor data (accounts, holdings, goals, budget, history).
 - You can explore the full UI without entering real financial data.
 
 Seed demo data (local Python):
@@ -109,7 +111,7 @@ Seed demo data (local Python):
 Seed demo data (Docker):
 
 ```bash
-docker exec -it shelly python scripts/seed_demo.py --username demo
+docker exec -it steadyplan python scripts/seed_demo.py --username demo
 ```
 
 Enable a public read-only demo login:
@@ -121,7 +123,7 @@ Enable a public read-only demo login:
 
 ## Backup Strategy (Recommended)
 
-Shelly supports two complementary backup styles:
+SteadyPlan supports two complementary backup styles:
 
 1. **JSON export (per user)** — download from **Settings → Download JSON export**. Best for portability (moving data between instances) and user-scoped restores.
 2. **Volume/SQLite backup (whole instance)** — back up the `data/` volume/directory that contains:
@@ -183,7 +185,7 @@ First boot:
 
 - On first visit you'll be redirected to `/setup` to create an admin account.
 - The database file is created/used inside the mounted `data/` volume (`data/finance.db`).
-- `TWELVE_DATA_API_KEY` is optional — you can run Shelly without it.
+- `TWELVE_DATA_API_KEY` is optional — you can run SteadyPlan without it.
 
 ### What lives in `data/` (persistent)
 - `finance.db` — SQLite database (your data)
@@ -215,10 +217,10 @@ See [DEPLOY.md](DEPLOY.md) for step-by-step instructions on deploying to Unraid 
 
 ### From Your Broker
 
-1. Go to **Monthly Review** in Shelly
+1. Go to **Monthly Review** in SteadyPlan
 2. Select your broker from the dropdown
 3. Upload the CSV file your broker provides (usually found under "Statements", "Export", or "Download" in your broker's app/website)
-4. Shelly will match the CSV rows to your existing holdings, showing you a preview
+4. SteadyPlan will match the CSV rows to your existing holdings, showing you a preview
 5. Review, adjust if needed, and confirm the import
 
 ### Using the Template
@@ -238,7 +240,7 @@ Vanguard LifeStrategy 80% Equity Fund,GB00B4PQW151,85.1200,243.10,20693.47
 iShares Core MSCI World ETF,SWDA,42.0000,82.15,3450.30
 ```
 
-**Note:** The CSV import updates existing holdings that are already set up in Shelly (matched by ticker or name). To get started, add your accounts and holdings through the app first, then use CSV import for quick monthly updates going forward.
+**Note:** The CSV import updates existing holdings that are already set up in SteadyPlan (matched by ticker or name). To get started, add your accounts and holdings through the app first, then use CSV import for quick monthly updates going forward.
 
 ---
 
@@ -328,13 +330,13 @@ data/
 Everything lives in a single SQLite file (`data/finance.db`). No external database to configure. The `data/` directory is git-ignored — your financial data never ends up in version control.
 
 ### Live Prices
-Holdings with a ticker symbol get live price lookups via Yahoo Finance. Shelly tries the ticker as-is first, then appends `.L` for London Stock Exchange listings. Prices are cached in a local catalogue and updated when you refresh.
+Holdings with a ticker symbol get live price lookups via Yahoo Finance. SteadyPlan tries the ticker as-is first, then appends `.L` for London Stock Exchange listings. Prices are cached in a local catalogue and updated when you refresh.
 
 ### Monthly Snapshots
-Each time you complete a monthly review (or update an account balance), Shelly saves a snapshot. These snapshots power the net worth history chart on the overview page and the performance tracking calculations.
+Each time you complete a monthly review (or update an account balance), SteadyPlan saves a snapshot. These snapshots power the net worth history chart on the overview page and the performance tracking calculations.
 
 ### Security
-Shelly uses Flask-Login for authentication with hashed passwords. It's designed for home network use — if you want to expose it to the internet, put it behind a reverse proxy with additional auth (e.g. Authelia, Cloudflare Tunnel, or basic auth).
+SteadyPlan uses Flask-Login for authentication with hashed passwords. It's designed for home network use — if you want to expose it to the internet, put it behind a reverse proxy with additional auth (e.g. Authelia, Cloudflare Tunnel, or basic auth).
 
 ---
 
@@ -363,7 +365,7 @@ Shelly uses Flask-Login for authentication with hashed passwords. It's designed 
 
 ## Contributing
 
-Shelly is a personal project shared for others to use and learn from. If you find a bug or have a feature idea, feel free to open an issue. Pull requests are welcome.
+SteadyPlan is a personal project shared for others to use and learn from. If you find a bug or have a feature idea, feel free to open an issue. Pull requests are welcome.
 
 ### Visual screenshots (Playwright)
 

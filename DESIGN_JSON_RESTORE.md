@@ -1,7 +1,7 @@
-# Shelly Finance — JSON Restore/Import (Design Note)
+# SteadyPlan — JSON Restore/Import (Design Note)
 
 ## Summary
-Shelly Finance supports a user-scoped JSON export at `GET /settings/export.json` and a safe v1 restore/import flow. Restore treats backups as **scenario-free data ownership tooling**: validate first, then **replace the current user’s data** in one transaction. No merge mode, no partial import, and no cross-user leakage.
+SteadyPlan supports a user-scoped JSON export at `GET /settings/export.json` and a safe v1 restore/import flow. Restore treats backups as **scenario-free data ownership tooling**: validate first, then **replace the current user’s data** in one transaction. No merge mode, no partial import, and no cross-user leakage.
 
 Implemented endpoints:
 - Validate (dry-run): `POST /settings/restore/validate` (no DB writes)
@@ -29,7 +29,7 @@ As of `export_schema_version == 1`, `/settings/export.json` returns a JSON objec
 
 - `meta.exported_at` (ISO timestamp string)
 - `meta.export_schema_version` (integer, currently `1`)
-- `meta.app` (string, e.g. “Shelly Finance”)
+- `meta.app` (string, e.g. “SteadyPlan”)
 
 Notes:
 
@@ -41,7 +41,7 @@ Notes:
 ### Restore Mode
 v1 mode: **replace-only** for the currently logged-in user.
 
-- Replace-only means: delete the current user’s Shelly Finance data and re-create it from the backup.
+- Replace-only means: delete the current user’s SteadyPlan data and re-create it from the backup.
 - Merge is explicitly deferred (conflict resolution, duplicate detection, ID collisions, and reference reconciliation are too risky for v1).
 - Partial import is explicitly deferred (e.g. “import only goals”).
 
@@ -57,7 +57,7 @@ v1 mode: **replace-only** for the currently logged-in user.
    - If valid, the uploaded JSON is staged server-side (token + session-bound) so the user can commit without re-uploading.
 
 2. **Confirm restore**
-   - Clear warning: “This will delete and replace your current Shelly Finance data.”
+   - Clear warning: “This will delete and replace your current SteadyPlan data.”
    - Requires explicit confirmation:
      - checkbox `confirm_replace`
      - typed phrase `RESTORE`
@@ -79,7 +79,7 @@ To prevent path traversal and accidental long-lived files:
 ### Version gating
 - Require `meta.export_schema_version` to exist and equal `1` for v1.
 - If schema version is unknown (e.g. `>1`), reject with a clear message:
-  - “This backup is from a newer Shelly Finance version and can’t be restored here.”
+  - “This export is from a newer SteadyPlan version and can’t be restored here.”
 - If schema version is missing/invalid, reject.
 
 ### Required sections (must match exporter output)

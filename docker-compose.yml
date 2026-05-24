@@ -1,7 +1,7 @@
 services:
-  shelly:
+  steadyplan:
     image: ghcr.io/jahumac/shelly-finance:latest
-    container_name: shelly
+    container_name: steadyplan
     ports:
       - "8000:8000"
     volumes:
@@ -13,10 +13,10 @@ services:
       - WEB_CONCURRENCY=1
     restart: unless-stopped
 
-  shelly-dev:
+  steadyplan-dev:
     profiles: ["dev"]
     build: .
-    container_name: shelly-dev
+    container_name: steadyplan-dev
     ports:
       - "8001:8000"
     volumes:
