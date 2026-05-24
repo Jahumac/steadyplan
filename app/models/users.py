@@ -110,46 +110,73 @@ def delete_user(user_id):
         if target["is_admin"] and admin_count <= 1:
             return False, "Cannot delete the only admin account."
 
-        # 1. Delete by user_id directly (most tables)
+        # Delete dependent rows before their parent rows. Some older databases
+        # pre-date the later ON DELETE CASCADE migrations, so keep this explicit
+        # rather than relying entirely on SQLite cascades.
+        child_deletes = [
+            (
+                "budget_entries",
+                "budget_item_id IN (SELECT id FROM budget_items WHERE user_id = ?)",
+            ),
+            (
+                "monthly_review_items",
+                "review_id IN (SELECT id FROM monthly_reviews WHERE user_id = ?) "
+                "OR account_id IN (SELECT id FROM accounts WHERE user_id = ?)",
+            ),
+            (
+                "holdings",
+                "account_id IN (SELECT id FROM accounts WHERE user_id = ?) "
+                "OR holding_catalogue_id IN (SELECT id FROM holding_catalogue WHERE user_id = ?)",
+            ),
+            (
+                "monthly_snapshots",
+                "account_id IN (SELECT id FROM accounts WHERE user_id = ?)",
+            ),
+            (
+                "contribution_overrides",
+                "account_id IN (SELECT id FROM accounts WHERE user_id = ?)",
+            ),
+            (
+                "premium_bonds_prizes",
+                "user_id = ? OR account_id IN (SELECT id FROM accounts WHERE user_id = ?)",
+            ),
+            (
+                "account_daily_snapshots",
+                "user_id = ? OR account_id IN (SELECT id FROM accounts WHERE user_id = ?)",
+            ),
+        ]
+        for table, where in child_deletes:
+            placeholders = where.count("?")
+            conn.execute(f"DELETE FROM {table} WHERE {where}", (user_id,) * placeholders)
+
+        # Account-linked tables also carry user_id. Deleting them before
+        # accounts avoids FK failures on legacy schemas that lack cascades.
         tables_with_user_id = [
-            "assumptions", "goals", "holding_catalogue", "monthly_reviews",
-            "budget_items", "budget_sections", "isa_contributions",
-            "pension_contributions", "dividend_records", "cgt_disposals",
-            "pension_carry_forward", "scheduler_runs", "portfolio_daily_snapshots",
-            "account_daily_snapshots", "custom_tags", "api_tokens", "debts"
+            "cash_flow_events",
+            "isa_contributions",
+            "pension_contributions",
+            "dividend_records",
+            "cgt_disposals",
+            "allowance_tracking",
+            "pension_carry_forward",
+            "portfolio_daily_snapshots",
+            "scheduler_runs",
+            "monthly_reviews",
+            "budget_items",
+            "budget_sections",
+            "holding_catalogue",
+            "custom_tags",
+            "hidden_tags",
+            "api_tokens",
+            "debts",
+            "goals",
+            "assumptions",
         ]
         for table in tables_with_user_id:
             conn.execute(f"DELETE FROM {table} WHERE user_id = ?", (user_id,))
 
-        # 2. Delete by account_id (tables linked to accounts)
-        # Fetch account IDs for this user
-        account_ids = [r["id"] for r in conn.execute(
-            "SELECT id FROM accounts WHERE user_id = ?", (user_id,)
-        ).fetchall()]
-        
-        if account_ids:
-            placeholders = ",".join(["?"] * len(account_ids))
-            tables_with_account_id = [
-                "holdings", "monthly_snapshots", "monthly_review_items",
-                "contribution_overrides"
-            ]
-            for table in tables_with_account_id:
-                conn.execute(
-                    f"DELETE FROM {table} WHERE account_id IN ({placeholders})",
-                    account_ids
-                )
-
-        # 3. Special cases (nested links)
-        # budget_entries are linked to budget_items (already deleted above by user_id)
-        # but we should be thorough.
-        conn.execute("""
-            DELETE FROM budget_entries WHERE budget_item_id NOT IN (SELECT id FROM budget_items)
-        """)
-
-        # 4. Finally delete the accounts and the user
         conn.execute("DELETE FROM accounts WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
-        
         conn.commit()
     return True, None
 
