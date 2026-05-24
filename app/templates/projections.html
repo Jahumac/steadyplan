@@ -19,8 +19,9 @@
     <div>
       <p class="eyebrow">Projections</p>
       <h2 class="hero-value">£{{ '{:,.0f}'.format(metrics.total_projected) }}</h2>
-      <p class="hero-subtitle">Scenario estimate at retirement · age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% annual growth</p>
-      <p class="helper-text m-0">Based on your current plan and assumptions (not a guarantee). See what drives it below.</p>
+      <p class="hero-subtitle">Scenario estimate at retirement · age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% annual growth (nominal)</p>
+      <p class="helper-text m-0">Based on your current balances, contributions, and assumptions. Not a guarantee, and not financial advice.</p>
+      <p class="helper-text m-0">This view models accumulation only — it does not model retirement withdrawals or spending.</p>
     </div>
     <div class="hero-turtle-wrap">
       <img src="{{ url_for('static', filename='icons/shelly/Goals.png') }}" alt="" class="hero-turtle">
@@ -45,11 +46,11 @@
     <span class="goal-track-icon">{% if on_track %}✓{% else %}⚠{% endif %}</span>
     <div style="flex:1; min-width:200px;">
       {% if on_track %}
-        <strong>On track for "{{ primary_goal.name }}"</strong>
-        <p class="helper-text m-0">Your projected £{{ '{:,.0f}'.format(metrics.total_projected) }} beats your £{{ '{:,.0f}'.format(primary_goal.target) }} goal by £{{ '{:,.0f}'.format(metrics.total_projected - primary_goal.target) }}.</p>
+        <strong>Scenario estimate meets "{{ primary_goal.name }}"</strong>
+        <p class="helper-text m-0">Estimated £{{ '{:,.0f}'.format(metrics.total_projected) }} vs target £{{ '{:,.0f}'.format(primary_goal.target) }} (margin £{{ '{:,.0f}'.format(metrics.total_projected - primary_goal.target) }}).</p>
       {% else %}
-        <strong>Falling short of "{{ primary_goal.name }}"</strong>
-        <p class="helper-text m-0">You're projected at £{{ '{:,.0f}'.format(metrics.total_projected) }} — £{{ '{:,.0f}'.format(gap) }} short of your £{{ '{:,.0f}'.format(primary_goal.target) }} goal.</p>
+        <strong>Scenario estimate is below "{{ primary_goal.name }}"</strong>
+        <p class="helper-text m-0">Estimated £{{ '{:,.0f}'.format(metrics.total_projected) }} vs target £{{ '{:,.0f}'.format(primary_goal.target) }} (gap £{{ '{:,.0f}'.format(gap) }}).</p>
       {% endif %}
     </div>
     <a href="/goals/" class="badge badge-sm">View goals</a>
@@ -84,9 +85,9 @@
 {# ── Summary cards ────────────────────────────────────────────────────────── #}
 <section class="card-grid mb-1">
   <div class="card stat-card">
-    <h2>Projected at Retirement</h2>
+    <h2>Scenario Estimate at Retirement</h2>
     <p>£{{ '{:,.0f}'.format(metrics.total_projected) }}</p>
-    <small>Scenario estimate · age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% annual growth</small>
+    <small>Age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% annual growth (nominal)</small>
   </div>
   <div class="card stat-card">
     <h2>Current Total</h2>
@@ -118,10 +119,10 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Account breakdown</p>
-      <h2>Each Account at Retirement</h2>
+      <h2>Each Account at Retirement (Estimate)</h2>
     </div>
   </div>
-  <p class="helper-text">What each account could be worth at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, government bonuses, and employer contributions).</p>
+  <p class="helper-text">Scenario estimates for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, government bonuses, and employer contributions).</p>
   <div class="budget-rows">
     {% for row in account_rows %}
     <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}">
@@ -204,7 +205,7 @@
       <h2>Portfolio Trajectory</h2>
     </div>
   </div>
-  <p class="helper-text">Shelly's crystal ball — how your portfolio could grow year by year, based on what you're putting in today.</p>
+  <p class="helper-text">How your portfolio could grow year by year under your current assumptions and contributions.</p>
   <div class="chart-wrap-md">
     <canvas id="projectionChart" role="img" aria-label="Projected portfolio growth chart"
       data-labels='{{ chart_labels | tojson | safe }}'
@@ -222,7 +223,7 @@
     </div>
     <button class="badge badge-meta" id="wi_reset" type="button">Reset to plan</button>
   </div>
-  <p class="helper-text">Tweak the numbers and see what happens. Nothing is saved — Shelly doesn't judge your hypothetical early retirement fantasies.</p>
+  <p class="helper-text">Adjust inputs to see how the scenario estimate changes. Nothing is saved unless you explicitly save it elsewhere.</p>
 
   {# Global controls #}
   <div class="form-grid settings-form mb-1">
