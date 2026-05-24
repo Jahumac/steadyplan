@@ -45,11 +45,22 @@ DEFAULT_PAGES = [
 ]
 
 
+def _env_first(*names, default=None):
+    for name in names:
+        val = os.getenv(name)
+        if val is not None and str(val).strip():
+            return val
+    return default
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--url", default=os.getenv("SHELLY_URL", "http://localhost:8000"))
-    parser.add_argument("--user", default=os.getenv("SHELLY_USER"))
-    parser.add_argument("--password", default=os.getenv("SHELLY_PASSWORD"))
+    parser.add_argument(
+        "--url",
+        default=_env_first("STEADYPLAN_URL", "SHELLY_URL", default="http://localhost:8000"),
+    )
+    parser.add_argument("--user", default=_env_first("STEADYPLAN_USER", "SHELLY_USER"))
+    parser.add_argument("--password", default=_env_first("STEADYPLAN_PASSWORD", "SHELLY_PASSWORD"))
     parser.add_argument("--out", default=None,
                         help="Output directory (default: tests/screenshots/<timestamp>)")
     parser.add_argument("--page", action="append", default=None,
@@ -70,7 +81,10 @@ def main():
     args = parser.parse_args()
 
     if not args.user or not args.password:
-        sys.stderr.write("Provide --user and --password (or SHELLY_USER / SHELLY_PASSWORD env vars).\n")
+        sys.stderr.write(
+            "Provide --user and --password (or set STEADYPLAN_USER / STEADYPLAN_PASSWORD; "
+            "legacy aliases: SHELLY_USER / SHELLY_PASSWORD).\n"
+        )
         sys.exit(2)
 
     if args.page:

@@ -155,8 +155,8 @@ Suggested simple routine for self-hosters:
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/jahumac/shelly-finance.git
-cd shelly-finance
+git clone https://github.com/jahumac/steadyplan.git
+cd steadyplan
 
 # 2. Create a virtual environment
 python -m venv .venv
