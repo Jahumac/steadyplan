@@ -727,7 +727,7 @@ def commit_restore_backup():
 
     confirm_checked = request.form.get("confirm_replace") == "1"
     confirm_phrase = request.form.get("confirm_phrase", "").strip()
-    if not confirm_checked or confirm_phrase != "RESTORE":
+    if not confirm_checked or confirm_phrase.upper() != "RESTORE":
         flash("To restore and overwrite data, tick the checkbox and type RESTORE to confirm.", "error")
         uid = current_user.id
         assumptions = fetch_assumptions(uid)
@@ -805,7 +805,7 @@ def commit_restore_backup():
 def reset_account():
     """Wipe all user data and return to a fresh-login state."""
     confirmation = request.form.get("confirm_reset", "").strip()
-    if confirmation != "RESET":
+    if confirmation.upper() != "RESET":
         return redirect(url_for("settings.settings"))
     reset_all_user_data(current_user.id)
     return redirect(url_for("overview.overview"))

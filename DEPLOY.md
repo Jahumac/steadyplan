@@ -173,6 +173,10 @@ If SteadyPlan sees `WEB_CONCURRENCY>1` with `RATELIMIT_STORAGE_URI=memory://`, i
 
 ## Updating
 
+Before upgrades or risky changes:
+- Download a per-user JSON export from **Settings → Download JSON export** (portable, user-scoped).
+- Back up the whole `/app/data` directory (whole instance: `finance.db`, `secret_key.txt`, and `backups/`).
+
 Pull the latest image and recreate the container:
 
 ```bash

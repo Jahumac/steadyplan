@@ -141,6 +141,8 @@ SteadyPlan supports two complementary backup styles:
    - `secret_key.txt` (Flask secret key; needed to keep sessions stable across restores)
    - `backups/` (if you use the built-in SQLite backup tool from Diagnostics)
 
+The built-in “SQLite backup” tool creates copies of `finance.db` under `data/backups/`. It does not back up `secret_key.txt`, so your normal volume/appdata backup should include the whole `data/` directory.
+
 Suggested simple routine for self-hosters:
 
 - Back up the `data/` volume on a schedule (NAS snapshot, rsync, borg, etc.).

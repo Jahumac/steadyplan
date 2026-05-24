@@ -7,6 +7,9 @@ Usage:
 Backups live in data/backups/. The scheduler runs one automatically at
 03:00 UK time every day; this CLI is for ad-hoc snapshots before a risky
 change, migration, or upgrade.
+
+Note: these are copies of finance.db only. For full disaster recovery, also
+back up the whole app data directory (including secret_key.txt and backups/).
 """
 import sys
 from pathlib import Path

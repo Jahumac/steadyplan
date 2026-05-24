@@ -87,6 +87,8 @@ def test_diagnostics_renders_backup_panel_when_no_backups_exist(app, client, mak
     assert "None yet" in body
     assert "whole-instance SQLite backups" in body
     assert "data/backups" in body
+    assert "finance.db" in body
+    assert "secret_key.txt" in body
 
 
 def test_admin_can_run_manual_backup_from_settings(app, client, make_user, tmp_path):

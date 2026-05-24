@@ -100,12 +100,30 @@ def test_restore_validation_valid_export_passes_and_no_db_writes(app, exported_j
     after = _count_rows(app)
 
     assert result["valid"] is True
+    assert result["app"] == "SteadyPlan"
     assert result["export_schema_version"] == 1
     assert result["exported_at"]
     assert result["counts"]["accounts"] >= 2
     assert result["counts"]["planning"]["allowance_tracking"] >= 1
     assert result["errors"] == []
     assert before == after
+
+
+def test_restore_validation_warns_if_export_app_name_is_unexpected(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["meta"]["app"] = "Shelly Finance"
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is True
+    assert result["app"] == "Shelly Finance"
+    assert any("Expected 'SteadyPlan'" in w for w in result["warnings"])
+
+
+def test_restore_validation_warns_if_export_is_stale(exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["meta"]["exported_at"] = "2000-01-01T00:00:00+00:00"
+    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
+    assert result["valid"] is True
+    assert any("days old" in w for w in result["warnings"])
 
 
 def test_restore_validation_corrupt_json_rejected_and_no_db_writes(app):

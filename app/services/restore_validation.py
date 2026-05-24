@@ -3,6 +3,7 @@ from datetime import datetime
 
 
 SUPPORTED_EXPORT_SCHEMA_VERSIONS = {1}
+STALE_EXPORT_WARNING_DAYS = 90
 
 
 def _is_mapping(x):
@@ -42,6 +43,7 @@ def validate_restore_backup_json(json_bytes):
     Does not perform any database reads/writes.
     Returns a dict with:
       - valid: bool
+      - app: str|None
       - export_schema_version: int|None
       - exported_at: str|None
       - counts: dict
@@ -56,6 +58,7 @@ def validate_restore_backup_json(json_bytes):
         errors.append("Export file must be provided as bytes.")
         return {
             "valid": False,
+            "app": None,
             "export_schema_version": None,
             "exported_at": None,
             "counts": {},
@@ -69,6 +72,7 @@ def validate_restore_backup_json(json_bytes):
         errors.append("Invalid JSON: could not parse export file.")
         return {
             "valid": False,
+            "app": None,
             "export_schema_version": None,
             "exported_at": None,
             "counts": {},
@@ -80,6 +84,7 @@ def validate_restore_backup_json(json_bytes):
         errors.append("Invalid JSON: top-level value must be an object.")
         return {
             "valid": False,
+            "app": None,
             "export_schema_version": None,
             "exported_at": None,
             "counts": {},
@@ -90,11 +95,18 @@ def validate_restore_backup_json(json_bytes):
     meta = payload.get("meta")
     if not _is_mapping(meta):
         errors.append("Missing or invalid 'meta' section.")
+        app_name = None
         export_schema_version = None
         exported_at = None
     else:
+        app_name = _non_empty_str(meta.get("app"))
         export_schema_version = meta.get("export_schema_version")
         exported_at = meta.get("exported_at")
+
+        if app_name and app_name != "SteadyPlan":
+            warnings.append(f"Export was created by '{app_name}'. Expected 'SteadyPlan'.")
+        elif not app_name:
+            warnings.append("Export is missing meta.app (app name).")
 
         if export_schema_version is None:
             errors.append("Missing meta.export_schema_version.")
@@ -107,6 +119,18 @@ def validate_restore_backup_json(json_bytes):
             errors.append("Missing meta.exported_at.")
         elif _parse_iso_timestamp(exported_at) is None:
             errors.append("Invalid meta.exported_at (must be ISO-8601 timestamp).")
+        else:
+            dt = _parse_iso_timestamp(exported_at)
+            if dt is not None:
+                now = datetime.now(dt.tzinfo) if dt.tzinfo is not None else datetime.now()
+                try:
+                    age_days = (now - dt).days
+                except Exception:
+                    age_days = None
+                if age_days is not None and age_days >= STALE_EXPORT_WARNING_DAYS:
+                    warnings.append(
+                        f"Export is {age_days} days old. Restore will work, but any newer changes will be lost."
+                    )
 
     required_top = [
         "assumptions",
@@ -696,6 +720,7 @@ def validate_restore_backup_json(json_bytes):
 
     return {
         "valid": len(errors) == 0,
+        "app": app_name if isinstance(meta, dict) else None,
         "export_schema_version": export_schema_version if isinstance(meta, dict) else None,
         "exported_at": exported_at if isinstance(meta, dict) else None,
         "counts": counts,

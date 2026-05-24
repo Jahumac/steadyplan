@@ -271,6 +271,9 @@
     These are whole-instance SQLite backups (a copy of the database for all users) stored under <code>data/backups</code> inside the app data directory (in Docker: <code>/app/data/backups</code>).
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
+    This tool backs up <code>finance.db</code> only. For full instance recovery, back up the whole app data directory (including <code>secret_key.txt</code> and <code>backups/</code>) with your normal server backups.
+  </p>
+  <p class="helper-text" style="margin-top:0.5rem;">
     On Docker/Unraid, this lives inside your host-mounted appdata path. Include it in your wider server backup routine — a backup sitting on the same disk/share is useful, but it isn’t a full disaster-recovery plan by itself.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
@@ -413,6 +416,9 @@
   <p class="helper-text" style="margin-top:0.5rem;">
     It does not include other users, server-level secrets, or whole-instance database backups. Keep the downloaded file private — it contains financial data.
   </p>
+  <p class="helper-text" style="margin-top:0.5rem;">
+    This export does not include your login password.
+  </p>
 </section>
 
 <section class="panel mt-1">
@@ -424,6 +430,9 @@
   </div>
   <p class="helper-text">
     Upload a JSON export file to validate it for restore. Validation does not change your data.
+  </p>
+  <p class="helper-text" style="margin-top:0.5rem;">
+    Restore replaces this user's data only. It does not change your username or password.
   </p>
   <form method="post" action="/settings/restore/validate" enctype="multipart/form-data" style="margin:0.75rem 0 0 0;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -450,6 +459,10 @@
           <tr>
             <td>Exported at</td>
             <td class="num">{{ restore_check_result.exported_at if restore_check_result.exported_at else '—' }}</td>
+          </tr>
+          <tr>
+            <td>Export app</td>
+            <td class="num">{{ restore_check_result.app if restore_check_result.app else '—' }}</td>
           </tr>
         </tbody>
       </table>
@@ -494,11 +507,11 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="restore_token" value="{{ restore_token }}">
             <label class="text-sm" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-              <input type="checkbox" name="confirm_replace" value="1">
+              <input type="checkbox" name="confirm_replace" value="1" required>
               <span>I understand this will overwrite all data for this user</span>
             </label>
             <div style="margin-top:0.6rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-              <input type="text" name="confirm_phrase" class="input-standard" placeholder="Type RESTORE" style="max-width:12rem;text-transform:uppercase;">
+              <input type="text" name="confirm_phrase" class="input-standard" placeholder="Type RESTORE" autocomplete="off" required style="max-width:12rem;text-transform:uppercase;">
               <button type="submit" class="badge badge-danger">Restore (overwrites data)</button>
             </div>
           </form>

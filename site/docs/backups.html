@@ -42,6 +42,9 @@
         <p class="muted">
           On Unraid, that host mount is often under <code>/mnt/user/appdata/steadyplan</code> (or whatever path you chose).
         </p>
+        <p class="muted"></p>
+          The same data directory also contains <code>secret_key.txt</code> (used to keep sessions stable). Include it in your backups.
+        </p>
 
         <div class="hr"></div>
         <h2>Per-user JSON export (portable)</h2>
@@ -78,6 +81,15 @@
           <li>Download a fresh per-user JSON export for the user you’re about to affect</li>
           <li>Create a whole-instance SQLite backup</li>
         </ul>
+
+        <div class="hr"></div>
+        <h2>How to restore</h2>
+        <p class="muted">
+          Per-user restore happens inside the app via the JSON export/restore flow. It overwrites that user’s data, but does not change usernames/passwords.
+        </p>
+        <p class="muted">
+          Whole-instance recovery is a server/admin task: stop the container and restore your appdata directory (at minimum <code>finance.db</code> and <code>secret_key.txt</code>) from your backup.
+        </p>
 
         <div class="hr"></div>
         <p class="muted small" style="margin:0;">
