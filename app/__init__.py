@@ -122,7 +122,7 @@ def create_app():
         <a href="/login" class="badge">Go to login</a>
       </div>
       <p style="margin:0.9rem 0 0;color:var(--muted);font-size:0.9rem;">
-        Project: <a href="https://github.com/Jahumac/shelly-finance" rel="noopener noreferrer" target="_blank" style="color:var(--accent);">github.com/Jahumac/shelly-finance</a>
+        Project: <a href="https://github.com/Jahumac/steadyplan" rel="noopener noreferrer" target="_blank" style="color:var(--accent);">github.com/Jahumac/steadyplan</a>
       </p>
     </div>
   </main>

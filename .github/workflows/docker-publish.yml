@@ -9,7 +9,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  PRIMARY_IMAGE: ghcr.io/jahumac/steadyplan
+  LEGACY_IMAGE: ghcr.io/jahumac/shelly-finance
 
 jobs:
   build-and-push:
@@ -33,7 +34,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: |
+            ${{ env.PRIMARY_IMAGE }}
+            ${{ env.LEGACY_IMAGE }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}

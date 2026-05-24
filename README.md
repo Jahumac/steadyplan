@@ -4,7 +4,11 @@ A self-hosted personal finance cockpit for UK investors 🐢. Track your account
 
 Primary domain: **steadyplan.co.uk** (with **steady-plan.co.uk** as an optional redirect/secondary domain).
 
-Compatibility note: the GitHub repository and Docker image are still published under the historical `shelly-finance` name (e.g. `ghcr.io/jahumac/shelly-finance`) until a separate repo/package rename task.
+Primary GitHub repo: `https://github.com/Jahumac/steadyplan`
+
+Primary Docker image: `ghcr.io/jahumac/steadyplan:latest`
+
+Legacy image (during transition): `ghcr.io/jahumac/shelly-finance:latest`
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue) ![Flask](https://img.shields.io/badge/Flask-3.x-green) ![SQLite](https://img.shields.io/badge/SQLite-local-lightgrey) ![License](https://img.shields.io/badge/License-MIT-yellow)
 
@@ -181,11 +185,13 @@ FLASK_DEBUG=1 python run.py
 docker compose up -d
 ```
 
-This uses the published image: `ghcr.io/jahumac/shelly-finance:latest`.
+This uses the published image: `ghcr.io/jahumac/steadyplan:latest`.
 
 - The app runs on port **8000** by default.
 - Your database persists in the `data/` directory which is mounted as a volume.
 - Release builds also publish version tags (e.g. `:1.2.3`); `:latest` tracks `main`.
+
+Migration note: if you previously used the legacy image or a data folder named `shelly-finance`, you can keep the same host path mounted to `/app/data` so your database is reused.
 
 First boot:
 
@@ -208,7 +214,7 @@ ports:
 ### Developer option (build from source)
 
 ```bash
-docker compose --profile dev up -d shelly-dev
+docker compose --profile dev up -d steadyplan-dev
 ```
 
 The dev profile builds the image locally from the Dockerfile and runs it on port **8001** by default.

@@ -2,7 +2,11 @@
 
 SteadyPlan runs as a Docker container. Your data stays on your machine — nothing is sent to the cloud.
 
-Compatibility note: the Docker image is still published under the historical name `ghcr.io/jahumac/shelly-finance:latest` until a separate repo/package rename task.
+Primary Docker image: `ghcr.io/jahumac/steadyplan:latest`
+
+Legacy image (during transition): `ghcr.io/jahumac/shelly-finance:latest`
+
+Existing installs do not need to rename their data directory. The safest migration is to run the new container image against the same `/app/data` mount first.
 
 ## Network posture (recommended)
 - Safe default: run SteadyPlan on your home LAN or VPN only. Do not port-forward it to the public internet.
@@ -16,7 +20,7 @@ Compatibility note: the Docker image is still published under the historical nam
 ### Step 1 — Pull the image
 
 ```bash
-docker pull ghcr.io/jahumac/shelly-finance:latest
+docker pull ghcr.io/jahumac/steadyplan:latest
 ```
 
 ### Step 2 — Run the container
@@ -27,7 +31,7 @@ docker run -d \
   --restart unless-stopped \
   -p 8000:8000 \
   -v /path/to/steadyplan-data:/app/data \
-  ghcr.io/jahumac/shelly-finance:latest
+  ghcr.io/jahumac/steadyplan:latest
 ```
 
 Replace `/path/to/steadyplan-data` with wherever you want SteadyPlan to store its database. For example:
@@ -62,7 +66,7 @@ If you cloned this repo, you can use the included `docker-compose.yml`. Otherwis
 ```yaml
 services:
   steadyplan:
-    image: ghcr.io/jahumac/shelly-finance:latest
+    image: ghcr.io/jahumac/steadyplan:latest
     container_name: steadyplan
     ports:
       - "8000:8000"
@@ -87,17 +91,39 @@ Search for **SteadyPlan** in the Unraid Community Apps store and click Install. 
 
 If you're upgrading an existing install, you can keep your current data directory (for example `/mnt/user/appdata/shelly-finance`). No rename is required.
 
+### Migrating from `shelly-finance` (single-user transition)
+
+If your existing data folder is still named `/mnt/user/appdata/shelly-finance`, the safest migration is to keep that folder and simply run the new image against it first:
+
+1) Stop the old container (whatever it is named), but do not delete your appdata folder.
+
+2) Start the new container and map `/app/data` to the existing folder:
+
+```bash
+docker pull ghcr.io/jahumac/steadyplan:latest
+docker run -d \
+  --name steadyplan \
+  --restart unless-stopped \
+  -p 8000:8000 \
+  -v /mnt/user/appdata/shelly-finance:/app/data \
+  ghcr.io/jahumac/steadyplan:latest
+```
+
+3) Verify your data in the UI. Only remove the old container once you’re confident.
+
+Optional cleanup (later): copy `/mnt/user/appdata/shelly-finance` to `/mnt/user/appdata/steadyplan`, update the volume mapping, and keep the old folder as rollback until you’re sure.
+
 ### Manual install via SSH
 
 ```bash
 ssh root@YOUR_UNRAID_IP
-docker pull ghcr.io/jahumac/shelly-finance:latest
+docker pull ghcr.io/jahumac/steadyplan:latest
 docker run -d \
   --name steadyplan \
   --restart unless-stopped \
   -p 8000:8000 \
   -v /mnt/user/appdata/steadyplan:/app/data \
-  ghcr.io/jahumac/shelly-finance:latest
+  ghcr.io/jahumac/steadyplan:latest
 ```
 
 Then open **http://YOUR_UNRAID_IP:8000** in your browser.
@@ -150,7 +176,7 @@ If SteadyPlan sees `WEB_CONCURRENCY>1` with `RATELIMIT_STORAGE_URI=memory://`, i
 Pull the latest image and recreate the container:
 
 ```bash
-docker pull ghcr.io/jahumac/shelly-finance:latest
+docker pull ghcr.io/jahumac/steadyplan:latest
 docker stop steadyplan
 docker rm steadyplan
 docker run -d \
@@ -158,7 +184,7 @@ docker run -d \
   --restart unless-stopped \
   -p 8000:8000 \
   -v /path/to/steadyplan-data:/app/data \
-  ghcr.io/jahumac/shelly-finance:latest
+  ghcr.io/jahumac/steadyplan:latest
 ```
 
 Or with Docker Compose:
@@ -187,8 +213,8 @@ docker logs -f steadyplan
 If you prefer to build the image yourself rather than using the pre-built one:
 
 ```bash
-git clone https://github.com/Jahumac/shelly-finance.git
-cd shelly-finance
+git clone https://github.com/Jahumac/steadyplan.git
+cd steadyplan
 docker build -t steadyplan .
 docker run -d \
   --name steadyplan \

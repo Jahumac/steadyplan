@@ -224,7 +224,7 @@ function offlineHTML() {
     <h1>You're offline</h1>
     <p>For privacy, SteadyPlan doesn't store your financial pages for offline viewing. Connect to the internet to access your dashboard.</p>
     <p style="margin-top:0.5rem;font-size:0.9rem;">
-      <a href="https://github.com/Jahumac/shelly-finance" rel="noopener noreferrer" target="_blank" style="color:#38bdf8;">github.com/Jahumac/shelly-finance</a>
+      <a href="https://github.com/Jahumac/steadyplan" rel="noopener noreferrer" target="_blank" style="color:#38bdf8;">github.com/Jahumac/steadyplan</a>
     </p>
     <button onclick="location.reload()">Try Again</button>
   </div>

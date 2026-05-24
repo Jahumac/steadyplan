@@ -1,6 +1,6 @@
 services:
   steadyplan:
-    image: ghcr.io/jahumac/shelly-finance:latest
+    image: ghcr.io/jahumac/steadyplan:latest
     container_name: steadyplan
     ports:
       - "8000:8000"
