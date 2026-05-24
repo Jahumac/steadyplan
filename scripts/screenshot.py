@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-"""Take screenshots of Shelly pages at desktop and mobile widths.
+"""Take screenshots of SteadyPlan pages at desktop and mobile widths.
 
-Runs a headless Chromium via Playwright against a local Shelly instance,
+Runs a headless Chromium via Playwright against a local SteadyPlan instance,
 logs in, and dumps PNGs of every page listed in DEFAULT_PAGES at two
 viewports (desktop + mobile). Useful for visual-regression spot-checks
 after UI changes — run before and after a change and diff the folders.

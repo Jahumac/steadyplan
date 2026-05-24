@@ -94,7 +94,7 @@ def setup_healthy_user(app, new_user_id):
             "target_dev_pct": 0.90,
             "target_em_pct": 0.10,
             "emergency_fund_target": 3000,
-            "dashboard_name": "Shelly",
+            "dashboard_name": "SteadyPlan",
             "salary_day": 0,
             "update_day": 0,
             "retirement_date_mode": "birthday",
@@ -274,7 +274,7 @@ def test_overview_data_health_quiet_when_no_warnings(app, client, make_user):
             )
             conn.execute(
                 "INSERT OR IGNORE INTO assumptions (user_id, annual_growth_rate, retirement_age, current_age, retirement_goal_value, isa_allowance, lisa_allowance, dividend_allowance, target_dev_pct, target_em_pct, emergency_fund_target, dashboard_name, updated_at) "
-                "VALUES (?, 0.07, 65, 40, 1500000, 20000, 4000, 500, 0.9, 0.1, 3000, 'Shelly', datetime('now'))",
+                "VALUES (?, 0.07, 65, 40, 1500000, 20000, 4000, 500, 0.9, 0.1, 3000, 'SteadyPlan', datetime('now'))",
                 (uid,),
             )
             conn.execute(

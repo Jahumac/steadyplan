@@ -18,17 +18,17 @@ This policy intentionally omits `'unsafe-inline'`, thereby blocking all inline J
 The resolution involved a systematic migration of all inline JavaScript to external, CSP-compliant files:
 
 ### 3.1 Chart Initialization (`charts.js`)
-- **Centralized Logic**: Created a robust `DOMContentLoaded` listener in [charts.js](file:///Users/janusz/Documents/trae/shelly-finance/app/static/js/charts.js) that scans for specific canvas IDs.
-- **Data Transfer**: Updated templates ([overview.html](file:///Users/janusz/Documents/trae/shelly-finance/app/templates/overview.html), [accounts.html](file:///Users/janusz/Documents/trae/shelly-finance/app/templates/accounts.html), etc.) to pass data via `data-` attributes (e.g., `data-labels`, `data-values`).
+- **Centralized Logic**: Created a robust `DOMContentLoaded` listener in `app/static/js/charts.js` that scans for specific canvas IDs.
+- **Data Transfer**: Updated templates (e.g. `app/templates/overview.html`, `app/templates/accounts.html`) to pass data via `data-` attributes (e.g., `data-labels`, `data-values`).
 - **Interactive Support**: Moved logic for period switching (1D, 1M, ALL) and range pills into the external listener.
 
 ### 3.2 Feature Migration (`app.js`)
-- **Holdings Lookup**: Moved the instrument search and Yahoo Finance lookup logic from [holdings.html](file:///Users/janusz/Documents/trae/shelly-finance/app/templates/holdings.html) to [app.js](file:///Users/janusz/Documents/trae/shelly-finance/app/static/js/app.js).
-- **What-If Calculator**: Ported the complex client-side projection logic from [projections.html](file:///Users/janusz/Documents/trae/shelly-finance/app/templates/projections.html) to [app.js](file:///Users/janusz/Documents/trae/shelly-finance/app/static/js/app.js), utilizing data attributes for baseline metrics.
-- **Tag Management**: Migrated the account tag add/delete functionality to [app.js](file:///Users/janusz/Documents/trae/shelly-finance/app/static/js/app.js).
+- **Holdings Lookup**: Moved the instrument search and Yahoo Finance lookup logic from `app/templates/holdings.html` to `app/static/js/app.js`.
+- **What-If Calculator**: Ported the complex client-side projection logic from `app/templates/projections.html` to `app/static/js/app.js`, utilizing data attributes for baseline metrics.
+- **Tag Management**: Migrated the account tag add/delete functionality to `app/static/js/app.js`.
 
 ### 3.3 UI Restoration
-- **Bug Reporting**: Re-inserted the "Report a bug" button into the `badge-row` of the [holdings.html](file:///Users/janusz/Documents/trae/shelly-finance/app/templates/holdings.html) listing interface.
+- **Bug Reporting**: Re-inserted the "Report a bug" button into the `badge-row` of the `app/templates/holdings.html` listing interface.
 
 ## 4. Verification & Testing
 - **Chart Rendering**: Verified that Line, Doughnut, and specialized financial charts render correctly across all views.

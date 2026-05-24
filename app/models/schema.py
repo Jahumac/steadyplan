@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS assumptions (
     target_dev_pct REAL DEFAULT 0.90,
     target_em_pct REAL DEFAULT 0.10,
     emergency_fund_target REAL DEFAULT 3000,
-    dashboard_name TEXT DEFAULT 'Shelly',
+    dashboard_name TEXT DEFAULT 'SteadyPlan',
     auto_update_prices INTEGER DEFAULT 1,
     updated_at TEXT
 );
@@ -353,7 +353,7 @@ def _run_migrations(conn):
 
     # ── Legacy column additions (other tables) ───────────────────────────
     for col_sql in [
-        "ALTER TABLE assumptions ADD COLUMN dashboard_name TEXT DEFAULT 'Shelly'",
+        "ALTER TABLE assumptions ADD COLUMN dashboard_name TEXT DEFAULT 'SteadyPlan'",
         "ALTER TABLE assumptions ADD COLUMN retirement_goal_value REAL DEFAULT 1000000",
         "ALTER TABLE assumptions ADD COLUMN dividend_allowance REAL DEFAULT 500",
         "ALTER TABLE holdings ADD COLUMN holding_catalogue_id INTEGER",
@@ -424,7 +424,7 @@ def _run_migrations(conn):
                 target_dev_pct REAL DEFAULT 0.90,
                 target_em_pct REAL DEFAULT 0.10,
                 emergency_fund_target REAL DEFAULT 3000,
-                dashboard_name TEXT DEFAULT 'Shelly',
+                dashboard_name TEXT DEFAULT 'SteadyPlan',
                 updated_at TEXT
             )
         """)
@@ -450,7 +450,7 @@ def _run_migrations(conn):
                     COALESCE(target_dev_pct, 0.90),
                     COALESCE(target_em_pct, 0.10),
                     COALESCE(emergency_fund_target, 3000),
-                    COALESCE(dashboard_name, 'Shelly'),
+                    COALESCE(dashboard_name, 'SteadyPlan'),
                     updated_at
                 FROM assumptions
                 LIMIT 1
@@ -459,6 +459,17 @@ def _run_migrations(conn):
         conn.execute("ALTER TABLE assumptions_new RENAME TO assumptions")
         conn.execute(
             "INSERT INTO schema_migrations (name) VALUES ('v4_assumptions_multi_user')"
+        )
+
+    # ── Rename default dashboard name (SteadyPlan) ─────────────────────────
+    if not conn.execute(
+        "SELECT 1 FROM schema_migrations WHERE name = 'v10_dashboard_name_steadyplan'"
+    ).fetchone():
+        conn.execute(
+            "UPDATE assumptions SET dashboard_name = 'SteadyPlan' WHERE dashboard_name = 'Shelly'"
+        )
+        conn.execute(
+            "INSERT INTO schema_migrations (name) VALUES ('v10_dashboard_name_steadyplan')"
         )
 
     # ── monthly_reviews: fix UNIQUE(month_key) → UNIQUE(user_id, month_key) ─

@@ -145,7 +145,7 @@ def _projection_assumption_summary(assumptions, accounts, account_rows, metrics)
         "title": "Inflation",
         "lines": [
             "Projections are in nominal future pounds.",
-            "Shelly does not model inflation or convert to ‘today’s spending power’.",
+            "SteadyPlan does not model inflation or convert to ‘today’s spending power’.",
         ],
     })
 
@@ -185,7 +185,7 @@ def _projection_assumption_summary(assumptions, accounts, account_rows, metrics)
         "title": "Retirement spending",
         "lines": [
             "Retirement spending / drawdown is not modelled.",
-            "Shelly compares pot totals to targets, not lifetime retirement cashflow.",
+            "SteadyPlan compares pot totals to targets, not lifetime retirement cashflow.",
         ],
     })
 

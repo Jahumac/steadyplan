@@ -691,7 +691,7 @@ def api_ticker_lookup():
         current_app.logger.warning("lookup_instrument(%s) failed: %s", ticker, e)
 
     if not instrument:
-        return jsonify({"ok": False, "error": f"Shelly couldn't find '{ticker}' via live market data providers. Double-check the symbol or add manually instead."}), 404
+        return jsonify({"ok": False, "error": f"SteadyPlan couldn't find '{ticker}' via live market data providers. Double-check the symbol or add manually instead."}), 404
 
     price_gbp = instrument["price_gbp"]
     return jsonify({
@@ -1062,7 +1062,7 @@ def log_holding_as_isa_contribution(account_id, holding_id):
     """Log this holding's current value as an ISA contribution.
 
     Useful when a broker hands you a free share inside an ISA — the share
-    landed in your account but Shelly's allowance ledger doesn't know
+    landed in your account but the allowance ledger doesn't know
     about it because no cash was deposited. One click here records the
     value as a top-up against your £20k allowance.
     """

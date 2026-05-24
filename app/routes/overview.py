@@ -488,7 +488,7 @@ def overview():
     if not salary_day and raw_accounts:
         alerts.append({
             "kind": "info",
-            "message": "Set your investment day in Settings — it tells Shelly when to remind you to do your Monthly Update.",
+            "message": "Set your investment day in Settings — it tells SteadyPlan when to remind you to do your Monthly Update.",
             "cta_text": "Go to Settings",
             "cta_href": "/settings/?mode=edit",
             "cta_form_action": None,
@@ -543,15 +543,15 @@ def overview():
     if raw_accounts:
         if review_nudge:
             next_action = {
-                "eyebrow": "Shelly's next nudge",
+                "eyebrow": "Your next nudge",
                 "title": "Monthly update is ready",
-                "body": "A quick check keeps your history honest. Update balances, confirm contributions, then Shelly can draw the next little line.",
+                "body": "A quick check keeps your history honest. Update balances, confirm contributions, then SteadyPlan can draw the next little line.",
                 "cta_text": "Start monthly update",
                 "cta_href": "/monthly-review/",
             }
         elif not goals_data:
             next_action = {
-                "eyebrow": "Shelly's next nudge",
+                "eyebrow": "Your next nudge",
                 "title": "Give this money a destination",
                 "body": "A goal turns the dashboard from a pile of numbers into a plan. Retirement, emergency fund, house deposit — one target is enough to start.",
                 "cta_text": "Create a goal",
@@ -559,17 +559,17 @@ def overview():
             }
         elif not history_labels:
             next_action = {
-                "eyebrow": "Shelly's next nudge",
+                "eyebrow": "Your next nudge",
                 "title": "Save your first snapshot",
-                "body": "Complete one Monthly Update and Shelly will have a proper starting point for progress, performance, and projections.",
+                "body": "Complete one Monthly Update to create a proper starting point for progress, performance, and projections.",
                 "cta_text": "Do first update",
                 "cta_href": "/monthly-review/",
             }
         elif not salary_day:
             next_action = {
-                "eyebrow": "Shelly's next nudge",
+                "eyebrow": "Your next nudge",
                 "title": "Set your monthly rhythm",
-                "body": "Add your investment day so Shelly knows when the month is ready to review, instead of nudging at the wrong time.",
+                "body": "Add your investment day so SteadyPlan knows when the month is ready to review, instead of nudging at the wrong time.",
                 "cta_text": "Open settings",
                 "cta_href": "/settings/?mode=edit",
             }

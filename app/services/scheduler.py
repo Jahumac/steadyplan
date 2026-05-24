@@ -348,7 +348,7 @@ def _run_price_update_for_user(app, user_id, slot_name="auto"):
                             # NOTE: holdings.price sync is done AFTER this transaction via
                             # sync_holding_prices_from_catalogue which handles GBp/USD/EUR conversion.
                         else:
-                            current_app.logger.error(f"[Shelly] ✗ {result.get('ticker')}: {result.get('error')}")
+                            current_app.logger.error(f"[SteadyPlan] ✗ {result.get('ticker')}: {result.get('error')}")
 
                     summary["success_count"] = ok_count
                     summary["by_source"] = by_source
@@ -382,7 +382,7 @@ def _run_price_update_for_user(app, user_id, slot_name="auto"):
         return summary
 
     except Exception as e:
-        current_app.logger.error(f"[Shelly] Price update FAILED for user {user_id}: {e}")
+        current_app.logger.error(f"[SteadyPlan] Price update FAILED for user {user_id}: {e}")
         logger.error(f"Price update failed for user {user_id}: {e}")
         return None
 

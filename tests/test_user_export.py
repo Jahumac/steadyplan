@@ -116,7 +116,7 @@ def test_settings_export_json_download(app, client, make_user):
 
     dispo = resp.headers.get("Content-Disposition", "")
     assert "attachment" in dispo
-    assert re.search(r'filename="shelly-finance-export-\d{4}-\d{2}-\d{2}\.json"', dispo)
+    assert re.search(r'filename="steadyplan-export-\d{4}-\d{2}-\d{2}\.json"', dispo)
 
     payload = json.loads(resp.data.decode("utf-8"))
     assert payload["meta"]["export_schema_version"] == 1

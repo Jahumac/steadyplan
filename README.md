@@ -53,7 +53,7 @@ Import holdings directly from your broker's CSV export. Supported platforms:
 - **Interactive Investor** — portfolio snapshot
 - **Generic CSV** — flexible column matching for any other format
 
-Don't use any of these? Download the [CSV template](app/static/shelly-holdings-template.csv) and fill in your holdings manually.
+Don't use any of these? Download the [CSV template](app/static/steadyplan-holdings-template.csv) and fill in your holdings manually. (The legacy `shelly-holdings-template.csv` filename is kept as a compatibility alias.)
 
 ### Monthly Review
 A lightweight monthly check-in to keep your numbers fresh: update account balances, review expected contributions (confirm/skip), add an optional note, and mark the month reviewed.
@@ -227,7 +227,7 @@ See [DEPLOY.md](DEPLOY.md) for step-by-step instructions on deploying to Unraid 
 
 If your broker isn't listed, or you prefer to enter holdings manually in bulk:
 
-1. Download [`shelly-holdings-template.csv`](app/static/shelly-holdings-template.csv)
+1. Download [`steadyplan-holdings-template.csv`](app/static/steadyplan-holdings-template.csv)
 2. Fill in your holdings — one row per holding with: `name`, `ticker`, `units`, `price`, `value`
 3. Import using the **Generic CSV** option in Monthly Review
 
