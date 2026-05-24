@@ -49,13 +49,46 @@ def _backup_diagnostics():
     db_path = Path(current_app.config["DB_PATH"])
     data_dir = Path(current_app.config.get("DATA_DIR", db_path.parent))
     backups = list_backups(data_dir)
-    latest = backups[-1] if backups else None
+    latest = None
+    if backups:
+        def _sort_key(row):
+            try:
+                return datetime.fromisoformat(str(row.get("modified") or ""))
+            except Exception:
+                return datetime.min
+        latest = max(backups, key=_sort_key)
+    latest_age_days = None
+    health_status = "warning"
+    health_label = "Needs backup"
+    health_message = "No whole-instance SQLite backup found."
+    if latest and latest.get("modified"):
+        try:
+            modified_dt = datetime.fromisoformat(str(latest["modified"]))
+            now_dt = datetime.now()
+            age_seconds = max(0, (now_dt - modified_dt).total_seconds())
+            latest_age_days = int(age_seconds // (24 * 60 * 60))
+            if latest_age_days <= 7:
+                health_status = "good"
+                health_label = "OK"
+                health_message = f"OK — latest whole-instance SQLite backup is {latest_age_days} day{'s' if latest_age_days != 1 else ''} old."
+            else:
+                health_status = "warning"
+                health_label = "Needs backup"
+                health_message = f"Latest whole-instance SQLite backup is {latest_age_days} days old."
+        except Exception:
+            health_status = "warning"
+            health_label = "Needs backup"
+            health_message = "Whole-instance SQLite backup exists, but its age could not be determined."
     return {
         "count": len(backups),
         "latest": latest,
         "latest_name": latest["name"] if latest else None,
         "latest_modified": latest["modified"] if latest else None,
         "latest_size_human": _human_bytes(latest["size_bytes"]) if latest else None,
+        "latest_age_days": latest_age_days,
+        "health_status": health_status,
+        "health_label": health_label,
+        "health_message": health_message,
     }
 
 
@@ -580,7 +613,17 @@ def settings():
             diagnostics["backups"] = _backup_diagnostics()
         except Exception:
             current_app.logger.exception("Failed to load backup diagnostics")
-            diagnostics["backups"] = {"count": 0, "latest": None}
+            diagnostics["backups"] = {
+                "count": 0,
+                "latest": None,
+                "latest_name": None,
+                "latest_modified": None,
+                "latest_size_human": None,
+                "latest_age_days": None,
+                "health_status": "warning",
+                "health_label": "Needs backup",
+                "health_message": "Backup health could not be determined.",
+            }
 
     return render_template(
         "settings.html",
