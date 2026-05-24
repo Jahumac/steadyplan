@@ -2,6 +2,8 @@
 
 A self-hosted personal finance dashboard for UK investors 🐢. Track your accounts, holdings, budget, goals and retirement projections — hosted on your own server/home network.
 
+Shelly Finance is not affiliated with Shelly smart-home products.
+
 ![Python](https://img.shields.io/badge/Python-3.10+-blue) ![Flask](https://img.shields.io/badge/Flask-3.x-green) ![SQLite](https://img.shields.io/badge/SQLite-local-lightgrey) ![License](https://img.shields.io/badge/License-MIT-yellow)
 
 ---
@@ -22,6 +24,10 @@ It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, 
 - **Twelve Data API key is optional:** If `TWELVE_DATA_API_KEY` is not set, Shelly can still be used (manual balances, manual holdings values, and any Yahoo-backed lookups).
 - **If you want “air-gapped”:** You can run Shelly without any external price lookups by relying on manual balances / manual holdings values and avoiding ticker-based refreshes.
 - **Internet exposure:** Shelly is designed for home-network use. If you expose it beyond your LAN, use HTTPS behind a reverse proxy and add an extra auth layer (Authelia, OAuth proxy, basic auth, etc.).
+
+### Network posture (recommended)
+- Safe default: run Shelly on your home LAN or VPN only. Do not port-forward it to the public internet.
+- If you expose it publicly: put it behind HTTPS on a reverse proxy, enable production cookie settings, and add an extra auth layer.
 
 ---
 
@@ -103,7 +109,7 @@ Seed demo data (local Python):
 Seed demo data (Docker):
 
 ```bash
-docker exec -it finance-dashboard python scripts/seed_demo.py --username demo
+docker exec -it shelly python scripts/seed_demo.py --username demo
 ```
 
 Enable a public read-only demo login:
@@ -117,7 +123,7 @@ Enable a public read-only demo login:
 
 Shelly supports two complementary backup styles:
 
-1. **JSON export (per user)** — download from **Settings → Backup your data**. Best for portability (moving data between instances) and user-scoped restores.
+1. **JSON export (per user)** — download from **Settings → Download JSON export**. Best for portability (moving data between instances) and user-scoped restores.
 2. **Volume/SQLite backup (whole instance)** — back up the `data/` volume/directory that contains:
    - `finance.db` (your SQLite database)
    - `secret_key.txt` (Flask secret key; needed to keep sessions stable across restores)
@@ -167,7 +173,11 @@ FLASK_DEBUG=1 python run.py
 docker compose up -d
 ```
 
-The app runs on port **8001** by default (mapped to port 8000 inside the container). Your database persists in the `data/` directory which is mounted as a volume.
+This uses the published image: `ghcr.io/jahumac/shelly-finance:latest`.
+
+- The app runs on port **8000** by default.
+- Your database persists in the `data/` directory which is mounted as a volume.
+- Release builds also publish version tags (e.g. `:1.2.3`); `:latest` tracks `main`.
 
 First boot:
 
@@ -175,12 +185,25 @@ First boot:
 - The database file is created/used inside the mounted `data/` volume (`data/finance.db`).
 - `TWELVE_DATA_API_KEY` is optional — you can run Shelly without it.
 
+### What lives in `data/` (persistent)
+- `finance.db` — SQLite database (your data)
+- `secret_key.txt` — app secret (keep this with the DB so sessions stay stable across restores)
+- `backups/` — optional built-in SQLite backups created from **Settings → Diagnostics**
+
 To change the port, edit `docker-compose.yml`:
 
 ```yaml
 ports:
   - "9000:8000"   # host:container — change the left number
 ```
+
+### Developer option (build from source)
+
+```bash
+docker compose --profile dev up -d shelly-dev
+```
+
+The dev profile builds the image locally from the Dockerfile and runs it on port **8001** by default.
 
 ### Unraid / Home Server
 

@@ -2,6 +2,10 @@
 
 Shelly runs as a Docker container. Your data stays on your machine — nothing is sent to the cloud.
 
+## Network posture (recommended)
+- Safe default: run Shelly on your home LAN or VPN only. Do not port-forward it to the public internet.
+- If you expose it publicly: use HTTPS on a reverse proxy, enable production cookie settings, and add an extra auth layer.
+
 ---
 
 ## Option A — Docker (any machine)
@@ -48,7 +52,7 @@ First run notes:
 
 ## Option B — Docker Compose
 
-Create a `docker-compose.yml`:
+If you cloned this repo, you can use the included `docker-compose.yml`. Otherwise, create a minimal `docker-compose.yml`:
 
 ```yaml
 services:
