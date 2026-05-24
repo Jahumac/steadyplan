@@ -257,7 +257,6 @@ def test_alice_cannot_add_holding_to_bobs_account_via_holdings_route(app, client
                 "SELECT COUNT(*) AS c FROM holdings WHERE account_id = ?",
                 (two_users["bob"]["account"],),
             ).fetchone()["c"]
-
     resp = client.post(
         f"/holdings/{two_users['alice']['catalogue']}/add-to-account",
         data={"account_id": two_users["bob"]["account"], "units": "1", "price": "1.0"},
@@ -273,6 +272,130 @@ def test_alice_cannot_add_holding_to_bobs_account_via_holdings_route(app, client
                 (two_users["bob"]["account"],),
             ).fetchone()["c"]
     assert after == before
+
+
+def test_delete_user_removes_all_data_for_that_user(app, make_user):
+    from app.models.users import delete_user
+
+    admin_id, admin_u, admin_p = make_user(username="admin-del", password="password123", is_admin=True)
+    target_id, target_u, target_p = make_user(username="janusz-old", password="password123", is_admin=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            acc_id = conn.execute(
+                "INSERT INTO accounts (user_id, name, current_value, is_active) VALUES (?, 'Target ISA', 1234, 1)",
+                (target_id,),
+            ).lastrowid
+            cat_id = conn.execute(
+                "INSERT INTO holding_catalogue (user_id, holding_name, ticker, asset_type, bucket, is_active) "
+                "VALUES (?, 'Target instrument', 'TGT', 'ETF', 'Equities', 1)",
+                (target_id,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO holdings (account_id, holding_catalogue_id, holding_name, ticker, value, units, price) "
+                "VALUES (?, ?, 'Target instrument', 'TGT', 1234, 10, 123.4)",
+                (acc_id, cat_id),
+            )
+            bid = conn.execute(
+                "INSERT INTO budget_items (user_id, name, section, default_amount, is_active) "
+                "VALUES (?, 'Rent', 'fixed', 1000, 1)",
+                (target_id,),
+            ).lastrowid
+            conn.execute(
+                "INSERT OR IGNORE INTO budget_entries (month_key, budget_item_id, amount) VALUES ('2026-05', ?, 1000)",
+                (bid,),
+            )
+            conn.commit()
+
+    with app.app_context():
+        ok, err = delete_user(target_id)
+    assert ok is True, err
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            assert conn.execute("SELECT 1 FROM users WHERE id = ?", (target_id,)).fetchone() is None
+            assert conn.execute("SELECT 1 FROM accounts WHERE user_id = ?", (target_id,)).fetchone() is None
+            assert conn.execute("SELECT 1 FROM goals WHERE user_id = ?", (target_id,)).fetchone() is None
+            assert conn.execute("SELECT 1 FROM holding_catalogue WHERE user_id = ?", (target_id,)).fetchone() is None
+            assert conn.execute(
+                "SELECT 1 FROM holdings h JOIN accounts a ON a.id = h.account_id WHERE a.user_id = ?",
+                (target_id,),
+            ).fetchone() is None
+            assert conn.execute(
+                "SELECT 1 FROM budget_items WHERE user_id = ?",
+                (target_id,),
+            ).fetchone() is None
+            assert conn.execute(
+                "SELECT 1 FROM budget_entries WHERE budget_item_id NOT IN (SELECT id FROM budget_items)",
+            ).fetchone() is None
+            assert conn.execute("SELECT 1 FROM users WHERE id = ?", (admin_id,)).fetchone() is not None
+
+
+def test_delete_user_handles_legacy_holdings_foreign_key_without_cascade(app, make_user):
+    from app.models.users import delete_user
+
+    make_user(username="admin-del-legacy", password="password123", is_admin=True)
+    target_id, _, _ = make_user(username="legacy-user", password="password123", is_admin=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute("ALTER TABLE holdings RENAME TO holdings_old")
+            conn.execute(
+                """
+                CREATE TABLE holdings (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    account_id INTEGER NOT NULL,
+                    holding_catalogue_id INTEGER,
+                    holding_name TEXT NOT NULL,
+                    ticker TEXT,
+                    asset_type TEXT,
+                    bucket TEXT,
+                    value REAL DEFAULT 0,
+                    units REAL,
+                    price REAL,
+                    book_cost REAL,
+                    notes TEXT,
+                    FOREIGN KEY(account_id) REFERENCES accounts(id) ON DELETE RESTRICT,
+                    FOREIGN KEY(holding_catalogue_id) REFERENCES holding_catalogue(id) ON DELETE RESTRICT
+                )
+                """
+            )
+            conn.execute(
+                """
+                INSERT INTO holdings
+                    (id, account_id, holding_catalogue_id, holding_name, ticker, asset_type, bucket, value, units, price, book_cost, notes)
+                SELECT
+                    id, account_id, holding_catalogue_id, holding_name, ticker, asset_type, bucket, value, units, price, book_cost, notes
+                FROM holdings_old
+                """
+            )
+            conn.execute("DROP TABLE holdings_old")
+
+            acc_id = conn.execute(
+                "INSERT INTO accounts (user_id, name, current_value, is_active) VALUES (?, 'Legacy ISA', 1000, 1)",
+                (target_id,),
+            ).lastrowid
+            cat_id = conn.execute(
+                "INSERT INTO holding_catalogue (user_id, holding_name, ticker, asset_type, bucket, is_active) "
+                "VALUES (?, 'Legacy instrument', 'LEG', 'ETF', 'Equities', 1)",
+                (target_id,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO holdings (account_id, holding_catalogue_id, holding_name, ticker, value, units, price) "
+                "VALUES (?, ?, 'Legacy instrument', 'LEG', 1000, 10, 100)",
+                (acc_id, cat_id),
+            )
+            conn.commit()
+
+    with app.app_context():
+        ok, err = delete_user(target_id)
+    assert ok is True, err
 
 
 def test_alice_cannot_update_bobs_catalogue_item_via_route(app, client, two_users):

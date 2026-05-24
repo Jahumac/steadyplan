@@ -4,6 +4,7 @@ User CRUD + Flask-Login User class + bearer-token management for the
 JSON API. Tokens are stored in plaintext (acceptable for a self-hosted
 single-instance app where DB access already implies full compromise).
 """
+import sqlite3
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -110,48 +111,96 @@ def delete_user(user_id):
         if target["is_admin"] and admin_count <= 1:
             return False, "Cannot delete the only admin account."
 
-        # 1. Delete by user_id directly (most tables)
-        tables_with_user_id = [
-            "assumptions", "goals", "holding_catalogue", "monthly_reviews",
-            "budget_items", "budget_sections", "isa_contributions",
-            "pension_contributions", "dividend_records", "cgt_disposals",
-            "pension_carry_forward", "scheduler_runs", "portfolio_daily_snapshots",
-            "account_daily_snapshots", "custom_tags", "api_tokens", "debts"
-        ]
-        for table in tables_with_user_id:
-            conn.execute(f"DELETE FROM {table} WHERE user_id = ?", (user_id,))
-
-        # 2. Delete by account_id (tables linked to accounts)
-        # Fetch account IDs for this user
-        account_ids = [r["id"] for r in conn.execute(
-            "SELECT id FROM accounts WHERE user_id = ?", (user_id,)
-        ).fetchall()]
-        
-        if account_ids:
-            placeholders = ",".join(["?"] * len(account_ids))
-            tables_with_account_id = [
-                "holdings", "monthly_snapshots", "monthly_review_items",
-                "contribution_overrides"
-            ]
-            for table in tables_with_account_id:
+        def _table_exists(table):
+            return bool(
                 conn.execute(
-                    f"DELETE FROM {table} WHERE account_id IN ({placeholders})",
-                    account_ids
+                    "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+                    (table,),
+                ).fetchone()
+            )
+
+        def _table_has_column(table, column):
+            try:
+                cols = conn.execute(f"PRAGMA table_info({table})").fetchall()
+            except Exception:
+                return False
+            return any((r.get("name") == column) for r in (cols or []))
+
+        account_ids = []
+        if _table_exists("accounts") and _table_has_column("accounts", "user_id"):
+            account_ids = [
+                r["id"]
+                for r in conn.execute("SELECT id FROM accounts WHERE user_id = ?", (user_id,)).fetchall()
+            ]
+
+        placeholders = ",".join(["?"] * len(account_ids)) if account_ids else None
+
+        try:
+            if account_ids:
+                for table in [
+                    "monthly_review_items",
+                    "monthly_snapshots",
+                    "contribution_overrides",
+                    "account_daily_snapshots",
+                    "premium_bonds_prizes",
+                    "holdings",
+                ]:
+                    if not _table_exists(table) or not _table_has_column(table, "account_id"):
+                        continue
+                    conn.execute(
+                        f"DELETE FROM {table} WHERE account_id IN ({placeholders})",
+                        account_ids,
+                    )
+
+            if _table_exists("budget_entries") and _table_exists("budget_items") and _table_has_column("budget_items", "user_id"):
+                conn.execute(
+                    """
+                    DELETE FROM budget_entries
+                    WHERE budget_item_id IN (SELECT id FROM budget_items WHERE user_id = ?)
+                    """,
+                    (user_id,),
                 )
 
-        # 3. Special cases (nested links)
-        # budget_entries are linked to budget_items (already deleted above by user_id)
-        # but we should be thorough.
-        conn.execute("""
-            DELETE FROM budget_entries WHERE budget_item_id NOT IN (SELECT id FROM budget_items)
-        """)
+            for table in [
+                "isa_contributions",
+                "pension_contributions",
+                "dividend_records",
+                "cgt_disposals",
+                "pension_carry_forward",
+                "allowance_tracking",
+                "cash_flow_events",
+                "scheduler_runs",
+                "portfolio_daily_snapshots",
+                "custom_tags",
+                "api_tokens",
+                "budget_items",
+                "budget_sections",
+                "monthly_reviews",
+                "goals",
+                "assumptions",
+                "debts",
+                "holding_catalogue",
+            ]:
+                if not _table_exists(table) or not _table_has_column(table, "user_id"):
+                    continue
+                conn.execute(f"DELETE FROM {table} WHERE user_id = ?", (user_id,))
 
-        # 4. Finally delete the accounts and the user
-        conn.execute("DELETE FROM accounts WHERE user_id = ?", (user_id,))
-        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
-        
-        conn.commit()
-    return True, None
+            if _table_exists("budget_entries"):
+                conn.execute(
+                    "DELETE FROM budget_entries WHERE budget_item_id NOT IN (SELECT id FROM budget_items)"
+                )
+
+            if _table_exists("accounts") and _table_has_column("accounts", "user_id"):
+                conn.execute("DELETE FROM accounts WHERE user_id = ?", (user_id,))
+            conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+            conn.commit()
+            return True, None
+        except sqlite3.IntegrityError as e:
+            conn.rollback()
+            return False, f"Could not delete user due to a database foreign-key constraint: {e}"
+        except Exception:
+            conn.rollback()
+            raise
 
 
 
