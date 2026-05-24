@@ -398,6 +398,71 @@ def test_delete_user_handles_legacy_holdings_foreign_key_without_cascade(app, ma
     assert ok is True, err
 
 
+def test_admin_cannot_delete_current_logged_in_user_via_route(app, client, make_user):
+    from app.models import get_user_by_username
+
+    uid, username, password = make_user(username="admin-selfdel", password="password123", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.post(f"/users/{uid}/delete", data={"confirm_username": username}, follow_redirects=False)
+    assert resp.status_code in (301, 302)
+    assert "/users" in resp.headers.get("Location", "")
+    assert "You+cannot+delete+your+own+account" in resp.headers.get("Location", "")
+
+    with app.app_context():
+        assert get_user_by_username(username) is not None
+
+
+def test_admin_delete_requires_typing_username(app, client, make_user):
+    from app.models import get_user_by_username
+
+    admin_id, admin_u, admin_p = make_user(username="admin-del-ui", password="password123", is_admin=True)
+    target_id, target_u, target_p = make_user(username="janusz", password="password123", is_admin=False)
+    client.post("/login", data={"username": admin_u, "password": admin_p}, follow_redirects=False)
+
+    resp = client.post(
+        f"/users/{target_id}/delete",
+        data={"confirm_username": "wrong"},
+        follow_redirects=False,
+    )
+    assert resp.status_code in (301, 302)
+    loc = resp.headers.get("Location", "")
+    assert "/users" in loc
+    assert f"edit={target_id}" in loc
+
+    with app.app_context():
+        assert get_user_by_username(target_u) is not None
+
+
+def test_admin_delete_with_correct_username_deletes_target(app, client, make_user):
+    from app.models import get_user_by_username
+
+    admin_id, admin_u, admin_p = make_user(username="admin-del-ui-2", password="password123", is_admin=True)
+    target_id, target_u, target_p = make_user(username="janusz2", password="password123", is_admin=False)
+    client.post("/login", data={"username": admin_u, "password": admin_p}, follow_redirects=False)
+
+    resp = client.post(
+        f"/users/{target_id}/delete",
+        data={"confirm_username": target_u},
+        follow_redirects=False,
+    )
+    assert resp.status_code in (301, 302)
+    assert "/users" in resp.headers.get("Location", "")
+
+    with app.app_context():
+        assert get_user_by_username(target_u) is None
+
+
+def test_delete_user_refuses_to_delete_only_admin(app, make_user):
+    from app.models.users import delete_user
+
+    admin_id, admin_u, admin_p = make_user(username="only-admin", password="password123", is_admin=True)
+    with app.app_context():
+        ok, err = delete_user(admin_id)
+    assert ok is False
+    assert "only admin" in (err or "").lower()
+
+
 def test_alice_cannot_update_bobs_catalogue_item_via_route(app, client, two_users):
     _login_as(client, "alice")
     resp = client.post(

@@ -105,8 +105,27 @@
     <button type="submit" form="edit-user-form">Save changes</button>
     <a class="badge" href="/users">Cancel</a>
     {% if edit_user.id != current_user.id %}
+      <div class="panel mt-1" style="margin:0.9rem 0 0 0;">
+        <div class="text-sm" style="font-weight:700;">Deleting a user removes</div>
+        <ul style="margin:0.45rem 0 0 1.15rem;">
+          <li class="text-sm">Accounts and holdings</li>
+          <li class="text-sm">Goals and budgets</li>
+          <li class="text-sm">Monthly reviews</li>
+          <li class="text-sm">API tokens</li>
+          <li class="text-sm">Snapshots/history</li>
+        </ul>
+        <p class="helper-text" style="margin:0.6rem 0 0 0;">
+          This cannot be undone. Download a JSON export and/or create a whole-instance SQLite backup first.
+        </p>
+      </div>
       <form method="POST" action="/users/{{ edit_user.id }}/delete" class="form-reset">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label style="display:block;margin:0.9rem 0 0.6rem 0;">
+          <span class="text-sm" style="display:block;margin-bottom:0.35rem;">
+            Type <strong>{{ edit_user.username }}</strong> to confirm deletion
+          </span>
+          <input type="text" name="confirm_username" class="input-standard" autocomplete="off" required style="max-width:16rem;">
+        </label>
         <button type="submit" class="badge badge-danger"
           data-confirm="This will permanently remove {{ edit_user.username }} and all their data. This can't be undone."
           data-confirm-title="Delete {{ edit_user.username }}?"
@@ -115,6 +134,8 @@
           Delete user
         </button>
       </form>
+    {% else %}
+      <span class="helper-text">You cannot delete your own account while logged in.</span>
     {% endif %}
   </div>
 </section>
