@@ -8,6 +8,12 @@ Compatibility note: the GitHub repository and Docker image are still published u
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue) ![Flask](https://img.shields.io/badge/Flask-3.x-green) ![SQLite](https://img.shields.io/badge/SQLite-local-lightgrey) ![License](https://img.shields.io/badge/License-MIT-yellow)
 
+## Website
+
+- Static website source lives in `site/`
+- Intended deployment target: Cloudflare Pages (build: none, output directory: `site`)
+- Canonical product domain: **steadyplan.co.uk**
+
 ---
 
 ## Why SteadyPlan?

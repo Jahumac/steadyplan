@@ -1,0 +1,16 @@
+# Cloudflare Pages supports Netlify-style _redirects.
+#
+# Important:
+# - Keep redirects path-based and safe.
+# - Domain-level redirects (e.g. steady-plan.co.uk -> steadyplan.co.uk) should be configured in Cloudflare (Redirect Rules / Bulk Redirects),
+#   not here.
+
+/index.html           /                301
+
+# Canonical paths (avoid duplicate content / convenience)
+/docs                 /docs/            301
+/docs/index.html      /docs/            301
+/docs/install         /docs/install.html 301
+/docs/backups         /docs/backups.html 301
+/docs/reverse-proxy   /docs/reverse-proxy.html 301
+/docs/privacy         /docs/privacy.html 301
