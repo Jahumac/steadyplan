@@ -10,7 +10,7 @@
 # Canonical paths (avoid duplicate content / convenience)
 /docs                 /docs/            301
 /docs/index.html      /docs/            301
-/docs/install         /docs/install.html 301
-/docs/backups         /docs/backups.html 301
-/docs/reverse-proxy   /docs/reverse-proxy.html 301
-/docs/privacy         /docs/privacy.html 301
+
+# Do not redirect clean doc URLs (for example /docs/install) to .html files.
+# Cloudflare Pages serves extensionless URLs and may redirect .html back to the
+# clean path, so adding /docs/install -> /docs/install.html can create a loop.
