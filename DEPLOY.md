@@ -29,7 +29,7 @@ docker run -d \
 
 Replace `/path/to/shelly-data` with wherever you want Shelly to store its database. For example:
 - **Mac/Linux:** `~/shelly-data`
-- **Unraid:** `/mnt/user/appdata/shelly/data`
+- **Unraid:** `/mnt/user/appdata/shelly-finance`
 
 What each flag does:
 - `-d` — runs in the background
@@ -78,7 +78,7 @@ docker compose up -d
 
 ### From Community Apps (recommended)
 
-Search for **Shelly** in the Unraid Community Apps store and click Install. Set the data path to `/mnt/user/appdata/shelly/data` and pick your port.
+Search for **Shelly** in the Unraid Community Apps store and click Install. Set the data path to `/mnt/user/appdata/shelly-finance` and pick your port.
 
 ### Manual install via SSH
 
@@ -89,7 +89,7 @@ docker run -d \
   --name shelly \
   --restart unless-stopped \
   -p 8000:8000 \
-  -v /mnt/user/appdata/shelly/data:/app/data \
+  -v /mnt/user/appdata/shelly-finance:/app/data \
   ghcr.io/jahumac/shelly-finance:latest
 ```
 
