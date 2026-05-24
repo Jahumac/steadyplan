@@ -337,7 +337,7 @@ def budget_quick_add():
 def budget_import():
     """Import budget items and amounts from an uploaded .xlsx file.
 
-    Reads the Shelly export format:
+    Reads the SteadyPlan export format:
       Row 1: title
       Row 2: generated date
       Then repeating blocks of:
@@ -1099,7 +1099,7 @@ def budget_debts_export():
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from openpyxl.utils import get_column_letter
 
-    # ── Shelly style constants (match projections export) ────────────────────
+    # ── Style constants (match projections export) ──────────────────────────
     TEAL       = "0F766E"
     TEAL_LIGHT = "CCFBF1"
     RED_LIGHT  = "FEE2E2"
@@ -1159,7 +1159,7 @@ def budget_debts_export():
     ws = wb.active
     ws.title = "Summary"
 
-    c = ws.cell(row=1, column=1, value="Shelly Finance — Debt Tracker")
+    c = ws.cell(row=1, column=1, value="SteadyPlan — Debt Tracker")
     c.font = title_font
     ws.merge_cells("A1:H1")
 
@@ -1220,7 +1220,7 @@ def budget_debts_export():
             title_str = f"{d['name']} — {label}"
             if extra > 0:
                 title_str += f" (£{new_payment:,.2f}/mo)"
-            c = ws2.cell(row=1, column=1, value=f"Shelly Finance — {title_str}")
+            c = ws2.cell(row=1, column=1, value=f"SteadyPlan — {title_str}")
             c.font = title_font
             ws2.merge_cells("A1:E1")
             ws2.row_dimensions[1].height = 28

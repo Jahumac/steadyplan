@@ -1,7 +1,7 @@
 """
 Export routes — generates .xlsx downloads for Projections and Budget.
 
-Clean, professional styling with Shelly-themed headers and plain UK-formatted data.
+Clean, professional styling with consistent headers and plain UK-formatted data.
 """
 from datetime import date, datetime
 from io import BytesIO
@@ -151,7 +151,7 @@ def export_projections():
     _set_col_width(ws, 3, 18)
     _set_col_width(ws, 4, 24)
 
-    _title_cell(ws, 1, "Shelly Finance — Retirement Projections", 4)
+    _title_cell(ws, 1, "SteadyPlan — Retirement Projections", 4)
     cell = ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}")
     cell.font = _SUBTITLE_FONT
 
@@ -209,7 +209,7 @@ def export_projections():
 
     # ── Sheet 2: Year by year ─────────────────────────────────────────────────
     ws2 = wb.create_sheet("Year by Year")
-    _title_cell(ws2, 1, "Shelly Finance — Year-by-Year Projection", 3)
+    _title_cell(ws2, 1, "SteadyPlan — Year-by-Year Projection", 3)
     _header_row(ws2, 3, ["Age", "Year", "Projected Total"])
     _set_col_width(ws2, 1, 10)
     _set_col_width(ws2, 2, 10)
@@ -236,7 +236,7 @@ def export_projections():
 
     # ── Sheet 3: Month by month (total portfolio) ────────────────────────────
     ws3 = wb.create_sheet("Month by Month")
-    _title_cell(ws3, 1, "Shelly Finance — Monthly Projection", 3)
+    _title_cell(ws3, 1, "SteadyPlan — Monthly Projection", 3)
     _header_row(ws3, 3, ["Month", "Projected Total"])
     _set_col_width(ws3, 1, 16)
     _set_col_width(ws3, 2, 22)
@@ -307,7 +307,7 @@ def export_projections():
                 acc_total_contrib_fees += float(b.get("contribution_fee") or 0)
 
         max_cols = 9 if (has_annual_fees and has_contrib_fee) else (8 if has_annual_fees else (7 if has_contrib_fee else 6))
-        _title_cell(ws_acc, 1, f"Shelly Finance — {acc['name']}", max_cols)
+        _title_cell(ws_acc, 1, f"SteadyPlan — {acc['name']}", max_cols)
         sub = ws_acc.cell(row=2, column=1, value=f"{acc['wrapper_type']} · {acc.get('provider') or ''}")
         sub.font = _SUBTITLE_FONT
 
@@ -671,7 +671,7 @@ def export_budget():
     ws.title = f"Budget {month_key}"
     _write_budget_month_sheet(
         ws,
-        f"Shelly Finance — Budget for {month_label}",
+        f"SteadyPlan — Budget for {month_label}",
         db_sections,
         items,
         entry_map,
@@ -734,7 +734,7 @@ def _write_annual_summary_sheet(ws, months, month_labels, db_sections, items, mo
     _set_col_width(ws, total_col, 14)
     ws.column_dimensions["A"].hidden = True
 
-    _title_cell(ws, 1, "Shelly Finance — Annual Budget Summary", total_col)
+    _title_cell(ws, 1, "SteadyPlan — Annual Budget Summary", total_col)
     ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}").font = _SUBTITLE_FONT
     note = ws.cell(
         row=3,
@@ -841,14 +841,14 @@ def _write_annual_summary_sheet(ws, months, month_labels, db_sections, items, mo
 def _write_budget_export_guide_sheet(ws, start_year):
     _set_col_width(ws, 1, 110)
     ty_label = f"{start_year}/{str(start_year + 1)[-2:]}"
-    _title_cell(ws, 1, f"Shelly Finance — Export Guide (Tax Year {ty_label})", 1)
+    _title_cell(ws, 1, f"SteadyPlan — Export Guide (Tax Year {ty_label})", 1)
     ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}").font = _SUBTITLE_FONT
 
     lines = [
         "Workflow (recommended):",
         "1) Edit numbers in the monthly tabs (Apr … Mar). Use the Amount column — those are the inputs.",
         "2) The Summary tab is calculated from the month tabs. It updates automatically when you edit a month.",
-        "3) Investment Tracking shows (a) what your budget plans to contribute and (b) what you actually logged in Shelly (ISA/Pension top-ups).",
+        "3) Investment Tracking shows (a) what your budget plans to contribute and (b) what you actually logged in SteadyPlan (ISA/Pension top-ups).",
         "4) Rows marked as Outside take-home pay (e.g. cashback, salary sacrifice) are added back in Surplus so they don’t reduce take-home cashflow.",
         "",
         "If you click a cell in Summary and see something like ='May 2026'!$D$14:",
@@ -888,7 +888,7 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
     _set_col_width(ws, 15, 16)
 
     ty_label = f"{start_year}/{str(start_year + 1)[-2:]}"
-    _title_cell(ws, 1, f"Shelly Finance — Investment Tracking (Tax Year {ty_label})", 15)
+    _title_cell(ws, 1, f"SteadyPlan — Investment Tracking (Tax Year {ty_label})", 15)
     ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}").font = _SUBTITLE_FONT
 
     isa_allowance = float(assumptions["isa_allowance"]) if assumptions and assumptions.get("isa_allowance") else 20000.0
@@ -1368,7 +1368,7 @@ def export_budget_annual():
     for mk, label in zip(months, month_labels):
         ws = wb.create_sheet(label)
         active_overrides = fetch_all_active_overrides(mk, uid) or {}
-        _write_budget_month_sheet(ws, f"Shelly Finance — Budget for {label}", db_sections, items,
+        _write_budget_month_sheet(ws, f"SteadyPlan — Budget for {label}", db_sections, items,
                                   month_entry_maps[mk], item_id_col=True,
                                   linked_accounts=account_map,
                                   active_overrides=active_overrides)
@@ -1429,7 +1429,7 @@ def export_performance():
     _set_col_width(ws, 9, 16)
     _set_col_width(ws, 10, 18)
 
-    _title_cell(ws, 1, "Shelly Finance — Performance Report", 10)
+    _title_cell(ws, 1, "SteadyPlan — Performance Report", 10)
     cell = ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}")
     cell.font = _SUBTITLE_FONT
 
@@ -1519,7 +1519,7 @@ def export_performance():
         _set_col_width(ws_d, 5, 16)
         _set_col_width(ws_d, 6, 12)
 
-        _title_cell(ws_d, 1, f"Shelly Finance — {title}", 6)
+        _title_cell(ws_d, 1, f"SteadyPlan — {title}", 6)
         sub = ws_d.cell(row=2, column=1, value=f"Assumed growth: {assumed_rate*100:.1f}%")
         sub.font = _SUBTITLE_FONT
 

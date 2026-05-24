@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Budget Setup · Shelly{% endblock %}
+{% block title %}Budget Setup · SteadyPlan{% endblock %}
 {% block content %}
 
 {# Focused editor — no subnav, no month strip. Items are universal,
@@ -15,7 +15,7 @@
     <div>
       <p class="eyebrow">Budget Setup</p>
       <h2 class="hero-value">Edit your budget items</h2>
-      <p class="hero-subtitle">Add, rename, or remove the lines Shelly tracks. Items here apply to every month — to change a single month's amount, edit the figure directly on the Budget page.</p>
+      <p class="hero-subtitle">Add, rename, or remove budget lines. Items here apply to every month — to change a single month's amount, edit the figure directly on the Budget page.</p>
     </div>
     <div class="hero-turtle-wrap">
       <img src="{{ url_for('static', filename='icons/shelly/Budget.png') }}" alt="" class="hero-turtle">
@@ -149,29 +149,19 @@
       <input type="hidden" name="form_name" value="delete_section">
       <input type="hidden" name="section_key" value="{{ edit_key }}">
       <input type="hidden" name="month" value="{{ month_key }}">
-      <div class="badge-row mt-1"><button type="submit" class="button-danger" data-confirm="This will remove the section and everything in it. Shelly won't be able to bring it back." data-confirm-title="Delete this section?" data-confirm-ok="Yes, delete it" data-confirm-cancel="Keep it">Yes, delete section</button></div>
+      <div class="badge-row mt-1"><button type="submit" class="button-danger" data-confirm="This will remove the section and everything in it. This can't be undone." data-confirm-title="Delete this section?" data-confirm-ok="Yes, delete it" data-confirm-cancel="Keep it">Yes, delete section</button></div>
     </form>
   </div>
 </section>
 {% endif %}
 
 {# ── Section colour map (same as budget view) ───────────────────────────── #}
-{% set section_colors = {
-  'income': '--accent-2',
-  'fixed': '--accent',
-  'debt': '--accent-6',
-  'investment': '--accent-5',
-  'saving': '--accent-5',
-  'discretionary': '--accent-3'
-} %}
-
 {# ── Sections (same card style as budget view) ──────────────────────────── #}
 {% for group in grouped %}
-{% set sec_color = section_colors.get(group.key, '--accent-7') %}
-<section class="panel mb-1 budget-section-panel" style="--sec-color: var({{ sec_color }})">
+<section class="panel mb-1 budget-section-panel" data-sec="{{ group.key }}">
   <div class="section-header">
     <div>
-      <p class="eyebrow" style="color: var({{ sec_color }})">{{ group.key | replace('_', ' ') | upper }}</p>
+      <p class="eyebrow budget-section-eyebrow">{{ group.key | replace('_', ' ') | upper }}</p>
       <h3>{{ group.label }}</h3>
     </div>
     <div class="badge-row">
@@ -181,7 +171,7 @@
 
   {# Section description hints (same as budget view) #}
   {% if loop.first %}
-  <p class="helper-text helper-text-section">Your take-home pay and any side income — Shelly uses this to work out how much you've got to play with.</p>
+  <p class="helper-text helper-text-section">Your take-home pay and any side income — used to show how much is available to allocate.</p>
   {% elif 'debt' in group.key %}
   <p class="helper-text helper-text-section">Minimum payments and extra chunks you're throwing at debt — every pound here gets you closer to freedom.</p>
   {% elif 'invest' in group.key or 'saving' in group.key %}
@@ -189,7 +179,7 @@
   {% elif 'fixed' in group.key or 'expense' in group.key %}
   <p class="helper-text helper-text-section">The essentials — bills, rent, subscriptions. These tend to stay steady month to month.</p>
   {% elif 'discretionary' in group.key or 'variable' in group.key or 'personal' in group.key %}
-  <p class="helper-text helper-text-section">The flexible stuff — eating out, hobbies, shopping. Shelly won't judge, but he will keep count.</p>
+  <p class="helper-text helper-text-section">The flexible stuff — eating out, hobbies, shopping.</p>
   {% endif %}
 
   {% if group.rows %}
@@ -221,7 +211,7 @@
   </p>
   {% else %}
   <p class="budget-section-add-hint">
-    Nothing here yet — <a href="/budget/items/?mode=create&section={{ group.key }}&month={{ month_key }}" class="link-accent">+ Add an item</a> and Shelly will start tracking it.
+    Nothing here yet — <a href="/budget/items/?mode=create&section={{ group.key }}&month={{ month_key }}" class="link-accent">+ Add an item</a> to start tracking it.
   </p>
   {% endif %}
 </section>

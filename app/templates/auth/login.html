@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sign In · Shelly Finance</title>
+  <title>Sign in · SteadyPlan</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,15 +18,15 @@
       <div class="auth-brand-bg-dots"></div>
 
       <div class="auth-brand-logo">
-        <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="Shelly" class="auth-brand-icon turtle-bob">
+        <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="SteadyPlan" class="auth-brand-icon turtle-bob">
         <div class="auth-brand-name-block">
-          <span class="auth-brand-name">Shelly Finance</span>
+          <span class="auth-brand-name">SteadyPlan</span>
           <span class="auth-version-badge">v{{ version }}</span>
         </div>
       </div>
 
       <h1 class="auth-brand-headline">Slow and steady<br><span>wins the race.</span></h1>
-      <p class="auth-brand-sub">Your self-hosted personal finance dashboard. Track investments, plan for retirement, and keep your budget on track — your data stays on your own server/home network.</p>
+      <p class="auth-brand-sub">A self-hosted UK finance cockpit for long-term planning. Track investments, run retirement scenario estimates, and keep your budget on track — your data stays on your own server/home network.</p>
 
       <ul class="auth-brand-features">
         <li>Net worth &amp; investment tracking</li>
@@ -43,7 +43,7 @@
       <div class="auth-form-inner">
         <p class="eyebrow">Welcome back</p>
         <h2>Sign in</h2>
-        <p class="auth-hint">Shelly missed you. Let's see how the portfolio's doing.</p>
+        <p class="auth-hint">Pick up where you left off.</p>
 
         {% if error %}
           <div class="auth-error">{{ error }}</div>

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from '_macros.html' import hero_stat %}
-{% block title %}CSV Import Preview · Shelly{% endblock %}
+{% block title %}CSV Import Preview · SteadyPlan{% endblock %}
 {% block content %}
 
 <nav class="subnav">
@@ -13,7 +13,7 @@
     <div>
       <p class="eyebrow">CSV Import</p>
       <h2 class="hero-value">{{ platform_label }} Import</h2>
-      <p class="hero-subtitle">Shelly matched your CSV against existing holdings. Review what's below, tick the ones you want, and confirm.</p>
+      <p class="hero-subtitle">Matched your CSV against existing holdings. Review what's below, tick the ones you want, and confirm.</p>
     </div>
     <a href="{% if month_key %}/monthly-review/?month={{ month_key }}{% else %}/monthly-review/{% endif %}" class="badge">Cancel</a>
   </div>
@@ -52,7 +52,7 @@
     </div>
 
     {% if matched %}
-      <p class="helper-text">Shelly found these matches between your CSV and existing holdings. Tick the ones you want to update.</p>
+      <p class="helper-text">These match between your CSV and existing holdings. Tick the ones you want to update.</p>
       <div class="csv-import-table-wrap">
         <table class="csv-import-table">
           <thead>
@@ -125,7 +125,7 @@
       </div>
 
     {% else %}
-      <p class="helper-text">Shelly couldn't match anything. To match, your holdings need a ticker that appears in the CSV, or a name that closely matches.</p>
+      <p class="helper-text">Nothing matched. To match, your holdings need a ticker that appears in the CSV, or a name that closely matches.</p>
       {% if csv_headers %}
       <p class="helper-text mt-05">Columns detected in your CSV: <span class="import-ticker">{{ csv_headers | join(', ') }}</span></p>
       {% endif %}
@@ -143,7 +143,7 @@
         <h2>CSV Rows Without a Match</h2>
       </div>
     </div>
-    <p class="helper-text">Shelly spotted these in the CSV but couldn't match them to anything you're tracking. You can add them manually if needed.</p>
+    <p class="helper-text">These are in the CSV but couldn't be matched to anything you're tracking. You can add them manually if needed.</p>
     <div class="simple-list">
       {% for row in csv_only %}
         <div class="simple-list-item">
@@ -176,7 +176,7 @@
         <h2>Holdings Not Found in CSV</h2>
       </div>
     </div>
-    <p class="helper-text">These holdings weren't in the CSV, so Shelly's leaving them untouched.</p>
+    <p class="helper-text">These holdings weren't in the CSV, so they’ll be left untouched.</p>
     <div class="simple-list">
       {% for h in db_only %}
         <div class="simple-list-item">

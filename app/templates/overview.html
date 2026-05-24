@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from '_macros.html' import hero_stat, empty_state %}
-{% block title %}Overview · Shelly{% endblock %}
+{% block title %}Overview · SteadyPlan{% endblock %}
 {% block content %}
 
 {# ── Onboarding state ────────────────────────────────────────────────────── #}
@@ -21,16 +21,16 @@
     <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="" class="onboarding-turtle turtle-hello shelly-inline-icon shelly-icon-md">
     <div>
       <p class="eyebrow">Getting Started</p>
-      <h2 class="onboarding-title">Welcome to Shelly</h2>
+      <h2 class="onboarding-title">Welcome to SteadyPlan</h2>
     </div>
     <small class="text-muted onboarding-progress">{{ steps_done }}/4 complete</small>
   </div>
-  <p class="helper-text mb-075">Hey! I'm Shelly — your personal finance companion. I'll help you track your savings, investments and goals. Let's get you set up — it only takes a couple of minutes.</p>
+  <p class="helper-text mb-075">A calm place to track accounts, budgets and long-term plans — hosted on your own machine. Let’s set up the essentials.</p>
   <div class="onboarding-steps">
     <a href="/settings/?mode=edit" class="onboarding-step {% if has_profile %}onboarding-done{% endif %}">
       <span class="onboarding-check">{% if has_profile %}✓{% else %}1{% endif %}</span>
       <div>
-        <strong>Tell Shelly about yourself</strong>
+        <strong>Set up your profile</strong>
         <small>Date of birth, retirement age, investment day — so projections actually mean something.</small>
       </div>
     </a>
@@ -45,14 +45,14 @@
       <span class="onboarding-check">{% if has_goal %}✓{% else %}3{% endif %}</span>
       <div>
         <strong>Set a goal</strong>
-        <small>Give Shelly a target to aim for. Even a turtle needs a finish line.</small>
+        <small>Pick a target and track progress over time.</small>
       </div>
     </a>
     <a href="/monthly-review/" class="onboarding-step {% if has_history %}onboarding-done{% endif %}">
       <span class="onboarding-check">{% if has_history %}✓{% else %}4{% endif %}</span>
       <div>
         <strong>Complete your first Monthly Update</strong>
-        <small>This is how Shelly tracks your progress over time.</small>
+        <small>Lock in a month so history and allowances have something solid to use.</small>
       </div>
     </a>
   </div>
@@ -66,7 +66,7 @@
     <img src="{{ url_for('static', filename='icons/shelly/Budget.png') }}" alt="" class="shelly-inline-icon shelly-icon-sm">
     <div style="flex:1; min-width:200px;">
       <strong>It's your investment day</strong>
-      <p class="helper-text" style="margin:0.15rem 0 0;">Time to move your contributions — check the budget, then Shelly will be ready for your Monthly Update in a day or two once everything settles.</p>
+      <p class="helper-text" style="margin:0.15rem 0 0;">Time to move your contributions — check the budget, then do your Monthly Update in a day or two once everything settles.</p>
     </div>
     <a href="/budget/" class="badge badge-meta">Open budget</a>
   </div>
@@ -225,7 +225,7 @@
   {% if daily_labels | length == 0 %}
   <p class="helper-text mt-05">No daily snapshots yet — hit ↻ Refresh to save your first point.</p>
   {% elif daily_labels | length == 1 %}
-  <p class="helper-text mt-05">One snapshot so far — Shelly will draw a proper line once there are two days of data.</p>
+  <p class="helper-text mt-05">One snapshot so far — a line appears once there are two days of data.</p>
   {% endif %}
 
   {% if daily_labels | length < 2 and history_labels | length >= 2 %}
@@ -239,11 +239,11 @@
   </div>
   {% elif daily_labels | length < 2 and history_labels | length == 1 %}
   <p class="helper-text mt-1">
-    One snapshot down — slow and steady. Complete next month's update and Shelly will start drawing your trend line.
+    One snapshot down — slow and steady. Complete next month's update to start seeing a trend line.
   </p>
   {% elif daily_labels | length < 2 %}
   <p class="helper-text mt-1">
-    Complete your first Monthly Update and Shelly will start tracking your net worth. Remember: slow and steady wins the race.
+    Complete your first Monthly Update to start tracking net worth over time. Remember: slow and steady wins the race.
   </p>
   {% endif %}
 
@@ -354,7 +354,7 @@
       </a>
     {% else %}
       {{ empty_state('Nothing in the shell yet',
-                     'Every journey starts with a single step — even for a turtle. Add your first account and Shelly will start crunching the numbers.',
+                     'Every journey starts with a single step — even for a turtle. Add your first account to begin tracking.',
                      cta_text='+ Add your first account', cta_href='/accounts/?mode=create') }}
     {% endfor %}
   </div>

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from '_macros.html' import hero_stat, empty_state %}
-{% block title %}Goals · Shelly{% endblock %}
+{% block title %}Goals · SteadyPlan{% endblock %}
 {% block content %}
 
 <nav class="subnav subnav-goals">
@@ -32,7 +32,7 @@
     <div>
       <p class="eyebrow">Goals</p>
       <h2 class="hero-value">{{ goal_cards | length }} goal{{ 's' if goal_cards | length != 1 }}</h2>
-      <p class="hero-subtitle">Goals give Shelly something to aim for. Tag your accounts, set a target, and watch the progress bar crawl forward — turtle-style.</p>
+      <p class="hero-subtitle">Tag your accounts, set a target, and track progress over time.</p>
     </div>
     <div class="hero-turtle-wrap">
       <img src="{{ url_for('static', filename='icons/shelly/Goals.png') }}" alt="" class="hero-turtle">
@@ -102,7 +102,7 @@
 {% else %}
 <section class="card">
   {{ empty_state('No goals yet',
-                 'A turtle without a destination is just wandering. Set a goal, tag the right accounts, and Shelly will track your progress to the finish line.',
+                 'Set a goal, tag the right accounts, and track progress toward your target over time.',
                  cta_text='+ Create your first goal', cta_href='/goals/?mode=create') }}
 </section>
 {% endif %}

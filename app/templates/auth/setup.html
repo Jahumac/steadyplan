@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>First-Time Setup · Shelly Finance</title>
+  <title>First-time setup · SteadyPlan</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,15 +18,15 @@
       <div class="auth-brand-bg-dots"></div>
 
       <div class="auth-brand-logo">
-        <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="Shelly" class="auth-brand-icon turtle-wave">
+        <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="SteadyPlan" class="auth-brand-icon turtle-wave">
         <div class="auth-brand-name-block">
-          <span class="auth-brand-name">Shelly Finance</span>
+          <span class="auth-brand-name">SteadyPlan</span>
           <span class="auth-version-badge">v{{ version }}</span>
         </div>
       </div>
 
-      <h1 class="auth-brand-headline">Meet Shelly,<br><span>your finance turtle.</span></h1>
-      <p class="auth-brand-sub">You're one step away from having your own personal finance dashboard. Shelly tracks the numbers — you make the decisions. Slow and steady.</p>
+      <h1 class="auth-brand-headline">Slow and steady,<br><span>on your own server.</span></h1>
+      <p class="auth-brand-sub">You're one step away from your own self-hosted UK finance cockpit for long-term planning. Your data stays local, under your control.</p>
 
       <ul class="auth-brand-features">
         <li>Net worth &amp; investment tracking</li>
@@ -43,7 +43,7 @@
       <div class="auth-form-inner">
         <p class="eyebrow">First-time setup</p>
         <h2>Create your account</h2>
-        <p class="auth-hint">This will be the admin account — Shelly's keeper. You can add more users later from Settings.</p>
+        <p class="auth-hint">This will be the admin account. You can add more users later from Settings.</p>
 
         {% if error %}
           <div class="auth-error">{{ error }}</div>

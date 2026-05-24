@@ -1,6 +1,6 @@
-# Contributing to Shelly
+# Contributing to SteadyPlan
 
-Thanks for your interest in contributing! Shelly is a personal project shared with the community, and contributions are welcome.
+Thanks for your interest in contributing! SteadyPlan is a personal project shared with the community, and contributions are welcome.
 
 ## Reporting Issues
 
@@ -23,7 +23,7 @@ If you find a bug or have a feature request, please open a GitHub issue. Include
 
 ## Database Migrations
 
-Shelly uses SQLite with auto-migrations in `app/models.py` (`init_db()`). If your change adds a column or table, add a migration block following the existing pattern — check for the column/table first, then ALTER/CREATE if it doesn't exist. This keeps the upgrade path smooth for existing users.
+SteadyPlan uses SQLite with auto-migrations in `app/models.py` (`init_db()`). If your change adds a column or table, add a migration block following the existing pattern — check for the column/table first, then ALTER/CREATE if it doesn't exist. This keeps the upgrade path smooth for existing users.
 
 ## What Makes a Good Contribution
 
@@ -35,7 +35,7 @@ Shelly uses SQLite with auto-migrations in `app/models.py` (`init_db()`). If you
 
 ## What to Avoid
 
-- Adding external services or cloud dependencies (Shelly is local-first by design)
+- Adding external services or cloud dependencies (SteadyPlan is local-first by design)
 - Large refactors without discussion — open an issue first
 - Changes that break the single-file SQLite architecture
 

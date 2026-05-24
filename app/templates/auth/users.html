@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Users · Shelly{% endblock %}
+{% block title %}Users · SteadyPlan{% endblock %}
 
 {% block content %}
 
@@ -8,7 +8,7 @@
     <div>
       <p class="eyebrow">Admin</p>
       <h2 class="hero-value">{{ users | length }} user{{ 's' if users | length != 1 }}</h2>
-      <p class="hero-subtitle">Everyone who's allowed inside Shelly's shell</p>
+      <p class="hero-subtitle">Everyone who can access this instance</p>
     </div>
   </div>
 </section>
@@ -108,7 +108,7 @@
       <form method="POST" action="/users/{{ edit_user.id }}/delete" class="form-reset">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="badge badge-danger"
-          data-confirm="This will permanently remove {{ edit_user.username }} and all their data. Shelly can't undo this one."
+          data-confirm="This will permanently remove {{ edit_user.username }} and all their data. This can't be undone."
           data-confirm-title="Delete {{ edit_user.username }}?"
           data-confirm-ok="Yes, delete them"
           data-confirm-cancel="Keep them">

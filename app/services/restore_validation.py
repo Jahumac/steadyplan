@@ -37,7 +37,7 @@ def _is_number(x):
 
 
 def validate_restore_backup_json(json_bytes):
-    """Validate a Shelly Finance export payload for dry-run restore.
+    """Validate a SteadyPlan export payload for dry-run restore.
 
     Does not perform any database reads/writes.
     Returns a dict with:

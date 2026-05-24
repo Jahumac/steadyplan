@@ -91,7 +91,7 @@ def create_app():
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Offline · Shelly</title>
+  <title>Offline · SteadyPlan</title>
   <meta name="theme-color" content="#0f172a">
   <link rel="stylesheet" href="/static/css/styles.css">
 </head>
@@ -100,7 +100,7 @@ def create_app():
     <div class="site-header-row">
       <h1 class="site-logo">
         <img src="/static/icons/icon-192.png" alt="" class="site-logo-icon" aria-hidden="true">
-        <span>Shelly</span>
+        <span>SteadyPlan</span>
       </h1>
     </div>
     <nav>
@@ -109,7 +109,7 @@ def create_app():
   </header>
   <main class="page-shell">
     <div class="flash-msg flash-info">
-      <span>You’re offline — for privacy, Shelly doesn’t store your financial pages for offline viewing.</span>
+      <span>You’re offline — for privacy, SteadyPlan doesn’t store your financial pages for offline viewing.</span>
       <span></span>
     </div>
     <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1rem;">
@@ -188,11 +188,11 @@ def create_app():
         try:
             if current_user.is_authenticated:
                 assumptions = fetch_assumptions(current_user.id)
-                name = (assumptions["dashboard_name"] if assumptions else None) or "Shelly"
+                name = (assumptions["dashboard_name"] if assumptions else None) or "SteadyPlan"
             else:
-                name = "Shelly"
+                name = "SteadyPlan"
         except Exception:
-            name = "Shelly"
+            name = "SteadyPlan"
         return {"dashboard_name": name}
 
     @app.context_processor

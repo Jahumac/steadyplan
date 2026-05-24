@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from '_macros.html' import hero_stat %}
-{% block title %}Budget · Shelly{% endblock %}
+{% block title %}Budget · SteadyPlan{% endblock %}
 {% block content %}
 
 <nav class="subnav subnav-budget">
@@ -34,11 +34,11 @@
       <p class="eyebrow">Budget</p>
       <h2 class="hero-value">{{ month_label }}</h2>
       {% if is_inherited %}
-      <p class="hero-subtitle">Shelly carried everything forward from your last saved month — tweak any number to make this month your own.</p>
+      <p class="hero-subtitle">Carried forward from your last saved month — tweak any number to make this month your own.</p>
       {% elif sections | length == 0 %}
-      <p class="hero-subtitle">Your budget is a blank canvas! Hit <a href="/budget/items/" class="link-accent">Edit Budget</a> to tell Shelly what to track.</p>
+      <p class="hero-subtitle">Your budget is a blank canvas. Hit <a href="/budget/items/" class="link-accent">Edit Budget</a> to add items to track.</p>
       {% else %}
-      <p class="hero-subtitle">Here's where the money goes — Shelly keeps score so you don't have to.</p>
+      <p class="hero-subtitle">Here's where the money goes — this view keeps score so you don't have to.</p>
       {% endif %}
     </div>
     <div class="hero-turtle-wrap">
@@ -104,9 +104,9 @@
       £{{ '{:,.2f}'.format(section.total) }}
     </strong>
   </div>
-  {# Section-level Shelly hints #}
+  {# Section-level helper hints #}
   {% if loop.first %}
-  <p class="helper-text helper-text-section">Your take-home pay and any side income — Shelly uses this to work out how much you've got to play with.</p>
+  <p class="helper-text helper-text-section">Your take-home pay and any side income — used to show how much is available to allocate.</p>
   {% elif 'debt' in section.key %}
   <p class="helper-text helper-text-section">Minimum payments and extra chunks you're throwing at debt — every pound here gets you closer to freedom.</p>
   {% elif 'invest' in section.key or 'saving' in section.key %}
@@ -114,7 +114,7 @@
   {% elif 'fixed' in section.key or 'expense' in section.key %}
   <p class="helper-text helper-text-section">The essentials — bills, rent, subscriptions. These tend to stay steady month to month.</p>
   {% elif 'discretionary' in section.key or 'variable' in section.key or 'personal' in section.key %}
-  <p class="helper-text helper-text-section">The flexible stuff — eating out, hobbies, shopping. Shelly won't judge, but he will keep count.</p>
+  <p class="helper-text helper-text-section">The flexible stuff — eating out, hobbies, shopping.</p>
   {% endif %}
 
   {% if section.rows %}

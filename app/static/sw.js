@@ -1,5 +1,5 @@
 /**
- * Shelly — Service Worker
+ * SteadyPlan — Service Worker
  *
  * Strategy:
  *  - App shell (CSS, JS, icons): Cache-first with background revalidation
@@ -11,7 +11,7 @@
  * CSS/JS instead of running stale shell assets indefinitely.
  */
 
-const CACHE_NAME = 'shelly-cache-v5';
+const CACHE_NAME = 'steadyplan-cache-v1';
 
 /* App shell files to pre-cache on install */
 const APP_SHELL = [
@@ -193,7 +193,7 @@ function offlineHTML() {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0f172a">
-  <title>Offline · Shelly</title>
+  <title>Offline · SteadyPlan</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -222,7 +222,7 @@ function offlineHTML() {
   <div class="offline-card">
     <div class="offline-icon">🐢</div>
     <h1>You're offline</h1>
-    <p>For privacy, Shelly doesn't store your financial pages for offline viewing. Connect to the internet to access your dashboard.</p>
+    <p>For privacy, SteadyPlan doesn't store your financial pages for offline viewing. Connect to the internet to access your dashboard.</p>
     <p style="margin-top:0.5rem;font-size:0.9rem;">
       <a href="https://github.com/Jahumac/shelly-finance" rel="noopener noreferrer" target="_blank" style="color:#38bdf8;">github.com/Jahumac/shelly-finance</a>
     </p>

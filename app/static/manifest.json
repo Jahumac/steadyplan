@@ -1,7 +1,7 @@
 {
-  "name": "Shelly",
-  "short_name": "Shelly",
-  "description": "Personal finance dashboard",
+  "name": "SteadyPlan",
+  "short_name": "SteadyPlan",
+  "description": "Self-hosted UK finance cockpit for long-term planning",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

@@ -388,7 +388,7 @@ def _user_export_payload(user_id):
         "meta": {
             "exported_at": exported_at,
             "export_schema_version": 1,
-            "app": "Shelly Finance",
+            "app": "SteadyPlan",
         },
         "assumptions": dict(assumptions) if assumptions else {},
         "accounts": accounts,
@@ -468,7 +468,7 @@ def settings():
             "target_dev_pct": assumptions["target_dev_pct"] if assumptions else 0.90,
             "target_em_pct": assumptions["target_em_pct"] if assumptions else 0.10,
             "emergency_fund_target": assumptions["emergency_fund_target"] if assumptions else 3000,
-            "dashboard_name": request.form.get("dashboard_name", "Shelly").strip() or "Shelly",
+            "dashboard_name": request.form.get("dashboard_name", "SteadyPlan").strip() or "SteadyPlan",
             "salary_day": salary_day,
             "update_day": update_day,
             "retirement_date_mode": request.form.get("retirement_date_mode", "birthday"),
@@ -617,7 +617,7 @@ def run_backup_now():
 def export_user_data():
     payload = _user_export_payload(current_user.id)
     today = datetime.now(timezone.utc).date().isoformat()
-    filename = f"shelly-finance-export-{today}.json"
+    filename = f"steadyplan-export-{today}.json"
     body = json.dumps(payload, indent=2, ensure_ascii=False)
     resp = Response(body, mimetype="application/json")
     resp.headers["Content-Disposition"] = f'attachment; filename="{filename}"'

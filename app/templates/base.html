@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Shelly{% endblock %}</title>
+  <title>{% block title %}SteadyPlan{% endblock %}</title>
   <meta name="theme-color" content="#0f172a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Shelly">
+  <meta name="apple-mobile-web-app-title" content="SteadyPlan">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-180.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -85,7 +85,7 @@
   </nav>
   {% endif %}
 
-  {# ── Shelly confirmation modal ─────────────────────────────────────────── #}
+  {# ── Confirmation modal ────────────────────────────────────────────────── #}
   <div id="shelly-confirm" class="shelly-modal-overlay hidden" aria-hidden="true">
     <div class="shelly-modal">
       <div class="shelly-modal-icon"><img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="" class="shelly-inline-icon shelly-icon-lg"></div>

@@ -1,4 +1,4 @@
-/* app.js — Core client-side logic for Shelly Finance */
+/* app.js — Core client-side logic for SteadyPlan */
 
 (function() {
   /* ── CSRF Protection ─────────────────────────────────────────────── */
@@ -59,7 +59,7 @@
     return originalFetch.apply(this, args);
   };
 
-  /* ── Shelly confirm — replaces browser confirm() ─────────────────── */
+  /* ── Confirm modal — replaces browser confirm() ──────────────────── */
   // Elements are looked up lazily (script runs in <head>, body not yet parsed).
   var pendingResolve = null;
 
@@ -1411,7 +1411,7 @@
           var price = document.getElementById('cw-m-price').value.trim();
           var status= document.getElementById('cw-m-status');
           if (!name || !units || !price || parseFloat(units) <= 0 || parseFloat(price) <= 0) {
-            status.textContent = 'Shelly needs a name, units and price per unit.';
+            status.textContent = 'Please enter a name, units and price per unit.';
             return;
           }
           var value = (parseFloat(units) * parseFloat(price)).toFixed(2);
@@ -1491,7 +1491,7 @@
       var createBtn = document.getElementById('cw-create-btn');
       if (createBtn) {
         createBtn.addEventListener('click', function() {
-          createBtn.textContent = 'Shelly\'s setting things up…';
+          createBtn.textContent = 'Setting things up…';
           createBtn.disabled = true;
 
           var fd = new FormData();
@@ -1533,12 +1533,12 @@
 
                 if (pendingHoldings.length > 0) {
                   title.textContent = accName + ' is live!';
-                  msg.textContent = 'Shelly\'s got ' + accName + ' all set up with ' +
+                  msg.textContent = accName + ' is set up with ' +
                     pendingHoldings.length + (pendingHoldings.length === 1 ? ' holding' : ' holdings') +
                     '. He\'s already crunching the numbers — check your dashboard to see how things are shaping up.';
                 } else {
                   title.textContent = 'You\'re all set!';
-                  msg.textContent = 'Shelly\'s got ' + accName + ' tucked away safe and sound. He\'s already keeping an eye on it — you\'ll see it on your dashboard and in your projections straight away. Go on, have a look.';
+                  msg.textContent = accName + ' is ready. You\'ll see it on your dashboard and in projections straight away.';
                 }
                 goTo(6, 'forward');
               });
@@ -1575,12 +1575,12 @@
       var prevTotal       = document.getElementById('cw-prev-total');
 
       var CFG = {
-        'Stocks & Shares ISA':       { cat: 'ISA',     bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly contribution', hint: 'How much do you put into this ISA each month? Even a rough figure helps Shelly map out your future.' },
+        'Stocks & Shares ISA':       { cat: 'ISA',     bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly contribution', hint: 'How much do you put into this ISA each month? Even a rough figure helps with projections.' },
         'Cash ISA':                   { cat: 'ISA',     bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Monthly deposit', hint: 'How much do you stash away in this Cash ISA each month?' },
         'Lifetime ISA':               { cat: 'ISA',     bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in each month? The government tops it up with a lovely 25% bonus (up to £1,000/year).' },
-        'Premium Bonds':              { cat: 'Savings', bal: 'premium_bonds', showEmployer: false, method: null, personalLabel: 'Monthly purchase', hint: 'How much do you usually add to Premium Bonds each month? Shelly tracks your prize draws and uses a gentle estimate for projections.' },
+        'Premium Bonds':              { cat: 'Savings', bal: 'premium_bonds', showEmployer: false, method: null, personalLabel: 'Monthly purchase', hint: 'How much do you usually add to Premium Bonds each month? Prize draws are tracked separately; projections use a gentle estimate.' },
         'SIPP':                       { cat: 'Pension', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in? Your provider claims 25% tax relief from HMRC automatically — free money, basically.' },
-        'Workplace Pension':          { cat: 'Pension', bal: 'manual',   showEmployer: true,  method: ['salary_sacrifice','relief_at_source'], methodDefault: 'salary_sacrifice', personalLabel: 'Your employee contribution', hint: 'How is your workplace pension set up? Pick the method first — Shelly will work out the rest.', methodHints: { salary_sacrifice: 'Contributions come out of your pay before tax — no further relief needed.', relief_at_source: 'You pay from net pay; your provider claims 20% tax relief from HMRC (e.g. NEST).' } },
+        'Workplace Pension':          { cat: 'Pension', bal: 'manual',   showEmployer: true,  method: ['salary_sacrifice','relief_at_source'], methodDefault: 'salary_sacrifice', personalLabel: 'Your employee contribution', hint: 'How is your workplace pension set up? Pick the method first, then fill in the amounts.', methodHints: { salary_sacrifice: 'Contributions come out of your pay before tax — no further relief needed.', relief_at_source: 'You pay from net pay; your provider claims 20% tax relief from HMRC (e.g. NEST).' } },
         'General Investment Account': { cat: 'Taxable', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly investment', hint: 'How much do you invest into this account each month?' },
         'Other':                      { cat: null,      bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Monthly contribution', hint: 'How much goes in each month, if anything? No pressure — you can always update this later.' }
       };
@@ -1676,7 +1676,7 @@
         }
         if (customRateHint) {
           customRateHint.textContent = w === 'Premium Bonds'
-            ? 'Premium Bonds do not pay guaranteed interest. Shelly uses this as a calm estimate only; NS&I can change the prize fund rate.'
+            ? 'Premium Bonds do not pay guaranteed interest. This is a calm estimate only; NS&I can change the prize fund rate.'
             : 'Enter as a percentage — 4.5 for 4.5%, 3.6 for 3.6%';
         }
 

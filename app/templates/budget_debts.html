@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from '_macros.html' import hero_stat, empty_state %}
-{% block title %}Debts · Shelly{% endblock %}
+{% block title %}Debts · SteadyPlan{% endblock %}
 {% block content %}
 
 <nav class="subnav subnav-budget">
@@ -80,7 +80,7 @@
   {# Progress bar #}
   {% if selected_debt.original_amount > 0 %}
   <div class="progress mb-05" role="progressbar">
-    <div class="progress-bar" style="width: {{ selected_debt.paid_off_pct | round(1) }}%; background: var(--accent-3);"></div>
+    <div class="progress-bar" data-pct="{{ selected_debt.paid_off_pct | round(1) }}" style="background: var(--accent-3);"></div>
   </div>
   <p class="helper-text mb-1">{{ '{:.1f}'.format(selected_debt.paid_off_pct) }}% paid off · £{{ '{:,.0f}'.format(selected_debt.original_amount - selected_debt.current_balance) }} cleared of £{{ '{:,.0f}'.format(selected_debt.original_amount) }}</p>
   {% endif %}
@@ -293,7 +293,7 @@
       <label>
         <span>First payment date <span style="color:var(--muted);font-weight:400;">optional</span></span>
         <input type="date" name="start_date" value="{{ selected_debt.start_date or '' }}">
-        <small class="form-hint">Set this and Shelly calculates the current balance automatically — no manual updates needed.</small>
+        <small class="form-hint">Set this to calculate the current balance automatically — no manual updates needed.</small>
       </label>
       <label>
         <span>Manual balance override (£) <span style="color:var(--muted);font-weight:400;">optional</span></span>
@@ -343,7 +343,7 @@
       <h3>Work out your monthly payment</h3>
     </div>
   </div>
-  <p class="helper-text mb-075">Got a 0% credit card or buy-now-pay-later deal? Enter the balance and how many months you have — Shelly tells you what to pay each month to clear it before interest kicks in.</p>
+  <p class="helper-text mb-075">Got a 0% credit card or buy-now-pay-later deal? Enter the balance and how many months you have to see what to pay each month to clear it before interest kicks in.</p>
   <div class="settings-form" style="max-width:420px;">
     <div class="form-grid">
       <label>
@@ -398,7 +398,7 @@
       <label>
         <span>First payment date <span style="color:var(--muted);font-weight:400;">recommended</span></span>
         <input type="date" name="start_date">
-        <small class="form-hint">Shelly calculates your current balance automatically and updates it each month.</small>
+        <small class="form-hint">Automatically calculates your current balance and updates it each month.</small>
       </label>
       <label>
         <span>Current balance (£) <span style="color:var(--muted);font-weight:400;">if no start date</span></span>
@@ -438,7 +438,7 @@
 
     {% if d.original_amount > 0 and d.paid_off_pct > 0 %}
     <div class="progress mb-025" role="progressbar">
-      <div class="progress-bar" style="width: {{ d.paid_off_pct | round(1) }}%; background: var(--accent-3);"></div>
+      <div class="progress-bar" data-pct="{{ d.paid_off_pct | round(1) }}" style="background: var(--accent-3);"></div>
     </div>
     <small>{{ '{:.1f}'.format(d.paid_off_pct) }}% paid off · £{{ '{:,.0f}'.format(d.current_balance) }} left</small>
     {% else %}
@@ -466,7 +466,7 @@
 {% else %}
 <section class="card mb-1">
   {{ empty_state('No debts tracked',
-                 'Add a loan, credit card or any other debt and Shelly will tell you exactly when you\'ll be free — and how much faster you could get there.',
+                 'Add a loan, credit card or any other debt to see a payoff date and how overpayments change it.',
                  cta_text='+ Add your first debt', cta_href='/budget/debts/?mode=create') }}
 </section>
 {% endif %}

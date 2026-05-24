@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from '_macros.html' import hero_stat, empty_state %}
-{% block title %}Instruments · Shelly{% endblock %}
+{% block title %}Instruments · SteadyPlan{% endblock %}
 {% block content %}
 {% set page_mode = request.args.get('mode', 'list') %}
 
@@ -13,7 +13,7 @@
     <div>
       <p class="eyebrow">Instruments</p>
       <h2 class="hero-value">{{ instruments_in_use | length }} in use</h2>
-      <p class="hero-subtitle">Shelly's master list — every ETF, fund, and pension across all your accounts</p>
+      <p class="hero-subtitle">A master list — every ETF, fund, and pension across all your accounts</p>
     </div>
     <div class="hero-turtle-wrap">
       <img src="{{ url_for('static', filename='icons/shelly/Accounts.png') }}" alt="" class="hero-turtle">
@@ -109,7 +109,7 @@
   </div>
   {% else %}
   {{ empty_state('No instruments yet',
-                 "This is where Shelly keeps the master list. Add holdings to your accounts and they'll appear here — one tidy view of everything you own.",
+                 "This is the master list. Add holdings to your accounts and they'll appear here — one tidy view of everything you own.",
                  cta_text='Go to Accounts', cta_href='/accounts/') }}
   {% endif %}
 </section>
@@ -123,7 +123,7 @@
       <h3>Search by ticker</h3>
     </div>
   </div>
-  <p class="helper-text mt-05">Type a ticker (e.g. VWRP, 0P00013P6I.L) and Shelly will fetch it live from market data providers.</p>
+  <p class="helper-text mt-05">Type a ticker (e.g. VWRP, 0P00013P6I.L) to fetch live price data.</p>
 
   <div class="instrument-search-bar">
     <input type="text" id="instrument-search-input" placeholder="e.g. VWRP or SWDA" autocomplete="off" autocapitalize="characters">
@@ -135,7 +135,7 @@
 </section>
 {% else %}
 <section class="panel mb-1">
-  <p class="helper-text">Shelly wants to fetch live prices but needs <code>yfinance</code> installed first. Add it to your Docker image to unlock this feature.</p>
+  <p class="helper-text">Live price lookups need <code>yfinance</code> installed. Add it to your Docker image to unlock this feature.</p>
 </section>
 {% endif %}
 

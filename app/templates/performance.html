@@ -35,7 +35,7 @@
         {% endif %}
       {% else %}
         <h2 class="hero-value">No data yet</h2>
-        <p class="hero-subtitle">Complete two monthly reviews and Shelly will start drawing the lines</p>
+        <p class="hero-subtitle">Complete two monthly reviews to start seeing performance charts</p>
       {% endif %}
     </div>
     <div class="hero-turtle-wrap">
@@ -61,7 +61,7 @@
 {% if not has_data %}
 <section class="card">
   {{ empty_state('Not enough data yet',
-                 'Even Shelly needs at least two data points to draw a line. Complete two monthly reviews and the performance charts will appear — patience is a virtue.',
+                 'You need at least two data points to draw a line. Complete two monthly reviews and the performance charts will appear.',
                  cta_text='Go to Monthly Update', cta_href='/monthly-review/') }}
 </section>
 

@@ -20,7 +20,7 @@
       {# ── Step 1 · The basics ────────────────────────────────────── #}
       <div class="cw-panel cw-visible" data-cw="1">
         <h3 class="cw-title">What's this account called?</h3>
-        <p class="cw-hint">Every penny needs a home. Give Shelly a name for this one, tell him who it's with and what kind of wrapper it sits in — he'll take it from there.</p>
+        <p class="cw-hint">Every penny needs a home. Name the account, set the provider and wrapper type, and you're ready to go.</p>
         <div class="cw-template-grid" aria-label="Account templates">
           <button type="button" class="cw-template" data-cw-template="stocks_isa">
             <strong>Stocks &amp; Shares ISA</strong>
@@ -93,7 +93,7 @@
       {# ── Step 2 · Balance & Growth ──────────────────────────────── #}
       <div class="cw-panel" data-cw="2">
         <h3 class="cw-title">How is this account valued?</h3>
-        <p class="cw-hint">Shelly needs to know how to track what this account is worth. If it holds investments, he can calculate the value from your holdings. Otherwise just tell him the balance and he'll keep things tidy.</p>
+        <p class="cw-hint">Choose how this account should be valued. If it holds investments, value can be calculated from holdings. Otherwise enter a manual balance.</p>
         <div class="form-grid">
           <label>
             <span>Balance method</span>
@@ -150,7 +150,7 @@
             </label>
           </div>
           <input type="hidden" name="annual_fee_pct" value="0">
-          <small class="form-hint text-muted block mt-05">All optional — Shelly combines annual fees into one effective rate. Contribution fee reduces each payment before it's invested.</small>
+          <small class="form-hint text-muted block mt-05">All optional — annual fees are combined into one effective rate. Contribution fee reduces each payment before it's invested.</small>
         </details>
         <div class="cw-actions">
           <button type="button" class="badge" data-cw-prev>Back</button>
@@ -161,7 +161,7 @@
       {# ── Step 3 · Holdings (only for holdings accounts) ─────────── #}
       <div class="cw-panel" data-cw="3">
         <h3 class="cw-title">What's in this account?</h3>
-        <p class="cw-hint">Tell Shelly what you're holding — search by ticker, or add funds manually if there's no ticker. Don't worry about getting every last one right now; you can always add more later.</p>
+        <p class="cw-hint">Add holdings (search by ticker, or add funds manually if there's no ticker). You can always add more later.</p>
 
         <div id="cw-holdings-list"></div>
         <p class="text-sm text-muted" id="cw-holdings-count" style="display:none;margin-bottom:0.75rem;"></p>
@@ -171,7 +171,7 @@
             <div class="add-holding-field">
               <label>Ticker</label>
               <input type="text" id="cw-h-ticker" class="input-standard" placeholder="e.g. VWRP" autocapitalize="characters" autocomplete="off">
-              <small class="form-hint">Shelly checks live market data providers and prefers the London Stock Exchange listing. If the price looks wrong, try adding .L to the ticker (e.g. VWRP.L).</small>
+              <small class="form-hint">Live price lookup prefers the London Stock Exchange listing. If the price looks wrong, try adding .L to the ticker (e.g. VWRP.L).</small>
             </div>
             <div class="add-holding-field">
               <label>Units</label>
@@ -236,7 +236,7 @@
       {# ── Step 4 · Contributions ─────────────────────────────────── #}
       <div class="cw-panel" data-cw="4">
         <h3 class="cw-title">Monthly contributions</h3>
-        <p class="cw-hint" id="cw-hint-contrib">How much goes into this account each month? Shelly uses this to project where you'll be at retirement — even a rough number helps.</p>
+        <p class="cw-hint" id="cw-hint-contrib">How much goes into this account each month? This is used for projections — even a rough number helps.</p>
 
         <label id="cw-method-field" style="display:none;">
           <span>Contribution method</span>
@@ -313,7 +313,7 @@
       {# ── Step 5 · Finishing touches ─────────────────────────────── #}
       <div class="cw-panel" data-cw="5">
         <h3 class="cw-title">Finishing touches</h3>
-        <p class="cw-hint">Nearly there! Tags help Shelly group this account with your goals — and the rest is totally optional. You can always tweak these later.</p>
+        <p class="cw-hint">Nearly there. Tags help group this account with your goals — the rest is optional. You can tweak these later.</p>
         <div class="form-grid">
           <label class="form-full-col">
             <span>Tags</span>
@@ -348,7 +348,7 @@
       <div class="cw-panel" data-cw="6">
         <div class="cw-success">
           <h3 class="cw-title" id="cw-success-title">You're all set!</h3>
-          <p class="cw-hint" id="cw-success-msg">Shelly's got your new account tucked away safe and sound. He's already keeping an eye on it — you'll see it on your dashboard and in projections straight away. Go on, have a look.</p>
+        <p class="cw-hint" id="cw-success-msg">Your new account is ready. You'll see it in Accounts and it will be included in projections straight away.</p>
           <div class="cw-success-actions">
             <a class="badge badge-accent" href="/accounts/">View your accounts</a>
             <a class="badge" href="/accounts/?mode=create">Add another account</a>

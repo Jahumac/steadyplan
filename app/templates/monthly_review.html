@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Monthly review · Shelly{% endblock %}
+{% block title %}Monthly review · SteadyPlan{% endblock %}
 {% block content %}
 
 <div class="monthly-review-container" data-month-key="{{ month_key }}" style="display:none"></div>
@@ -57,7 +57,7 @@
         <dialog id="confirm-complete-dialog" class="confirm-dialog">
           <div class="confirm-dialog-content">
             <h3>Mark {{ month_label }} reviewed?</h3>
-            <p>Shelly will snapshot updated account values for this month. Holdings snapshot from holdings; manual and Premium Bonds snapshot only if you updated their balance.</p>
+            <p>This will snapshot updated account values for this month. Holdings snapshot from holdings; manual and Premium Bonds snapshot only if you updated their balance.</p>
             {% if unupdated_manual_names %}
             <p class="helper-text" style="color: var(--accent-3);">⚠ {{ unupdated_manual_names | length }} manual account{{ 's' if unupdated_manual_names | length != 1 else '' }} haven't had their balance updated this month ({{ unupdated_manual_names | join(', ') }}).</p>
             {% endif %}
@@ -209,7 +209,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <p class="helper-text">No contributions to track this month. Set them up in <a href="/accounts/" class="link-accent">Accounts</a> and Shelly will list them here.</p>
+    <p class="helper-text">No contributions to track this month. Set them up in <a href="/accounts/" class="link-accent">Accounts</a> and they’ll appear here.</p>
   {% endif %}
 </section>
 
@@ -341,7 +341,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <p class="helper-text">No manual accounts to review this month. If you add any manual-value accounts, Shelly will prompt you to update them here.</p>
+    <p class="helper-text">No manual accounts to review this month. If you add any manual-value accounts, they’ll appear here.</p>
   {% endif %}
 </section>
 
@@ -434,7 +434,7 @@
       <button type="button" class="badge badge-meta" id="csv-import-toggle">Show</button>
     </div>
   </div>
-  <p class="helper-text">Got a lot of holdings to update? Shelly can read CSV exports from most UK brokers — or you can use his own template to update everything in one go.</p>
+  <p class="helper-text">Got a lot of holdings to update? SteadyPlan can read CSV exports from most UK brokers — or you can use the template to update everything in one go.</p>
   <div id="csv-import-panel" class="hidden">
     <form method="post" action="/monthly-review/import-csv" enctype="multipart/form-data" class="csv-upload-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

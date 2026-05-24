@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from '_macros.html' import hero_stat %}
-{% block title %}Settings · Shelly{% endblock %}
+{% block title %}Settings · SteadyPlan{% endblock %}
 {% block content %}
 {% set page_mode = request.args.get('mode', 'view') %}
 
@@ -33,7 +33,7 @@
     <div class="form-grid">
       <label class="form-full-col">
         <span>Dashboard name</span>
-        <input type="text" name="dashboard_name" value="{{ assumptions.dashboard_name if assumptions and assumptions.dashboard_name else 'Shelly' }}">
+        <input type="text" name="dashboard_name" value="{{ assumptions.dashboard_name if assumptions and assumptions.dashboard_name else 'SteadyPlan' }}">
         <small class="form-hint">Shown in the header on every page</small>
       </label>
       <label>
@@ -56,12 +56,12 @@
           <option value="higher" {{ 'selected' if tb == 'higher' }}>Higher rate (40%)</option>
           <option value="additional" {{ 'selected' if tb == 'additional' }}>Additional rate (45%)</option>
         </select>
-        <small class="form-hint">Shelly uses this to calculate pension tax relief and show what you can reclaim</small>
+        <small class="form-hint">Used to calculate pension tax relief and show what you can reclaim</small>
       </label>
       <label>
         <span>Date of birth</span>
         <input type="date" name="date_of_birth" value="{{ assumptions.date_of_birth if assumptions and assumptions.date_of_birth else '' }}">
-        <small class="form-hint">Shelly uses this to calculate your age automatically{% if computed_age %} — you're currently {{ computed_age }}{% endif %}</small>
+        <small class="form-hint">Used to calculate your age automatically{% if computed_age %} — you're currently {{ computed_age }}{% endif %}</small>
       </label>
       <label>
         <span>Retirement age</span>
@@ -75,7 +75,7 @@
           <option value="end_of_year" {{ 'selected' if rdm == 'end_of_year' }}>End of the calendar year</option>
           <option value="end_of_tax_year" {{ 'selected' if rdm == 'end_of_tax_year' }}>End of the tax year (5 April)</option>
         </select>
-        <small class="form-hint">When Shelly should count you as "retired" — affects projections and years-to-go</small>
+        <small class="form-hint">When you should be counted as "retired" — affects projections and years-to-go</small>
       </label>
       <label>
         <span>ISA allowance</span>
@@ -115,7 +115,7 @@
       <label class="form-full-col" style="border-top:1px solid var(--border); padding-top:1rem; margin-top:0.5rem;">
         <input type="checkbox" name="auto_update_prices" value="1" id="auto-update-toggle" {{ 'checked' if not assumptions or assumptions.auto_update_prices != 0 else '' }}>
         <span style="font-weight:600; font-size:0.95rem;">Auto-update portfolio prices</span>
-        <small class="form-hint" style="margin-top:-0.25rem;">Shelly will automatically fetch fresh prices at the times below (UK time)</small>
+        <small class="form-hint" style="margin-top:-0.25rem;">Automatically fetch fresh prices at the times below (UK time)</small>
       </label>
       <div id="update-times-row" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; padding-left:1.5rem;">
         <label>
@@ -132,7 +132,7 @@
 
       <label class="form-full-col" style="border-top:1px solid var(--border); padding-top:1rem; margin-top:0.5rem;">
         <span style="font-weight:600; font-size:0.95rem;">Monthly Update Timing</span>
-        <small class="form-hint" style="margin-top:-0.25rem;">Shelly uses this to calculate when your investments have settled and it's time to review</small>
+        <small class="form-hint" style="margin-top:-0.25rem;">Used to estimate when your investments have settled and it's time to review</small>
       </label>
       <label>
         <span>Investment day of month</span>
@@ -142,7 +142,7 @@
           <option value="{{ d }}" {{ 'selected' if assumptions and assumptions.salary_day == d }}>{{ d }}{{ 'st' if d in [1,21,31] else ('nd' if d in [2,22] else ('rd' if d in [3,23] else 'th')) }}</option>
           {% endfor %}
         </select>
-        <small class="form-hint">The day your ISA contributions and standing orders go out — usually when your salary arrives or a day after. Shelly will figure out settlement times and weekends automatically.</small>
+        <small class="form-hint">The day your ISA contributions and standing orders go out — usually when your salary arrives or a day after. Settlement timing accounts for weekends automatically.</small>
       </label>
     </div>
     <div class="badge-row mt-1">
@@ -316,8 +316,8 @@
   <div class="hero-top">
     <div>
       <p class="eyebrow">Settings</p>
-      <h2 class="hero-value" style="font-size:2rem;">{{ assumptions.dashboard_name if assumptions and assumptions.dashboard_name else 'Shelly' }}</h2>
-      <p class="hero-subtitle">The numbers Shelly uses behind the scenes — growth rates, ages, and allowances</p>
+      <h2 class="hero-value" style="font-size:2rem;">{{ assumptions.dashboard_name if assumptions and assumptions.dashboard_name else 'SteadyPlan' }}</h2>
+      <p class="hero-subtitle">The numbers used behind the scenes — growth rates, ages, and allowances</p>
     </div>
     <div class="hero-turtle-wrap">
       <img src="{{ url_for('static', filename='icons/shelly/Settings.png') }}" alt="" class="hero-turtle">
@@ -348,7 +348,7 @@
     </div>
     <a class="badge badge-primary-action" href="/users">Manage users</a>
   </div>
-  <p class="helper-text">Control who gets to peek inside Shelly's shell. Add or remove user accounts here.</p>
+  <p class="helper-text">Control who can access this SteadyPlan instance. Add or remove user accounts here.</p>
 </section>
 {% endif %}
 
