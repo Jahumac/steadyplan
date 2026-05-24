@@ -4,13 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-05-24
+
 ### Added
+- SteadyPlan public website, install docs, and demo-data screenshots.
+- New primary Docker image: `ghcr.io/jahumac/steadyplan`.
 - User JSON backup/export in Settings and a hardened JSON restore flow (validate preview + explicit confirmation, transactional, current-user scoped).
 - Overview Data Health panel (read-only) for stale/missing inputs.
 - Monthly Review workflow (lightweight check-in with notes, contribution confirm/skip, and month completion snapshot).
 - Manual account balance update workflow for regular use/monthly review.
 
 ### Changed
+- Rebranded the project from Shelly Finance to SteadyPlan across the public app, documentation, Docker image, Unraid template, and repository metadata.
+- Renamed the GitHub repository to `Jahumac/steadyplan` and updated local quick-start instructions.
+- Updated screenshot tooling to prefer `STEADYPLAN_*` environment variables while retaining legacy `SHELLY_*` aliases.
+- Clarified the distinction between per-user JSON exports and whole-instance SQLite/appdata backups.
 - Projection copy frames projections as scenario estimates.
 - Monthly Review contribution copy uses “Confirmed” (does not imply a financial transaction was recorded).
 - Contribution truth hardening:
@@ -21,6 +29,13 @@ All notable changes to this project will be documented in this file.
   - Monthly Review completion avoids writing fresh snapshots for manual/Premium Bonds accounts unless their balance was updated in that review.
   - CSV holdings import marks touched accounts as holdings_updated for Monthly Review state.
   - Allowance POST routes reject wrong account types (ISA/pension/dividend).
+
+### Fixed
+- Backup/restore UX hardening: clearer preview metadata, stale export warnings, explicit destructive confirmation, and safer backup diagnostics copy.
+
+### Compatibility
+- Legacy `ghcr.io/jahumac/shelly-finance` image publishing remains in place for rollback/migration compatibility.
+- Existing appdata paths such as `/mnt/user/appdata/shelly-finance` can still be reused safely during migration.
 
 ## [1.8.0] - 2026-04-20
 
