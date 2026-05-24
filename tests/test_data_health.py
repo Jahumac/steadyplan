@@ -248,8 +248,13 @@ def test_settings_still_mentions_backup_restore(app, client, make_user):
     resp = client.get("/settings/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
+    assert "Data &amp; privacy" in html
+    assert "SteadyPlan stores your financial data locally in a SQLite database" in html
     assert "Download JSON export" in html
     assert "Validate a restore file" in html
+    assert "Downloads a portable JSON export of this user's data only" in html
+    assert "whole-instance SQLite backup" in html
+    assert "Delete all data for this user" in html
 
 
 def test_overview_data_health_quiet_when_no_warnings(app, client, make_user):

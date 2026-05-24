@@ -85,6 +85,8 @@ def test_diagnostics_renders_backup_panel_when_no_backups_exist(app, client, mak
     body = resp.data.decode("utf-8", errors="ignore")
     assert "SQLite backups" in body
     assert "None yet" in body
+    assert "whole-instance SQLite backups" in body
+    assert "data/backups" in body
 
 
 def test_admin_can_run_manual_backup_from_settings(app, client, make_user, tmp_path):
