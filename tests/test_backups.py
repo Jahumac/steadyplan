@@ -84,6 +84,8 @@ def test_diagnostics_renders_backup_panel_when_no_backups_exist(app, client, mak
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "SQLite backups" in body
+    assert "Backup health" in body
+    assert "No whole-instance SQLite backup found." in body
     assert "None yet" in body
     assert "whole-instance SQLite backups" in body
     assert "data/backups" in body
@@ -171,3 +173,46 @@ def test_diagnostics_shows_latest_backup_metadata(app, client, make_user, tmp_pa
     assert dest.name in body
     assert "Latest size" in body
     assert str(dest) not in body
+
+
+def test_backup_health_is_good_for_recent_backup(app, client, make_user, tmp_path):
+    import os
+    import time
+
+    app.config["DATA_DIR"] = tmp_path
+    backup_dir = tmp_path / "backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    p = backup_dir / "finance-2026-05-01.db"
+    p.write_text("x")
+    now = time.time()
+    os.utime(p, (now, now))
+
+    uid, username, password = make_user(username="diag-admin-recent", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    resp = client.get("/settings/?mode=diagnostics")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Backup health:" in body
+    assert "OK — latest whole-instance SQLite backup is" in body
+
+
+def test_backup_health_warns_when_backup_is_old(app, client, make_user, tmp_path):
+    import os
+    import time
+
+    app.config["DATA_DIR"] = tmp_path
+    backup_dir = tmp_path / "backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    p = backup_dir / "finance-2026-05-01.db"
+    p.write_text("x")
+    old = time.time() - (10 * 24 * 60 * 60)
+    os.utime(p, (old, old))
+
+    uid, username, password = make_user(username="diag-admin-old", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    resp = client.get("/settings/?mode=diagnostics")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Backup health" in body
+    assert "Latest whole-instance SQLite backup is" in body
+    assert "days old." in body
