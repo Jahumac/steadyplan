@@ -23,11 +23,11 @@ It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, 
 - **May leave the machine (optional):** If you enable live prices, Shelly sends **ticker symbols / identifiers** to external price sources (Yahoo Finance; optionally Twelve Data) to fetch prices. Your account balances and transaction history are not sent.
 - **Twelve Data API key is optional:** If `TWELVE_DATA_API_KEY` is not set, Shelly can still be used (manual balances, manual holdings values, and any Yahoo-backed lookups).
 - **If you want “air-gapped”:** You can run Shelly without any external price lookups by relying on manual balances / manual holdings values and avoiding ticker-based refreshes.
-- **Internet exposure:** Shelly is designed for home-network use. If you expose it beyond your LAN, use HTTPS behind a reverse proxy and add an extra auth layer (Authelia, OAuth proxy, basic auth, etc.).
+- **Internet exposure:** Shelly is designed for home-network use. You can access it over LAN/VPN, or (optionally) expose it publicly through standard self-hosting patterns (reverse proxy + HTTPS, Cloudflare Tunnel, etc.). Because Shelly contains sensitive financial data, treat public exposure as an advanced admin choice and configure it carefully (extra auth, strong passwords).
 
 ### Network posture (recommended)
 - Safe default: run Shelly on your home LAN or VPN only. Do not port-forward it to the public internet.
-- If you expose it publicly: put it behind HTTPS on a reverse proxy, enable production cookie settings, and add an extra auth layer.
+- Optional public access: use HTTPS on a reverse proxy (e.g. Nginx Proxy Manager) or a tunnel/VPN approach (e.g. Cloudflare Tunnel, Tailscale). Enable production cookie settings and add an extra auth layer.
 
 ---
 

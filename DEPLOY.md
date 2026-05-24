@@ -4,7 +4,8 @@ Shelly runs as a Docker container. Your data stays on your machine — nothing i
 
 ## Network posture (recommended)
 - Safe default: run Shelly on your home LAN or VPN only. Do not port-forward it to the public internet.
-- If you expose it publicly: use HTTPS on a reverse proxy, enable production cookie settings, and add an extra auth layer.
+- Optional public access: you can expose Shelly like any other self-hosted web app (reverse proxy + HTTPS, or a tunnel/VPN approach). Because Shelly contains sensitive financial data, treat public exposure as an advanced admin choice and configure it carefully (extra auth, strong passwords).
+- If you expose it publicly: use HTTPS on a reverse proxy (e.g. Nginx Proxy Manager), enable production cookie settings, and add an extra auth layer (Authelia, OAuth proxy, basic auth, etc.). Examples are common patterns, not requirements.
 
 ---
 
