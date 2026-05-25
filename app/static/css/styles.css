@@ -5807,6 +5807,10 @@ a.link-accent:hover {
 
 
 /* ── Planning tab ─────────────────────────────────────────────────────────── */
+.planning-compact-only {
+  display: none !important;
+}
+
 .planning-milestone-grid {
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
@@ -5887,7 +5891,139 @@ a.link-accent:hover {
   color: var(--text);
 }
 
-@media (max-width: 600px) {
+.planning-account-values {
+  gap: 0.25rem;
+}
+
+.planning-compact-details {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.72);
+  padding: 0;
+  margin-top: 0.8rem;
+  overflow: hidden;
+}
+
+.planning-compact-details summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.95rem 1rem;
+  color: var(--text);
+  font-weight: 750;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.planning-compact-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.planning-compact-details summary::after {
+  content: '+';
+  color: var(--accent);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.planning-compact-details[open] summary::after {
+  content: '–';
+}
+
+.planning-compact-details > :not(summary) {
+  padding: 0 1rem 1rem;
+}
+
+.planning-account-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.planning-account-summary div {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.planning-account-summary span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.planning-account-summary strong {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 900px) {
+  .planning-desktop-only,
+  .planning-desktop-detail {
+    display: none !important;
+  }
+
+  .planning-compact-only {
+    display: block !important;
+  }
+
+  .planning-account-summary.planning-compact-only {
+    display: grid !important;
+  }
+
+  .planning-hero-card {
+    padding: 1rem;
+  }
+
+  .planning-hero-top {
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .planning-hero-card .hero-value {
+    font-size: clamp(2rem, 8vw, 3.2rem);
+    line-height: 0.95;
+  }
+
+  .planning-hero-card .hero-subtitle {
+    font-size: 0.95rem;
+    line-height: 1.45;
+    margin-top: 0.55rem;
+  }
+
+  .planning-hero-caveat {
+    font-size: 0.82rem;
+  }
+
+  .planning-turtle-wrap {
+    max-width: 74px;
+    opacity: 0.78;
+  }
+
+  .planning-hero-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
+  .planning-section-header {
+    gap: 0.75rem;
+  }
+
+  .planning-section-header .badge {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .planning-signal-card h2,
+  .planning-income-summary h2,
+  .planning-next-card h2 {
+    font-size: 1.45rem;
+    line-height: 1.15;
+  }
+
   .planning-assumptions-form {
     grid-template-columns: 1fr;
   }
@@ -5905,4 +6041,30 @@ a.link-accent:hover {
     justify-content: center;
     width: 100%;
   }
+
+  .planning-account-row {
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .planning-account-values {
+    align-items: flex-start;
+    text-align: left;
+    min-width: 100%;
+  }
 }
+
+@media (max-width: 520px) {
+  .planning-turtle-wrap {
+    display: none;
+  }
+
+  .planning-hero-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .planning-account-summary {
+    grid-template-columns: 1fr;
+  }
+}
+

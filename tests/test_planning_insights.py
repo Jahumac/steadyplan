@@ -96,6 +96,7 @@ def test_accessible_summary_splits_current_money_and_milestones(app, make_user):
     assert summary["restricted_current"] == 500
     assert summary["milestones"][0]["target"] == 20000
     assert summary["milestones"][0]["months"] == 11
+    assert summary["next_milestone"]["target"] == 20000
 
 
 def test_retirement_income_summary_has_withdrawal_ranges_and_bridge_signal(app, make_user):
@@ -133,6 +134,9 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     response = client.get("/planning/?desired_income=24000")
 
     assert response.status_code == 200
-    assert b"Accessible now vs locked for later" in response.data
-    assert b"Income analyser" in response.data
+    assert b"Accessible vs locked" in response.data
+    assert b"Target retirement income/year" in response.data
+    assert b"Accessible security milestones" in response.data
+    assert b"View account details" in response.data
+    assert b"perfect retirement salary" not in response.data
     assert b"Weakest link" in response.data
