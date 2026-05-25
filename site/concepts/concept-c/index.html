@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SteadyPlan · Concept C</title>
+  <meta name="description" content="Concept C: Docs-first self-hosted project homepage for SteadyPlan — long-term finance planning, self-hosted.">
+  <meta name="robots" content="noindex">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1220;
+      --panel: rgba(17, 27, 47, 0.78);
+      --panel2: rgba(15, 23, 42, 0.78);
+      --border: rgba(148, 163, 184, 0.18);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #2dd4bf;
+      --accent2: #38bdf8;
+      --shadow: 0 16px 42px rgba(0, 0, 0, 0.44);
+      --radius: 16px;
+      --max: 1180px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 650px at 15% -10%, rgba(45, 212, 191, 0.12), transparent 60%),
+        radial-gradient(1000px 600px at 95% 0%, rgba(56, 189, 248, 0.10), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    a { color: inherit; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    :focus-visible { outline: 2px solid rgba(56, 189, 248, 0.75); outline-offset: 2px; }
+    .container { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 1.25rem; }
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      background: rgba(11, 18, 32, 0.74);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.85rem 0;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-weight: 850;
+      letter-spacing: 0.2px;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.12);
+    }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9rem;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .nav a { color: var(--muted); font-weight: 650; font-size: 0.95rem; }
+    .nav a:hover { color: var(--text); text-decoration: none; }
+    .crumb { color: var(--muted); font-size: 0.92rem; margin: 0.95rem 0 0 0; }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.95rem;
+      padding: 1.25rem 0 0;
+      align-items: start;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .pad { padding: 1.1rem; }
+    .hero-title {
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      letter-spacing: -0.02em;
+      margin: 0 0 0.25rem 0;
+      line-height: 1.08;
+    }
+    .tagline {
+      margin: 0 0 0.9rem 0;
+      font-weight: 850;
+      color: var(--muted);
+    }
+    .lead {
+      color: var(--muted);
+      font-size: 1.02rem;
+      margin: 0 0 0.9rem 0;
+      max-width: 70ch;
+    }
+    .cta {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 0.75rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.7rem 1rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(17, 27, 47, 0.65);
+      color: var(--text);
+      font-weight: 850;
+      font-size: 0.95rem;
+      text-decoration: none;
+    }
+    .btn:hover { text-decoration: none; border-color: rgba(45, 212, 191, 0.55); }
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.95), rgba(56, 189, 248, 0.85));
+      border: 0;
+      color: #0b1220;
+    }
+    .btn.primary:hover { filter: brightness(1.02); }
+    .muted { color: var(--muted); }
+    .kicker { color: var(--muted); font-weight: 750; font-size: 0.95rem; margin: 0 0 0.35rem 0; }
+    .hr { height: 1px; background: var(--border); margin: 1.2rem 0; }
+    .sidebar {
+      background: rgba(15, 23, 42, 0.62);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.95rem;
+    }
+    .sidebar h2 { margin: 0 0 0.7rem 0; font-size: 1.05rem; }
+    .toc {
+      display: grid;
+      gap: 0.45rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .toc a {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.45rem 0.6rem;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      background: rgba(17, 27, 47, 0.55);
+      color: var(--muted);
+      font-weight: 750;
+    }
+    .toc a:hover { color: var(--text); text-decoration: none; border-color: rgba(45, 212, 191, 0.35); }
+    .pill {
+      font-size: 0.82rem;
+      padding: 0.08rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(15, 23, 42, 0.55);
+      color: var(--muted);
+      font-weight: 750;
+    }
+    pre, code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    pre {
+      background: rgba(15, 23, 42, 0.82);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 0.85rem 0.95rem;
+      overflow: auto;
+      margin: 0.75rem 0;
+      color: #e2e8f0;
+    }
+    code {
+      background: rgba(148, 163, 184, 0.10);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      padding: 0.1rem 0.35rem;
+      border-radius: 8px;
+      color: #e2e8f0;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.9rem;
+    }
+    .tile h3 { margin: 0 0 0.35rem 0; font-size: 1.05rem; }
+    .tile p { margin: 0; color: var(--muted); }
+    .note {
+      border-left: 3px solid rgba(45, 212, 191, 0.55);
+      padding-left: 0.85rem;
+      color: var(--muted);
+    }
+    .tour-panel {
+      border: 1px dashed rgba(148, 163, 184, 0.28);
+      border-radius: 14px;
+      padding: 0.95rem;
+      background: rgba(15, 23, 42, 0.44);
+      color: var(--muted);
+    }
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 1.25rem 0;
+      margin-top: 2rem;
+      color: var(--muted);
+    }
+    .footer-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    @media (min-width: 980px) {
+      .layout { grid-template-columns: 0.75fr 1.25fr; }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+      .footer-row { grid-template-columns: 1fr auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header-row">
+        <a class="brand" href="../../index.html">
+          <span class="dot" aria-hidden="true"></span>
+          <span>SteadyPlan</span>
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="../../index.html">Home</a>
+          <a href="../../docs/index.html">Docs</a>
+          <a href="../../tour.html">Tour</a>
+          <a href="../../about.html">About</a>
+          <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <p class="crumb">Concept C · Docs-first/self-hosted project style</p>
+      <div class="layout">
+        <aside class="sidebar" aria-label="On-page navigation">
+          <h2>Start</h2>
+          <ul class="toc">
+            <li><a href="#hero">What is it? <span class="pill">overview</span></a></li>
+            <li><a href="#quickstart">Quickstart <span class="pill">docker</span></a></li>
+            <li><a href="#data">Data &amp; backups <span class="pill">trust</span></a></li>
+            <li><a href="#features">Features <span class="pill">what</span></a></li>
+            <li><a href="#ways">Ways to use it <span class="pill">where</span></a></li>
+            <li><a href="#tour">Tour concept <span class="pill">how</span></a></li>
+            <li><a href="#docs">Docs links <span class="pill">next</span></a></li>
+          </ul>
+          <div class="hr"></div>
+          <p class="muted" style="margin:0;">
+            No dead ends: use the top nav to return to Home/Docs/Tour/About at any time.
+          </p>
+        </aside>
+
+        <div>
+          <section class="card pad" id="hero">
+            <p class="kicker">Long-term finance planning, self-hosted.</p>
+            <h1 class="hero-title">SteadyPlan</h1>
+            <p class="tagline">Face the numbers. Keep control. Plan steadily.</p>
+            <p class="lead">
+              SteadyPlan is a self-hosted UK finance planning app. It helps you model accounts, debts, contributions, goals, investments and retirement scenarios in one private place — without handing your financial life to another platform.
+            </p>
+            <div class="cta" aria-label="Hero actions">
+              <a class="btn primary" href="#quickstart">Install quickstart</a>
+              <a class="btn" href="#docs">Read docs</a>
+            </div>
+          </section>
+
+          <section class="section" id="why">
+            <div class="card pad">
+              <h2 style="margin:0 0 0.75rem 0;">Why it exists</h2>
+              <p class="muted" style="margin:0;">
+                SteadyPlan started as a personal project after serious money stress and debt/IVA. Visibility — facing the numbers clearly — was the turning point.
+                The project is shared for people who value self-hosting, local control, and systems you can back up and repair.
+              </p>
+            </div>
+          </section>
+
+          <section class="section" id="quickstart">
+            <div class="card pad">
+              <h2 style="margin:0 0 0.75rem 0;">Quickstart (Docker)</h2>
+              <p class="muted" style="margin:0;">
+                Persist <code>/app/data</code>. That’s where your SQLite database and keys live.
+              </p>
+              <pre>docker pull ghcr.io/jahumac/steadyplan:latest
+docker run -d \
+  --name steadyplan \
+  --restart unless-stopped \
+  -p 8000:8000 \
+  -v /path/to/steadyplan-data:/app/data \
+  ghcr.io/jahumac/steadyplan:latest</pre>
+              <p class="note" style="margin:0;">
+                Before risky updates: take a backup. See <a href="../../docs/backups.html">Backups &amp; restore</a>.
+              </p>
+            </div>
+          </section>
+
+          <section class="section" id="data">
+            <div class="card pad">
+              <h2 style="margin:0 0 0.75rem 0;">Data &amp; backups (trust boundaries)</h2>
+              <div class="grid-3">
+                <div class="card pad tile" style="background:var(--panel2);">
+                  <h3>Database</h3>
+                  <p>Local SQLite under your mounted data directory.</p>
+                </div>
+                <div class="card pad tile" style="background:var(--panel2);">
+                  <h3>Exports</h3>
+                  <p>Per-user JSON exports you can store privately.</p>
+                </div>
+                <div class="card pad tile" style="background:var(--panel2);">
+                  <h3>Instance backups</h3>
+                  <p>Whole-instance SQLite backups and server-level recovery.</p>
+                </div>
+              </div>
+              <div class="hr"></div>
+              <p class="muted" style="margin:0;">
+                Read: <a href="../../docs/backups.html">Backups &amp; restore</a> · <a href="../../docs/privacy.html">Privacy</a>
+              </p>
+            </div>
+          </section>
+
+          <section class="section" id="features">
+            <div class="card pad">
+              <h2 style="margin:0 0 0.75rem 0;">What SteadyPlan helps with</h2>
+              <div class="grid-3">
+                <div class="card pad tile" style="background:var(--panel2);">
+                  <h3>See the full picture</h3>
+                  <p>Accounts, debts, savings, investments and goals in one view.</p>
+                </div>
+                <div class="card pad tile" style="background:var(--panel2);">
+                  <h3>Track accounts and holdings</h3>
+                  <p>Manual-first with optional external price lookups.</p>
+                </div>
+                <div class="card pad tile" style="background:var(--panel2);">
+                  <h3>Plan contributions and goals</h3>
+                  <p>Keep monthly inputs consistent and review progress.</p>
+                </div>
+              </div>
+              <div class="grid-3" style="margin-top:0.9rem;">
+                <div class="card pad tile" style="background:var(--panel2);">
+                  <h3>Retirement scenarios</h3>
+                  <p>Scenario estimates from your balances + assumptions.</p>
+                </div>
+                <div class="card pad tile" style="background:var(--panel2);">
+                  <h3>Keep data local</h3>
+                  <p>No cloud sync. You control the data directory.</p>
+                </div>
+                <div class="card pad tile" style="background:var(--panel2);">
+                  <h3>Back up and restore</h3>
+                  <p>Two layers: exports and instance backups.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section" id="ways">
+            <div class="card pad">
+              <h2 style="margin:0 0 0.75rem 0;">Ways to use it</h2>
+              <div class="grid-3">
+                <div class="card pad tile" style="background:var(--panel2);">
+                  <h3>Run on your own hardware</h3>
+                  <p>Server/NAS/desktop. Docker/Unraid friendly.</p>
+                </div>
+                <div class="card pad tile" style="background:var(--panel2);">
+                  <h3>Use from any device</h3>
+                  <p>Desktop/tablet/phone browser. Your phone does not host the app.</p>
+                </div>
+                <div class="card pad tile" style="background:var(--panel2);">
+                  <h3>Install as a web app</h3>
+                  <p>PWA where supported by your browser.</p>
+                </div>
+              </div>
+              <div class="hr"></div>
+              <p class="muted" style="margin:0;">
+                LAN/VPN is the safest default. If you expose SteadyPlan publicly, use HTTPS on a trusted reverse proxy.
+              </p>
+            </div>
+          </section>
+
+          <section class="section" id="tour">
+            <div class="card pad">
+              <h2 style="margin:0 0 0.75rem 0;">Product tour (concept)</h2>
+              <p class="muted" style="margin:0;">
+                Docs-first doesn’t mean “no tour”. It means a tour that’s feature-led and honest about screenshots.
+              </p>
+              <div class="hr"></div>
+              <div class="tour-panel">
+                <p style="margin:0;" class="muted">
+                  Tour idea: show 5–6 feature cards. Each card has:
+                  <span class="pill">what it does</span>
+                  <span class="pill">why it matters</span>
+                  <span class="pill">where to edit</span>
+                  plus an optional small preview panel when a screenshot is current and accurate.
+                </p>
+              </div>
+              <div class="hr"></div>
+              <p class="muted" style="margin:0;">
+                Readable alternatives to big screenshots: small preview panels, annotated snippets, and “see in app” links in the docs.
+              </p>
+            </div>
+          </section>
+
+          <section class="section" id="docs">
+            <div class="card pad">
+              <h2 style="margin:0 0 0.75rem 0;">Docs / next steps</h2>
+              <div class="grid-3">
+                <a class="card pad tile" style="background:var(--panel2);" href="../../docs/index.html">
+                  <h3>Docs home</h3>
+                  <p>Start here.</p>
+                </a>
+                <a class="card pad tile" style="background:var(--panel2);" href="../../docs/install.html">
+                  <h3>Install</h3>
+                  <p>Docker/Unraid setup and updates.</p>
+                </a>
+                <a class="card pad tile" style="background:var(--panel2);" href="../../docs/backups.html">
+                  <h3>Backups</h3>
+                  <p>Exports vs instance backups.</p>
+                </a>
+              </div>
+              <div class="grid-3" style="margin-top:0.9rem;">
+                <a class="card pad tile" style="background:var(--panel2);" href="../../docs/privacy.html">
+                  <h3>Privacy</h3>
+                  <p>Local data and optional lookups.</p>
+                </a>
+                <a class="card pad tile" style="background:var(--panel2);" href="../../docs/reverse-proxy.html">
+                  <h3>Reverse proxy</h3>
+                  <p>HTTPS if you go public.</p>
+                </a>
+                <div class="card pad tile" style="background:var(--panel2);">
+                  <h3>GitHub (secondary)</h3>
+                  <p class="muted" style="margin:0;">
+                    <a href="https://github.com/Jahumac/steadyplan/releases" target="_blank" rel="noopener noreferrer">Releases</a> ·
+                    <a href="https://github.com/Jahumac/steadyplan/issues" target="_blank" rel="noopener noreferrer">Issues</a> ·
+                    <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">Source</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-row">
+        <div class="muted">
+          <a href="../../index.html">Back to real site</a>
+          <span class="muted"> · </span>
+          <a href="#hero">Top</a>
+          <span class="muted"> · </span>
+          <a href="../../docs/index.html">Back to docs</a>
+        </div>
+        <div class="muted">Concept C · Disposable mockup</div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
