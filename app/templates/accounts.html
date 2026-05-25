@@ -159,26 +159,21 @@
         <p class="eyebrow">{{ selected.provider }} · {{ selected.wrapper_type }}</p>
         <h2>{{ selected.name }}</h2>
       </div>
-      <div class="badge-row">
+      <div class="badge-row account-detail-actions">
         <a class="badge" href="/accounts/">← Back</a>
-        <div class="acct-overflow" data-overflow>
-          <button type="button" class="badge acct-overflow-trigger" data-overflow-trigger aria-haspopup="true" aria-expanded="false" aria-label="More actions">⋯</button>
-          <div class="acct-overflow-menu" data-overflow-menu>
-            {% if detail_mode != 'edit' %}<a class="badge" href="/accounts/{{ selected.id }}?mode=edit">Edit</a>{% endif %}
-            {% if detail_mode != 'edit' and selected.valuation_mode == 'holdings' %}<button type="button" class="badge" id="top-add-holding">+ Add holding</button>{% endif %}
-            <form method="post" class="form-reset" style="display:inline;">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <input type="hidden" name="form_name" value="delete_account">
-              <button type="submit" class="badge badge-danger"
-                data-confirm="This will permanently remove {{ selected.name }} and all its holdings. This can't be undone."
-                data-confirm-title="Delete {{ selected.name }}?"
-                data-confirm-ok="Yes, delete it"
-                data-confirm-cancel="Keep it">
-                Delete
-              </button>
-            </form>
-          </div>
-        </div>
+        {% if detail_mode != 'edit' %}<a class="badge" href="/accounts/{{ selected.id }}?mode=edit">Edit</a>{% endif %}
+        {% if detail_mode != 'edit' and selected.valuation_mode == 'holdings' %}<button type="button" class="badge" id="top-add-holding">+ Add holding</button>{% endif %}
+        <form method="post" class="form-reset account-delete-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="form_name" value="delete_account">
+          <button type="submit" class="badge badge-danger"
+            data-confirm="This will permanently remove {{ selected.name }} and all its holdings. This can't be undone."
+            data-confirm-title="Delete {{ selected.name }}?"
+            data-confirm-ok="Yes, delete it"
+            data-confirm-cancel="Keep it">
+            Delete
+          </button>
+        </form>
       </div>
     </div>
 

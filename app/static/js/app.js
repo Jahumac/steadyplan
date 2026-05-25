@@ -170,25 +170,6 @@
       });
     });
 
-    // 0e. Account detail overflow menu (mobile ⋯)
-    document.querySelectorAll('[data-overflow-trigger]').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        var wrap = btn.closest('[data-overflow]');
-        if (!wrap) return;
-        var open = wrap.classList.toggle('is-open');
-        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      });
-    });
-    document.addEventListener('click', function(e) {
-      document.querySelectorAll('[data-overflow].is-open').forEach(function(wrap) {
-        if (!wrap.contains(e.target)) {
-          wrap.classList.remove('is-open');
-          var trig = wrap.querySelector('[data-overflow-trigger]');
-          if (trig) trig.setAttribute('aria-expanded', 'false');
-        }
-      });
-    });
 
     // 1. All [data-confirm] elements
     document.querySelectorAll('[data-confirm]').forEach(function (el) {
