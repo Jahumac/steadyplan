@@ -41,6 +41,35 @@ a:hover {
   text-decoration: underline;
 }
 
+:focus-visible {
+  outline: 2px solid rgba(56, 189, 248, 0.75);
+  outline-offset: 2px;
+}
+
+.tile-link {
+  display: block;
+  text-decoration: none;
+}
+
+.tile-link:hover {
+  text-decoration: none;
+  border-color: rgba(45, 212, 191, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.45);
+}
+
+.tile-link:focus-visible {
+  outline-offset: 4px;
+}
+
+.tile-link h3 {
+  text-decoration: none;
+}
+
+.tile-link:hover h3 {
+  text-decoration: none;
+}
+
 .container {
   width: 100%;
   max-width: var(--max);
@@ -236,6 +265,7 @@ a:hover {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
 
 .card.pad {

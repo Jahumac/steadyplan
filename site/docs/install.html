@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SteadyPlan Docs · Install</title>
-  <meta name="description" content="Install SteadyPlan with Docker or Unraid. Links to the main README and DEPLOY guide.">
+  <meta name="description" content="Install SteadyPlan on Docker or Unraid: persist /app/data, first run, where data lives, and how to update safely.">
   <link rel="canonical" href="https://steadyplan.co.uk/docs/install">
   <meta name="color-scheme" content="dark">
   <link rel="stylesheet" href="../assets/site.css">
@@ -19,7 +19,8 @@
         </a>
         <nav class="nav" aria-label="Primary">
           <a href="./index.html">Docs</a>
-          <a href="./install.html" aria-current="page">Install</a>
+          <a href="../tour.html">Tour</a>
+          <a href="../about.html">About</a>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
       </div>
@@ -101,6 +102,17 @@
             <li><code>finance.db</code> (SQLite database)</li>
             <li><code>secret_key.txt</code> (Flask secret key; keep this with the database)</li>
             <li><code>backups/</code> (optional whole-instance SQLite backups created from the app)</li>
+          </ul>
+        </div>
+
+        <div class="prose">
+          <h2>Use from phone</h2>
+          <p class="muted">
+            SteadyPlan runs on your server/NAS/desktop. Your phone does not host the app — it just connects to your instance in a browser.
+          </p>
+          <ul class="muted">
+            <li>Use it from desktop, tablet, or phone browser on your LAN/VPN.</li>
+            <li>Where supported, you can install it as a web app (PWA) from the browser “Add to Home Screen” / “Install app” menu.</li>
           </ul>
         </div>
 

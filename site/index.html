@@ -19,7 +19,8 @@
         </a>
         <nav class="nav" aria-label="Primary">
           <a href="./docs/index.html">Docs</a>
-          <a href="./docs/install.html">Install</a>
+          <a href="./tour.html">Tour</a>
+          <a href="./about.html">About</a>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
       </div>
@@ -32,23 +33,23 @@
         <div class="hero-grid">
           <div>
             <span class="badge">Long-term finance planning, self-hosted.</span>
-            <h1>A self-hosted UK finance planning app for people who want long-term visibility without handing their data to a fintech.</h1>
+            <h1>Long-term finance planning, on your own terms.</h1>
             <p class="lead">
-              SteadyPlan helps you model accounts, contributions, goals, pensions, debts and retirement scenarios while keeping your data on your own server. It is a planning dashboard and scenario tool — not a bank, broker, or adviser.
+              SteadyPlan is a self-hosted finance planning app built to help you face the numbers: accounts, debts, contributions, goals, investments and retirement scenarios — without handing your financial life to another platform.
             </p>
             <div class="cta-row">
-              <a class="btn btn-primary" href="./docs/index.html">Start here</a>
-              <a class="btn" href="./docs/install.html">Install</a>
-              <a class="btn btn-ghost" href="https://github.com/Jahumac/steadyplan/releases" target="_blank" rel="noopener noreferrer">Releases</a>
+              <a class="btn btn-primary" href="./about.html">Why it exists</a>
+              <a class="btn" href="./docs/index.html">View docs</a>
+              <a class="btn btn-ghost" href="./tour.html">Product tour</a>
             </div>
             <div class="hr"></div>
-            <p class="note small">Safest default is LAN/VPN-only. If you expose SteadyPlan publicly, do it intentionally: HTTPS on a trusted reverse proxy and strong passwords.</p>
+            <p class="note small">SteadyPlan runs on your own server/NAS/desktop. You can use it from desktop, tablet, or phone browser. Where supported, you can install it as a web app (PWA).</p>
           </div>
           <div class="card pad">
-            <p class="kicker">Screenshots</p>
+            <p class="kicker">A quick look</p>
             <img class="screenshot" src="./assets/screenshots/overview.png" alt="SteadyPlan overview dashboard (demo data)">
             <p class="muted small" style="margin:0.75rem 0 0 0;">
-              Screenshots use demo data.
+              Screenshots use demo data. See the <a href="./tour.html">full tour</a>.
             </p>
           </div>
         </div>
@@ -58,45 +59,26 @@
     <section class="section">
       <div class="container">
         <div class="section-head">
-          <h2>What it looks like</h2>
-          <p class="muted" style="margin:0;">Screenshots use demo data.</p>
+          <h2>Product tour</h2>
+          <p class="muted" style="margin:0;">Screenshots use demo data · <a href="./tour.html">View full tour</a></p>
         </div>
         <div class="screens-grid">
-          <figure class="screens-tile card">
+          <a class="screens-tile card tile-link" href="./tour.html">
             <img class="screenshot" src="./assets/screenshots/overview.png" alt="Overview dashboard showing totals, month strip, and next actions (demo data)">
-            <figcaption class="muted small">Overview dashboard</figcaption>
-          </figure>
-          <figure class="screens-tile card">
+            <div class="muted small">Overview dashboard</div>
+          </a>
+          <a class="screens-tile card tile-link" href="./tour.html">
             <img class="screenshot" src="./assets/screenshots/holdings.png" alt="Holdings page showing accounts and holdings breakdown (demo data)">
-            <figcaption class="muted small">Holdings</figcaption>
-          </figure>
-          <figure class="screens-tile card">
+            <div class="muted small">Holdings</div>
+          </a>
+          <a class="screens-tile card tile-link" href="./tour.html">
             <img class="screenshot" src="./assets/screenshots/projections.png" alt="Projections page with scenario estimates and goals (demo data)">
-            <figcaption class="muted small">Projections</figcaption>
-          </figure>
-          <figure class="screens-tile card">
+            <div class="muted small">Projections</div>
+          </a>
+          <a class="screens-tile card tile-link" href="./tour.html">
             <img class="screenshot" src="./assets/screenshots/data-privacy.png" alt="Settings page showing data ownership and backup guidance (demo data)">
-            <figcaption class="muted small">Data &amp; privacy</figcaption>
-          </figure>
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="container">
-        <div class="grid-3">
-          <div class="card pad tile">
-            <h3>Who it’s for</h3>
-            <p>Self-hosters who want a calmer, longer-term view than a spreadsheet — and who prefer to keep financial data on their own machine.</p>
-          </div>
-          <div class="card pad tile">
-            <h3>What it can model</h3>
-            <p>Accounts and balances, monthly contributions, budgets, pensions, debts, ISA/LISA/pension allowances, goals, and retirement scenarios.</p>
-          </div>
-          <div class="card pad tile">
-            <h3>Why self-host it</h3>
-            <p>Local SQLite database, no cloud sync. Optional external price lookups can be enabled, but the app works without them.</p>
-          </div>
+            <div class="muted small">Data &amp; privacy</div>
+          </a>
         </div>
       </div>
     </section>
@@ -105,30 +87,63 @@
       <div class="container">
         <div class="split">
           <div class="card pad">
-            <h2>Data ownership and confidence</h2>
-            <p class="muted">
-              Your day-to-day data is stored in a local SQLite database. SteadyPlan supports broker CSV import, per-user JSON export/restore, and whole-instance SQLite backups.
+            <h2>Why SteadyPlan exists</h2>
+            <p class="muted prose">
+              SteadyPlan started as a personal project. After serious money stress and debt, the turning point wasn’t a trick — it was visibility.
+              I needed one calm place to see the full picture — accounts, debts, savings, investments, goals and retirement plans — without sending all of that data to another finance platform.
+              SteadyPlan is the tool I built to keep doing that.
             </p>
-            <p class="muted">
-              Next steps:
-              <a href="./docs/index.html">Docs home</a>,
-              <a href="./docs/install.html">Install</a>,
-              <a href="./docs/backups.html">Backups &amp; restore</a>,
-              <a href="./docs/privacy.html">Privacy</a>,
-              <a href="./docs/reverse-proxy.html">Reverse proxy</a>.
-            </p>
+            <div class="cta-row" style="margin-top:1rem;">
+              <a class="btn" href="./about.html">Read the story</a>
+              <a class="btn btn-ghost" href="./docs/index.html">Start with the docs</a>
+            </div>
           </div>
           <div class="card pad">
-            <h2>What SteadyPlan is (and isn’t)</h2>
-            <p class="muted">
-              SteadyPlan is a tracking dashboard and scenario tool. It does not connect to your bank, and it does not provide financial advice. Projections are assumptions-based estimates.
+            <h2>What it is (and isn’t)</h2>
+            <ul class="muted prose">
+              <li>A planning and visibility tool for long-term decisions.</li>
+              <li>Self-hosted, with a local SQLite database and your own backup routine.</li>
+              <li>Not a bank, broker, or financial adviser. No promises — projections are estimates based on your inputs.</li>
+            </ul>
+            <p class="note small">Safest default is LAN/VPN-only. If you expose SteadyPlan publicly, use HTTPS on a trusted reverse proxy and configure it intentionally.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="grid-3">
+          <a class="card pad tile tile-link" href="./docs/install.html">
+            <h3>Install</h3>
+            <p>Docker/Unraid-first. Persist <code>/app/data</code>, then you’re running.</p>
+          </a>
+          <a class="card pad tile tile-link" href="./docs/backups.html">
+            <h3>Backups &amp; restore</h3>
+            <p>JSON exports and whole-instance SQLite backups — plus what to back up for real recovery.</p>
+          </a>
+          <a class="card pad tile tile-link" href="./docs/privacy.html">
+            <h3>Privacy &amp; data ownership</h3>
+            <p>Local database, no cloud sync, and clear notes on optional external lookups.</p>
+          </a>
+        </div>
+        <div class="grid-3" style="margin-top:0.9rem;">
+          <a class="card pad tile tile-link" href="./tour.html">
+            <h3>Product tour</h3>
+            <p>See how the main screens fit together. Demo data screenshots.</p>
+          </a>
+          <a class="card pad tile tile-link" href="./about.html">
+            <h3>Built to face the numbers</h3>
+            <p>Why SteadyPlan exists, how it’s used, and what it’s trying to be.</p>
+          </a>
+          <div class="card pad tile">
+            <h3>GitHub (development home)</h3>
+            <p>Source code, releases, and issues live on GitHub.</p>
+            <p class="muted" style="margin:0.5rem 0 0 0;">
+              <a href="https://github.com/Jahumac/steadyplan/releases" target="_blank" rel="noopener noreferrer">Releases</a> ·
+              <a href="https://github.com/Jahumac/steadyplan/issues" target="_blank" rel="noopener noreferrer">Issues</a> ·
+              <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">Source</a>
             </p>
-            <div class="hr"></div>
-            <h2>Runs well on Docker/Unraid</h2>
-            <p class="muted">
-              The common setup is Docker or Unraid with a host-mounted data directory. You control where data is stored and how it’s backed up.
-            </p>
-            <a class="btn" href="./docs/install.html">Install notes</a>
           </div>
         </div>
       </div>
