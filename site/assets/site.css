@@ -200,6 +200,18 @@ a:hover {
   margin: 0 0 0.5rem 0;
 }
 
+.hero-title {
+  font-size: clamp(2.6rem, 6vw, 3.6rem);
+  letter-spacing: -0.02em;
+  margin: 0 0 0.4rem 0;
+}
+
+.hero-tagline {
+  margin: 0 0 0.85rem 0;
+  font-weight: 750;
+  color: var(--muted);
+}
+
 .hero p.lead {
   margin: 0.25rem 0 1.25rem 0;
   color: var(--muted);
@@ -405,6 +417,25 @@ pre {
   border-radius: 14px;
   border: 1px solid var(--border);
   background: rgba(15, 23, 42, 0.7);
+}
+
+.tour-block {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.tour-media {
+  max-width: none;
+}
+
+.tour-media-link {
+  display: block;
+}
+
+@media (min-width: 860px) {
+  .tour-block {
+    gap: 1rem;
+  }
 }
 
 @media (min-width: 860px) {
