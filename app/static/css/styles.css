@@ -3413,56 +3413,30 @@ button.button-danger:focus {
   box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
 }
 
-/* Account detail overflow menu.
-   Desktop: trigger hidden, menu items render inline (acts like the
-   original badge-row). Mobile: trigger button visible, menu items
-   expand inline below the trigger — pushing the rest of the page
-   down — rather than as an overlay. This avoids off-screen popovers
-   on narrow viewports. */
-.acct-overflow {
-  display: contents;
+.account-detail-actions {
+  align-items: center;
 }
-.acct-overflow-trigger {
-  display: none;
+.account-delete-form {
+  display: inline-flex;
+  margin: 0;
 }
-.acct-overflow-menu {
-  display: contents;
+.account-delete-form .badge {
+  width: 100%;
 }
 @media (max-width: 640px) {
-  /* Allow the menu to wrap onto its own line within the badge-row. */
-  .section-header .badge-row {
-    flex-wrap: wrap;
+  .account-detail-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 0.55rem;
   }
-  .acct-overflow {
-    display: contents;
+  .account-detail-actions .badge,
+  .account-delete-form {
+    width: 100%;
   }
-  .acct-overflow-trigger {
-    display: inline-flex;
-    align-items: center;
+  .account-detail-actions .badge {
     justify-content: center;
-    min-width: 2.4rem;
-    font-size: 1.1rem;
-    line-height: 1;
-  }
-  .acct-overflow-menu {
-    display: none;
-    flex-basis: 100%;
-    width: 100%;
-    flex-direction: column;
-    gap: 0.4rem;
-    padding: 0.6rem;
-    margin-top: 0.5rem;
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-  }
-  .acct-overflow.is-open .acct-overflow-menu {
-    display: flex;
-  }
-  .acct-overflow-menu .badge,
-  .acct-overflow-menu button.badge {
-    width: 100%;
-    text-align: center;
+    min-height: 44px;
   }
 }
 
