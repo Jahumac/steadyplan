@@ -19,43 +19,63 @@
         </a>
         <nav class="nav" aria-label="Primary">
           <a href="./index.html">Docs</a>
+          <a href="./install.html">Install</a>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
       </div>
     </div>
   </header>
 
+  <div class="docs-nav-wrap">
+    <div class="container">
+      <nav class="docs-nav" aria-label="Docs">
+        <a href="./index.html">Start here</a>
+        <a href="./install.html">Install</a>
+        <a href="./backups.html">Backups &amp; restore</a>
+        <a href="./privacy.html" aria-current="page">Privacy</a>
+        <a href="./reverse-proxy.html">Reverse proxy</a>
+        <a href="https://github.com/Jahumac/steadyplan/releases" target="_blank" rel="noopener noreferrer">Releases</a>
+      </nav>
+    </div>
+  </div>
+
   <main class="section">
     <div class="container">
       <div class="card pad">
         <p class="kicker"><a href="./index.html">Docs</a> · Privacy</p>
         <h1 style="margin:0 0 0.5rem 0;">Privacy notes</h1>
-        <p class="muted" style="margin:0;">
-          SteadyPlan is self-hosted. Your data is stored on your server, and you decide how it is accessed and backed up.
+        <p class="muted prose" style="margin:0;">
+          SteadyPlan is self-hosted. Your financial data is stored in a local SQLite database on your server, and you decide how it is accessed and backed up.
         </p>
 
         <div class="hr"></div>
-        <h2>Local database</h2>
-        <p class="muted">
-          SteadyPlan stores financial data locally in a SQLite database under the app data directory. In Docker this is typically under <code>/app/data</code> inside the container, backed by a host-mounted volume.
-        </p>
+        <h2>What stays on your server</h2>
+        <ul class="muted prose">
+          <li>Accounts, balances, holdings, budgets, goals, and history live in a local SQLite database.</li>
+          <li>Exports and backups you generate are files you control.</li>
+          <li>This website does not set cookies or analytics; it’s just static HTML/CSS.</li>
+        </ul>
 
         <div class="hr"></div>
         <h2>No cloud sync</h2>
-        <p class="muted">
-          SteadyPlan does not send account balances, budgets, goals, or history to a cloud service.
-        </p>
+        <p class="muted prose">SteadyPlan does not sync your financial data to a cloud service.</p>
 
         <div class="hr"></div>
         <h2>Optional live price lookups</h2>
-        <p class="muted">
-          If you enable live price lookup, SteadyPlan may send ticker symbols/identifiers to external price sources. This is optional and depends on how you configure your instance.
+        <p class="muted prose">
+          If you enable live price lookups, SteadyPlan may send ticker symbols/identifiers to external price sources (for example Yahoo Finance; optionally Twelve Data).
+          This is optional. Your balances, budgets, and notes are not sent as part of those lookups.
         </p>
 
         <div class="hr"></div>
         <h2>Exports contain sensitive data</h2>
-        <p class="muted">
-          Per-user JSON exports are portable and useful for backup/restore, but they contain financial data. Keep export files private and store them securely.
+        <p class="muted prose">Per-user JSON exports are useful, portable backups — and they contain financial data. Keep export files private and store them securely.</p>
+
+        <div class="hr"></div>
+        <h2>Public exposure</h2>
+        <p class="muted prose">
+          Safest default is LAN/VPN-only access. If you expose SteadyPlan publicly, use HTTPS on a trusted reverse proxy and treat it like any other sensitive self-hosted app.
+          See <a href="./reverse-proxy.html">Reverse proxy</a>.
         </p>
 
         <div class="hr"></div>

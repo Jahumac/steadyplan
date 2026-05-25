@@ -19,24 +19,38 @@
         </a>
         <nav class="nav" aria-label="Primary">
           <a href="./index.html">Docs</a>
+          <a href="./install.html">Install</a>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
       </div>
     </div>
   </header>
 
+  <div class="docs-nav-wrap">
+    <div class="container">
+      <nav class="docs-nav" aria-label="Docs">
+        <a href="./index.html">Start here</a>
+        <a href="./install.html">Install</a>
+        <a href="./backups.html">Backups &amp; restore</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./reverse-proxy.html" aria-current="page">Reverse proxy</a>
+        <a href="https://github.com/Jahumac/steadyplan/releases" target="_blank" rel="noopener noreferrer">Releases</a>
+      </nav>
+    </div>
+  </div>
+
   <main class="section">
     <div class="container">
       <div class="card pad">
         <p class="kicker"><a href="./index.html">Docs</a> · Reverse proxy</p>
         <h1 style="margin:0 0 0.5rem 0;">Reverse proxy and public exposure</h1>
-        <p class="muted" style="margin:0;">
+        <p class="muted prose" style="margin:0;">
           SteadyPlan contains sensitive personal financial data. Safest default is LAN/VPN-only. Public exposure is an admin choice and should be configured carefully.
         </p>
 
         <div class="hr"></div>
         <h2>Recommended posture</h2>
-        <ul class="muted">
+        <ul class="muted prose">
           <li>Default: access SteadyPlan over home LAN or VPN only</li>
           <li>If public: use HTTPS via a trusted reverse proxy or tunnel</li>
           <li>Use strong passwords, and consider extra auth at the proxy/tunnel layer</li>
@@ -47,19 +61,29 @@
 
         <div class="hr"></div>
         <h2>HTTPS options</h2>
-        <p class="muted">
+        <p class="muted prose">
           Typical approaches include a reverse proxy with HTTPS (for example Nginx Proxy Manager) or a tunnel/VPN approach (for example Cloudflare Tunnel or Tailscale). Use the approach you already trust and maintain.
         </p>
 
         <div class="hr"></div>
+        <h2>Cookies and HTTPS</h2>
+        <p class="muted prose">
+          If SteadyPlan is served behind HTTPS, enable production cookie settings so your browser marks session cookies as secure:
+        </p>
+        <pre>APP_ENV=production</pre>
+        <p class="muted prose">
+          If you intentionally run SteadyPlan over plain HTTP on your LAN, keep production mode off so login works over <code>http://</code>.
+        </p>
+
+        <div class="hr"></div>
         <h2>Proxy headers</h2>
-        <p class="muted">
+        <p class="muted prose">
           Only set <code>TRUST_PROXY_HEADERS=1</code> when SteadyPlan is behind a trusted reverse proxy that sets <code>X-Forwarded-For</code> and <code>X-Forwarded-Proto</code> correctly. Do not enable it if you access the container directly without a proxy.
         </p>
 
         <div class="hr"></div>
         <h2>What this does not do</h2>
-        <p class="muted">
+        <p class="muted prose">
           SteadyPlan does not attempt to detect your exposure status or configure your proxy for you. Treat public exposure like any other self-hosted web app: pick a secure pattern and configure it intentionally.
         </p>
 
