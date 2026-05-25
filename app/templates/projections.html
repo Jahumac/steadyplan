@@ -38,6 +38,17 @@
   </div>
 </section>
 
+<section class="card alert-banner alert-info mb-1">
+  <div class="flex flex-center gap-075 flex-wrap">
+    <div style="flex:1; min-width:220px;">
+      <strong>About this estimate</strong>
+      <p class="helper-text m-0">Built from your current account balances (today) and your monthly contribution settings, then grown using your assumptions (growth rate, retirement timing, fees and tax/allowance settings).</p>
+      <p class="helper-text m-0">This is an assumptions-based forecast, not a promise. Edit the inputs in <a href="/settings/?mode=edit" class="link-accent">Settings</a>.</p>
+    </div>
+    <a href="/settings/?mode=edit" class="badge badge-meta">Edit assumptions</a>
+  </div>
+</section>
+
 {% if primary_goal %}
 {% set on_track = metrics.total_projected >= primary_goal.target %}
 {% set gap = primary_goal.target - metrics.total_projected %}
