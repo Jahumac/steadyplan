@@ -36,6 +36,9 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     body = resp.data.decode("utf-8", errors="ignore")
 
     assert "Scenario estimate at retirement" in body
+    assert "About this estimate" in body
+    assert "assumptions-based forecast, not a promise" in body
+    assert "Edit the inputs in" in body
     assert "What drives this estimate" in body
     assert "Inflation" in body
     assert "Retirement timing" in body
@@ -52,6 +55,7 @@ def test_settings_growth_hint_no_longer_says_nominal_todays_money(app, client, m
     resp = client.get("/settings/?mode=edit")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
+    assert "These inputs feed Projections and goal estimates." in body
     assert "nominal (today's money)" not in body
     assert "nominal future pounds" in body
 
@@ -78,6 +82,7 @@ def test_overview_projected_retirement_stat_has_estimate_qualifier(app, client, 
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Projected at retirement" in body
     assert "<small>estimate</small>" in body
+    assert "Scenario estimate based on your current balances" in body
 
 
 def test_goals_eta_helper_copy_present(app, client, make_user):
@@ -109,4 +114,3 @@ def test_goals_eta_helper_copy_present(app, client, make_user):
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Goal ETAs are approximate scenario estimates" in body
     assert "~" in body
-

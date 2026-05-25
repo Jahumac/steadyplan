@@ -157,7 +157,7 @@
   </div>
   <div class="hero-strip">
     {% call hero_stat('Monthly contributions') %}<strong>£{{ '{:,.0f}'.format(metrics.monthly_total) }}</strong>{% endcall %}
-    {% call hero_stat('Projected at retirement') %}<strong>£{{ '{:,.0f}'.format(metrics.projected_total) }}</strong><small>estimate</small>{% endcall %}
+    {% call hero_stat('Projected at retirement') %}<strong title="Scenario estimate based on your current balances, contribution settings, and assumptions in Settings.">£{{ '{:,.0f}'.format(metrics.projected_total) }}</strong><small>estimate</small>{% endcall %}
     {% call hero_stat('Accounts') %}<strong>{{ accounts | length }}</strong>{% endcall %}
     {% call hero_stat('Tax Year ' ~ metrics.tax_year) %}<strong>{{ metrics.tax_year_days_left }} days left</strong>{% endcall %}
     {% if goals_data %}
