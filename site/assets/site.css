@@ -226,6 +226,22 @@ a:hover {
   margin-top: 0.75rem;
 }
 
+.hero-actions {
+  align-items: center;
+}
+
+.link-quiet {
+  color: var(--muted);
+  font-weight: 700;
+  text-decoration: none;
+  padding: 0.5rem 0.25rem;
+}
+
+.link-quiet:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -336,6 +352,12 @@ a:hover {
   gap: 0.9rem;
 }
 
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+}
+
 .tile h3 {
   margin: 0 0 0.35rem 0;
   font-size: 1.05rem;
@@ -419,6 +441,11 @@ pre {
   background: rgba(15, 23, 42, 0.7);
 }
 
+.screenshot-preview {
+  height: 320px;
+  object-fit: contain;
+}
+
 .tour-block {
   display: grid;
   gap: 0.85rem;
@@ -440,14 +467,17 @@ pre {
 
 @media (min-width: 860px) {
   .hero-grid {
-    grid-template-columns: 1.15fr 0.85fr;
-    align-items: center;
+    grid-template-columns: 1fr;
+    align-items: start;
   }
   .screens-grid {
     grid-template-columns: repeat(2, 1fr);
   }
   .split {
     grid-template-columns: 1fr 1fr;
+  }
+  .grid-2 {
+    grid-template-columns: repeat(2, 1fr);
   }
   .grid-3 {
     grid-template-columns: repeat(3, 1fr);
