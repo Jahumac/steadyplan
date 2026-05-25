@@ -38,6 +38,7 @@
       <a href="/accounts/" class="{% if active_page == 'accounts' %}active{% endif %}">Accounts</a>
       <a href="/budget/" class="{% if active_page in ('budget', 'monthly_review') %}active{% endif %}">Budget</a>
       <a href="/goals/" class="{% if active_page in ('goals', 'projections', 'performance') %}active{% endif %}">Goals</a>
+      <a href="/planning/" class="{% if active_page == 'planning' %}active{% endif %}">Planning</a>
       <a href="/settings/" class="{% if active_page in ('settings', 'users') %}active{% endif %}">Settings</a>
       {% if current_user.is_authenticated %}
         <a href="/logout" class="nav-logout">{{ current_user.username }} &rarr; Log out</a>
@@ -77,6 +78,10 @@
     <a href="/goals/" class="bottom-nav-item {% if active_page in ('goals', 'projections', 'performance') %}bottom-nav-active{% endif %}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
       <span>Goals</span>
+    </a>
+    <a href="/planning/" class="bottom-nav-item {% if active_page == 'planning' %}bottom-nav-active{% endif %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16l3-4 3 2 4-7"/></svg>
+      <span>Planning</span>
     </a>
     <a href="/settings/" class="bottom-nav-item {% if active_page in ('settings', 'users') %}bottom-nav-active{% endif %}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
