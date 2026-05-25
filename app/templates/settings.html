@@ -405,6 +405,17 @@
   <p class="helper-text" style="margin-top:0.5rem;">
     JSON export is per-user. SQLite backups are whole-instance backups.
   </p>
+  <div class="callout-box" style="margin-top:0.85rem;">
+    <div style="font-weight:600;margin-bottom:0.35rem;">Backup and restore at a glance</div>
+    <ul class="helper-text" style="margin:0.35rem 0 0 1.15rem;">
+      <li><strong>Local SQLite database:</strong> the live SteadyPlan data store for this instance.</li>
+      <li><strong>JSON export:</strong> portable, per-user, and useful before risky actions.</li>
+      <li><strong>Whole-instance SQLite backup:</strong> database copy for all users, stored under <code>data/backups</code>.</li>
+      <li><strong>Restore validation:</strong> checks a JSON file without changing data.</li>
+      <li><strong>Restore commit:</strong> replaces this user’s data only after confirmation.</li>
+      <li><strong>Delete user data:</strong> removes this user’s finance data, not the login account.</li>
+    </ul>
+  </div>
 </section>
 
 <section class="panel mt-1">

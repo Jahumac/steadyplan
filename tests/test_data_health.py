@@ -257,6 +257,27 @@ def test_settings_still_mentions_backup_restore(app, client, make_user):
     assert "Delete all data for this user" in html
 
 
+def test_settings_explains_backup_restore_scope_at_a_glance(app, client, make_user):
+    _, username, password = make_user(username="dh-scope-guide", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/settings/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Backup and restore at a glance" in html
+    assert "Local SQLite database" in html
+    assert "the live SteadyPlan data store" in html
+    assert "JSON export" in html
+    assert "portable, per-user, and useful before risky actions" in html
+    assert "Restore validation" in html
+    assert "checks a JSON file without changing data" in html
+    assert "Restore commit" in html
+    assert "replaces this user’s data only after confirmation" in html
+    assert "Delete user data" in html
+    assert "removes this user’s finance data, not the login account" in html
+
+
 def test_overview_data_health_quiet_when_no_warnings(app, client, make_user):
     uid, username, password = make_user(username="dh-quiet", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
