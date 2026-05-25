@@ -66,7 +66,7 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
         create_contribution_override({
             "account_id": isa_id,
             "from_month": "2028-11",
-            "to_month": "2099-12",
+            "to_month": "9999-12",
             "override_amount": 750,
             "reason": "Future increase",
         }, uid)
@@ -94,7 +94,8 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
 
     schedule = wb["Contribution Schedule"]
     schedule_rows = [tuple(cell.value for cell in row) for row in schedule.iter_rows()]
-    assert ("ISA", "Stocks & Shares ISA", "2028-11", "2099-12", 750, 750, "Future increase") in schedule_rows
+    assert ("ISA", "Stocks & Shares ISA", "2028-11", "Ongoing", 750, 750, "Future increase") in schedule_rows
+    assert ("ISA", "Stocks & Shares ISA", "2028-11", "9999-12", 750, 750, "Future increase") not in schedule_rows
 
 
 def test_premium_bonds_cap_is_not_reported_as_negative_growth(app, client, make_user):

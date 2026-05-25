@@ -87,6 +87,14 @@ def _set_col_width(ws, col, width):
     ws.column_dimensions[get_column_letter(col)].width = width
 
 
+def _display_schedule_to_month(to_month):
+    """Render open-ended contribution override sentinels as user-facing text."""
+    if not to_month:
+        return "Ongoing"
+    text = str(to_month)
+    return "Ongoing" if text >= "9999-12" else text
+
+
 def _header_row(ws, row_num, values):
     for col, val in enumerate(values, 1):
         cell = ws.cell(row=row_num, column=col, value=val)
@@ -288,7 +296,7 @@ def export_projections():
             adjusted["monthly_contribution"] = override["override_amount"]
             b = contribution_breakdown(adjusted, assumptions)
             _data_row(ws_sched, sched_row, [
-                acc["name"], acc.get("wrapper_type") or "", override["from_month"], override["to_month"],
+                acc["name"], acc.get("wrapper_type") or "", override["from_month"], _display_schedule_to_month(override["to_month"]),
                 b["personal"], b["total_into_pot"], _safe_get(override, "reason") or "Override",
             ], num_formats={5: GBP, 6: GBP})
             sched_row += 1
