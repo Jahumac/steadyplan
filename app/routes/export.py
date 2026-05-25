@@ -57,6 +57,8 @@ from app.models import (
     fetch_pension_contributions,
     fetch_prior_month_budget_entries,
 )
+from app.models.accounts import PREMIUM_BONDS_MAX_BALANCE, is_premium_bonds_account
+from app.services.planning_insights import classify_account
 
 export_bp = Blueprint("export", __name__)
 
@@ -149,13 +151,14 @@ def export_projections():
     _set_col_width(ws, 1, 34)
     _set_col_width(ws, 2, 18)
     _set_col_width(ws, 3, 18)
-    _set_col_width(ws, 4, 24)
+    _set_col_width(ws, 4, 20)
+    _set_col_width(ws, 5, 24)
 
-    _title_cell(ws, 1, "SteadyPlan — Retirement Projections", 4)
+    _title_cell(ws, 1, "SteadyPlan — Retirement Projections", 5)
     cell = ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}")
     cell.font = _SUBTITLE_FONT
 
-    _header_row(ws, 4, ["Account", "Current Value", "Monthly into Pot", "Projected at Retirement"])
+    _header_row(ws, 4, ["Account", "Current Value", "You pay monthly", "Into pots monthly", "Projected at Retirement"])
 
     # UK pound formats
     GBP  = '£#,##0.00'
@@ -164,20 +167,34 @@ def export_projections():
     for i, acc in enumerate(accounts, 5):
         proj = projected_account_value(acc, assumptions)
         effective = projection_monthly_contribution(acc, assumptions, 0)
+        first_month_override = contribution_override_for_month(acc, start_month) if start_month else None
+        contribution_account = dict(acc)
+        if first_month_override is not None:
+            contribution_account["monthly_contribution"] = first_month_override
+        personal = contribution_breakdown(contribution_account, assumptions)["personal"]
         _data_row(ws, i, [
             acc["name"],
             to_float(acc["current_value"]),
+            personal,
             effective,
             proj,
-        ], num_formats={2: GBP, 3: GBP, 4: GBP0})
+        ], num_formats={2: GBP, 3: GBP, 4: GBP, 5: GBP0})
 
     total_row = len(accounts) + 5
+    total_personal_monthly = 0.0
+    for a in accounts:
+        first_month_override = contribution_override_for_month(a, start_month) if start_month else None
+        contribution_account = dict(a)
+        if first_month_override is not None:
+            contribution_account["monthly_contribution"] = first_month_override
+        total_personal_monthly += contribution_breakdown(contribution_account, assumptions)["personal"]
     _data_row(ws, total_row, [
         "Total",
         sum(to_float(a["current_value"]) for a in accounts),
+        total_personal_monthly,
         sum(projection_monthly_contribution(a, assumptions, 0) for a in accounts),
         total_projected,
-    ], bold=True, num_formats={2: GBP, 3: GBP, 4: GBP0})
+    ], bold=True, num_formats={2: GBP, 3: GBP, 4: GBP, 5: GBP0})
 
     # Fee impact summary (only if any account has fees)
     total_no_fees = sum(projected_account_value_no_fees(a, assumptions) for a in accounts)
@@ -188,10 +205,11 @@ def export_projections():
             "Lifetime cost of fees",
             "",
             "",
+            "",
             total_fee_impact,
-        ], bold=True, num_formats={4: GBP0})
+        ], bold=True, num_formats={5: GBP0})
         # Colour the fee impact value in a muted red
-        ws.cell(row=r_fee, column=4).font = Font(name="Aptos", bold=True, color="DC2626", size=10)
+        ws.cell(row=r_fee, column=5).font = Font(name="Aptos", bold=True, color="DC2626", size=10)
         ws.cell(row=r_fee, column=1).font = Font(name="Aptos", bold=True, color="DC2626", size=10)
 
     # Assumptions block
@@ -207,7 +225,81 @@ def export_projections():
         ws.cell(row=r, column=1, value=label).font = _SUBTITLE_FONT
         ws.cell(row=r, column=2, value=val).font = _DATA_FONT
 
-    # ── Sheet 2: Year by year ─────────────────────────────────────────────────
+    r += 2
+    ws.cell(row=r, column=1, value="Accessible vs locked").font = _ACCENT_FONT
+    _header_row(ws, r + 1, ["Type", "Current value", "Projected at retirement", "Account count"])
+    access_rows = {"accessible": [0.0, 0.0, 0], "restricted": [0.0, 0.0, 0], "locked": [0.0, 0.0, 0]}
+    for acc in accounts:
+        access_type = classify_account(acc).access_type
+        access_rows[access_type][0] += to_float(acc["current_value"])
+        access_rows[access_type][1] += projected_account_value(acc, assumptions)
+        access_rows[access_type][2] += 1
+    for access_type in ["accessible", "restricted", "locked"]:
+        r += 1
+        label = access_type.title() if access_type != "locked" else "Locked for later"
+        _data_row(ws, r + 1, [label, access_rows[access_type][0], access_rows[access_type][1], access_rows[access_type][2]], num_formats={2: GBP, 3: GBP0})
+
+    r += 3
+    ws.cell(row=r, column=1, value="Notes").font = _ACCENT_FONT
+    for note in [
+        "Values are nominal projections before inflation unless stated otherwise.",
+        "You pay monthly is your personal contribution; into pots includes tax relief, employer contributions and bonuses where applicable.",
+        "This is a planning estimate, not financial advice.",
+    ]:
+        r += 1
+        ws.cell(row=r, column=1, value=note).font = _SUBTITLE_FONT
+
+    # ── Sheet 2: Assumptions ─────────────────────────────────────────────────
+    ws_ass = wb.create_sheet("Assumptions")
+    _title_cell(ws_ass, 1, "SteadyPlan — Projection Assumptions", 3)
+    _set_col_width(ws_ass, 1, 32)
+    _set_col_width(ws_ass, 2, 24)
+    _set_col_width(ws_ass, 3, 52)
+    _header_row(ws_ass, 3, ["Setting", "Value", "Note"])
+    assumption_rows = [
+        ("Generated", datetime.now().strftime("%d %b %Y at %H:%M"), "Snapshot date for this export."),
+        ("Current age", int(current_age), "Derived from date of birth when available."),
+        ("Retirement age", int(retirement_age), "Target age used for this projection."),
+        ("Years to retirement", round(exact_years, 1), "Exact years when a retirement date is available."),
+        ("Projection start month", start_month, "First future contribution month considered by projections."),
+        ("Annual growth rate", f"{growth_rate*100:.1f}%", "Default gross annual growth before account fees."),
+        ("Inflation treatment", "Nominal", "Future values are not inflation-adjusted in this export."),
+        ("Salary/review day", _safe_get(assumptions, "salary_day", "") if assumptions else "", "Used to decide whether the current month has already settled."),
+    ]
+    for idx, row_vals in enumerate(assumption_rows, 4):
+        _data_row(ws_ass, idx, row_vals)
+
+    # ── Sheet 3: Contribution schedule ───────────────────────────────────────
+    ws_sched = wb.create_sheet("Contribution Schedule")
+    _title_cell(ws_sched, 1, "SteadyPlan — Contribution Schedule", 7)
+    for col, width in enumerate([28, 18, 16, 16, 16, 16, 36], 1):
+        _set_col_width(ws_sched, col, width)
+    _header_row(ws_sched, 3, ["Account", "Wrapper", "From", "To", "You pay monthly", "Into pot monthly", "Reason"])
+    sched_row = 4
+    for acc in accounts:
+        baseline_breakdown = contribution_breakdown(acc, assumptions)
+        _data_row(ws_sched, sched_row, [
+            acc["name"], acc.get("wrapper_type") or "", start_month or "Now", "Ongoing",
+            baseline_breakdown["personal"], baseline_breakdown["total_into_pot"], "Account default",
+        ], num_formats={5: GBP, 6: GBP})
+        sched_row += 1
+        for override in acc.get("_contribution_overrides", []) or []:
+            adjusted = dict(acc)
+            adjusted["monthly_contribution"] = override["override_amount"]
+            b = contribution_breakdown(adjusted, assumptions)
+            _data_row(ws_sched, sched_row, [
+                acc["name"], acc.get("wrapper_type") or "", override["from_month"], override["to_month"],
+                b["personal"], b["total_into_pot"], _safe_get(override, "reason") or "Override",
+            ], num_formats={5: GBP, 6: GBP})
+            sched_row += 1
+        if is_premium_bonds_account(acc):
+            _data_row(ws_sched, sched_row, [
+                acc["name"], acc.get("wrapper_type") or "", "Cap", "", "", PREMIUM_BONDS_MAX_BALANCE,
+                "NS&I Premium Bonds balance is capped; overflow is not shown as account growth.",
+            ], num_formats={6: GBP0})
+            sched_row += 1
+
+    # ── Sheet 4: Year by year ─────────────────────────────────────────────────
     ws2 = wb.create_sheet("Year by Year")
     _title_cell(ws2, 1, "SteadyPlan — Year-by-Year Projection", 3)
     _header_row(ws2, 3, ["Age", "Year", "Projected Total"])
@@ -286,6 +378,7 @@ def export_projections():
         has_fees = has_annual_fees or has_contrib_fee
 
         is_lisa = acc.get("wrapper_type") == "Lifetime ISA"
+        is_pb = is_premium_bonds_account(acc)
 
         def _month_breakdown(month_index):
             mk = add_months_to_key(start_month, month_index) if start_month else None
@@ -306,7 +399,7 @@ def export_projections():
                 b = _month_breakdown(mi)
                 acc_total_contrib_fees += float(b.get("contribution_fee") or 0)
 
-        max_cols = 9 if (has_annual_fees and has_contrib_fee) else (8 if has_annual_fees else (7 if has_contrib_fee else 6))
+        max_cols = 9 if (has_annual_fees and has_contrib_fee) else (8 if has_annual_fees else (7 if has_contrib_fee or is_pb else 6))
         _title_cell(ws_acc, 1, f"SteadyPlan — {acc['name']}", max_cols)
         sub = ws_acc.cell(row=2, column=1, value=f"{acc['wrapper_type']} · {acc.get('provider') or ''}")
         sub.font = _SUBTITLE_FONT
@@ -357,6 +450,8 @@ def export_projections():
             yby_headers = ["Age", "Year", "Projected Value", "Growth", "You pay (yr)", "Into pot (yr)", "Value (no fees)", "Fee Impact"]
         elif has_contrib_fee:
             yby_headers = ["Age", "Year", "Projected Value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)"]
+        elif is_pb:
+            yby_headers = ["Age", "Year", "Projected Value", "Growth", "Cap adjustment", "You pay (yr)", "Into pot (yr)"]
         else:
             yby_headers = ["Age", "Year", "Projected Value", "Growth", "You pay (yr)", "Into pot (yr)"]
         _header_row(ws_acc, yby_start, yby_headers)
@@ -395,6 +490,10 @@ def export_projections():
                     personal_this_year += float(b.get("personal") or 0)
                     contrib_fee_this_year += float(b.get("contribution_fee") or 0)
             growth_this_year = (val - prev_val - contrib_this_year) if yr > 0 else 0
+            cap_adjustment_this_year = 0.0
+            if is_pb and growth_this_year < 0 and val >= PREMIUM_BONDS_MAX_BALANCE - 0.005:
+                cap_adjustment_this_year = growth_this_year
+                growth_this_year = 0.0
             year_label = f"{curr_year + yr} (today)" if yr == 0 else curr_year + yr
 
             if has_annual_fees and has_contrib_fee:
@@ -412,6 +511,10 @@ def export_projections():
             elif has_contrib_fee:
                 _data_row(ws_acc, yby_start + 1 + yr, [
                     age, year_label, val, growth_this_year, personal_this_year, contrib_this_year, contrib_fee_this_year,
+                ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0})
+            elif is_pb:
+                _data_row(ws_acc, yby_start + 1 + yr, [
+                    age, year_label, val, growth_this_year, cap_adjustment_this_year, personal_this_year, contrib_this_year,
                 ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0})
             else:
                 _data_row(ws_acc, yby_start + 1 + yr, [
@@ -433,6 +536,10 @@ def export_projections():
                     acc_projected_no_fees, acc_fee_impact,
                 ], bold=True, num_formats={3: GBP0, 7: GBP0, 8: GBP0})
             elif has_contrib_fee:
+                _data_row(ws_acc, final_r, [
+                    int(retirement_age), curr_year + whole_years + 1, acc_projected, "", "", "", "",
+                ], bold=True, num_formats={3: GBP0})
+            elif is_pb:
                 _data_row(ws_acc, final_r, [
                     int(retirement_age), curr_year + whole_years + 1, acc_projected, "", "", "", "",
                 ], bold=True, num_formats={3: GBP0})
