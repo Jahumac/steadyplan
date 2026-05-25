@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [2026.05.0] - 2026-05-25
+## [2026.5.0] - 2026-05-25
 
 ### Added
 - Backup health tracking and display in Settings.
