@@ -19,7 +19,8 @@
         </a>
         <nav class="nav" aria-label="Primary">
           <a href="./index.html" aria-current="page">Docs</a>
-          <a href="./install.html">Install</a>
+          <a href="../tour.html">Tour</a>
+          <a href="../about.html">About</a>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
       </div>
@@ -49,24 +50,34 @@
         </p>
         <div class="hr"></div>
         <div class="grid-3">
-          <div class="card pad tile">
-            <h3><a href="./install.html">1) Install</a></h3>
+          <a class="card pad tile tile-link" href="./install.html">
+            <h3>1) Install</h3>
             <p>Docker/Unraid setup, where data lives, and how to update.</p>
-          </div>
-          <div class="card pad tile">
-            <h3><a href="./backups.html">2) Backups &amp; restore</a></h3>
+          </a>
+          <a class="card pad tile tile-link" href="./backups.html">
+            <h3>2) Backups &amp; restore</h3>
             <p>How to back up safely (JSON exports and whole-instance SQLite backups) and how restore works.</p>
-          </div>
-          <div class="card pad tile">
-            <h3><a href="./privacy.html">3) Privacy &amp; data ownership</a></h3>
+          </a>
+          <a class="card pad tile tile-link" href="./privacy.html">
+            <h3>3) Privacy &amp; data ownership</h3>
             <p>Local SQLite database, no cloud sync, and what leaves your machine (optional price lookups).</p>
-          </div>
+          </a>
         </div>
         <div style="margin-top:0.9rem;" class="grid-3">
-          <div class="card pad tile">
-            <h3><a href="./reverse-proxy.html">4) Reverse proxy / public exposure</a></h3>
+          <a class="card pad tile tile-link" href="./reverse-proxy.html">
+            <h3>4) Reverse proxy / public exposure</h3>
             <p>LAN/VPN is the safe default. If you go public: HTTPS, trusted proxy, and careful headers.</p>
-          </div>
+          </a>
+          <a class="card pad tile tile-link" href="../tour.html">
+            <h3>Product tour</h3>
+            <p>See how the main screens fit together. Demo data screenshots.</p>
+          </a>
+          <a class="card pad tile tile-link" href="../about.html">
+            <h3>Built to face the numbers</h3>
+            <p>Why SteadyPlan exists, how it’s used, and what it’s trying to be.</p>
+          </a>
+        </div>
+        <div style="margin-top:0.9rem;" class="grid-3">
           <div class="card pad tile">
             <h3>GitHub</h3>
             <p>Source code, releases, and issues live on GitHub.</p>
@@ -77,11 +88,18 @@
             </p>
           </div>
           <div class="card pad tile">
-            <h3>Quick links</h3>
+            <h3>Docs topics</h3>
             <p class="muted" style="margin:0;">
-              <a href="../index.html">Homepage</a> ·
               <a href="./install.html">Install</a> ·
-              <a href="./backups.html">Backups</a>
+              <a href="./backups.html">Backups</a> ·
+              <a href="./privacy.html">Privacy</a> ·
+              <a href="./reverse-proxy.html">Reverse proxy</a>
+            </p>
+          </div>
+          <div class="card pad tile">
+            <h3>Homepage</h3>
+            <p class="muted" style="margin:0;">
+              <a href="../index.html">SteadyPlan.co.uk</a>
             </p>
           </div>
         </div>
@@ -97,8 +115,9 @@
     <div class="container">
       <div class="footer-row">
         <div class="small">
-          <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">github.com/Jahumac/steadyplan</a>
-          <span class="muted"> · SteadyPlan is open source and self-hosted.</span>
+          <a href="../index.html">Homepage</a>
+          <span class="muted"> · </span>
+          <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">Source &amp; issues on GitHub</a>
         </div>
         <div class="small muted">Not financial advice.</div>
       </div>
