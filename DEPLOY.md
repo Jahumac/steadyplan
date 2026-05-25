@@ -177,6 +177,82 @@ Before upgrades or risky changes:
 - Download a per-user JSON export from **Settings → Download JSON export** (portable, user-scoped).
 - Back up the whole `/app/data` directory (whole instance: `finance.db`, `secret_key.txt`, and `backups/`).
 
+## Maintenance workflow (protected `main`)
+
+`main` is protected. Do all work on a feature branch and merge via a GitHub Pull Request (PR).
+
+### Start new work (from `main`)
+
+From your local repo folder (Trae / VS Code terminal):
+
+```bash
+git checkout main
+git pull origin main
+```
+
+### Create a feature branch
+
+```bash
+git checkout -b feat/something
+```
+
+Make your changes, then:
+
+```bash
+git status
+git add .
+git commit -m "Short description of the change"
+git push -u origin HEAD
+```
+
+### Open the PR on GitHub
+
+- Open PR list: https://github.com/Jahumac/steadyplan/pulls
+  - “Open” PRs are the active ones waiting to merge.
+  - “Closed” PRs include merged PRs and PRs that were closed without merging.
+- Branch list: https://github.com/Jahumac/steadyplan/branches
+
+Typical flow:
+- After `git push -u origin HEAD`, GitHub usually shows a “Compare & pull request” button.
+- Otherwise go to the Pull Requests page and click “New pull request”.
+
+### Merge the PR
+
+On the PR page:
+- Wait for checks to pass (if configured).
+- Use GitHub’s merge button (Squash merge is fine for small PRs).
+
+Then update your local `main`:
+
+```bash
+git checkout main
+git pull origin main
+```
+
+### Update / restart the Unraid container (GHCR `:latest`)
+
+SteadyPlan’s image is `ghcr.io/jahumac/steadyplan:latest`. After merging a PR, pull the new image and restart.
+
+- Unraid UI:
+  - Docker tab → find the SteadyPlan container → “Check for Updates” / “Update” (wording varies by Unraid version)
+  - Then restart the container if it doesn’t auto-restart.
+- Unraid SSH (optional):
+
+```bash
+ssh root@YOUR_UNRAID_IP
+docker pull ghcr.io/jahumac/steadyplan:latest
+docker restart steadyplan
+```
+
+### Take a backup before risky updates
+
+Calm rule of thumb: if you’d be annoyed to lose the last week of edits, take a backup first.
+
+- In-app (fast):
+  - Settings → Download JSON export (per-user)
+  - Settings → Diagnostics → Create SQLite backup now (whole instance, database only)
+- On the server (recommended): back up your whole `/app/data` directory (includes `finance.db`, `secret_key.txt`, and `backups/`).
+
 Pull the latest image and recreate the container:
 
 ```bash
