@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2026.05.0] - 2026-05-25
+
+### Added
+- Backup health tracking and display in Settings.
+- Deployment notes for the SteadyPlan Docker/Unraid setup.
+
+### Changed
+- Continued mobile polish across the private app experience.
+- Updated runtime dependencies to current releases, including Flask 3.1.3, Flask-WTF 1.3.0, yfinance 1.4.0, Gunicorn 26.0.0, APScheduler 3.11.2, pytz 2026.2, Flask-Limiter 4.1.1, and openpyxl 3.1.5.
+- Updated the Docker base image to Python 3.14 slim.
+- Updated GitHub Actions workflow dependencies for checkout, GHCR login, metadata, and Docker build/push.
+
+### Verified
+- Full test suite passes on Python 3.13 and Python 3.14.
+- GitHub Docker build/publish and Cloudflare Pages checks pass.
+- Production container update was smoke-tested on Unraid.
+
 ## [2.0.0] - 2026-05-24
 
 ### Added
