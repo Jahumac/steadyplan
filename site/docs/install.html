@@ -19,42 +19,109 @@
         </a>
         <nav class="nav" aria-label="Primary">
           <a href="./index.html">Docs</a>
+          <a href="./install.html" aria-current="page">Install</a>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
       </div>
     </div>
   </header>
 
+  <div class="docs-nav-wrap">
+    <div class="container">
+      <nav class="docs-nav" aria-label="Docs">
+        <a href="./index.html">Start here</a>
+        <a href="./install.html" aria-current="page">Install</a>
+        <a href="./backups.html">Backups &amp; restore</a>
+        <a href="./privacy.html">Privacy</a>
+        <a href="./reverse-proxy.html">Reverse proxy</a>
+        <a href="https://github.com/Jahumac/steadyplan/releases" target="_blank" rel="noopener noreferrer">Releases</a>
+      </nav>
+    </div>
+  </div>
+
   <main class="section">
     <div class="container">
       <div class="card pad">
         <p class="kicker"><a href="./index.html">Docs</a> · Install</p>
         <h1 style="margin:0 0 0.5rem 0;">Install SteadyPlan</h1>
-        <p class="muted" style="margin:0;">
-          Most people run SteadyPlan on Docker or Unraid, with a host-mounted data directory. This page is a short overview; the repository docs contain the full detail.
+        <p class="muted prose" style="margin:0;">
+          Most people run SteadyPlan on Docker or Unraid with a host-mounted data directory. The only hard requirement is that <code>/app/data</code> persists — that’s where your database and keys live.
         </p>
         <div class="hr"></div>
 
-        <h2>Docker (typical)</h2>
-        <p class="muted">
-          In Docker, SteadyPlan stores data under <code>/app/data</code> inside the container. You map that to a host path (for example on Unraid: <code>/mnt/user/appdata/steadyplan</code>).
-        </p>
-        <p class="note small">
-          Compatibility note: older installs may still use <code>ghcr.io/jahumac/shelly-finance:latest</code>. The preferred image is <code>ghcr.io/jahumac/steadyplan:latest</code>.
-        </p>
-        <pre>docker pull ghcr.io/jahumac/steadyplan:latest</pre>
+        <div class="prose">
+          <h2>Quick install (Docker)</h2>
+          <p class="muted">
+            Pull the image, run the container, and map a host folder to <code>/app/data</code>.
+          </p>
+          <pre>docker pull ghcr.io/jahumac/steadyplan:latest</pre>
+          <pre>docker run -d \
+  --name steadyplan \
+  --restart unless-stopped \
+  -p 8000:8000 \
+  -v /path/to/steadyplan-data:/app/data \
+  ghcr.io/jahumac/steadyplan:latest</pre>
+          <p class="note small">
+            On Unraid, a common host path is <code>/mnt/user/appdata/steadyplan</code>.
+            Older installs may still reference the historical <code>shelly-finance</code> name (image or data folder). You can switch images without wiping data as long as you keep the same <code>/app/data</code> mount.
+          </p>
+        </div>
 
-        <h2>Unraid</h2>
-        <p class="muted">
-          If you use Unraid, map the app’s <code>/app/data</code> volume to your appdata share. For new installs, a common path is <code>/mnt/user/appdata/steadyplan</code>. Existing installs do not need to rename their data directory.
-        </p>
+        <div class="prose">
+          <h2>Docker Compose (optional)</h2>
+          <p class="muted">If you prefer Compose, this is the minimal shape:</p>
+          <pre>services:
+  steadyplan:
+    image: ghcr.io/jahumac/steadyplan:latest
+    container_name: steadyplan
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped</pre>
+          <p class="muted">Then:</p>
+          <pre>docker compose up -d</pre>
+        </div>
+
+        <div class="prose">
+          <h2>First run</h2>
+          <ul class="muted">
+            <li>Open <code>http://YOUR_SERVER:8000</code>.</li>
+            <li>On first visit you’ll be prompted to create an admin account.</li>
+            <li>Your database is created under the mounted data directory (typically <code>finance.db</code>).</li>
+          </ul>
+        </div>
+
+        <div class="prose">
+          <h2>Where your data lives</h2>
+          <p class="muted">
+            Your persistent app data is in the host path you mounted to <code>/app/data</code>. It typically includes:
+          </p>
+          <ul class="muted">
+            <li><code>finance.db</code> (SQLite database)</li>
+            <li><code>secret_key.txt</code> (Flask secret key; keep this with the database)</li>
+            <li><code>backups/</code> (optional whole-instance SQLite backups created from the app)</li>
+          </ul>
+        </div>
+
+        <div class="prose">
+          <h2>Update</h2>
+          <p class="muted">Before updating, take a backup (see <a href="./backups.html">Backups &amp; restore</a>).</p>
+          <pre>docker pull ghcr.io/jahumac/steadyplan:latest
+docker restart steadyplan</pre>
+          <p class="note small">If you use Unraid’s Docker UI, update the container from the Docker tab and restart if needed.</p>
+        </div>
 
         <div class="hr"></div>
-        <h2>Canonical guides</h2>
-        <ul class="muted">
-          <li><a href="https://github.com/Jahumac/steadyplan/blob/main/README.md" target="_blank" rel="noopener noreferrer">README.md</a> (overview and quick start)</li>
-          <li><a href="https://github.com/Jahumac/steadyplan/blob/main/DEPLOY.md" target="_blank" rel="noopener noreferrer">DEPLOY.md</a> (Docker/Unraid/reverse proxy details)</li>
-        </ul>
+        <div class="prose">
+          <h2>GitHub (secondary)</h2>
+          <p class="muted">
+            GitHub is the source-of-truth for releases and development:
+            <a href="https://github.com/Jahumac/steadyplan/releases" target="_blank" rel="noopener noreferrer">Releases</a>,
+            <a href="https://github.com/Jahumac/steadyplan/issues" target="_blank" rel="noopener noreferrer">Issues</a>,
+            <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">Source</a>.
+          </p>
+        </div>
 
         <div class="hr"></div>
         <p class="muted small" style="margin:0;">

@@ -5,7 +5,7 @@ This folder contains the source for the SteadyPlan static website hub (landing +
 ## Purpose
 
 - Provide a calm, privacy-first landing page for SteadyPlan
-- Host a small docs hub that links back to the main repository docs
+- Host the main human-readable docs hub (install, backups, privacy, reverse proxy)
 - Act as the source directory for a future static host deployment (Cloudflare Pages, GitHub Pages, etc.)
 
 ## Local Preview
@@ -44,4 +44,3 @@ Cloudflare Pages supports Netlify-style files:
   - Domain-level redirects (e.g. `steady-plan.co.uk` → `steadyplan.co.uk`) should be configured with Cloudflare redirect rules / bulk redirects
 - `site/_headers`:
   - Contains basic security headers appropriate for a static docs site
-
