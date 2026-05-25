@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SteadyPlan · Concept A</title>
+  <meta name="description" content="Concept A: Editorial project-home style for SteadyPlan — long-term finance planning, self-hosted.">
+  <meta name="robots" content="noindex">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1220;
+      --panel: rgba(17, 27, 47, 0.78);
+      --border: rgba(148, 163, 184, 0.18);
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #2dd4bf;
+      --accent2: #38bdf8;
+      --shadow: 0 18px 44px rgba(0, 0, 0, 0.46);
+      --radius: 16px;
+      --max: 1080px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+      background:
+        radial-gradient(1200px 700px at 10% -10%, rgba(45, 212, 191, 0.12), transparent 60%),
+        radial-gradient(1100px 700px at 85% 0%, rgba(56, 189, 248, 0.10), transparent 60%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    a { color: inherit; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    :focus-visible { outline: 2px solid rgba(56, 189, 248, 0.75); outline-offset: 2px; }
+    .container { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 1.25rem; }
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      background: rgba(11, 18, 32, 0.72);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.85rem 0;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.12);
+    }
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.9rem;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .nav a { color: var(--muted); font-weight: 650; font-size: 0.95rem; }
+    .nav a:hover { color: var(--text); text-decoration: none; }
+    .crumb {
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin: 0.95rem 0 0 0;
+    }
+    .hero {
+      padding: 3.1rem 0 1.6rem;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .pad { padding: 1.2rem; }
+    .hero-title {
+      font-size: clamp(2.6rem, 6vw, 3.8rem);
+      letter-spacing: -0.02em;
+      margin: 0 0 0.3rem 0;
+      line-height: 1.05;
+    }
+    .tagline {
+      margin: 0 0 0.95rem 0;
+      font-weight: 800;
+      color: var(--muted);
+    }
+    .lead {
+      color: var(--muted);
+      font-size: 1.06rem;
+      max-width: 62ch;
+      margin: 0 0 1.1rem 0;
+    }
+    .cta {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.7rem 1rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(17, 27, 47, 0.65);
+      color: var(--text);
+      font-weight: 800;
+      font-size: 0.96rem;
+      text-decoration: none;
+    }
+    .btn:hover { text-decoration: none; border-color: rgba(45, 212, 191, 0.55); }
+    .btn.primary {
+      background: linear-gradient(135deg, rgba(45, 212, 191, 0.95), rgba(56, 189, 248, 0.85));
+      border: 0;
+      color: #0b1220;
+    }
+    .btn.primary:hover { filter: brightness(1.02); }
+    .section { padding: 1.2rem 0; }
+    .section h2 { margin: 0 0 0.75rem 0; font-size: 1.35rem; }
+    .muted { color: var(--muted); }
+    .note {
+      border-left: 3px solid rgba(45, 212, 191, 0.55);
+      padding-left: 0.85rem;
+      color: var(--muted);
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.9rem;
+    }
+    .tile-link {
+      display: block;
+      text-decoration: none;
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+    .tile-link:hover {
+      text-decoration: none;
+      border-color: rgba(45, 212, 191, 0.35);
+      transform: translateY(-1px);
+      box-shadow: 0 14px 38px rgba(0, 0, 0, 0.45);
+    }
+    .tile h3 { margin: 0 0 0.35rem 0; font-size: 1.05rem; }
+    .tile p { margin: 0; color: var(--muted); }
+    .hr { height: 1px; background: var(--border); margin: 1.2rem 0; }
+    .mini {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.15rem 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+    .tour-frame {
+      border: 1px dashed rgba(148, 163, 184, 0.28);
+      border-radius: 14px;
+      padding: 0.95rem;
+      background: rgba(15, 23, 42, 0.40);
+      color: var(--muted);
+    }
+    .tour-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.8rem;
+      margin-top: 0.8rem;
+    }
+    .tour-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 0.85rem;
+      background: rgba(17, 27, 47, 0.60);
+    }
+    .tour-card strong { display: block; margin-bottom: 0.3rem; }
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 1.25rem 0;
+      margin-top: 2rem;
+      color: var(--muted);
+    }
+    .footer-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    @media (min-width: 860px) {
+      .hero-grid { grid-template-columns: 1.2fr 0.8fr; }
+      .grid-3 { grid-template-columns: repeat(3, 1fr); }
+      .tour-row { grid-template-columns: 1fr 1fr; }
+      .footer-row { grid-template-columns: 1fr auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header-row">
+        <a class="brand" href="../../index.html">
+          <span class="dot" aria-hidden="true"></span>
+          <span>SteadyPlan</span>
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="../../index.html">Home</a>
+          <a href="../../docs/index.html">Docs</a>
+          <a href="../../tour.html">Tour</a>
+          <a href="../../about.html">About</a>
+          <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <p class="crumb">Concept A · Editorial project-home style</p>
+    </div>
+
+    <section class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div class="card pad">
+            <h1 class="hero-title">SteadyPlan</h1>
+            <p class="tagline">Long-term finance planning, self-hosted.</p>
+            <p class="lead">
+              Face the numbers. Keep control. Plan steadily.
+              SteadyPlan helps you model accounts, debts, contributions, goals, investments and retirement scenarios in one private place — without handing your financial life to another platform.
+            </p>
+            <div class="cta" aria-label="Hero actions">
+              <a class="btn primary" href="#start">Start with docs</a>
+              <a class="btn" href="#tour">See how the tour could work</a>
+            </div>
+          </div>
+
+          <div class="card pad">
+            <span class="mini">Core stance</span>
+            <div class="hr"></div>
+            <p class="muted" style="margin:0;">
+              Runs on your own server/NAS/desktop. Use it from desktop, tablet or phone browser. Install as a web app (PWA) where supported.
+              No bank linking. No promises. Just visibility and planning.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="why">
+      <div class="container">
+        <div class="card pad">
+          <h2>Why it exists</h2>
+          <p class="muted" style="margin:0;">
+            SteadyPlan started as a personal project after serious money stress and debt/IVA. The turning point wasn’t a trick — it was visibility.
+            I needed one clear place to see the full picture and stay engaged with it, without sending my entire financial life to another platform.
+          </p>
+          <div class="hr"></div>
+          <p class="note" style="margin:0;">
+            Shared as a self-hosted/open-source project for people who value local control, repairability and backups.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="container">
+        <h2 style="margin-top:0;">What SteadyPlan helps with</h2>
+        <div class="grid-3">
+          <a class="card pad tile tile-link" href="#tour">
+            <h3>See the full picture</h3>
+            <p>Accounts, debts, savings, investments and goals in one view you control.</p>
+          </a>
+          <a class="card pad tile tile-link" href="#tour">
+            <h3>Track accounts and holdings</h3>
+            <p>Manual-first tracking with optional external price lookups (if you enable them).</p>
+          </a>
+          <a class="card pad tile tile-link" href="#tour">
+            <h3>Plan contributions and goals</h3>
+            <p>Keep month-to-month inputs consistent so your plan stays grounded.</p>
+          </a>
+        </div>
+        <div class="grid-3" style="margin-top:0.9rem;">
+          <a class="card pad tile tile-link" href="#tour">
+            <h3>Understand retirement scenarios</h3>
+            <p>Scenario estimates driven by your balances, contributions and assumptions.</p>
+          </a>
+          <a class="card pad tile tile-link" href="#start">
+            <h3>Keep data local</h3>
+            <p>Local SQLite database. No cloud sync.</p>
+          </a>
+          <a class="card pad tile tile-link" href="#start">
+            <h3>Back up and restore</h3>
+            <p>Your server, your backups — with clear restore boundaries.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="ways">
+      <div class="container">
+        <div class="card pad">
+          <h2>Ways to use it</h2>
+          <div class="grid-3" style="margin-top:0.9rem;">
+            <div class="card pad tile">
+              <h3>Run it</h3>
+              <p>On your own server/NAS/desktop. Docker/Unraid friendly.</p>
+            </div>
+            <div class="card pad tile">
+              <h3>Use it</h3>
+              <p>From desktop, tablet or phone browser on your LAN/VPN.</p>
+            </div>
+            <div class="card pad tile">
+              <h3>Install it</h3>
+              <p>As a web app (PWA) where supported by your browser.</p>
+            </div>
+          </div>
+          <div class="hr"></div>
+          <p class="muted" style="margin:0;">
+            Public exposure is optional and should be configured intentionally (HTTPS + trusted reverse proxy).
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="start">
+      <div class="container">
+        <div class="card pad">
+          <h2>Start here</h2>
+          <div class="grid-3" style="margin-top:0.9rem;">
+            <a class="card pad tile tile-link" href="../../docs/index.html">
+              <h3>Docs home</h3>
+              <p>Start here for the practical guide.</p>
+            </a>
+            <a class="card pad tile tile-link" href="../../docs/install.html">
+              <h3>Install</h3>
+              <p>Docker/Unraid setup and updates.</p>
+            </a>
+            <a class="card pad tile tile-link" href="../../docs/backups.html">
+              <h3>Backups</h3>
+              <p>Exports vs whole-instance backups, and recovery.</p>
+            </a>
+          </div>
+          <div class="grid-3" style="margin-top:0.9rem;">
+            <a class="card pad tile tile-link" href="../../docs/privacy.html">
+              <h3>Privacy</h3>
+              <p>What stays local and what can leave your machine.</p>
+            </a>
+            <a class="card pad tile tile-link" href="../../docs/reverse-proxy.html">
+              <h3>Reverse proxy</h3>
+              <p>LAN/VPN default; HTTPS if you go public.</p>
+            </a>
+            <div class="card pad tile">
+              <h3>GitHub (secondary)</h3>
+              <p class="muted" style="margin:0;">
+                <a href="https://github.com/Jahumac/steadyplan/releases" target="_blank" rel="noopener noreferrer">Releases</a> ·
+                <a href="https://github.com/Jahumac/steadyplan/issues" target="_blank" rel="noopener noreferrer">Issues</a> ·
+                <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">Source</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="tour">
+      <div class="container">
+        <div class="card pad">
+          <h2>Product tour (concept)</h2>
+          <p class="muted" style="margin:0;">
+            A tour that explains features and purpose first, with small preview panels. Screenshots are optional — and only used when current and accurate.
+          </p>
+          <div class="hr"></div>
+          <div class="tour-frame">
+            <span class="mini">Tour layout</span>
+            <div class="tour-row">
+              <div class="tour-card">
+                <strong>Overview</strong>
+                <div class="muted">What it does, why it exists, and a small preview panel.</div>
+              </div>
+              <div class="tour-card">
+                <strong>Projections</strong>
+                <div class="muted">Assumptions-based scenario estimates, clearly labelled.</div>
+              </div>
+              <div class="tour-card">
+                <strong>Data ownership</strong>
+                <div class="muted">Where data lives, backups, exports, and trust boundaries.</div>
+              </div>
+              <div class="tour-card">
+                <strong>Holdings</strong>
+                <div class="muted">Only show screenshots if the asset matches the current UI.</div>
+              </div>
+            </div>
+            <div class="hr"></div>
+            <p style="margin:0;" class="muted">
+              Escape routes: always show <a href="../../index.html">Home</a> · <a href="../../docs/index.html">Docs</a> · <a href="../../about.html">About</a> at the top of the tour page.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-row">
+        <div class="muted">
+          <a href="#top">Back to top</a>
+          <span class="muted"> · </span>
+          <a href="../../index.html">Back to real site</a>
+        </div>
+        <div class="muted">Concept A · Disposable mockup</div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
