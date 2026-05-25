@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import hero_stat %}
+{% block title %}Planning · SteadyPlan{% endblock %}
+{% block content %}
+
+{% include '_month_strip.html' %}
+
+<section class="card highlight mb-1 month-accent-{{ current_month_num }}">
+  <div class="hero-top">
+    <div>
+      <p class="eyebrow">Planning</p>
+      <h2 class="hero-value">Accessible now vs locked for later</h2>
+      <p class="hero-subtitle">Your total balance is not the whole story. Some money protects you before pension age; some is building future income.</p>
+      <p class="helper-text m-0">This page is an assumptions-based analyser, not advice. It is designed to show pressure points clearly.</p>
+    </div>
+    <div class="hero-turtle-wrap">
+      <img src="{{ url_for('static', filename='icons/shelly/Goals.png') }}" alt="" class="hero-turtle">
+    </div>
+  </div>
+  <div class="hero-strip">
+    {% call hero_stat('Accessible') %}<strong>£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</strong>{% endcall %}
+    {% call hero_stat('Locked') %}<strong>£{{ '{:,.0f}'.format(access_summary.locked_current) }}</strong>{% endcall %}
+    {% call hero_stat('Restricted') %}<strong>£{{ '{:,.0f}'.format(access_summary.restricted_current) }}</strong>{% endcall %}
+    {% call hero_stat('Accessible share') %}<strong>{{ '{:.0f}'.format(access_summary.accessible_pct) }}%</strong>{% endcall %}
+  </div>
+</section>
+
+<section class="card-grid mb-1">
+  <div class="card stat-card">
+    <h2>Accessible security</h2>
+    <p>£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</p>
+    <small>Money normally usable before pension age: ISA, cash, GIA, Premium Bonds and similar accounts.</small>
+  </div>
+  <div class="card stat-card">
+    <h2>Locked for later</h2>
+    <p>£{{ '{:,.0f}'.format(access_summary.locked_current) }}</p>
+    <small>Pension-style money that is doing long-term retirement work.</small>
+  </div>
+  <div class="card stat-card">
+    <h2>Restricted</h2>
+    <p>£{{ '{:,.0f}'.format(access_summary.restricted_current) }}</p>
+    <small>Money with rules, penalties or special access conditions.</small>
+  </div>
+  <div class="card stat-card">
+    <h2>Projected private pot</h2>
+    <p>£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</p>
+    <small>At age {{ '{:.0f}'.format(income_summary.retirement_age) }} under current balances, contributions and growth assumptions.</small>
+  </div>
+</section>
+
+<section class="card mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Accessible security</p>
+      <h2>Milestones that actually change how exposed you feel</h2>
+    </div>
+    <a class="badge badge-sm" href="/accounts/">Review accounts</a>
+  </div>
+  <p class="helper-text">These milestones only use accounts classed as accessible. Pension totals are deliberately kept out so the signal stays honest.</p>
+  <div class="card-grid planning-milestone-grid">
+    {% for milestone in access_summary.milestones %}
+    <div class="card planning-mini-card">
+      <div class="budget-row" style="padding:0;border:none;">
+        <div class="budget-row-left">
+          <span class="budget-row-name">£{{ '{:,.0f}'.format(milestone.target) }} accessible</span>
+          <span class="budget-row-note">{{ '{:.0f}'.format(milestone.progress) }}% complete · £{{ '{:,.0f}'.format(milestone.remaining) }} to go</span>
+        </div>
+        <div class="budget-row-right">
+          <strong>{{ milestone.duration }}</strong>
+        </div>
+      </div>
+      <div class="planning-progress" aria-hidden="true"><span style="width: {{ '{:.1f}'.format(milestone.progress) }}%"></span></div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Income analyser</p>
+      <h2>What could the current plan support?</h2>
+    </div>
+  </div>
+  <p class="helper-text">Use this when you do not yet know the perfect retirement salary. It turns your projected pot into an illustrative withdrawal range, then checks the bridge before pension access.</p>
+
+  <form method="get" class="planning-assumptions-form mb-1">
+    <label>
+      <span>Desired income/year (optional)</span>
+      <input type="number" step="100" min="0" name="desired_income" value="{{ '{:.0f}'.format(income_summary.desired_income) if income_summary.desired_income else '' }}" placeholder="e.g. 24000">
+    </label>
+    <label>
+      <span>Pension access age</span>
+      <input type="number" step="1" min="0" name="pension_access_age" value="{{ '{:.0f}'.format(income_summary.pension_access_age) }}">
+    </label>
+    <label>
+      <span>State Pension age</span>
+      <input type="number" step="1" min="0" name="state_pension_age" value="{{ '{:.0f}'.format(income_summary.state_pension_age) }}">
+    </label>
+    <label>
+      <span>State Pension/year estimate</span>
+      <input type="number" step="100" min="0" name="state_pension_annual" value="{{ '{:.0f}'.format(income_summary.state_pension_annual) }}">
+    </label>
+    <div class="planning-form-actions">
+      <button type="submit" class="badge badge-primary-action">Update analyser</button>
+      <a href="/settings/?mode=edit" class="badge badge-meta">Edit growth/retirement age</a>
+    </div>
+  </form>
+
+  <div class="card-grid mb-1">
+    {% for row in income_summary.withdrawal_ranges %}
+    <div class="card stat-card planning-mini-card">
+      <h2>{{ row.label }} · {{ '{:.1f}'.format(row.rate * 100) }}%</h2>
+      <p>£{{ '{:,.0f}'.format(row.annual_income) }}/yr</p>
+      <small>About £{{ '{:,.0f}'.format(row.monthly_income) }}/mo. {{ row.note }}</small>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="card-grid mb-1">
+    <div class="card planning-mini-card">
+      <h2>Bridge before pension access</h2>
+      {% if income_summary.bridge_years > 0 %}
+        <p class="planning-big-number">{{ '{:.0f}'.format(income_summary.bridge_years) }} years</p>
+        <p class="helper-text">From age {{ '{:.0f}'.format(income_summary.retirement_age) }} to {{ '{:.0f}'.format(income_summary.pension_access_age) }}. Accessible pot projected at retirement: £{{ '{:,.0f}'.format(income_summary.accessible_at_retirement) }}.</p>
+        {% if income_summary.uses_goal_mode %}
+          <p class="helper-text">At your entered income, simple bridge need is £{{ '{:,.0f}'.format(income_summary.bridge_need) }}. Surplus/gap: <strong class="{% if income_summary.bridge_surplus >= 0 %}text-gain{% else %}text-loss{% endif %}">£{{ '{:,.0f}'.format(income_summary.bridge_surplus) }}</strong>.</p>
+        {% else %}
+          <p class="helper-text">Without a desired income entered, that accessible pot could cover about £{{ '{:,.0f}'.format(income_summary.bridge_income_capacity) }}/yr for the bridge period before growth/tax detail.</p>
+        {% endif %}
+      {% else %}
+        <p class="planning-big-number">No bridge gap</p>
+        <p class="helper-text">Your selected retirement age is at or after pension access age in this scenario.</p>
+      {% endif %}
+    </div>
+    <div class="card planning-mini-card">
+      <h2>After State Pension starts</h2>
+      <p class="planning-big-number">£{{ '{:,.0f}'.format(income_summary.private_after_state_needed) }}/yr</p>
+      <p class="helper-text">Private income needed after an illustrative State Pension of £{{ '{:,.0f}'.format(income_summary.state_pension_annual) }}/yr{% if income_summary.uses_goal_mode %} against your desired £{{ '{:,.0f}'.format(income_summary.desired_income) }}/yr{% else %}, using the balanced estimate as the income to model{% endif %}.</p>
+    </div>
+    <div class="card planning-mini-card">
+      <h2>Weakest link</h2>
+      <p class="planning-big-number">{{ income_summary.limiting_factor }}</p>
+      <p class="helper-text">This is a simple signal to help decide whether the next £1 should mainly build accessible security, locked pension income, or neither.</p>
+    </div>
+  </div>
+
+  <div class="card alert-banner alert-info">
+    <strong>Tax and withdrawal detail is deliberately light in this first version.</strong>
+    <p class="helper-text m-0">ISA withdrawals are usually tax-free; pension and State Pension income may be taxable. This page shows planning scenarios, not guaranteed safe withdrawal advice.</p>
+  </div>
+</section>
+
+<section class="card mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Account classification</p>
+      <h2>How SteadyPlan split your pots</h2>
+    </div>
+  </div>
+  <div class="budget-rows">
+    {% for key, group in access_summary.groups.items() %}
+      {% for account in group.accounts %}
+      <div class="budget-row">
+        <div class="budget-row-left">
+          <span class="budget-row-name">{{ account.name }}</span>
+          <span class="budget-row-note">{{ account.wrapper_type or 'No wrapper type' }} · {{ account.access_label }}</span>
+          <span class="budget-row-note">{{ account.access_reason }}</span>
+        </div>
+        <div class="budget-row-right">
+          <span class="muted-cell">now £{{ '{:,.0f}'.format(account.current) }}</span>
+          <strong>£{{ '{:,.0f}'.format(account.projected) }}</strong>
+        </div>
+      </div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</section>
+
+{% endblock %}

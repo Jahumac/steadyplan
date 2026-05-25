@@ -35,3 +35,4 @@ shelly_icons/
 
 # Claude Code
 .claude/
+pip-memory/
