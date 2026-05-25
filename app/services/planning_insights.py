@@ -160,6 +160,7 @@ def build_accessible_security_summary(accounts, assumptions):
             "months": months,
             "duration": _years_months_label(months),
         })
+    next_milestone = next((m for m in milestones if m["remaining"] > 0), milestones[-1] if milestones else None)
 
     return {
         "groups": groups,
@@ -173,6 +174,7 @@ def build_accessible_security_summary(accounts, assumptions):
         "locked_pct": (groups[LOCKED]["current"] / total_current * 100.0) if total_current else 0.0,
         "restricted_pct": (groups[RESTRICTED]["current"] / total_current * 100.0) if total_current else 0.0,
         "milestones": milestones,
+        "next_milestone": next_milestone,
         "accessible_accounts": accessible_accounts,
     }
 
@@ -230,7 +232,7 @@ def build_retirement_income_summary(
     elif desired_income and private_pot_at_retirement < required_private_pot_for_desired:
         limiting_factor = "Overall retirement pot"
     else:
-        limiting_factor = "No obvious shortfall in this simple estimate"
+        limiting_factor = "No obvious shortfall under these assumptions"
 
     return {
         "current_age": current_age,
