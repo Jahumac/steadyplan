@@ -262,6 +262,9 @@ Rules:
 Returns the saved amount plus the previous effective amount/source so the
 assistant can explain what changed.
 
+Every successful assistant write is also recorded in SteadyPlan's assistant
+activity log, which is visible on the Settings page.
+
 ### `POST /accounts/<id>/balance`
 Update a manual-valuation account's balance. Also records a monthly
 snapshot so history stays consistent with the monthly-review flow.

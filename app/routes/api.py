@@ -52,6 +52,7 @@ from app.models import (
     fetch_monthly_review_items,
     get_connection,
     ensure_monthly_review_items,
+    log_assistant_audit_event,
     update_account,
     update_monthly_review,
     upsert_budget_entry,
@@ -397,6 +398,28 @@ def assistant_update_budget_entry(item_id):
     previous_source = previous_row.get("source") if previous_row else "default"
 
     upsert_budget_entry(month_key, item_id, amount, g.api_user.id)
+    log_assistant_audit_event(
+        g.api_user.id,
+        token_id=g.api_token.get("id"),
+        token_label=g.api_token.get("label"),
+        token_kind=g.api_token.get("token_kind"),
+        action_type="budget_item_month_entry_updated",
+        endpoint=request.path,
+        target_type="budget_item",
+        target_id=item["id"],
+        target_label=item["name"],
+        month_key=month_key,
+        before_state={
+            "amount": previous_amount,
+            "source": previous_source,
+            "section": item["section"],
+        },
+        after_state={
+            "amount": amount,
+            "source": "manual_override",
+            "section": item["section"],
+        },
+    )
 
     return jsonify({
         "ok": True,
