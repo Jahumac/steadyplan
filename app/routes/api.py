@@ -31,6 +31,7 @@ from app.services.monthly_review_checklist import (
 from app.utils import valid_date, valid_month_key
 from app.models import (
     API_TOKEN_KIND_ASSISTANT,
+    ASSISTANT_SCOPE_BUDGET_WRITE,
     ASSISTANT_SCOPE_READ,
     add_dividend_record,
     add_isa_contribution,
@@ -42,6 +43,7 @@ from app.models import (
     fetch_all_holdings,
     fetch_assumptions,
     fetch_budget_entries,
+    fetch_budget_item,
     fetch_budget_items,
     fetch_holding_totals_by_account,
     fetch_holdings_for_account,
@@ -52,6 +54,7 @@ from app.models import (
     ensure_monthly_review_items,
     update_account,
     update_monthly_review,
+    upsert_budget_entry,
     upsert_monthly_snapshot,
 )
 
@@ -353,6 +356,60 @@ def _parse_api_month_key(raw):
     except ValueError:
         return None
     return month_key
+
+
+
+def _assistant_budget_row_for_month(user_id, month_key, item_id):
+    month_summary = build_assistant_month_summary(user_id, month_key)
+    for section in month_summary.get("sections", []):
+        for row in section.get("rows", []):
+            if int(row.get("id") or 0) == int(item_id):
+                return row
+    return None
+
+
+@api_bp.route("/assistant/budget-items/<int:item_id>/month-entry", methods=["POST"])
+@api_auth_required
+@assistant_scope_required(ASSISTANT_SCOPE_BUDGET_WRITE)
+@_limit("30 per minute")
+def assistant_update_budget_entry(item_id):
+    payload = request.get_json(silent=True) or {}
+    month_key = _parse_api_month_key(payload.get("month"))
+    if month_key is None:
+        return _err("bad_request", "month must be YYYY-MM", 400)
+
+    amount = _parse_amount(payload.get("amount"))
+    if amount is None:
+        return _err("bad_request", "amount (number >= 0) required", 400)
+
+    item = fetch_budget_item(item_id, g.api_user.id)
+    if item is None or int(item.get("is_active") or 0) != 1:
+        return _err("not_found", "Budget item not found", 404)
+    if item.get("linked_account_id") or item.get("linked_debt_id"):
+        return _err(
+            "bad_request",
+            "This assistant write endpoint only supports manual unlinked budget items.",
+            400,
+        )
+
+    previous_row = _assistant_budget_row_for_month(g.api_user.id, month_key, item_id)
+    previous_amount = float(previous_row.get("amount") or 0) if previous_row else float(item.get("default_amount") or 0)
+    previous_source = previous_row.get("source") if previous_row else "default"
+
+    upsert_budget_entry(month_key, item_id, amount, g.api_user.id)
+
+    return jsonify({
+        "ok": True,
+        "month": month_key,
+        "amount": amount,
+        "previous_amount": previous_amount,
+        "previous_source": previous_source,
+        "budget_item": {
+            "id": item["id"],
+            "name": item["name"],
+            "section": item["section"],
+        },
+    })
 
 
 @api_bp.route("/accounts/<int:account_id>/balance", methods=["POST"])
