@@ -18,7 +18,11 @@ from pathlib import Path
 
 from app.extensions import limiter
 from app.calculations import effective_account_value, is_price_stale
-from app.services.assistant_api import build_assistant_month_summary
+from app.services.assistant_api import (
+    build_assistant_affordability,
+    build_assistant_month_summary,
+    build_assistant_portfolio_overview,
+)
 from app.services.backups import list_backups
 from app.services.monthly_review_checklist import (
     encode_monthly_review_notes,
@@ -237,9 +241,51 @@ def assistant_month_summary(month_key):
     return jsonify(build_assistant_month_summary(g.api_user.id, parsed_month))
 
 
+@api_bp.route("/assistant/portfolio-overview")
+@api_auth_required
+@_limit("60 per minute")
+def assistant_portfolio_overview():
+    return jsonify(build_assistant_portfolio_overview(g.api_user.id))
+
+
+@api_bp.route("/assistant/affordability/<month_key>")
+@api_auth_required
+@_limit("60 per minute")
+def assistant_affordability(month_key):
+    parsed_month = _parse_api_month_key(month_key)
+    if parsed_month is None:
+        return _err("bad_request", "month_key must be YYYY-MM", 400)
+
+    amount = _parse_positive_amount(request.args.get("amount"))
+    if amount is None:
+        return _err("bad_request", "amount query parameter must be a positive number", 400)
+
+    spread_months = _parse_positive_int(request.args.get("spread_months", "1"))
+    if spread_months is None:
+        return _err("bad_request", "spread_months query parameter must be an integer >= 1", 400)
+
+    return jsonify(build_assistant_affordability(g.api_user.id, parsed_month, amount, spread_months))
+
+
 # ── Write endpoints ──────────────────────────────────────────────────────────
 # Kept small and deliberate. Each write is scoped to the token's user and
 # validated at the model layer (ownership checks apply the same as the web UI).
+
+def _parse_positive_amount(raw):
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None
+    return value if value > 0 else None
+
+
+def _parse_positive_int(raw):
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return None
+    return value if value >= 1 else None
+
 
 def _parse_amount(raw):
     try:

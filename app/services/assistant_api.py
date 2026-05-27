@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from app.calculations import add_months_to_key
+from app.calculations import add_months_to_key, effective_account_value
 from app.models import (
     fetch_all_accounts,
     fetch_all_active_overrides,
@@ -8,9 +8,11 @@ from app.models import (
     fetch_budget_entries,
     fetch_budget_items,
     fetch_budget_sections,
+    fetch_holding_totals_by_account,
     fetch_prior_month_budget_entries,
 )
 from app.models.debts import debt_months_remaining
+from app.services.planning_insights import classify_account
 
 
 def _debt_payoff_month_key(debt):
@@ -61,6 +63,135 @@ def _build_signals(summary):
                 "level": "info",
                 "code": "pre_salary_contributions_excluded",
                 "message": "Pre-salary contributions are shown for visibility but excluded from take-home affordability.",
+            }
+        )
+    return signals
+
+
+def build_assistant_portfolio_overview(user_id):
+    """Return a read-only portfolio snapshot for assistant reasoning.
+
+    Uses effective account values so holdings-based accounts reflect the live
+    holdings total plus uninvested cash, rather than relying on stale
+    current_value fields.
+    """
+    accounts = fetch_all_accounts(user_id)
+    holdings_totals = fetch_holding_totals_by_account(user_id)
+
+    account_rows = []
+    accessible_total = 0.0
+    restricted_total = 0.0
+    locked_total = 0.0
+
+    for account in accounts:
+        classification = classify_account(account)
+        holdings_value = float(holdings_totals.get(account["id"], 0) or 0)
+        uninvested_cash = float(account.get("uninvested_cash") or 0)
+        effective_value = float(effective_account_value(account, holdings_totals) or 0)
+        accessible_value = effective_value if classification.access_type == "accessible" else 0.0
+
+        if classification.access_type == "accessible":
+            accessible_total += effective_value
+        elif classification.access_type == "restricted":
+            restricted_total += effective_value
+        else:
+            locked_total += effective_value
+
+        account_rows.append(
+            {
+                "id": account["id"],
+                "name": account["name"],
+                "provider": account["provider"],
+                "wrapper_type": account["wrapper_type"],
+                "category": account["category"],
+                "owner": account["owner"],
+                "valuation_mode": account["valuation_mode"],
+                "current_value": float(account.get("current_value") or 0),
+                "holdings_value": holdings_value,
+                "uninvested_cash": uninvested_cash,
+                "effective_value": effective_value,
+                "monthly_contribution": float(account.get("monthly_contribution") or 0),
+                "accessible_value": accessible_value,
+                "access_type": classification.access_type,
+                "access_label": classification.label,
+                "access_reason": classification.reason,
+            }
+        )
+
+    total_net_worth = accessible_total + restricted_total + locked_total
+    return {
+        "summary": {
+            "total_net_worth": total_net_worth,
+            "accessible_total": accessible_total,
+            "restricted_total": restricted_total,
+            "locked_total": locked_total,
+            "accessible_pct": (accessible_total / total_net_worth * 100.0) if total_net_worth else 0.0,
+            "restricted_pct": (restricted_total / total_net_worth * 100.0) if total_net_worth else 0.0,
+            "locked_pct": (locked_total / total_net_worth * 100.0) if total_net_worth else 0.0,
+            "account_count": len(account_rows),
+        },
+        "accounts": account_rows,
+    }
+
+
+def _build_affordability_signals(*, purchase_amount, spread_months, monthly_cost, available_after_budget,
+                                accessible_total, remaining_budget_after_purchase,
+                                accessible_after_purchase):
+    signals = []
+    if spread_months > 1:
+        signals.append(
+            {
+                "level": "info",
+                "code": "spread_applied",
+                "message": f"Affordability is being assessed as {spread_months} monthly payments of {monthly_cost:.2f}, not a single upfront hit.",
+            }
+        )
+    if available_after_budget < 0:
+        signals.append(
+            {
+                "level": "warning",
+                "code": "budget_already_negative",
+                "message": "This month is already budgeted at a deficit before the proposed purchase.",
+            }
+        )
+    if remaining_budget_after_purchase < 0:
+        signals.append(
+            {
+                "level": "warning",
+                "code": "purchase_exceeds_budget_headroom",
+                "message": "This purchase would push the month beyond planned take-home budget headroom.",
+            }
+        )
+    else:
+        signals.append(
+            {
+                "level": "info",
+                "code": "fits_monthly_budget",
+                "message": "This purchase fits within the planned monthly budget headroom.",
+            }
+        )
+    if accessible_after_purchase < 0:
+        signals.append(
+            {
+                "level": "warning",
+                "code": "purchase_exceeds_accessible_assets",
+                "message": "The purchase is larger than assets currently classed as accessible before pension age.",
+            }
+        )
+    elif purchase_amount > max(available_after_budget, 0):
+        signals.append(
+            {
+                "level": "info",
+                "code": "would_require_accessible_assets",
+                "message": "You could fund this from accessible assets, but not purely from this month's planned budget surplus.",
+            }
+        )
+    if accessible_total > 0:
+        signals.append(
+            {
+                "level": "info",
+                "code": "accessible_assets_not_cash",
+                "message": "Accessible totals can include ISA/investment assets and should not be treated as the same thing as spare bank cash.",
             }
         )
     return signals
@@ -195,4 +326,77 @@ def build_assistant_month_summary(user_id, month_key):
         "summary": summary,
         "signals": _build_signals(summary),
         "sections": sections,
+    }
+
+
+
+def build_assistant_affordability(user_id, month_key, purchase_amount, spread_months=1):
+    """Assess a proposed purchase against budget headroom and accessible assets.
+
+    This remains read-only and intentionally conservative:
+    - budget affordability uses the month-summary take-home surplus
+    - backup funding uses assets classed as accessible before pension age
+    - accessible assets are not assumed to be idle cash
+    """
+    month_data = build_assistant_month_summary(user_id, month_key)
+    portfolio_data = build_assistant_portfolio_overview(user_id)
+
+    purchase_amount = float(purchase_amount or 0)
+    spread_months = int(spread_months or 1)
+    monthly_cost = purchase_amount / spread_months if spread_months > 0 else purchase_amount
+
+    available_after_budget = float(month_data["summary"]["available_after_budget"] or 0)
+    accessible_total = float(portfolio_data["summary"]["accessible_total"] or 0)
+    restricted_total = float(portfolio_data["summary"]["restricted_total"] or 0)
+    locked_total = float(portfolio_data["summary"]["locked_total"] or 0)
+
+    remaining_budget_after_purchase = available_after_budget - monthly_cost
+    accessible_after_purchase = accessible_total - purchase_amount
+
+    budget_affordable = remaining_budget_after_purchase >= 0
+    accessible_funding_available = accessible_after_purchase >= 0
+
+    if budget_affordable:
+        verdict = "yes"
+        verdict_reason = "It fits inside the planned monthly budget headroom."
+    elif accessible_funding_available:
+        verdict = "caution"
+        verdict_reason = "It does not fit the planned monthly budget on its own, but it could be covered from assets currently classed as accessible before pension age."
+    else:
+        verdict = "no"
+        verdict_reason = "It does not fit the monthly budget headroom and would also exceed currently accessible pre-pension assets."
+
+    return {
+        "month": month_data["month"],
+        "month_label": month_data["month_label"],
+        "purchase": {
+            "amount": purchase_amount,
+            "spread_months": spread_months,
+            "monthly_cost": monthly_cost,
+        },
+        "assessment": {
+            "verdict": verdict,
+            "verdict_reason": verdict_reason,
+            "budget_affordable": budget_affordable,
+            "accessible_funding_available": accessible_funding_available,
+        },
+        "budget": {
+            "available_after_budget": available_after_budget,
+            "remaining_after_purchase": remaining_budget_after_purchase,
+        },
+        "access": {
+            "accessible_total": accessible_total,
+            "restricted_total": restricted_total,
+            "locked_total": locked_total,
+            "accessible_after_purchase": accessible_after_purchase,
+        },
+        "signals": _build_affordability_signals(
+            purchase_amount=purchase_amount,
+            spread_months=spread_months,
+            monthly_cost=monthly_cost,
+            available_after_budget=available_after_budget,
+            accessible_total=accessible_total,
+            remaining_budget_after_purchase=remaining_budget_after_purchase,
+            accessible_after_purchase=accessible_after_purchase,
+        ),
     }

@@ -135,6 +135,85 @@ Returns:
 }
 ```
 
+### `GET /assistant/portfolio-overview`
+Assistant-oriented read-only portfolio snapshot for questions like current net worth, how much is accessible now, and how much sits in each account.
+
+Important behaviour:
+- uses **effective account values**, so holdings-based accounts use live holdings totals plus uninvested cash
+- splits totals into `accessible`, `restricted`, and `locked` using the same conservative classification rules as the Planning insights service
+- returns per-account access labels/reasons so the assistant can explain *why* something is or is not counted as accessible
+
+```json
+{
+  "summary": {
+    "total_net_worth": 2384,
+    "accessible_total": 1284,
+    "restricted_total": 400,
+    "locked_total": 700,
+    "accessible_pct": 53.86,
+    "restricted_pct": 16.78,
+    "locked_pct": 29.36,
+    "account_count": 3
+  },
+  "accounts": [
+    {
+      "name": "ISA Portfolio",
+      "wrapper_type": "Stocks & Shares ISA",
+      "effective_value": 1284,
+      "holdings_value": 1234,
+      "uninvested_cash": 50,
+      "accessible_value": 1284,
+      "access_type": "accessible",
+      "access_label": "Accessible before pension age"
+    }
+  ]
+}
+```
+
+### `GET /assistant/affordability/<YYYY-MM>?amount=...&spread_months=...`
+Assistant-oriented read-only affordability check for a proposed purchase.
+
+Important behaviour:
+- compares the purchase against that month’s `available_after_budget`
+- also checks whether the purchase could be covered by assets classed as accessible before pension age
+- keeps those two concepts separate, because **accessible assets are not the same thing as spare cash**
+- `spread_months` is optional and defaults to `1`
+
+```json
+{
+  "month": "2026-04",
+  "month_label": "April 2026",
+  "purchase": {
+    "amount": 1800,
+    "spread_months": 3,
+    "monthly_cost": 600
+  },
+  "assessment": {
+    "verdict": "yes",
+    "verdict_reason": "It fits inside the planned monthly budget headroom.",
+    "budget_affordable": true,
+    "accessible_funding_available": true
+  },
+  "budget": {
+    "available_after_budget": 1400,
+    "remaining_after_purchase": 800
+  },
+  "access": {
+    "accessible_total": 2000,
+    "restricted_total": 0,
+    "locked_total": 9000,
+    "accessible_after_purchase": 200
+  },
+  "signals": [
+    {
+      "level": "info",
+      "code": "spread_applied",
+      "message": "Affordability is being assessed as 3 monthly payments of 600.00, not a single upfront hit."
+    }
+  ]
+}
+```
+
 ### `GET /health`  _(no auth)_
 Liveness probe for uptime monitors. Returns 200 with DB status and last
 backup time (file presence only), or 503 if the DB is unreachable.

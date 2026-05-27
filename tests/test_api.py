@@ -204,6 +204,174 @@ def test_assistant_month_summary_includes_linked_budget_items(app, client, token
     assert debt_section["rows"][0]["source"] == "linked_debt"
 
 
+
+def test_assistant_portfolio_overview_splits_access_and_uses_effective_values(app, client, token):
+    with app.app_context():
+        from app.models import get_connection, get_user_by_username
+
+        uid = get_user_by_username("apiuser").id
+        with get_connection() as conn:
+            holdings_account_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, category, valuation_mode,
+                    current_value, uninvested_cash, is_active
+                ) VALUES (?, 'ISA Portfolio', 'Stocks & Shares ISA', 'ISA', 'holdings', 5, 50, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            pension_account_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, category, valuation_mode,
+                    current_value, uninvested_cash, is_active
+                ) VALUES (?, 'Work Pension', 'Workplace Pension', 'Pension', 'manual', 700, 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            lisa_account_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, category, valuation_mode,
+                    current_value, uninvested_cash, is_active
+                ) VALUES (?, 'House LISA', 'Lifetime ISA', 'ISA', 'manual', 400, 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO holdings (account_id, holding_name, value)
+                VALUES (?, 'Vanguard FTSE Global All Cap', 1234)
+                """,
+                (holdings_account_id,),
+            )
+            conn.commit()
+
+    resp = client.get(
+        "/api/v1/assistant/portfolio-overview",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+
+    assert body["summary"]["total_net_worth"] == 2384
+    assert body["summary"]["accessible_total"] == 1284
+    assert body["summary"]["restricted_total"] == 400
+    assert body["summary"]["locked_total"] == 700
+    assert body["summary"]["account_count"] == 3
+
+    accounts = {row["name"]: row for row in body["accounts"]}
+    assert accounts["ISA Portfolio"]["effective_value"] == 1284
+    assert accounts["ISA Portfolio"]["holdings_value"] == 1234
+    assert accounts["ISA Portfolio"]["accessible_value"] == 1284
+    assert accounts["ISA Portfolio"]["access_type"] == "accessible"
+    assert accounts["Work Pension"]["access_type"] == "locked"
+    assert accounts["House LISA"]["access_type"] == "restricted"
+
+
+
+def test_assistant_affordability_requires_positive_amount(api):
+    resp = api.get("/api/v1/assistant/affordability/2026-04")
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "bad_request"
+
+    resp = api.get("/api/v1/assistant/affordability/2026-04?amount=0")
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "bad_request"
+
+
+
+def test_assistant_affordability_rejects_invalid_spread_months(api):
+    resp = api.get("/api/v1/assistant/affordability/2026-04?amount=900&spread_months=0")
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "bad_request"
+
+
+
+def test_assistant_affordability_combines_budget_and_access_context(app, client, token):
+    with app.app_context():
+        from app.models import create_budget_item, fetch_budget_sections, get_connection, get_user_by_username
+
+        uid = get_user_by_username("apiuser").id
+        fetch_budget_sections(uid)
+        create_budget_item(
+            {
+                "name": "Salary",
+                "section": "income",
+                "default_amount": 3000,
+                "notes": "",
+                "sort_order": 0,
+            },
+            uid,
+        )
+        create_budget_item(
+            {
+                "name": "Rent",
+                "section": "fixed",
+                "default_amount": 1200,
+                "notes": "",
+                "sort_order": 0,
+            },
+            uid,
+        )
+        create_budget_item(
+            {
+                "name": "Groceries",
+                "section": "discretionary",
+                "default_amount": 400,
+                "notes": "",
+                "sort_order": 0,
+            },
+            uid,
+        )
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, category, valuation_mode,
+                    current_value, is_active
+                ) VALUES (?, 'Emergency ISA', 'Stocks & Shares ISA', 'ISA', 'manual', 2000, 1)
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, category, valuation_mode,
+                    current_value, is_active
+                ) VALUES (?, 'Work Pension', 'Workplace Pension', 'Pension', 'manual', 9000, 1)
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get(
+        "/api/v1/assistant/affordability/2026-04?amount=1800",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["assessment"]["verdict"] == "caution"
+    assert body["assessment"]["budget_affordable"] is False
+    assert body["assessment"]["accessible_funding_available"] is True
+    assert body["budget"]["available_after_budget"] == 1400
+    assert body["budget"]["remaining_after_purchase"] == -400
+    assert body["access"]["accessible_total"] == 2000
+    assert body["access"]["locked_total"] == 9000
+
+    spread_resp = client.get(
+        "/api/v1/assistant/affordability/2026-04?amount=1800&spread_months=3",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert spread_resp.status_code == 200
+    spread_body = spread_resp.get_json()
+    assert spread_body["purchase"]["monthly_cost"] == 600
+    assert spread_body["assessment"]["verdict"] == "yes"
+    assert spread_body["assessment"]["budget_affordable"] is True
+    assert any(signal["code"] == "spread_applied" for signal in spread_body["signals"])
+
+
+
 def test_assumptions_returns_defaults(api):
     resp = api.get("/api/v1/assumptions")
     assert resp.status_code == 200
