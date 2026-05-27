@@ -81,6 +81,60 @@ exist yet for that month.
 ### `GET /assumptions`
 Growth rate, retirement age, ISA/LISA allowances, etc.
 
+### `GET /assistant/month-summary/<YYYY-MM>`
+Assistant-oriented read-only monthly budget roll-up using the same source rules as the Budget page.
+
+Returns:
+- `summary.total_income`
+- `summary.total_expenses`
+- `summary.pre_salary_total`
+- `summary.take_home_outgoings`
+- `summary.planned_savings`
+- `summary.planned_debt_payments`
+- `summary.available_after_budget`
+- `summary.savings_rate`
+- `signals[]` for obvious caution flags such as no income budgeted or a planned deficit
+- `sections[]` with the underlying rows and source (`default`, `inherited`, `manual_override`, `linked_account`, `linked_debt`)
+
+```json
+{
+  "month": "2026-04",
+  "month_label": "April 2026",
+  "summary": {
+    "total_income": 3000,
+    "total_expenses": 2250,
+    "pre_salary_total": 300,
+    "take_home_outgoings": 1950,
+    "planned_savings": 500,
+    "planned_debt_payments": 150,
+    "available_after_budget": 1050,
+    "savings_rate": 16.67
+  },
+  "signals": [
+    {
+      "level": "info",
+      "code": "pre_salary_contributions_excluded",
+      "message": "Pre-salary contributions are shown for visibility but excluded from take-home affordability."
+    }
+  ],
+  "sections": [
+    {
+      "key": "income",
+      "label": "Income",
+      "total": 3000,
+      "rows": [
+        {
+          "name": "Salary",
+          "amount": 3000,
+          "source": "default",
+          "pre_salary": false
+        }
+      ]
+    }
+  ]
+}
+```
+
 ### `GET /health`  _(no auth)_
 Liveness probe for uptime monitors. Returns 200 with DB status and last
 backup time (file presence only), or 503 if the DB is unreachable.

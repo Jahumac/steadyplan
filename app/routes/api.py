@@ -18,6 +18,7 @@ from pathlib import Path
 
 from app.extensions import limiter
 from app.calculations import effective_account_value, is_price_stale
+from app.services.assistant_api import build_assistant_month_summary
 from app.services.backups import list_backups
 from app.services.monthly_review_checklist import (
     encode_monthly_review_notes,
@@ -224,6 +225,16 @@ def get_assumptions():
         return jsonify({})
     # Return as dict; Row → dict is fine since all columns are primitive.
     return jsonify(dict(row))
+
+
+@api_bp.route("/assistant/month-summary/<month_key>")
+@api_auth_required
+@_limit("60 per minute")
+def assistant_month_summary(month_key):
+    parsed_month = _parse_api_month_key(month_key)
+    if parsed_month is None:
+        return _err("bad_request", "month_key must be YYYY-MM", 400)
+    return jsonify(build_assistant_month_summary(g.api_user.id, parsed_month))
 
 
 # ── Write endpoints ──────────────────────────────────────────────────────────

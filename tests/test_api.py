@@ -98,6 +98,112 @@ def test_budget_valid_month_key(api):
     assert "items" in body
 
 
+def test_assistant_month_summary_bad_month_key(api):
+    resp = api.get("/api/v1/assistant/month-summary/2026-13")
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "bad_request"
+
+
+def test_assistant_month_summary_empty_user(api):
+    resp = api.get("/api/v1/assistant/month-summary/2026-04")
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["month"] == "2026-04"
+    assert body["summary"]["available_after_budget"] == 0
+    assert body["summary"]["total_income"] == 0
+    assert body["summary"]["take_home_outgoings"] == 0
+    assert body["summary"]["planned_savings"] == 0
+    assert any(signal["code"] == "no_income_budgeted" for signal in body["signals"])
+
+
+def test_assistant_month_summary_includes_linked_budget_items(app, client, token):
+    with app.app_context():
+        from app.models import create_budget_item, fetch_budget_sections, get_connection, get_user_by_username
+
+        uid = get_user_by_username("apiuser").id
+        fetch_budget_sections(uid)
+        create_budget_item(
+            {
+                "name": "Salary",
+                "section": "income",
+                "default_amount": 3000,
+                "notes": "",
+                "sort_order": 0,
+            },
+            uid,
+        )
+        create_budget_item(
+            {
+                "name": "Rent",
+                "section": "fixed",
+                "default_amount": 1200,
+                "notes": "",
+                "sort_order": 0,
+            },
+            uid,
+        )
+        create_budget_item(
+            {
+                "name": "Groceries",
+                "section": "discretionary",
+                "default_amount": 400,
+                "notes": "",
+                "sort_order": 0,
+            },
+            uid,
+        )
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, current_value, monthly_contribution,
+                    include_in_budget, pre_salary, is_active
+                ) VALUES (?, 'Work Pension', 0, 300, 1, 1, 1)
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, current_value, monthly_contribution,
+                    include_in_budget, pre_salary, is_active
+                ) VALUES (?, 'Stocks ISA', 0, 200, 1, 0, 1)
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO debts (
+                    user_id, name, current_balance, monthly_payment, apr, is_active, created_at
+                ) VALUES (?, 'Car Loan', 5000, 150, 7.9, 1, datetime('now'))
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get(
+        "/api/v1/assistant/month-summary/2026-04",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+
+    assert body["summary"]["total_income"] == 3000
+    assert body["summary"]["total_expenses"] == 2250
+    assert body["summary"]["planned_savings"] == 500
+    assert body["summary"]["planned_debt_payments"] == 150
+    assert body["summary"]["pre_salary_total"] == 300
+    assert body["summary"]["take_home_outgoings"] == 1950
+    assert body["summary"]["available_after_budget"] == 1050
+
+    investment_section = next(section for section in body["sections"] if section["key"] == "investment")
+    debt_section = next(section for section in body["sections"] if section["key"] == "debt")
+    assert sorted(row["name"] for row in investment_section["rows"]) == ["Stocks ISA", "Work Pension"]
+    assert investment_section["total"] == 500
+    assert debt_section["rows"][0]["name"] == "Car Loan"
+    assert debt_section["rows"][0]["source"] == "linked_debt"
+
+
 def test_assumptions_returns_defaults(api):
     resp = api.get("/api/v1/assumptions")
     assert resp.status_code == 200
