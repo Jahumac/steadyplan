@@ -205,6 +205,48 @@ def test_assistant_month_summary_includes_linked_budget_items(app, client, token
 
 
 
+def test_assistant_month_summary_keeps_explicit_future_linked_debt_entry_visible(app, client, token):
+    with app.app_context():
+        from app.models import fetch_budget_items, fetch_budget_sections, get_connection, get_user_by_username, upsert_budget_entry
+        from app.routes.budget import _build_monthly_data
+
+        user = get_user_by_username("apiuser")
+        assert user is not None
+        uid = user.id
+        fetch_budget_sections(uid)
+        with get_connection() as conn:
+            debt_id = conn.execute(
+                """
+                INSERT INTO debts (
+                    user_id, name, current_balance, monthly_payment, apr, is_active, created_at
+                ) VALUES (?, 'Final repayment', 0, 70, 0, 1, datetime('now'))
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+        debt_item = next(item for item in fetch_budget_items(uid) if item.get("linked_debt_id") == debt_id)
+        upsert_budget_entry("2026-06", debt_item["id"], 70, uid)
+
+        budget_sections, budget_summary = _build_monthly_data("2026-06", uid)
+        budget_debt_rows = [row for section in budget_sections if section["key"] == "debt" for row in section["rows"]]
+        assert any(row["name"] == "Final repayment" and row["amount"] == 70 for row in budget_debt_rows)
+        assert budget_summary["total_expenses"] == 70
+
+    resp = client.get(
+        "/api/v1/assistant/month-summary/2026-06",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+
+    debt_section = next(section for section in body["sections"] if section["key"] == "debt")
+    assert any(row["name"] == "Final repayment" and row["amount"] == 70 for row in debt_section["rows"])
+    assert body["summary"]["total_expenses"] == 70
+    assert body["summary"]["planned_debt_payments"] == 70
+
+
+
 def test_assistant_portfolio_overview_splits_access_and_uses_effective_values(app, client, token):
     with app.app_context():
         from app.models import get_connection, get_user_by_username
