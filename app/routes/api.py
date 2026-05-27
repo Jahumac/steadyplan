@@ -30,9 +30,12 @@ from app.services.monthly_review_checklist import (
 )
 from app.utils import valid_date, valid_month_key
 from app.models import (
+    API_TOKEN_KIND_ASSISTANT,
+    ASSISTANT_SCOPE_READ,
     add_dividend_record,
     add_isa_contribution,
     add_pension_contribution,
+    authenticate_api_token,
     fetch_account,
     fetch_all_accounts,
     fetch_all_goals,
@@ -45,7 +48,6 @@ from app.models import (
     fetch_latest_price_update,
     fetch_or_create_monthly_review,
     fetch_monthly_review_items,
-    fetch_user_by_api_token,
     get_connection,
     ensure_monthly_review_items,
     update_account,
@@ -74,12 +76,45 @@ def api_auth_required(fn):
     def wrapper(*args, **kwargs):
         header = request.headers.get("Authorization", "")
         if not header.lower().startswith("bearer "):
-            return _err("missing_token", "Authorization: Bearer <token> required", 401)
+            return _err("missing_token", "Authorization: Bearer *** required", 401)
         token = header.split(" ", 1)[1].strip()
-        user = fetch_user_by_api_token(token)
-        if user is None:
+        auth = authenticate_api_token(token)
+        if auth is None:
             return _err("invalid_token", "Token not recognised", 401)
-        g.api_user = user
+        g.api_user = auth["user"]
+        g.api_token = auth["token"]
+        return fn(*args, **kwargs)
+
+    return wrapper
+
+
+def assistant_scope_required(scope):
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            token_info = getattr(g, "api_token", {}) or {}
+            if token_info.get("token_kind") != API_TOKEN_KIND_ASSISTANT:
+                return fn(*args, **kwargs)
+            scopes = set(token_info.get("scopes") or [])
+            if scope not in scopes:
+                return _err("insufficient_scope", f"This assistant token requires the '{scope}' scope", 403)
+            return fn(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def general_api_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        token_info = getattr(g, "api_token", {}) or {}
+        if token_info.get("token_kind") == API_TOKEN_KIND_ASSISTANT:
+            return _err(
+                "insufficient_scope",
+                "This assistant token is limited to assistant endpoints. Use a general API token for raw read/write endpoints.",
+                403,
+            )
         return fn(*args, **kwargs)
 
     return wrapper
@@ -136,6 +171,7 @@ def _goal_to_dict(row):
 
 @api_bp.route("/me")
 @api_auth_required
+@assistant_scope_required(ASSISTANT_SCOPE_READ)
 @_limit("60 per minute")
 def me():
     u = g.api_user
@@ -143,11 +179,14 @@ def me():
         "id": u.id,
         "username": u.username,
         "is_admin": u.is_admin,
+        "token_kind": g.api_token.get("token_kind"),
+        "scopes": g.api_token.get("scopes") or [],
     })
 
 
 @api_bp.route("/accounts")
 @api_auth_required
+@general_api_required
 @_limit("60 per minute")
 def list_accounts():
     rows = fetch_all_accounts(g.api_user.id)
@@ -156,6 +195,7 @@ def list_accounts():
 
 @api_bp.route("/accounts/<int:account_id>")
 @api_auth_required
+@general_api_required
 @_limit("60 per minute")
 def get_account(account_id):
     row = fetch_account(account_id, g.api_user.id)
@@ -168,6 +208,7 @@ def get_account(account_id):
 
 @api_bp.route("/holdings")
 @api_auth_required
+@general_api_required
 @_limit("60 per minute")
 def list_holdings():
     rows = fetch_all_holdings(g.api_user.id)
@@ -176,6 +217,7 @@ def list_holdings():
 
 @api_bp.route("/goals")
 @api_auth_required
+@general_api_required
 @_limit("60 per minute")
 def list_goals():
     rows = fetch_all_goals(g.api_user.id)
@@ -184,6 +226,7 @@ def list_goals():
 
 @api_bp.route("/overview")
 @api_auth_required
+@general_api_required
 @_limit("60 per minute")
 def overview():
     accounts = fetch_all_accounts(g.api_user.id)
@@ -198,6 +241,7 @@ def overview():
 
 @api_bp.route("/budget/<month_key>")
 @api_auth_required
+@general_api_required
 @_limit("60 per minute")
 def get_budget(month_key):
     if not valid_month_key(month_key):
@@ -223,6 +267,7 @@ def get_budget(month_key):
 
 @api_bp.route("/assumptions")
 @api_auth_required
+@general_api_required
 def get_assumptions():
     row = fetch_assumptions(g.api_user.id)
     if row is None:
@@ -233,6 +278,7 @@ def get_assumptions():
 
 @api_bp.route("/assistant/month-summary/<month_key>")
 @api_auth_required
+@assistant_scope_required(ASSISTANT_SCOPE_READ)
 @_limit("60 per minute")
 def assistant_month_summary(month_key):
     parsed_month = _parse_api_month_key(month_key)
@@ -243,6 +289,7 @@ def assistant_month_summary(month_key):
 
 @api_bp.route("/assistant/portfolio-overview")
 @api_auth_required
+@assistant_scope_required(ASSISTANT_SCOPE_READ)
 @_limit("60 per minute")
 def assistant_portfolio_overview():
     return jsonify(build_assistant_portfolio_overview(g.api_user.id))
@@ -250,6 +297,7 @@ def assistant_portfolio_overview():
 
 @api_bp.route("/assistant/affordability/<month_key>")
 @api_auth_required
+@assistant_scope_required(ASSISTANT_SCOPE_READ)
 @_limit("60 per minute")
 def assistant_affordability(month_key):
     parsed_month = _parse_api_month_key(month_key)
@@ -309,6 +357,7 @@ def _parse_api_month_key(raw):
 
 @api_bp.route("/accounts/<int:account_id>/balance", methods=["POST"])
 @api_auth_required
+@general_api_required
 def update_account_balance(account_id):
     """Update a manual-valuation account's current balance. Also records
     a monthly snapshot so performance history stays consistent with the
@@ -343,6 +392,7 @@ def update_account_balance(account_id):
 
 @api_bp.route("/contributions/isa", methods=["POST"])
 @api_auth_required
+@general_api_required
 def log_isa_contribution():
     payload = request.get_json(silent=True) or {}
     account_id = payload.get("account_id")
@@ -362,6 +412,7 @@ def log_isa_contribution():
 
 @api_bp.route("/contributions/pension", methods=["POST"])
 @api_auth_required
+@general_api_required
 def log_pension_contribution():
     payload = request.get_json(silent=True) or {}
     account_id = payload.get("account_id")
@@ -385,6 +436,7 @@ def log_pension_contribution():
 
 @api_bp.route("/dividends", methods=["POST"])
 @api_auth_required
+@general_api_required
 def log_dividend():
     payload = request.get_json(silent=True) or {}
     account_id = payload.get("account_id")
@@ -404,6 +456,7 @@ def log_dividend():
 
 @api_bp.route("/monthly-review/<month_key>/complete", methods=["POST"])
 @api_auth_required
+@general_api_required
 def complete_monthly_review(month_key):
     """Mark a monthly review as complete and snapshot every account's
     current effective value for that month. Mirrors the web UI's

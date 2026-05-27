@@ -16,11 +16,19 @@ from app.services.restore_validation import validate_restore_backup_json
 from app.services.restore_service import RestoreValidationError, restore_backup_for_user
 from app.utils import optional_float, optional_int, valid_date
 from app.models import (
+    API_TOKEN_KIND_ASSISTANT,
+    ASSISTANT_SCOPE_BUDGET_WRITE,
+    ASSISTANT_SCOPE_READ,
+    ASSISTANT_SCOPE_TRANSACTIONS_WRITE,
+    create_api_token,
+    fetch_api_token,
+    fetch_api_tokens,
     fetch_assumptions,
     fetch_holding_catalogue_in_use,
     fetch_latest_price_update,
     get_connection,
     reset_all_user_data,
+    revoke_api_token,
     update_assumptions,
 )
 
@@ -119,6 +127,72 @@ def _safe_next_settings_url(raw):
 
 def _select_rows(conn, sql, params):
     return [dict(r) for r in (conn.execute(sql, params).fetchall() or [])]
+
+
+def _assistant_scope_options():
+    return [
+        {
+            "key": ASSISTANT_SCOPE_READ,
+            "label": "Read-only assistant answers",
+            "hint": "Lets Pip read the assistant summary endpoints for portfolio, monthly budget headroom, and affordability checks.",
+        },
+        {
+            "key": ASSISTANT_SCOPE_BUDGET_WRITE,
+            "label": "Budget write (reserved)",
+            "hint": "Reserved for future assistant budget update endpoints. Safe to leave off today.",
+        },
+        {
+            "key": ASSISTANT_SCOPE_TRANSACTIONS_WRITE,
+            "label": "Transaction write (reserved)",
+            "hint": "Reserved for future assistant transaction entry endpoints. Safe to leave off today.",
+        },
+    ]
+
+
+def _normalise_requested_assistant_scopes(raw_scopes):
+    ordered = []
+    valid = {opt["key"] for opt in _assistant_scope_options()}
+    for scope in raw_scopes or []:
+        scope_text = str(scope or "").strip().lower()
+        if scope_text in valid and scope_text not in ordered:
+            ordered.append(scope_text)
+    return ordered or [ASSISTANT_SCOPE_READ]
+
+
+def _pop_plaintext_assistant_token():
+    token = session.pop("assistant_plaintext_token", None)
+    if not token:
+        return None
+    return {
+        "value": token,
+        "label": session.pop("assistant_plaintext_label", None) or "Assistant token",
+        "scopes": session.pop("assistant_plaintext_scopes", []) or [],
+        "action": session.pop("assistant_plaintext_action", "created"),
+    }
+
+
+def _stash_plaintext_assistant_token(*, token, label, scopes, action):
+    session["assistant_plaintext_token"] = token
+    session["assistant_plaintext_label"] = label or "Assistant token"
+    session["assistant_plaintext_scopes"] = list(scopes or [])
+    session["assistant_plaintext_action"] = action
+
+
+def _settings_template_context(uid, *, assumptions=None, computed_age=None, diagnostics=None, page_mode="view", **extra):
+    assumptions = assumptions if assumptions is not None else fetch_assumptions(uid)
+    computed_age = computed_age if computed_age is not None else (int(current_age_from_assumptions(assumptions)) if assumptions else 0)
+    assistant_tokens = fetch_api_tokens(uid, token_kind=API_TOKEN_KIND_ASSISTANT)
+    return {
+        "assumptions": assumptions,
+        "computed_age": computed_age,
+        "diagnostics": diagnostics,
+        "page_mode": page_mode,
+        "active_page": "settings",
+        "assistant_tokens": assistant_tokens,
+        "assistant_scope_options": _assistant_scope_options(),
+        "assistant_token_secret": _pop_plaintext_assistant_token(),
+        **extra,
+    }
 
 
 def _restore_staging_dir():
@@ -627,12 +701,68 @@ def settings():
 
     return render_template(
         "settings.html",
-        assumptions=assumptions,
-        computed_age=computed_age,
-        diagnostics=diagnostics,
-        page_mode=page_mode,
-        active_page="settings",
+        **_settings_template_context(
+            uid,
+            assumptions=assumptions,
+            computed_age=computed_age,
+            diagnostics=diagnostics,
+            page_mode=page_mode,
+        ),
     )
+
+
+@settings_bp.route("/assistant-access/create", methods=["POST"])
+@login_required
+def create_assistant_access_token():
+    label = request.form.get("label", "").strip() or "Pip"
+    scopes = _normalise_requested_assistant_scopes(request.form.getlist("scopes"))
+    token = create_api_token(
+        current_user.id,
+        label=label,
+        token_kind=API_TOKEN_KIND_ASSISTANT,
+        scopes=scopes,
+    )
+    _stash_plaintext_assistant_token(token=token, label=label, scopes=scopes, action="created")
+    flash("Assistant token created. Copy it now — it will only be shown once.", "success")
+    return redirect(url_for("settings.settings"))
+
+
+@settings_bp.route("/assistant-access/<int:token_id>/regenerate", methods=["POST"])
+@login_required
+def regenerate_assistant_access_token(token_id):
+    existing = fetch_api_token(token_id, current_user.id, token_kind=API_TOKEN_KIND_ASSISTANT)
+    if existing is None:
+        flash("Assistant token not found.", "error")
+        return redirect(url_for("settings.settings"))
+
+    new_token = create_api_token(
+        current_user.id,
+        label=existing.get("label") or "Pip",
+        token_kind=API_TOKEN_KIND_ASSISTANT,
+        scopes=existing.get("scopes") or [ASSISTANT_SCOPE_READ],
+    )
+    revoke_api_token(token_id, current_user.id)
+    _stash_plaintext_assistant_token(
+        token=new_token,
+        label=existing.get("label") or "Pip",
+        scopes=existing.get("scopes") or [ASSISTANT_SCOPE_READ],
+        action="regenerated",
+    )
+    flash("Assistant token regenerated. The old token no longer works.", "success")
+    return redirect(url_for("settings.settings"))
+
+
+@settings_bp.route("/assistant-access/<int:token_id>/revoke", methods=["POST"])
+@login_required
+def revoke_assistant_access_token(token_id):
+    existing = fetch_api_token(token_id, current_user.id, token_kind=API_TOKEN_KIND_ASSISTANT)
+    if existing is None:
+        flash("Assistant token not found.", "error")
+        return redirect(url_for("settings.settings"))
+
+    revoke_api_token(token_id, current_user.id)
+    flash("Assistant token revoked.", "success")
+    return redirect(url_for("settings.settings"))
 
 
 @settings_bp.route("/backups/run", methods=["POST"])
@@ -712,13 +842,15 @@ def validate_restore_backup_upload():
     computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
     return render_template(
         "settings.html",
-        assumptions=assumptions,
-        computed_age=computed_age,
-        diagnostics=None,
-        page_mode="view",
-        active_page="settings",
-        restore_check_result=result,
-        restore_token=restore_token,
+        **_settings_template_context(
+            uid,
+            assumptions=assumptions,
+            computed_age=computed_age,
+            diagnostics=None,
+            page_mode="view",
+            restore_check_result=result,
+            restore_token=restore_token,
+        ),
     )
 
 
@@ -759,13 +891,15 @@ def commit_restore_backup():
         computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
         return render_template(
             "settings.html",
-            assumptions=assumptions,
-            computed_age=computed_age,
-            diagnostics=None,
-            page_mode="view",
-            active_page="settings",
-            restore_check_result=result,
-            restore_token=None,
+            **_settings_template_context(
+                uid,
+                assumptions=assumptions,
+                computed_age=computed_age,
+                diagnostics=None,
+                page_mode="view",
+                restore_check_result=result,
+                restore_token=None,
+            ),
         )
 
     confirm_checked = request.form.get("confirm_replace") == "1"
@@ -777,13 +911,15 @@ def commit_restore_backup():
         computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
         return render_template(
             "settings.html",
-            assumptions=assumptions,
-            computed_age=computed_age,
-            diagnostics=None,
-            page_mode="view",
-            active_page="settings",
-            restore_check_result=result,
-            restore_token=restore_token,
+            **_settings_template_context(
+                uid,
+                assumptions=assumptions,
+                computed_age=computed_age,
+                diagnostics=None,
+                page_mode="view",
+                restore_check_result=result,
+                restore_token=restore_token,
+            ),
         )
 
     try:
@@ -807,13 +943,15 @@ def commit_restore_backup():
         computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
         return render_template(
             "settings.html",
-            assumptions=assumptions,
-            computed_age=computed_age,
-            diagnostics=None,
-            page_mode="view",
-            active_page="settings",
-            restore_check_result=e.validation_result,
-            restore_token=None,
+            **_settings_template_context(
+                uid,
+                assumptions=assumptions,
+                computed_age=computed_age,
+                diagnostics=None,
+                page_mode="view",
+                restore_check_result=e.validation_result,
+                restore_token=None,
+            ),
         )
     except Exception:
         current_app.logger.exception("Restore failed for user_id=%s", current_user.id)
@@ -832,14 +970,16 @@ def commit_restore_backup():
     computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
     return render_template(
         "settings.html",
-        assumptions=assumptions,
-        computed_age=computed_age,
-        diagnostics=None,
-        page_mode="view",
-        active_page="settings",
-        restore_check_result=result,
-        restore_token=None,
-        restore_commit_result=restore_summary,
+        **_settings_template_context(
+            uid,
+            assumptions=assumptions,
+            computed_age=computed_age,
+            diagnostics=None,
+            page_mode="view",
+            restore_check_result=result,
+            restore_token=None,
+            restore_commit_result=restore_summary,
+        ),
     )
 
 

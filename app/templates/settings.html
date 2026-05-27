@@ -591,6 +591,103 @@
   {% endif %}
 </section>
 
+<section class="panel mt-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Assistant access</p>
+      <h3>Let Pip read your SteadyPlan summaries safely</h3>
+    </div>
+  </div>
+  <p class="helper-text">
+    This creates a dedicated assistant token for SteadyPlan. Unlike a general API token, it is limited to assistant-friendly endpoints and can be revoked or regenerated here.
+  </p>
+
+  {% if assistant_token_secret %}
+  <div style="margin-top:0.85rem;padding:0.95rem;border:1px solid var(--border);border-radius:12px;background:var(--panel-2);">
+    <div style="font-weight:600;">Assistant token {{ assistant_token_secret.action }}</div>
+    <p class="helper-text" style="margin:0.35rem 0 0.75rem 0;">
+      Copy this now. For safety, SteadyPlan will only show the raw token once.
+    </p>
+    <div class="text-sm" style="margin-bottom:0.4rem;">Label: <strong>{{ assistant_token_secret.label }}</strong></div>
+    <div class="text-sm" style="margin-bottom:0.4rem;">Scopes: {{ assistant_token_secret.scopes|join(', ') }}</div>
+    <code data-assistant-token-value="{{ assistant_token_secret.value }}" style="display:block;overflow:auto;padding:0.75rem;border-radius:10px;background:rgba(0,0,0,0.2);">{{ assistant_token_secret.value }}</code>
+  </div>
+  {% endif %}
+
+  <form method="post" action="/settings/assistant-access/create" style="margin-top:1rem;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-grid">
+      <label>
+        <span>Token label</span>
+        <input type="text" name="label" value="Pip" maxlength="64">
+        <small class="form-hint">Just a friendly label so you know what this token is for.</small>
+      </label>
+      <div class="form-full-col">
+        <span style="display:block;font-weight:600;margin-bottom:0.55rem;">Permissions</span>
+        <div style="display:grid;gap:0.75rem;">
+          {% for scope in assistant_scope_options %}
+          <label style="display:block;padding:0.8rem 0.95rem;border:1px solid var(--border);border-radius:12px;background:var(--panel);">
+            <div style="display:flex;gap:0.75rem;align-items:flex-start;">
+              <input type="checkbox" name="scopes" value="{{ scope.key }}" {{ 'checked' if scope.key == 'assistant:read' else '' }}>
+              <span>
+                <strong>{{ scope.label }}</strong><br>
+                <small class="form-hint">{{ scope.hint }}</small>
+              </span>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="badge-row mt-1">
+      <button type="submit">Create assistant token</button>
+    </div>
+  </form>
+
+  <div style="margin-top:1rem;">
+    <div class="text-sm" style="font-weight:600;margin-bottom:0.45rem;">Existing assistant tokens</div>
+    {% if assistant_tokens %}
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Label</th>
+            <th>Permissions</th>
+            <th>Created</th>
+            <th>Last used</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for token in assistant_tokens %}
+          <tr>
+            <td>{{ token.label or 'Assistant token' }}</td>
+            <td>{{ token.scopes|join(', ') if token.scopes else 'assistant:read' }}</td>
+            <td>{{ token.created_at or '—' }}</td>
+            <td>{{ token.last_used_at or 'Never' }}</td>
+            <td class="num">
+              <div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">
+                <form method="post" action="/settings/assistant-access/{{ token.id }}/regenerate" style="margin:0;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="badge">Regenerate</button>
+                </form>
+                <form method="post" action="/settings/assistant-access/{{ token.id }}/revoke" style="margin:0;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="badge badge-danger">Revoke</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="helper-text" style="margin:0;">No assistant tokens yet.</p>
+    {% endif %}
+  </div>
+</section>
+
 {# ── Danger Zone · Reset ─────────────────────────────────────────────────── #}
 <section class="panel mt-1 danger-zone" id="danger-zone">
   <div class="section-header">

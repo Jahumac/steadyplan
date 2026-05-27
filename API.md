@@ -10,6 +10,11 @@ Bearer-token HTTP JSON API for external clients (Android, desktop, scripts).
 
 ## Minting a token
 
+SteadyPlan now supports two token styles:
+
+- **General API token** — created from the server CLI, keeps the legacy broad API access.
+- **Assistant token** — created from **Settings → Assistant access** in the web UI, limited to assistant endpoints and explicit scopes.
+
 Tokens are created from the command line on the server:
 
 ```bash
@@ -23,7 +28,9 @@ python scripts/api_token.py list <username>
 python scripts/api_token.py revoke <token_id>
 ```
 
-Tokens are stored in the `api_tokens` table alongside `last_used_at` so you
+Assistant tokens are created and rotated in the Settings page so the raw value is only shown once.
+
+Tokens are stored in the `api_tokens` table alongside `last_used_at`, `token_kind`, and scope metadata so you
 can see which tokens are active.
 
 ---
@@ -36,7 +43,7 @@ Non-2xx responses always return:
 { "error": "<code>", "message": "<human-readable>" }
 ```
 
-Codes currently used: `missing_token`, `invalid_token`, `not_found`,
+Codes currently used: `missing_token`, `invalid_token`, `insufficient_scope`, `not_found`,
 `bad_request`, `method_not_allowed`, `server_error`.
 
 ---
@@ -47,7 +54,7 @@ All endpoints are scoped to the token's user unless stated otherwise. Most are G
 ### `GET /me`
 Current user info.
 ```json
-{ "id": 1, "username": "alice", "is_admin": true }
+{ "id": 1, "username": "alice", "is_admin": true, "token_kind": "assistant", "scopes": ["assistant:read"] }
 ```
 
 ### `GET /accounts`
@@ -82,7 +89,7 @@ exist yet for that month.
 Growth rate, retirement age, ISA/LISA allowances, etc.
 
 ### `GET /assistant/month-summary/<YYYY-MM>`
-Assistant-oriented read-only monthly budget roll-up using the same source rules as the Budget page.
+Assistant-oriented read-only monthly budget roll-up using the same source rules as the Budget page. Assistant tokens need the `assistant:read` scope.
 
 Returns:
 - `summary.total_income`

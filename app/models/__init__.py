@@ -36,12 +36,19 @@ from .premium_bonds import (
 
 # Users + API tokens
 from .users import (
+    API_TOKEN_KIND_ASSISTANT,
+    API_TOKEN_KIND_GENERAL,
+    ASSISTANT_SCOPE_BUDGET_WRITE,
+    ASSISTANT_SCOPE_READ,
+    ASSISTANT_SCOPE_TRANSACTIONS_WRITE,
     User,
+    authenticate_api_token,
     count_users,
     create_api_token,
     create_user,
     delete_user,
     fetch_all_users,
+    fetch_api_token,
     fetch_api_tokens,
     fetch_user_by_api_token,
     get_user_by_id,
