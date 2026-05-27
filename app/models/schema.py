@@ -309,6 +309,8 @@ CREATE TABLE IF NOT EXISTS api_tokens (
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     token TEXT NOT NULL UNIQUE,
     label TEXT,
+    token_kind TEXT NOT NULL DEFAULT 'general',
+    scopes TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_used_at TEXT
 );
@@ -765,10 +767,21 @@ def _run_migrations(conn):
             user_id INTEGER NOT NULL REFERENCES users(id),
             token TEXT NOT NULL UNIQUE,
             label TEXT,
+            token_kind TEXT NOT NULL DEFAULT 'general',
+            scopes TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
             last_used_at TEXT
         )
     """)
+
+    for col_sql in [
+        "ALTER TABLE api_tokens ADD COLUMN token_kind TEXT NOT NULL DEFAULT 'general'",
+        "ALTER TABLE api_tokens ADD COLUMN scopes TEXT NOT NULL DEFAULT ''",
+    ]:
+        try:
+            conn.execute(col_sql)
+        except Exception as e:
+            _log_migration_error(e)
 
     # ── cgt_disposals: add optional account_id ───────────────────────────
     try:

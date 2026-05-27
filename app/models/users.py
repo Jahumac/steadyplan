@@ -205,39 +205,93 @@ def delete_user(user_id):
 
 
 # ── API tokens ────────────────────────────────────────────────────────────────
-# Bearer tokens for the JSON API. Mint via scripts/api_token.py create <user>.
-# Tokens are stored as SHA-256 hashes.
+# Bearer tokens for the JSON API. General tokens keep legacy broad access.
+# Assistant tokens are intentionally narrower and scope-limited.
+
+API_TOKEN_KIND_GENERAL = "general"
+API_TOKEN_KIND_ASSISTANT = "assistant"
+VALID_API_TOKEN_KINDS = {API_TOKEN_KIND_GENERAL, API_TOKEN_KIND_ASSISTANT}
+
+ASSISTANT_SCOPE_READ = "assistant:read"
+ASSISTANT_SCOPE_BUDGET_WRITE = "assistant:budget_write"
+ASSISTANT_SCOPE_TRANSACTIONS_WRITE = "assistant:transactions_write"
+VALID_ASSISTANT_SCOPES = (
+    ASSISTANT_SCOPE_READ,
+    ASSISTANT_SCOPE_BUDGET_WRITE,
+    ASSISTANT_SCOPE_TRANSACTIONS_WRITE,
+)
+
 
 def _hash_token(token):
     import hashlib
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def create_api_token(user_id, label=None):
+def _normalise_token_kind(token_kind):
+    kind = (token_kind or API_TOKEN_KIND_GENERAL).strip().lower()
+    return kind if kind in VALID_API_TOKEN_KINDS else API_TOKEN_KIND_GENERAL
+
+
+def _normalise_assistant_scopes(scopes):
+    values = []
+    for scope in (scopes or []):
+        scope_text = str(scope or "").strip().lower()
+        if scope_text in VALID_ASSISTANT_SCOPES and scope_text not in values:
+            values.append(scope_text)
+    return values or [ASSISTANT_SCOPE_READ]
+
+
+def _serialise_scopes(scopes):
+    return ",".join(scopes or [])
+
+
+def _deserialise_scopes(raw_scopes):
+    values = []
+    for scope in str(raw_scopes or "").split(","):
+        scope_text = scope.strip().lower()
+        if scope_text and scope_text not in values:
+            values.append(scope_text)
+    return values
+
+
+def create_api_token(user_id, label=None, token_kind=API_TOKEN_KIND_GENERAL, scopes=None):
     import secrets
+
+    kind = _normalise_token_kind(token_kind)
+    raw_scopes = _normalise_assistant_scopes(scopes) if kind == API_TOKEN_KIND_ASSISTANT else []
     token = secrets.token_hex(32)
     hashed = _hash_token(token)
     with get_connection() as conn:
         conn.execute(
-            "INSERT INTO api_tokens (user_id, token, label) VALUES (?, ?, ?)",
-            (user_id, hashed, label),
+            """
+            INSERT INTO api_tokens (user_id, token, label, token_kind, scopes)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (user_id, hashed, label, kind, _serialise_scopes(raw_scopes)),
         )
         conn.commit()
     return token
 
 
-def fetch_user_by_api_token(token):
+def authenticate_api_token(token):
     if not token:
         return None
+
     hashed = _hash_token(token)
     with get_connection() as conn:
         row = conn.execute(
             """
-            SELECT u.* FROM users u
+            SELECT
+                u.*, t.id AS token_id, t.label AS token_label,
+                t.created_at AS token_created_at,
+                t.last_used_at AS token_last_used_at,
+                COALESCE(t.token_kind, ?) AS token_kind,
+                COALESCE(t.scopes, '') AS token_scopes
+            FROM users u
             JOIN api_tokens t ON t.user_id = u.id
             WHERE t.token = ?
             """,
-            (hashed,),
+            (API_TOKEN_KIND_GENERAL, hashed),
         ).fetchone()
         if row is None:
             return None
@@ -246,19 +300,76 @@ def fetch_user_by_api_token(token):
             (hashed,),
         )
         conn.commit()
-    return User(row["id"], row["username"], row["password_hash"], row["is_admin"])
+
+    token_kind = _normalise_token_kind(row["token_kind"])
+    token_scopes = _deserialise_scopes(row["token_scopes"])
+    return {
+        "user": User(row["id"], row["username"], row["password_hash"], row["is_admin"]),
+        "token": {
+            "id": row["token_id"],
+            "label": row["token_label"],
+            "created_at": row["token_created_at"],
+            "last_used_at": row["token_last_used_at"],
+            "token_kind": token_kind,
+            "scopes": token_scopes,
+        },
+    }
 
 
-def fetch_api_tokens(user_id):
+def fetch_user_by_api_token(token):
+    auth = authenticate_api_token(token)
+    return auth["user"] if auth else None
+
+
+def fetch_api_tokens(user_id, token_kind=None):
+    kind = _normalise_token_kind(token_kind) if token_kind else None
+    sql = """
+        SELECT id, label, created_at, last_used_at,
+               substr(token, 1, 8) AS token_preview,
+               COALESCE(token_kind, ?) AS token_kind,
+               COALESCE(scopes, '') AS scopes
+        FROM api_tokens
+        WHERE user_id = ?
+    """
+    params = [API_TOKEN_KIND_GENERAL, user_id]
+    if kind:
+        sql += " AND COALESCE(token_kind, ?) = ?"
+        params.extend([API_TOKEN_KIND_GENERAL, kind])
+    sql += " ORDER BY created_at DESC, id DESC"
+
     with get_connection() as conn:
-        return conn.execute(
-            """
-            SELECT id, label, created_at, last_used_at,
-                   substr(token, 1, 8) AS token_preview
-            FROM api_tokens WHERE user_id = ? ORDER BY created_at DESC
-            """,
-            (user_id,),
-        ).fetchall()
+        rows = conn.execute(sql, tuple(params)).fetchall()
+
+    out = []
+    for row in rows:
+        item = dict(row)
+        item["token_kind"] = _normalise_token_kind(item.get("token_kind"))
+        item["scopes"] = _deserialise_scopes(item.get("scopes"))
+        out.append(item)
+    return out
+
+
+def fetch_api_token(token_id, user_id, token_kind=None):
+    kind = _normalise_token_kind(token_kind) if token_kind else None
+    sql = """
+        SELECT id, user_id, label, created_at, last_used_at,
+               COALESCE(token_kind, ?) AS token_kind,
+               COALESCE(scopes, '') AS scopes
+        FROM api_tokens
+        WHERE id = ? AND user_id = ?
+    """
+    params = [API_TOKEN_KIND_GENERAL, token_id, user_id]
+    if kind:
+        sql += " AND COALESCE(token_kind, ?) = ?"
+        params.extend([API_TOKEN_KIND_GENERAL, kind])
+    with get_connection() as conn:
+        row = conn.execute(sql, tuple(params)).fetchone()
+    if row is None:
+        return None
+    item = dict(row)
+    item["token_kind"] = _normalise_token_kind(item.get("token_kind"))
+    item["scopes"] = _deserialise_scopes(item.get("scopes"))
+    return item
 
 
 def revoke_api_token(token_id, user_id):
