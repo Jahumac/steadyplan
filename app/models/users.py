@@ -172,6 +172,7 @@ def delete_user(user_id):
                 "scheduler_runs",
                 "portfolio_daily_snapshots",
                 "custom_tags",
+                "assistant_audit_events",
                 "api_tokens",
                 "budget_items",
                 "budget_sections",
@@ -273,6 +274,52 @@ def create_api_token(user_id, label=None, token_kind=API_TOKEN_KIND_GENERAL, sco
     return token
 
 
+
+def log_assistant_audit_event(
+    user_id,
+    *,
+    token_id=None,
+    token_label=None,
+    token_kind=None,
+    action_type,
+    endpoint,
+    target_type=None,
+    target_id=None,
+    target_label=None,
+    month_key=None,
+    before_state=None,
+    after_state=None,
+):
+    import json
+
+    with get_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO assistant_audit_events (
+                user_id, token_id, token_label, token_kind,
+                action_type, endpoint, target_type, target_id, target_label,
+                month_key, before_state, after_state
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                token_id,
+                token_label,
+                _normalise_token_kind(token_kind),
+                action_type,
+                endpoint,
+                target_type,
+                target_id,
+                target_label,
+                month_key,
+                json.dumps(before_state or {}, sort_keys=True),
+                json.dumps(after_state or {}, sort_keys=True),
+            ),
+        )
+        conn.commit()
+
+
+
 def authenticate_api_token(token):
     if not token:
         return None
@@ -347,6 +394,56 @@ def fetch_api_tokens(user_id, token_kind=None):
         item["scopes"] = _deserialise_scopes(item.get("scopes"))
         out.append(item)
     return out
+
+
+
+def fetch_assistant_audit_events(user_id, limit=20):
+    import json
+
+    try:
+        safe_limit = max(1, min(int(limit or 20), 100))
+    except (TypeError, ValueError):
+        safe_limit = 20
+
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT
+                e.id,
+                e.user_id,
+                e.token_id,
+                e.token_label,
+                COALESCE(e.token_kind, ?) AS token_kind,
+                e.action_type,
+                e.endpoint,
+                e.target_type,
+                e.target_id,
+                e.target_label,
+                e.month_key,
+                e.before_state,
+                e.after_state,
+                e.created_at
+            FROM assistant_audit_events e
+            WHERE e.user_id = ?
+            ORDER BY e.created_at DESC, e.id DESC
+            LIMIT ?
+            """,
+            (API_TOKEN_KIND_ASSISTANT, user_id, safe_limit),
+        ).fetchall()
+
+    out = []
+    for row in rows:
+        item = dict(row)
+        item["token_kind"] = _normalise_token_kind(item.get("token_kind"))
+        for field in ("before_state", "after_state"):
+            raw = item.get(field)
+            try:
+                item[field] = json.loads(raw) if raw else {}
+            except Exception:
+                item[field] = {}
+        out.append(item)
+    return out
+
 
 
 def fetch_api_token(token_id, user_id, token_kind=None):

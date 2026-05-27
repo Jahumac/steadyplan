@@ -23,6 +23,7 @@ from app.models import (
     create_api_token,
     fetch_api_token,
     fetch_api_tokens,
+    fetch_assistant_audit_events,
     fetch_assumptions,
     fetch_holding_catalogue_in_use,
     fetch_latest_price_update,
@@ -138,8 +139,8 @@ def _assistant_scope_options():
         },
         {
             "key": ASSISTANT_SCOPE_BUDGET_WRITE,
-            "label": "Budget write (reserved)",
-            "hint": "Reserved for future assistant budget update endpoints. Safe to leave off today.",
+            "label": "Budget write",
+            "hint": "Lets Pip update one month at a time on existing manual, unlinked budget items via the narrow assistant budget write endpoint.",
         },
         {
             "key": ASSISTANT_SCOPE_TRANSACTIONS_WRITE,
@@ -182,6 +183,7 @@ def _settings_template_context(uid, *, assumptions=None, computed_age=None, diag
     assumptions = assumptions if assumptions is not None else fetch_assumptions(uid)
     computed_age = computed_age if computed_age is not None else (int(current_age_from_assumptions(assumptions)) if assumptions else 0)
     assistant_tokens = fetch_api_tokens(uid, token_kind=API_TOKEN_KIND_ASSISTANT)
+    assistant_audit_events = fetch_assistant_audit_events(uid, limit=12)
     return {
         "assumptions": assumptions,
         "computed_age": computed_age,
@@ -189,6 +191,7 @@ def _settings_template_context(uid, *, assumptions=None, computed_age=None, diag
         "page_mode": page_mode,
         "active_page": "settings",
         "assistant_tokens": assistant_tokens,
+        "assistant_audit_events": assistant_audit_events,
         "assistant_scope_options": _assistant_scope_options(),
         "assistant_token_secret": _pop_plaintext_assistant_token(),
         **extra,

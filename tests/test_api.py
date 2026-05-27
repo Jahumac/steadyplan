@@ -288,6 +288,123 @@ def test_assistant_affordability_rejects_invalid_spread_months(api):
 
 
 
+def test_assistant_budget_entry_write_rejects_invalid_payload(app, client, token):
+    with app.app_context():
+        from app.models import create_budget_item, fetch_budget_sections, get_user_by_username
+
+        uid = get_user_by_username("apiuser").id
+        fetch_budget_sections(uid)
+        item_id = create_budget_item(
+            {
+                "name": "Phone sinking fund",
+                "section": "discretionary",
+                "default_amount": 50,
+                "notes": "",
+                "sort_order": 0,
+            },
+            uid,
+        )
+
+    bad_month = client.post(
+        f"/api/v1/assistant/budget-items/{item_id}/month-entry",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"month": "2026-13", "amount": 200},
+    )
+    assert bad_month.status_code == 400
+    assert bad_month.get_json()["error"] == "bad_request"
+
+    bad_amount = client.post(
+        f"/api/v1/assistant/budget-items/{item_id}/month-entry",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"month": "2026-05", "amount": -1},
+    )
+    assert bad_amount.status_code == 400
+    assert bad_amount.get_json()["error"] == "bad_request"
+
+
+
+def test_assistant_budget_entry_write_updates_manual_unlinked_item(app, client, token):
+    with app.app_context():
+        from app.models import create_budget_item, fetch_budget_entries, fetch_budget_sections, get_user_by_username
+
+        uid = get_user_by_username("apiuser").id
+        fetch_budget_sections(uid)
+        item_id = create_budget_item(
+            {
+                "name": "Phone sinking fund",
+                "section": "discretionary",
+                "default_amount": 50,
+                "notes": "Planned upgrade",
+                "sort_order": 0,
+            },
+            uid,
+        )
+
+    resp = client.post(
+        f"/api/v1/assistant/budget-items/{item_id}/month-entry",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"month": "2026-05", "amount": 799},
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["budget_item"]["id"] == item_id
+    assert body["budget_item"]["name"] == "Phone sinking fund"
+    assert body["month"] == "2026-05"
+    assert body["amount"] == 799
+    assert body["previous_amount"] == 50
+    assert body["previous_source"] == "default"
+
+    with app.app_context():
+        from app.models import fetch_budget_entries, get_user_by_username
+
+        uid = get_user_by_username("apiuser").id
+        entries = fetch_budget_entries("2026-05", uid)
+        saved = next(entry for entry in entries if entry["budget_item_id"] == item_id)
+        assert float(saved["amount"]) == 799
+
+
+
+def test_assistant_budget_entry_write_rejects_linked_items(app, client, token):
+    with app.app_context():
+        from app.models import create_budget_item, fetch_budget_sections, get_connection, get_user_by_username
+
+        uid = get_user_by_username("apiuser").id
+        fetch_budget_sections(uid)
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, current_value, monthly_contribution,
+                    include_in_budget, pre_salary, is_active
+                ) VALUES (?, 'Stocks ISA', 0, 200, 1, 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+        item_id = create_budget_item(
+            {
+                "name": "Linked ISA",
+                "section": "investment",
+                "default_amount": 200,
+                "linked_account_id": account_id,
+                "notes": "",
+                "sort_order": 0,
+            },
+            uid,
+        )
+
+    resp = client.post(
+        f"/api/v1/assistant/budget-items/{item_id}/month-entry",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"month": "2026-05", "amount": 799},
+    )
+    assert resp.status_code == 400
+    assert resp.get_json()["error"] == "bad_request"
+
+
+
 def test_assistant_affordability_combines_budget_and_access_context(app, client, token):
     with app.app_context():
         from app.models import create_budget_item, fetch_budget_sections, get_connection, get_user_by_username

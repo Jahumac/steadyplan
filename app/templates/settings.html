@@ -595,11 +595,14 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Assistant access</p>
-      <h3>Let Pip read your SteadyPlan summaries safely</h3>
+      <h3>Let Pip use SteadyPlan safely</h3>
     </div>
   </div>
   <p class="helper-text">
     This creates a dedicated assistant token for SteadyPlan. Unlike a general API token, it is limited to assistant-friendly endpoints and can be revoked or regenerated here.
+  </p>
+  <p class="helper-text" style="margin-top:0.45rem;">
+    Read-only access lets Pip answer portfolio, budget, and affordability questions. Budget write access additionally allows one narrow action today: updating a single month's amount on an existing manual, unlinked budget item.
   </p>
 
   {% if assistant_token_secret %}
@@ -684,6 +687,49 @@
     </div>
     {% else %}
     <p class="helper-text" style="margin:0;">No assistant tokens yet.</p>
+    {% endif %}
+  </div>
+
+  <div style="margin-top:1rem;">
+    <div class="text-sm" style="font-weight:600;margin-bottom:0.45rem;">Recent assistant activity</div>
+    {% if assistant_audit_events %}
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Token</th>
+            <th>Action</th>
+            <th>Target</th>
+            <th>Change</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in assistant_audit_events %}
+          <tr>
+            <td>{{ event.created_at or '—' }}</td>
+            <td>{{ event.token_label or 'Assistant token' }}</td>
+            <td>{{ event.action_type }}</td>
+            <td>
+              {{ event.target_label or event.target_type or '—' }}
+              {% if event.month_key %}<div class="helper-text" style="margin-top:0.2rem;">{{ event.month_key }}</div>{% endif %}
+            </td>
+            <td>
+              {% set before_amount = event.before_state.get('amount') %}
+              {% set after_amount = event.after_state.get('amount') %}
+              {% if before_amount is not none and after_amount is not none %}
+                {{ before_amount }} → {{ after_amount }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="helper-text" style="margin:0;">No assistant writes logged yet.</p>
     {% endif %}
   </div>
 </section>
