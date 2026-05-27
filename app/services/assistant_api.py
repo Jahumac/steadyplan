@@ -21,7 +21,7 @@ def _debt_payoff_month_key(debt):
     payment = float(debt["monthly_payment"] or 0)
     apr = float(debt["apr"] or 0)
     months = debt_months_remaining(balance, payment, apr)
-    if months is None:
+    if not months:
         return None
     today = date.today()
     return add_months_to_key(f"{today.year}-{today.month:02d}", months)
