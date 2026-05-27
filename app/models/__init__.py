@@ -50,9 +50,11 @@ from .users import (
     fetch_all_users,
     fetch_api_token,
     fetch_api_tokens,
+    fetch_assistant_audit_events,
     fetch_user_by_api_token,
     get_user_by_id,
     get_user_by_username,
+    log_assistant_audit_event,
     revoke_api_token,
     update_user,
 )

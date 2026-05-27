@@ -215,3 +215,57 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
         from app.models import fetch_api_tokens
 
         assert fetch_api_tokens(uid, token_kind="assistant") == []
+
+
+
+def test_assistant_write_is_logged_and_visible_in_settings(app, client, make_user):
+    uid, username, password = make_user(username="assistant-audit-user")
+
+    with app.app_context():
+        from app.models import create_api_token, create_budget_item, fetch_budget_sections
+
+        fetch_budget_sections(uid)
+        item_id = create_budget_item(
+            {
+                "name": "Phone sinking fund",
+                "section": "discretionary",
+                "default_amount": 50,
+                "notes": "",
+                "sort_order": 0,
+            },
+            uid,
+        )
+        token = create_api_token(
+            uid,
+            label="Pip budget write",
+            token_kind="assistant",
+            scopes=["assistant:budget_write"],
+        )
+
+    write_resp = client.post(
+        f"/api/v1/assistant/budget-items/{item_id}/month-entry",
+        headers=_bearer(token),
+        json={"month": "2026-05", "amount": 799},
+    )
+    assert write_resp.status_code == 200
+
+    with app.app_context():
+        from app.models import fetch_assistant_audit_events
+
+        events = fetch_assistant_audit_events(uid)
+        assert len(events) == 1
+        assert events[0]["token_label"] == "Pip budget write"
+        assert events[0]["action_type"] == "budget_item_month_entry_updated"
+        assert events[0]["target_label"] == "Phone sinking fund"
+        assert events[0]["month_key"] == "2026-05"
+        assert events[0]["after_state"]["amount"] == 799
+        assert events[0]["before_state"]["amount"] == 50
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    settings_resp = client.get("/settings/")
+    settings_html = settings_resp.get_data(as_text=True)
+    assert settings_resp.status_code == 200
+    assert "Recent assistant activity" in settings_html
+    assert "Phone sinking fund" in settings_html
+    assert "2026-05" in settings_html
+    assert "799" in settings_html
