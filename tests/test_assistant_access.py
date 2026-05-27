@@ -62,6 +62,76 @@ def test_assistant_token_without_read_scope_is_rejected(app, client, make_user):
 
 
 
+def test_assistant_budget_write_scope_allows_narrow_budget_write(app, client, make_user):
+    uid, _, _ = make_user(username="assistant-budget-write")
+
+    with app.app_context():
+        from app.models import create_api_token, create_budget_item, fetch_budget_sections
+
+        fetch_budget_sections(uid)
+        item_id = create_budget_item(
+            {
+                "name": "Phone sinking fund",
+                "section": "discretionary",
+                "default_amount": 50,
+                "notes": "",
+                "sort_order": 0,
+            },
+            uid,
+        )
+        token = create_api_token(
+            uid,
+            label="Pip budget write",
+            token_kind="assistant",
+            scopes=["assistant:budget_write"],
+        )
+
+    resp = client.post(
+        f"/api/v1/assistant/budget-items/{item_id}/month-entry",
+        headers=_bearer(token),
+        json={"month": "2026-05", "amount": 799},
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["ok"] is True
+    assert body["amount"] == 799
+
+
+
+def test_assistant_read_only_token_cannot_write_budget_entry(app, client, make_user):
+    uid, _, _ = make_user(username="assistant-budget-readonly")
+
+    with app.app_context():
+        from app.models import create_api_token, create_budget_item, fetch_budget_sections
+
+        fetch_budget_sections(uid)
+        item_id = create_budget_item(
+            {
+                "name": "Phone sinking fund",
+                "section": "discretionary",
+                "default_amount": 50,
+                "notes": "",
+                "sort_order": 0,
+            },
+            uid,
+        )
+        token = create_api_token(
+            uid,
+            label="Pip read only",
+            token_kind="assistant",
+            scopes=["assistant:read"],
+        )
+
+    resp = client.post(
+        f"/api/v1/assistant/budget-items/{item_id}/month-entry",
+        headers=_bearer(token),
+        json={"month": "2026-05", "amount": 799},
+    )
+    assert resp.status_code == 403
+    assert resp.get_json()["error"] == "insufficient_scope"
+
+
+
 def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, make_user):
     uid, username, password = make_user(username="assistant-settings-user")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)

@@ -239,6 +239,29 @@ backup time (file presence only), or 503 if the DB is unreachable.
 All writes require auth and are scoped to the token's user (attempting
 to mutate another user's data returns 404).
 
+Assistant write endpoints are intentionally narrower than the general API.
+Assistant tokens must carry the specific write scope required by that route.
+
+### `POST /assistant/budget-items/<id>/month-entry`
+Assistant-only narrow write for updating a single month's planned amount on an
+existing **manual, unlinked** budget item. This is designed for safe cases like
+"set my phone sinking fund to £799 this month" without opening broad budget-edit
+powers. Assistant tokens need the `assistant:budget_write` scope.
+
+Rules:
+- `month` must be `YYYY-MM`
+- `amount` must be a number `>= 0`
+- the item must belong to the authenticated user
+- the item must be active
+- linked account / linked debt budget items are rejected on purpose
+
+```json
+{ "month": "2026-05", "amount": 799 }
+```
+
+Returns the saved amount plus the previous effective amount/source so the
+assistant can explain what changed.
+
 ### `POST /accounts/<id>/balance`
 Update a manual-valuation account's balance. Also records a monthly
 snapshot so history stays consistent with the monthly-review flow.
