@@ -9,7 +9,32 @@ def test_overview_renders_monthly_review_card(auth_client):
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "Monthly review" in html
-    assert "Checklist:" in html
+    assert "Status:" in html
+    assert "Checklist:" not in html
+
+
+def test_overview_completed_monthly_review_does_not_show_stale_checklist(app, client, make_user):
+    uid, username, password = make_user(username="mr-overview-complete", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    from datetime import date
+
+    month_key = date.today().strftime("%Y-%m")
+    resp = client.post(
+        "/monthly-review/",
+        data={
+            "form_name": "mark_complete",
+            "month": month_key,
+        },
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+
+    overview = client.get("/")
+    assert overview.status_code == 200
+    html = overview.get_data(as_text=True)
+    assert "Status: Complete" in html
+    assert "Checklist:" not in html
 
 
 def test_monthly_review_get_is_idempotent_for_user_month(app, client, make_user):
