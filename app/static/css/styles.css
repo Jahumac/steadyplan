@@ -2045,6 +2045,37 @@ button.button-danger:focus {
   font-weight: 700;
 }
 
+.overview-access-card {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.overview-access-header {
+  margin-bottom: 0;
+}
+
+.overview-access-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.overview-access-mini-card {
+  background: rgba(11, 18, 32, 0.35);
+}
+
+.overview-access-value {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 900px) {
+  .overview-access-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .hero-top {
     flex-wrap: wrap;
