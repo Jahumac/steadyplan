@@ -338,8 +338,10 @@ def api_account_schedule():
         seen.add(start_age)
         uniq.append((start_age, amount))
 
-    delete_contribution_overrides_for_reason(int(account_id), uid, "schedule")
+    if rules_in and not uniq:
+        return jsonify({"ok": False, "error": "at least one valid schedule row is required"}), 400
     if not uniq:
+        delete_contribution_overrides_for_reason(int(account_id), uid, "schedule")
         return jsonify({"ok": True})
 
     month_keys = []
