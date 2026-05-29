@@ -3076,6 +3076,56 @@ button.button-danger:focus {
 }
 
 /* ── Budget toolbar (Edit Budget + Export + Import) ──────────────── */
+.budget-compact-flow-card {
+  margin-bottom: 1rem;
+}
+
+.compact-flow-list {
+  margin: 0 0 1rem;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.compact-flow-list li {
+  color: var(--text);
+}
+
+.compact-flow-list li span {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.budget-tools-details {
+  width: 100%;
+}
+
+.budget-tools-details summary {
+  list-style: none;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.budget-tools-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.budget-tools-menu {
+  margin-top: 0.75rem;
+}
+
+.monthly-review-related-details summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.monthly-review-related-details[open] summary {
+  color: var(--accent);
+}
+
 .budget-toolbar {
   display: flex;
   align-items: center;
@@ -3660,6 +3710,26 @@ button.button-danger:focus {
 
 /* ── Monthly review hero: mobile layout ────────────────────────────────── */
 @media (max-width: 600px) {
+  .budget-compact-flow-card .section-header,
+  .monthly-review-start-card .section-header {
+    align-items: flex-start;
+  }
+
+  .budget-compact-flow-card .badge-row,
+  .monthly-review-start-card .badge-row,
+  .budget-tools-menu,
+  .monthly-review-related-details .badge-row {
+    width: 100%;
+  }
+
+  .budget-compact-flow-card .badge-row .badge,
+  .monthly-review-start-card .badge-row .badge,
+  .budget-tools-menu .badge,
+  .monthly-review-related-details .badge-row .badge {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
   .review-hero-card .hero-top {
     position: relative;
     flex-direction: column;
