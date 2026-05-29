@@ -158,5 +158,8 @@ def test_monthly_review_manual_balances_shortcut_matches_section_anchor_and_head
     assert 'href="#manual-balances"' in html
     assert 'id="manual-balances"' in html
     assert ">Manual balances<" in html
+    assert "jump to manual balances when needed." in html
     assert 'href="#manual-accounts"' not in html
     assert "Update manual balances" not in html
+    assert "No manual balances to review this month." in html
+    assert "No manual accounts to review this month." not in html
