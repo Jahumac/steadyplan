@@ -16,6 +16,31 @@
 
 {# ── Getting started (shown first for new users) ─────────────────────────── #}
 {% if steps_done < 4 %}
+{% if not has_profile %}
+  {% set onboarding_primary_eyebrow = 'Start here' %}
+  {% set onboarding_primary_title = 'Complete your profile' %}
+  {% set onboarding_primary_body = 'Just enough to make dates and projections line up later.' %}
+  {% set onboarding_primary_href = '/settings/?mode=edit' %}
+  {% set onboarding_primary_cta = 'Open settings' %}
+{% elif not has_accounts %}
+  {% set onboarding_primary_eyebrow = 'Start here' %}
+  {% set onboarding_primary_title = 'Add your first account' %}
+  {% set onboarding_primary_body = 'Start with one real account so Overview has something concrete to show.' %}
+  {% set onboarding_primary_href = '/accounts/?mode=create' %}
+  {% set onboarding_primary_cta = 'Add account' %}
+{% elif not has_goal %}
+  {% set onboarding_primary_eyebrow = 'Next helpful step' %}
+  {% set onboarding_primary_title = 'Set a first goal' %}
+  {% set onboarding_primary_body = 'Optional, but useful once you want SteadyPlan to track progress toward something specific.' %}
+  {% set onboarding_primary_href = '/goals/?mode=create' %}
+  {% set onboarding_primary_cta = 'Add goal' %}
+{% else %}
+  {% set onboarding_primary_eyebrow = 'Next helpful step' %}
+  {% set onboarding_primary_title = 'Do your first monthly update' %}
+  {% set onboarding_primary_body = 'Best once your first contribution or balance change has settled.' %}
+  {% set onboarding_primary_href = '/monthly-review/' %}
+  {% set onboarding_primary_cta = 'Open monthly update' %}
+{% endif %}
 <section class="card onboarding-welcome mb-1">
   <div class="onboarding-hero">
     <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="" class="onboarding-turtle turtle-hello shelly-inline-icon shelly-icon-md">
@@ -25,37 +50,54 @@
     </div>
     <small class="text-muted onboarding-progress">{{ steps_done }}/4 complete</small>
   </div>
-  <p class="helper-text mb-075">A calm place to track accounts, budgets and long-term plans — hosted on your own machine. Let’s set up the essentials.</p>
+  <p class="helper-text mb-075">You only need the basics to begin. Goals and monthly updates can wait until you have something real to track.</p>
+
+  <section class="onboarding-primary">
+    <div>
+      <p class="eyebrow m-0">{{ onboarding_primary_eyebrow }}</p>
+      <strong>{{ onboarding_primary_title }}</strong>
+      <p class="helper-text m-0">{{ onboarding_primary_body }}</p>
+    </div>
+    <a href="{{ onboarding_primary_href }}" class="badge badge-primary-action">{{ onboarding_primary_cta }}</a>
+  </section>
+
+  <p class="onboarding-section-label">Essential to start</p>
   <div class="onboarding-steps">
     <a href="/settings/?mode=edit" class="onboarding-step {% if has_profile %}onboarding-done{% endif %}">
       <span class="onboarding-check">{% if has_profile %}✓{% else %}1{% endif %}</span>
       <div>
-        <strong>Set up your profile</strong>
-        <small>Date of birth, retirement age, investment day — so projections actually mean something.</small>
+        <strong>Complete your profile</strong>
+        <small>Date of birth and retirement age are enough to make later dates and projections meaningful.</small>
       </div>
     </a>
     <a href="/accounts/?mode=create" class="onboarding-step {% if has_accounts %}onboarding-done{% endif %}">
       <span class="onboarding-check">{% if has_accounts %}✓{% else %}2{% endif %}</span>
       <div>
         <strong>Add your first account</strong>
-        <small>ISA, pension, savings — anything you want to track.</small>
-      </div>
-    </a>
-    <a href="/goals/?mode=create" class="onboarding-step {% if has_goal %}onboarding-done{% endif %}">
-      <span class="onboarding-check">{% if has_goal %}✓{% else %}3{% endif %}</span>
-      <div>
-        <strong>Set a goal</strong>
-        <small>Pick a target and track progress over time.</small>
-      </div>
-    </a>
-    <a href="/monthly-review/" class="onboarding-step {% if has_history %}onboarding-done{% endif %}">
-      <span class="onboarding-check">{% if has_history %}✓{% else %}4{% endif %}</span>
-      <div>
-        <strong>Complete your first Monthly Update</strong>
-        <small>Lock in a month so history and allowances have something solid to use.</small>
+        <small>ISA, pension, savings or cash — start with what you already have.</small>
       </div>
     </a>
   </div>
+
+  <details class="onboarding-later">
+    <summary>Do later</summary>
+    <div class="onboarding-steps onboarding-steps-secondary">
+      <a href="/goals/?mode=create" class="onboarding-step {% if has_goal %}onboarding-done{% endif %}">
+        <span class="onboarding-check">{% if has_goal %}✓{% else %}3{% endif %}</span>
+        <div>
+          <strong>Set a goal</strong>
+          <small>Set a goal once you know what you want to aim for.</small>
+        </div>
+      </a>
+      <a href="/monthly-review/" class="onboarding-step {% if has_history %}onboarding-done{% endif %}">
+        <span class="onboarding-check">{% if has_history %}✓{% else %}4{% endif %}</span>
+        <div>
+          <strong>Do your first monthly update</strong>
+          <small>Do your first monthly update after your first contribution or balance change settles.</small>
+        </div>
+      </a>
+    </div>
+  </details>
 </section>
 {% endif %}
 
