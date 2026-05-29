@@ -53,6 +53,7 @@ from app.models import (
     fetch_completed_tax_year_contributions,
 )
 from app.services.data_health import build_data_health_summary
+from app.services.planning_insights import build_accessible_security_summary
 
 overview_bp = Blueprint("overview", __name__)
 
@@ -586,6 +587,7 @@ def overview():
     allocation_values = [round(a[1], 2) for a in allocation]
 
     assumed_rate_pct = round(to_float((assumptions or {}).get("annual_growth_rate", 0.07)) * 100, 1)
+    access_summary = build_accessible_security_summary(accounts, assumptions)
 
     daily_contributions, pending_review_months = _build_daily_contributions_cumulative(
         uid, daily_labels, accounts, assumptions
@@ -638,6 +640,7 @@ def overview():
         current_month_num=now.month,
         data_health_summary=data_health_summary,
         monthly_review_card=monthly_review_card,
+        access_summary=access_summary,
     ))
     resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     resp.headers["Pragma"] = "no-cache"

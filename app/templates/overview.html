@@ -156,14 +156,42 @@
     </div>
   </div>
   <div class="hero-strip">
+    {% call hero_stat('Accessible now') %}<strong>£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</strong>{% endcall %}
+    {% call hero_stat('Locked later') %}<strong>£{{ '{:,.0f}'.format(access_summary.locked_current) }}</strong>{% endcall %}
     {% call hero_stat('Monthly contributions') %}<strong>£{{ '{:,.0f}'.format(metrics.monthly_total) }}</strong>{% endcall %}
     {% call hero_stat('Projected at retirement') %}<strong title="Scenario estimate based on your current balances, contribution settings, and assumptions in Settings.">£{{ '{:,.0f}'.format(metrics.projected_total) }}</strong><small>estimate</small>{% endcall %}
-    {% call hero_stat('Accounts') %}<strong>{{ accounts | length }}</strong>{% endcall %}
-    {% call hero_stat('Tax Year ' ~ metrics.tax_year) %}<strong>{{ metrics.tax_year_days_left }} days left</strong>{% endcall %}
-    {% if goals_data %}
-      {% call hero_stat('Goal progress') %}<strong>{{ '{:.1f}'.format(goals_data[0].progress * 100) }}%</strong>{% if goals_data[0].goal_year %}<small>~{{ goals_data[0].goal_year }}</small>{% endif %}{% endcall %}
-    {% endif %}
   </div>
+</section>
+
+<section class="card mb-1 overview-access-card">
+  <div class="section-header mb-05 overview-access-header">
+    <div>
+      <p class="eyebrow">Where you stand now</p>
+      <h2>Accessible vs locked</h2>
+    </div>
+    <a href="/planning/" class="link-accent text-sm">Open Planning</a>
+  </div>
+  <p class="helper-text">Use this as the quick truth: what you can usually reach before pension age, what has conditions, and what is doing longer-term retirement work.</p>
+  <div class="card-grid overview-access-grid">
+    <div class="card overview-access-mini-card">
+      <p class="eyebrow">Accessible now</p>
+      <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</p>
+      <p class="helper-text m-0">{{ '{:.0f}'.format(access_summary.accessible_pct) }}% of your current total. ISA, cash, GIA, Premium Bonds and similar accounts.</p>
+    </div>
+    <div class="card overview-access-mini-card">
+      <p class="eyebrow">Restricted</p>
+      <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.restricted_current) }}</p>
+      <p class="helper-text m-0">Money with rules, penalties, or special conditions such as a Lifetime ISA.</p>
+    </div>
+    <div class="card overview-access-mini-card">
+      <p class="eyebrow">Locked later</p>
+      <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.locked_current) }}</p>
+      <p class="helper-text m-0">Pension-style money that is building for later rather than near-term flexibility.</p>
+    </div>
+  </div>
+  {% if access_summary.next_milestone %}
+  <p class="helper-text mt-075 mb-0">Next accessible milestone: <strong>£{{ '{:,.0f}'.format(access_summary.next_milestone.target) }}</strong> — £{{ '{:,.0f}'.format(access_summary.next_milestone.remaining) }} to go.</p>
+  {% endif %}
 </section>
 
 {# ── Data Health (only when action is needed) ─────────────────────────────── #}
