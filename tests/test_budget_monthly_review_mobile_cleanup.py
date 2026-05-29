@@ -133,7 +133,7 @@ def test_monthly_review_manual_section_uses_manual_balances_heading(app, client,
     assert "Manual Accounts" not in html
 
 
-def test_monthly_review_finish_shortcut_matches_finish_step_wording(app, client, make_user):
+def test_monthly_review_finish_shortcuts_match_final_step_wording(app, client, make_user):
     _, username, password = make_user(username="review-finish-shortcut", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
@@ -141,6 +141,7 @@ def test_monthly_review_finish_shortcut_matches_finish_step_wording(app, client,
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert 'href="#monthly-note"' in html
-    assert "Save note and finish" in html
+    assert html.count('href="#monthly-note"') >= 2
+    assert "Save note and mark reviewed" in html
+    assert "Save note and finish" not in html
     assert "Finish review" not in html
