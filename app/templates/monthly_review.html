@@ -278,7 +278,7 @@
   {% endif %}
 </section>
 
-<section class="card mb-1" id="manual-accounts">
+<section class="card mb-1" id="manual-balances">
   <div class="section-header">
     <div>
       <p class="eyebrow">Manual</p>
@@ -474,7 +474,7 @@
               {% if review.status == 'complete' %}disabled{% endif %}>{{ monthly_review_notes }}</textarea>
     <div class="badge-row mt-075">
       <button type="submit" class="badge badge-meta" {% if review.status == 'complete' %}disabled{% endif %}>Save note</button>
-      <a href="#manual-accounts" class="badge badge-meta">Update manual balances</a>
+      <a href="#manual-balances" class="badge badge-meta">Manual balances</a>
     </div>
   </form>
   {% if review.status != 'complete' %}

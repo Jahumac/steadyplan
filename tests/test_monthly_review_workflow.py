@@ -80,8 +80,8 @@ def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_u
     assert "not a transaction record" in html
     assert "To confirm" in html
     assert "<p class=\"eyebrow\">Optional</p>" not in html
-    assert "Update manual balances" in html
-    assert 'href="#manual-accounts"' in html
+    assert "Manual balances" in html
+    assert 'href="#manual-balances"' in html
     assert "/accounts/balances/bulk" not in html
     assert 'href="/accounts/' in html
     assert 'href="/goals/' in html
