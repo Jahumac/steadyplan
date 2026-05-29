@@ -372,122 +372,138 @@
 
 {% if premium_bonds_items %}
 <section class="card mb-1">
-  <div class="section-header">
-    <div>
-      <p class="eyebrow">Premium Bonds</p>
-      <h2>Prize Draw Results</h2>
-    </div>
-  </div>
-  <p class="helper-text">NS&amp;I runs the prize draw monthly — results are published on the <strong>1st of each month</strong> (or first working day if the 1st falls on a weekend). Check your NS&amp;I account online or in the app, then log your result below and update your balance.</p>
-  <div class="review-list">
-    {% for item in premium_bonds_items %}
-    {% set existing_prize = pb_prizes_this_month.get(item.account_id) %}
-    <section class="card position-entry-card {% if not existing_prize and review.status != 'complete' %}pb-prize-pending{% endif %}">
-      <div class="section-header mb-05">
+  <details class="monthly-review-secondary-details">
+    <summary>
+      <span class="badge badge-meta">Premium Bonds</span>
+      <span class="helper-text">Prize draw results and balance updates</span>
+    </summary>
+    <div class="monthly-review-secondary-panel">
+      <div class="section-header">
         <div>
-          <h3>{{ item.account_name }}</h3>
-          <p>{% if item.provider %}{{ item.provider }} · {% endif %}{{ item.wrapper_type or 'Premium Bonds' }}</p>
-        </div>
-        <div class="badge-row">
-          {% if not existing_prize and review.status != 'complete' %}
-            <span class="badge badge-warning">Prize not logged</span>
-          {% elif existing_prize and existing_prize.prize_amount > 0 %}
-            <span class="pb-prize-won">£{{ '{:,.2f}'.format(existing_prize.prize_amount) }} won</span>
-          {% elif existing_prize %}
-            <span class="pb-prize-nil">No win logged</span>
-          {% endif %}
-          <a class="badge" href="/accounts/{{ item.account_id }}">Open account</a>
+          <p class="eyebrow">Premium Bonds</p>
+          <h2>Prize Draw Results</h2>
         </div>
       </div>
+      <p class="helper-text">NS&amp;I runs the prize draw monthly — results are published on the <strong>1st of each month</strong> (or first working day if the 1st falls on a weekend). Check your NS&amp;I account online or in the app, then log your result below and update your balance.</p>
+      <div class="review-list">
+        {% for item in premium_bonds_items %}
+        {% set existing_prize = pb_prizes_this_month.get(item.account_id) %}
+        <section class="card position-entry-card {% if not existing_prize and review.status != 'complete' %}pb-prize-pending{% endif %}">
+          <div class="section-header mb-05">
+            <div>
+              <h3>{{ item.account_name }}</h3>
+              <p>{% if item.provider %}{{ item.provider }} · {% endif %}{{ item.wrapper_type or 'Premium Bonds' }}</p>
+            </div>
+            <div class="badge-row">
+              {% if not existing_prize and review.status != 'complete' %}
+                <span class="badge badge-warning">Prize not logged</span>
+              {% elif existing_prize and existing_prize.prize_amount > 0 %}
+                <span class="pb-prize-won">£{{ '{:,.2f}'.format(existing_prize.prize_amount) }} won</span>
+              {% elif existing_prize %}
+                <span class="pb-prize-nil">No win logged</span>
+              {% endif %}
+              <a class="badge" href="/accounts/{{ item.account_id }}">Open account</a>
+            </div>
+          </div>
 
-      {# Prize logging #}
-      <form method="post" class="settings-form mb-075">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="form_name" value="log_prize">
-        <input type="hidden" name="month" value="{{ month_key }}">
-        <input type="hidden" name="account_id" value="{{ item.account_id }}">
-        <div class="form-grid">
-          <label class="form-field">
-            <span class="form-label">Prize this month (£)</span>
-            <input type="number" step="0.01" min="0" name="prize_amount"
-                   value="{{ '{:.2f}'.format(existing_prize.prize_amount) if existing_prize else '' }}"
-                   placeholder="0.00"
-                   {% if review.status == 'complete' %}disabled{% endif %}>
-            <span class="form-hint">Enter 0 if no win this month</span>
-          </label>
-        </div>
-        {% if review.status != 'complete' %}
-        <div class="form-actions">
-          <button type="submit" class="badge badge-primary-action">{{ 'Update prize' if existing_prize else 'Log prize' }}</button>
-        </div>
-        {% endif %}
-      </form>
+          {# Prize logging #}
+          <form method="post" class="settings-form mb-075">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="form_name" value="log_prize">
+            <input type="hidden" name="month" value="{{ month_key }}">
+            <input type="hidden" name="account_id" value="{{ item.account_id }}">
+            <div class="form-grid">
+              <label class="form-field">
+                <span class="form-label">Prize this month (£)</span>
+                <input type="number" step="0.01" min="0" name="prize_amount"
+                       value="{{ '{:.2f}'.format(existing_prize.prize_amount) if existing_prize else '' }}"
+                       placeholder="0.00"
+                       {% if review.status == 'complete' %}disabled{% endif %}>
+                <span class="form-hint">Enter 0 if no win this month</span>
+              </label>
+            </div>
+            {% if review.status != 'complete' %}
+            <div class="form-actions">
+              <button type="submit" class="badge badge-primary-action">{{ 'Update prize' if existing_prize else 'Log prize' }}</button>
+            </div>
+            {% endif %}
+          </form>
 
-      {# Balance update #}
-      <form method="post" class="settings-form manual-balance-form" style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0;">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="form_name" value="update_account_balance">
-        <input type="hidden" name="month" value="{{ month_key }}">
-        <input type="hidden" name="account_id" value="{{ item.account_id }}">
-        <div class="form-grid">
-          <label class="form-field">
-            <span class="form-label">Current NS&amp;I balance (£)</span>
-            <input type="number" step="0.01" name="current_value"
-                   value="{{ '{:.2f}'.format(item.current_value) if item.current_value else '' }}"
-                   {% if review.status == 'complete' %}disabled{% endif %}>
-          </label>
-        </div>
-        {% if review.status != 'complete' %}
-        <div class="form-actions">
-          <button type="submit" class="badge badge-primary-action">Update balance</button>
-        </div>
-        {% endif %}
-      </form>
-    </section>
-    {% endfor %}
-  </div>
+          {# Balance update #}
+          <form method="post" class="settings-form manual-balance-form" style="border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="form_name" value="update_account_balance">
+            <input type="hidden" name="month" value="{{ month_key }}">
+            <input type="hidden" name="account_id" value="{{ item.account_id }}">
+            <div class="form-grid">
+              <label class="form-field">
+                <span class="form-label">Current NS&amp;I balance (£)</span>
+                <input type="number" step="0.01" name="current_value"
+                       value="{{ '{:.2f}'.format(item.current_value) if item.current_value else '' }}"
+                       {% if review.status == 'complete' %}disabled{% endif %}>
+              </label>
+            </div>
+            {% if review.status != 'complete' %}
+            <div class="form-actions">
+              <button type="submit" class="badge badge-primary-action">Update balance</button>
+            </div>
+            {% endif %}
+          </form>
+        </section>
+        {% endfor %}
+      </div>
+    </div>
+  </details>
 </section>
 {% endif %}
 
 <section class="card">
-  <div class="section-header">
-    <div>
-      <p class="eyebrow">Shortcut</p>
-      <h2>CSV Import</h2>
-    </div>
-    <div class="badge-row">
-      <button type="button" class="badge badge-meta" id="csv-import-toggle">Show</button>
-    </div>
-  </div>
-  <p class="helper-text">Got a lot of holdings to update? SteadyPlan can read CSV exports from most UK brokers — or you can use the template to update everything in one go.</p>
-  <div id="csv-import-panel" class="hidden">
-    <form method="post" action="/monthly-review/import-csv" enctype="multipart/form-data" class="csv-upload-form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="hidden" name="month" value="{{ month_key }}">
-      <label class="csv-upload-field">
-        <span>Platform</span>
-        <select name="platform" required>
-          <option value="" disabled selected>Select platform…</option>
-          <option value="trading212">Trading 212</option>
-          <option value="investengine">InvestEngine</option>
-          <option value="vanguard">Vanguard Investor</option>
-          <option value="hl">Hargreaves Lansdown</option>
-          <option value="ajbell">AJ Bell</option>
-          <option value="freetrade">Freetrade</option>
-          <option value="ii">Interactive Investor</option>
-          <option value="generic">Other (generic CSV)</option>
-        </select>
-      </label>
-      <label class="csv-upload-field">
-        <span>CSV File</span>
-        <input type="file" name="csv_file" accept=".csv,text/csv" required>
-      </label>
-      <div class="csv-upload-actions">
-        <button type="submit" class="badge badge-primary-action">Preview Import</button>
-        <button type="button" class="badge" id="csv-import-cancel">Cancel</button>
+  <details class="monthly-review-secondary-details" open>
+    <summary>
+      <span class="badge badge-meta">Update tools</span>
+      <span class="helper-text">CSV import for bigger holdings updates</span>
+    </summary>
+    <div class="monthly-review-secondary-panel">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">Shortcut</p>
+          <h2>CSV Import</h2>
+        </div>
+        <div class="badge-row">
+          <button type="button" class="badge badge-meta" id="csv-import-toggle">Show</button>
+        </div>
       </div>
-    </form>
-  </div>
+      <p class="helper-text">Got a lot of holdings to update? SteadyPlan can read CSV exports from most UK brokers — or you can use the template to update everything in one go.</p>
+      <div id="csv-import-panel" class="hidden">
+        <form method="post" action="/monthly-review/import-csv" enctype="multipart/form-data" class="csv-upload-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="month" value="{{ month_key }}">
+          <label class="csv-upload-field">
+            <span>Platform</span>
+            <select name="platform" required>
+              <option value="" disabled selected>Select platform…</option>
+              <option value="trading212">Trading 212</option>
+              <option value="investengine">InvestEngine</option>
+              <option value="vanguard">Vanguard Investor</option>
+              <option value="hl">Hargreaves Lansdown</option>
+              <option value="ajbell">AJ Bell</option>
+              <option value="freetrade">Freetrade</option>
+              <option value="ii">Interactive Investor</option>
+              <option value="generic">Other (generic CSV)</option>
+            </select>
+          </label>
+          <label class="csv-upload-field">
+            <span>CSV File</span>
+            <input type="file" name="csv_file" accept=".csv,text/csv" required>
+          </label>
+          <div class="csv-upload-actions">
+            <button type="submit" class="badge badge-primary-action">Preview Import</button>
+            <button type="button" class="badge" id="csv-import-cancel">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </details>
 </section>
 
 {% endblock %}

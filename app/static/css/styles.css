@@ -3126,6 +3126,31 @@ button.button-danger:focus {
   color: var(--accent);
 }
 
+.monthly-review-secondary-details {
+  width: 100%;
+}
+
+.monthly-review-secondary-details summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.monthly-review-secondary-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.monthly-review-secondary-details summary .helper-text {
+  margin: 0;
+}
+
+.monthly-review-secondary-panel {
+  margin-top: 0.9rem;
+}
+
 .budget-toolbar {
   display: flex;
   align-items: center;
@@ -3718,7 +3743,8 @@ button.button-danger:focus {
   .budget-compact-flow-card .badge-row,
   .monthly-review-start-card .badge-row,
   .budget-tools-menu,
-  .monthly-review-related-details .badge-row {
+  .monthly-review-related-details .badge-row,
+  .monthly-review-secondary-details {
     width: 100%;
   }
 
@@ -3728,6 +3754,11 @@ button.button-danger:focus {
   .monthly-review-related-details .badge-row .badge {
     flex: 1 1 100%;
     justify-content: center;
+  }
+
+  .monthly-review-secondary-details summary {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .review-hero-card .hero-top {
