@@ -71,7 +71,7 @@ def test_monthly_review_places_finish_step_after_update_sections(app, client, ma
     html = resp.get_data(as_text=True)
 
     expected_idx = html.index("Expected contributions")
-    manual_idx = html.index("Manual Accounts")
+    manual_idx = html.index("Manual balances")
     note_idx = html.index("Monthly note")
 
     assert expected_idx < manual_idx < note_idx
@@ -104,7 +104,7 @@ def test_monthly_review_start_here_update_link_targets_first_update_section(app,
 
     contributions_idx = html.index("Expected contributions")
     update_idx = html.index('id="update-balances"')
-    manual_idx = html.index("Manual Accounts")
+    manual_idx = html.index("Manual balances")
 
     assert contributions_idx < update_idx < manual_idx
 
@@ -119,3 +119,15 @@ def test_monthly_review_first_update_section_uses_update_balances_heading(app, c
 
     assert "<h2>Update balances</h2>" in html
     assert "Holdings-Based Accounts" not in html
+
+
+def test_monthly_review_manual_section_uses_manual_balances_heading(app, client, make_user):
+    _, username, password = make_user(username="review-manual-heading", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "<h2>Manual balances</h2>" in html
+    assert "Manual Accounts" not in html
