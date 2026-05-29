@@ -107,7 +107,27 @@
   {% endif %}
 </section>
 
-<section class="card mb-1">
+<section class="card mb-1 monthly-review-start-card">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Start here</p>
+      <h2>Work top to bottom</h2>
+      <p class="helper-text m-0">On a phone, keep the flow narrow: confirm, update, then finish.</p>
+    </div>
+  </div>
+  <ol class="compact-flow-list">
+    <li><strong>1. Confirm contributions</strong><span>Tick off anything that happened this month.</span></li>
+    <li><strong>2. Update balances</strong><span>Open holdings or jump to manual accounts when needed.</span></li>
+    <li><strong>3. Save a note and mark reviewed</strong><span>Leave a quick reminder, then lock the month when you are happy.</span></li>
+  </ol>
+  <div class="badge-row">
+    <a href="#expected-contributions" class="badge">Confirm contributions</a>
+    <a href="#manual-accounts" class="badge badge-meta">Update balances</a>
+    <a href="#monthly-note" class="badge badge-meta">Finish review</a>
+  </div>
+</section>
+
+<section class="card mb-1" id="monthly-note">
   <div class="section-header">
     <div>
       <p class="eyebrow">Notes</p>
@@ -130,14 +150,19 @@
     <div class="badge-row mt-075">
       <button type="submit" class="badge badge-meta" {% if review.status == 'complete' %}disabled{% endif %}>Save note</button>
       <a href="#manual-accounts" class="badge badge-meta">Update manual balances</a>
-      <a href="/goals/" class="badge badge-meta">Review goals</a>
-      <a href="/budget/debts/" class="badge badge-meta">Review debts</a>
-      <a href="/settings/?mode=edit" class="badge badge-meta">Review assumptions</a>
     </div>
+    <details class="monthly-review-related-details mt-075">
+      <summary>Related checks</summary>
+      <div class="badge-row mt-075">
+        <a href="/goals/" class="badge badge-meta">Review goals</a>
+        <a href="/budget/debts/" class="badge badge-meta">Review debts</a>
+        <a href="/settings/?mode=edit" class="badge badge-meta">Review assumptions</a>
+      </div>
+    </details>
   </form>
 </section>
 
-<section class="card mb-1">
+<section class="card mb-1" id="expected-contributions">
   <div class="section-header">
     <div>
       <p class="eyebrow">To confirm</p>

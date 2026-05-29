@@ -63,27 +63,45 @@
 </p>
 {% endif %}
 
+<section class="card mb-1 budget-compact-flow-card">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">This month</p>
+      <h2>Keep budget editing simple</h2>
+      <p class="helper-text m-0">Edit numbers below to shape this month.</p>
+    </div>
+    <div class="badge-row">
+      <a class="badge" href="#{{ income_key | replace('_', '-') }}">Jump to budget</a>
+      <a class="badge badge-meta" href="/budget/items/?month={{ month_key }}">Budget Setup</a>
+    </div>
+  </div>
+</section>
+
 {# ── Budget toolbar ──────────────────────────────────────────────────────── #}
 <div class="budget-toolbar">
   <div class="badge-row">
-    <a class="badge" href="/budget/items/?month={{ month_key }}">Budget Setup</a>
-    <a class="badge badge-sm" href="/budget/export.xlsx?month={{ month_key }}">↓ Export month</a>
-    <a class="badge badge-sm" href="/budget/annual-export.xlsx" title="Download the whole UK tax year (Apr–Mar) with one tab per month, a summary, and an investment-tracking tab">↓ Export tax year</a>
-    <label class="badge badge-sm budget-import-label" title="Import budget from an Excel file">
-      ↑ Import month
-      <form method="post" action="/budget/import" enctype="multipart/form-data" id="import-form" style="display:none">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="hidden" name="month" value="{{ month_key }}">
-        <input type="file" name="file" accept=".xlsx,.xls" id="budget-import-file">
-      </form>
-    </label>
-    <label class="badge badge-sm budget-import-label" title="Upload a filled-in tax-year workbook (all 12 month tabs are applied at once)">
-      ↑ Import tax year
-      <form method="post" action="/budget/annual-import" enctype="multipart/form-data" id="annual-import-form" style="display:none">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="file" name="file" accept=".xlsx,.xls" id="budget-annual-import-file">
-      </form>
-    </label>
+    <details class="budget-tools-details">
+      <summary class="badge badge-sm">Import / export tools</summary>
+      <div class="badge-row budget-tools-menu">
+        <a class="badge badge-sm" href="/budget/export.xlsx?month={{ month_key }}">↓ Export month</a>
+        <a class="badge badge-sm" href="/budget/annual-export.xlsx" title="Download the whole UK tax year (Apr–Mar) with one tab per month, a summary, and an investment-tracking tab">↓ Export tax year</a>
+        <label class="badge badge-sm budget-import-label" title="Import budget from an Excel file">
+          ↑ Import month
+          <form method="post" action="/budget/import" enctype="multipart/form-data" id="import-form" style="display:none">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="month" value="{{ month_key }}">
+            <input type="file" name="file" accept=".xlsx,.xls" id="budget-import-file">
+          </form>
+        </label>
+        <label class="badge badge-sm budget-import-label" title="Upload a filled-in tax-year workbook (all 12 month tabs are applied at once)">
+          ↑ Import tax year
+          <form method="post" action="/budget/annual-import" enctype="multipart/form-data" id="annual-import-form" style="display:none">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="file" name="file" accept=".xlsx,.xls" id="budget-annual-import-file">
+          </form>
+        </label>
+      </div>
+    </details>
   </div>
   <div class="budget-edit-callout">
     <strong>✏️ Just click any number and type to change it for this month.</strong>
@@ -94,7 +112,7 @@
 {# ── Budget sections ──────────────────────────────────────────────────────── #}
 <div class="budget-container" data-month-key="{{ month_key }}" data-income-key="{{ income_key }}">
 {% for section in sections %}
-<section class="panel mb-1 budget-section-panel" data-sec="{{ section.key }}">
+<section class="panel mb-1 budget-section-panel" id="{{ section.key | replace('_', '-') }}" data-sec="{{ section.key }}">
   <div class="section-header">
     <div>
       <p class="eyebrow budget-section-eyebrow">{{ section.key | replace('_', ' ') | upper }}</p>
