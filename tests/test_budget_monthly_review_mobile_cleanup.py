@@ -107,3 +107,15 @@ def test_monthly_review_start_here_update_link_targets_first_update_section(app,
     manual_idx = html.index("Manual Accounts")
 
     assert contributions_idx < update_idx < manual_idx
+
+
+def test_monthly_review_first_update_section_uses_update_balances_heading(app, client, make_user):
+    _, username, password = make_user(username="review-update-heading", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "<h2>Update balances</h2>" in html
+    assert "Holdings-Based Accounts" not in html
