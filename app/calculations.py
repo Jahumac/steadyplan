@@ -1,3 +1,4 @@
+from calendar import monthrange
 from datetime import date, datetime, timedelta, timezone
 
 PRICE_STALE_AFTER_HOURS = 36     # >36h since last successful fetch ⇒ stale badge on holdings
@@ -346,6 +347,11 @@ def total_monthly_contributions(accounts, assumptions=None):
 
 
 
+def _safe_year_anniversary(dob, year):
+    last_day = monthrange(year, dob.month)[1]
+    return date(year, dob.month, min(dob.day, last_day))
+
+
 def _retirement_target_date(dob_str, retirement_age, mode="birthday"):
     if not dob_str:
         return None
@@ -362,7 +368,7 @@ def _retirement_target_date(dob_str, retirement_age, mode="birthday"):
         else:
             return date(retire_year + 1, 4, 5)
     else:
-        return date(retire_year, dob.month, dob.day)
+        return _safe_year_anniversary(dob, retire_year)
 
 
 def years_to_retirement(current_age, retirement_age, assumptions=None):

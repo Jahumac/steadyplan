@@ -1,6 +1,7 @@
 from datetime import date, datetime
 import pytest
 from app.calculations import (
+    _retirement_target_date,
     age_from_dob,
     calculate_isa_usage,
     contribution_breakdown,
@@ -28,6 +29,10 @@ def test_to_float():
     assert to_float(123.45) == 123.45
     assert to_float(None) == 0.0
     assert to_float("abc") == 0.0
+
+
+def test_retirement_target_date_handles_leap_day_birthdays_in_non_leap_years():
+    assert _retirement_target_date("1988-02-29", 65, "birthday") == date(2053, 2, 28)
 
 def test_contribution_breakdown_sipp():
     account = {
