@@ -75,3 +75,17 @@ def test_monthly_review_places_finish_step_after_update_sections(app, client, ma
     note_idx = html.index("Monthly note")
 
     assert expected_idx < manual_idx < note_idx
+
+
+def test_monthly_review_places_mark_reviewed_action_in_finish_section(app, client, make_user):
+    _, username, password = make_user(username="review-finish-action", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    note_idx = html.index("Monthly note")
+    mark_idx = html.index("Mark month reviewed")
+
+    assert note_idx < mark_idx
