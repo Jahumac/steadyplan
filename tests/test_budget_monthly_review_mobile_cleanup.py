@@ -145,3 +145,18 @@ def test_monthly_review_finish_shortcuts_match_final_step_wording(app, client, m
     assert "Save note and mark reviewed" in html
     assert "Save note and finish" not in html
     assert "Finish review" not in html
+
+
+def test_monthly_review_manual_balances_shortcut_matches_section_anchor_and_heading(app, client, make_user):
+    _, username, password = make_user(username="review-manual-shortcut", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'href="#manual-balances"' in html
+    assert 'id="manual-balances"' in html
+    assert ">Manual balances<" in html
+    assert 'href="#manual-accounts"' not in html
+    assert "Update manual balances" not in html
