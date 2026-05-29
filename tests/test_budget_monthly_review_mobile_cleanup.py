@@ -89,3 +89,21 @@ def test_monthly_review_places_mark_reviewed_action_in_finish_section(app, clien
     mark_idx = html.index("Mark month reviewed")
 
     assert note_idx < mark_idx
+
+
+def test_monthly_review_start_here_update_link_targets_first_update_section(app, client, make_user):
+    _, username, password = make_user(username="review-update-anchor", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'href="#update-balances"' in html
+    assert 'id="update-balances"' in html
+
+    contributions_idx = html.index("Expected contributions")
+    update_idx = html.index('id="update-balances"')
+    manual_idx = html.index("Manual Accounts")
+
+    assert contributions_idx < update_idx < manual_idx
