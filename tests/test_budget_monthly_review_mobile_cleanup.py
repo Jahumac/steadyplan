@@ -59,3 +59,19 @@ def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(
     assert "Update tools" in html
     assert "Premium Bonds" in html
     assert "CSV Import" in html
+
+
+
+def test_monthly_review_places_finish_step_after_update_sections(app, client, make_user):
+    _, username, password = make_user(username="review-finish-order", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    expected_idx = html.index("Expected contributions")
+    manual_idx = html.index("Manual Accounts")
+    note_idx = html.index("Monthly note")
+
+    assert expected_idx < manual_idx < note_idx

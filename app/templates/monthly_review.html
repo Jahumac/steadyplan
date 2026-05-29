@@ -127,41 +127,6 @@
   </div>
 </section>
 
-<section class="card mb-1" id="monthly-note">
-  <div class="section-header">
-    <div>
-      <p class="eyebrow">Notes</p>
-      <h2>Monthly note</h2>
-      <p class="helper-text m-0">Optional — a short reminder for your future self.</p>
-    </div>
-    {% if review.status == 'complete' %}
-      <span class="badge badge-meta">Locked</span>
-    {% endif %}
-  </div>
-  <form method="post" class="form-reset">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <input type="hidden" name="form_name" value="save_review_notes">
-    <input type="hidden" name="month" value="{{ month_key }}">
-    <textarea name="notes"
-              class="input-standard input-full"
-              rows="3"
-              placeholder="Anything worth remembering from this month?"
-              {% if review.status == 'complete' %}disabled{% endif %}>{{ monthly_review_notes }}</textarea>
-    <div class="badge-row mt-075">
-      <button type="submit" class="badge badge-meta" {% if review.status == 'complete' %}disabled{% endif %}>Save note</button>
-      <a href="#manual-accounts" class="badge badge-meta">Update manual balances</a>
-    </div>
-    <details class="monthly-review-related-details mt-075">
-      <summary>Related checks</summary>
-      <div class="badge-row mt-075">
-        <a href="/goals/" class="badge badge-meta">Review goals</a>
-        <a href="/budget/debts/" class="badge badge-meta">Review debts</a>
-        <a href="/settings/?mode=edit" class="badge badge-meta">Review assumptions</a>
-      </div>
-    </details>
-  </form>
-</section>
-
 <section class="card mb-1" id="expected-contributions">
   <div class="section-header">
     <div>
@@ -504,6 +469,41 @@
       </div>
     </div>
   </details>
+</section>
+
+<section class="card mb-1" id="monthly-note">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Notes</p>
+      <h2>Monthly note</h2>
+      <p class="helper-text m-0">Optional — a short reminder for your future self.</p>
+    </div>
+    {% if review.status == 'complete' %}
+      <span class="badge badge-meta">Locked</span>
+    {% endif %}
+  </div>
+  <form method="post" class="form-reset">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="form_name" value="save_review_notes">
+    <input type="hidden" name="month" value="{{ month_key }}">
+    <textarea name="notes"
+              class="input-standard input-full"
+              rows="3"
+              placeholder="Anything worth remembering from this month?"
+              {% if review.status == 'complete' %}disabled{% endif %}>{{ monthly_review_notes }}</textarea>
+    <div class="badge-row mt-075">
+      <button type="submit" class="badge badge-meta" {% if review.status == 'complete' %}disabled{% endif %}>Save note</button>
+      <a href="#manual-accounts" class="badge badge-meta">Update manual balances</a>
+    </div>
+    <details class="monthly-review-related-details mt-075">
+      <summary>Related checks</summary>
+      <div class="badge-row mt-075">
+        <a href="/goals/" class="badge badge-meta">Review goals</a>
+        <a href="/budget/debts/" class="badge badge-meta">Review debts</a>
+        <a href="/settings/?mode=edit" class="badge badge-meta">Review assumptions</a>
+      </div>
+    </details>
+  </form>
 </section>
 
 {% endblock %}
