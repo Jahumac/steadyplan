@@ -234,8 +234,9 @@ def list_goals():
 @_limit("60 per minute")
 def overview():
     accounts = fetch_all_accounts(g.api_user.id)
-    total = sum(float(a["current_value"] or 0) for a in accounts)
-    monthly = sum(float(a["monthly_contribution"] or 0) for a in accounts)
+    holdings_totals = fetch_holding_totals_by_account(g.api_user.id)
+    total = sum(float(effective_account_value(account, holdings_totals) or 0) for account in accounts)
+    monthly = sum(float(account["monthly_contribution"] or 0) for account in accounts)
     return jsonify({
         "total_value": total,
         "monthly_contribution": monthly,
@@ -250,21 +251,25 @@ def overview():
 def get_budget(month_key):
     if not valid_month_key(month_key):
         return _err("bad_request", "month_key must be YYYY-MM", 400)
-    items = fetch_budget_items(g.api_user.id)
-    entries = fetch_budget_entries(month_key, g.api_user.id)
-    entries_by_item = {e["budget_item_id"]: float(e["amount"] or 0) for e in entries}
+
+    from app.routes.budget import _build_monthly_data
+
+    sections, _summary = _build_monthly_data(month_key, g.api_user.id)
     return jsonify({
         "month": month_key,
         "items": [
             {
-                "id": it["id"],
-                "name": it["name"],
-                "section": it["section"],
-                "default_amount": float(it["default_amount"] or 0),
-                "amount": entries_by_item.get(it["id"], float(it["default_amount"] or 0)),
-                "linked_account_id": it["linked_account_id"],
+                "id": row["id"],
+                "name": row["name"],
+                "section": row["section"],
+                "default_amount": float(row.get("default_amount") or 0),
+                "amount": float(row["amount"] or 0),
+                "linked_account_id": row.get("linked_account_id"),
+                "linked_debt_id": row.get("linked_debt_id"),
+                "source": row.get("source"),
             }
-            for it in items
+            for section in sections
+            for row in section["rows"]
         ],
     })
 

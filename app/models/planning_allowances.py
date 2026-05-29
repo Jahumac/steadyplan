@@ -290,18 +290,56 @@ def delete_contribution_overrides_for_reason(account_id, user_id, reason):
         return cur.rowcount or 0
 
 
+def _month_key_to_index(month_key):
+    try:
+        year, month = str(month_key).split("-")
+        return int(year) * 12 + int(month)
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+
+def _override_span_months(row):
+    start = _month_key_to_index(row["from_month"])
+    end = _month_key_to_index(row["to_month"])
+    if start is None or end is None:
+        return None
+    return max(end - start, 0)
+
+
 def fetch_all_active_overrides(month_key, user_id):
-    """Return overrides active for a given month, keyed by account_id."""
+    """Return overrides active for a given month, keyed by account_id.
+
+    When multiple overrides overlap for the same account/month, prefer the
+    narrowest matching span. For ties, prefer the newest record.
+    """
     with get_connection() as conn:
         rows = conn.execute(
             """
             SELECT co.* FROM contribution_overrides co
             JOIN accounts a ON a.id = co.account_id
             WHERE co.from_month <= ? AND co.to_month >= ? AND a.user_id = ?
+            ORDER BY co.account_id ASC, co.id DESC
             """,
             (month_key, month_key, user_id),
         ).fetchall()
-    return {r["account_id"]: r for r in rows}
+
+    best_by_account = {}
+    for row in rows:
+        account_id = row["account_id"]
+        span = _override_span_months(row)
+        current = best_by_account.get(account_id)
+        if current is None:
+            best_by_account[account_id] = row
+            continue
+
+        current_span = _override_span_months(current)
+        if current_span is None and span is not None:
+            best_by_account[account_id] = row
+            continue
+        if span is not None and current_span is not None and span < current_span:
+            best_by_account[account_id] = row
+
+    return best_by_account
 
 
 def fetch_isa_overrides_for_tax_year(user_id, ty_start, ty_end):

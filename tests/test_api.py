@@ -84,6 +84,50 @@ def test_overview_empty(api):
     assert body["account_count"] == 0
 
 
+def test_overview_uses_effective_account_values_for_holdings_accounts(app, client, token):
+    with app.app_context():
+        from app.models import get_connection, get_user_by_username
+
+        uid = get_user_by_username("apiuser").id
+        with get_connection() as conn:
+            holdings_account_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, category, valuation_mode,
+                    current_value, uninvested_cash, monthly_contribution, is_active
+                ) VALUES (?, 'ISA Portfolio', 'Stocks & Shares ISA', 'ISA', 'holdings', 5, 50, 125, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, category, valuation_mode,
+                    current_value, uninvested_cash, monthly_contribution, is_active
+                ) VALUES (?, 'Cash ISA', 'Cash ISA', 'ISA', 'manual', 700, 25, 75, 1)
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO holdings (account_id, holding_name, value)
+                VALUES (?, 'Vanguard FTSE Global All Cap', 1234)
+                """,
+                (holdings_account_id,),
+            )
+            conn.commit()
+
+    resp = client.get(
+        "/api/v1/overview",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+    assert body["total_value"] == 2009
+    assert body["monthly_contribution"] == 200
+    assert body["account_count"] == 2
+
+
 def test_budget_bad_month_key(api):
     resp = api.get("/api/v1/budget/2026")
     assert resp.status_code == 400
@@ -96,6 +140,151 @@ def test_budget_valid_month_key(api):
     body = resp.get_json()
     assert body["month"] == "2026-04"
     assert "items" in body
+
+
+def test_budget_endpoint_matches_budget_page_rollup_rules(app, client, token):
+    with app.app_context():
+        from app.models import (
+            create_budget_item,
+            create_contribution_override,
+            fetch_budget_items,
+            fetch_budget_sections,
+            get_connection,
+            get_user_by_username,
+            upsert_budget_entry,
+        )
+        from app.routes.budget import _build_monthly_data
+
+        user = get_user_by_username("apiuser")
+        assert user is not None
+        uid = user.id
+        fetch_budget_sections(uid)
+
+        carry_item_id = create_budget_item(
+            {
+                "name": "Groceries",
+                "section": "discretionary",
+                "default_amount": 300,
+                "notes": "",
+                "sort_order": 0,
+            },
+            uid,
+        )
+
+        with get_connection() as conn:
+            linked_account_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, current_value, monthly_contribution,
+                    include_in_budget, pre_salary, is_active
+                ) VALUES (?, 'Stocks ISA', 0, 100, 1, 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            linked_debt_id = conn.execute(
+                """
+                INSERT INTO debts (
+                    user_id, name, current_balance, monthly_payment, apr, is_active, created_at
+                ) VALUES (?, 'Car Loan', 5000, 150, 7.9, 1, datetime('now'))
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+        linked_items = fetch_budget_items(uid)
+        linked_account_item = next(item for item in linked_items if item.get("linked_account_id") == linked_account_id)
+        linked_debt_item = next(item for item in linked_items if item.get("linked_debt_id") == linked_debt_id)
+
+        upsert_budget_entry("2026-05", carry_item_id, 450, uid)
+        create_contribution_override(
+            {
+                "account_id": linked_account_id,
+                "from_month": "2026-05",
+                "to_month": "2026-07",
+                "override_amount": 100,
+                "reason": "broad",
+            },
+            uid,
+        )
+        create_contribution_override(
+            {
+                "account_id": linked_account_id,
+                "from_month": "2026-06",
+                "to_month": "2026-06",
+                "override_amount": 250,
+                "reason": "narrow",
+            },
+            uid,
+        )
+
+        budget_sections, _ = _build_monthly_data("2026-06", uid)
+        expected_amounts = {
+            row["id"]: row["amount"]
+            for section in budget_sections
+            for row in section["rows"]
+        }
+
+    resp = client.get(
+        "/api/v1/budget/2026-06",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    body = resp.get_json()
+
+    actual_amounts = {item["id"]: item["amount"] for item in body["items"]}
+    assert actual_amounts[carry_item_id] == 450
+    assert actual_amounts[linked_account_item["id"]] == 250
+    assert actual_amounts[linked_debt_item["id"]] == 150
+    assert actual_amounts == expected_amounts
+
+
+def test_fetch_all_active_overrides_prefers_narrower_matching_override(app, make_user):
+    uid, _, _ = make_user(username="override-user")
+
+    with app.app_context():
+        from app.models import create_contribution_override, get_connection, fetch_all_active_overrides
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, provider, wrapper_type, category, tags, current_value,
+                    monthly_contribution, pension_contribution_day, goal_value, valuation_mode,
+                    growth_mode, growth_rate_override, owner, is_active, notes, last_updated,
+                    employer_contribution, contribution_method, annual_fee_pct, platform_fee_pct,
+                    platform_fee_flat, platform_fee_cap, fund_fee_pct, contribution_fee_pct,
+                    uninvested_cash, cash_interest_rate, interest_payment_day
+                ) VALUES (?, 'Stocks ISA', 'Vanguard', 'Stocks & Shares ISA', 'ISA', '', 0,
+                    100, 0, 0, 'manual', 'default', NULL, 'Janusz', 1, '', datetime('now'),
+                    0, 'standard', 0, 0, 0, 0, 0, 0, 0, 0, 0)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+        create_contribution_override(
+            {
+                "account_id": account_id,
+                "from_month": "2026-06",
+                "to_month": "2026-06",
+                "override_amount": 250,
+                "reason": "narrow",
+            },
+            uid,
+        )
+        create_contribution_override(
+            {
+                "account_id": account_id,
+                "from_month": "2026-05",
+                "to_month": "2026-07",
+                "override_amount": 100,
+                "reason": "broad",
+            },
+            uid,
+        )
+
+        active = fetch_all_active_overrides("2026-06", uid)
+
+    assert float(active[account_id]["override_amount"] or 0) == 250
 
 
 def test_assistant_month_summary_bad_month_key(api):
