@@ -476,7 +476,7 @@ def overview():
         alerts.append({
             "kind": "warning",
             "message": f"Your Premium Bonds total is £{premium_bonds_total:,.0f}. NS&I's current maximum eligible holding is £50,000.",
-            "cta_text": "Review accounts",
+            "cta_text": "Review Premium Bonds",
             "cta_href": "/accounts/",
         })
 
