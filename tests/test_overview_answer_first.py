@@ -17,6 +17,7 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Do later · 0/2 complete" in html
     assert "Complete your profile" in html
     assert "Add your first account" in html
+    assert "Set a first goal" in html
     assert "Set a goal once you know what you want to aim for." in html
     assert "Do your first monthly update after your first contribution or balance change settles." in html
     assert "Complete profile" in html
