@@ -239,11 +239,13 @@
       <p class="eyebrow">Accessible now</p>
       <p class="helper-text m-0">{{ '{:.0f}'.format(access_summary.accessible_pct) }}% of your current total is usually reachable before pension age. ISA, cash, GIA, Premium Bonds and similar accounts sit here.</p>
     </div>
+    {% if access_summary.restricted_current > 0 %}
     <div class="card overview-access-mini-card">
       <p class="eyebrow">Restricted</p>
       <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.restricted_current) }}</p>
       <p class="helper-text m-0">Money with rules, penalties, or special conditions such as a Lifetime ISA.</p>
     </div>
+    {% endif %}
     <div class="card overview-access-mini-card">
       <p class="eyebrow">Locked later</p>
       <p class="helper-text m-0">Pension-style money that is building for later rather than near-term flexibility. The top summary keeps the headline locked amount visible.</p>
