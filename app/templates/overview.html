@@ -24,25 +24,25 @@
   {% set onboarding_primary_title = 'Complete your profile' %}
   {% set onboarding_primary_body = 'Just enough to make dates and projections line up later.' %}
   {% set onboarding_primary_href = '/settings/?mode=edit' %}
-  {% set onboarding_primary_cta = 'Open settings' %}
+  {% set onboarding_primary_cta = 'Complete profile' %}
 {% elif not has_accounts %}
   {% set onboarding_primary_eyebrow = 'Start here' %}
   {% set onboarding_primary_title = 'Add your first account' %}
   {% set onboarding_primary_body = 'Start with one real account so Overview has something concrete to show.' %}
   {% set onboarding_primary_href = '/accounts/?mode=create' %}
-  {% set onboarding_primary_cta = 'Add account' %}
+  {% set onboarding_primary_cta = 'Add first account' %}
 {% elif not has_goal %}
   {% set onboarding_primary_eyebrow = 'Next helpful step' %}
   {% set onboarding_primary_title = 'Set a first goal' %}
   {% set onboarding_primary_body = 'Optional, but useful once you want SteadyPlan to track progress toward something specific.' %}
   {% set onboarding_primary_href = '/goals/?mode=create' %}
-  {% set onboarding_primary_cta = 'Add goal' %}
+  {% set onboarding_primary_cta = 'Set first goal' %}
 {% else %}
   {% set onboarding_primary_eyebrow = 'Next helpful step' %}
   {% set onboarding_primary_title = 'Do your first monthly update' %}
   {% set onboarding_primary_body = 'Best once your first contribution or balance change has settled.' %}
   {% set onboarding_primary_href = '/monthly-review/' %}
-  {% set onboarding_primary_cta = 'Open monthly update' %}
+  {% set onboarding_primary_cta = 'Start first monthly update' %}
 {% endif %}
 <section class="card onboarding-welcome mb-1">
   <div class="onboarding-hero">
