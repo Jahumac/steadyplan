@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SteadyPlan · Product tour</title>
-  <meta name="description" content="Product tour of SteadyPlan’s main screens using demo data: Overview, Holdings, Projections, and Settings / data ownership.">
+  <meta name="description" content="Product tour of SteadyPlan’s main screens using demo data: Overview, holdings, planning, projections, and trust/data-ownership flows.">
   <link rel="canonical" href="https://steadyplan.co.uk/tour">
   <meta name="color-scheme" content="dark">
   <link rel="stylesheet" href="./assets/site.css">
@@ -18,8 +18,8 @@
           <span>SteadyPlan</span>
         </a>
         <nav class="nav" aria-label="Primary">
-          <a href="./docs/index.html">Docs</a>
           <a href="./tour.html" aria-current="page">Tour</a>
+          <a href="./docs/index.html">Docs</a>
           <a href="./about.html">About</a>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
@@ -27,108 +27,162 @@
     </div>
   </header>
 
-  <main class="section">
+  <main class="section section-top-gap">
     <div class="container">
-      <div class="card pad">
-        <p class="kicker">Tour</p>
-        <h1 style="margin:0 0 0.5rem 0;">Product tour</h1>
-        <p class="muted prose" style="margin:0;">
-          SteadyPlan runs on your own server/NAS/desktop, and you use it in a browser (desktop, tablet, or phone). This tour explains the main areas and why they exist. Screenshots use demo data.
-        </p>
+      <div class="page-shell card pad page-shell-wide">
+        <div class="page-intro">
+          <p class="eyebrow">Product tour</p>
+          <h1>See how SteadyPlan helps people face the numbers</h1>
+          <p class="lead prose">
+            SteadyPlan runs on your own server, NAS, or desktop, and you use it in a browser from desktop, tablet, or phone. This tour explains the product in human terms, with demo screenshots where helpful.
+          </p>
+        </div>
 
-        <div class="hr"></div>
-
-        <div class="grid-2">
-          <div class="card pad">
-            <h2 style="margin:0 0 0.5rem 0;">Overview</h2>
-            <p class="muted">
-              What it does: gives you one place to see the current picture across accounts, goals and the month-to-month rhythm.
-            </p>
-            <p class="muted" style="margin:0.5rem 0 0 0;">
-              Why it exists: when the numbers are visible, it’s easier to stay honest and make small course corrections.
-            </p>
-            <div class="hr"></div>
-            <img class="screenshot screenshot-preview" src="./assets/screenshots/overview.png" alt="Overview dashboard (demo data)">
-            <p class="muted small" style="margin:0.5rem 0 0 0;">
-              Demo data · <a href="./assets/screenshots/overview.png" target="_blank" rel="noopener noreferrer">Open screenshot</a>
-            </p>
-          </div>
-
-          <div class="card pad">
-            <h2 style="margin:0 0 0.5rem 0;">Contributions / monthly update</h2>
-            <p class="muted">
-              What it does: helps you keep your month-to-month inputs consistent so projections stay grounded in reality.
-            </p>
-            <p class="muted" style="margin:0.5rem 0 0 0;">
-              Why it exists: long-term plans drift when the monthly picture isn’t reviewed. A light routine keeps the model trustworthy.
-            </p>
-            <div class="hr"></div>
-            <p class="note small" style="margin:0;">No screenshot on the public site for this yet.</p>
-          </div>
-
-          <div class="card pad">
-            <h2 style="margin:0 0 0.5rem 0;">Holdings</h2>
-            <p class="muted">
-              What it does: track holdings without bank/broker linking. Prices can be fully manual, or you can enable optional external lookups.
-            </p>
-            <p class="muted" style="margin:0.5rem 0 0 0;">
-              Why it exists: it’s easier to plan when your investments aren’t split across apps and mental arithmetic.
-            </p>
-            <div class="hr"></div>
-            <p class="note small" style="margin:0;">Screenshot removed for now while it’s refreshed to match the current app UI.</p>
-          </div>
-
-          <div class="card pad">
-            <h2 style="margin:0 0 0.5rem 0;">Projections</h2>
-            <p class="muted">
-              What it does: scenario estimates for retirement planning, driven by your current balances, contribution settings and assumptions.
-            </p>
-            <p class="muted" style="margin:0.5rem 0 0 0;">
-              Why it exists: you can see what changes if you contribute more, retire earlier/later, or adjust assumptions — without pretending it’s a promise.
-            </p>
-            <div class="hr"></div>
-            <img class="screenshot screenshot-preview" src="./assets/screenshots/projections.png" alt="Projections view (demo data)">
-            <p class="muted small" style="margin:0.5rem 0 0 0;">
-              Demo data · <a href="./assets/screenshots/projections.png" target="_blank" rel="noopener noreferrer">Open screenshot</a>
-            </p>
-          </div>
-
-          <div class="card pad">
-            <h2 style="margin:0 0 0.5rem 0;">Settings and data ownership</h2>
-            <p class="muted">
-              What it does: keeps the “trust boundaries” clear — where your data lives, what you can export, and what assumptions feed projections.
-            </p>
-            <p class="muted" style="margin:0.5rem 0 0 0;">
-              Why it exists: self-hosting is only comforting if you understand how backups, exports and restores actually work.
-            </p>
-            <div class="hr"></div>
-            <img class="screenshot screenshot-preview" src="./assets/screenshots/data-privacy.png" alt="Settings and data ownership view (demo data)">
-            <p class="muted small" style="margin:0.5rem 0 0 0;">
-              Demo data · <a href="./assets/screenshots/data-privacy.png" target="_blank" rel="noopener noreferrer">Open screenshot</a>
-            </p>
-          </div>
-
-          <div class="card pad">
-            <h2 style="margin:0 0 0.5rem 0;">Backups / restore confidence</h2>
-            <p class="muted">
-              What it does: gives you two layers: per-user JSON exports and whole-instance SQLite backups, plus guidance for server-level recovery.
-            </p>
-            <p class="muted" style="margin:0.5rem 0 0 0;">
-              Why it exists: planning is only useful if you trust that your data can be recovered after mistakes or updates.
-            </p>
-            <div class="hr"></div>
-            <p class="muted" style="margin:0;">
-              Read: <a href="./docs/backups.html">Backups &amp; restore</a>
-            </p>
-          </div>
+        <div class="tour-rail grid-2">
+          <a class="card pad tile tile-link quick-link" href="#overview">
+            <h3>Overview</h3>
+            <p>Answer first, machinery second.</p>
+          </a>
+          <a class="card pad tile tile-link quick-link" href="#accessible-money">
+            <h3>Accessible vs locked money</h3>
+            <p>See what is usable now and what is for later.</p>
+          </a>
+          <a class="card pad tile tile-link quick-link" href="#holdings">
+            <h3>Holdings and accounts</h3>
+            <p>Keep the picture together without handing data away.</p>
+          </a>
+          <a class="card pad tile tile-link quick-link" href="#projections">
+            <h3>Projections</h3>
+            <p>Explore scenarios without false certainty.</p>
+          </a>
+          <a class="card pad tile tile-link quick-link" href="#trust">
+            <h3>Trust and ownership</h3>
+            <p>Backups, exports, restore confidence, and privacy.</p>
+          </a>
+          <a class="card pad tile tile-link quick-link" href="#next-steps">
+            <h3>Next steps</h3>
+            <p>Docs, install notes, and why the product exists.</p>
+          </a>
         </div>
 
         <div class="hr"></div>
 
+        <section id="overview" class="tour-section card pad inner-card">
+          <div class="tour-copy">
+            <p class="kicker">Overview</p>
+            <h2>Start with the answer</h2>
+            <p class="muted prose">
+              The Overview exists to reduce avoidance. It should tell you where you stand, what matters now, and where the pressure points are before you dig into configuration or detail.
+            </p>
+            <p class="muted prose">
+              This is especially important for the roadmap: answer-first hierarchy is part of making SteadyPlan more inviting and more useful to normal people, not just finance power users.
+            </p>
+          </div>
+          <figure class="tour-media">
+            <img class="screenshot screenshot-large" src="./assets/screenshots/overview.png" alt="SteadyPlan overview dashboard with demo data">
+            <figcaption class="screenshot-meta">Demo data · <a href="./assets/screenshots/overview.png" target="_blank" rel="noopener noreferrer">Open screenshot</a></figcaption>
+          </figure>
+        </section>
+
+        <section id="accessible-money" class="tour-section card pad inner-card">
+          <div class="tour-copy">
+            <p class="kicker">Accessible vs locked money</p>
+            <h2>Useful distinctions, not just bigger totals</h2>
+            <p class="muted prose">
+              One of SteadyPlan’s most important jobs is helping users understand what they can actually use now, what comes with restrictions or penalties, and what is really part of later retirement planning.
+            </p>
+            <p class="muted prose">
+              That distinction supports calmer decisions. It stops the product from presenting one big number as if all money is equally available.
+            </p>
+            <p class="note compact-note">This principle runs through Overview, Planning, and future assistant/API work as well.</p>
+          </div>
+          <div class="tour-side-note card pad">
+            <p class="feature-label">Why it matters</p>
+            <ul class="plain-list muted prose">
+              <li>Shows what is realistically available now</li>
+              <li>Makes pensions and longer-term holdings easier to reason about</li>
+              <li>Supports calmer affordability and planning decisions</li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="holdings" class="tour-section card pad inner-card">
+          <div class="tour-copy">
+            <p class="kicker">Holdings and accounts</p>
+            <h2>Keep investments and account context in the same picture</h2>
+            <p class="muted prose">
+              SteadyPlan helps track holdings without requiring bank or broker account linking. You can keep prices fully manual or enable optional external lookups where that suits you.
+            </p>
+            <p class="muted prose">
+              The goal is not market excitement. It is making the investment part of your life legible alongside everything else.
+            </p>
+          </div>
+          <figure class="tour-media">
+            <img class="screenshot screenshot-large" src="./assets/screenshots/holdings.png" alt="SteadyPlan holdings screen with demo data">
+            <figcaption class="screenshot-meta">Demo data · <a href="./assets/screenshots/holdings.png" target="_blank" rel="noopener noreferrer">Open screenshot</a></figcaption>
+          </figure>
+        </section>
+
+        <section id="projections" class="tour-section card pad inner-card">
+          <div class="tour-copy">
+            <p class="kicker">Projections</p>
+            <h2>Scenario planning without pretending the future is guaranteed</h2>
+            <p class="muted prose">
+              Projections let you explore what changes if you adjust contributions, retirement timing, or assumptions. They are there to support thinking, not to manufacture certainty.
+            </p>
+            <p class="muted prose">
+              That honest boundary matters. The product should help people think longer-term while staying clear that estimates are still estimates.
+            </p>
+          </div>
+          <figure class="tour-media">
+            <img class="screenshot screenshot-large" src="./assets/screenshots/projections.png" alt="SteadyPlan projections screen with demo data">
+            <figcaption class="screenshot-meta">Demo data · <a href="./assets/screenshots/projections.png" target="_blank" rel="noopener noreferrer">Open screenshot</a></figcaption>
+          </figure>
+        </section>
+
+        <section id="trust" class="tour-section card pad inner-card">
+          <div class="tour-copy">
+            <p class="kicker">Trust and ownership</p>
+            <h2>Self-hosting only feels safe if the boundaries are clear</h2>
+            <p class="muted prose">
+              SteadyPlan is not just about keeping data local in theory. It also needs to make backups, exports, restore behaviour, and optional external lookups understandable in practice.
+            </p>
+            <p class="muted prose">
+              That is why Settings, privacy notes, and backup guidance are part of the public story as well as the app itself.
+            </p>
+            <p class="note compact-note">Trust surfaces include per-user JSON exports, whole-instance SQLite backups, and plain-language notes on public exposure and optional external lookups.</p>
+          </div>
+          <figure class="tour-media">
+            <img class="screenshot screenshot-large" src="./assets/screenshots/data-privacy.png" alt="SteadyPlan settings and data ownership screen with demo data">
+            <figcaption class="screenshot-meta">Demo data · <a href="./assets/screenshots/data-privacy.png" target="_blank" rel="noopener noreferrer">Open screenshot</a></figcaption>
+          </figure>
+        </section>
+
+        <section id="next-steps" class="tour-section tour-section-wide card pad inner-card next-steps-card">
+          <div class="section-intro section-intro-tight">
+            <p class="kicker">Next steps</p>
+            <h2>Keep exploring SteadyPlan</h2>
+          </div>
+          <div class="grid-3">
+            <a class="card pad tile tile-link" href="./docs/install.html">
+              <h3>Install notes</h3>
+              <p>Docker and Unraid-friendly setup, data location, and first practical steps.</p>
+            </a>
+            <a class="card pad tile tile-link" href="./docs/backups.html">
+              <h3>Backups and restore</h3>
+              <p>Understand the recovery story before trusting the app with real personal data.</p>
+            </a>
+            <a class="card pad tile tile-link" href="./about.html">
+              <h3>Why it exists</h3>
+              <p>Read the founder story and the product stance behind SteadyPlan.</p>
+            </a>
+          </div>
+        </section>
+
         <div class="cta-row">
-          <a class="btn btn-primary" href="./docs/install.html">Install</a>
-          <a class="btn" href="./docs/index.html">View docs</a>
-          <a class="btn btn-ghost" href="./about.html">Why it exists</a>
+          <a class="btn btn-primary" href="./docs/index.html">Open docs hub</a>
+          <a class="btn" href="./about.html">Read the story</a>
+          <a class="btn btn-ghost" href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
       </div>
     </div>
@@ -138,6 +192,8 @@
     <div class="container">
       <div class="footer-row">
         <div class="small">
+          <a href="./index.html">Home</a>
+          <span class="muted"> · </span>
           <a href="./docs/index.html">Docs</a>
           <span class="muted"> · </span>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">Source &amp; issues on GitHub</a>

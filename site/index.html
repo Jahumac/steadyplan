@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SteadyPlan · Self-hosted UK finance planning</title>
-    <meta name="description" content="SteadyPlan is a self-hosted UK finance planning app for long-term visibility. Model accounts, contributions, goals, pensions, debts and retirement scenarios while keeping your data on your own server.">
+  <title>SteadyPlan · Long-term finance planning, on your own terms</title>
+  <meta name="description" content="SteadyPlan is a self-hosted finance planning app for people who want to face the numbers calmly, keep control of their data, and connect monthly decisions to long-term goals.">
   <link rel="canonical" href="https://steadyplan.co.uk/">
   <meta name="color-scheme" content="dark">
   <link rel="stylesheet" href="./assets/site.css">
@@ -18,8 +18,8 @@
           <span>SteadyPlan</span>
         </a>
         <nav class="nav" aria-label="Primary">
-          <a href="./docs/index.html">Docs</a>
           <a href="./tour.html">Tour</a>
+          <a href="./docs/index.html">Docs</a>
           <a href="./about.html">About</a>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
         </nav>
@@ -28,20 +28,42 @@
   </header>
 
   <main>
-    <section class="hero">
+    <section class="hero hero-home">
       <div class="container">
-        <div class="hero-grid">
-          <div>
-            <h1 class="hero-title">SteadyPlan</h1>
-            <p class="hero-tagline">Long-term finance planning, self-hosted.</p>
-            <p class="lead">
-              Face the numbers, keep your data under your control, and plan steadily from your own server/NAS/desktop. SteadyPlan helps you model accounts, debts, contributions, goals, investments and retirement scenarios without handing your financial life to another platform.
-            </p>
-            <div class="cta-row hero-actions">
-              <a class="btn btn-primary" href="./docs/index.html">View docs</a>
-              <a class="btn" href="./tour.html">Product tour</a>
-              <a class="link-quiet" href="./about.html">Why it exists</a>
+        <div class="hero-shell card">
+          <div class="hero-grid hero-grid-home">
+            <div class="hero-copy">
+              <p class="eyebrow">Self-hosted • privacy-first • built for ordinary people who want clarity</p>
+              <h1 class="hero-title">Long-term finance planning, on your own terms.</h1>
+              <p class="lead lead-strong">
+                SteadyPlan is a self-hosted planning app for accounts, debts, savings, investments, goals and retirement scenarios — built to help you face the numbers without handing your financial life to another platform.
+              </p>
+              <p class="lead">
+                Clearer picture. Calmer decisions. A more intentional relationship with money.
+              </p>
+              <div class="cta-row hero-actions">
+                <a class="btn btn-primary" href="./tour.html">Explore the tour</a>
+                <a class="btn" href="./docs/index.html">Read the docs</a>
+                <a class="link-quiet" href="./about.html">Why it exists</a>
+              </div>
             </div>
+
+            <aside class="hero-side card panel-soft" aria-label="SteadyPlan summary">
+              <div class="stack-tight">
+                <span class="badge">SteadyPlan</span>
+                <h2 class="panel-title">Built for the next SteadyPlan phase</h2>
+                <p class="muted panel-copy">
+                  The roadmap is about making SteadyPlan clearer, more trustworthy, and easier to understand from the outside — without turning it into generic SaaS.
+                </p>
+              </div>
+              <ul class="check-list">
+                <li>See where you stand</li>
+                <li>Understand accessible vs locked money</li>
+                <li>Connect monthly choices to long-term plans</li>
+                <li>Keep data under your own control</li>
+              </ul>
+              <p class="note compact-note">Not a bank, broker, or financial adviser. Projections are illustrative and based on your inputs.</p>
+            </aside>
           </div>
         </div>
       </div>
@@ -49,64 +71,75 @@
 
     <section class="section">
       <div class="container">
-        <div class="section-head">
-          <h2>What SteadyPlan helps with</h2>
-          <p class="muted" style="margin:0;">Practical visibility and planning from your own instance.</p>
+        <div class="section-intro">
+          <p class="kicker">What SteadyPlan helps with</p>
+          <h2>Less avoidance. More visibility. Better long-term decisions.</h2>
+          <p class="muted prose">
+            SteadyPlan is for people who want to understand their position more clearly without becoming spreadsheet obsessives. The product is there to help you see the picture, keep perspective, and make steadier choices over time.
+          </p>
         </div>
-        <div class="grid-3">
-          <a class="card pad tile tile-link" href="./tour.html">
-            <h3>See the full picture</h3>
-            <p>Bring accounts, debts, savings, investments and goals into one view you control.</p>
+        <div class="feature-grid grid-3">
+          <a class="card pad tile tile-link feature-card" href="./tour.html#overview">
+            <p class="feature-label">Current position</p>
+            <h3>See the full picture in one place</h3>
+            <p>Accounts, debts, savings, investments and goals in one calm control panel rather than scattered notes and guesswork.</p>
           </a>
-          <a class="card pad tile tile-link" href="./tour.html">
-            <h3>Plan contributions and goals</h3>
-            <p>Track what you’re putting in each month and whether you’re still on track for your goals.</p>
+          <a class="card pad tile tile-link feature-card" href="./tour.html#accessible-money">
+            <p class="feature-label">Useful clarity</p>
+            <h3>Understand what is available now vs locked for later</h3>
+            <p>Separate what you can actually use from what is restricted, penalised, or part of a longer retirement plan.</p>
           </a>
-          <a class="card pad tile tile-link" href="./tour.html">
-            <h3>Understand long-term scenarios</h3>
-            <p>Explore retirement estimates and what changes if your inputs or assumptions change.</p>
-          </a>
-        </div>
-        <div class="grid-3" style="margin-top:0.9rem;">
-          <a class="card pad tile tile-link" href="./docs/privacy.html">
-            <h3>Keep data local</h3>
-            <p>Local SQLite database and no cloud sync. Optional external lookups can be turned on or off.</p>
-          </a>
-          <a class="card pad tile tile-link" href="./docs/backups.html">
-            <h3>Back up and restore</h3>
-            <p>Your server, your backups. Clear guidance on exports, backups, and real recovery.</p>
-          </a>
-          <a class="card pad tile tile-link" href="./docs/install.html">
-            <h3>Use it from desktop, tablet or phone</h3>
-            <p>SteadyPlan runs on your server/NAS/desktop. Use it in a browser; PWA install is supported where available.</p>
+          <a class="card pad tile tile-link feature-card" href="./tour.html#projections">
+            <p class="feature-label">Long-term thinking</p>
+            <h3>Connect today’s inputs to future scenarios</h3>
+            <p>Use contributions, assumptions and retirement projections to explore trade-offs without pretending the future is guaranteed.</p>
           </a>
         </div>
       </div>
     </section>
 
-    <section class="section">
+    <section class="section section-contrast">
       <div class="container">
-        <div class="split">
-          <div class="card pad">
-            <h2>Why SteadyPlan exists</h2>
+        <div class="story-grid split split-strong">
+          <div class="card pad story-card">
+            <p class="kicker">Why SteadyPlan exists</p>
+            <h2>Built to face the numbers</h2>
             <p class="muted prose">
-              SteadyPlan started as a personal project. After serious money stress and debt, the turning point wasn’t a trick — it was visibility.
-              I needed one clear place to see the full picture — accounts, debts, savings, investments, goals and retirement plans — without sending all of that data to another finance platform.
-              SteadyPlan is the tool I built to keep doing that.
+              SteadyPlan started as a personal project after serious money stress, debt, and the slow realisation that avoiding the full picture only makes life foggier.
             </p>
-            <div class="cta-row" style="margin-top:1rem;">
-              <a class="btn" href="./about.html">Read the story</a>
-              <a class="btn btn-ghost" href="./docs/index.html">Start with the docs</a>
+            <p class="muted prose">
+              The turning point was not a trick. It was visibility. One place to understand accounts, debts, savings, investments, goals, contributions and retirement plans honestly.
+            </p>
+            <p class="muted prose">
+              That is still the heart of the product now: helping ordinary people face the numbers more calmly and more intentionally.
+            </p>
+            <div class="cta-row">
+              <a class="btn" href="./about.html">Read the full story</a>
             </div>
           </div>
-          <div class="card pad">
-            <h2>What it is (and isn’t)</h2>
-            <ul class="muted prose">
-              <li>A planning and visibility tool for long-term decisions.</li>
-              <li>Self-hosted, with a local SQLite database and your own backup routine.</li>
-              <li>Not a bank, broker, or financial adviser. No promises — projections are estimates based on your inputs.</li>
-            </ul>
-            <p class="note small">Safest default is LAN/VPN-only. If you expose SteadyPlan publicly, use HTTPS on a trusted reverse proxy and configure it intentionally.</p>
+
+          <div class="card pad story-card">
+            <p class="kicker">What it is and is not</p>
+            <h2>A planning tool, not a promise engine</h2>
+            <div class="definition-list">
+              <div>
+                <h3>What it is</h3>
+                <ul class="plain-list muted">
+                  <li>A self-hosted personal finance planning and visibility tool</li>
+                  <li>A bridge between monthly life and long-term goals</li>
+                  <li>A practical product that values local control and honest wording</li>
+                </ul>
+              </div>
+              <div>
+                <h3>What it is not</h3>
+                <ul class="plain-list muted">
+                  <li>Not a bank, broker, or budgeting guru persona</li>
+                  <li>Not a financial adviser</li>
+                  <li>Not a race to generic hosted SaaS</li>
+                </ul>
+              </div>
+            </div>
+            <p class="note compact-note">Safest default is LAN or VPN access. Public exposure is optional and should be set up deliberately with HTTPS and a trusted reverse proxy.</p>
           </div>
         </div>
       </div>
@@ -114,37 +147,58 @@
 
     <section class="section">
       <div class="container">
-        <div class="grid-3">
-          <a class="card pad tile tile-link" href="./docs/install.html">
-            <h3>Install</h3>
-            <p>Docker/Unraid-first. Persist <code>/app/data</code>, then you’re running.</p>
+        <div class="section-intro">
+          <p class="kicker">Trust, ownership, and first impression</p>
+          <h2>Open about the product. Clear about the boundaries.</h2>
+          <p class="muted prose">
+            A better website should not just look nicer. It should make the product easier to understand and easier to trust.
+          </p>
+        </div>
+        <div class="trust-grid grid-3">
+          <a class="card pad tile tile-link" href="./docs/privacy.html">
+            <h3>Privacy and data ownership</h3>
+            <p>Local SQLite storage, no cloud sync, and plain-language notes on what leaves your machine when optional lookups are enabled.</p>
           </a>
           <a class="card pad tile tile-link" href="./docs/backups.html">
-            <h3>Backups &amp; restore</h3>
-            <p>JSON exports and whole-instance SQLite backups — plus what to back up for real recovery.</p>
+            <h3>Backups and restore confidence</h3>
+            <p>See how JSON exports, whole-instance backups, and restore checks fit together before you trust the app with real data.</p>
           </a>
-          <a class="card pad tile tile-link" href="./docs/privacy.html">
-            <h3>Privacy &amp; data ownership</h3>
-            <p>Local database, no cloud sync, and clear notes on optional external lookups.</p>
+          <a class="card pad tile tile-link" href="./docs/install.html">
+            <h3>Use it from desktop, tablet, or phone</h3>
+            <p>SteadyPlan runs on your own instance. Use it in a browser, and install it as a web app where PWA support is available.</p>
           </a>
         </div>
-        <div class="grid-3" style="margin-top:0.9rem;">
-          <a class="card pad tile tile-link" href="./tour.html">
-            <h3>Product tour</h3>
-            <p>See how the main screens fit together. Demo data screenshots.</p>
-          </a>
-          <a class="card pad tile tile-link" href="./about.html">
-            <h3>Built to face the numbers</h3>
-            <p>Why SteadyPlan exists, how it’s used, and what it’s trying to be.</p>
-          </a>
-          <div class="card pad tile">
-            <h3>GitHub (development home)</h3>
-            <p>Source code, releases, and issues live on GitHub.</p>
-            <p class="muted" style="margin:0.5rem 0 0 0;">
-              <a href="https://github.com/Jahumac/steadyplan/releases" target="_blank" rel="noopener noreferrer">Releases</a> ·
-              <a href="https://github.com/Jahumac/steadyplan/issues" target="_blank" rel="noopener noreferrer">Issues</a> ·
-              <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">Source</a>
-            </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="roadmap-shell card pad">
+          <div class="section-intro section-intro-tight">
+            <p class="kicker">Roadmap alignment</p>
+            <h2>This redesign supports the product direction, not just the visuals.</h2>
+          </div>
+          <div class="roadmap-grid grid-3">
+            <div class="card pad roadmap-card">
+              <p class="feature-label">Phase 1</p>
+              <h3>Clarify product truth</h3>
+              <p>Lead with who SteadyPlan is for, what it helps with, and what it does not pretend to be.</p>
+            </div>
+            <div class="card pad roadmap-card">
+              <p class="feature-label">Phases 2–3</p>
+              <h3>Reduce intimidation</h3>
+              <p>Use plainer language, clearer sections, and a calmer front door for normal people.</p>
+            </div>
+            <div class="card pad roadmap-card">
+              <p class="feature-label">Phases 4–5</p>
+              <h3>Improve trust and demoability</h3>
+              <p>Make the product easier to evaluate from the outside before any wider sharing.</p>
+            </div>
+          </div>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="./tour.html">See the product tour</a>
+            <a class="btn" href="./docs/index.html">Open docs hub</a>
+            <a class="btn btn-ghost" href="https://github.com/Jahumac/steadyplan/releases" target="_blank" rel="noopener noreferrer">Releases</a>
           </div>
         </div>
       </div>
@@ -155,7 +209,11 @@
     <div class="container">
       <div class="footer-row">
         <div class="small">
+          <a href="./index.html">Home</a>
+          <span class="muted"> · </span>
           <a href="./docs/index.html">Docs</a>
+          <span class="muted"> · </span>
+          <a href="./tour.html">Tour</a>
           <span class="muted"> · </span>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">Source &amp; issues on GitHub</a>
         </div>
