@@ -255,7 +255,7 @@
       <p class="helper-text m-0">Pension-style money that is building for later rather than near-term flexibility. The top summary keeps the headline locked amount visible.</p>
     </div>
   </div>
-  {% if access_summary.next_milestone %}
+  {% if access_summary.next_milestone and access_summary.next_milestone.remaining > 0 %}
   <p class="helper-text mt-075 mb-0">Next accessible milestone: <strong>£{{ '{:,.0f}'.format(access_summary.next_milestone.target) }}</strong> — £{{ '{:,.0f}'.format(access_summary.next_milestone.remaining) }} to go.</p>
   {% endif %}
 </section>
