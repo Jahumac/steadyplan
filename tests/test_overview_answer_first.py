@@ -133,6 +133,100 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
 
 
 
+def test_overview_single_holding_state_hides_allocation_panel(app, client, make_user):
+    uid, username, password = make_user(username="overview-single-holding", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 0, 1, 'holdings')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO holdings (account_id, holding_name, value)
+                VALUES (?, 'Vanguard FTSE Global All Cap', 1234)
+                """,
+                (account_id,),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "ISA Allowance" in html
+    assert "id=\"allocationChart\"" not in html
+    assert "Asset allocation doughnut chart" not in html
+
+
+
+def test_overview_multi_holding_state_restores_allocation_panel(app, client, make_user):
+    uid, username, password = make_user(username="overview-multi-holding", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 0, 1, 'holdings')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.executemany(
+                """
+                INSERT INTO holdings (account_id, holding_name, value)
+                VALUES (?, ?, ?)
+                """,
+                [
+                    (account_id, 'Vanguard FTSE Global All Cap', 1234),
+                    (account_id, 'iShares Core S&P 500', 567),
+                ],
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "id=\"allocationChart\"" in html
+    assert "Asset allocation doughnut chart" in html
+
+
+
 def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
     uid, username, password = make_user(username="overview-access", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
