@@ -405,6 +405,7 @@
 </section>
 
 {# ── Accounts ─────────────────────────────────────────────────────────────── #}
+{% if has_accounts %}
 <section class="card mb-1">
   <div class="section-header">
     <div>
@@ -420,13 +421,10 @@
         <p>£{{ '{:,.2f}'.format(metrics.effective_values[account.id]) }}</p>
         <small>{{ account.provider }} · {{ account.wrapper_type }}</small>
       </a>
-    {% else %}
-      {{ empty_state('Nothing in the shell yet',
-                     'Every journey starts with a single step — even for a turtle. Add your first account to begin tracking.',
-                     cta_text='+ Add your first account', cta_href='/accounts/?mode=create') }}
     {% endfor %}
   </div>
 </section>
+{% endif %}
 
 {# ── Asset Allocation ─────────────────────────────────────────────────────── #}
 {% if allocation_labels %}
