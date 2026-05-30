@@ -18,6 +18,8 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Set a goal once you know what you want to aim for." in html
     assert "Do your first monthly update after your first contribution or balance change settles." in html
     assert 'href="/settings/?mode=edit"' in html
+    assert "Monthly review" not in html
+    assert "Status:" not in html
 
 
 def test_overview_getting_started_primary_action_moves_to_first_incomplete_basic_step(app, client, make_user):
