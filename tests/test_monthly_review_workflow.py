@@ -4,8 +4,47 @@ from app.services.monthly_review_checklist import (
 )
 
 
-def test_overview_renders_monthly_review_card(auth_client):
-    resp = auth_client.get("/")
+def test_overview_renders_monthly_review_card_after_basic_onboarding_is_complete(app, client, make_user):
+    uid, username, password = make_user(username="mr-overview-card", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    from datetime import date
+
+    month_key = date.today().strftime("%Y-%m")
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key)
+                VALUES (?, ?, ?, ?)
+                """,
+                (f"{month_key}-01", account_id, 1000, month_key),
+            )
+            conn.commit()
+
+    resp = client.get("/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "Monthly review" in html
@@ -20,6 +59,39 @@ def test_overview_completed_monthly_review_does_not_show_stale_checklist(app, cl
     from datetime import date
 
     month_key = date.today().strftime("%Y-%m")
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key)
+                VALUES (?, ?, ?, ?)
+                """,
+                (f"{month_key}-01", account_id, 1000, month_key),
+            )
+            conn.commit()
+
     resp = client.post(
         "/monthly-review/",
         data={

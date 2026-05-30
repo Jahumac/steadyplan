@@ -604,6 +604,14 @@ def overview():
 
     data_health_summary = build_data_health_summary(uid)
 
+    onboarding_complete = bool(
+        assumptions
+        and assumptions.get("date_of_birth")
+        and raw_accounts
+        and goals_data
+        and history_labels
+    )
+
     mr_review = fetch_monthly_review(current_month_key, uid)
     if mr_review is None:
         mr_status = "Not started"
@@ -613,7 +621,7 @@ def overview():
         mr_badge_class = "badge badge-complete" if mr_review.get("status") == "complete" else "badge badge-meta"
 
     monthly_review_card = None
-    if not review_nudge:
+    if onboarding_complete and not review_nudge:
         monthly_review_card = {
             "month_key": current_month_key,
             "month_label": datetime(now_date.year, now_date.month, 1).strftime("%B %Y"),
