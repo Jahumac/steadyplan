@@ -14,7 +14,7 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "0/2 basics complete" in html
     assert "0/4 complete" not in html
     assert "Essential to start" in html
-    assert "Do later" in html
+    assert "Do later · 0/2 complete" in html
     assert "Complete your profile" in html
     assert "Add your first account" in html
     assert "Set a goal once you know what you want to aim for." in html
@@ -217,6 +217,7 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
     assert "Start first monthly update" in html
     assert "Basics done" in html
     assert "1/2 later steps complete" in html
+    assert "Do later · 1/2 complete" in html
     assert "2/4 complete" not in html
     assert "ISA Allowance" in html
     assert "Pension Allowance" in html
