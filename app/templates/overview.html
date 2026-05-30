@@ -70,7 +70,7 @@
     <a href="{{ onboarding_primary_href }}" class="badge badge-primary-action">{{ onboarding_primary_cta }}</a>
   </section>
 
-  <p class="onboarding-section-label">Essential to start</p>
+  <p class="onboarding-section-label">{% if essential_steps_done < 2 %}Essential to start{% else %}Basics done{% endif %}</p>
   <div class="onboarding-steps">
     <a href="/settings/?mode=edit" class="onboarding-step {% if has_profile %}onboarding-done{% endif %}">
       <span class="onboarding-check">{% if has_profile %}✓{% else %}1{% endif %}</span>
