@@ -183,6 +183,22 @@
 </section>
 {% endif %}
 
+{# ── Data Health (only when action is needed) ─────────────────────────────── #}
+{% if data_health_warnings %}
+<section class="card alert-banner alert-warning mb-1">
+  <div class="flex flex-center flex-wrap gap-075">
+    <div style="flex:1; min-width:200px;">
+      <p class="eyebrow m-0">Data Health</p>
+      <strong>Needs attention</strong>
+      <p class="helper-text m-0">
+        {{ data_health_warnings[0].title }}{% if data_health_warnings[0].explanation %} — {{ data_health_warnings[0].explanation }}{% endif %}
+      </p>
+    </div>
+    <a href="{{ data_health_warnings[0].link if data_health_warnings[0].link else '/settings/?mode=diagnostics' }}" class="badge badge-meta">Review</a>
+  </div>
+</section>
+{% endif %}
+
 {% if has_accounts %}
 {# ── Month strip ─────────────────────────────────────────────────────────── #}
 {% include '_month_strip.html' %}
@@ -237,22 +253,6 @@
   <p class="helper-text mt-075 mb-0">Next accessible milestone: <strong>£{{ '{:,.0f}'.format(access_summary.next_milestone.target) }}</strong> — £{{ '{:,.0f}'.format(access_summary.next_milestone.remaining) }} to go.</p>
   {% endif %}
 </section>
-
-{# ── Data Health (only when action is needed) ─────────────────────────────── #}
-{% if data_health_warnings %}
-<section class="card alert-banner alert-warning mb-1">
-  <div class="flex flex-center flex-wrap gap-075">
-    <div style="flex:1; min-width:200px;">
-      <p class="eyebrow m-0">Data Health</p>
-      <strong>Needs attention</strong>
-      <p class="helper-text m-0">
-        {{ data_health_warnings[0].title }}{% if data_health_warnings[0].explanation %} — {{ data_health_warnings[0].explanation }}{% endif %}
-      </p>
-    </div>
-    <a href="{{ data_health_warnings[0].link if data_health_warnings[0].link else '/settings/?mode=diagnostics' }}" class="badge badge-meta">Review</a>
-  </div>
-</section>
-{% endif %}
 
 {# ── Portfolio Value ───────────────────────────────────────────────────────── #}
 {% if has_portfolio_history %}
