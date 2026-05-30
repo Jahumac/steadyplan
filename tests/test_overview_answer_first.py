@@ -17,8 +17,9 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Do later · 0/2 complete" in html
     assert "Complete your profile" in html
     assert "Add your first account" in html
-    assert "Set a first goal" in html
-    assert "Set a first goal once you know what you want to aim for." in html
+    assert "Set your first goal" in html
+    assert "Set your first goal once you know what you want to aim for." in html
+    assert "Set a first goal" not in html
     assert "Set a goal once you know what you want to aim for." not in html
     assert "Do your first monthly update after your first contribution or balance change settles." in html
     assert "Complete profile" in html
@@ -91,8 +92,8 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Set a first goal" in html
     assert "Set your first goal" in html
+    assert "Set a first goal" not in html
     assert "Set first goal" not in html
     assert "Accessible vs locked" in html
     assert "Portfolio Value" not in html
@@ -222,6 +223,7 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
     assert "Getting Started" not in html
     assert "You already have the basics in place." in html
     assert "Do your first monthly update when you want SteadyPlan to start tracking progress." in html
+    assert "Set your first goal or do your first monthly update" not in html
     assert "Set a first goal or do your first monthly update" not in html
     assert "Add a goal or do your first monthly update" not in html
     assert "You only need the basics to begin." not in html
@@ -315,7 +317,8 @@ def test_overview_pre_goal_multi_holding_state_hides_allocation_panel(app, clien
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Set a first goal" in html
+    assert "Set your first goal" in html
+    assert "Set a first goal" not in html
     assert "Accessible vs locked" in html
     assert "id=\"allocationChart\"" not in html
     assert "Asset allocation doughnut chart" not in html
