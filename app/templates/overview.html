@@ -33,7 +33,7 @@
   {% set onboarding_primary_cta = 'Add first account' %}
 {% elif not has_goal %}
   {% set onboarding_primary_eyebrow = 'Next helpful step' %}
-  {% set onboarding_primary_title = 'Set a first goal' %}
+  {% set onboarding_primary_title = 'Set your first goal' %}
   {% set onboarding_primary_body = 'Optional, but useful once you want SteadyPlan to track progress toward something specific.' %}
   {% set onboarding_primary_href = '/goals/?mode=create' %}
   {% set onboarding_primary_cta = 'Set your first goal' %}
@@ -63,7 +63,7 @@
     {% if essential_steps_done < 2 %}
       You only need the basics to begin. Goals and monthly updates can wait until you have something real to track.
     {% elif not has_goal %}
-      You already have the basics in place. Set a first goal or do your first monthly update when you want SteadyPlan to start tracking progress.
+      You already have the basics in place. Set your first goal or do your first monthly update when you want SteadyPlan to start tracking progress.
     {% else %}
       You already have the basics in place. Do your first monthly update when you want SteadyPlan to start tracking progress.
     {% endif %}
@@ -102,8 +102,8 @@
       <a href="/goals/?mode=create" class="onboarding-step {% if has_goal %}onboarding-done{% endif %}">
         <span class="onboarding-check">{% if has_goal %}✓{% else %}3{% endif %}</span>
         <div>
-          <strong>Set a first goal</strong>
-          <small>Set a first goal once you know what you want to aim for.</small>
+          <strong>Set your first goal</strong>
+          <small>Set your first goal once you know what you want to aim for.</small>
         </div>
       </a>
       <a href="/monthly-review/" class="onboarding-step {% if has_history %}onboarding-done{% endif %}">
