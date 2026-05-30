@@ -99,6 +99,7 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
                     "title": "Some goals are missing a target amount",
                     "explanation": f"The following goals are missing a target amount: {', '.join(goals_missing_target)}. Update them to track progress effectively.",
                     "link": "/goals",
+                    "cta_text": "Review goals",
                 })
                 if overall_status == HEALTH_STATUS_GOOD:
                     overall_status = HEALTH_STATUS_WARNING
