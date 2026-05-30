@@ -485,7 +485,7 @@ def overview():
         alerts.append({
             "kind": "info",
             "message": "Set your investment day in Settings — it tells SteadyPlan when to remind you to do your Monthly Update.",
-            "cta_text": "Go to Settings",
+            "cta_text": "Set your investment day",
             "cta_href": "/settings/?mode=edit",
             "cta_form_action": None,
         })

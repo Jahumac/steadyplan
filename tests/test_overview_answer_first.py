@@ -764,5 +764,6 @@ def test_overview_missing_salary_day_uses_single_settings_nudge(app, client, mak
     html = resp.get_data(as_text=True)
 
     assert "Set your investment day in Settings" in html
-    assert "Go to Settings" in html
+    assert "Set your investment day" in html
+    assert "Go to Settings" not in html
     assert "Your next nudge" not in html
