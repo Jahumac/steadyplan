@@ -215,6 +215,8 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
 
     assert "Do your first monthly update" in html
     assert "Start first monthly update" in html
+    assert "Keep going" in html
+    assert "Getting Started" not in html
     assert "Basics done" in html
     assert "Essential to start" not in html
     assert "1/2 later steps complete" in html
