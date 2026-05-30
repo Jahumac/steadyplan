@@ -220,7 +220,8 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
     assert "Keep going" in html
     assert "Getting Started" not in html
     assert "You already have the basics in place." in html
-    assert "Set a first goal or do your first monthly update" in html
+    assert "Do your first monthly update when you want SteadyPlan to start tracking progress." in html
+    assert "Set a first goal or do your first monthly update" not in html
     assert "Add a goal or do your first monthly update" not in html
     assert "You only need the basics to begin." not in html
     assert "Basics done" in html
