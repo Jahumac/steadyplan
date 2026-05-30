@@ -343,7 +343,7 @@
 {% endif %}
 
 {# ── Goal progress ────────────────────────────────────────────────────────── #}
-{% if goals_data %}
+{% if goals_data | length > 1 %}
 <section class="card mb-1">
   <div class="section-header mb-05">
     <p class="eyebrow">Goals</p>

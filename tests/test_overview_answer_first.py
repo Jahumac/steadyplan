@@ -130,6 +130,50 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
     assert "Do your first monthly update" in html
     assert "ISA Allowance" in html
     assert "Pension Allowance" in html
+    assert "<p class=\"eyebrow\">Goals</p>" not in html
+    assert "Emergency fund progress" not in html
+
+
+
+def test_overview_multi_goal_state_restores_goal_progress_panel(app, client, make_user):
+    uid, username, password = make_user(username="overview-multi-goal", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.executemany(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, ?, ?, '', '', '')
+                """,
+                [
+                    (uid, 'Emergency fund', 5000),
+                    (uid, 'House deposit', 20000),
+                ],
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "<p class=\"eyebrow\">Goals</p>" in html
+    assert "Emergency fund progress" in html
+    assert "House deposit progress" in html
 
 
 
