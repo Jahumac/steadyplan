@@ -59,7 +59,13 @@
       {% endif %}
     </small>
   </div>
-  <p class="helper-text mb-075">You only need the basics to begin. Goals and monthly updates can wait until you have something real to track.</p>
+  <p class="helper-text mb-075">
+    {% if essential_steps_done < 2 %}
+      You only need the basics to begin. Goals and monthly updates can wait until you have something real to track.
+    {% else %}
+      You already have the basics in place. Add a goal or do your first monthly update when you want SteadyPlan to start tracking progress.
+    {% endif %}
+  </p>
 
   <section class="onboarding-primary">
     <div>
