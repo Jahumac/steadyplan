@@ -48,7 +48,7 @@
   <div class="onboarding-hero">
     <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="" class="onboarding-turtle turtle-hello shelly-inline-icon shelly-icon-md">
     <div>
-      <p class="eyebrow">Getting Started</p>
+      <p class="eyebrow">{% if essential_steps_done < 2 %}Getting Started{% else %}Keep going{% endif %}</p>
       <h2 class="onboarding-title">Welcome to SteadyPlan</h2>
     </div>
     <small class="text-muted onboarding-progress">
