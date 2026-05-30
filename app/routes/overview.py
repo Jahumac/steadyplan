@@ -570,6 +570,15 @@ def overview():
                 "cta_href": "/settings/?mode=edit",
             }
 
+    alert_cta_targets = {alert.get("cta_href") for alert in alerts if alert.get("cta_href")}
+    next_action_href = next_action.get("cta_href") if next_action else None
+    show_next_action = bool(
+        next_action
+        and next_action_href not in alert_cta_targets
+        and not (review_nudge and next_action_href == "/monthly-review/")
+        and not (payday_banner and next_action_href == "/budget/")
+    )
+
     # ── Asset allocation by individual holding ────────────────────────────────
     all_holdings_grouped = fetch_all_holdings_grouped(uid)
     holding_totals: dict = {}
@@ -603,13 +612,15 @@ def overview():
         mr_status = "Complete" if mr_review.get("status") == "complete" else "In progress"
         mr_badge_class = "badge badge-complete" if mr_review.get("status") == "complete" else "badge badge-meta"
 
-    monthly_review_card = {
-        "month_key": current_month_key,
-        "month_label": datetime(now_date.year, now_date.month, 1).strftime("%B %Y"),
-        "status": mr_status,
-        "badge_class": mr_badge_class,
-        "href": f"/monthly-review/?month={current_month_key}",
-    }
+    monthly_review_card = None
+    if not review_nudge:
+        monthly_review_card = {
+            "month_key": current_month_key,
+            "month_label": datetime(now_date.year, now_date.month, 1).strftime("%B %Y"),
+            "status": mr_status,
+            "badge_class": mr_badge_class,
+            "href": f"/monthly-review/?month={current_month_key}",
+        }
 
     # Render the response and ensure it's not cached by the browser
     resp = make_response(render_template(
@@ -634,6 +645,7 @@ def overview():
         payday_banner=payday_banner,
         alerts=alerts,
         next_action=next_action,
+        show_next_action=show_next_action,
         allocation_labels=allocation_labels,
         allocation_values=allocation_values,
         active_page="overview",
