@@ -64,9 +64,14 @@ def test_overview_projected_retirement_stat_has_estimate_qualifier(app, client, 
     uid, username, password = make_user(username="ov", password="password123")
 
     with app.app_context():
-        from app.models import get_connection
+        from app.models import fetch_assumptions, get_connection
 
+        fetch_assumptions(uid)
         with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
             conn.execute(
                 """
                 INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)

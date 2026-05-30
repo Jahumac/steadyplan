@@ -369,9 +369,14 @@ def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, clien
     month_key = date.today().strftime("%Y-%m")
 
     with app.app_context():
-        from app.models import get_connection
+        from app.models import fetch_assumptions, get_connection
 
+        fetch_assumptions(uid)
         with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
             conn.execute(
                 """
                 INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
@@ -398,6 +403,36 @@ def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, clien
     assert "Projected at retirement" in html
     assert "Goal progress" not in html
     assert "Tax Year " not in html
+
+
+
+def test_overview_hides_retirement_projection_until_profile_exists(app, client, make_user):
+    uid, username, password = make_user(username="overview-no-profile-projection", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 10000, 250, 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Complete your profile" in html
+    assert "Accessible now" in html
+    assert "Locked later" in html
+    assert "Monthly contributions" in html
+    assert "Projected at retirement" not in html
+    assert "Scenario estimate based on your current balances, contribution settings, and assumptions in Settings." not in html
 
 
 def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, make_user):
