@@ -182,6 +182,7 @@
 </section>
 {% endif %}
 
+{% if has_accounts %}
 {# ── Month strip ─────────────────────────────────────────────────────────── #}
 {% include '_month_strip.html' %}
 
@@ -453,5 +454,5 @@
   </div>
 </section>
 {% endif %}
-
+{% endif %}
 {% endblock %}

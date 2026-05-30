@@ -22,6 +22,10 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Status:" not in html
     assert "Nothing in the shell yet" not in html
     assert "<h2>Accounts</h2>" not in html
+    assert "Total Net Worth" not in html
+    assert "Accessible vs locked" not in html
+    assert "Portfolio Value" not in html
+    assert "ISA Allowance" not in html
 
 
 def test_overview_getting_started_primary_action_moves_to_first_incomplete_basic_step(app, client, make_user):
@@ -49,6 +53,9 @@ def test_overview_getting_started_primary_action_moves_to_first_incomplete_basic
     assert 'href="/accounts/?mode=create"' in html
     assert "Nothing in the shell yet" not in html
     assert "<h2>Accounts</h2>" not in html
+    assert "Total Net Worth" not in html
+    assert "Accessible vs locked" not in html
+    assert "Portfolio Value" not in html
 
 
 def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
