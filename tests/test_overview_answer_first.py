@@ -908,8 +908,63 @@ def test_overview_missing_salary_day_uses_single_settings_nudge(app, client, mak
 
     assert "Set your investment day in Settings" in html
     assert "Set your investment day" in html
+    assert "Open settings" not in html
     assert "Go to Settings" not in html
     assert "Your next nudge" not in html
+
+
+def test_overview_unlinked_holdings_alert_uses_specific_price_source_cta(app, client, make_user):
+    uid, username, password = make_user(username="overview-unlinked-holdings", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = date.today().strftime("%Y-%m")
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01', salary_day = 1, auto_update_prices = 1 WHERE user_id = ?",
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 1, 'holdings')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO holdings (account_id, holding_name, ticker, value)
+                VALUES (?, 'Global ETF', 'VWRP', 1000)
+                """,
+                (account_id,),
+            )
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key)
+                VALUES (?, ?, ?, ?)
+                """,
+                (f"{month_key}-01", account_id, 1000, month_key),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "no price source linked" in html
+    assert "Link price sources" in html
+    assert "Review holdings" not in html
 
 
 def test_overview_premium_bonds_cap_alert_uses_specific_premium_bonds_cta(app, client, make_user):
