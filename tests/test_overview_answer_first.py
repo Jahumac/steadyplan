@@ -765,6 +765,53 @@ def test_overview_missed_review_alert_uses_specific_monthly_update_cta(app, clie
     assert "Do it now" not in html
 
 
+def test_overview_unconfirmed_contributions_alert_uses_monthly_update_cta(app, client, make_user):
+    uid, username, password = make_user(username="overview-unconfirmed-contributions", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = date.today().strftime("%Y-%m")
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 250, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            review_id = conn.execute(
+                """
+                INSERT INTO monthly_reviews (user_id, month_key, status)
+                VALUES (?, ?, 'complete')
+                """,
+                (uid, month_key),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO monthly_review_items (review_id, account_id, expected_contribution, contribution_confirmed)
+                VALUES (?, ?, ?, 0)
+                """,
+                (review_id, account_id, 250),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Open monthly update" in html
+    assert "Check contributions" not in html
+    assert '/monthly-review/?month=' in html
+
+
 def test_overview_missing_salary_day_uses_single_settings_nudge(app, client, make_user):
     uid, username, password = make_user(username="overview-no-salary-day", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
