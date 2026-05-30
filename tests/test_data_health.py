@@ -191,6 +191,37 @@ def test_stale_account_data_produces_warning(app, setup_stale_account_user):
         titles = [item["title"] for item in summary["health_items"]]
         assert "Some accounts have stale or missing history" in titles
 
+
+def test_stale_account_warning_uses_review_history_cta(app, setup_stale_account_user):
+    with app.app_context():
+        conn = get_connection()
+        today = datetime.date.today()
+        conn.execute(
+            "INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes) VALUES (?, 'Emergency fund', 5000, '', '', '')",
+            (setup_stale_account_user,),
+        )
+        fetch_assumptions(setup_stale_account_user)
+        conn.execute(
+            "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+            (setup_stale_account_user,),
+        )
+        conn.execute(
+            "INSERT INTO budget_items (user_id, name, section, default_amount, sort_order, is_active) VALUES (?, 'Rent', 'fixed', 500, 0, 1)",
+            (setup_stale_account_user,),
+        )
+        bid = conn.execute("SELECT id FROM budget_items WHERE user_id = ? LIMIT 1", (setup_stale_account_user,)).fetchone()["id"]
+        conn.execute(
+            "INSERT INTO budget_entries (month_key, budget_item_id, amount) VALUES (?, ?, 500)",
+            (today.strftime("%Y-%m"), bid),
+        )
+        conn.commit()
+
+        summary = build_data_health_summary(setup_stale_account_user)
+        stale_warning = next(item for item in summary["health_items"] if item["title"] == "Some accounts have stale or missing history")
+        assert stale_warning["link"] == "/history"
+        assert stale_warning["cta_text"] == "Review history"
+
+
 def test_missing_goal_produces_warning(app, setup_missing_goal_user):
     with app.app_context():
         summary = build_data_health_summary(setup_missing_goal_user)
@@ -454,4 +485,57 @@ def test_overview_data_health_goal_target_warning_uses_review_goals_cta(app, cli
     assert "Some goals are missing a target amount" in html
     assert 'href="/goals"' in html
     assert "Review goals" in html
+    assert ">Review<" not in html
+
+
+
+def test_overview_data_health_stale_history_warning_uses_review_history_cta(app, client, make_user):
+    uid, username, password = make_user(username="dh-stale-history", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = date.today().strftime("%Y-%m")
+
+    with app.app_context():
+        fetch_assumptions(uid)
+        conn = get_connection()
+        conn.execute(
+            "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+            (uid,),
+        )
+        aid = conn.execute(
+            """
+            INSERT INTO accounts (user_id, name, provider, wrapper_type, category, current_value, is_active, valuation_mode)
+            VALUES (?, 'ISA', 'Vanguard', 'Stocks & Shares ISA', 'Investments', 1000, 1, 'manual')
+            """,
+            (uid,),
+        ).lastrowid
+        conn.execute(
+            """
+            INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+            VALUES (?, 'Emergency fund', 5000, '', '', '')
+            """,
+            (uid,),
+        )
+        conn.execute(
+            "INSERT INTO budget_items (user_id, name, section, default_amount, sort_order, is_active) VALUES (?, 'Rent', 'fixed', 500, 0, 1)",
+            (uid,),
+        )
+        bid = conn.execute("SELECT id FROM budget_items WHERE user_id = ? LIMIT 1", (uid,)).fetchone()["id"]
+        conn.execute(
+            "INSERT INTO budget_entries (month_key, budget_item_id, amount) VALUES (?, ?, 500)",
+            (month_key, bid),
+        )
+        stale_date = (date.today() - timedelta(days=90)).strftime("%Y-%m-%d")
+        conn.execute(
+            "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, 1000, ?)",
+            (stale_date, aid, stale_date[:7]),
+        )
+        conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Some accounts have stale or missing history" in html
+    assert 'href="/history"' in html
+    assert "Review history" in html
     assert ">Review<" not in html
