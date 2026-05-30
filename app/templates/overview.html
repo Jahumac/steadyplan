@@ -62,8 +62,10 @@
   <p class="helper-text mb-075">
     {% if essential_steps_done < 2 %}
       You only need the basics to begin. Goals and monthly updates can wait until you have something real to track.
-    {% else %}
+    {% elif not has_goal %}
       You already have the basics in place. Set a first goal or do your first monthly update when you want SteadyPlan to start tracking progress.
+    {% else %}
+      You already have the basics in place. Do your first monthly update when you want SteadyPlan to start tracking progress.
     {% endif %}
   </p>
 
