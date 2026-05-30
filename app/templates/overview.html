@@ -433,7 +433,7 @@
 {% endif %}
 
 {# ── Asset Allocation ─────────────────────────────────────────────────────── #}
-{% if allocation_labels | length > 1 %}
+{% if has_goal and allocation_labels | length > 1 %}
 <section class="card mb-1">
   <div class="section-header mb-075">
     <p class="eyebrow m-0">Holdings</p>
