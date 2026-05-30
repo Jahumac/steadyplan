@@ -363,6 +363,7 @@
 {% endif %}
 
 {# ── ISA Allowances ───────────────────────────────────────────────────────── #}
+{% if has_goal %}
 <section class="card-grid allowance-grid mb-1">
   <div class="card allowance-card">
     <h2>ISA Allowance {{ metrics.tax_year }}</h2>
@@ -407,6 +408,7 @@
     </div>
   </div>
 </section>
+{% endif %}
 
 {# ── Accounts ─────────────────────────────────────────────────────────────── #}
 {% if has_accounts %}
