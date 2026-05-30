@@ -220,7 +220,7 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
     html = resp.get_data(as_text=True)
 
     assert "Do your first monthly update" in html
-    assert "Start first monthly update" in html
+    assert "Start first monthly update" not in html
     assert "Keep going" in html
     assert "Getting Started" not in html
     assert "You already have the basics in place." in html
