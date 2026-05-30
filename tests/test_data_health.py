@@ -199,6 +199,14 @@ def test_missing_goal_produces_warning(app, setup_missing_goal_user):
         assert "Some goals are missing a target amount" in titles
 
 
+def test_missing_goal_warning_uses_review_goals_cta(app, setup_missing_goal_user):
+    with app.app_context():
+        summary = build_data_health_summary(setup_missing_goal_user)
+        goal_warning = next(item for item in summary["health_items"] if item["title"] == "Some goals are missing a target amount")
+        assert goal_warning["link"] == "/goals"
+        assert goal_warning["cta_text"] == "Review goals"
+
+
 def test_no_goals_warning_uses_first_goal_cta(app, setup_stale_account_user):
     with app.app_context():
         conn = get_connection()
@@ -399,4 +407,51 @@ def test_overview_data_health_missing_goal_uses_first_goal_cta(app, client, make
     assert "No financial goals set" in html
     assert 'href="/goals/?mode=create"' in html
     assert "Set your first goal" in html
+    assert ">Review<" not in html
+
+
+def test_overview_data_health_goal_target_warning_uses_review_goals_cta(app, client, make_user):
+    uid, username, password = make_user(username="dh-goal-target", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = date.today().strftime("%Y-%m")
+    today_str = date.today().strftime("%Y-%m-%d")
+
+    with app.app_context():
+        fetch_assumptions(uid)
+        conn = get_connection()
+        conn.execute(
+            "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+            (uid,),
+        )
+        aid = conn.execute(
+            """
+            INSERT INTO accounts (user_id, name, provider, wrapper_type, category, current_value, is_active, valuation_mode)
+            VALUES (?, 'ISA', 'Vanguard', 'Stocks & Shares ISA', 'Investments', 1000, 1, 'manual')
+            """,
+            (uid,),
+        ).lastrowid
+        conn.execute(
+            """
+            INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+            VALUES (?, 'Emergency fund', 0, '', '', '')
+            """,
+            (uid,),
+        )
+        conn.execute(
+            "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, 1000, ?)",
+            (month_key + "-01", aid, month_key),
+        )
+        conn.execute(
+            "INSERT INTO account_daily_snapshots (user_id, account_id, snapshot_date, value) VALUES (?, ?, ?, 1000)",
+            (uid, aid, today_str),
+        )
+        conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Some goals are missing a target amount" in html
+    assert 'href="/goals"' in html
+    assert "Review goals" in html
     assert ">Review<" not in html
