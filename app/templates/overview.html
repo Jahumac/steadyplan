@@ -413,7 +413,7 @@
 {% endif %}
 
 {# ── Accounts ─────────────────────────────────────────────────────────────── #}
-{% if has_accounts %}
+{% if accounts|length > 1 %}
 <section class="card mb-1">
   <div class="section-header">
     <div>
