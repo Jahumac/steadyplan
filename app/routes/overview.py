@@ -529,7 +529,7 @@ def overview():
             alerts.append({
                 "kind": "info",
                 "message": f"Your {now_date.strftime('%B')} update is done but {len(unconfirmed)} contribution{'s' if len(unconfirmed) != 1 else ''} weren't confirmed — did they all arrive? ({names})",
-                "cta_text": "Check contributions",
+                "cta_text": "Open monthly update",
                 "cta_href": f"/monthly-review/?month={current_month_key}",
                 "cta_form_action": None,
             })
