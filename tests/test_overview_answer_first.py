@@ -522,6 +522,38 @@ def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, clien
 
 
 
+def test_overview_hides_zero_monthly_contribution_hero_stat(app, client, make_user):
+    uid, username, password = make_user(username="overview-zero-contribution", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 10000, 0, 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Accessible now" in html
+    assert "Locked later" in html
+    assert "Monthly contributions" not in html
+
+
+
 def test_overview_hides_retirement_projection_until_profile_exists(app, client, make_user):
     uid, username, password = make_user(username="overview-no-profile-projection", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
