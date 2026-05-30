@@ -11,6 +11,8 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
 
     assert "Start here" in html
     assert "You only need the basics to begin." in html
+    assert "0/2 basics complete" in html
+    assert "0/4 complete" not in html
     assert "Essential to start" in html
     assert "Do later" in html
     assert "Complete your profile" in html
@@ -49,6 +51,8 @@ def test_overview_getting_started_primary_action_moves_to_first_incomplete_basic
 
     assert "Add your first account" in html
     assert "Start with one real account so Overview has something concrete to show." in html
+    assert "1/2 basics complete" in html
+    assert "0/4 complete" not in html
     assert "Add account" in html
     assert 'href="/accounts/?mode=create"' in html
     assert "Nothing in the shell yet" not in html
@@ -208,6 +212,9 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
     html = resp.get_data(as_text=True)
 
     assert "Do your first monthly update" in html
+    assert "Basics done" in html
+    assert "1/2 later steps complete" in html
+    assert "2/4 complete" not in html
     assert "ISA Allowance" in html
     assert "Pension Allowance" in html
     assert "<p class=\"eyebrow\">Goals</p>" not in html

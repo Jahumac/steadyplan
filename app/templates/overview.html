@@ -10,6 +10,8 @@
 {% set has_history = history_labels | length > 0 %}
 {% set has_portfolio_history = (daily_labels | length > 0) or has_history %}
 {% set steps_done = [has_profile, has_accounts, has_goal, has_history] | select | list | length %}
+{% set essential_steps_done = [has_profile, has_accounts] | select | list | length %}
+{% set later_steps_done = [has_goal, has_history] | select | list | length %}
 {% set data_health_warnings = [] %}
 {% if data_health_summary and data_health_summary.health_items %}
   {% set data_health_warnings = data_health_summary.health_items | selectattr('status', 'equalto', 'warning') | list %}
@@ -49,7 +51,13 @@
       <p class="eyebrow">Getting Started</p>
       <h2 class="onboarding-title">Welcome to SteadyPlan</h2>
     </div>
-    <small class="text-muted onboarding-progress">{{ steps_done }}/4 complete</small>
+    <small class="text-muted onboarding-progress">
+      {% if essential_steps_done < 2 %}
+        {{ essential_steps_done }}/2 basics complete
+      {% else %}
+        Basics done · {{ later_steps_done }}/2 later steps complete
+      {% endif %}
+    </small>
   </div>
   <p class="helper-text mb-075">You only need the basics to begin. Goals and monthly updates can wait until you have something real to track.</p>
 
