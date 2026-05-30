@@ -339,6 +339,7 @@ def test_overview_data_health_visible_when_warnings_exist(app, client, make_user
     html = resp.get_data(as_text=True)
     assert "Data Health" in html
     assert "Needs attention" in html
-    assert "/settings#accounts" in html
-    assert ">Review<" in html
+    assert "/accounts/?mode=create" in html
+    assert "Add your first account" in html
+    assert ">Review<" not in html
     assert "alert-warning" in html

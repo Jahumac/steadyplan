@@ -37,7 +37,8 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
                 "status": HEALTH_STATUS_WARNING,
                 "title": "No accounts set up",
                 "explanation": "You haven't added any financial accounts yet. Add accounts to track your finances.",
-                "link": "/settings#accounts",
+                "link": "/accounts/?mode=create",
+                "cta_text": "Add your first account",
             })
             overall_status = HEALTH_STATUS_WARNING
         else:

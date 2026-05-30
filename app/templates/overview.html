@@ -210,7 +210,7 @@
         {{ data_health_warnings[0].title }}{% if data_health_warnings[0].explanation %} — {{ data_health_warnings[0].explanation }}{% endif %}
       </p>
     </div>
-    <a href="{{ data_health_warnings[0].link if data_health_warnings[0].link else '/settings/?mode=diagnostics' }}" class="badge badge-meta">Review</a>
+    <a href="{{ data_health_warnings[0].link if data_health_warnings[0].link else '/settings/?mode=diagnostics' }}" class="badge badge-meta">{{ data_health_warnings[0].cta_text if data_health_warnings[0].cta_text else 'Review' }}</a>
   </div>
 </section>
 {% endif %}

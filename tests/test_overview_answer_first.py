@@ -25,6 +25,9 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Complete your profile" in html
     assert "Complete profile" not in html
     assert 'href="/settings/?mode=edit"' in html
+    assert "No accounts set up" in html
+    assert 'href="/accounts/?mode=create"' in html
+    assert "Review" not in html
     assert "Monthly review" not in html
     assert "Status:" not in html
     assert "Nothing in the shell yet" not in html
