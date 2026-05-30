@@ -89,7 +89,7 @@
   </div>
 
   <details class="onboarding-later">
-    <summary>Do later</summary>
+    <summary>Do later · {{ later_steps_done }}/2 complete</summary>
     <div class="onboarding-steps onboarding-steps-secondary">
       <a href="/goals/?mode=create" class="onboarding-step {% if has_goal %}onboarding-done{% endif %}">
         <span class="onboarding-check">{% if has_goal %}✓{% else %}3{% endif %}</span>
