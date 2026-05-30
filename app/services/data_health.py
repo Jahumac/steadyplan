@@ -83,7 +83,8 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
                 "status": HEALTH_STATUS_WARNING,
                 "title": "No financial goals set",
                 "explanation": "You haven't set any financial goals yet. Define your goals to track progress.",
-                "link": "/goals",
+                "link": "/goals/?mode=create",
+                "cta_text": "Set your first goal",
             })
             if overall_status == HEALTH_STATUS_GOOD:
                 overall_status = HEALTH_STATUS_WARNING
