@@ -168,7 +168,7 @@
 </section>
 {% endif %}
 
-{% if next_action and steps_done >= 4 %}
+{% if show_next_action and steps_done >= 4 %}
 <section class="card next-action-card mb-1">
   <div class="flex flex-center flex-wrap gap-075">
     <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="" class="shelly-inline-icon shelly-icon-sm">
@@ -217,8 +217,7 @@
   <div class="card-grid overview-access-grid">
     <div class="card overview-access-mini-card">
       <p class="eyebrow">Accessible now</p>
-      <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</p>
-      <p class="helper-text m-0">{{ '{:.0f}'.format(access_summary.accessible_pct) }}% of your current total. ISA, cash, GIA, Premium Bonds and similar accounts.</p>
+      <p class="helper-text m-0">{{ '{:.0f}'.format(access_summary.accessible_pct) }}% of your current total is usually reachable before pension age. ISA, cash, GIA, Premium Bonds and similar accounts sit here.</p>
     </div>
     <div class="card overview-access-mini-card">
       <p class="eyebrow">Restricted</p>
@@ -227,8 +226,7 @@
     </div>
     <div class="card overview-access-mini-card">
       <p class="eyebrow">Locked later</p>
-      <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.locked_current) }}</p>
-      <p class="helper-text m-0">Pension-style money that is building for later rather than near-term flexibility.</p>
+      <p class="helper-text m-0">Pension-style money that is building for later rather than near-term flexibility. The top summary keeps the headline locked amount visible.</p>
     </div>
   </div>
   {% if access_summary.next_milestone %}

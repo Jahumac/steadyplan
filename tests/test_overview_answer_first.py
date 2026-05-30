@@ -85,10 +85,10 @@ def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
     assert "Accessible now" in html
     assert "Restricted" in html
     assert "Locked later" in html
-    assert "£1,000" in html
+    assert html.count('class="overview-access-value"') == 1
     assert "£2,000" in html
-    assert "£3,000" in html
-    assert "17% of your current total" in html
+    assert "17% of your current total is usually reachable before pension age" in html
+    assert "The top summary keeps the headline locked amount visible." in html
     assert "Next accessible milestone:" in html
     assert "£20,000" in html
 
@@ -129,3 +129,98 @@ def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, clien
     assert "Projected at retirement" in html
     assert "Goal progress" not in html
     assert "Tax Year " not in html
+
+
+def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, make_user):
+    uid, username, password = make_user(username="overview-review-due", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = date.today().strftime("%Y-%m")
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01', salary_day = 1 WHERE user_id = ?",
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key)
+                VALUES (?, ?, ?, ?)
+                """,
+                (f"{month_key}-01", account_id, 1000, month_key),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Your investments should be settled by now" in html
+    assert "Start monthly update" in html
+    assert "Your next nudge" not in html
+    assert "Status:" not in html
+
+
+def test_overview_missing_salary_day_uses_single_settings_nudge(app, client, make_user):
+    uid, username, password = make_user(username="overview-no-salary-day", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = date.today().strftime("%Y-%m")
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01', salary_day = 0 WHERE user_id = ?",
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key)
+                VALUES (?, ?, ?, ?)
+                """,
+                (f"{month_key}-01", account_id, 1000, month_key),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Set your investment day in Settings" in html
+    assert "Go to Settings" in html
+    assert "Your next nudge" not in html
