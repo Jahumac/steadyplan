@@ -19,6 +19,7 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Add your first account" in html
     assert "Set a goal once you know what you want to aim for." in html
     assert "Do your first monthly update after your first contribution or balance change settles." in html
+    assert "Complete profile" in html
     assert 'href="/settings/?mode=edit"' in html
     assert "Monthly review" not in html
     assert "Status:" not in html
@@ -53,7 +54,7 @@ def test_overview_getting_started_primary_action_moves_to_first_incomplete_basic
     assert "Start with one real account so Overview has something concrete to show." in html
     assert "1/2 basics complete" in html
     assert "0/4 complete" not in html
-    assert "Add account" in html
+    assert "Add first account" in html
     assert 'href="/accounts/?mode=create"' in html
     assert "Nothing in the shell yet" not in html
     assert "<h2>Accounts</h2>" not in html
@@ -89,6 +90,7 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     html = resp.get_data(as_text=True)
 
     assert "Set a first goal" in html
+    assert "Set first goal" in html
     assert "Accessible vs locked" in html
     assert "Portfolio Value" not in html
     assert "ISA Allowance" not in html
@@ -212,6 +214,7 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
     html = resp.get_data(as_text=True)
 
     assert "Do your first monthly update" in html
+    assert "Start first monthly update" in html
     assert "Basics done" in html
     assert "1/2 later steps complete" in html
     assert "2/4 complete" not in html
