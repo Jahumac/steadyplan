@@ -8,6 +8,7 @@
 {% set has_accounts = accounts | length > 0 %}
 {% set has_goal = goals_data | length > 0 %}
 {% set has_history = history_labels | length > 0 %}
+{% set has_portfolio_history = (daily_labels | length > 0) or has_history %}
 {% set steps_done = [has_profile, has_accounts, has_goal, has_history] | select | list | length %}
 {% set data_health_warnings = [] %}
 {% if data_health_summary and data_health_summary.health_items %}
@@ -252,6 +253,7 @@
 {% endif %}
 
 {# ── Portfolio Value ───────────────────────────────────────────────────────── #}
+{% if has_portfolio_history %}
 <section class="card mb-1">
   <div class="section-header mb-075">
     <p class="chart-label m-0">Portfolio Value</p>
@@ -338,6 +340,7 @@
     </div>
   </div>
 </section>
+{% endif %}
 
 {# ── Goal progress ────────────────────────────────────────────────────────── #}
 {% if goals_data %}

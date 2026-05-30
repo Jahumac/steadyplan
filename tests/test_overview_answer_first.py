@@ -58,6 +58,40 @@ def test_overview_getting_started_primary_action_moves_to_first_incomplete_basic
     assert "Portfolio Value" not in html
 
 
+def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, make_user):
+    uid, username, password = make_user(username="overview-first-account", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Set a first goal" in html
+    assert "Accessible vs locked" in html
+    assert "Portfolio Value" not in html
+    assert "No daily snapshots yet" not in html
+    assert "Complete your first Monthly Update to start tracking net worth over time" not in html
+
+
+
 def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
     uid, username, password = make_user(username="overview-access", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
