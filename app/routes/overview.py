@@ -542,7 +542,7 @@ def overview():
                 "eyebrow": "Your next nudge",
                 "title": "Monthly update is ready",
                 "body": "A quick check keeps your history honest. Update balances, confirm contributions, then SteadyPlan can draw the next little line.",
-                "cta_text": "Start monthly update",
+                "cta_text": "Open monthly update",
                 "cta_href": "/monthly-review/",
             }
         elif not goals_data:

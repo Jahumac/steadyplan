@@ -715,7 +715,8 @@ def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, m
     html = resp.get_data(as_text=True)
 
     assert "Your investments should be settled by now" in html
-    assert "Start monthly update" in html
+    assert "Open monthly update" in html
+    assert "Start monthly update" not in html
     assert "Your next nudge" not in html
     assert "Status:" not in html
 
