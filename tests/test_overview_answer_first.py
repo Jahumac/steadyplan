@@ -910,3 +910,52 @@ def test_overview_missing_salary_day_uses_single_settings_nudge(app, client, mak
     assert "Set your investment day" in html
     assert "Go to Settings" not in html
     assert "Your next nudge" not in html
+
+
+def test_overview_premium_bonds_cap_alert_uses_specific_premium_bonds_cta(app, client, make_user):
+    uid, username, password = make_user(username="overview-premium-bonds-cap", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = date.today().strftime("%Y-%m")
+    today_str = date.today().strftime("%Y-%m-%d")
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01', salary_day = 1 WHERE user_id = ?",
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'PB', 'Premium Bonds', 51000, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key)
+                VALUES (?, ?, ?, ?)
+                """,
+                (today_str, account_id, 51000, month_key),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "NS&amp;I&#39;s current maximum eligible holding is £50,000" in html
+    assert "Review Premium Bonds" in html
+    assert "Review accounts" not in html
+    assert 'href="/accounts/"' in html
