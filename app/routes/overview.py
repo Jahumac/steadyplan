@@ -450,7 +450,7 @@ def overview():
         alerts.append({
             "kind": "info",
             "message": f"{days_left} days left in the tax year — £{isa_remaining:,.0f} of your ISA allowance is still unused.",
-            "cta_text": "Record top-up",
+            "cta_text": "Record ISA top-up",
             "cta_href": "/allowance/#topup",
         })
 
