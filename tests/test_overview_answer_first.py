@@ -478,6 +478,35 @@ def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
     assert "£20,000" in html
 
 
+
+def test_overview_hides_completed_accessible_milestone_nudge(app, client, make_user):
+    uid, username, password = make_user(username="overview-milestone-complete", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'Cash ISA', 'Cash ISA', 100000, 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Accessible vs locked" in html
+    assert "Accessible now" in html
+    assert "Next accessible milestone:" not in html
+    assert "£0 to go" not in html
+
+
+
 def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, client, make_user):
     uid, username, password = make_user(username="overview-hero", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
