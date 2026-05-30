@@ -72,6 +72,7 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
                     "title": "Some accounts have stale or missing history",
                     "explanation": f"The following accounts have no recent balance history: {', '.join(stale_accounts)}. Update them to ensure accurate projections.",
                     "link": "/history",
+                    "cta_text": "Review history",
                 })
                 if overall_status == HEALTH_STATUS_GOOD:
                     overall_status = HEALTH_STATUS_WARNING
