@@ -721,6 +721,50 @@ def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, m
     assert "Status:" not in html
 
 
+def test_overview_missed_review_alert_uses_specific_monthly_update_cta(app, client, make_user):
+    uid, username, password = make_user(username="overview-missed-review-alert", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    today = date.today()
+    if today.month == 1:
+        last_month_key = f"{today.year - 1}-12"
+    else:
+        last_month_key = f"{today.year}-{today.month - 1:02d}"
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01', salary_day = 1 WHERE user_id = ?",
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO monthly_reviews (user_id, month_key, status)
+                VALUES (?, ?, 'started')
+                """,
+                (uid, last_month_key),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert '/monthly-review/?month=' in html
+    assert "Open monthly update" in html
+    assert "Do it now" not in html
+
+
 def test_overview_missing_salary_day_uses_single_settings_nudge(app, client, make_user):
     uid, username, password = make_user(username="overview-no-salary-day", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)

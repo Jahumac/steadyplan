@@ -502,7 +502,7 @@ def overview():
                 alerts.append({
                     "kind": "warning",
                     "message": f"Your {lm_label} monthly update hasn't been completed yet.",
-                    "cta_text": "Do it now",
+                    "cta_text": "Open monthly update",
                     "cta_href": f"/monthly-review/?month={lm_key}",
                     "cta_form_action": None,
                 })
