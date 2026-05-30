@@ -429,7 +429,7 @@ def overview():
         alerts.append({
             "kind": "danger",
             "message": f"You're on track to exceed your ISA allowance by £{over:,.0f} this tax year.",
-            "cta_text": "View allowance",
+            "cta_text": "Review ISA allowance",
             "cta_href": "/allowance/",
         })
 
