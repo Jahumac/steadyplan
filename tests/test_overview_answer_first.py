@@ -92,7 +92,8 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     html = resp.get_data(as_text=True)
 
     assert "Set a first goal" in html
-    assert "Set first goal" in html
+    assert "Set your first goal" in html
+    assert "Set first goal" not in html
     assert "Accessible vs locked" in html
     assert "Portfolio Value" not in html
     assert "ISA Allowance" not in html
