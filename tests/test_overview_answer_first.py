@@ -22,7 +22,8 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Set a first goal" not in html
     assert "Set a goal once you know what you want to aim for." not in html
     assert "Do your first monthly update after your first contribution or balance change settles." in html
-    assert "Complete profile" in html
+    assert "Complete your profile" in html
+    assert "Complete profile" not in html
     assert 'href="/settings/?mode=edit"' in html
     assert "Monthly review" not in html
     assert "Status:" not in html
@@ -57,7 +58,8 @@ def test_overview_getting_started_primary_action_moves_to_first_incomplete_basic
     assert "Start with one real account so Overview has something concrete to show." in html
     assert "1/2 basics complete" in html
     assert "0/4 complete" not in html
-    assert "Add first account" in html
+    assert "Add your first account" in html
+    assert "Add first account" not in html
     assert 'href="/accounts/?mode=create"' in html
     assert "Nothing in the shell yet" not in html
     assert "<h2>Accounts</h2>" not in html
