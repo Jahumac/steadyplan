@@ -417,7 +417,7 @@ def overview():
             alerts.append({
                 "kind": "warning",
                 "message": "Prices haven't updated in over 24 hours — the scheduler may have missed a window.",
-                "cta_text": "↻ Refresh now",
+                "cta_text": "Refresh prices now",
                 "cta_href": None,
                 "cta_form_action": "/holdings/trigger-price-update",
             })
