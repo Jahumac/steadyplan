@@ -20,6 +20,8 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert 'href="/settings/?mode=edit"' in html
     assert "Monthly review" not in html
     assert "Status:" not in html
+    assert "Nothing in the shell yet" not in html
+    assert "<h2>Accounts</h2>" not in html
 
 
 def test_overview_getting_started_primary_action_moves_to_first_incomplete_basic_step(app, client, make_user):
@@ -45,6 +47,8 @@ def test_overview_getting_started_primary_action_moves_to_first_incomplete_basic
     assert "Start with one real account so Overview has something concrete to show." in html
     assert "Add account" in html
     assert 'href="/accounts/?mode=create"' in html
+    assert "Nothing in the shell yet" not in html
+    assert "<h2>Accounts</h2>" not in html
 
 
 def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
