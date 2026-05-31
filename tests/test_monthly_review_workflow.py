@@ -47,7 +47,8 @@ def test_overview_renders_monthly_review_card_after_basic_onboarding_is_complete
     resp = client.get("/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-    assert "Monthly review" in html
+    assert "Monthly update" in html
+    assert "Monthly review" not in html
     assert "Status:" in html
     assert "Checklist:" not in html
 
