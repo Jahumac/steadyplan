@@ -82,6 +82,8 @@ def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(
     assert "<h2>Prize Draw Results</h2>" not in html
     assert ">Prize result (£)<" in html
     assert ">Prize this month (£)<" not in html
+    assert ">Current balance (£)<" in html
+    assert ">Current NS&amp;I balance (£)<" not in html
     assert ">Log prize result<" in html
     assert ">Log prize<" not in html
     assert "<p class=\"eyebrow\">CSV import</p>" in html
