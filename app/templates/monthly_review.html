@@ -346,7 +346,7 @@
               {% elif existing_prize and existing_prize.prize_amount > 0 %}
                 <span class="pb-prize-won">£{{ '{:,.2f}'.format(existing_prize.prize_amount) }} won</span>
               {% elif existing_prize %}
-                <span class="pb-prize-nil">No win logged</span>
+                <span class="pb-prize-nil">No prize won</span>
               {% endif %}
               <a class="badge" href="/accounts/{{ item.account_id }}">Review account</a>
             </div>
