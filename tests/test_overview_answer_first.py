@@ -1143,6 +1143,57 @@ def test_overview_portfolio_card_uses_specific_refresh_prices_cta(app, client, m
     assert "↻ Refresh</button>" not in html
 
 
+def test_overview_portfolio_pending_review_helper_uses_sentence_case_monthly_update_link(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="overview-pending-review-helper-copy", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    import app.routes.overview as overview_route
+
+    monkeypatch.setattr(overview_route, "is_review_due", lambda *_args, **_kwargs: False)
+
+    today_str = date.today().strftime("%Y-%m-%d")
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01', salary_day = 1 WHERE user_id = ?",
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 250, 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value)
+                VALUES (?, ?, ?)
+                """,
+                (uid, today_str, 1000),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "estimated from defaults — confirm in" in html
+    assert 'href="/monthly-review/" class="link-accent">monthly update</a>' in html
+    assert 'href="/monthly-review/" class="link-accent">Monthly Update</a>' not in html
+
+
 def test_overview_premium_bonds_cap_alert_uses_specific_premium_bonds_cta(app, client, make_user):
     uid, username, password = make_user(username="overview-premium-bonds-cap", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
