@@ -248,7 +248,7 @@
                                value="{{ '{:.4f}'.format(holding.price) if holding.price else '' }}"
                                class="hu-price" {% if review.status == 'complete' %}disabled{% endif %}>
                         {% if holding.ticker and review.status != 'complete' %}
-                          <button type="button" class="hu-refresh" title="Fetch latest price">↻</button>
+                          <button type="button" class="hu-refresh" title="Refresh latest price">↻</button>
                         {% endif %}
                       </div>
                     </label>
