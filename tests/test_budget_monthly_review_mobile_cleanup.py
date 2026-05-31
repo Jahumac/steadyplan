@@ -24,7 +24,8 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
 
     assert 'href="/monthly-review/" class="subnav-active">Monthly Update</a>' in html
     assert 'href="/monthly-review/" class="subnav-active">Monthly review</a>' not in html
-    assert "Start here" in html
+    assert '<p class="eyebrow">Monthly Update</p>' in html
+    assert '<p class="eyebrow">Monthly review</p>' not in html
     assert '<span>Review status</span>' in html
     assert '<div class="hero-strip-stat">\n      <span>Status</span>' not in html
     assert '<strong>Not started</strong>' in html
