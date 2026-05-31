@@ -185,6 +185,7 @@ def test_overview_multi_account_state_restores_accounts_breakdown_panel(app, cli
     html = resp.get_data(as_text=True)
 
     assert "<h2>Accounts</h2>" in html
+    assert "Review accounts" in html
     assert "2 active" in html
 
 
