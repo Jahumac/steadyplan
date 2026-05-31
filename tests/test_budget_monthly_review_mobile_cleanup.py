@@ -84,6 +84,8 @@ def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(
     assert "Prize not logged" not in html
     assert ">Prize result (£)<" in html
     assert ">Prize this month (£)<" not in html
+    assert "Enter 0 if no prize won this month" in html
+    assert "Enter 0 if no win this month" not in html
     assert ">Current balance (£)<" in html
     assert ">Current NS&amp;I balance (£)<" not in html
     assert ">Log prize result<" in html

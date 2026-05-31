@@ -365,7 +365,7 @@
                        value="{{ '{:.2f}'.format(existing_prize.prize_amount) if existing_prize else '' }}"
                        placeholder="0.00"
                        {% if review.status == 'complete' %}disabled{% endif %}>
-                <span class="form-hint">Enter 0 if no win this month</span>
+                <span class="form-hint">Enter 0 if no prize won this month</span>
               </label>
             </div>
             {% if review.status != 'complete' %}
