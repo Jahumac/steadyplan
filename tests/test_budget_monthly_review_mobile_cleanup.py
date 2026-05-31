@@ -269,6 +269,48 @@ def test_monthly_review_contribution_checkbox_uses_explicit_label(app, client, m
     assert '<p class="helper-text m-0">Not confirmed</p>' not in html
 
 
+def test_monthly_review_confirmed_contribution_uses_explicit_status_label(app, client, make_user):
+    uid, username, password = make_user(username="review-confirmed-contribution-label", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, valuation_mode, monthly_contribution, current_value, is_active)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 'manual', 150, 1000, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            review_id = conn.execute(
+                """
+                INSERT INTO monthly_reviews (user_id, month_key, status, created_at, updated_at)
+                VALUES (?, '2026-04', 'in_progress', datetime('now'), datetime('now'))
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO monthly_review_items (
+                    review_id, account_id, expected_contribution,
+                    contribution_confirmed, holdings_updated, balance_updated, notes
+                )
+                VALUES (?, ?, 150, 1, 0, 0, '')
+                """,
+                (review_id, account_id),
+            )
+            conn.commit()
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert '<p class="helper-text m-0">Contribution confirmed</p>' in html
+    assert '<p class="helper-text m-0">Confirmed</p>' not in html
+
+
 def test_monthly_review_first_update_section_uses_update_balances_heading(app, client, make_user):
     _, username, password = make_user(username="review-update-heading", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
