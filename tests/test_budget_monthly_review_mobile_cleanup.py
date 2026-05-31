@@ -255,6 +255,19 @@ def test_monthly_review_update_balances_uses_refresh_prices_now_cta(app, client,
     assert "↻ Update All Prices" not in html
 
 
+def test_monthly_review_empty_holdings_state_uses_explicit_add_account_cta(app, client, make_user):
+    _, username, password = make_user(username="review-empty-holdings", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "No holdings-based accounts" in html
+    assert ">Add holdings-based account<" in html
+    assert ">+ Add account<" not in html
+
+
 def test_monthly_review_finish_shortcuts_match_final_step_wording(app, client, make_user):
     _, username, password = make_user(username="review-finish-shortcut", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
