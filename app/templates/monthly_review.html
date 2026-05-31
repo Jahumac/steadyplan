@@ -305,7 +305,7 @@
                    {% if review.status == 'complete' %}disabled{% endif %}>
           </label>
           {% if review.status != 'complete' %}
-          <button type="submit" class="badge badge-primary-action">Update</button>
+          <button type="submit" class="badge badge-primary-action">Update balance</button>
           <a href="/accounts/{{ item.account_id }}?mode=view#balance-update&next=/monthly-review/?month={{ month_key }}" class="badge badge-meta">Open account</a>
           {% endif %}
         </form>
