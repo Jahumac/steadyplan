@@ -265,6 +265,8 @@ def test_monthly_review_contribution_checkbox_uses_explicit_label(app, client, m
     assert 'title="Confirm contribution happened"' in html
     assert 'class="badge badge-sm contribution-skip-btn">Skip this month<' in html
     assert 'class="badge badge-sm contribution-skip-btn">Skip<' not in html
+    assert '<p class="helper-text m-0">Contribution not confirmed</p>' in html
+    assert '<p class="helper-text m-0">Not confirmed</p>' not in html
 
 
 def test_monthly_review_first_update_section_uses_update_balances_heading(app, client, make_user):
