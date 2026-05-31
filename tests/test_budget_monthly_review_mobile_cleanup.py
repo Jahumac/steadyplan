@@ -23,6 +23,8 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     html = resp.get_data(as_text=True)
 
     assert "Start here" in html
+    assert '<span>From you</span>' in html
+    assert '<span>Monthly in</span>' not in html
     assert "1. Confirm contributions" in html
     assert "Confirm anything that happened this month." in html
     assert "Tick off anything that happened this month." not in html
