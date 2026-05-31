@@ -429,7 +429,8 @@ def test_monthly_review_empty_holdings_state_uses_explicit_add_account_cta(app, 
     html = resp.get_data(as_text=True)
 
     assert "No holdings-based accounts" in html
-    assert "ready for your monthly update" in html
+    assert "appear here ready for your monthly update" in html
+    assert "show up ready for your monthly update" not in html
     assert "ready for your monthly check-in" not in html
     assert ">Add holdings-based account<" in html
     assert ">+ Add account<" not in html
