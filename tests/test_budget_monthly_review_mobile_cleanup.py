@@ -142,6 +142,31 @@ def test_monthly_review_manual_section_uses_manual_balances_heading(app, client,
     assert "Manual Accounts" not in html
 
 
+def test_monthly_review_manual_balance_field_uses_sentence_case_label(app, client, make_user):
+    uid, username, password = make_user(username="review-manual-balance-label", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, valuation_mode, current_value, is_active)
+                VALUES (?, 'Cash pot', 'manual', 2500, 1)
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert ">Current balance<" in html
+    assert ">Current Balance<" not in html
+
+
 def test_monthly_review_update_balances_uses_refresh_prices_now_cta(app, client, make_user):
     uid, username, password = make_user(username="review-refresh-prices", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
