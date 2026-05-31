@@ -459,7 +459,8 @@ def test_monthly_review_empty_account_helper_uses_monthly_update_wording(app, cl
     html = resp.get_data(as_text=True)
 
     assert "No holdings here yet." in html
-    assert "appear here for your monthly update" in html
+    assert "Add holdings in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" in html
+    assert "Add some in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" not in html
     assert "show up for your monthly update" not in html
     assert "show up for your next update" not in html
 
