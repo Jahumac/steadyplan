@@ -63,6 +63,8 @@ def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(
     assert "<h2>Prize Draw Results</h2>" not in html
     assert ">Log prize result<" in html
     assert ">Log prize<" not in html
+    assert "<p class=\"eyebrow\">CSV import</p>" in html
+    assert "<p class=\"eyebrow\">Shortcut</p>" not in html
     assert "<h2>CSV import</h2>" in html
     assert "<h2>CSV Import</h2>" not in html
     assert "<span class=\"badge badge-meta\">CSV import</span>" in html
