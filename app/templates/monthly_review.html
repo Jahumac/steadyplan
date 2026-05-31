@@ -35,7 +35,7 @@
     </div>
     <div class="hero-actions-col">
       {% if review.status == 'complete' %}
-        <span class="badge badge-complete">✓ Completed</span>
+        <span class="badge badge-complete">✓ Complete</span>
         <form method="post" class="form-reset" style="display:inline;">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="form_name" value="reopen">
