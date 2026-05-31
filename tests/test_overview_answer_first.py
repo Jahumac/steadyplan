@@ -1441,7 +1441,9 @@ def test_overview_pension_allowance_card_uses_specific_review_cta(app, client, m
     assert "Pension Allowance" in html
     assert 'href="/allowance/#pension"' in html
     assert '>Review pension allowance</a>' in html
+    assert '>Record pension contribution</a>' in html
     assert 'href="/allowance/#pension" class="badge badge-sm">View breakdown</a>' not in html
+    assert '>Record contribution</a>' not in html
 
 
 def test_overview_unused_isa_allowance_alert_uses_specific_topup_cta(app, client, make_user, monkeypatch):
