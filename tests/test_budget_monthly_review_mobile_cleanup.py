@@ -137,6 +137,8 @@ def test_monthly_review_first_update_section_uses_update_balances_heading(app, c
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
+    assert '<p class="eyebrow">Update balances</p>' in html
+    assert '<p class="eyebrow">Step 2</p>' not in html
     assert "<h2>Update balances</h2>" in html
     assert "Holdings-Based Accounts" not in html
 
