@@ -383,7 +383,7 @@
             <input type="hidden" name="account_id" value="{{ item.account_id }}">
             <div class="form-grid">
               <label class="form-field">
-                <span class="form-label">Current NS&amp;I balance (£)</span>
+                <span class="form-label">Current balance (£)</span>
                 <input type="number" step="0.01" name="current_value"
                        value="{{ '{:.2f}'.format(item.current_value) if item.current_value else '' }}"
                        {% if review.status == 'complete' %}disabled{% endif %}>
