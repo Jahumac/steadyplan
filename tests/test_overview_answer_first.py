@@ -281,6 +281,8 @@ def test_overview_multi_goal_state_restores_goal_progress_panel(app, client, mak
     html = resp.get_data(as_text=True)
 
     assert "<p class=\"eyebrow\">Goals</p>" in html
+    assert "Review goals" in html
+    assert "Manage</a>" not in html
     assert "Emergency fund progress" in html
     assert "House deposit progress" in html
 
