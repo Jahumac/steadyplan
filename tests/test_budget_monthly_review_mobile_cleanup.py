@@ -32,6 +32,9 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert "3. Save a note and mark reviewed" in html
     assert "Leave a quick reminder, then mark the month reviewed when you are happy." in html
     assert "Leave a quick reminder, then lock the month when you are happy." not in html
+    assert "No contributions to track this month." in html
+    assert "they’ll appear here for your monthly update." in html
+    assert "Set them up in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here.</p>" not in html
     assert "log prize draw results if needed" in html
     assert "log Premium Bonds if needed" not in html
     assert "Related checks" in html
