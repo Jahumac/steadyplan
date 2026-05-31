@@ -35,7 +35,8 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert '<strong>In progress</strong>' not in html
     assert '<span>From you</span>' in html
     assert '<span>Monthly in</span>' not in html
-    assert '<span>Accounts to review</span>' in html
+    assert '<span>Accounts to update</span>' in html
+    assert '<span>Accounts to review</span>' not in html
     assert '<div class="hero-strip-stat">\n      <span>Accounts</span>' not in html
     assert "1. Confirm contributions" in html
     assert "Confirm anything that happened this month." in html
