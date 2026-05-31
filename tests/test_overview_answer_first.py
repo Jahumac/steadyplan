@@ -496,7 +496,8 @@ def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
     html = resp.get_data(as_text=True)
 
     assert "Accessible vs locked" in html
-    assert "Open Planning" in html
+    assert "Review planning" in html
+    assert "Open Planning" not in html
     assert "Accessible now" in html
     assert "Restricted" in html
     assert "Locked later" in html
