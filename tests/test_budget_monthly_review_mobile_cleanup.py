@@ -65,6 +65,8 @@ def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(
     assert "<h2>CSV import</h2>" in html
     assert "<h2>CSV Import</h2>" not in html
     assert "Open CSV import" in html
+    assert 'id="csv-import-cancel">Hide CSV import<' in html
+    assert 'id="csv-import-cancel">Cancel<' not in html
     assert ">Preview import<" in html
     assert ">Preview Import<" not in html
     assert ">Show<" not in html
