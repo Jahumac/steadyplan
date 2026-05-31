@@ -47,6 +47,8 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert "To do: 0 contributions to confirm · 0 accounts to update" not in html
     assert "Leave a quick reminder, then mark the month reviewed when you are happy." in html
     assert "Leave a quick reminder, then lock the month when you are happy." not in html
+    assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or manual balances below where needed." in html
+    assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or balances below where needed." not in html
     assert "No contributions to track this month." in html
     assert "Set them up in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" in html
     assert "Set them up in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here.</p>" not in html
