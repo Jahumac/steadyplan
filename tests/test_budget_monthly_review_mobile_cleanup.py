@@ -107,6 +107,39 @@ def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(
 
 
 
+def test_monthly_review_zero_prize_result_uses_outcome_badge_wording(app, client, make_user):
+    uid, username, password = make_user(username="review-zero-prize-badge", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, valuation_mode, current_value, is_active)
+                VALUES (?, 'PB Zero', 'Premium Bonds', 'premium_bonds', 1000, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO premium_bonds_prizes (user_id, account_id, month_key, prize_amount, logged_at)
+                VALUES (?, ?, '2026-04', 0, '2026-04-01T00:00:00')
+                """,
+                (uid, account_id),
+            )
+            conn.commit()
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "No prize won" in html
+    assert "No win logged" not in html
+    assert ">Update prize result<" in html
+
+
 def test_monthly_review_places_finish_step_after_update_sections(app, client, make_user):
     _, username, password = make_user(username="review-finish-order", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
