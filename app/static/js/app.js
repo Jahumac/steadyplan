@@ -672,7 +672,7 @@
       if (updateAllBtn) {
         updateAllBtn.addEventListener('click', async function() {
           updateAllBtn.disabled = true;
-          updateAllBtn.textContent = '↻ Updating…';
+          updateAllBtn.textContent = 'Refreshing prices…';
           var rows = document.querySelectorAll('.holding-update-row[data-ticker]');
           var total = rows.length;
           var done = 0;
@@ -680,11 +680,11 @@
             var btn = rows[i].querySelector('.hu-refresh');
             if (btn) btn.click();
             done++;
-            updateAllBtn.textContent = '↻ ' + done + '/' + total;
+            updateAllBtn.textContent = 'Refreshing prices ' + done + '/' + total;
             await new Promise(function(r) { setTimeout(r, 500); });
           }
-          updateAllBtn.textContent = '✓ All updated';
-          setTimeout(function() { updateAllBtn.disabled = false; updateAllBtn.textContent = '↻ Update All Prices'; }, 2500);
+          updateAllBtn.textContent = '✓ Prices refreshed';
+          setTimeout(function() { updateAllBtn.disabled = false; updateAllBtn.textContent = 'Refresh prices now'; }, 2500);
         });
       }
 

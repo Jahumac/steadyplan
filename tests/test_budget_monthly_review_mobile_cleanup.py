@@ -136,6 +136,38 @@ def test_monthly_review_manual_section_uses_manual_balances_heading(app, client,
     assert "Manual Accounts" not in html
 
 
+def test_monthly_review_update_balances_uses_refresh_prices_now_cta(app, client, make_user):
+    uid, username, password = make_user(username="review-refresh-prices", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, valuation_mode, current_value, is_active)
+                VALUES (?, 'Holdings', 'holdings', 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO holdings (account_id, holding_name, ticker, value, units, price)
+                VALUES (?, 'VUSA', 'VUSA', 1000, 10, 100)
+                """,
+                (account_id,),
+            )
+            conn.commit()
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Refresh prices now" in html
+    assert "↻ Update All Prices" not in html
+
+
 def test_monthly_review_finish_shortcuts_match_final_step_wording(app, client, make_user):
     _, username, password = make_user(username="review-finish-shortcut", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
