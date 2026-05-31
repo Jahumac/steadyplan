@@ -707,13 +707,13 @@
         csvToggle.addEventListener('click', function() {
           var hidden = csvPanel.classList.contains('hidden');
           csvPanel.classList.toggle('hidden', !hidden);
-          csvToggle.textContent = hidden ? 'Hide' : 'Show';
+          csvToggle.textContent = hidden ? 'Hide CSV import' : 'Open CSV import';
         });
       }
       if (csvCancel && csvPanel) {
         csvCancel.addEventListener('click', function() {
           csvPanel.classList.add('hidden');
-          if (csvToggle) csvToggle.textContent = 'Show';
+          if (csvToggle) csvToggle.textContent = 'Open CSV import';
         });
       }
 
