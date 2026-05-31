@@ -342,7 +342,7 @@
             </div>
             <div class="badge-row">
               {% if not existing_prize and review.status != 'complete' %}
-                <span class="badge badge-warning">Prize not logged</span>
+                <span class="badge badge-warning">Prize result not logged</span>
               {% elif existing_prize and existing_prize.prize_amount > 0 %}
                 <span class="pb-prize-won">£{{ '{:,.2f}'.format(existing_prize.prize_amount) }} won</span>
               {% elif existing_prize %}
