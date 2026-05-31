@@ -39,7 +39,7 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert "Leave a quick reminder, then mark the month reviewed when you are happy." in html
     assert "Leave a quick reminder, then lock the month when you are happy." not in html
     assert "No contributions to track this month." in html
-    assert "they’ll appear here for your monthly update." in html
+    assert "Set them up in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" in html
     assert "Set them up in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here.</p>" not in html
     assert "log prize draw results if needed" in html
     assert "log Premium Bonds if needed" not in html
@@ -233,6 +233,32 @@ def test_monthly_review_expected_contributions_section_uses_expected_contributio
     assert '<p class="eyebrow">Expected contributions</p>' in html
     assert '<p class="eyebrow">To confirm</p>' not in html
     assert "<h2>Expected contributions</h2>" in html
+
+
+def test_monthly_review_contribution_checkbox_uses_explicit_label(app, client, make_user):
+    uid, username, password = make_user(username="review-confirm-contribution-label", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, valuation_mode, monthly_contribution, current_value, is_active)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 'manual', 150, 1000, 1)
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert '<span class="helper-text m-0">Confirm contribution</span>' in html
+    assert '<span class="helper-text m-0">Confirm</span>' not in html
+    assert 'title="Confirm contribution happened"' in html
 
 
 def test_monthly_review_first_update_section_uses_update_balances_heading(app, client, make_user):
