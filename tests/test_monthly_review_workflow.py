@@ -114,11 +114,14 @@ def test_overview_completed_monthly_review_does_not_show_stale_checklist(app, cl
     review_html = review_page.get_data(as_text=True)
     assert "✓ Complete" in review_html
     assert "✓ Completed" not in review_html
-    assert ">Reopen review<" in review_html
-    assert 'data-confirm-ok="Yes, reopen review"' in review_html
-    assert 'data-confirm-ok="Yes, reopen it"' not in review_html
-    assert 'data-confirm-cancel="Keep review complete">Reopen review<' in review_html
-    assert 'data-confirm-cancel="Keep it complete">Reopen review<' not in review_html
+    assert ">Reopen monthly update<" in review_html
+    assert ">Reopen review<" not in review_html
+    assert 'data-confirm-title="Reopen monthly update?"' in review_html
+    assert 'data-confirm-title="Reopen review?"' not in review_html
+    assert 'data-confirm-ok="Yes, reopen monthly update"' in review_html
+    assert 'data-confirm-ok="Yes, reopen review"' not in review_html
+    assert 'data-confirm-cancel="Keep monthly update complete">Reopen monthly update<' in review_html
+    assert 'data-confirm-cancel="Keep review complete">Reopen review<' not in review_html
 
 
 def test_monthly_review_get_is_idempotent_for_user_month(app, client, make_user):
