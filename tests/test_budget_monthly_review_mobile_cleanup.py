@@ -63,6 +63,8 @@ def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(
     assert "Premium Bonds" in html
     assert '<span class="badge badge-meta">Prize draw results</span>' in html
     assert '<span class="badge badge-meta">Premium Bonds</span>' not in html
+    assert 'Log prize draw results and update balances' in html
+    assert 'Prize draw results and balance updates' not in html
     assert '<p class="eyebrow">Prize draw results</p>' in html
     assert '<p class="eyebrow">Premium Bonds</p>' not in html
     assert "<h2>Prize draw results</h2>" in html
