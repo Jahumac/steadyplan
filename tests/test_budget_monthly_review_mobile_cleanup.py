@@ -223,7 +223,8 @@ def test_monthly_review_finish_shortcuts_match_final_step_wording(app, client, m
     html = resp.get_data(as_text=True)
 
     assert html.count('href="#monthly-note"') >= 2
-    assert "Save note and mark reviewed" in html
+    assert "Save a note and mark reviewed" in html
+    assert "Save note and mark reviewed" not in html
     assert "Save note and finish" not in html
     assert "Finish review" not in html
 
