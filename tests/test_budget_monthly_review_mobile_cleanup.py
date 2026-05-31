@@ -149,6 +149,8 @@ def test_monthly_review_manual_section_uses_manual_balances_heading(app, client,
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
+    assert '<p class="eyebrow">Manual balances</p>' in html
+    assert '<p class="eyebrow">Manual</p>' not in html
     assert "<h2>Manual balances</h2>" in html
     assert "Manual Accounts" not in html
 
