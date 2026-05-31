@@ -27,7 +27,7 @@
     <div>
       <p class="eyebrow">Monthly review</p>
       <h2 class="hero-value">{{ month_label }}</h2>
-      <p class="hero-subtitle">Work down the page: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark the month reviewed.</p>
+      <p class="hero-subtitle">Work top to bottom: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark the month reviewed.</p>
       {% if review.status != 'complete' %}
         {% set remaining_accounts = total_accounts - accounts_updated %}
         <p class="helper-text m-0">To do: {{ unconfirmed_count }} contribution{{ '' if unconfirmed_count == 1 else 's' }} to confirm · {{ remaining_accounts }} account{{ '' if remaining_accounts == 1 else 's' }} not updated</p>
