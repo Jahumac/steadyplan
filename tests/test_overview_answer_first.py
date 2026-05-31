@@ -509,7 +509,7 @@ def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
     assert html.count('class="overview-access-value"') == 1
     assert "£2,000" in html
     assert "17% of your current total is usually reachable before pension age" in html
-    assert "The top summary keeps the headline locked amount visible." in html
+    assert "When you have locked money, the top summary keeps the headline amount visible." in html
     assert "Next accessible milestone:" in html
     assert "£20,000" in html
 
@@ -649,6 +649,8 @@ def test_overview_hides_zero_locked_hero_stat(app, client, make_user):
     assert "Monthly contributions" not in html
     assert "Projected at retirement" in html
     assert html.count("Locked later") == 1
+    assert "When you have locked money, the top summary keeps the headline amount visible." not in html
+    assert "Pension-style money will show up here once you start building it." in html
 
 
 
