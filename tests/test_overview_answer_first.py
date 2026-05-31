@@ -423,6 +423,8 @@ def test_overview_multi_holding_state_restores_allocation_panel(app, client, mak
 
     assert "id=\"allocationChart\"" in html
     assert "Asset allocation doughnut chart" in html
+    assert "Review accounts" in html
+    assert ">Manage</a>" not in html
 
 
 
