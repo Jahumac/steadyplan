@@ -22,6 +22,8 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
+    assert '<title>Monthly Update · SteadyPlan</title>' in html
+    assert '<title>Monthly review · SteadyPlan</title>' not in html
     assert 'href="/monthly-review/" class="subnav-active">Monthly Update</a>' in html
     assert 'href="/monthly-review/" class="subnav-active">Monthly review</a>' not in html
     assert '<p class="eyebrow">Monthly Update</p>' in html

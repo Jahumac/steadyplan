@@ -150,7 +150,8 @@ def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_u
     resp = client.get(f"/monthly-review/?month={month_key}")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-    assert "Monthly review" in html
+    assert "Monthly Update" in html
+    assert "Monthly review" not in html
     assert "Work top to bottom: confirm expected contributions" in html
     assert "Work down the page: confirm expected contributions" not in html
     assert "Still to do:" in html
