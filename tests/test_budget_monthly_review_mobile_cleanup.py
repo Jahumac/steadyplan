@@ -356,6 +356,8 @@ def test_monthly_review_update_balances_uses_refresh_prices_now_cta(app, client,
     assert 'title="Fetch latest price"' not in html
     assert ">Latest price<" in html
     assert ">Price<" not in html
+    assert ">Current value<" in html
+    assert ">Value<" not in html
     assert ">Update holding<" in html
     assert "Review account" in html
     assert "Open account" not in html
