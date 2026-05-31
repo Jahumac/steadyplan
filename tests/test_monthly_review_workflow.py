@@ -115,6 +115,8 @@ def test_overview_completed_monthly_review_does_not_show_stale_checklist(app, cl
     assert "✓ Complete" in review_html
     assert "✓ Completed" not in review_html
     assert ">Reopen review<" in review_html
+    assert 'data-confirm-ok="Yes, reopen review"' in review_html
+    assert 'data-confirm-ok="Yes, reopen it"' not in review_html
     assert 'data-confirm-cancel="Keep review complete">Reopen review<' in review_html
     assert 'data-confirm-cancel="Keep it complete">Reopen review<' not in review_html
 
