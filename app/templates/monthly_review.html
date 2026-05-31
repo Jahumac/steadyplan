@@ -147,7 +147,7 @@
               {% elif item.contribution_confirmed %}
                 <p class="helper-text m-0">Confirmed</p>
               {% else %}
-                <p class="helper-text m-0">Not confirmed</p>
+                <p class="helper-text m-0">Contribution not confirmed</p>
               {% endif %}
               {% set br = contribution_breakdowns.get(item.account_id) %}
               {% if br and br.total_into_pot > item.expected_contribution + 0.005 %}
