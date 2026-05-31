@@ -245,11 +245,12 @@ def test_monthly_review_manual_balance_field_uses_sentence_case_label(app, clien
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert ">Current balance<" in html
+    assert ">Current balance (£)<" in html
     assert ">Current Balance<" not in html
     assert ">Update balance<" in html
     assert "Review account" in html
     assert "Open account" not in html
+    assert ">Current balance<" not in html
     assert ">Update<" not in html
 
 
