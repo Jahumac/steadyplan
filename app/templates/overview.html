@@ -442,7 +442,10 @@
       <p class="eyebrow">Breakdown</p>
       <h2>Accounts</h2>
     </div>
-    <small class="text-muted">{{ accounts|length }} active</small>
+    <div class="flex flex-center gap-05">
+      <small class="text-muted">{{ accounts|length }} active</small>
+      <a href="/accounts/" class="link-accent text-sm">Review accounts</a>
+    </div>
   </div>
   <div class="card-grid">
     {% for account in accounts %}
