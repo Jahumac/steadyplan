@@ -360,7 +360,7 @@
             <input type="hidden" name="account_id" value="{{ item.account_id }}">
             <div class="form-grid">
               <label class="form-field">
-                <span class="form-label">Prize this month (£)</span>
+                <span class="form-label">Prize result (£)</span>
                 <input type="number" step="0.01" min="0" name="prize_amount"
                        value="{{ '{:.2f}'.format(existing_prize.prize_amount) if existing_prize else '' }}"
                        placeholder="0.00"
