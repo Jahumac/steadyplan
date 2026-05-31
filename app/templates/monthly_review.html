@@ -207,7 +207,7 @@
               <p>{% if item.provider %}{{ item.provider }} · {% endif %}{{ item.wrapper_type or 'Account' }}</p>
             </div>
             <div class="badge-row">
-              <a class="badge" href="/accounts/{{ item.account_id }}">Review account</a>
+              <a class="badge" href="/accounts/{{ item.account_id }}">Open account</a>
             </div>
           </div>
 
@@ -306,7 +306,7 @@
           </label>
           {% if review.status != 'complete' %}
           <button type="submit" class="badge badge-primary-action">Update balance</button>
-          <a href="/accounts/{{ item.account_id }}?mode=view#balance-update&next=/monthly-review/?month={{ month_key }}" class="badge badge-meta">Review account</a>
+          <a href="/accounts/{{ item.account_id }}?mode=view#balance-update&next=/monthly-review/?month={{ month_key }}" class="badge badge-meta">Open account</a>
           {% endif %}
         </form>
       {% endfor %}
@@ -348,7 +348,7 @@
               {% elif existing_prize %}
                 <span class="pb-prize-nil">No prize won</span>
               {% endif %}
-              <a class="badge" href="/accounts/{{ item.account_id }}">Review account</a>
+              <a class="badge" href="/accounts/{{ item.account_id }}">Open account</a>
             </div>
           </div>
 
