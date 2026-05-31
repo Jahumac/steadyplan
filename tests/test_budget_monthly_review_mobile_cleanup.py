@@ -280,6 +280,8 @@ def test_monthly_review_update_balances_uses_refresh_prices_now_cta(app, client,
     html = resp.get_data(as_text=True)
 
     assert "Refresh prices now" in html
+    assert 'title="Refresh latest price"' in html
+    assert 'title="Fetch latest price"' not in html
     assert ">Update holding<" in html
     assert "Review account" in html
     assert "Open account" not in html
