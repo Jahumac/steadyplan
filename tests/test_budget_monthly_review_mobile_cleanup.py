@@ -242,6 +242,14 @@ def test_monthly_review_completed_state_uses_complete_badge_in_monthly_note_sect
 
     assert '>Complete<' in html
     assert '>Locked<' not in html
+    assert '>Reopen monthly update<' in html
+    assert '>Reopen review<' not in html
+    assert 'data-confirm-title="Reopen monthly update?"' in html
+    assert 'data-confirm-title="Reopen review?"' not in html
+    assert 'data-confirm-ok="Yes, reopen monthly update"' in html
+    assert 'data-confirm-ok="Yes, reopen review"' not in html
+    assert 'data-confirm-cancel="Keep monthly update complete">Reopen monthly update<' in html
+    assert 'data-confirm-cancel="Keep review complete">Reopen review<' not in html
 
 
 def test_monthly_review_expected_contributions_section_uses_expected_contributions_heading(app, client, make_user):
