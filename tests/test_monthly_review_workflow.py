@@ -109,6 +109,12 @@ def test_overview_completed_monthly_review_does_not_show_stale_checklist(app, cl
     assert "Status: Complete" in html
     assert "Checklist:" not in html
 
+    review_page = client.get(f"/monthly-review/?month={month_key}")
+    assert review_page.status_code == 200
+    review_html = review_page.get_data(as_text=True)
+    assert "✓ Complete" in review_html
+    assert "✓ Completed" not in review_html
+
 
 def test_monthly_review_get_is_idempotent_for_user_month(app, client, make_user):
     uid, username, password = make_user(username="mr-idem", password="password123")
