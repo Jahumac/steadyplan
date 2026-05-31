@@ -26,6 +26,8 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert "1. Confirm contributions" in html
     assert "2. Update balances" in html
     assert "3. Save a note and mark reviewed" in html
+    assert "log prize draw results if needed" in html
+    assert "log Premium Bonds if needed" not in html
     assert "Related checks" in html
     assert "Review goals" in html
     assert "Review debts" in html
