@@ -30,9 +30,9 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert "Review goals" in html
     assert "Review debts" in html
     assert "Review assumptions" in html
-    assert "Update tools" in html
     assert "CSV import" in html
     assert "CSV Import" not in html
+    assert "Update tools" not in html
 
 
 def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(app, client, make_user):
@@ -58,7 +58,6 @@ def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(
 
     assert 'class="monthly-review-secondary-details"' in html
     assert '<details class="monthly-review-secondary-details" open>' not in html
-    assert "Update tools" in html
     assert "Premium Bonds" in html
     assert "<h2>Prize draw results</h2>" in html
     assert "<h2>Prize Draw Results</h2>" not in html
@@ -66,6 +65,8 @@ def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(
     assert ">Log prize<" not in html
     assert "<h2>CSV import</h2>" in html
     assert "<h2>CSV Import</h2>" not in html
+    assert "<span class=\"badge badge-meta\">CSV import</span>" in html
+    assert "Update tools" not in html
     assert "Open CSV import" in html
     assert 'id="csv-import-cancel">Hide CSV import<' in html
     assert 'id="csv-import-cancel">Cancel<' not in html
