@@ -827,7 +827,8 @@ def test_overview_monthly_review_card_uses_specific_monthly_update_cta(app, clie
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Monthly review" in html
+    assert "Monthly update" in html
+    assert "Monthly review" not in html
     assert "Open monthly update" in html
     assert '>Open<' not in html
     assert f'/monthly-review/?month={month_key}' in html
