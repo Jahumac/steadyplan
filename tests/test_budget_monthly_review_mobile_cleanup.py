@@ -191,6 +191,8 @@ def test_monthly_review_manual_section_uses_manual_balances_heading(app, client,
     assert '<p class="eyebrow">Manual balances</p>' in html
     assert '<p class="eyebrow">Manual</p>' not in html
     assert "<h2>Manual balances</h2>" in html
+    assert "Update balances for manually valued accounts." in html
+    assert "Update balances for accounts that are valued manually." not in html
     assert "Manual Accounts" not in html
 
 
