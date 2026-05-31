@@ -731,6 +731,8 @@ def test_overview_payday_banner_uses_specific_budget_cta(app, client, make_user,
     html = resp.get_data(as_text=True)
 
     assert "investment day" in html
+    assert "check the budget, then do your monthly update" in html
+    assert "check the budget, then do your Monthly Update" not in html
     assert '>Review budget</a>' in html
     assert '>Open budget</a>' not in html
     assert 'href="/budget/"' in html
