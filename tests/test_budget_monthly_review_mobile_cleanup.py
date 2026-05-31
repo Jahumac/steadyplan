@@ -56,6 +56,7 @@ def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(
     html = resp.get_data(as_text=True)
 
     assert 'class="monthly-review-secondary-details"' in html
+    assert '<details class="monthly-review-secondary-details" open>' not in html
     assert "Update tools" in html
     assert "Premium Bonds" in html
     assert "CSV Import" in html
