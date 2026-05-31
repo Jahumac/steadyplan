@@ -675,6 +675,59 @@ def test_overview_hides_retirement_projection_until_profile_exists(app, client, 
     assert "Scenario estimate based on your current balances, contribution settings, and assumptions in Settings." not in html
 
 
+def test_overview_payday_banner_uses_specific_budget_cta(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="overview-payday-banner-budget-cta", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = date.today().strftime("%Y-%m")
+    today_str = date.today().strftime("%Y-%m-%d")
+
+    import app.routes.overview as overview_route
+    monkeypatch.setattr(overview_route, "is_salary_day", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(overview_route, "is_review_due", lambda *_args, **_kwargs: False)
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01', salary_day = 15 WHERE user_id = ?",
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 250, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key)
+                VALUES (?, ?, ?, ?)
+                """,
+                (today_str, account_id, 1000, month_key),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "investment day" in html
+    assert '>Review budget</a>' in html
+    assert '>Open budget</a>' not in html
+    assert 'href="/budget/"' in html
+
+
 def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, make_user):
     uid, username, password = make_user(username="overview-review-due", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
