@@ -573,7 +573,7 @@
           btn.disabled = true; btn.textContent = '…';
           apiPost(url, body)
             .then(function(r) { if (r.ok) location.reload(); })
-            .catch(function() { btn.disabled = false; btn.textContent = isSkip ? 'Skip' : 'Restore'; });
+            .catch(function() { btn.disabled = false; btn.textContent = isSkip ? 'Skip this month' : 'Restore'; });
         });
       });
 
