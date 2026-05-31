@@ -39,7 +39,8 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert 'href="#expected-contributions" class="badge">Expected contributions</a>' in html
     assert 'href="#expected-contributions" class="badge">Confirm contributions</a>' not in html
     assert "2. Update balances" in html
-    assert "3. Save a note and mark reviewed" in html
+    assert "3. Save a note and mark this month reviewed" in html
+    assert "3. Save a note and mark reviewed" not in html
     assert "Work top to bottom: confirm expected contributions" in html
     assert "Work down the page: confirm expected contributions" not in html
     assert "Still to do: 0 contributions to confirm · 0 accounts to update" in html
@@ -47,6 +48,8 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert "To do: 0 contributions to confirm · 0 accounts to update" not in html
     assert "Leave a quick reminder, then mark the month reviewed when you are happy." in html
     assert "Leave a quick reminder, then lock the month when you are happy." not in html
+    assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark this month reviewed</a>' in html
+    assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark reviewed</a>' not in html
     assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or manual balances below where needed." in html
     assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or balances below where needed." not in html
     assert "No contributions to track this month." in html
