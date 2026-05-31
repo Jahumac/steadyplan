@@ -24,6 +24,8 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
 
     assert "Start here" in html
     assert "1. Confirm contributions" in html
+    assert 'href="#expected-contributions" class="badge">Expected contributions</a>' in html
+    assert 'href="#expected-contributions" class="badge">Confirm contributions</a>' not in html
     assert "2. Update balances" in html
     assert "3. Save a note and mark reviewed" in html
     assert "log prize draw results if needed" in html
