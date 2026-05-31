@@ -169,6 +169,8 @@ def test_monthly_review_manual_balance_field_uses_sentence_case_label(app, clien
 
     assert ">Current balance<" in html
     assert ">Current Balance<" not in html
+    assert ">Update balance<" in html
+    assert ">Update<" not in html
 
 
 def test_monthly_review_update_balances_uses_refresh_prices_now_cta(app, client, make_user):
