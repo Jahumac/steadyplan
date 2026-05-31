@@ -173,6 +173,8 @@ def test_monthly_review_first_update_section_uses_update_balances_heading(app, c
     assert '<p class="eyebrow">Update balances</p>' in html
     assert '<p class="eyebrow">Step 2</p>' not in html
     assert "<h2>Update balances</h2>" in html
+    assert "Update holdings-based accounts first, then continue to any manual balances below." in html
+    assert "Start with holdings-based accounts, then continue to any manual balances below." not in html
     assert "Holdings-Based Accounts" not in html
 
 
