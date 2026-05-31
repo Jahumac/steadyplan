@@ -1107,13 +1107,13 @@ def test_overview_portfolio_card_uses_specific_refresh_prices_cta(app, client, m
                 "UPDATE assumptions SET date_of_birth = '1990-01-01', auto_update_prices = 1 WHERE user_id = ?",
                 (uid,),
             )
-            account_id = conn.execute(
+            conn.execute(
                 """
                 INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
                 VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 1, 'manual')
                 """,
                 (uid,),
-            ).lastrowid
+            )
             conn.execute(
                 """
                 INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
@@ -1123,10 +1123,10 @@ def test_overview_portfolio_card_uses_specific_refresh_prices_cta(app, client, m
             )
             conn.execute(
                 """
-                INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value)
+                VALUES (?, ?, ?)
                 """,
-                (f"{month_key}-01", account_id, 1000, month_key),
+                (uid, f"{month_key}-01", 1000),
             )
             conn.commit()
 
@@ -1135,6 +1135,8 @@ def test_overview_portfolio_card_uses_specific_refresh_prices_cta(app, client, m
     html = resp.get_data(as_text=True)
 
     assert "Portfolio Value" in html
+    assert "Complete your first monthly update to start tracking net worth over time" in html
+    assert "Complete your first Monthly Update to start tracking net worth over time" not in html
     assert "Refresh prices now" in html
     assert "↻ Refresh</button>" not in html
 
