@@ -276,6 +276,32 @@ def test_monthly_review_empty_holdings_state_uses_explicit_add_account_cta(app, 
     assert ">+ Add account<" not in html
 
 
+def test_monthly_review_empty_account_helper_uses_monthly_update_wording(app, client, make_user):
+    uid, username, password = make_user(username="review-empty-account-helper", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, valuation_mode, current_value, is_active)
+                VALUES (?, 'Holdings shell', 'holdings', 0, 1)
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "No holdings here yet." in html
+    assert "show up for your monthly update" in html
+    assert "show up for your next update" not in html
+
+
 def test_monthly_review_finish_shortcuts_match_final_step_wording(app, client, make_user):
     _, username, password = make_user(username="review-finish-shortcut", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
