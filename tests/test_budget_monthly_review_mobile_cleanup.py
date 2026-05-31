@@ -154,6 +154,25 @@ def test_monthly_review_start_here_update_link_targets_first_update_section(app,
     assert contributions_idx < update_idx < manual_idx
 
 
+def test_monthly_review_completed_state_uses_complete_badge_in_monthly_note_section(app, client, make_user):
+    _, username, password = make_user(username="review-complete-badge", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.post(
+        "/monthly-review/",
+        data={
+            "form_name": "mark_complete",
+            "month": "2026-04",
+        },
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert '>Complete<' in html
+    assert '>Locked<' not in html
+
+
 def test_monthly_review_expected_contributions_section_uses_expected_contributions_heading(app, client, make_user):
     _, username, password = make_user(username="review-contributions-heading", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
