@@ -60,6 +60,8 @@ def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(
     assert "Update tools" in html
     assert "Premium Bonds" in html
     assert "CSV Import" in html
+    assert "Open CSV import" in html
+    assert ">Show<" not in html
 
 
 
