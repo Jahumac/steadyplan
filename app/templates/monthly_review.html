@@ -242,7 +242,7 @@
                              class="hu-units" {% if review.status == 'complete' %}disabled{% endif %}>
                     </label>
                     <label class="holding-update-field">
-                      <span>Price</span>
+                      <span>Latest price</span>
                       <div class="holding-price-wrap">
                         <input type="number" step="any" name="price"
                                value="{{ '{:.4f}'.format(holding.price) if holding.price else '' }}"
