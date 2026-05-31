@@ -106,6 +106,8 @@ def test_monthly_review_places_mark_reviewed_action_in_finish_section(app, clien
     note_idx = html.index("Monthly note")
     mark_idx = html.index("Mark month reviewed")
 
+    assert '<p class="eyebrow">Monthly note</p>' in html
+    assert '<p class="eyebrow">Notes</p>' not in html
     assert note_idx < mark_idx
 
 
