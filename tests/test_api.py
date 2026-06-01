@@ -781,7 +781,7 @@ def test_update_account_balance_succeeds_for_owner(app, client, token):
     assert resp.get_json()["current_value"] == 5555
 
 
-def test_update_account_balance_rejects_invalid_month(app, client, token):
+def test_update_account_balance_rejects_invalid_month_without_changing_balance(app, client, token):
     with app.app_context():
         from app.models import get_connection, get_user_by_username
         uid = get_user_by_username("apiuser").id
@@ -799,6 +799,15 @@ def test_update_account_balance_rejects_invalid_month(app, client, token):
     )
     assert resp.status_code == 400
     assert resp.get_json()["error"] == "bad_request"
+
+    with app.app_context():
+        from app.models import get_connection
+        with get_connection() as conn:
+            row = conn.execute(
+                "SELECT current_value FROM accounts WHERE id = ?",
+                (aid,),
+            ).fetchone()
+        assert float(row["current_value"]) == 100.0
 
 
 def test_update_account_balance_rejects_negative(app, client, token):

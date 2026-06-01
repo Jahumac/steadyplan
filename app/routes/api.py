@@ -456,12 +456,6 @@ def update_account_balance(account_id):
     if account is None:
         return _err("not_found", "Account not found", 404)
 
-    # Preserve all other fields — update_account needs a complete payload.
-    update_payload = dict(account)
-    update_payload["current_value"] = balance
-    update_payload["last_updated"] = datetime.now(timezone.utc).isoformat()
-    update_account(update_payload, g.api_user.id)
-
     raw_month = payload.get("month")
     if raw_month is None:
         month_key = datetime.now().strftime("%Y-%m")
@@ -469,6 +463,13 @@ def update_account_balance(account_id):
         month_key = _parse_api_month_key(raw_month)
     if month_key is None:
         return _err("bad_request", "month must be YYYY-MM", 400)
+
+    # Preserve all other fields — update_account needs a complete payload.
+    update_payload = dict(account)
+    update_payload["current_value"] = balance
+    update_payload["last_updated"] = datetime.now(timezone.utc).isoformat()
+    update_account(update_payload, g.api_user.id)
+
     upsert_monthly_snapshot(account_id, month_key, balance)
 
     return jsonify({"ok": True, "account_id": account_id,
