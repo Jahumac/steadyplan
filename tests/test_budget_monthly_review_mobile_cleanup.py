@@ -59,7 +59,8 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark monthly update complete</a>' in html
     assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark this month reviewed</a>' not in html
     assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark reviewed</a>' not in html
-    assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark this month reviewed</a>' in html
+    assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark monthly update complete</a>' in html
+    assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark this month reviewed</a>' not in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark reviewed</a>' not in html
     assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or manual balances below where needed." in html
     assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or balances below where needed." not in html
@@ -507,6 +508,8 @@ def test_monthly_review_finish_shortcuts_match_final_step_wording(app, client, m
     html = resp.get_data(as_text=True)
 
     assert html.count('href="#monthly-note"') >= 2
+    assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark monthly update complete</a>' in html
+    assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark this month reviewed</a>' not in html
     assert "Save a note and mark this month reviewed" in html
     assert "Save a note and mark reviewed" not in html
     assert "Save note and mark reviewed" not in html
