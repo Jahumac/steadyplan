@@ -18,9 +18,8 @@ def test_goals_page_moves_primary_action_into_hero_for_mobile_cleanup(app, clien
     html = resp.get_data(as_text=True)
 
     assert '<section class="budget-year-strip month-strip-global month-strip-mobile-hidden' in html
-    assert '<details class="subnav-mobile-menu subnav-mobile-menu-goals">' in html
-    assert '<span class="subnav-mobile-current">Goals</span>' in html
-    assert '<span class="subnav-mobile-toggle">More views</span>' in html
+    assert '<section class="subnav-mobile-family subnav-mobile-family-goals" aria-label="Goals views">' in html
+    assert '<p class="subnav-mobile-current">Goals</p>' in html
     assert 'href="/projections/">Projections</a>' in html
     assert 'class="hero-actions-col goals-hero-actions"' in html
     assert 'class="badge-row goals-hero-badges"' in html
@@ -31,6 +30,7 @@ def test_goals_page_moves_primary_action_into_hero_for_mobile_cleanup(app, clien
     assert ".goals-hero-actions {" in css
     assert "flex-direction: column;" in css
     assert ".goals-hero-badges .badge {" in css
+    assert ".subnav-mobile-family-goals .subnav-mobile-panel .badge {" in css
 
     hero_idx = html.index('class="hero-actions-col goals-hero-actions"')
     create_idx = html.index('href="/goals/?mode=create">+ Create goal</a>')
