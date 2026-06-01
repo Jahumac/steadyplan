@@ -47,7 +47,8 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert "3. Save a note and mark monthly update complete" in html
     assert "3. Save a note and mark this month reviewed" not in html
     assert "3. Save a note and mark reviewed" not in html
-    assert "Work top to bottom: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark this month reviewed." in html
+    assert "Work top to bottom: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark monthly update complete." in html
+    assert "Work top to bottom: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark this month reviewed." not in html
     assert "Work top to bottom: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark the month reviewed." not in html
     assert "Work down the page: confirm expected contributions" not in html
     assert "Still to do: 0 contributions to confirm · 0 accounts to update" in html
