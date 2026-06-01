@@ -12,7 +12,7 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert 'class="budget-month-nav budget-hero-month-nav"' in html
     assert 'class="badge badge-meta budget-prev-month"' in html
     assert 'class="badge badge-meta budget-next-month"' in html
-    assert "Edit numbers below to shape this month." in html
+    assert 'class="helper-text m-0 budget-hero-mobile-hint">Edit numbers below to shape this month.</p>' in html
     assert "Budget Setup" in html
     assert "Jump to budget" in html
     assert "Import / export tools" in html
@@ -25,7 +25,13 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
     assert ".budget-hero-actions {" in css
     assert "justify-content: center;" in css
+    assert ".subnav-page.subnav-budget {" in css
+    assert "overflow-x: auto;" in css
+    assert ".subnav-page.subnav-budget a {" in css
+    assert "min-width: max-content;" in css
     assert ".budget-hero-badges {" in css
+    assert ".budget-hero-mobile-hint {" in css
+    assert "display: none;" in css
     assert "margin-inline: auto;" in css
 
     hero_idx = html.index('class="hero-actions-col budget-hero-actions"')
