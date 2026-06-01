@@ -1146,7 +1146,8 @@ def test_overview_portfolio_card_uses_specific_refresh_prices_cta(app, client, m
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Portfolio Value" in html
+    assert "Portfolio value" in html
+    assert "Portfolio Value" not in html
     assert "Complete your first monthly update to start tracking net worth over time" in html
     assert "Complete your first Monthly Update to start tracking net worth over time" not in html
     assert "Refresh prices now" in html
