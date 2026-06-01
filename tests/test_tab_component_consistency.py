@@ -20,6 +20,7 @@ TABBED_PAGE_PATHS = [
 MAIN_HERO_PATHS = [
     "/",
     "/accounts/",
+    "/holdings/",
     "/planning/",
 ]
 
@@ -66,6 +67,15 @@ def test_main_mobile_hero_pages_do_not_render_turtle_icons(auth_client, path):
     html = response.data.decode()
     assert 'hero-turtle-wrap' not in html
     assert 'onboarding-turtle' not in html
+
+
+def test_budget_setup_page_does_not_render_turtle_icon(auth_client):
+    response = auth_client.get("/budget/items/?month=2026-04", follow_redirects=True)
+
+    assert response.status_code == 200
+    html = response.data.decode()
+    assert "Budget Setup" in html
+    assert 'hero-turtle-wrap' not in html
 
 
 def test_holding_detail_uses_standard_tab_nav_for_history_periods(app, client, make_user, monkeypatch):
