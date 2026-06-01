@@ -193,13 +193,14 @@ def test_monthly_review_places_mark_reviewed_action_in_finish_section(app, clien
     html = resp.get_data(as_text=True)
 
     note_idx = html.index("Monthly note")
-    mark_idx = html.index("Mark this month reviewed")
+    mark_idx = html.index("Mark monthly update complete")
 
     assert '<p class="eyebrow">Monthly note</p>' in html
     assert '<p class="eyebrow">Notes</p>' not in html
     assert '>Save monthly note<' in html
     assert '>Save note<' not in html
-    assert '>Mark this month reviewed<' in html
+    assert '>Mark monthly update complete<' in html
+    assert '>Mark this month reviewed<' not in html
     assert '>Mark reviewed<' not in html
     assert '>Mark month reviewed<' not in html
     assert '<h3>Mark ' in html
