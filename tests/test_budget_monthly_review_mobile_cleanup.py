@@ -7,7 +7,7 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     html = resp.get_data(as_text=True)
 
     assert '<section class="subnav-mobile-family subnav-mobile-family-budget" aria-label="Budget views">' in html
-    assert '<p class="subnav-mobile-current">Budget Plan</p>' in html
+    assert 'class="subnav-mobile-current"' not in html
     assert 'href="/monthly-review/">Monthly Update</a>' in html
     assert '<section class="budget-year-strip month-strip-mobile-hidden month-accent-' in html
     assert 'class="hero-actions-col budget-hero-actions"' in html
@@ -29,7 +29,6 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert ".budget-hero-actions {" in css
     assert "flex-direction: column;" in css
     assert ".subnav-mobile-family {" in css
-    assert ".subnav-mobile-current {" in css
     assert ".subnav-mobile-family-budget .subnav-mobile-panel .badge," in css
     assert ".subnav-page.subnav-budget," in css
     assert ".budget-hero-badges {" in css
@@ -37,6 +36,7 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert ".budget-hero-mobile-hint {" in css
     assert "display: none;" in css
     assert "justify-content: center;" in css
+    assert "margin-bottom: 0.65rem;" in css
 
     hero_idx = html.index('class="hero-actions-col budget-hero-actions"')
     jump_idx = html.index('href="#income">Jump to budget</a>')
