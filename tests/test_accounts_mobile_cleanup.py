@@ -92,3 +92,31 @@ def test_accounts_edit_form_preserves_selected_legacy_wrapper_label(app, client,
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert '<option value="Stocks and Shares ISA" selected>Stocks and Shares ISA</option>' in html
+
+
+def test_accounts_create_form_includes_investment_category_option(app, client, make_user):
+    uid, username, password = make_user(username="accounts-investment-category", password="password123")
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/accounts/?mode=create")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '<option value="Investment">Investment</option>' in html
+
+
+def test_accounts_edit_form_preserves_selected_legacy_category_label(app, client, make_user):
+    uid, username, password = make_user(username="accounts-legacy-category", password="password123")
+    payload = _account_payload()
+    payload["name"] = "Legacy category account"
+    payload["category"] = "Investments"
+
+    with app.app_context():
+        account_id = create_account(payload, uid)
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}?mode=edit")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '<option value="Investments" selected>Investments</option>' in html
