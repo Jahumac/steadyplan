@@ -28,8 +28,8 @@ All notable changes to this project will be documented in this file.
 - New primary Docker image: `ghcr.io/jahumac/steadyplan`.
 - User JSON backup/export in Settings and a hardened JSON restore flow (validate preview + explicit confirmation, transactional, current-user scoped).
 - Overview Data Health panel (read-only) for stale/missing inputs.
-- Monthly Review workflow (lightweight check-in with notes, contribution confirm/skip, and month completion snapshot).
-- Manual account balance update workflow for regular use/monthly review.
+- Monthly Update workflow (lightweight check-in with notes, contribution confirm/skip, and month completion snapshot).
+- Manual account balance update workflow for regular use/monthly update.
 
 ### Changed
 - Rebranded the project from Shelly Finance to SteadyPlan across the public app, documentation, Docker image, Unraid template, and repository metadata.
