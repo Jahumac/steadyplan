@@ -650,7 +650,8 @@ def test_overview_hides_zero_locked_hero_stat(app, client, make_user):
     assert "Projected at retirement" in html
     assert html.count("Locked later") == 1
     assert "When you have locked money, the top summary keeps the headline amount visible." not in html
-    assert "Pension-style money will show up here once you start building it." in html
+    assert "Pension-style money will appear here once you start building it." in html
+    assert "Pension-style money will show up here once you start building it." not in html
 
 
 

@@ -70,6 +70,14 @@ def test_account_detail_balance_panel_uses_open_monthly_update_cta(app, client, 
                 "VALUES (?, 'Cash', 10, 1, 'manual')",
                 (uid,),
             ).lastrowid
+            conn.execute(
+                "INSERT INTO account_daily_snapshots (user_id, account_id, snapshot_date, value) VALUES (?, ?, '2026-04-01', 10)",
+                (uid, aid),
+            )
+            conn.execute(
+                "INSERT INTO account_daily_snapshots (user_id, account_id, snapshot_date, value) VALUES (?, ?, '2026-04-02', 12)",
+                (uid, aid),
+            )
             conn.commit()
 
     resp = client.get(f"/accounts/{aid}", follow_redirects=True)
@@ -77,7 +85,10 @@ def test_account_detail_balance_panel_uses_open_monthly_update_cta(app, client, 
     html = resp.get_data(as_text=True)
 
     assert '>Open monthly update<' in html
+    assert 'monthly update due date' in html
+    assert 'Budget overrides / monthly update entries' in html
     assert '>Go to Monthly Update<' not in html
+    assert 'Monthly Review entries' not in html
 
 
 def test_invalid_balance_rejected_without_changes(app, client, make_user):

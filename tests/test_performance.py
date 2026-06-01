@@ -69,6 +69,42 @@ def test_contribution_summary_empty_state_uses_monthly_update_copy(auth_client):
     assert ">Go to Monthly Update<" not in html
 
 
+def test_performance_helper_uses_sentence_case_monthly_update_copy(app, client, make_user):
+    uid, username, password = make_user(username="performance-helper-copy", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'ISA', 1000, 150, 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2026-04-01', 1000)",
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2026-04-02', 1100)",
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/performance/", follow_redirects=True)
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "monthly update entries" in html
+    assert "monthly update due date" in html
+    assert "Monthly Review entries" not in html
+    assert "Monthly Update due date" not in html
+
+
 def test_contribution_summary_legend_uses_monthly_update_copy(app, client, make_user):
     uid, username, password = make_user(username="contrib-legend", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
