@@ -2089,17 +2089,15 @@ button.button-danger:focus {
   .accounts-hero-actions,
   .debts-hero-actions {
     width: 100%;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-  }
-
-  .accounts-hero-actions {
     flex: 1 0 100%;
     order: 2;
     align-items: stretch;
     justify-content: flex-start;
+    gap: 0.75rem;
+  }
+
+  .accounts-hero-actions {
+    flex-direction: row;
   }
 
   .goals-hero-actions,
@@ -2119,18 +2117,23 @@ button.button-danger:focus {
 
   .accounts-hero-badges,
   .debts-hero-badges {
-    order: 1;
-    justify-content: flex-start;
-  }
-
-  .accounts-hero-badges {
     width: 100%;
     display: grid;
     grid-template-columns: 1fr;
+    order: 1;
+    justify-content: flex-start;
     margin-top: 0;
   }
 
+  .accounts-hero-badges {
+    flex-direction: row;
+  }
+
   .accounts-hero-badges .badge {
+    width: 100%;
+  }
+
+  .debts-hero-badges .badge {
     width: 100%;
   }
 
