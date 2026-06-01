@@ -69,6 +69,42 @@ def test_contribution_summary_empty_state_uses_monthly_update_copy(auth_client):
     assert ">Go to Monthly Update<" not in html
 
 
+def test_contribution_summary_legend_uses_monthly_update_copy(app, client, make_user):
+    uid, username, password = make_user(username="contrib-legend", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
+                VALUES (?, 'ISA', 'ISA', 1000, 100, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            review_id = conn.execute(
+                "INSERT INTO monthly_reviews (user_id, month_key, status) VALUES (?, '2026-04', 'complete')",
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO monthly_review_items (review_id, account_id, expected_contribution, contribution_confirmed)
+                VALUES (?, ?, 100, 1)
+                """,
+                (review_id, account_id),
+            )
+            conn.commit()
+
+    resp = client.get("/performance/contributions/", follow_redirects=True)
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "confirmed in monthly update" in html
+    assert "ticked off in monthly review" not in html
+
+
 def test_performance_plan_uses_recorded_monthly_contributions():
     from app.calculations import compute_performance_series
 
