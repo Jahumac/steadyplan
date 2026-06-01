@@ -48,6 +48,37 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Retirement spending" in body
 
 
+def test_projections_page_uses_government_bonus_wording(app, client, make_user):
+    uid, username, password = make_user(username="proj-government-bonus", password="password123")
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection, update_assumptions
+
+        assumptions = dict(fetch_assumptions(uid))
+        assumptions.update({
+            "annual_growth_rate": 0.05,
+            "retirement_age": 60,
+            "date_of_birth": "1990-01-01",
+        })
+        update_assumptions(assumptions, uid)
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, category, current_value, monthly_contribution, is_active)
+                VALUES (?, 'LISA', 'Lifetime ISA', 'ISA', 5000, 400, 1)
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    resp = client.get("/projections/")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "government bonus" in body
+    assert "govt bonus" not in body
+
+
 def test_settings_growth_hint_no_longer_says_nominal_todays_money(app, client, make_user):
     uid, username, password = make_user(username="settings", password="password123")
     _login(client, username, password)
