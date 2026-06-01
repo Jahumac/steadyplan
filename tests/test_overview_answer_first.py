@@ -1150,6 +1150,8 @@ def test_overview_portfolio_card_uses_specific_refresh_prices_cta(app, client, m
 
     assert "Portfolio value" in html
     assert "Portfolio Value" not in html
+    assert "Latest value" in html
+    assert "Latest Value" not in html
     assert "Complete your first monthly update to start tracking net worth over time" in html
     assert "Complete your first Monthly Update to start tracking net worth over time" not in html
     assert "Refresh prices now" in html
