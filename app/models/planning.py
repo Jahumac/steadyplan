@@ -90,6 +90,7 @@ WRAPPER_TYPE_OPTIONS = [
 
 CATEGORY_OPTIONS = [
     "ISA",
+    "Investment",
     "Pension",
     "Savings",
     "Taxable",

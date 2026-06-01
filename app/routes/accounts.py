@@ -156,6 +156,14 @@ def _wrapper_type_options_for(selected=None):
     return options
 
 
+def _category_options_for(selected=None):
+    options = list(CATEGORY_OPTIONS)
+    category = ((selected or {}).get("category") or "").strip()
+    if category and category not in options:
+        options.append(category)
+    return options
+
+
 def _render_accounts_page(user_id, selected=None, detail_mode="view", position_error=None, position_added=False, edit_holding_id=None):
     rows = fetch_all_accounts(user_id)
     assumptions = fetch_assumptions(user_id)
@@ -496,7 +504,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         contrib_breakdowns=contrib_breakdowns,
         active_page="accounts",
         wrapper_type_options=_wrapper_type_options_for(selected),
-        category_options=CATEGORY_OPTIONS,
+        category_options=_category_options_for(selected),
         tag_options=fetch_user_tags(user_id),
         custom_tags=fetch_custom_tags(user_id),
         default_tags=DEFAULT_TAG_OPTIONS,
