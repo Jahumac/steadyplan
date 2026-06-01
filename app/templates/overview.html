@@ -97,8 +97,15 @@
   </div>
 
   <details class="onboarding-later">
-    <summary>Do later · {{ later_steps_done }}/2 complete</summary>
+    <summary>
+      {% if essential_steps_done < 2 %}
+      Optional after basics · {{ later_steps_done }}/2 complete
+      {% else %}
+      Helpful next steps · {{ 2 - later_steps_done }} remaining
+      {% endif %}
+    </summary>
     <div class="onboarding-steps onboarding-steps-secondary">
+      {% if essential_steps_done < 2 or not has_goal %}
       <a href="/goals/?mode=create" class="onboarding-step {% if has_goal %}onboarding-done{% endif %}">
         <span class="onboarding-check">{% if has_goal %}✓{% else %}3{% endif %}</span>
         <div>
@@ -106,6 +113,8 @@
           <small>Set your first goal once you know what you want to aim for.</small>
         </div>
       </a>
+      {% endif %}
+      {% if essential_steps_done < 2 or not has_history %}
       <a href="/monthly-review/" class="onboarding-step {% if has_history %}onboarding-done{% endif %}">
         <span class="onboarding-check">{% if has_history %}✓{% else %}4{% endif %}</span>
         <div>
@@ -113,6 +122,7 @@
           <small>Do your first monthly update after your first contribution or balance change settles.</small>
         </div>
       </a>
+      {% endif %}
     </div>
   </details>
 </section>
