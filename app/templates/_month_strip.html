@@ -3,7 +3,7 @@
 {% if month_strip %}
 {% set _current_month = month_strip | selectattr('is_today', 'true') | first %}
 {% set _accent = _current_month.month_num if _current_month else 4 %}
-<section class="budget-year-strip month-strip-global month-accent-{{ _accent }}">
+<section class="budget-year-strip month-strip-global{% if month_strip_class %} {{ month_strip_class }}{% endif %} month-accent-{{ _accent }}">
   <div class="budget-year-strip-inner">
     {% for m in month_strip %}
     <span class="budget-month-pill month-accent-{{ m.month_num }}{% if m.is_today %} budget-month-active{% endif %}"

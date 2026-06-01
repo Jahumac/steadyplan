@@ -21,6 +21,7 @@
 {% endif %}
 
 {# ── Month strip ─────────────────────────────────────────────────────────── #}
+{% set month_strip_class = 'month-strip-mobile-hidden' %}
 {% include '_month_strip.html' %}
 
 {# total_saved is passed from the route — deduplicated so accounts shared
@@ -34,8 +35,17 @@
       <h2 class="hero-value">{{ goal_cards | length }} goal{{ 's' if goal_cards | length != 1 }}</h2>
       <p class="hero-subtitle">Tag your accounts, set a target, and track progress over time.</p>
     </div>
-    <div class="hero-turtle-wrap">
-      <img src="{{ url_for('static', filename='icons/shelly/Goals.png') }}" alt="" class="hero-turtle">
+    <div class="hero-actions-col goals-hero-actions">
+      <div class="hero-turtle-wrap">
+        <img src="{{ url_for('static', filename='icons/shelly/Goals.png') }}" alt="" class="hero-turtle">
+      </div>
+      <div class="badge-row goals-hero-badges">
+        {% if page_mode == 'view' %}
+          <a class="badge badge-primary-action" href="/goals/?mode=create">+ Create goal</a>
+        {% else %}
+          <a class="badge" href="/goals/">Back to goals</a>
+        {% endif %}
+      </div>
     </div>
   </div>
   {% if goal_cards %}
@@ -47,14 +57,6 @@
   </div>
   {% endif %}
 </section>
-
-<div class="row-end">
-  {% if page_mode == 'view' %}
-    <a class="badge badge-primary-action" href="/goals/?mode=create">+ Create goal</a>
-  {% else %}
-    <a class="badge" href="/goals/">Back to goals</a>
-  {% endif %}
-</div>
 
 {% if goal_cards %}
 <p class="helper-text">Goal ETAs are approximate scenario estimates based on your current contributions and growth assumptions. Inflation and retirement withdrawals aren’t modelled.</p>
