@@ -41,6 +41,7 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert '<p class="eyebrow">Monthly review</p>' not in html
     assert '<span>Monthly update status</span>' in html
     assert '<span>Review status</span>' not in html
+    assert '<section class="budget-year-strip month-strip-global month-strip-mobile-hidden' in html
     assert '<div class="hero-strip-stat">\n      <span>Status</span>' not in html
     assert '<strong>Not started</strong>' in html
     assert '<strong>In progress</strong>' not in html
