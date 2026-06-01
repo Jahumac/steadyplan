@@ -32,6 +32,7 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Review" not in html
     assert "Monthly review" not in html
     assert "Status:" not in html
+    assert html.index("budget-year-strip") < html.index("Welcome to SteadyPlan")
     assert "Nothing in the shell yet" not in html
     assert "<h2>Accounts</h2>" not in html
     assert "Total Net Worth" not in html
@@ -844,6 +845,7 @@ def test_overview_monthly_review_card_uses_specific_monthly_update_cta(app, clie
     assert f'/monthly-review/?month={month_key}' in html
     assert "Total net worth" in html
     assert "Total Net Worth" not in html
+    assert html.index("budget-year-strip") < html.index("Total net worth")
     assert html.index("Total net worth") < html.index("Monthly update")
     assert html.index("Accessible vs locked") < html.index("Monthly update")
 

@@ -3,6 +3,9 @@
 {% block title %}Overview · SteadyPlan{% endblock %}
 {% block content %}
 
+{# ── Month strip ─────────────────────────────────────────────────────────── #}
+{% include '_month_strip.html' %}
+
 {# ── Onboarding state ────────────────────────────────────────────────────── #}
 {% set has_profile = assumptions and assumptions.date_of_birth %}
 {% set has_accounts = accounts | length > 0 %}
@@ -297,9 +300,6 @@
   </div>
 </section>
 {% endif %}
-
-{# ── Month strip ─────────────────────────────────────────────────────────── #}
-{% include '_month_strip.html' %}
 
 {# ── Portfolio Value ───────────────────────────────────────────────────────── #}
 {% if has_portfolio_history %}
