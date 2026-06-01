@@ -328,7 +328,7 @@ data/
 - Read‑only demo mode for public try‑outs (done).
 - JSON backup/export and restore flow (done).
 - Overview Data Health panel (done).
-- Monthly Review workflow and manual balance updates (done).
+- Monthly Update workflow and manual balance updates (done).
 - Better offline experience: cached read‑only views with clear “offline” indicators.
 - Diagnostics page: last scheduler run, Yahoo price fetch status, DB health.
 - Import UX: smarter column matching and validation hints.
@@ -347,7 +347,7 @@ Everything lives in a single SQLite file (`data/finance.db`). No external databa
 Holdings with a ticker symbol get live price lookups via Yahoo Finance. SteadyPlan tries the ticker as-is first, then appends `.L` for London Stock Exchange listings. Prices are cached in a local catalogue and updated when you refresh.
 
 ### Monthly Snapshots
-Each time you complete a monthly review (or update an account balance), SteadyPlan saves a snapshot. These snapshots power the net worth history chart on the overview page and the performance tracking calculations.
+Each time you complete a monthly update (or update an account balance), SteadyPlan saves a snapshot. These snapshots power the net worth history chart on the overview page and the performance tracking calculations.
 
 ### Security
 SteadyPlan uses Flask-Login for authentication with hashed passwords. It's designed for home network use — if you want to expose it to the internet, put it behind a reverse proxy with additional auth (e.g. Authelia, Cloudflare Tunnel, or basic auth).

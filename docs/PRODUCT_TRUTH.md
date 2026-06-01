@@ -58,11 +58,11 @@ These jobs should outrank lower-value feature work:
 2. **See accessible vs locked money**
    - Users should understand what they can use now, what has penalties/restrictions, and what is for later retirement.
 3. **Track whether they are on course**
-   - Goals, retirement estimates, and monthly review state should feel understandable rather than overwhelming.
+   - Goals, retirement estimates, and monthly update state should feel understandable rather than overwhelming.
 4. **Connect short-term actions to long-term goals**
    - Budget, contributions, and account actions should clearly feed into the bigger picture.
 5. **Stop avoiding the overall picture**
-   - First use, overview, and monthly review should reduce dread, not increase it.
+   - First use, overview, and monthly update should reduce dread, not increase it.
 
 ---
 

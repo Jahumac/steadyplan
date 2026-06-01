@@ -56,7 +56,7 @@ Quick orientation for anyone (you, me, or a future contributor) coming back to t
 | `goals.py`     | Savings/retirement goals.                                             |
 | `accounts.py`  | Accounts, holdings, holding catalogue, prices.                        |
 | `budget.py`    | Budget items, sections, monthly entries.                              |
-| `planning.py`  | Assumptions, monthly reviews, snapshots, ISA/pension/dividend records, contribution overrides, tags, data resets. |
+| `planning.py`  | Assumptions, monthly updates (internally stored as monthly reviews), snapshots, ISA/pension/dividend records, contribution overrides, tags, data resets. |
 | `__init__.py`  | Re-exports everything so `from app.models import X` still works.      |
 
 Every public symbol is re-exported from `__init__.py`. **Add a new function?** Put it in the right domain file, then add it to the `__init__.py` re-export list.
