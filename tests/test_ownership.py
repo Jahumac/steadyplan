@@ -413,6 +413,19 @@ def test_admin_cannot_delete_current_logged_in_user_via_route(app, client, make_
         assert get_user_by_username(username) is not None
 
 
+def test_admin_delete_warning_uses_monthly_update_copy(app, client, make_user):
+    admin_id, admin_u, admin_p = make_user(username="admin-del-copy", password="password123", is_admin=True)
+    target_id, target_u, target_p = make_user(username="janusz-copy", password="password123", is_admin=False)
+    client.post("/login", data={"username": admin_u, "password": admin_p}, follow_redirects=False)
+
+    resp = client.get(f"/users?edit={target_id}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Deleting a user removes" in html
+    assert "Monthly updates" in html
+    assert "Monthly reviews" not in html
+
+
 def test_admin_delete_requires_typing_username(app, client, make_user):
     from app.models import get_user_by_username
 
