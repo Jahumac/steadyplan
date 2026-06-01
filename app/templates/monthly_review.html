@@ -489,7 +489,7 @@
 
   <dialog id="confirm-complete-dialog" class="confirm-dialog">
     <div class="confirm-dialog-content">
-      <h3>Mark {{ month_label }} reviewed?</h3>
+      <h3>Mark {{ month_label }} monthly update complete?</h3>
       <p>This will snapshot updated account values for this month. Holdings snapshot from holdings; manual and Premium Bonds snapshot only if you updated their balance.</p>
       {% if unupdated_manual_names %}
       <p class="helper-text" style="color: var(--accent-3);">⚠ {{ unupdated_manual_names | length }} manual account{{ 's' if unupdated_manual_names | length != 1 else '' }} haven't had their balance updated this month ({{ unupdated_manual_names | join(', ') }}).</p>
