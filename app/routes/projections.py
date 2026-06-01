@@ -362,6 +362,8 @@ def api_account_schedule():
         last_mk = mk
         filtered.append((mk, amount))
 
+    delete_contribution_overrides_for_reason(int(account_id), uid, "schedule")
+
     for i, (from_m, amount) in enumerate(filtered):
         next_m = filtered[i + 1][0] if i + 1 < len(filtered) else None
         to_m = add_months_to_key(next_m, -1) if next_m else "9999-12"
