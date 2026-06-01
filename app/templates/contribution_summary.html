@@ -20,9 +20,6 @@
       <h2 class="hero-value">Contribution Summary</h2>
       <p class="hero-subtitle">Month-by-month contributions across all accounts</p>
     </div>
-    <div class="hero-turtle-wrap">
-      <img src="{{ url_for('static', filename='icons/shelly/Goals.png') }}" alt="" class="hero-turtle">
-    </div>
   </div>
   {% if accounts %}
   {% set total_contributed = month_totals.values() | sum %}

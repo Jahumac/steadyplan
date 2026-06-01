@@ -27,9 +27,6 @@
       <p class="hero-subtitle">Track what you owe, see when you'll be free, and find out how much faster you could get there by overpaying.</p>
     </div>
     <div class="hero-actions-col debts-hero-actions">
-      <div class="hero-turtle-wrap">
-        <img src="{{ url_for('static', filename='icons/shelly/Budget.png') }}" alt="" class="hero-turtle">
-      </div>
       {% if page_mode == 'view' and not selected_debt %}
       <div class="badge-row debts-hero-badges">
         <a class="badge" href="/budget/debts/export.xlsx">↓ Export</a>
