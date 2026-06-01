@@ -148,6 +148,14 @@ def _account_payload_from_form(form):
     }
 
 
+def _wrapper_type_options_for(selected=None):
+    options = list(WRAPPER_TYPE_OPTIONS)
+    wrapper_type = ((selected or {}).get("wrapper_type") or "").strip()
+    if wrapper_type and wrapper_type not in options:
+        options.append(wrapper_type)
+    return options
+
+
 def _render_accounts_page(user_id, selected=None, detail_mode="view", position_error=None, position_added=False, edit_holding_id=None):
     rows = fetch_all_accounts(user_id)
     assumptions = fetch_assumptions(user_id)
@@ -487,7 +495,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         total_into_pot_monthly=sum(float(b.get("total_into_pot", 0) or 0) for b in contrib_breakdowns.values()),
         contrib_breakdowns=contrib_breakdowns,
         active_page="accounts",
-        wrapper_type_options=WRAPPER_TYPE_OPTIONS,
+        wrapper_type_options=_wrapper_type_options_for(selected),
         category_options=CATEGORY_OPTIONS,
         tag_options=fetch_user_tags(user_id),
         custom_tags=fetch_custom_tags(user_id),
