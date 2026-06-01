@@ -45,6 +45,7 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     assert response.status_code == 200
     html = response.get_data(as_text=True)
 
+    assert '<section class="budget-year-strip month-strip-global month-strip-mobile-hidden' in html
     assert 'class="hero-actions-col accounts-hero-actions"' in html
     assert 'class="badge-row accounts-hero-badges"' in html
     assert 'href="/accounts/?mode=create">+ Add account</a>' in html
