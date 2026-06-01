@@ -122,6 +122,8 @@ def test_overview_completed_monthly_review_does_not_show_stale_checklist(app, cl
     assert 'data-confirm-ok="Yes, reopen review"' not in review_html
     assert 'data-confirm-cancel="Keep monthly update complete">Reopen monthly update<' in review_html
     assert 'data-confirm-cancel="Keep review complete">Reopen review<' not in review_html
+    assert "· ✓ Monthly update complete" in review_html
+    assert "· ✓ Review done" not in review_html
 
 
 def test_monthly_review_get_is_idempotent_for_user_month(app, client, make_user):
@@ -143,6 +145,33 @@ def test_monthly_review_get_is_idempotent_for_user_month(app, client, make_user)
                 (uid, month_key),
             ).fetchone()["c"]
     assert int(c) == 1
+
+
+def test_monthly_review_month_strip_uses_monthly_update_tooltips(app, client, make_user):
+    _, username, password = make_user(username="mr-month-strip-tooltips", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    from datetime import date
+
+    month_key = date.today().strftime("%Y-%m")
+    open_resp = client.get(f"/monthly-review/?month={month_key}")
+    assert open_resp.status_code == 200
+    open_html = open_resp.get_data(as_text=True)
+    assert "· Monthly update not finished" in open_html
+    assert "· Review not finished" not in open_html
+
+    complete_resp = client.post(
+        "/monthly-review/",
+        data={
+            "form_name": "mark_complete",
+            "month": month_key,
+        },
+        follow_redirects=True,
+    )
+    assert complete_resp.status_code == 200
+    complete_html = complete_resp.get_data(as_text=True)
+    assert "· ✓ Monthly update complete" in complete_html
+    assert "· ✓ Review done" not in complete_html
 
 
 def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_user):
