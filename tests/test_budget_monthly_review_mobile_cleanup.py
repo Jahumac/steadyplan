@@ -1,4 +1,4 @@
-def test_budget_page_surfaces_primary_editing_guidance_and_collapses_import_export_tools(app, client, make_user):
+def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup(app, client, make_user):
     _, username, password = make_user(username="budget-mobile", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
@@ -6,12 +6,23 @@ def test_budget_page_surfaces_primary_editing_guidance_and_collapses_import_expo
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "This month" in html
+    assert 'class="hero-actions-col budget-hero-actions"' in html
+    assert 'class="badge-row budget-hero-badges"' in html
     assert "Edit numbers below to shape this month." in html
     assert "Budget Setup" in html
+    assert "Jump to budget" in html
     assert "Import / export tools" in html
     assert "Export month" in html
     assert "Import tax year" in html
+    assert '<section class="card mb-1 budget-compact-flow-card">' not in html
+    assert '<p class="eyebrow">This month</p>' not in html
+    assert "Keep budget editing simple" not in html
+
+    hero_idx = html.index('class="hero-actions-col budget-hero-actions"')
+    jump_idx = html.index('href="#income">Jump to budget</a>')
+    toolbar_idx = html.index('class="budget-toolbar"')
+
+    assert hero_idx < jump_idx < toolbar_idx
 
 
 def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links_behind_details(app, client, make_user):

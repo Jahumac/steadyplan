@@ -40,9 +40,16 @@
       {% else %}
       <p class="hero-subtitle">Here's where the money goes — this view keeps score so you don't have to.</p>
       {% endif %}
+      <p class="helper-text m-0">Edit numbers below to shape this month.</p>
     </div>
-    <div class="hero-turtle-wrap">
-      <img src="{{ url_for('static', filename='icons/shelly/Budget.png') }}" alt="" class="hero-turtle">
+    <div class="hero-actions-col budget-hero-actions">
+      <div class="badge-row budget-hero-badges">
+        <a class="badge" href="#{{ income_key | replace('_', '-') }}">Jump to budget</a>
+        <a class="badge badge-meta" href="/budget/items/?month={{ month_key }}">Budget Setup</a>
+      </div>
+      <div class="hero-turtle-wrap">
+        <img src="{{ url_for('static', filename='icons/shelly/Budget.png') }}" alt="" class="hero-turtle">
+      </div>
     </div>
   </div>
   <div class="hero-strip">
@@ -62,20 +69,6 @@
   <strong id="pre-salary-total">£{{ '{:,.0f}'.format(summary.pre_salary_total) }}</strong> is marked outside take-home. It is shown in the relevant section for visibility, but not deducted again from Left over.
 </p>
 {% endif %}
-
-<section class="card mb-1 budget-compact-flow-card">
-  <div class="section-header">
-    <div>
-      <p class="eyebrow">This month</p>
-      <h2>Keep budget editing simple</h2>
-      <p class="helper-text m-0">Edit numbers below to shape this month.</p>
-    </div>
-    <div class="badge-row">
-      <a class="badge" href="#{{ income_key | replace('_', '-') }}">Jump to budget</a>
-      <a class="badge badge-meta" href="/budget/items/?month={{ month_key }}">Budget Setup</a>
-    </div>
-  </div>
-</section>
 
 {# ── Budget toolbar ──────────────────────────────────────────────────────── #}
 <div class="budget-toolbar">

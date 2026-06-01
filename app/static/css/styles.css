@@ -2086,7 +2086,8 @@ button.button-danger:focus {
     flex-wrap: wrap;
   }
 
-  .goals-hero-actions {
+  .goals-hero-actions,
+  .budget-hero-actions {
     width: 100%;
     flex-direction: row;
     align-items: center;
@@ -2094,12 +2095,14 @@ button.button-danger:focus {
     gap: 0.75rem;
   }
 
-  .goals-hero-actions .hero-turtle-wrap {
+  .goals-hero-actions .hero-turtle-wrap,
+  .budget-hero-actions .hero-turtle-wrap {
     order: 2;
     margin-left: 0;
   }
 
-  .goals-hero-badges {
+  .goals-hero-badges,
+  .budget-hero-badges {
     order: 1;
     justify-content: flex-start;
   }
@@ -3266,11 +3269,17 @@ button.button-danger:focus {
   justify-content: flex-start;
 }
 
-.goals-hero-badges {
+.budget-hero-actions {
+  justify-content: flex-start;
+}
+
+.goals-hero-badges,
+.budget-hero-badges {
   justify-content: flex-end;
 }
 
-.goals-hero-badges .badge {
+.goals-hero-badges .badge,
+.budget-hero-badges .badge {
   white-space: nowrap;
 }
 
