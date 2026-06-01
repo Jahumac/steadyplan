@@ -358,7 +358,7 @@ def fetch_isa_overrides_for_tax_year(user_id, ty_start, ty_end):
               AND co.to_month >= ?
               AND a.wrapper_type IN (
                   'Stocks & Shares ISA', 'Cash ISA', 'Lifetime ISA',
-                  'Stocks and Shares ISA', 'Junior ISA'
+                  'Stocks and Shares ISA'
               )
             ORDER BY co.account_id, co.from_month
             """,
