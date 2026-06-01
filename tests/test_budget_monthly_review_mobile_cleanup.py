@@ -56,6 +56,9 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert "Leave a quick reminder, then mark this month reviewed when you are happy." not in html
     assert "Leave a quick reminder, then mark the month reviewed when you are happy." not in html
     assert "Leave a quick reminder, then lock the month when you are happy." not in html
+    assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark monthly update complete</a>' in html
+    assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark this month reviewed</a>' not in html
+    assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark reviewed</a>' not in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark this month reviewed</a>' in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark reviewed</a>' not in html
     assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or manual balances below where needed." in html
