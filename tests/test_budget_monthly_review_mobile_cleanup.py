@@ -6,8 +6,12 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
+    assert '<section class="budget-year-strip month-strip-mobile-hidden month-accent-' in html
     assert 'class="hero-actions-col budget-hero-actions"' in html
     assert 'class="badge-row budget-hero-badges"' in html
+    assert 'class="budget-month-nav budget-hero-month-nav"' in html
+    assert 'class="badge badge-meta budget-prev-month"' in html
+    assert 'class="badge badge-meta budget-next-month"' in html
     assert "Edit numbers below to shape this month." in html
     assert "Budget Setup" in html
     assert "Jump to budget" in html
@@ -20,9 +24,10 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
 
     hero_idx = html.index('class="hero-actions-col budget-hero-actions"')
     jump_idx = html.index('href="#income">Jump to budget</a>')
+    month_nav_idx = html.index('class="budget-month-nav budget-hero-month-nav"')
     toolbar_idx = html.index('class="budget-toolbar"')
 
-    assert hero_idx < jump_idx < toolbar_idx
+    assert hero_idx < jump_idx < month_nav_idx < toolbar_idx
 
 
 def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, client, make_user):

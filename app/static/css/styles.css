@@ -3277,6 +3277,12 @@ button.button-danger:focus {
   .month-strip-mobile-hidden {
     display: none;
   }
+
+  .budget-hero-month-nav {
+    display: flex;
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 .goals-hero-actions {
@@ -3290,6 +3296,10 @@ button.button-danger:focus {
 .goals-hero-badges,
 .budget-hero-badges {
   justify-content: flex-end;
+}
+
+.budget-hero-month-nav {
+  display: none;
 }
 
 .goals-hero-badges .badge,

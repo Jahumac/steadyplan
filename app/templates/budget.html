@@ -13,7 +13,7 @@
 
 {# ── Month strip (tax year: Apr → Mar) — moved above hero for consistency ─ #}
 {% set _mk_month = month_key.split('-')[1] | int %}
-<section class="budget-year-strip month-accent-{{ _mk_month }}">
+<section class="budget-year-strip month-strip-mobile-hidden month-accent-{{ _mk_month }}">
   <div class="budget-year-strip-inner">
     <button type="button" class="budget-year-arrow" id="prev-month" aria-label="Previous month">◀</button>
     {% for m in month_strip %}
@@ -46,6 +46,11 @@
       <div class="badge-row budget-hero-badges">
         <a class="badge" href="#{{ income_key | replace('_', '-') }}">Jump to budget</a>
         <a class="badge badge-meta" href="/budget/items/?month={{ month_key }}">Budget Setup</a>
+      </div>
+      <div class="budget-month-nav budget-hero-month-nav">
+        <button type="button" class="badge badge-meta budget-prev-month" title="Previous month">◀</button>
+        <span class="budget-month-nav-label">{{ month_label }}</span>
+        <button type="button" class="badge badge-meta budget-next-month" title="Next month">▶</button>
       </div>
       <div class="hero-turtle-wrap">
         <img src="{{ url_for('static', filename='icons/shelly/Budget.png') }}" alt="" class="hero-turtle">
