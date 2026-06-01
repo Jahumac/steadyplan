@@ -57,6 +57,29 @@ def test_user_can_update_own_account_balance_and_snapshot_created(app, client, m
             assert int(ads_count) == 1
 
 
+def test_account_detail_balance_panel_uses_open_monthly_update_cta(app, client, make_user):
+    uid, username, password = make_user(username="bal-detail-copy", password="password123")
+    _login(client, username, password)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            aid = conn.execute(
+                "INSERT INTO accounts (user_id, name, current_value, is_active, valuation_mode) "
+                "VALUES (?, 'Cash', 10, 1, 'manual')",
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+    resp = client.get(f"/accounts/{aid}", follow_redirects=True)
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert '>Open monthly update<' in html
+    assert '>Go to Monthly Update<' not in html
+
+
 def test_invalid_balance_rejected_without_changes(app, client, make_user):
     uid, username, password = make_user(username="bal-invalid", password="password123")
     _login(client, username, password)
