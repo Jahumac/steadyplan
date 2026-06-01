@@ -1913,95 +1913,127 @@
 
     // 19. Projections What-If Logic
     (function initWhatIf() {
-      var ageInput = document.getElementById('wi_age');
-      if (!ageInput) return;
+      function initScenario(config) {
+        var ageInput = document.getElementById(config.ageId);
+        if (!ageInput) return;
 
-      var BASE_CURRENT_AGE = parseFloat(ageInput.dataset.currentAgeFrac);
-      var BASE_RETIREMENT_AGE = parseInt(ageInput.dataset.baseRetirementAge);
-      var BASE_YEARS_REMAINING = parseFloat(ageInput.dataset.baseYearsRemaining);
-      var BASE_MONTHS_REMAINING = parseInt(ageInput.dataset.baseMonthsRemaining);
-      var DEFAULT_RATE_PCT = parseFloat(ageInput.dataset.defaultRatePct);
+        var BASE_CURRENT_AGE = parseFloat(ageInput.dataset.currentAgeFrac);
+        var BASE_RETIREMENT_AGE = parseInt(ageInput.dataset.baseRetirementAge);
+        var BASE_YEARS_REMAINING = parseFloat(ageInput.dataset.baseYearsRemaining);
+        var BASE_MONTHS_REMAINING = parseInt(ageInput.dataset.baseMonthsRemaining);
+        var DEFAULT_RATE_PCT = parseFloat(ageInput.dataset.defaultRatePct);
 
-      function fv(current, monthly, annualRate, years, months) {
-        var r = annualRate / 12;
-        var n = (typeof months === 'number') ? months : Math.floor(years * 12);
-        var fc = current * Math.pow(1 + r, n);
-        var fm = r === 0 ? monthly * n : monthly * ((Math.pow(1 + r, n) - 1) / r);
-        return fc + fm;
-      }
-
-      function projectAccount(current, monthly, annualRate, retAge, isLISA) {
-        var onPlan = (retAge === BASE_RETIREMENT_AGE);
-        var years  = onPlan ? BASE_YEARS_REMAINING : Math.max(retAge - BASE_CURRENT_AGE, 0);
-        var months = onPlan ? BASE_MONTHS_REMAINING : undefined;
-        if (isLISA) {
-          var contribEndAge = Math.min(50, retAge);
-          var contribYears  = Math.max(contribEndAge - BASE_CURRENT_AGE, 0);
-          var frozenYears   = Math.max(years - contribYears, 0);
-          var valAtEnd = fv(current, monthly, annualRate, contribYears);
-          return fv(valAtEnd, 0, annualRate, frozenYears);
+        function fv(current, monthly, annualRate, years, months) {
+          var r = annualRate / 12;
+          var n = (typeof months === 'number') ? months : Math.floor(years * 12);
+          var fc = current * Math.pow(1 + r, n);
+          var fm = r === 0 ? monthly * n : monthly * ((Math.pow(1 + r, n) - 1) / r);
+          return fc + fm;
         }
-        return fv(current, monthly, annualRate, years, months);
-      }
 
-      function fmt(v) { return '£' + Math.round(v).toLocaleString('en-GB'); }
-
-      var inputs  = Array.from(document.querySelectorAll('.wi-contrib-input'));
-      var labels  = Array.from(document.querySelectorAll('[data-projected-label]'));
-      var rateInput = document.getElementById('wi_rate');
-
-      function recalc() {
-        var retAge      = parseFloat(ageInput.value)  || BASE_RETIREMENT_AGE;
-        var globalPct   = parseFloat(rateInput.value) || 0;
-        var rateChanged = Math.abs(globalPct - DEFAULT_RATE_PCT) > 0.0001;
-        var scenarioTotal = 0;
-        var planTotal     = 0;
-        var totalMonthly  = 0;
-
-        inputs.forEach(function(inp, i) {
-          var current = parseFloat(inp.dataset.current) || 0;
-          var personal = parseFloat(inp.value) || 0;
-          var planPersonal = parseFloat(inp.dataset.plan) || 0;
-          var planEffective = parseFloat(inp.dataset.effective) || planPersonal;
-          var acctRate = parseFloat(inp.dataset.rate) || 0;
-          var isLISA = inp.dataset.wrapper === 'Lifetime ISA';
-          var ratio = planPersonal > 0 ? (planEffective / planPersonal) : 1;
-          var monthly = personal * ratio;
-          var useRate = rateChanged ? (globalPct / 100) : acctRate;
-          var proj = projectAccount(current, monthly, useRate, retAge, isLISA);
-          var planVal = projectAccount(current, planEffective, acctRate, BASE_RETIREMENT_AGE, isLISA);
-          scenarioTotal += proj; planTotal += planVal; totalMonthly += personal;
-          if (labels[i]) labels[i].textContent = fmt(proj);
-        });
-
-        var diff = scenarioTotal - planTotal;
-        var diffEl = document.getElementById('wi_diff');
-        if (diffEl) {
-          diffEl.textContent = (diff >= 0 ? '+' : '') + fmt(diff);
-          diffEl.className = diff >= 0 ? 'whatif-positive' : 'whatif-negative';
+        function projectAccount(current, monthly, annualRate, retAge, isLISA) {
+          var onPlan = (retAge === BASE_RETIREMENT_AGE);
+          var years  = onPlan ? BASE_YEARS_REMAINING : Math.max(retAge - BASE_CURRENT_AGE, 0);
+          var months = onPlan ? BASE_MONTHS_REMAINING : undefined;
+          if (isLISA) {
+            var contribEndAge = Math.min(50, retAge);
+            var contribYears  = Math.max(contribEndAge - BASE_CURRENT_AGE, 0);
+            var frozenYears   = Math.max(years - contribYears, 0);
+            var valAtEnd = fv(current, monthly, annualRate, contribYears);
+            return fv(valAtEnd, 0, annualRate, frozenYears);
+          }
+          return fv(current, monthly, annualRate, years, months);
         }
-        var totalEl = document.getElementById('wi_total');
-        if (totalEl) totalEl.textContent = fmt(scenarioTotal);
-        var yearsEl = document.getElementById('wi_years');
-        if (yearsEl) yearsEl.textContent = Math.round((retAge === BASE_RETIREMENT_AGE) ? BASE_YEARS_REMAINING : Math.max(retAge - BASE_CURRENT_AGE, 0)) + ' years';
-        var monthlyEl = document.getElementById('wi_monthly');
-        if (monthlyEl) monthlyEl.textContent = fmt(totalMonthly) + '/mo';
+
+        function fmt(v) { return '£' + Math.round(v).toLocaleString('en-GB'); }
+
+        var root = ageInput.closest(config.rootSelector) || document;
+        var inputs = Array.from(root.querySelectorAll(config.inputSelector));
+        var labels = Array.from(root.querySelectorAll(config.labelSelector));
+        var rateInput = document.getElementById(config.rateId);
+
+        function recalc() {
+          var retAge      = parseFloat(ageInput.value)  || BASE_RETIREMENT_AGE;
+          var globalPct   = parseFloat(rateInput.value) || 0;
+          var rateChanged = Math.abs(globalPct - DEFAULT_RATE_PCT) > 0.0001;
+          var scenarioTotal = 0;
+          var planTotal     = 0;
+          var totalMonthly  = 0;
+
+          inputs.forEach(function(inp, i) {
+            var current = parseFloat(inp.dataset.current) || 0;
+            var personal = parseFloat(inp.value) || 0;
+            var planPersonal = parseFloat(inp.dataset.plan) || 0;
+            var planEffective = parseFloat(inp.dataset.effective) || planPersonal;
+            var acctRate = parseFloat(inp.dataset.rate) || 0;
+            var isLISA = inp.dataset.wrapper === 'Lifetime ISA';
+            var ratio = planPersonal > 0 ? (planEffective / planPersonal) : 1;
+            var monthly = personal * ratio;
+            var useRate = rateChanged ? (globalPct / 100) : acctRate;
+            var proj = projectAccount(current, monthly, useRate, retAge, isLISA);
+            var planVal = projectAccount(current, planEffective, acctRate, BASE_RETIREMENT_AGE, isLISA);
+            scenarioTotal += proj;
+            planTotal += planVal;
+            totalMonthly += personal;
+            if (labels[i]) labels[i].textContent = fmt(proj);
+          });
+
+          var diff = scenarioTotal - planTotal;
+          var diffEl = document.getElementById(config.diffId);
+          if (diffEl) {
+            diffEl.textContent = (diff >= 0 ? '+' : '') + fmt(diff);
+            diffEl.className = diff >= 0 ? 'whatif-positive' : 'whatif-negative';
+          }
+          var totalEl = document.getElementById(config.totalId);
+          if (totalEl) totalEl.textContent = fmt(scenarioTotal);
+          var yearsEl = document.getElementById(config.yearsId);
+          if (yearsEl) yearsEl.textContent = Math.round((retAge === BASE_RETIREMENT_AGE) ? BASE_YEARS_REMAINING : Math.max(retAge - BASE_CURRENT_AGE, 0)) + ' years';
+          var monthlyEl = document.getElementById(config.monthlyId);
+          if (monthlyEl) monthlyEl.textContent = fmt(totalMonthly) + '/mo';
+        }
+
+        ageInput.addEventListener('input', recalc);
+        if (rateInput) rateInput.addEventListener('input', recalc);
+        inputs.forEach(function(inp) { inp.addEventListener('input', recalc); });
+
+        var resetBtn = document.getElementById(config.resetId);
+        if (resetBtn) {
+          resetBtn.addEventListener('click', function() {
+            ageInput.value = BASE_RETIREMENT_AGE;
+            if (rateInput) rateInput.value = DEFAULT_RATE_PCT;
+            inputs.forEach(function(inp) { inp.value = inp.dataset.plan; });
+            recalc();
+          });
+        }
+        recalc();
       }
 
-      ageInput.addEventListener('input', recalc);
-      if (rateInput) rateInput.addEventListener('input', recalc);
-      inputs.forEach(function(inp) { inp.addEventListener('input', recalc); });
-
-      var resetBtn = document.getElementById('wi_reset');
-      if (resetBtn) {
-        resetBtn.addEventListener('click', function() {
-          ageInput.value  = BASE_RETIREMENT_AGE;
-          if (rateInput) rateInput.value = DEFAULT_RATE_PCT;
-          inputs.forEach(function(inp) { inp.value = inp.dataset.plan; });
-          recalc();
-        });
-      }
-      recalc();
+      [
+        {
+          rootSelector: '.projections-desktop-detail',
+          ageId: 'wi_age',
+          rateId: 'wi_rate',
+          resetId: 'wi_reset',
+          inputSelector: '.wi-contrib-input',
+          labelSelector: '[data-projected-label]',
+          totalId: 'wi_total',
+          diffId: 'wi_diff',
+          yearsId: 'wi_years',
+          monthlyId: 'wi_monthly'
+        },
+        {
+          rootSelector: '.projections-compact-details',
+          ageId: 'wi_age_mobile',
+          rateId: 'wi_rate_mobile',
+          resetId: 'wi_reset_mobile',
+          inputSelector: '.wi-contrib-input-mobile',
+          labelSelector: '[data-projected-label]',
+          totalId: 'wi_total_mobile',
+          diffId: 'wi_diff_mobile',
+          yearsId: 'wi_years_mobile',
+          monthlyId: 'wi_monthly_mobile'
+        }
+      ].forEach(initScenario);
     })();
 
     (function initProjectionAccountDetails() {

@@ -69,7 +69,7 @@
 </div>
 
 {% if assumption_summary and assumption_summary.items_list %}
-<section class="card mb-1">
+<section class="card mb-1 projections-desktop-detail">
   <div class="section-header">
     <div>
       <p class="eyebrow">Assumptions</p>
@@ -86,6 +86,27 @@
     </div>
   {% endfor %}
 </section>
+
+<details class="projections-compact-details projections-compact-only mb-1">
+  <summary>Assumptions</summary>
+  <div class="projections-compact-panel">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Assumptions</p>
+        <h2>What drives this estimate</h2>
+      </div>
+      <a class="badge badge-sm" href="/settings/?mode=edit">Edit assumptions</a>
+    </div>
+    {% for item in assumption_summary.items_list %}
+      <div class="mb-075">
+        <strong>{{ item.title }}</strong>
+        {% for line in item.lines %}
+          <p class="helper-text m-0">{{ line }}</p>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  </div>
+</details>
 {% endif %}
 
 {# ── Summary cards ────────────────────────────────────────────────────────── #}
@@ -121,7 +142,7 @@
 
 {# ── Per-account breakdown ────────────────────────────────────────────────── #}
 {% if account_rows %}
-<section class="card mb-1">
+<section class="card mb-1 projections-desktop-detail">
   <div class="section-header">
     <div>
       <p class="eyebrow">Account breakdown</p>
@@ -200,11 +221,94 @@
     </div>
   </div>
 </section>
+
+<details class="projections-compact-details projections-compact-only mb-1">
+  <summary>Account breakdown</summary>
+  <div class="projections-compact-panel">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Account breakdown</p>
+        <h2>Each Account at Retirement (Estimate)</h2>
+      </div>
+    </div>
+    <p class="helper-text">Scenario estimates for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, government bonuses, and employer contributions).</p>
+    <div class="budget-rows">
+      {% for row in account_rows %}
+      <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}">
+        <summary class="budget-row proj-acc-summary">
+          <div class="budget-row-left">
+            <span class="budget-row-name">{{ row.name }}</span>
+            <span class="budget-row-note">{{ row.wrapper_type }} · {{ '{:.1f}'.format(row.growth_rate * 100) }}% net
+              {%- if row.annual_fee_pct %} <span style="color:var(--muted);">({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
+              {%- if row.effective_contribution != row.monthly_contribution or row.contribution_fee > 0 %} · you pay £{{ '{:,.2f}'.format(row.monthly_contribution) }}
+                {%- if row.tax_relief %} + £{{ '{:,.2f}'.format(row.tax_relief) }} tax relief{% endif %}
+                {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} govt bonus{% endif %}
+                {%- if row.employer %} + £{{ '{:,.2f}'.format(row.employer) }} employer{% endif %}
+                {%- if row.contribution_fee > 0 %} − £{{ '{:,.2f}'.format(row.contribution_fee) }} contribution fee{% endif %}
+                = £{{ '{:,.2f}'.format(row.effective_contribution) }}/mo into pot
+              {%- else %} · £{{ '{:,.0f}'.format(row.monthly_contribution) }}/mo
+              {%- endif %}
+            </span>
+            {% if row.self_assessment > 0 %}
+            <span class="budget-row-note" style="color:var(--accent-3);">Plus £{{ '{:,.2f}'.format(row.self_assessment) }}/mo reclaimable via self-assessment</span>
+            {% endif %}
+            {% if row.contribution_fee > 0 %}
+            <span class="budget-row-note text-danger">{{ '{:.2f}'.format(row.contribution_fee_pct) }}% contribution fee costs £{{ '{:,.2f}'.format(row.contribution_fee) }}/mo — £{{ '{:,.0f}'.format(row.contribution_fee * 12) }}/yr</span>
+            {% endif %}
+            {% if row.fee_impact > 0 %}
+            <span class="budget-row-note text-danger">Annual fees cost £{{ '{:,.0f}'.format(row.fee_impact) }} in lost growth over the period</span>
+            {% endif %}
+          </div>
+          <div class="budget-row-right proj-row-right">
+            <span class="muted-cell proj-row-current">now £{{ '{:,.0f}'.format(row.current_value) }}</span>
+            <strong class="text-accent-2">£{{ '{:,.0f}'.format(row.projected_value) }}</strong>
+            <span class="proj-acc-caret" aria-hidden="true">▾</span>
+          </div>
+        </summary>
+        <div class="proj-acc-detail">
+          <div class="proj-acc-toolbar">
+            <div class="badge-row">
+              <button type="button" class="badge badge-meta is-active" data-proj-mode-btn data-mode="yearly">Yearly</button>
+              <button type="button" class="badge badge-meta" data-proj-mode-btn data-mode="monthly">Monthly</button>
+            </div>
+          </div>
+          <div class="proj-acc-series" data-proj-series aria-live="polite"></div>
+
+          <div class="proj-acc-schedule">
+            <div class="section-header mb-05" style="padding:0;border:none;">
+              <div>
+                <p class="eyebrow">Contribution schedule</p>
+                <h3 style="margin:0;font-size:1rem;">Change contributions at certain ages</h3>
+              </div>
+            </div>
+            <p class="helper-text m-0">Add rows like “from age 50 → £600/mo”. This saves to your plan and updates projections.</p>
+            <div class="proj-schedule-rows" data-proj-schedule-rows></div>
+            <div class="badge-row mt-075">
+              <button type="button" class="badge badge-meta" data-proj-schedule-add>+ Add row</button>
+              <button type="button" class="badge badge-primary-action" data-proj-schedule-save>Save schedule</button>
+            </div>
+            <div class="helper-text mt-05" data-proj-schedule-status></div>
+          </div>
+        </div>
+      </details>
+      {% endfor %}
+      <div class="budget-row" style="border-top:1px solid var(--border); margin-top:0.25rem; padding-top:0.75rem;">
+        <div class="budget-row-left">
+          <span class="budget-row-name" style="font-weight:700;">Total</span>
+        </div>
+        <div class="budget-row-right" style="gap:1.5rem;">
+          <span class="muted-cell" style="font-size:0.82rem;">now £{{ '{:,.0f}'.format(metrics.total_current) }}</span>
+          <strong style="color:var(--accent-2);">£{{ '{:,.0f}'.format(metrics.total_projected) }}</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</details>
 {% endif %}
 
 {# ── Projection chart ─────────────────────────────────────────────────────── #}
 {% if chart_labels %}
-<section class="card mb-1">
+<section class="card mb-1 projections-desktop-detail">
   <div class="section-header">
     <div>
       <p class="eyebrow">Growth curve</p>
@@ -218,10 +322,28 @@
       data-values='{{ chart_values | tojson | safe }}'></canvas>
   </div>
 </section>
+
+<details class="projections-compact-details projections-compact-only mb-1">
+  <summary>Growth curve</summary>
+  <div class="projections-compact-panel">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Growth curve</p>
+        <h2>Portfolio Trajectory</h2>
+      </div>
+    </div>
+    <p class="helper-text">How your portfolio could grow year by year under your current assumptions and contributions.</p>
+    <div class="chart-wrap-md">
+      <canvas id="projectionChartMobile" role="img" aria-label="Projected portfolio growth chart"
+        data-labels='{{ chart_labels | tojson | safe }}'
+        data-values='{{ chart_values | tojson | safe }}'></canvas>
+    </div>
+  </div>
+</details>
 {% endif %}
 
 {# ── What-if ──────────────────────────────────────────────────────────────── #}
-<section class="card mb-1">
+<section class="card mb-1 projections-desktop-detail">
   <div class="section-header">
     <div>
       <p class="eyebrow">Scenario planner</p>
@@ -297,6 +419,83 @@
     </div>
   </div>
 </section>
+
+<details class="projections-compact-details projections-compact-only mb-1">
+  <summary>Scenario planner</summary>
+  <div class="projections-compact-panel">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Scenario planner</p>
+        <h2>What If?</h2>
+      </div>
+      <button class="badge badge-meta" id="wi_reset_mobile" type="button">Reset to plan</button>
+    </div>
+    <p class="helper-text">Adjust inputs to see how the scenario estimate changes. Nothing is saved unless you explicitly save it elsewhere.</p>
+
+    <div class="form-grid settings-form mb-1">
+      <label>
+        <span>Retirement age</span>
+        <input type="number" id="wi_age_mobile" value="{{ metrics.retirement_age }}" min="{{ metrics.current_age|int }}" max="100" step="1"
+          data-current-age-frac="{{ '{:.10f}'.format(metrics.current_age_frac) }}"
+          data-base-retirement-age="{{ metrics.retirement_age }}"
+          data-base-years-remaining="{{ '{:.10f}'.format(metrics.years_remaining) }}"
+          data-base-months-remaining="{{ '{:d}'.format((metrics.years_remaining * 12)|int) }}"
+          data-default-rate-pct="{{ '{:.1f}'.format(metrics.growth_rate * 100) }}">
+      </label>
+      <label>
+        <span>Annual growth rate (%)</span>
+        <input type="number" id="wi_rate_mobile" value="{{ '{:.1f}'.format(metrics.growth_rate * 100) }}" min="0" max="20" step="0.1">
+      </label>
+    </div>
+
+    <p class="eyebrow mb-05">Monthly contributions per account</p>
+    <div class="wi-account-list" id="wi_accounts_mobile">
+      {% for row in account_rows %}
+      <div class="wi-account-row">
+        <div class="wi-account-info">
+          <strong>{{ row.name }}</strong>
+          <small>{{ row.wrapper_type }}{% if row.wrapper_type == 'Lifetime ISA' %} · contributions stop at 50{% endif %}</small>
+        </div>
+        <div class="wi-account-right">
+          <div class="wi-account-input-wrap">
+            <span class="wi-gbp">£</span>
+            <input type="number"
+                   class="wi-contrib-input wi-contrib-input-mobile"
+                   data-plan="{{ row.monthly_contribution }}"
+                   data-effective="{{ row.effective_contribution }}"
+                   data-employer="{{ row.employer }}"
+                   data-current="{{ row.current_value }}"
+                   data-rate="{{ row.growth_rate }}"
+                   data-wrapper="{{ row.wrapper_type }}"
+                   value="{{ row.monthly_contribution }}"
+                   step="10" min="0">
+          </div>
+          <span class="wi-account-projected" data-projected-label>—</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="whatif-result mt-125" id="whatifResultMobile">
+      <div class="whatif-result-item">
+        <span>Scenario total</span>
+        <strong id="wi_total_mobile">—</strong>
+      </div>
+      <div class="whatif-result-item">
+        <span>vs. your plan</span>
+        <strong id="wi_diff_mobile">—</strong>
+      </div>
+      <div class="whatif-result-item">
+        <span>Years to retirement</span>
+        <strong id="wi_years_mobile">—</strong>
+      </div>
+      <div class="whatif-result-item">
+        <span>Monthly total</span>
+        <strong id="wi_monthly_mobile">—</strong>
+      </div>
+    </div>
+  </div>
+</details>
 
 
 {% endblock %}

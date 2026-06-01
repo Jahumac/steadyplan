@@ -2059,6 +2059,10 @@ button.button-danger:focus {
   display: none !important;
 }
 
+.projections-compact-only {
+  display: none !important;
+}
+
 .overview-access-header {
   margin-bottom: 0;
 }
@@ -2085,6 +2089,14 @@ button.button-danger:focus {
   }
 
   .overview-compact-only {
+    display: block !important;
+  }
+
+  .projections-desktop-detail {
+    display: none !important;
+  }
+
+  .projections-compact-only {
     display: block !important;
   }
 
@@ -6314,7 +6326,8 @@ a.link-accent:hover {
 }
 
 .planning-compact-details,
-.overview-compact-details {
+.overview-compact-details,
+.projections-compact-details {
   border: 1px solid var(--border);
   border-radius: 14px;
   background: rgba(15, 23, 42, 0.72);
@@ -6324,7 +6337,8 @@ a.link-accent:hover {
 }
 
 .planning-compact-details summary,
-.overview-compact-details summary {
+.overview-compact-details summary,
+.projections-compact-details summary {
   cursor: pointer;
   list-style: none;
   padding: 0.95rem 1rem;
@@ -6337,12 +6351,14 @@ a.link-accent:hover {
 }
 
 .planning-compact-details summary::-webkit-details-marker,
-.overview-compact-details summary::-webkit-details-marker {
+.overview-compact-details summary::-webkit-details-marker,
+.projections-compact-details summary::-webkit-details-marker {
   display: none;
 }
 
 .planning-compact-details summary::after,
-.overview-compact-details summary::after {
+.overview-compact-details summary::after,
+.projections-compact-details summary::after {
   content: '+';
   color: var(--accent);
   font-size: 1.2rem;
@@ -6350,12 +6366,14 @@ a.link-accent:hover {
 }
 
 .planning-compact-details[open] summary::after,
-.overview-compact-details[open] summary::after {
+.overview-compact-details[open] summary::after,
+.projections-compact-details[open] summary::after {
   content: '–';
 }
 
 .planning-compact-details > :not(summary),
-.overview-compact-details > :not(summary) {
+.overview-compact-details > :not(summary),
+.projections-compact-details > :not(summary) {
   padding: 0 1rem 1rem;
 }
 
