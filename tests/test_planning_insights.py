@@ -146,3 +146,5 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert ".planning-hero-strip {" in css
     assert css.count("grid-template-columns: repeat(2, minmax(0, 1fr));") >= 3
     assert "@media (max-width: 520px) {" in css
+    assert ".planning-hero-caveat {" in css
+    assert "display: none;" in css

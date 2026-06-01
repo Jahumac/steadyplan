@@ -4920,11 +4920,25 @@ button.button-danger:focus {
   }
 
   .subnav-page.subnav-budget {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: flex;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    scroll-snap-type: x proximity;
   }
 
-  .subnav-page.subnav-budget a:last-child:nth-child(odd) {
-    grid-column: auto;
+  .subnav-page.subnav-budget::-webkit-scrollbar {
+    display: none;
+  }
+
+  .subnav-page.subnav-budget a {
+    flex: 0 0 auto;
+    min-width: max-content;
+    white-space: nowrap;
+    scroll-snap-align: start;
   }
 
   .subnav-history,
@@ -6344,11 +6358,16 @@ a.link-accent:hover {
   .planning-hero-card .hero-subtitle {
     font-size: 0.95rem;
     line-height: 1.45;
-    margin-top: 0.55rem;
+    margin-top: 0.45rem;
   }
 
   .planning-hero-caveat {
     font-size: 0.82rem;
+    display: none;
+  }
+
+  .budget-hero-mobile-hint {
+    display: none;
   }
 
   .planning-turtle-wrap {
