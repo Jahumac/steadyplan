@@ -10,6 +10,8 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     html = resp.get_data(as_text=True)
 
     assert "Start here" in html
+    assert "Getting started" in html
+    assert "Getting Started" not in html
     assert "You only need the basics to begin." in html
     assert "0/2 basics complete" in html
     assert "0/4 complete" not in html
