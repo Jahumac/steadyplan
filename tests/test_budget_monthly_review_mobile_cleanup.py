@@ -25,7 +25,7 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert hero_idx < jump_idx < toolbar_idx
 
 
-def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links_behind_details(app, client, make_user):
+def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, client, make_user):
     _, username, password = make_user(username="review-mobile", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
@@ -49,6 +49,10 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert '<span>Accounts to update</span>' in html
     assert '<span>Accounts to review</span>' not in html
     assert '<div class="hero-strip-stat">\n      <span>Accounts</span>' not in html
+    assert 'class="review-hero-flow"' in html
+    assert 'class="badge-row review-hero-badges"' in html
+    assert '<section class="card mb-1 monthly-review-start-card">' not in html
+    assert "On a phone, keep the flow narrow: confirm, update, then finish." not in html
     assert "1. Confirm contributions" in html
     assert "Confirm anything that happened this month." in html
     assert "Tick off anything that happened this month." not in html
@@ -90,6 +94,11 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert "CSV import" in html
     assert "CSV Import" not in html
     assert "Update tools" not in html
+
+    hero_flow_idx = html.index('class="review-hero-flow"')
+    first_section_idx = html.index('id="expected-contributions"')
+
+    assert hero_flow_idx < first_section_idx
 
 
 def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(app, client, make_user):
