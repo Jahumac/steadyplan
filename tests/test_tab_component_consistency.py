@@ -29,8 +29,7 @@ def test_tab_css_uses_one_consistent_mobile_safe_component():
 
     assert ".subnav-page {" in css
     assert ".subnav-history," in css
-    assert ".subnav-mobile-menu {" in css
-    assert ".subnav-mobile-summary {" in css
+    assert ".subnav-mobile-family {" in css
     assert "display: grid;" in css
     assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in css
     assert "white-space: normal;" in css

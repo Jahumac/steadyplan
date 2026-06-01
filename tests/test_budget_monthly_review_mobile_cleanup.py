@@ -6,9 +6,8 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert '<details class="subnav-mobile-menu subnav-mobile-menu-budget">' in html
-    assert '<span class="subnav-mobile-current">Budget Plan</span>' in html
-    assert '<span class="subnav-mobile-toggle">More views</span>' in html
+    assert '<section class="subnav-mobile-family subnav-mobile-family-budget" aria-label="Budget views">' in html
+    assert '<p class="subnav-mobile-current">Budget Plan</p>' in html
     assert 'href="/monthly-review/">Monthly Update</a>' in html
     assert '<section class="budget-year-strip month-strip-mobile-hidden month-accent-' in html
     assert 'class="hero-actions-col budget-hero-actions"' in html
@@ -29,8 +28,9 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
     assert ".budget-hero-actions {" in css
     assert "flex-direction: column;" in css
-    assert ".subnav-mobile-menu {" in css
+    assert ".subnav-mobile-family {" in css
     assert ".subnav-mobile-current {" in css
+    assert ".subnav-mobile-family-budget .subnav-mobile-panel .badge," in css
     assert ".subnav-page.subnav-budget," in css
     assert ".budget-hero-badges {" in css
     assert ".budget-hero-badges .badge {" in css

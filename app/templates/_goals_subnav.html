@@ -1,15 +1,12 @@
-<details class="subnav-mobile-menu subnav-mobile-menu-goals">
-  <summary class="subnav-mobile-summary">
-    <span class="subnav-mobile-current">{{ active_label }}</span>
-    <span class="subnav-mobile-toggle">More views</span>
-  </summary>
+<section class="subnav-mobile-family subnav-mobile-family-goals" aria-label="Goals views">
+  <p class="subnav-mobile-current">{{ active_label }}</p>
   <div class="subnav-mobile-panel badge-row" aria-label="Goals views">
     {% if active_key != 'goals' %}<a class="badge" href="/goals/">Goals</a>{% endif %}
     {% if active_key != 'projections' %}<a class="badge" href="/projections/">Projections</a>{% endif %}
     {% if active_key != 'performance' %}<a class="badge" href="/performance/">Performance</a>{% endif %}
     {% if active_key != 'contributions' %}<a class="badge" href="/performance/contributions/">Contribution history</a>{% endif %}
   </div>
-</details>
+</section>
 <nav class="subnav subnav-page subnav-goals">
   <a href="/goals/"{% if active_key == 'goals' %} class="subnav-active"{% endif %}>Goals</a>
   <a href="/projections/"{% if active_key == 'projections' %} class="subnav-active"{% endif %}>Projections</a>

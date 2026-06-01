@@ -4863,7 +4863,7 @@ button.button-danger:focus {
   width: fit-content;
 }
 
-.subnav-mobile-menu {
+.subnav-mobile-family {
   display: none;
 }
 
@@ -4920,56 +4920,40 @@ button.button-danger:focus {
 }
 
 @media (max-width: 600px) {
-  .subnav-mobile-menu {
+  .subnav-mobile-family {
     display: block;
     width: 100%;
     margin-bottom: 1rem;
   }
 
-  .subnav-mobile-summary {
-    list-style: none;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    min-height: 2.75rem;
-    padding: 0.65rem 0.9rem;
-    border-radius: 1rem;
-    border: 1px solid var(--border);
-    background: var(--panel);
-    color: var(--text);
-    cursor: pointer;
-  }
-
-  .subnav-mobile-summary::-webkit-details-marker {
-    display: none;
-  }
-
   .subnav-mobile-current {
+    width: 100%;
+    margin: 0 0 0.5rem;
     font-size: 1rem;
     font-weight: 700;
-  }
-
-  .subnav-mobile-toggle {
-    color: var(--accent);
-    font-size: 0.82rem;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-
-  .subnav-mobile-menu[open] .subnav-mobile-summary {
-    border-color: rgba(56, 189, 248, 0.35);
+    color: var(--text);
   }
 
   .subnav-mobile-panel {
-    margin-top: 0.65rem;
+    gap: 0.5rem;
+  }
+
+  .subnav-mobile-family .subnav-mobile-panel {
+    margin-top: 0;
     gap: 0.5rem;
   }
 
   .subnav-mobile-panel .badge {
     flex: 1 1 calc(50% - 0.5rem);
     justify-content: center;
+    min-height: 2.5rem;
+  }
+
+  .subnav-mobile-family-budget .subnav-mobile-panel .badge,
+  .subnav-mobile-family-goals .subnav-mobile-panel .badge {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
   }
 
   .subnav-page {
