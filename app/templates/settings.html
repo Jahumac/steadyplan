@@ -5,7 +5,7 @@
 {% set page_mode = request.args.get('mode', 'view') %}
 
 {% if page_mode != 'edit' %}
-<nav class="subnav">
+<nav class="subnav subnav-page">
   <a href="/settings/" {% if page_mode != 'diagnostics' %}class="subnav-active"{% endif %}>Settings</a>
   <a href="/settings/?mode=diagnostics" {% if page_mode == 'diagnostics' %}class="subnav-active"{% endif %}>Diagnostics</a>
 </nav>

@@ -17,11 +17,21 @@ TABBED_PAGE_PATHS = [
     "/settings/?mode=diagnostics",
 ]
 
+MAIN_HERO_PATHS = [
+    "/",
+    "/accounts/",
+    "/planning/",
+]
+
 
 def test_tab_css_uses_one_consistent_mobile_safe_component():
     css = Path("/opt/data/steadyplan/app/static/css/styles.css").read_text()
 
-    assert ".subnav,\n#history-period-tabs {" in css
+    assert ".subnav-page {" in css
+    assert ".subnav-history," in css
+    assert "display: grid;" in css
+    assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in css
+    assert "grid-column: 1 / -1;" in css
     assert "flex-wrap: nowrap;" in css
     assert "scroll-snap-type: x proximity;" in css
     assert "#history-period-tabs a[aria-current=\"page\"]" in css
@@ -38,7 +48,16 @@ def test_tabbed_pages_render_standard_tabs_without_turtle_icons(auth_client, pat
 
     assert response.status_code == 200
     html = response.data.decode()
-    assert '<nav class="subnav' in html
+    assert '<nav class="subnav subnav-page' in html
+    assert 'hero-turtle-wrap' not in html
+
+
+@pytest.mark.parametrize("path", MAIN_HERO_PATHS)
+def test_main_mobile_hero_pages_do_not_render_turtle_icons(auth_client, path):
+    response = auth_client.get(path, follow_redirects=True)
+
+    assert response.status_code == 200
+    html = response.data.decode()
     assert 'hero-turtle-wrap' not in html
 
 
