@@ -64,7 +64,8 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark monthly update complete</a>' in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark this month reviewed</a>' not in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark reviewed</a>' not in html
-    assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or manual balances below where needed." in html
+    assert "Confirm expected contributions that happened this month. This is a monthly update flag (not a transaction record). Update holdings or manual balances below where needed." in html
+    assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or manual balances below where needed." not in html
     assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or balances below where needed." not in html
     assert "No contributions to track this month." in html
     assert "Set them up in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" in html
