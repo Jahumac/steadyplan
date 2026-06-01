@@ -141,3 +141,8 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"View account details" in response.data
     assert b"perfect retirement salary" not in response.data
     assert b"Weakest link" in response.data
+
+    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    assert ".planning-hero-strip {" in css
+    assert css.count("grid-template-columns: repeat(2, minmax(0, 1fr));") >= 3
+    assert "@media (max-width: 520px) {" in css

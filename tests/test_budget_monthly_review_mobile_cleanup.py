@@ -22,6 +22,12 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert '<p class="eyebrow">This month</p>' not in html
     assert "Keep budget editing simple" not in html
 
+    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    assert ".budget-hero-actions {" in css
+    assert "justify-content: center;" in css
+    assert ".budget-hero-badges {" in css
+    assert "margin-inline: auto;" in css
+
     hero_idx = html.index('class="hero-actions-col budget-hero-actions"')
     jump_idx = html.index('href="#income">Jump to budget</a>')
     month_nav_idx = html.index('class="budget-month-nav budget-hero-month-nav"')
