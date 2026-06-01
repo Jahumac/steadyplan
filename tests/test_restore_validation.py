@@ -404,6 +404,10 @@ def test_restore_validate_route_valid_upload_shows_valid_result_and_no_db_writes
     assert "Validate a restore file" in body
     assert "Restore file looks valid. Checking did not change your data." in body
     assert "Export schema version" in body
+    assert "Monthly updates" in body
+    assert "Monthly reviews" not in body
+    assert "Monthly update items" in body
+    assert "Monthly review items" not in body
     assert before == after
 
 
