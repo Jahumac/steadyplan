@@ -60,6 +60,19 @@ def test_settings_growth_hint_no_longer_says_nominal_todays_money(app, client, m
     assert "nominal future pounds" in body
 
 
+
+def test_settings_monthly_update_timing_helper_uses_monthly_update_wording(app, client, make_user):
+    uid, username, password = make_user(username="settings-monthly-update-copy", password="password123")
+    _login(client, username, password)
+
+    resp = client.get("/settings/?mode=edit")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Monthly Update Timing" in body
+    assert "Used to estimate when your investments have settled and it's time for your monthly update" in body
+    assert "Used to estimate when your investments have settled and it's time to review" not in body
+
+
 def test_overview_projected_retirement_stat_has_estimate_qualifier(app, client, make_user):
     uid, username, password = make_user(username="ov", password="password123")
 
