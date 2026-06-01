@@ -37,3 +37,70 @@ def test_goals_page_moves_primary_action_into_hero_for_mobile_cleanup(app, clien
     empty_state_idx = html.index('No goals yet')
 
     assert hero_idx < create_idx < empty_state_idx
+
+
+def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app, client, make_user):
+    uid, username, password = make_user(username="overview-mobile-details", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            conn.executemany(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, ?, ?, ?, 1, 'manual')
+                """,
+                [
+                    (uid, 'ISA', 'Stocks & Shares ISA', 1000),
+                    (uid, 'Pension', 'SIPP', 2000),
+                ],
+            )
+            conn.executemany(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, ?, ?, '', '', '')
+                """,
+                [
+                    (uid, 'Emergency fund', 5000),
+                    (uid, 'House deposit', 20000),
+                ],
+            )
+            conn.execute(
+                """
+                INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value)
+                VALUES (?, date('now'), ?)
+                """,
+                (uid, 3000),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'class="card mb-1 overview-portfolio-card"' in html
+    assert '<summary>Where are you standing now</summary>' in html
+    assert '<summary>Goals</summary>' in html
+    assert '<summary>Allowances</summary>' in html
+    assert '<summary>Breakdown accounts</summary>' in html
+    assert 'class="card mb-1 overview-access-card overview-desktop-detail"' in html
+    assert 'class="card-grid allowance-grid mb-1 overview-desktop-detail"' in html
+
+    hero_idx = html.index('class="card highlight mb-1 month-accent-')
+    portfolio_idx = html.index('class="card mb-1 overview-portfolio-card"')
+    access_idx = html.index('class="card mb-1 overview-access-card overview-desktop-detail"')
+
+    assert hero_idx < portfolio_idx < access_idx
+
+    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    assert ".overview-compact-only {" in css
+    assert ".overview-desktop-detail {" in css
+    assert ".overview-compact-details summary::after {" in css
+    assert "display: block !important;" in css
