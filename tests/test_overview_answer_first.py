@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 
 def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_steps(app, client, make_user):
@@ -738,9 +738,13 @@ def test_overview_payday_banner_uses_specific_budget_cta(app, client, make_user,
     assert 'href="/budget/"' in html
 
 
-def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, make_user):
+def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, make_user, monkeypatch):
     uid, username, password = make_user(username="overview-review-due", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    import app.routes.overview as overview_route
+
+    monkeypatch.setattr(overview_route, "is_review_due", lambda *_args, **_kwargs: True)
 
     month_key = date.today().strftime("%Y-%m")
 
@@ -1151,7 +1155,8 @@ def test_overview_portfolio_pending_review_helper_uses_sentence_case_monthly_upd
 
     monkeypatch.setattr(overview_route, "is_review_due", lambda *_args, **_kwargs: False)
 
-    today_str = date.today().strftime("%Y-%m-%d")
+    previous_month_date = date.today().replace(day=1) - timedelta(days=1)
+    previous_month_str = previous_month_date.strftime("%Y-%m-%d")
 
     with app.app_context():
         from app.models import fetch_assumptions, get_connection
@@ -1181,7 +1186,7 @@ def test_overview_portfolio_pending_review_helper_uses_sentence_case_monthly_upd
                 INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value)
                 VALUES (?, ?, ?)
                 """,
-                (uid, today_str, 1000),
+                (uid, previous_month_str, 1000),
             )
             conn.commit()
 
