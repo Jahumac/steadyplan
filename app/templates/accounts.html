@@ -30,7 +30,7 @@
   <div class="hero-strip">
     {% call hero_stat('Total value') %}<strong>£{{ '{:,.0f}'.format(total_value) }}</strong>{% endcall %}
     {% call hero_stat('Monthly in', stat_id='accounts-monthly-in') %}
-      <strong title="Total landing in your accounts each month — your contributions plus any tax relief, gov't bonus and employer top-ups">£{{ '{:,.0f}'.format(total_into_pot_monthly) }}</strong>
+      <strong title="Total landing in your accounts each month — your contributions plus any tax relief, government bonus and employer top-ups">£{{ '{:,.0f}'.format(total_into_pot_monthly) }}</strong>
     {% endcall %}
     {% call hero_stat('Holdings tracked') %}<strong>{{ accounts | selectattr('valuation_mode', 'equalto', 'holdings') | list | length }}</strong>{% endcall %}
   </div>
