@@ -45,6 +45,30 @@ def test_monthly_performance_carries_forward_missing_account_snapshots(app, make
         assert perf["carried_forward_months"] == 1
 
 
+def test_performance_empty_state_uses_monthly_update_copy(auth_client):
+    resp = auth_client.get("/performance/", follow_redirects=True)
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Complete two monthly updates to start seeing performance charts" in html
+    assert "Complete two monthly reviews to start seeing performance charts" not in html
+    assert "Complete two monthly updates and the performance charts will appear." in html
+    assert "Complete two monthly reviews and the performance charts will appear." not in html
+    assert ">Open monthly update<" in html
+    assert ">Go to Monthly Update<" not in html
+
+
+def test_contribution_summary_empty_state_uses_monthly_update_copy(auth_client):
+    resp = auth_client.get("/performance/contributions/", follow_redirects=True)
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Complete some monthly updates and the contribution history will appear here." in html
+    assert "Complete some monthly reviews and the contribution history will appear here." not in html
+    assert ">Open monthly update<" in html
+    assert ">Go to Monthly Update<" not in html
+
+
 def test_performance_plan_uses_recorded_monthly_contributions():
     from app.calculations import compute_performance_series
 
