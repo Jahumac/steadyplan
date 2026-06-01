@@ -31,10 +31,14 @@ def test_tab_css_uses_one_consistent_mobile_safe_component():
     assert ".subnav-history," in css
     assert "display: grid;" in css
     assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in css
+    assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in css
+    assert "white-space: normal;" in css
     assert "grid-column: 1 / -1;" in css
     assert "flex-wrap: nowrap;" in css
     assert "scroll-snap-type: x proximity;" in css
     assert "#history-period-tabs a[aria-current=\"page\"]" in css
+    assert ".accounts-hero-actions," in css
+    assert ".accounts-hero-badges {" in css
     assert ".subnav-budget a:nth-child" not in css
     assert ".subnav-goals a:nth-child" not in css
 
@@ -59,6 +63,7 @@ def test_main_mobile_hero_pages_do_not_render_turtle_icons(auth_client, path):
     assert response.status_code == 200
     html = response.data.decode()
     assert 'hero-turtle-wrap' not in html
+    assert 'onboarding-turtle' not in html
 
 
 def test_holding_detail_uses_standard_tab_nav_for_history_periods(app, client, make_user, monkeypatch):
