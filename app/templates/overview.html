@@ -168,39 +168,8 @@
 </section>
 {% endfor %}
 
-{% if monthly_review_card %}
-<section class="card mb-1">
-  <div class="flex flex-center flex-wrap gap-075">
-    <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="" class="shelly-inline-icon shelly-icon-sm">
-    <div style="flex:1; min-width:220px;">
-      <p class="eyebrow m-0">Monthly update</p>
-      <strong>{{ monthly_review_card.month_label }}</strong>
-      <p class="helper-text" style="margin:0.15rem 0 0;">
-        Status: {{ monthly_review_card.status }}
-      </p>
-    </div>
-    <span class="{{ monthly_review_card.badge_class }}">{{ monthly_review_card.status }}</span>
-    <a href="{{ monthly_review_card.href }}" class="badge badge-meta">Open monthly update</a>
-  </div>
-</section>
-{% endif %}
-
-{% if show_next_action and steps_done >= 4 %}
-<section class="card next-action-card mb-1">
-  <div class="flex flex-center flex-wrap gap-075">
-    <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="" class="shelly-inline-icon shelly-icon-sm">
-    <div style="flex:1; min-width:220px;">
-      <p class="eyebrow m-0">{{ next_action.eyebrow }}</p>
-      <strong>{{ next_action.title }}</strong>
-      <p class="helper-text" style="margin:0.15rem 0 0;">{{ next_action.body }}</p>
-    </div>
-    <a href="{{ next_action.cta_href }}" class="badge badge-primary-action">{{ next_action.cta_text }}</a>
-  </div>
-</section>
-{% endif %}
-
 {# ── Data Health (only when action is needed) ─────────────────────────────── #}
-{% if data_health_warnings %}
+{% if data_health_warnings and not has_accounts %}
 <section class="card alert-banner alert-warning mb-1">
   <div class="flex flex-center flex-wrap gap-075">
     <div style="flex:1; min-width:200px;">
@@ -216,9 +185,6 @@
 {% endif %}
 
 {% if has_accounts %}
-{# ── Month strip ─────────────────────────────────────────────────────────── #}
-{% include '_month_strip.html' %}
-
 {# ── Hero: Net Worth + Key Stats ─────────────────────────────────────────── #}
 <section class="card highlight mb-1 month-accent-{{ current_month_num }}">
   <div class="hero-top">
@@ -279,6 +245,51 @@
   <p class="helper-text mt-075 mb-0">Next accessible milestone: <strong>£{{ '{:,.0f}'.format(access_summary.next_milestone.target) }}</strong> — £{{ '{:,.0f}'.format(access_summary.next_milestone.remaining) }} to go.</p>
   {% endif %}
 </section>
+
+{% if (monthly_review_card or show_next_action) and steps_done >= 4 %}
+<section class="card mb-1 overview-focus-card">
+  <div class="section-header mb-05">
+    <div>
+      <p class="eyebrow m-0">{% if show_next_action %}{{ next_action.eyebrow }}{% else %}Monthly update{% endif %}</p>
+      <h2>{% if show_next_action %}{{ next_action.title }}{% else %}{{ monthly_review_card.month_label }}{% endif %}</h2>
+    </div>
+    {% if monthly_review_card %}
+    <span class="{{ monthly_review_card.badge_class }}">{{ monthly_review_card.status }}</span>
+    {% endif %}
+  </div>
+  {% if show_next_action %}
+  <p class="helper-text mt-0 mb-075">{{ next_action.body }}</p>
+  <div class="flex flex-center flex-wrap gap-075">
+    <a href="{{ next_action.cta_href }}" class="badge badge-primary-action">{{ next_action.cta_text }}</a>
+    {% if monthly_review_card %}
+    <small class="text-muted">{{ monthly_review_card.month_label }} · Status: {{ monthly_review_card.status }}</small>
+    {% endif %}
+  </div>
+  {% else %}
+  <p class="helper-text mt-0 mb-075">Status: {{ monthly_review_card.status }}</p>
+  <a href="{{ monthly_review_card.href }}" class="badge badge-meta">Open monthly update</a>
+  {% endif %}
+</section>
+{% endif %}
+
+{# ── Data Health (only when action is needed) ─────────────────────────────── #}
+{% if data_health_warnings %}
+<section class="card alert-banner alert-warning mb-1">
+  <div class="flex flex-center flex-wrap gap-075">
+    <div style="flex:1; min-width:200px;">
+      <p class="eyebrow m-0">Data Health</p>
+      <strong>Needs attention</strong>
+      <p class="helper-text m-0">
+        {{ data_health_warnings[0].title }}{% if data_health_warnings[0].explanation %} — {{ data_health_warnings[0].explanation }}{% endif %}
+      </p>
+    </div>
+    <a href="{{ data_health_warnings[0].link if data_health_warnings[0].link else '/settings/?mode=diagnostics' }}" class="badge badge-meta">{{ data_health_warnings[0].cta_text if data_health_warnings[0].cta_text else 'Review' }}</a>
+  </div>
+</section>
+{% endif %}
+
+{# ── Month strip ─────────────────────────────────────────────────────────── #}
+{% include '_month_strip.html' %}
 
 {# ── Portfolio Value ───────────────────────────────────────────────────────── #}
 {% if has_portfolio_history %}

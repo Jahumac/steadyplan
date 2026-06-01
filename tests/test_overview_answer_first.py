@@ -839,6 +839,8 @@ def test_overview_monthly_review_card_uses_specific_monthly_update_cta(app, clie
     assert "Open monthly update" in html
     assert '>Open<' not in html
     assert f'/monthly-review/?month={month_key}' in html
+    assert html.index("Total Net Worth") < html.index("Monthly update")
+    assert html.index("Accessible vs locked") < html.index("Monthly update")
 
 
 
