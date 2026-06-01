@@ -132,3 +132,20 @@ def test_accounts_create_wizard_uses_general_investment_account_label(app, clien
     html = response.get_data(as_text=True)
     assert '<strong>General Investment Account</strong>' in html
     assert '<strong>General Investment</strong>' not in html
+    assert '25% government top-up, age limits' in html
+    assert "25% gov't top-up, age limits" not in html
+
+
+def test_accounts_page_uses_government_bonus_wording(app, client, make_user):
+    uid, username, password = make_user(username="accounts-government-copy", password="password123")
+
+    with app.app_context():
+        create_account(_account_payload(), uid)
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/accounts/")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'government bonus and employer top-ups' in html
+    assert "gov't bonus and employer top-ups" not in html
