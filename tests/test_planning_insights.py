@@ -134,6 +134,7 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     response = client.get("/planning/?desired_income=24000")
 
     assert response.status_code == 200
+    assert b'budget-year-strip month-strip-global month-strip-mobile-hidden' in response.data
     assert b"Accessible vs locked" in response.data
     assert b"Target retirement income/year" in response.data
     assert b"Accessible security milestones" in response.data
