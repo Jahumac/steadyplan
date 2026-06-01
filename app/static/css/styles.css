@@ -2086,6 +2086,24 @@ button.button-danger:focus {
     flex-wrap: wrap;
   }
 
+  .goals-hero-actions {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .goals-hero-actions .hero-turtle-wrap {
+    order: 2;
+    margin-left: 0;
+  }
+
+  .goals-hero-badges {
+    order: 1;
+    justify-content: flex-start;
+  }
+
   .hero-value {
     font-size: 1.9rem;
   }
@@ -3236,6 +3254,24 @@ button.button-danger:focus {
 }
 .month-strip-global .budget-month-pill {
   cursor: default;
+}
+
+@media (max-width: 640px) {
+  .month-strip-mobile-hidden {
+    display: none;
+  }
+}
+
+.goals-hero-actions {
+  justify-content: flex-start;
+}
+
+.goals-hero-badges {
+  justify-content: flex-end;
+}
+
+.goals-hero-badges .badge {
+  white-space: nowrap;
 }
 
 /* ── Account cards ─────────────────────────────────────────────────── */
