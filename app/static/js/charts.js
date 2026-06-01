@@ -685,31 +685,35 @@
 
     // ── 5. Projections Chart ────────────────────────────────────────────────
     (function initProjectionChart() {
-      var canvas = document.getElementById('projectionChart');
-      if (!canvas || typeof window.Chart !== 'function') return;
-      var labels = JSON.parse(canvas.dataset.labels || '[]');
-      var values = JSON.parse(canvas.dataset.values || '[]');
+      function renderProjectionChart(canvas) {
+        if (!canvas || typeof window.Chart !== 'function') return;
+        var labels = JSON.parse(canvas.dataset.labels || '[]');
+        var values = JSON.parse(canvas.dataset.values || '[]');
 
-      new Chart(canvas, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [lineDataset({
-            values: values,
-            color: c.accent2,
-            fillAlphaHex: '12',
-            pointCutoff: 20,
-            tension: 0.3,
-          })]
-        },
-        options: lineOptions({
-          tooltip: gbpTooltip(0),
-          extraScales: {
-            x: { ticks: { color: c.muted, font: { size: 11 }, maxTicksLimit: 10 } },
-            y: { ticks: { color: c.muted, font: { size: 11 }, callback: function(v) { return '£' + (v/1000).toFixed(0) + 'k'; } } }
-          }
-        })
-      });
+        new Chart(canvas, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [lineDataset({
+              values: values,
+              color: c.accent2,
+              fillAlphaHex: '12',
+              pointCutoff: 20,
+              tension: 0.3,
+            })]
+          },
+          options: lineOptions({
+            tooltip: gbpTooltip(0),
+            extraScales: {
+              x: { ticks: { color: c.muted, font: { size: 11 }, maxTicksLimit: 10 } },
+              y: { ticks: { color: c.muted, font: { size: 11 }, callback: function(v) { return '£' + (v/1000).toFixed(0) + 'k'; } } }
+            }
+          })
+        });
+      }
+
+      renderProjectionChart(document.getElementById('projectionChart'));
+      renderProjectionChart(document.getElementById('projectionChartMobile'));
     })();
 
     // ── 6. Overview Allocation Chart ─────────────────────────────────────────

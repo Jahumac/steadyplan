@@ -102,5 +102,6 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
     assert ".overview-compact-only {" in css
     assert ".overview-desktop-detail {" in css
-    assert ".overview-compact-details summary::after {" in css
+    assert ".overview-compact-details," in css
+    assert ".overview-compact-details summary::after" in css
     assert "display: block !important;" in css
