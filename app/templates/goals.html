@@ -36,9 +36,6 @@
       <p class="hero-subtitle">Tag your accounts, set a target, and track progress over time.</p>
     </div>
     <div class="hero-actions-col goals-hero-actions">
-      <div class="hero-turtle-wrap">
-        <img src="{{ url_for('static', filename='icons/shelly/Goals.png') }}" alt="" class="hero-turtle">
-      </div>
       <div class="badge-row goals-hero-badges">
         {% if page_mode == 'view' %}
           <a class="badge badge-primary-action" href="/goals/?mode=create">+ Create goal</a>

@@ -20,9 +20,6 @@
       <h2 class="hero-value">Spend Trend</h2>
       <p class="hero-subtitle">{% if months %}Last {{ months | length }} month{{ 's' if months | length != 1 }} · average spend per category{% else %}Fill in a few months of budget entries and the trend will appear here{% endif %}</p>
     </div>
-    <div class="hero-turtle-wrap">
-      <img src="{{ url_for('static', filename='icons/shelly/Budget.png') }}" alt="" class="hero-turtle">
-    </div>
   </div>
   {% if months %}
   <div class="hero-strip">

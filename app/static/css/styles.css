@@ -2096,13 +2096,6 @@ button.button-danger:focus {
     gap: 0.75rem;
   }
 
-  .goals-hero-actions .hero-turtle-wrap,
-  .budget-hero-actions .hero-turtle-wrap,
-  .debts-hero-actions .hero-turtle-wrap {
-    order: 2;
-    margin-left: 0;
-  }
-
   .goals-hero-badges,
   .budget-hero-badges,
   .debts-hero-badges {
@@ -4798,83 +4791,89 @@ button.button-danger:focus {
   justify-content: flex-end;
 }
 
-/* ── Sub-nav pill switcher (used inside Budget, Goals tabs) ──────────── */
-.subnav {
+/* ── Tab navigation system (page tabs + period tabs) ─────────────────── */
+.subnav,
+#history-period-tabs {
   display: flex;
-  gap: 0.25rem;
+  align-items: stretch;
+  gap: 0.375rem;
   margin-bottom: 1.25rem;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 1rem;
   padding: 0.25rem;
   width: fit-content;
   max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  flex-wrap: nowrap;
+  scroll-snap-type: x proximity;
 }
 
-.subnav::-webkit-scrollbar { display: none; }
+#history-period-tabs {
+  margin-left: auto;
+}
 
-.subnav a {
-  padding: 0.4rem 1.1rem;
-  border-radius: 999px;
+.subnav::-webkit-scrollbar,
+#history-period-tabs::-webkit-scrollbar { display: none; }
+
+.subnav a,
+#history-period-tabs a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.45rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid transparent;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
+  line-height: 1.2;
   color: var(--muted);
   text-decoration: none;
-  transition: background 0.15s ease, color 0.15s ease;
+  text-align: center;
   white-space: nowrap;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  scroll-snap-align: start;
 }
 
 @media (max-width: 600px) {
-  .subnav {
+  .subnav,
+  #history-period-tabs {
     width: 100%;
-    border-radius: 999px;
-  }
-  .subnav a {
-    flex: 1;
-    text-align: center;
-    padding: 0.35rem 0.6rem;
-    font-size: 0.78rem;
   }
 
-  /* Budget subnav has 5 tabs — wrap into 2 rows: 2 on top, 3 on bottom */
-  .subnav-budget {
-    flex-wrap: wrap;
-    border-radius: 1rem;
-  }
-  .subnav-budget a:nth-child(1),
-  .subnav-budget a:nth-child(2) {
-    flex-basis: 45%;
-  }
-  .subnav-budget a:nth-child(3),
-  .subnav-budget a:nth-child(4),
-  .subnav-budget a:nth-child(5) {
-    flex-basis: 28%;
+  #history-period-tabs {
+    margin-left: 0;
   }
 
-  /* Goals/Performance subnav has 4 tabs — wrap into 2 rows: 3 on top, 1 on bottom */
-  .subnav-goals {
-    flex-wrap: wrap;
-    border-radius: 1rem;
-  }
-  .subnav-goals a:nth-child(1),
-  .subnav-goals a:nth-child(2),
-  .subnav-goals a:nth-child(3) {
-    flex-basis: 30%;
-  }
-  .subnav-goals a:nth-child(4) {
-    flex-basis: 100%;
+  .subnav a,
+  #history-period-tabs a {
+    min-height: 2.35rem;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.82rem;
   }
 }
 
-.subnav a:hover {
+.subnav a:hover,
+#history-period-tabs a:hover {
   color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
 }
 
-.subnav a.subnav-active {
+.subnav a:focus-visible,
+#history-period-tabs a:focus-visible {
+  outline: none;
+  color: var(--text);
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+.subnav a.subnav-active,
+#history-period-tabs a.subnav-active,
+#history-period-tabs a[aria-current="page"] {
   background: var(--accent);
   color: #0f172a;
   font-weight: 600;

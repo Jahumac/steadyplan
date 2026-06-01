@@ -61,12 +61,12 @@
       <p class="eyebrow">Performance</p>
       <h3>Price history</h3>
     </div>
-    <div class="badge-row badge-row-end" id="history-period-tabs">
-      <a class="badge {% if history_period == '1d' %}badge-primary-action{% else %}badge-meta{% endif %}" href="/holdings/{{ item.id }}?period=1d">1D</a>
-      <a class="badge {% if history_period == '1m' %}badge-primary-action{% else %}badge-meta{% endif %}" href="/holdings/{{ item.id }}?period=1m">1M</a>
-      <a class="badge {% if history_period == '6m' %}badge-primary-action{% else %}badge-meta{% endif %}" href="/holdings/{{ item.id }}?period=6m">6M</a>
-      <a class="badge {% if history_period == '1y' %}badge-primary-action{% else %}badge-meta{% endif %}" href="/holdings/{{ item.id }}?period=1y">1Y</a>
-    </div>
+    <nav class="subnav subnav-history" id="history-period-tabs" aria-label="Price history periods">
+      <a href="/holdings/{{ item.id }}?period=1d" {% if history_period == '1d' %}class="subnav-active" aria-current="page"{% endif %}>1D</a>
+      <a href="/holdings/{{ item.id }}?period=1m" {% if history_period == '1m' %}class="subnav-active" aria-current="page"{% endif %}>1M</a>
+      <a href="/holdings/{{ item.id }}?period=6m" {% if history_period == '6m' %}class="subnav-active" aria-current="page"{% endif %}>6M</a>
+      <a href="/holdings/{{ item.id }}?period=1y" {% if history_period == '1y' %}class="subnav-active" aria-current="page"{% endif %}>1Y</a>
+    </nav>
   </div>
 
   {% if perf_stats %}
