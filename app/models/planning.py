@@ -80,6 +80,7 @@ WRAPPER_TYPE_OPTIONS = [
     "Stocks & Shares ISA",
     "Cash ISA",
     "Lifetime ISA",
+    "Junior ISA",
     "Premium Bonds",
     "SIPP",
     "Workplace Pension",

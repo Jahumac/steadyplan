@@ -64,3 +64,31 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     grid_idx = html.index('class="acct-grid"')
 
     assert hero_idx < add_idx < grid_idx
+
+
+def test_accounts_create_form_includes_junior_isa_wrapper_option(app, client, make_user):
+    uid, username, password = make_user(username="accounts-jisa", password="password123")
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/accounts/?mode=create")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '<option value="Junior ISA">Junior ISA</option>' in html
+
+
+def test_accounts_edit_form_preserves_selected_legacy_wrapper_label(app, client, make_user):
+    uid, username, password = make_user(username="accounts-legacy-wrapper", password="password123")
+    payload = _account_payload()
+    payload["name"] = "Legacy ISA"
+    payload["wrapper_type"] = "Stocks and Shares ISA"
+
+    with app.app_context():
+        account_id = create_account(payload, uid)
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}?mode=edit")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '<option value="Stocks and Shares ISA" selected>Stocks and Shares ISA</option>' in html
