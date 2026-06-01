@@ -3,13 +3,9 @@
 {% block title %}Budget · SteadyPlan{% endblock %}
 {% block content %}
 
-<nav class="subnav subnav-page subnav-budget">
-  <a href="/budget/" class="subnav-active">Budget Plan</a>
-  <a href="/monthly-review/">Monthly Update</a>
-  <a href="/allowance/">Allowances</a>
-  <a href="/budget/trend/">Trend</a>
-  <a href="/budget/debts/">Debts</a>
-</nav>
+{% set active_key = 'budget' %}
+{% set active_label = 'Budget Plan' %}
+{% include '_budget_subnav.html' %}
 
 {# ── Month strip (tax year: Apr → Mar) — moved above hero for consistency ─ #}
 {% set _mk_month = month_key.split('-')[1] | int %}

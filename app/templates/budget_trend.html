@@ -3,13 +3,9 @@
 {% block title %}Budget Trend{% endblock %}
 {% block content %}
 
-<nav class="subnav subnav-page subnav-budget">
-  <a href="/budget/">Budget Plan</a>
-  <a href="/monthly-review/">Monthly Update</a>
-  <a href="/allowance/">Allowances</a>
-  <a href="/budget/trend/" class="subnav-active">Trend</a>
-  <a href="/budget/debts/">Debts</a>
-</nav>
+{% set active_key = 'trend' %}
+{% set active_label = 'Trend' %}
+{% include '_budget_subnav.html' %}
 
 {% include '_month_strip.html' %}
 

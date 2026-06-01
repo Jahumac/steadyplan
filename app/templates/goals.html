@@ -3,12 +3,9 @@
 {% block title %}Goals · SteadyPlan{% endblock %}
 {% block content %}
 
-<nav class="subnav subnav-page subnav-goals">
-  <a href="/goals/" class="subnav-active">Goals</a>
-  <a href="/projections/">Projections</a>
-  <a href="/performance/">Performance</a>
-  <a href="/performance/contributions/">Contribution history</a>
-</nav>
+{% set active_key = 'goals' %}
+{% set active_label = 'Goals' %}
+{% include '_goals_subnav.html' %}
 
 {% set editing_goal = selected_goal is not none and page_mode == 'edit' %}
 {% set selected_goal_card = namespace(item=None) %}

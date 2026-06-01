@@ -4,13 +4,9 @@
 
 <div class="monthly-review-container" data-month-key="{{ month_key }}" style="display:none"></div>
 
-<nav class="subnav subnav-page subnav-budget">
-  <a href="/budget/">Budget Plan</a>
-  <a href="/monthly-review/" class="subnav-active">Monthly Update</a>
-  <a href="/allowance/">Allowances</a>
-  <a href="/budget/trend/">Trend</a>
-  <a href="/budget/debts/">Debts</a>
-</nav>
+{% set active_key = 'monthly_review' %}
+{% set active_label = 'Monthly Update' %}
+{% include '_budget_subnav.html' %}
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}

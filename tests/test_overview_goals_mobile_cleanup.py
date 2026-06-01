@@ -18,10 +18,19 @@ def test_goals_page_moves_primary_action_into_hero_for_mobile_cleanup(app, clien
     html = resp.get_data(as_text=True)
 
     assert '<section class="budget-year-strip month-strip-global month-strip-mobile-hidden' in html
+    assert '<details class="subnav-mobile-menu subnav-mobile-menu-goals">' in html
+    assert '<span class="subnav-mobile-current">Goals</span>' in html
+    assert '<span class="subnav-mobile-toggle">More views</span>' in html
+    assert 'href="/projections/">Projections</a>' in html
     assert 'class="hero-actions-col goals-hero-actions"' in html
     assert 'class="badge-row goals-hero-badges"' in html
     assert 'href="/goals/?mode=create">+ Create goal</a>' in html
     assert '<div class="row-end">' not in html
+
+    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    assert ".goals-hero-actions {" in css
+    assert "flex-direction: column;" in css
+    assert ".goals-hero-badges .badge {" in css
 
     hero_idx = html.index('class="hero-actions-col goals-hero-actions"')
     create_idx = html.index('href="/goals/?mode=create">+ Create goal</a>')

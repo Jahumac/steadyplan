@@ -3,12 +3,9 @@
 {% block title %}Projections · SteadyPlan{% endblock %}
 {% block content %}
 
-<nav class="subnav subnav-page subnav-goals">
-  <a href="/goals/">Goals</a>
-  <a href="/projections/" class="subnav-active">Projections</a>
-  <a href="/performance/">Performance</a>
-  <a href="/performance/contributions/">Contribution history</a>
-</nav>
+{% set active_key = 'projections' %}
+{% set active_label = 'Projections' %}
+{% include '_goals_subnav.html' %}
 
 {# ── Month strip ─────────────────────────────────────────────────────────── #}
 {% set month_strip_class = 'month-strip-mobile-hidden' %}

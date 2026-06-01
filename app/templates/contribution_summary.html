@@ -3,12 +3,9 @@
 {% block title %}Contributions {{ tax_year }}{% endblock %}
 {% block content %}
 
-<nav class="subnav subnav-page subnav-goals">
-  <a href="/goals/">Goals</a>
-  <a href="/projections/">Projections</a>
-  <a href="/performance/">Performance</a>
-  <a href="/performance/contributions/" class="subnav-active">Contribution history</a>
-</nav>
+{% set active_key = 'contributions' %}
+{% set active_label = 'Contribution history' %}
+{% include '_goals_subnav.html' %}
 
 {% set month_strip_class = 'month-strip-mobile-hidden' %}
 {% include '_month_strip.html' %}
