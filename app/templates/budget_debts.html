@@ -3,13 +3,9 @@
 {% block title %}Debts · SteadyPlan{% endblock %}
 {% block content %}
 
-<nav class="subnav subnav-page subnav-budget">
-  <a href="/budget/">Budget Plan</a>
-  <a href="/monthly-review/">Monthly Update</a>
-  <a href="/allowance/">Allowances</a>
-  <a href="/budget/trend/">Trend</a>
-  <a href="/budget/debts/" class="subnav-active">Debts</a>
-</nav>
+{% set active_key = 'debts' %}
+{% set active_label = 'Debts' %}
+{% include '_budget_subnav.html' %}
 
 {% include '_month_strip.html' %}
 

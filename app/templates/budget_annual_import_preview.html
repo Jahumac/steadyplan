@@ -2,13 +2,9 @@
 {% block title %}Preview annual import · SteadyPlan{% endblock %}
 {% block content %}
 
-<nav class="subnav subnav-page subnav-budget">
-  <a href="/budget/" class="subnav-active">Budget Plan</a>
-  <a href="/monthly-review/">Monthly Update</a>
-  <a href="/allowance/">Allowances</a>
-  <a href="/budget/trend/">Trend</a>
-  <a href="/budget/debts/">Debts</a>
-</nav>
+{% set active_key = 'budget' %}
+{% set active_label = 'Budget Plan' %}
+{% include '_budget_subnav.html' %}
 
 <section class="card highlight mb-1">
   <div class="hero-top">
