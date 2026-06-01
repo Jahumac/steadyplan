@@ -254,7 +254,30 @@ def test_restore_validation_invalid_monthly_review_items_references_rejected(exp
     )
     result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
     assert result["valid"] is False
-    assert any("history.monthly_review_items[].review_id" in e and "missing monthly review" in e for e in result["errors"])
+    assert any(
+        "history.monthly_review_items[].review_id" in e and "missing monthly update" in e
+        for e in result["errors"]
+    )
+    assert not any("missing monthly review" in e for e in result["errors"])
+
+
+def test_restore_validate_route_invalid_monthly_update_reference_uses_monthly_update_copy(app, client, exported_json_bytes):
+    payload = json.loads(exported_json_bytes.decode("utf-8"))
+    payload["history"]["monthly_review_items"].append(
+        {"id": 1, "review_id": 999999, "account_id": payload["accounts"][0]["id"]}
+    )
+
+    resp = client.post(
+        "/settings/restore/validate",
+        data={"backup_file": (io.BytesIO(json.dumps(payload).encode("utf-8")), "backup.json")},
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8")
+    assert "references missing monthly update" in body
+    assert "references missing monthly review" not in body
 
 
 def test_restore_validation_account_linked_references_valid_pass(exported_json_bytes):

@@ -499,7 +499,7 @@ def validate_restore_backup_json(json_bytes):
         if not isinstance(rid, int):
             errors.append("Invalid history.monthly_review_items[].review_id (must be an integer).")
         elif rid not in monthly_review_ids:
-            errors.append("Invalid history.monthly_review_items[].review_id (references missing monthly review).")
+            errors.append("Invalid history.monthly_review_items[].review_id (references missing monthly update).")
         aid = mri.get("account_id")
         if not isinstance(aid, int):
             errors.append("Invalid history.monthly_review_items[].account_id (must be an integer).")
