@@ -138,7 +138,9 @@ def test_contribution_summary_legend_uses_monthly_update_copy(app, client, make_
     html = resp.get_data(as_text=True)
 
     assert "confirmed in monthly update" in html
+    assert "no monthly update entry" in html
     assert "ticked off in monthly review" not in html
+    assert "no review entry" not in html
 
 
 def test_performance_plan_uses_recorded_monthly_contributions():
