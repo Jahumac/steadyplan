@@ -202,6 +202,9 @@ def test_monthly_review_places_mark_reviewed_action_in_finish_section(app, clien
     assert '>Mark this month reviewed<' in html
     assert '>Mark reviewed<' not in html
     assert '>Mark month reviewed<' not in html
+    assert '<h3>Mark ' in html
+    assert ' monthly update complete?</h3>' in html
+    assert ' reviewed?</h3>' not in html
     assert 'id="confirm-complete-yes">Yes, mark monthly update complete<' in html
     assert 'id="confirm-complete-yes">Yes, mark this month reviewed<' not in html
     assert 'id="confirm-complete-yes">Yes, mark reviewed<' not in html
