@@ -17,8 +17,16 @@
       <h2 class="hero-value">{{ accounts | length }} account{{ 's' if accounts | length != 1 }}</h2>
       <p class="hero-subtitle">Everything you're tracking — tap any account for the full picture</p>
     </div>
-    <div class="hero-turtle-wrap">
-      <img src="{{ url_for('static', filename='icons/shelly/Accounts.png') }}" alt="" class="hero-turtle">
+    <div class="hero-actions-col accounts-hero-actions">
+      <div class="hero-turtle-wrap">
+        <img src="{{ url_for('static', filename='icons/shelly/Accounts.png') }}" alt="" class="hero-turtle">
+      </div>
+      {% if accounts | length > 0 and page_mode != 'create' and not selected %}
+      <div class="badge-row accounts-hero-badges">
+        <a class="badge badge-primary-action" href="/accounts/?mode=create">+ Add account</a>
+        <a class="badge badge-meta" href="/accounts/balances/bulk?month_key={{ current_month_key }}">Update balances</a>
+      </div>
+      {% endif %}
     </div>
   </div>
   <div class="hero-strip">
@@ -92,13 +100,6 @@
   </details>
   {% endif %}
 </section>
-
-{% if accounts | length > 0 and page_mode != 'create' and not selected %}
-<div class="row-end">
-  <a class="badge badge-primary-action" href="/accounts/?mode=create">+ Add account</a>
-  <a class="badge badge-meta" href="/accounts/balances/bulk?month_key={{ current_month_key }}">Update balances</a>
-</div>
-{% endif %}
 
 {# ── Account cards ────────────────────────────────────────────────────────── #}
 {% if page_mode != 'create' and not selected %}
