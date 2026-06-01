@@ -14,9 +14,6 @@
       <p class="hero-subtitle">See what protects you now, what is locked for later, and what your current plan might support.</p>
       <p class="helper-text m-0 planning-hero-caveat">Assumptions-based analyser, not advice. Useful signal first; detail when you need it.</p>
     </div>
-    <div class="hero-turtle-wrap planning-turtle-wrap">
-      <img src="{{ url_for('static', filename='icons/shelly/Goals.png') }}" alt="" class="hero-turtle">
-    </div>
   </div>
   <div class="hero-strip planning-hero-strip">
     {% call hero_stat('Accessible now') %}<strong>£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</strong>{% endcall %}
