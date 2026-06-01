@@ -4923,15 +4923,7 @@ button.button-danger:focus {
   .subnav-mobile-family {
     display: block;
     width: 100%;
-    margin-bottom: 1rem;
-  }
-
-  .subnav-mobile-current {
-    width: 100%;
-    margin: 0 0 0.5rem;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text);
+    margin-bottom: 0.65rem;
   }
 
   .subnav-mobile-panel {
