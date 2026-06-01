@@ -88,6 +88,51 @@ def test_schedule_api_rejects_invalid_rules_without_deleting_existing_schedule(a
         assert float(remaining[0]["override_amount"]) == 750.0
 
 
+def test_schedule_api_replaces_existing_schedule_rules_instead_of_appending(app, client, make_user):
+    uid, username, password = make_user(username="proj-schedule-replace", password="password123")
+    with app.app_context():
+        assumptions = dict(fetch_assumptions(uid))
+        assumptions.update({
+            "annual_growth_rate": 0.05,
+            "retirement_age": 62,
+            "date_of_birth": "1983-05-25",
+            "salary_day": 25,
+        })
+        update_assumptions(assumptions, uid)
+        account_id = create_account(_account("ISA", "Stocks & Shares ISA", 10000, 300), uid)
+        create_contribution_override({
+            "account_id": account_id,
+            "from_month": "2028-11",
+            "to_month": "9999-12",
+            "override_amount": 750,
+            "reason": "schedule",
+        }, uid)
+
+    _login(client, username, password)
+    resp = client.post(
+        "/projections/api/account-schedule",
+        json={
+            "account_id": account_id,
+            "rules": [
+                {"start_age": 50, "amount": 900},
+                {"start_age": 52, "amount": 1100},
+            ],
+        },
+    )
+
+    assert resp.status_code == 200
+    assert resp.get_json() == {"ok": True}
+
+    with app.app_context():
+        remaining = fetch_contribution_overrides_for_reason(account_id, uid, "schedule")
+        assert len(remaining) == 2
+        assert [float(row["override_amount"]) for row in remaining] == [900.0, 1100.0]
+        assert [(row["from_month"], row["to_month"]) for row in remaining] == [
+            ("2033-05", "2035-04"),
+            ("2035-05", "9999-12"),
+        ]
+
+
 def test_schedule_api_allows_intentional_clear_with_empty_rules(app, client, make_user):
     uid, username, password = make_user(username="proj-schedule-clear", password="password123")
     with app.app_context():
