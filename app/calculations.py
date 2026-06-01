@@ -806,7 +806,12 @@ def is_salary_day(today, salary_day=0):
     return today.day == resolved
 
 
-ISA_WRAPPER_TYPES = {"Stocks & Shares ISA", "Cash ISA", "Lifetime ISA"}
+ISA_WRAPPER_TYPES = {
+    "Stocks & Shares ISA",
+    "Stocks and Shares ISA",
+    "Cash ISA",
+    "Lifetime ISA",
+}
 LISA_WRAPPER_TYPES = {"Lifetime ISA"}
 
 

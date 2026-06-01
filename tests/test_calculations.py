@@ -132,6 +132,28 @@ def test_isa_projection_includes_next_april_for_early_month_salary_day():
     assert usage["projected_isa"] == 1200
 
 
+def test_isa_usage_accepts_stocks_and_shares_label_variant():
+    accounts = [
+        {
+            "id": 1,
+            "name": "ISA",
+            "wrapper_type": "Stocks and Shares ISA",
+            "monthly_contribution": 100,
+        }
+    ]
+
+    usage = calculate_isa_usage(
+        accounts,
+        ad_hoc_contributions=[],
+        today=date(2026, 6, 30),
+        salary_day=28,
+    )
+
+    assert usage["monthly_isa"] == 300
+    assert usage["projected_isa"] == 1200
+    assert usage["breakdown"][0]["wrapper_type"] == "Stocks and Shares ISA"
+
+
 def test_isa_usage_excludes_regular_lisa_contributions_after_age_50():
     accounts = [
         {

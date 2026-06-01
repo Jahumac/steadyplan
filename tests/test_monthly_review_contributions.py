@@ -201,6 +201,34 @@ def test_isa_usage_draft_review_does_not_override_default_or_override(app, make_
         assert usage["monthly_isa"] == 250.0  # Apr 100 + May 50 (override) + Jun 100
 
 
+def test_isa_usage_ignores_junior_isa_overrides_for_adult_allowance(app, make_user):
+    uid, _, _ = make_user(username="junior-isa-overrides", password="password123")
+
+    with app.app_context():
+        from app.models import fetch_isa_overrides_for_tax_year, get_connection
+
+        with get_connection() as conn:
+            aid = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, valuation_mode, monthly_contribution, current_value, is_active)
+                VALUES (?, 'Junior ISA', 'Junior ISA', 'manual', 100, 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO contribution_overrides (account_id, from_month, to_month, override_amount, reason, created_at)
+                VALUES (?, '2026-04', '2026-06', 50, 'test', datetime('now'))
+                """,
+                (aid,),
+            )
+            conn.commit()
+
+        overrides = fetch_isa_overrides_for_tax_year(uid, "2026-04-06", "2027-04-05")
+
+    assert overrides == []
+
+
 def test_isa_usage_completed_review_overrides_default_or_override(app, make_user):
     from datetime import date
 
