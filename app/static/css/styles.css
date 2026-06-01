@@ -2087,7 +2087,8 @@ button.button-danger:focus {
   }
 
   .goals-hero-actions,
-  .budget-hero-actions {
+  .budget-hero-actions,
+  .debts-hero-actions {
     width: 100%;
     flex-direction: row;
     align-items: center;
@@ -2096,13 +2097,15 @@ button.button-danger:focus {
   }
 
   .goals-hero-actions .hero-turtle-wrap,
-  .budget-hero-actions .hero-turtle-wrap {
+  .budget-hero-actions .hero-turtle-wrap,
+  .debts-hero-actions .hero-turtle-wrap {
     order: 2;
     margin-left: 0;
   }
 
   .goals-hero-badges,
-  .budget-hero-badges {
+  .budget-hero-badges,
+  .debts-hero-badges {
     order: 1;
     justify-content: flex-start;
   }
@@ -3293,8 +3296,13 @@ button.button-danger:focus {
   justify-content: flex-start;
 }
 
+.debts-hero-actions {
+  justify-content: flex-start;
+}
+
 .goals-hero-badges,
-.budget-hero-badges {
+.budget-hero-badges,
+.debts-hero-badges {
   justify-content: flex-end;
 }
 
@@ -3303,7 +3311,8 @@ button.button-danger:focus {
 }
 
 .goals-hero-badges .badge,
-.budget-hero-badges .badge {
+.budget-hero-badges .badge,
+.debts-hero-badges .badge {
   white-space: nowrap;
 }
 
