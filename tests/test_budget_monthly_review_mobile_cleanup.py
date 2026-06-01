@@ -44,7 +44,8 @@ def test_monthly_review_page_surfaces_start_here_steps_and_hides_secondary_links
     assert 'href="#expected-contributions" class="badge">Expected contributions</a>' in html
     assert 'href="#expected-contributions" class="badge">Confirm contributions</a>' not in html
     assert "2. Update balances" in html
-    assert "3. Save a note and mark this month reviewed" in html
+    assert "3. Save a note and mark monthly update complete" in html
+    assert "3. Save a note and mark this month reviewed" not in html
     assert "3. Save a note and mark reviewed" not in html
     assert "Work top to bottom: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark this month reviewed." in html
     assert "Work top to bottom: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark the month reviewed." not in html
@@ -510,7 +511,8 @@ def test_monthly_review_finish_shortcuts_match_final_step_wording(app, client, m
     assert html.count('href="#monthly-note"') >= 2
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark monthly update complete</a>' in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark this month reviewed</a>' not in html
-    assert "Save a note and mark this month reviewed" in html
+    assert "3. Save a note and mark monthly update complete" in html
+    assert "3. Save a note and mark this month reviewed" not in html
     assert "Save a note and mark reviewed" not in html
     assert "Save note and mark reviewed" not in html
     assert "Save note and finish" not in html
