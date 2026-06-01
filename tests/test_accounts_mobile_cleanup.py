@@ -120,3 +120,15 @@ def test_accounts_edit_form_preserves_selected_legacy_category_label(app, client
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert '<option value="Investments" selected>Investments</option>' in html
+
+
+def test_accounts_create_wizard_uses_general_investment_account_label(app, client, make_user):
+    uid, username, password = make_user(username="accounts-gia-template", password="password123")
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/accounts/?mode=create")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '<strong>General Investment Account</strong>' in html
+    assert '<strong>General Investment</strong>' not in html
