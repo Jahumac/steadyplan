@@ -52,6 +52,13 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     assert 'href="/accounts/balances/bulk?month_key=' in html
     assert '<div class="row-end">' not in html
 
+    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    assert ".accounts-hero-actions {" in css
+    assert "flex: 1 0 100%;" in css
+    assert "display: grid;" in css
+    assert ".accounts-hero-badges .badge {" in css
+    assert "width: 100%;" in css
+
     hero_idx = html.index('class="hero-actions-col accounts-hero-actions"')
     add_idx = html.index('href="/accounts/?mode=create">+ Add account</a>')
     grid_idx = html.index('class="acct-grid"')
