@@ -517,6 +517,8 @@
       // Prev/next month navigation arrows
       var prevMonthBtn = document.getElementById('prev-month');
       var nextMonthBtn = document.getElementById('next-month');
+      var heroPrevMonthBtn = document.querySelector('.budget-prev-month');
+      var heroNextMonthBtn = document.querySelector('.budget-next-month');
       function shiftMonth(key, delta) {
         var parts = key.split('-');
         var y = parseInt(parts[0]);
@@ -527,6 +529,8 @@
       }
       if (prevMonthBtn) prevMonthBtn.addEventListener('click', function() { shiftMonth(MONTH, -1); });
       if (nextMonthBtn) nextMonthBtn.addEventListener('click', function() { shiftMonth(MONTH, 1); });
+      if (heroPrevMonthBtn) heroPrevMonthBtn.addEventListener('click', function() { shiftMonth(MONTH, -1); });
+      if (heroNextMonthBtn) heroNextMonthBtn.addEventListener('click', function() { shiftMonth(MONTH, 1); });
     })();
 
     // 12. Monthly Review Logic
