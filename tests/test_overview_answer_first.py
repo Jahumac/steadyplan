@@ -582,12 +582,100 @@ def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, clien
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
+    assert "Assets" in html
+    assert "After debts" not in html
+    assert "Active debts kept separate:" not in html
     assert "Accessible now" in html
     assert "Locked later" in html
     assert "Monthly contributions" in html
     assert "Projected at retirement" in html
     assert "Goal progress" not in html
     assert "Tax Year " not in html
+
+
+
+def test_overview_shows_assets_after_debts_toggle_when_active_debts_exist(app, client, make_user):
+    uid, username, password = make_user(username="overview-debt-toggle", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 10000, 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO debts (user_id, name, current_balance, monthly_payment, is_active)
+                VALUES (?, 'Loan', 1234.56, 100, 1)
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'aria-label="Overview headline view"' in html
+    assert 'href="/" class="period-btn active">Assets<' in html
+    assert 'href="/?position=after_debts" class="period-btn">After debts<' in html
+    assert "Active debts kept separate: £1,234.56." in html
+    assert "Subtracting £1,234.56 in active debts." not in html
+    assert "£10,000.00" in html
+    assert "Total net worth" not in html
+
+
+
+def test_overview_after_debts_view_updates_headline_value_and_helper(app, client, make_user):
+    uid, username, password = make_user(username="overview-after-debts-view", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 10000, 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO debts (user_id, name, current_balance, monthly_payment, is_active)
+                VALUES (?, 'Loan', 1234.56, 100, 1)
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get('/?position=after_debts')
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'href="/?position=after_debts" class="period-btn active">After debts<' in html
+    assert 'href="/" class="period-btn">Assets<' in html
+    assert "<p class=\"eyebrow\">After debts</p>" in html
+    assert "Subtracting £1,234.56 in active debts." in html
+    assert "Active debts kept separate: £1,234.56." not in html
+    assert "£8,765.44" in html
 
 
 
@@ -847,10 +935,12 @@ def test_overview_monthly_review_card_uses_specific_monthly_update_cta(app, clie
     assert "Open monthly update" in html
     assert '>Open<' not in html
     assert f'/monthly-review/?month={month_key}' in html
-    assert "Total net worth" in html
+    assert "Assets" in html
+    assert "After debts" not in html
+    assert "Total net worth" not in html
     assert "Total Net Worth" not in html
-    assert html.index("budget-year-strip") < html.index("Total net worth")
-    assert html.index("Total net worth") < html.index("Monthly update")
+    assert html.index("budget-year-strip") < html.index("Assets")
+    assert html.index("Assets") < html.index("Monthly update")
     assert html.index("Accessible vs locked") < html.index("Monthly update")
 
 

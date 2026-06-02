@@ -1962,6 +1962,12 @@ button.button-danger:focus {
   margin: 0;
 }
 
+.hero-helper {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 /* Shared month picker inside hero sections */
 
 /* Horizontal stat strip — sits below hero-top, inside the hero card */
@@ -5437,30 +5443,44 @@ button.button-danger:focus {
   background: transparent;
   color: var(--muted);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.02em;
+  text-decoration: none;
   transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
+
 .period-btn.active {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
   box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25);
 }
+
 .period-btn:hover:not(.active) {
   border-color: rgba(56, 189, 248, 0.45);
   color: var(--text);
   background: rgba(56, 189, 248, 0.06);
 }
+
 .period-btn:active {
   transform: translateY(1px);
+}
+
+.overview-position-toggle {
+  align-self: flex-start;
 }
 
 @media (max-width: 480px) {
   .period-selector {
     flex-wrap: wrap;
     gap: 0.35rem;
+  }
+  .overview-position-toggle {
+    width: 100%;
   }
   .period-btn {
     padding: 0.25rem 0.55rem;
