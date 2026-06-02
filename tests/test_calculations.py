@@ -102,7 +102,7 @@ def test_contribution_breakdown_lisa_stops_from_age_50():
     assert breakdown["personal"] == 0
     assert breakdown["government_bonus"] == 0
     assert breakdown["total_into_pot"] == 0
-    assert breakdown["method_label"] == "LISA contributions stop at age 50"
+    assert breakdown["method_label"] == "Lifetime ISA contributions stop at age 50"
 
 
 def test_full_tax_year_has_12_contribution_months_for_early_month_salary_day():

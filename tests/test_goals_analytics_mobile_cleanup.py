@@ -29,6 +29,13 @@ def test_projections_marks_global_month_strip_for_mobile_hiding(app, client, mak
                 """,
                 (uid,),
             )
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, fund_fee_pct, is_active)
+                VALUES (?, 'Home deposit', 'Lifetime ISA', 5000, 200, 0.20, 1)
+                """,
+                (uid,),
+            )
             conn.commit()
 
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
@@ -48,6 +55,8 @@ def test_projections_marks_global_month_strip_for_mobile_hiding(app, client, mak
     assert 'id="projectionChartMobile"' in html
     assert 'id="wi_age_mobile"' in html
     assert 'id="wi_reset_mobile"' in html
+    assert html.count('Lifetime ISA contributions stop at age 50') == 2
+    assert 'LISA contributions stop at age 50' not in html
 
     css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
     assert ".projections-compact-only {" in css
