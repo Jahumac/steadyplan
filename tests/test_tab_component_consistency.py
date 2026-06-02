@@ -42,6 +42,7 @@ def test_tab_css_uses_one_consistent_mobile_safe_component():
     assert "#history-period-tabs a[aria-current=\"page\"]" in css
     assert ".accounts-hero-actions," in css
     assert ".accounts-hero-badges {" in css
+    assert ".shelly-modal-icon {" not in css
     assert ".subnav-budget a:nth-child" not in css
     assert ".subnav-goals a:nth-child" not in css
 
@@ -67,6 +68,16 @@ def test_main_mobile_hero_pages_do_not_render_turtle_icons(auth_client, path):
     html = response.data.decode()
     assert 'hero-turtle-wrap' not in html
     assert 'onboarding-turtle' not in html
+
+
+def test_shared_shell_does_not_render_confirm_modal_mascot_icon(auth_client):
+    response = auth_client.get("/", follow_redirects=True)
+
+    assert response.status_code == 200
+    html = response.data.decode()
+    assert 'id="shelly-confirm"' in html
+    assert 'shelly-modal-icon' not in html
+    assert 'shelly-inline-icon shelly-icon-lg' not in html
 
 
 def test_budget_setup_page_does_not_render_turtle_icon(auth_client):

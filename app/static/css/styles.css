@@ -4534,11 +4534,6 @@ button.button-danger:focus {
 /* Ensure cards wrapping empty states span the full grid (e.g. accounts page) */
 .acct-grid > .card { grid-column: 1 / -1; }
 
-.empty-state-icon {
-  margin-bottom: 0.25rem;
-  animation: turtle-peek 5s ease-in-out infinite;
-}
-
 .empty-state h3 {
   font-size: 1.1rem;
   font-weight: 700;
@@ -4807,11 +4802,6 @@ button.button-danger:focus {
 @keyframes shelly-modal-pop {
   from { opacity: 0; transform: scale(0.9) translateY(10px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.shelly-modal-icon {
-  margin-bottom: 0.5rem;
-  animation: turtle-hello-wave 2.5s ease-in-out infinite;
 }
 
 .shelly-modal-title {
