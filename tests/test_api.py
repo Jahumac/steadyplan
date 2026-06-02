@@ -287,6 +287,104 @@ def test_fetch_all_active_overrides_prefers_narrower_matching_override(app, make
     assert float(active[account_id]["override_amount"] or 0) == 250
 
 
+def test_fetch_contribution_overrides_for_accounts_groups_rows_by_account(app, make_user):
+    uid, _, _ = make_user(username="override-batch-user")
+
+    with app.app_context():
+        from app.models import (
+            create_contribution_override,
+            fetch_contribution_overrides_for_accounts,
+            get_connection,
+        )
+
+        with get_connection() as conn:
+            first_account_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, provider, wrapper_type, category, tags, current_value,
+                    monthly_contribution, pension_contribution_day, goal_value, valuation_mode,
+                    growth_mode, growth_rate_override, owner, is_active, notes, last_updated,
+                    employer_contribution, contribution_method, annual_fee_pct, platform_fee_pct,
+                    platform_fee_flat, platform_fee_cap, fund_fee_pct, contribution_fee_pct,
+                    uninvested_cash, cash_interest_rate, interest_payment_day
+                ) VALUES (?, 'Stocks ISA', 'Vanguard', 'Stocks & Shares ISA', 'ISA', '', 0,
+                    100, 0, 0, 'manual', 'default', NULL, 'Janusz', 1, '', datetime('now'),
+                    0, 'standard', 0, 0, 0, 0, 0, 0, 0, 0, 0)
+                """,
+                (uid,),
+            ).lastrowid
+            second_account_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, provider, wrapper_type, category, tags, current_value,
+                    monthly_contribution, pension_contribution_day, goal_value, valuation_mode,
+                    growth_mode, growth_rate_override, owner, is_active, notes, last_updated,
+                    employer_contribution, contribution_method, annual_fee_pct, platform_fee_pct,
+                    platform_fee_flat, platform_fee_cap, fund_fee_pct, contribution_fee_pct,
+                    uninvested_cash, cash_interest_rate, interest_payment_day
+                ) VALUES (?, 'Cash ISA', 'Vanguard', 'Cash ISA', 'ISA', '', 0,
+                    50, 0, 0, 'manual', 'default', NULL, 'Janusz', 1, '', datetime('now'),
+                    0, 'standard', 0, 0, 0, 0, 0, 0, 0, 0, 0)
+                """,
+                (uid,),
+            ).lastrowid
+            third_account_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, provider, wrapper_type, category, tags, current_value,
+                    monthly_contribution, pension_contribution_day, goal_value, valuation_mode,
+                    growth_mode, growth_rate_override, owner, is_active, notes, last_updated,
+                    employer_contribution, contribution_method, annual_fee_pct, platform_fee_pct,
+                    platform_fee_flat, platform_fee_cap, fund_fee_pct, contribution_fee_pct,
+                    uninvested_cash, cash_interest_rate, interest_payment_day
+                ) VALUES (?, 'Premium Bonds', 'NS&I', 'Cash', 'Cash', '', 0,
+                    0, 0, 0, 'manual', 'default', NULL, 'Janusz', 1, '', datetime('now'),
+                    0, 'standard', 0, 0, 0, 0, 0, 0, 0, 0, 0)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+        create_contribution_override(
+            {
+                "account_id": first_account_id,
+                "from_month": "2026-04",
+                "to_month": "2026-05",
+                "override_amount": 125,
+                "reason": "spring",
+            },
+            uid,
+        )
+        create_contribution_override(
+            {
+                "account_id": first_account_id,
+                "from_month": "2026-06",
+                "to_month": "2026-06",
+                "override_amount": 200,
+                "reason": "bonus",
+            },
+            uid,
+        )
+        create_contribution_override(
+            {
+                "account_id": second_account_id,
+                "from_month": "2026-04",
+                "to_month": "2026-04",
+                "override_amount": 75,
+                "reason": "trim",
+            },
+            uid,
+        )
+
+        grouped = fetch_contribution_overrides_for_accounts(
+            [first_account_id, second_account_id, third_account_id]
+        )
+
+    assert [float(row["override_amount"] or 0) for row in grouped[first_account_id]] == [125, 200]
+    assert [float(row["override_amount"] or 0) for row in grouped[second_account_id]] == [75]
+    assert grouped[third_account_id] == []
+
+
 def test_assistant_month_summary_bad_month_key(api):
     resp = api.get("/api/v1/assistant/month-summary/2026-13")
     assert resp.status_code == 400

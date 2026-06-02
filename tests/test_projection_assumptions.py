@@ -163,3 +163,74 @@ def test_goals_eta_helper_copy_present(app, client, make_user):
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Goal ETAs are approximate scenario estimates" in body
     assert "~" in body
+
+
+def test_goals_route_fetches_contribution_overrides_in_one_batch(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="goals-batch", password="password123")
+
+    with app.app_context():
+        from app.models import create_contribution_override, get_connection
+
+        with get_connection() as conn:
+            first_account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, tags, current_value, monthly_contribution, is_active)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 'goal-tag', 500, 100, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            second_account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, tags, current_value, monthly_contribution, is_active)
+                VALUES (?, 'Cash ISA', 'Cash ISA', 'goal-tag', 250, 50, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Holiday', 5000, 'Tagged Goal', 'goal-tag', '')
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+        create_contribution_override(
+            {
+                "account_id": first_account_id,
+                "from_month": "2026-04",
+                "to_month": "2026-04",
+                "override_amount": 150,
+                "reason": "bonus",
+            },
+            uid,
+        )
+        create_contribution_override(
+            {
+                "account_id": second_account_id,
+                "from_month": "2026-05",
+                "to_month": "2026-05",
+                "override_amount": 0,
+                "reason": "pause",
+            },
+            uid,
+        )
+
+    import app.routes.goals as goals_route
+
+    original = goals_route.fetch_contribution_overrides_for_accounts
+    calls = []
+
+    def _tracked(account_ids):
+        calls.append(list(account_ids))
+        return original(account_ids)
+
+    monkeypatch.setattr(goals_route, "fetch_contribution_overrides_for_accounts", _tracked)
+
+    _login(client, username, password)
+    resp = client.get("/goals/")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+
+    assert "Holiday" in body
+    assert calls == [[first_account_id, second_account_id]]

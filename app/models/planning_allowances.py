@@ -264,6 +264,24 @@ def fetch_contribution_overrides(account_id):
         ).fetchall()
 
 
+def fetch_contribution_overrides_for_accounts(account_ids):
+    account_ids = [int(account_id) for account_id in account_ids or []]
+    if not account_ids:
+        return {}
+
+    placeholders = ", ".join("?" for _ in account_ids)
+    with get_connection() as conn:
+        rows = conn.execute(
+            f"SELECT * FROM contribution_overrides WHERE account_id IN ({placeholders}) ORDER BY account_id ASC, from_month ASC",
+            tuple(account_ids),
+        ).fetchall()
+
+    grouped = {account_id: [] for account_id in account_ids}
+    for row in rows:
+        grouped.setdefault(row["account_id"], []).append(row)
+    return grouped
+
+
 def fetch_contribution_overrides_for_reason(account_id, user_id, reason):
     with get_connection() as conn:
         if not _account_belongs_to_user(conn, account_id, user_id):
