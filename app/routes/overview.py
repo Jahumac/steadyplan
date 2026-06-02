@@ -2,7 +2,7 @@ import math
 import pytz
 from datetime import date, datetime, timedelta, timezone
 
-from flask import Blueprint, render_template, make_response
+from flask import Blueprint, render_template, make_response, request
 from flask_login import current_user, login_required
 
 from app.calculations import (
@@ -33,6 +33,7 @@ from app.calculations import (
 from app.models import (
     fetch_all_accounts,
     fetch_all_active_overrides,
+    fetch_all_debts,
     fetch_all_goals,
     fetch_all_holdings,
     fetch_all_holdings_grouped,
@@ -175,6 +176,7 @@ def _build_daily_contributions_cumulative(uid, daily_labels, accounts, assumptio
 def overview():
     uid = current_user.id
     raw_accounts = fetch_all_accounts(uid)
+    debts = fetch_all_debts(uid)
     assumptions = fetch_assumptions(uid)
     holdings_totals = fetch_holding_totals_by_account(uid)
 
@@ -188,6 +190,23 @@ def overview():
         accounts.append(row)
 
     invested_total = total_invested(accounts, holdings_totals)
+    total_debt_balance = round(sum(float(d["current_balance"] or 0) for d in debts), 2)
+    has_debts = total_debt_balance > 0
+    position_view = request.args.get("position")
+    if position_view not in {"assets", "after_debts"}:
+        position_view = "assets"
+    if position_view == "after_debts" and not has_debts:
+        position_view = "assets"
+
+    hero_value = invested_total - total_debt_balance if position_view == "after_debts" else invested_total
+    hero_label = "After debts" if position_view == "after_debts" else "Assets"
+    hero_helper = None
+    if has_debts:
+        if position_view == "after_debts":
+            hero_helper = f"Subtracting £{total_debt_balance:,.2f} in active debts."
+        else:
+            hero_helper = f"Active debts kept separate: £{total_debt_balance:,.2f}."
+
     monthly_total = total_monthly_contributions(accounts, assumptions)
     tag_totals_map = tag_totals(accounts, holdings_totals)
     projected_total = projected_total_retirement_value(accounts, assumptions)
@@ -289,6 +308,7 @@ def overview():
 
     metrics = {
         "invested_total": invested_total,
+        "total_debt_balance": total_debt_balance,
         "monthly_total": monthly_total,
         "tag_totals": tag_totals_map,
         "projected_total": projected_total,
@@ -661,6 +681,11 @@ def overview():
         data_health_summary=data_health_summary,
         monthly_review_card=monthly_review_card,
         access_summary=access_summary,
+        hero_label=hero_label,
+        hero_value=hero_value,
+        hero_helper=hero_helper,
+        has_debts=has_debts,
+        position_view=position_view,
     ))
     resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     resp.headers["Pragma"] = "no-cache"

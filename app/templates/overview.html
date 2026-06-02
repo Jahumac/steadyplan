@@ -200,10 +200,19 @@
 <section class="card highlight mb-1 month-accent-{{ current_month_num }}">
   <div class="hero-top">
     <div>
-      <p class="eyebrow">Total net worth</p>
-      <h2 class="hero-value hero-value-xl">£{{ '{:,.2f}'.format(metrics.invested_total) }}</h2>
+      <p class="eyebrow">{{ hero_label }}</p>
+      <h2 class="hero-value hero-value-xl">£{{ '{:,.2f}'.format(hero_value) }}</h2>
       <p class="hero-subtitle">{{ metrics.current_date }} · {{ metrics.current_time }}</p>
+      {% if hero_helper %}
+      <p class="hero-helper">{{ hero_helper }}</p>
+      {% endif %}
     </div>
+    {% if has_debts %}
+    <div class="period-selector flex gap-05 overview-position-toggle" aria-label="Overview headline view">
+      <a href="/" class="period-btn{% if position_view == 'assets' %} active{% endif %}">Assets</a>
+      <a href="/?position=after_debts" class="period-btn{% if position_view == 'after_debts' %} active{% endif %}">After debts</a>
+    </div>
+    {% endif %}
   </div>
   <div class="hero-strip">
     {% call hero_stat('Accessible now') %}<strong>£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</strong>{% endcall %}
