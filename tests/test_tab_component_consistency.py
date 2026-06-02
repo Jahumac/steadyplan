@@ -42,6 +42,7 @@ def test_tab_css_uses_one_consistent_mobile_safe_component():
     assert "#history-period-tabs a[aria-current=\"page\"]" in css
     assert ".accounts-hero-actions," in css
     assert ".accounts-hero-badges {" in css
+    assert ".site-logo-mark {" in css
     assert ".shelly-modal-icon {" not in css
     assert ".site-logo-icon {" not in css
     assert ".subnav-budget a:nth-child" not in css
@@ -77,6 +78,8 @@ def test_shared_shell_does_not_render_confirm_modal_mascot_icon(auth_client):
     assert response.status_code == 200
     html = response.data.decode()
     assert 'id="shelly-confirm"' in html
+    assert 'brand/steadyplan-mark.svg' in html
+    assert 'class="site-logo-mark"' in html
     assert 'site-logo-icon' not in html
     assert 'icon-192.png' not in html
     assert 'shelly-modal-icon' not in html
