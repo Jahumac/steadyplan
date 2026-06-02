@@ -1,3 +1,6 @@
+from datetime import date
+
+
 def test_overview_marks_global_month_strip_for_mobile_hiding(app, client, make_user):
     _, username, password = make_user(username="overview-mobile", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
@@ -125,3 +128,56 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     assert ".overview-compact-details," in css
     assert ".overview-compact-details summary::after" in css
     assert "display: block !important;" in css
+
+
+def test_overview_lifetime_isa_review_cta_stays_aligned_in_mobile_details(app, client, make_user):
+    uid, username, password = make_user(username="overview-mobile-lifetime-isa-review-cta", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = date.today().strftime("%Y-%m")
+    today_str = date.today().strftime("%Y-%m-%d")
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE assumptions
+                SET date_of_birth = '1990-01-01', salary_day = 1, isa_allowance = 20000, lisa_allowance = 4000
+                WHERE user_id = ?
+                """,
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'LISA', 'Cash LISA', 1000, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key)
+                VALUES (?, ?, ?, ?)
+                """,
+                (today_str, account_id, 1000, month_key),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert html.count('>Review Lifetime ISA allowance</a>') == 2
+    assert '>Review LISA allowance</a>' not in html
+    assert html.count('<h2>Lifetime ISA allowance ') == 2
+    assert html.count('<summary>Tax allowance progress</summary>') == 1
