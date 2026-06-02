@@ -148,8 +148,8 @@ body {
 }
 
 .site-logo-mark {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.85rem;
+  height: 1.85rem;
   flex-shrink: 0;
   display: inline-block;
   object-fit: contain;
@@ -3966,11 +3966,16 @@ button.button-danger:focus {
 }
 
 .auth-brand-mark {
-  width: 72px;
-  height: 72px;
+  width: 84px;
+  height: 84px;
   flex-shrink: 0;
   display: block;
   object-fit: contain;
+  padding: 0.35rem;
+  margin: -0.35rem;
+  border-radius: 1.25rem;
+  background: radial-gradient(circle at 50% 35%, rgba(173, 255, 214, 0.2) 0%, rgba(56, 189, 248, 0.12) 42%, rgba(56, 189, 248, 0) 78%);
+  filter: drop-shadow(0 10px 26px rgba(15, 23, 42, 0.32)) drop-shadow(0 0 18px rgba(56, 189, 248, 0.12));
 }
 
 .auth-brand-mark--float {

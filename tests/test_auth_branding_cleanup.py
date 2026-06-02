@@ -39,6 +39,10 @@ def test_auth_css_no_longer_contains_auth_brand_icon_or_auth_turtle_classes():
     assert ".auth-brand-mark {" in css
     assert ".auth-brand-mark--float {" in css
     assert "@keyframes brand-mark-float" in css
+    assert "width: 84px;" in css
+    assert "height: 84px;" in css
+    assert "background: radial-gradient(circle at 50% 35%" in css
+    assert "filter: drop-shadow(0 10px 26px rgba(15, 23, 42, 0.32))" in css
     assert ".auth-brand-icon {" not in css
     assert ".turtle-bob {" not in css
     assert ".turtle-wave {" not in css
