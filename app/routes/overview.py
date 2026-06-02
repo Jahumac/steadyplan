@@ -459,7 +459,7 @@ def overview():
         alerts.append({
             "kind": "danger",
             "message": f"You're on track to exceed your pension annual allowance by £{over:,.0f} this tax year.",
-            "cta_text": "Review pension allowance",
+            "cta_text": "Review pension annual allowance",
             "cta_href": "/allowance/#pension",
         })
 
