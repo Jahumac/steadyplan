@@ -257,8 +257,9 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
     assert "ISA Allowance" not in html
     assert "Tax allowance progress" in html
     assert "Tax allowances" not in html
-    assert "Pension allowance" in html
-    assert "Pension Allowance" not in html
+    assert '<h2>Pension annual allowance ' in html
+    assert '<h2>Pension allowance ' not in html
+    assert "Pension Annual Allowance" not in html
     assert "<p class=\"eyebrow\">Goals</p>" not in html
     assert "Emergency fund progress" not in html
 
@@ -1759,8 +1760,9 @@ def test_overview_pension_allowance_card_uses_specific_review_cta(app, client, m
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Pension allowance" in html
-    assert "Pension Allowance" not in html
+    assert '<h2>Pension annual allowance ' in html
+    assert '<h2>Pension allowance ' not in html
+    assert "Pension Annual Allowance" not in html
     assert html.count("personal limit:") == 2
     assert "Personal limit:" not in html
     assert 'href="/allowance/#pension"' in html

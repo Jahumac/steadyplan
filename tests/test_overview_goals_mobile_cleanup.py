@@ -98,6 +98,8 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     assert '<summary>Tax allowance progress</summary>' in html
     assert '<summary>Tax allowances</summary>' not in html
     assert '<summary>Allowances</summary>' not in html
+    assert html.count('<h2>Pension annual allowance ') == 2
+    assert '<h2>Pension allowance ' not in html
     assert '<summary>Accounts breakdown</summary>' in html
     assert html.count('<p class="eyebrow">Accounts breakdown</p>') == 2
     assert html.count('<h2>Accounts breakdown</h2>') == 2
