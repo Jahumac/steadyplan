@@ -159,6 +159,7 @@ nav {
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 nav a {
@@ -4987,8 +4988,11 @@ button.button-danger:focus {
 
 /* Logout link in nav */
 .nav-logout {
-  opacity: 0.55;
+  margin-left: auto;
+  opacity: 0.72;
   font-size: 0.82rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(148, 163, 184, 0.18);
 }
 
 .nav-logout:hover {

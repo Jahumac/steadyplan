@@ -45,6 +45,9 @@ def test_tab_css_uses_one_consistent_mobile_safe_component():
     assert ".site-logo-mark {" in css
     assert "width: 1.85rem;" in css
     assert "height: 1.85rem;" in css
+    assert "align-items: center;" in css
+    assert "margin-left: auto;" in css
+    assert "border-color: rgba(148, 163, 184, 0.18);" in css
     assert "object-fit: contain;" in css
     assert ".hero-turtle-wrap {" not in css
     assert ".onboarding-turtle {" not in css
@@ -86,6 +89,7 @@ def test_shared_shell_does_not_render_confirm_modal_mascot_icon(auth_client):
     assert 'brand/steadyplan-mark.png' in html
     assert 'icons/favicon-32.png' in html
     assert 'class="site-logo-mark"' in html
+    assert 'class="nav-logout"' in html
     assert 'site-logo-icon' not in html
     assert 'icon-192.png' not in html
     assert 'shelly-modal-icon' not in html
