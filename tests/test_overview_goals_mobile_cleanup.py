@@ -93,7 +93,8 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     assert '<summary>Where you stand now</summary>' in html
     assert '<summary>Goal progress</summary>' in html
     assert '<summary>Goals</summary>' not in html
-    assert '<summary>Tax allowances</summary>' in html
+    assert '<summary>Tax allowance progress</summary>' in html
+    assert '<summary>Tax allowances</summary>' not in html
     assert '<summary>Allowances</summary>' not in html
     assert '<summary>Accounts breakdown</summary>' in html
     assert html.count('<p class="eyebrow">Accounts breakdown</p>') == 2
