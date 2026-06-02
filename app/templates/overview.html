@@ -219,6 +219,9 @@
     {% if access_summary.locked_current > 0 %}
     {% call hero_stat('Locked later') %}<strong>£{{ '{:,.0f}'.format(access_summary.locked_current) }}</strong>{% endcall %}
     {% endif %}
+    {% if has_debts %}
+    {% call hero_stat('Active debts') %}<strong>£{{ '{:,.0f}'.format(metrics.total_debt_balance) }}</strong>{% endcall %}
+    {% endif %}
     {% if metrics.monthly_total > 0 %}
     {% call hero_stat('Monthly contributions') %}<strong>£{{ '{:,.0f}'.format(metrics.monthly_total) }}</strong>{% endcall %}
     {% endif %}
