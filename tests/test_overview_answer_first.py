@@ -38,6 +38,7 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Total Net Worth" not in html
     assert "Accessible vs locked" not in html
     assert "Portfolio Value" not in html
+    assert "ISA allowance" not in html
     assert "ISA Allowance" not in html
 
 
@@ -72,6 +73,8 @@ def test_overview_getting_started_primary_action_moves_to_first_incomplete_basic
     assert "Total Net Worth" not in html
     assert "Accessible vs locked" not in html
     assert "Portfolio Value" not in html
+    assert "ISA allowance" not in html
+    assert "ISA Allowance" not in html
 
 
 def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, make_user):
@@ -245,7 +248,8 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
     assert "Helpful next steps · 1 remaining" in html
     assert "2/4 complete" not in html
     assert "Set your first goal once you know what you want to aim for." not in html
-    assert "ISA Allowance" in html
+    assert "ISA allowance" in html
+    assert "ISA Allowance" not in html
     assert "Tax allowance progress" in html
     assert "Tax allowances" not in html
     assert "Pension allowance" in html
@@ -384,7 +388,8 @@ def test_overview_single_holding_state_hides_allocation_panel(app, client, make_
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "ISA Allowance" in html
+    assert "ISA allowance" in html
+    assert "ISA Allowance" not in html
     assert "id=\"allocationChart\"" not in html
     assert "Asset allocation doughnut chart" not in html
 
@@ -1578,7 +1583,8 @@ def test_overview_isa_allowance_card_uses_specific_topup_cta(app, client, make_u
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "ISA Allowance" in html
+    assert "ISA allowance" in html
+    assert "ISA Allowance" not in html
     assert 'href="/allowance/#topup"' in html
     assert '>Record ISA top-up</a>' in html
     assert '>Record top-up</a>' not in html
@@ -1631,7 +1637,8 @@ def test_overview_isa_allowance_card_uses_specific_review_cta(app, client, make_
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "ISA Allowance" in html
+    assert "ISA allowance" in html
+    assert "ISA Allowance" not in html
     assert 'href="/allowance/#topup"' in html
     assert '>Review ISA allowance</a>' in html
     assert 'href="/allowance/#topup" class="badge badge-sm">View breakdown</a>' not in html
