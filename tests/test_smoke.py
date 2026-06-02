@@ -24,6 +24,21 @@ def test_setup_creates_admin_and_logs_in(client):
     assert resp.status_code == 200
 
 
+def test_auth_pages_use_lifetime_isa_marketing_copy(client, app, make_user):
+    setup_resp = client.get("/setup")
+    assert setup_resp.status_code == 200
+    setup_html = setup_resp.get_data(as_text=True)
+    assert "ISA, Lifetime ISA &amp; pension allowance tracking" in setup_html
+    assert "ISA, LISA &amp; pension allowance tracking" not in setup_html
+
+    make_user(username="auth-copy-user", password="password123")
+    login_resp = client.get("/login")
+    assert login_resp.status_code == 200
+    login_html = login_resp.get_data(as_text=True)
+    assert "ISA, Lifetime ISA &amp; pension allowance tracking" in login_html
+    assert "ISA, LISA &amp; pension allowance tracking" not in login_html
+
+
 def test_login_rejects_bad_password(app, client, make_user):
     make_user(username="bob", password="rightpass123")
     resp = client.post("/login", data={"username": "bob", "password": "wrong"},
