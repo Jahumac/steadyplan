@@ -144,16 +144,6 @@ body {
   font-size: 1.5rem;
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-}
-
-.site-logo-icon {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  flex-shrink: 0;
-  display: inline-block;
-  transform: scaleX(-1);
 }
 
 nav {
