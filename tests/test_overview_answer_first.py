@@ -1777,6 +1777,8 @@ def test_overview_pension_allowance_card_uses_specific_review_cta(app, client, m
     assert '>Review pension annual allowance</a>' in html
     assert '>Review pension allowance</a>' not in html
     assert '>Record pension contribution</a>' in html
+    assert 'aria-label="Pension annual allowance used"' in html
+    assert 'aria-label="Pension allowance used"' not in html
     assert 'href="/allowance/#pension" class="badge badge-sm">View breakdown</a>' not in html
     assert '>Record contribution</a>' not in html
 
