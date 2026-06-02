@@ -104,6 +104,7 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     assert '<h2>Accounts</h2>' not in html
     assert '<p class="eyebrow">Breakdown</p>' not in html
     assert html.count('<p class="eyebrow">Goal progress</p>') == 2
+    assert html.count('<h2>Goal progress</h2>') == 2
     assert '<p class="eyebrow">Goals</p>' not in html
     assert 'class="card mb-1 overview-access-card overview-desktop-detail"' in html
     assert 'class="card-grid allowance-grid mb-1 overview-desktop-detail"' in html

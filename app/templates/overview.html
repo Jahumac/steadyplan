@@ -440,7 +440,10 @@
 {% if goals_data | length > 1 %}
 <section class="card mb-1 overview-desktop-detail">
   <div class="section-header mb-05">
-    <p class="eyebrow">Goal progress</p>
+    <div>
+      <p class="eyebrow">Goal progress</p>
+      <h2>Goal progress</h2>
+    </div>
     <a href="/goals/" class="link-accent text-sm">Review goals</a>
   </div>
   {% for g in goals_data %}
@@ -459,7 +462,10 @@
   <summary>Goal progress</summary>
   <div class="overview-compact-panel">
     <div class="section-header mb-05">
-      <p class="eyebrow">Goal progress</p>
+      <div>
+        <p class="eyebrow">Goal progress</p>
+        <h2>Goal progress</h2>
+      </div>
       <a href="/goals/" class="link-accent text-sm">Review goals</a>
     </div>
     {% for g in goals_data %}

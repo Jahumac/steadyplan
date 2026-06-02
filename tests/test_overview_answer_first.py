@@ -300,7 +300,8 @@ def test_overview_multi_goal_state_restores_goal_progress_panel(app, client, mak
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "<p class=\"eyebrow\">Goal progress</p>" in html
+    assert html.count("<p class=\"eyebrow\">Goal progress</p>") == 2
+    assert html.count("<h2>Goal progress</h2>") == 2
     assert "<p class=\"eyebrow\">Goals</p>" not in html
     assert "Review goals" in html
     assert "Manage</a>" not in html
