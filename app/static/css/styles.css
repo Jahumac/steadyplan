@@ -1863,9 +1863,6 @@ button.button-danger:focus {
   .onboarding-hero {
     flex-wrap: wrap;
   }
-  .onboarding-turtle {
-    font-size: 2.8rem;
-  }
   .onboarding-welcome h2.onboarding-title {
     font-size: 1.9rem;
   }
@@ -3320,27 +3317,6 @@ button.button-danger:focus {
 .shelly-icon-md { width: 44px; height: 44px; }     /* onboarding */
 .shelly-icon-lg { width: 64px; height: 64px; }     /* empty states, modals */
 
-/* ── Hero turtle icons ──────────────────────────────────────────────── */
-.hero-turtle-wrap {
-  flex-shrink: 0;
-  margin-left: auto;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  align-self: flex-start;
-}
-.hero-turtle {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-  opacity: 0.9;
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15));
-  transition: transform 0.3s ease;
-}
-.hero-turtle:hover {
-  transform: scale(1.08) rotate(-3deg);
-}
-
 /* ── Global month strip (non-budget pages) ─────────────────────────── */
 .month-strip-global {
   pointer-events: none;            /* display-only, no links */
@@ -3918,19 +3894,6 @@ button.button-danger:focus {
     position: relative;
     flex-direction: column;
     gap: 0.6rem;
-  }
-
-  /* Turtle stays pinned top-right, out of document flow */
-  .review-hero-card .hero-turtle-wrap {
-    position: absolute;
-    top: 0;
-    right: 0;
-    margin-left: 0;
-  }
-
-  /* Title block: pad right so text doesn't run under the turtle */
-  .review-hero-card .hero-top > div:first-child {
-    padding-right: 70px;
   }
 
   /* Actions bar: button on left, month nav on right, same row */
@@ -4597,12 +4560,6 @@ button.button-danger:focus {
   align-items: center;
   gap: 1rem;
   margin-bottom: 0.75rem;
-}
-
-.onboarding-turtle {
-  font-size: 3.5rem;
-  line-height: 1;
-  flex-shrink: 0;
 }
 
 .onboarding-welcome h2.onboarding-title {

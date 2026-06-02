@@ -74,10 +74,6 @@
     document.getElementById('shelly-confirm-msg').textContent   = opts.message || '';
     document.getElementById('shelly-confirm-ok').textContent    = opts.confirmText || 'Yes, do it';
     document.getElementById('shelly-confirm-cancel').textContent = opts.cancelText || 'Nope, go back';
-    if (opts.icon) {
-      var iconEl = ov.querySelector('.shelly-modal-icon img');
-      if (iconEl) iconEl.src = opts.icon;
-    }
     ov.classList.remove('hidden');
     ov.setAttribute('aria-hidden', 'false');
     document.getElementById('shelly-confirm-ok').focus();
@@ -1832,7 +1828,6 @@
                   message: '"' + tagName + '" is on ' + n + ' account' + (n === 1 ? '' : 's') + '. Removing it from the picker won\'t strip it from those accounts — you\'ll need to do that manually. Remove anyway?',
                   confirmText: 'Yes, remove it',
                   cancelText: 'Keep it',
-                  icon: '/static/icons/shelly/Accounts.png',
                 }).then(function(confirmed) { if (confirmed) doDelete(true); });
               }
             });
@@ -1843,7 +1838,6 @@
           message: 'This removes the tag from the picker. It won\'t affect accounts already using it.',
           confirmText: 'Yes, remove it',
           cancelText: 'Keep it',
-          icon: '/static/icons/shelly/Accounts.png',
         }).then(function (confirmed) {
           if (!confirmed) return;
           doDelete(false);
