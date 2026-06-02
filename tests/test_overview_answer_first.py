@@ -1255,7 +1255,8 @@ def test_overview_portfolio_card_uses_specific_refresh_prices_cta(app, client, m
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Portfolio value" in html
+    assert "Portfolio history" in html
+    assert "Portfolio value" not in html
     assert "Portfolio Value" not in html
     assert "Latest value" in html
     assert "Latest Value" not in html
