@@ -1542,7 +1542,8 @@ def test_overview_pension_allowance_alert_uses_specific_pension_cta(app, client,
     html = resp.get_data(as_text=True)
 
     assert "You&#39;re on track to exceed your pension annual allowance" in html
-    assert "Review pension allowance" in html
+    assert "Review pension annual allowance" in html
+    assert "Review pension allowance" not in html
     assert "View allowance" not in html
     assert 'href="/allowance/#pension"' in html
 
@@ -1766,7 +1767,8 @@ def test_overview_pension_allowance_card_uses_specific_review_cta(app, client, m
     assert html.count("personal limit:") == 2
     assert "Personal limit:" not in html
     assert 'href="/allowance/#pension"' in html
-    assert '>Review pension allowance</a>' in html
+    assert '>Review pension annual allowance</a>' in html
+    assert '>Review pension allowance</a>' not in html
     assert '>Record pension contribution</a>' in html
     assert 'href="/allowance/#pension" class="badge badge-sm">View breakdown</a>' not in html
     assert '>Record contribution</a>' not in html
