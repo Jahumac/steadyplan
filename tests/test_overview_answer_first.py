@@ -36,6 +36,7 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Nothing in the shell yet" not in html
     assert "<h2>Accounts</h2>" not in html
     assert "Total Net Worth" not in html
+    assert '<h2>Where you stand now</h2>' not in html
     assert "Accessible vs locked" not in html
     assert "Portfolio Value" not in html
     assert "ISA allowance" not in html
@@ -71,6 +72,7 @@ def test_overview_getting_started_primary_action_moves_to_first_incomplete_basic
     assert "Nothing in the shell yet" not in html
     assert "<h2>Accounts</h2>" not in html
     assert "Total Net Worth" not in html
+    assert '<h2>Where you stand now</h2>' not in html
     assert "Accessible vs locked" not in html
     assert "Portfolio Value" not in html
     assert "ISA allowance" not in html
@@ -106,7 +108,8 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     assert "Set your first goal" in html
     assert "Set a first goal" not in html
     assert "Set first goal" not in html
-    assert "Accessible vs locked" in html
+    assert html.count("<h2>Where you stand now</h2>") == 2
+    assert "Accessible vs locked" not in html
     assert "Portfolio Value" not in html
     assert "ISA Allowance" not in html
     assert "Pension allowance" not in html
@@ -150,7 +153,8 @@ def test_overview_single_account_state_hides_accounts_breakdown_panel(app, clien
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Accessible vs locked" in html
+    assert html.count("<h2>Where you stand now</h2>") == 2
+    assert "Accessible vs locked" not in html
     assert "<h2>Accounts</h2>" not in html
 
 
@@ -343,7 +347,8 @@ def test_overview_pre_goal_multi_holding_state_hides_allocation_panel(app, clien
 
     assert "Set your first goal" in html
     assert "Set a first goal" not in html
-    assert "Accessible vs locked" in html
+    assert html.count("<h2>Where you stand now</h2>") == 2
+    assert "Accessible vs locked" not in html
     assert "id=\"allocationChart\"" not in html
     assert "Asset allocation doughnut chart" not in html
 
@@ -476,7 +481,8 @@ def test_overview_hides_restricted_summary_when_there_is_no_restricted_money(app
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Accessible vs locked" in html
+    assert html.count("<h2>Where you stand now</h2>") == 2
+    assert "Accessible vs locked" not in html
     assert "Accessible now" in html
     assert "Locked later" in html
     assert "Restricted" not in html
@@ -519,7 +525,8 @@ def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Accessible vs locked" in html
+    assert html.count("<h2>Where you stand now</h2>") == 2
+    assert "Accessible vs locked" not in html
     assert "Review planning" in html
     assert "Open Planning" not in html
     assert "Where you stand now" in html
@@ -557,7 +564,8 @@ def test_overview_hides_completed_accessible_milestone_nudge(app, client, make_u
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Accessible vs locked" in html
+    assert html.count("<h2>Where you stand now</h2>") == 2
+    assert "Accessible vs locked" not in html
     assert "Accessible now" in html
     assert "Next accessible milestone:" not in html
     assert "£0 to go" not in html
@@ -963,7 +971,7 @@ def test_overview_monthly_review_card_uses_specific_monthly_update_cta(app, clie
     assert "Total Net Worth" not in html
     assert html.index("budget-year-strip") < html.index("Assets")
     assert html.index("Assets") < html.index("Monthly update")
-    assert html.index("Accessible vs locked") < html.index("Monthly update")
+    assert html.index("Where you stand now") < html.index("Monthly update")
 
 
 
