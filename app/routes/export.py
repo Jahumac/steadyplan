@@ -973,7 +973,7 @@ def _write_budget_export_guide_sheet(ws, start_year):
         "Legend (Investment Tracking):",
         "- Personal: money you plan to pay in (from budget lines linked to accounts).",
         "- Tax relief: added for relief-at-source pensions/SIPPs (25% uplift on net; logged pension rows are treated as gross).",
-        "- LISA bonus: 25% bonus on LISA personal contributions until the £4,000/year cap (bonus does not count toward ISA allowance).",
+        "- Lifetime ISA bonus: 25% bonus on Lifetime ISA personal contributions until the £4,000/year cap (bonus does not count toward ISA allowance).",
         "- Employer: workplace pension employer contributions.",
         "- Allowance basis: ISA uses personal only; Pension uses gross into-pot (personal + relief + employer).",
     ]
@@ -1073,7 +1073,7 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
 
     wrapper_rows = [
         ("ISA (all)", isa_allowance),
-        ("  of which LISA", lisa_allowance),
+        ("  of which Lifetime ISA", lisa_allowance),
         ("Pension", pension_allowance),
     ]
     for i, (label, allowance) in enumerate(wrapper_rows):
@@ -1083,7 +1083,7 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
         _data_row(ws, r, [label, 0, 0, float(allowance), remaining_formula, pct_formula], num_formats={2: GBP, 3: GBP, 4: GBP, 5: GBP, 6: PCT})
 
     note_row = wrapper_table_start + 5
-    note = ws.cell(row=note_row, column=1, value="Note: LISA personal contributions count toward the overall ISA £20k allowance. The 25% LISA bonus does not.")
+    note = ws.cell(row=note_row, column=1, value="Note: Lifetime ISA personal contributions count toward the overall ISA £20k allowance. The 25% Lifetime ISA bonus does not.")
     note.font = _SUBTITLE_FONT
     ws.merge_cells(start_row=note_row, start_column=1, end_row=note_row, end_column=15)
 
@@ -1094,12 +1094,12 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
         "Wrapper",
         "Planned personal (budget)",
         "Planned tax relief",
-        "Planned LISA bonus",
+        "Planned Lifetime ISA bonus",
         "Planned employer",
         "Planned into pot",
         "Logged personal",
         "Logged tax relief",
-        "Logged LISA bonus",
+        "Logged Lifetime ISA bonus",
         "Logged employer",
         "Logged into pot",
         "Allowance basis (planned)",
@@ -1209,14 +1209,14 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
     info = ws.cell(
         row=row,
         column=1,
-        value="Personal is the sum of your linked budget lines (by account). Tax relief is 25% of the pension/SIPP lines that are relief-at-source. LISA bonus is calculated with a running £4k/year cap. Employer is your pension employer contribution (or logged employer payments).",
+        value="Personal is the sum of your linked budget lines (by account). Tax relief is 25% of the pension/SIPP lines that are relief-at-source. Lifetime ISA bonus is calculated with a running £4k/year cap. Employer is your pension employer contribution (or logged employer payments).",
     )
     info.font = _SUBTITLE_FONT
     info.alignment = Alignment(wrap_text=True, vertical="top")
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=7)
     row += 2
 
-    _header_row(ws, row, ["Account", "Wrapper", "Budget source (example)", "Personal", "Tax relief", "LISA bonus", "Employer/mo"])
+    _header_row(ws, row, ["Account", "Wrapper", "Budget source (example)", "Personal", "Tax relief", "Lifetime ISA bonus", "Employer/mo"])
     row += 1
     item_name_map = {int(it["id"]): (it.get("name") or "") for it in items}
     first_month_sheet = month_sheet_names[0] if month_sheet_names else ""
@@ -1263,7 +1263,7 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
         row += 1
 
     row += 1
-    _header_row(ws, row, ["Month", "Personal", "Tax relief", "LISA bonus", "Employer", "Total into pot", "Running total"])
+    _header_row(ws, row, ["Month", "Personal", "Tax relief", "Lifetime ISA bonus", "Employer", "Total into pot", "Running total"])
     row += 1
 
     ws.column_dimensions["P"].hidden = True
@@ -1344,7 +1344,7 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
         lisa_running_personal_cell = lisa_running_cell
 
     row = row + len(month_keys) + 2
-    _header_row(ws, row, ["Month (logged)", "Personal", "Tax relief", "LISA bonus", "Employer", "Total into pot", "Running total"])
+    _header_row(ws, row, ["Month (logged)", "Personal", "Tax relief", "Lifetime ISA bonus", "Employer", "Total into pot", "Running total"])
     row += 1
 
     isa_personal_by_month = {mk: 0.0 for mk in month_keys}

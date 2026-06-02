@@ -50,6 +50,31 @@ def _export_and_edit(auth_client, edits):
     return buf
 
 
+def test_annual_export_uses_lifetime_isa_copy(auth_client, app, make_user):
+    uid, _, _ = make_user(username="annual-export-lifetime-isa", password="password123")
+    _seed(app, uid)
+
+    resp = auth_client.get("/budget/annual-export.xlsx")
+    assert resp.status_code == 200
+    wb = load_workbook(BytesIO(resp.data), data_only=True)
+
+    guide_values = [cell.value for row in wb["Guide"].iter_rows() for cell in row if isinstance(cell.value, str)]
+    tracking_values = [cell.value for row in wb["Investment Tracking"].iter_rows() for cell in row if isinstance(cell.value, str)]
+
+    assert "- Lifetime ISA bonus: 25% bonus on Lifetime ISA personal contributions until the £4,000/year cap (bonus does not count toward ISA allowance)." in guide_values
+    assert "- LISA bonus: 25% bonus on LISA personal contributions until the £4,000/year cap (bonus does not count toward ISA allowance)." not in guide_values
+    assert "  of which Lifetime ISA" in tracking_values
+    assert "  of which LISA" not in tracking_values
+    assert "Note: Lifetime ISA personal contributions count toward the overall ISA £20k allowance. The 25% Lifetime ISA bonus does not." in tracking_values
+    assert "Note: LISA personal contributions count toward the overall ISA £20k allowance. The 25% LISA bonus does not." not in tracking_values
+    assert "Planned Lifetime ISA bonus" in tracking_values
+    assert "Logged Lifetime ISA bonus" in tracking_values
+    assert tracking_values.count("Lifetime ISA bonus") == 3
+    assert "Planned LISA bonus" not in tracking_values
+    assert "Logged LISA bonus" not in tracking_values
+    assert "LISA bonus" not in tracking_values
+
+
 def test_annual_import_preview_does_not_write_db(app, auth_client, make_user):
     from app.models import get_connection
     uid, _, _ = make_user()
