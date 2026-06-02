@@ -147,5 +147,6 @@ def test_accounts_page_uses_government_bonus_wording(app, client, make_user):
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'government bonus and employer top-ups' in html
+    assert 'Lifetime ISA bonus and employer top-ups' in html
+    assert 'government bonus and employer top-ups' not in html
     assert "gov't bonus and employer top-ups" not in html

@@ -60,7 +60,7 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Retirement spending" in body
 
 
-def test_projections_page_uses_government_bonus_wording(app, client, make_user):
+def test_projections_page_uses_lifetime_isa_bonus_wording(app, client, make_user):
     uid, username, password = make_user(username="proj-government-bonus", password="password123")
 
     with app.app_context():
@@ -87,7 +87,10 @@ def test_projections_page_uses_government_bonus_wording(app, client, make_user):
     resp = client.get("/projections/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "government bonus" in body
+    assert "Lifetime ISA bonus" in body
+    assert "Lifetime ISA bonuses" in body
+    assert "government bonus" not in body
+    assert "government bonuses" not in body
     assert "govt bonus" not in body
 
 

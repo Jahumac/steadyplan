@@ -127,7 +127,7 @@ def contribution_breakdown(account, assumptions=None):
             annual_personal = personal * 12
             eligible = min(annual_personal, LISA_ANNUAL_CAP)
             government_bonus = (eligible * LISA_BONUS_RATE) / 12  # monthly equivalent
-            method_label = "Government bonus (25%)"
+            method_label = "Lifetime ISA bonus (25%)"
 
     gross_into_pot = personal + tax_relief + government_bonus + employer
 

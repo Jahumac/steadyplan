@@ -102,7 +102,9 @@ def test_performance_helper_uses_sentence_case_monthly_update_copy(app, client, 
     assert "monthly update entries" in html
     assert "monthly update due date" in html
     assert "includes tax relief, Lifetime ISA bonus, employer match" in html
+    assert ">Lifetime ISA bonus<" in html
     assert "includes tax relief, LISA bonus, employer match" not in html
+    assert ">Bonus<" not in html
     assert "Monthly Review entries" not in html
     assert "Monthly Update due date" not in html
 
