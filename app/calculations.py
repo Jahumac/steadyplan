@@ -121,7 +121,7 @@ def contribution_breakdown(account, assumptions=None):
             # Lifetime ISA contributions and government bonuses stop from age 50.
             personal = 0.0
             government_bonus = 0.0
-            method_label = "LISA contributions stop at age 50"
+            method_label = "Lifetime ISA contributions stop at age 50"
         else:
             # 25% government bonus, capped at £4,000/year personal contributions
             annual_personal = personal * 12
