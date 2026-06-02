@@ -1266,6 +1266,57 @@ def test_overview_portfolio_card_uses_specific_refresh_prices_cta(app, client, m
     assert "↻ Refresh</button>" not in html
 
 
+def test_overview_fallback_net_worth_chart_uses_history_wording(app, client, make_user):
+    uid, username, password = make_user(username="overview-net-worth-history-copy", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    current_month = date.today().replace(day=1)
+    previous_month = (current_month - timedelta(days=1)).replace(day=1)
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.executemany(
+                """
+                INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key)
+                VALUES (?, ?, ?, ?)
+                """,
+                [
+                    (previous_month.strftime('%Y-%m-%d'), account_id, 900, previous_month.strftime('%Y-%m')),
+                    (current_month.strftime('%Y-%m-%d'), account_id, 1000, current_month.strftime('%Y-%m')),
+                ],
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Net worth history" in html
+    assert 'aria-label="Net worth history chart"' in html
+    assert 'aria-label="Net worth growth chart"' not in html
+
+
 def test_overview_portfolio_pending_review_helper_uses_sentence_case_monthly_update_link(app, client, make_user, monkeypatch):
     uid, username, password = make_user(username="overview-pending-review-helper-copy", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
