@@ -741,6 +741,8 @@ def test_overview_payday_banner_uses_specific_budget_cta(app, client, make_user,
     assert '>Review budget</a>' in html
     assert '>Open budget</a>' not in html
     assert 'href="/budget/"' in html
+    payday_banner = html.split('<section class="card payday-banner mb-1">', 1)[1].split('</section>', 1)[0]
+    assert 'shelly-inline-icon' not in payday_banner
 
 
 def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, make_user, monkeypatch):
@@ -794,6 +796,8 @@ def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, m
     assert "Start monthly update" not in html
     assert "Your next nudge" not in html
     assert "Status:" not in html
+    review_nudge = html.split('<section class="card review-nudge mb-1">', 1)[1].split('</section>', 1)[0]
+    assert 'shelly-inline-icon' not in review_nudge
 
 
 def test_overview_monthly_review_card_uses_specific_monthly_update_cta(app, client, make_user):

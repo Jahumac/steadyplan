@@ -135,7 +135,6 @@
 {% if payday_banner and not review_nudge %}
 <section class="card payday-banner mb-1">
   <div class="flex flex-center flex-wrap gap-075">
-    <img src="{{ url_for('static', filename='icons/shelly/Budget.png') }}" alt="" class="shelly-inline-icon shelly-icon-sm">
     <div style="flex:1; min-width:200px;">
       <strong>It's your investment day</strong>
       <p class="helper-text" style="margin:0.15rem 0 0;">Time to move your contributions — check the budget, then do your monthly update in a day or two once everything settles.</p>
@@ -149,7 +148,6 @@
 {% if review_nudge %}
 <section class="card review-nudge mb-1">
   <div class="flex flex-center flex-wrap gap-075">
-    <img src="{{ url_for('static', filename='icons/icon-192.png') }}" alt="" class="shelly-inline-icon shelly-icon-sm">
     <div style="flex:1; min-width:200px;">
       <strong>Your investments should be settled by now</strong>
       <p class="helper-text" style="margin:0.15rem 0 0;">
