@@ -43,6 +43,8 @@ def test_tab_css_uses_one_consistent_mobile_safe_component():
     assert ".accounts-hero-actions," in css
     assert ".accounts-hero-badges {" in css
     assert ".site-logo-mark {" in css
+    assert "width: 1.85rem;" in css
+    assert "height: 1.85rem;" in css
     assert "object-fit: contain;" in css
     assert ".hero-turtle-wrap {" not in css
     assert ".onboarding-turtle {" not in css
