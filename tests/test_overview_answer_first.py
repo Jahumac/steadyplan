@@ -507,6 +507,8 @@ def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
     assert "Accessible vs locked" in html
     assert "Review planning" in html
     assert "Open Planning" not in html
+    assert "Where you stand now" in html
+    assert "Where are you standing now" not in html
     assert "Accessible now" in html
     assert "Restricted" in html
     assert "Locked later" in html
