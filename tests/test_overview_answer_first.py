@@ -1715,6 +1715,8 @@ def test_overview_lisa_allowance_card_uses_specific_review_cta(app, client, make
     assert '>Review LISA allowance</a>' not in html
     assert '>Record Lifetime ISA top-up</a>' in html
     assert '>Record LISA top-up</a>' not in html
+    assert 'aria-label="Lifetime ISA allowance used"' in html
+    assert 'aria-label="LISA allowance used"' not in html
     assert 'href="/allowance/#topup" class="badge badge-sm">View breakdown</a>' not in html
     assert '>Record top-up</a>' not in html
 
