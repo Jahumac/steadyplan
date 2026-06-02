@@ -9,6 +9,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SteadyPlan">
   <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/favicon-32.png') }}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/favicon-16.png') }}">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-180.png') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,7 +25,10 @@
   {% set active_page = active_page|default('') %}
   <header class="site-header">
     <div class="site-header-row">
-      <h1 class="site-logo">{{ dashboard_name }}</h1>
+      <h1 class="site-logo">
+        <img src="{{ static_v('brand/steadyplan-mark.png') }}" alt="" class="site-logo-mark" aria-hidden="true">
+        <span>{{ dashboard_name }}</span>
+      </h1>
       {% if current_user.is_authenticated %}
       <a href="/logout" class="mobile-logout" title="Log out">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
