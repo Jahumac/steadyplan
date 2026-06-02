@@ -34,3 +34,36 @@ def test_allowance_page_uses_lifetime_isa_heading(app, client, make_user):
     assert "Lifetime ISA Allowance" not in html
     assert 'aria-label="Lifetime ISA allowance used"' in html
     assert 'aria-label="LISA allowance used"' not in html
+
+
+def test_allowance_page_uses_pension_annual_progress_label(app, client, make_user):
+    uid, username, password = make_user(username="allowance-pension-progress-label", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE assumptions
+                SET date_of_birth = '1990-01-01', salary_day = 1
+                WHERE user_id = ?
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'Pension', 'SIPP', 1000, 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/allowance/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "<h2>Annual Allowance</h2>" in html
+    assert 'aria-label="Pension annual allowance used"' in html
+    assert 'aria-label="Pension allowance used"' not in html
