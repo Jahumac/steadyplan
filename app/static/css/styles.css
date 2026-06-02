@@ -152,6 +152,7 @@ body {
   height: 1.5rem;
   flex-shrink: 0;
   display: inline-block;
+  object-fit: contain;
 }
 
 nav {
@@ -4006,6 +4007,22 @@ button.button-danger:focus {
   height: 72px;
   flex-shrink: 0;
   display: block;
+  object-fit: contain;
+}
+
+.auth-brand-mark--float {
+  animation: brand-mark-float 7s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+@keyframes brand-mark-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(2deg);
+  }
 }
 
 /* Legacy emoji fallback */
