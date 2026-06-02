@@ -245,6 +245,8 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
     assert "2/4 complete" not in html
     assert "Set your first goal once you know what you want to aim for." not in html
     assert "ISA Allowance" in html
+    assert "Tax allowance progress" in html
+    assert "Tax allowances" not in html
     assert "Pension Allowance" in html
     assert "<p class=\"eyebrow\">Goals</p>" not in html
     assert "Emergency fund progress" not in html
