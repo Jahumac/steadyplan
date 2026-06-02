@@ -505,7 +505,7 @@
   </div>
   {% endif %}
   <div class="card allowance-card">
-    <h2>Pension Allowance {{ metrics.tax_year }}</h2>
+    <h2>Pension allowance {{ metrics.tax_year }}</h2>
     <p>£{{ '{:,.0f}'.format(metrics.pension_used) }} <span class="allowance-denom">/ £{{ '{:,.0f}'.format(metrics.pension_allowance) }}</span></p>
     <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.pension_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="Pension allowance used"><div class="progress-bar" data-pct="{{ (metrics.pension_progress * 100)|round(1) }}"></div></div>
     <small>
@@ -553,7 +553,7 @@
       </div>
       {% endif %}
       <div class="card allowance-card">
-        <h2>Pension Allowance {{ metrics.tax_year }}</h2>
+        <h2>Pension allowance {{ metrics.tax_year }}</h2>
         <p>£{{ '{:,.0f}'.format(metrics.pension_used) }} <span class="allowance-denom">/ £{{ '{:,.0f}'.format(metrics.pension_allowance) }}</span></p>
         <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.pension_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="Pension allowance used"><div class="progress-bar" data-pct="{{ (metrics.pension_progress * 100)|round(1) }}"></div></div>
         <small>
