@@ -1,4 +1,4 @@
-from app.models import create_account
+from app.models import create_account, get_connection
 
 
 def _account_payload():
@@ -50,3 +50,35 @@ def test_account_detail_actions_are_direct_not_overflow_menu(app, client, make_u
     assert "?mode=edit" in html
     assert "+ Add holding" in html
     assert "Delete" in html
+
+
+def test_account_detail_helper_uses_lifetime_isa_bonus_wording(app, client, make_user):
+    uid, username, password = make_user(username="account-lifetime-isa-bonus", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(), uid)
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2026-05-01', 6000)",
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2026-05-02', 6100)",
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO account_daily_snapshots (user_id, account_id, snapshot_date, value) VALUES (?, ?, '2026-05-01', 6000)",
+                (uid, account_id),
+            )
+            conn.execute(
+                "INSERT INTO account_daily_snapshots (user_id, account_id, snapshot_date, value) VALUES (?, ?, '2026-05-02', 6100)",
+                (uid, account_id),
+            )
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password})
+    resp = client.get(f"/accounts/{account_id}")
+
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "includes Lifetime ISA bonus, tax relief, and employer match where applicable" in html
+    assert "includes LISA bonus, tax relief, and employer match where applicable" not in html
