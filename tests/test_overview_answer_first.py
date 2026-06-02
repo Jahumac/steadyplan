@@ -1707,8 +1707,9 @@ def test_overview_lisa_allowance_card_uses_specific_review_cta(app, client, make
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "LISA allowance" in html
-    assert "LISA Allowance" not in html
+    assert '<h2>Lifetime ISA allowance ' in html
+    assert '<h2>LISA allowance ' not in html
+    assert "Lifetime ISA Allowance" not in html
     assert 'href="/allowance/#topup"' in html
     assert '>Review LISA allowance</a>' in html
     assert '>Record LISA top-up</a>' in html
