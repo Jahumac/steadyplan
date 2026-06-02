@@ -179,5 +179,7 @@ def test_overview_lifetime_isa_review_cta_stays_aligned_in_mobile_details(app, c
 
     assert html.count('>Review Lifetime ISA allowance</a>') == 2
     assert '>Review LISA allowance</a>' not in html
+    assert html.count('>Record Lifetime ISA top-up</a>') == 2
+    assert '>Record LISA top-up</a>' not in html
     assert html.count('<h2>Lifetime ISA allowance ') == 2
     assert html.count('<summary>Tax allowance progress</summary>') == 1
