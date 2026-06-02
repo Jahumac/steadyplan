@@ -384,6 +384,7 @@ def test_overview_data_health_quiet_when_no_warnings(app, client, make_user):
     resp = client.get("/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
+    assert "Data health" not in html
     assert "Data Health" not in html
     assert "Looks good" not in html
 
@@ -395,7 +396,8 @@ def test_overview_data_health_visible_when_warnings_exist(app, client, make_user
     resp = client.get("/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-    assert "Data Health" in html
+    assert "Data health" in html
+    assert "Data Health" not in html
     assert "Needs attention" in html
     assert "/accounts/?mode=create" in html
     assert "Add your first account" in html
