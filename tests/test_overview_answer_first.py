@@ -187,6 +187,8 @@ def test_overview_multi_account_state_restores_accounts_breakdown_panel(app, cli
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
+    assert "<p class=\"eyebrow\">Accounts breakdown</p>" in html
+    assert "<p class=\"eyebrow\">Breakdown</p>" not in html
     assert "<h2>Accounts</h2>" in html
     assert "Review accounts" in html
     assert "2 active" in html
