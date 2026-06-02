@@ -1,3 +1,5 @@
+from datetime import date
+
 from app.models import fetch_assumptions, get_connection
 
 
@@ -75,3 +77,38 @@ def test_allowance_page_uses_pension_annual_progress_label(app, client, make_use
     assert "<h2>Annual Allowance</h2>" in html
     assert 'aria-label="Pension annual allowance used"' in html
     assert 'aria-label="Pension allowance used"' not in html
+
+
+def test_allowance_page_spells_out_lifetime_isa_age_warning(app, client, make_user):
+    uid, username, password = make_user(username="allowance-lifetime-isa-age-warning", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    today = date.today()
+    dob = date(today.year - 49, 1, 1).isoformat()
+
+    with app.app_context():
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE assumptions
+                SET date_of_birth = ?, salary_day = 1, isa_allowance = 20000, lisa_allowance = 4000
+                WHERE user_id = ?
+                """,
+                (dob, uid),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'Lifetime ISA', 'Lifetime ISA', 1000, 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/allowance/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "⚠ Lifetime ISA contributions stop at age 50." in html
+    assert "⚠ Contributions stop at age 50." not in html
