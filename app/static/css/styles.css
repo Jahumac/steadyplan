@@ -144,6 +144,14 @@ body {
   font-size: 1.5rem;
   display: flex;
   align-items: center;
+  gap: 0.55rem;
+}
+
+.site-logo-mark {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  display: inline-block;
 }
 
 nav {
@@ -3989,7 +3997,15 @@ button.button-danger:focus {
 .auth-brand-logo {
   display: flex;
   align-items: center;
+  gap: 0.9rem;
   margin-bottom: 1.75rem;
+}
+
+.auth-brand-mark {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  display: block;
 }
 
 /* Legacy emoji fallback */
