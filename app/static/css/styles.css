@@ -3989,15 +3989,7 @@ button.button-danger:focus {
 .auth-brand-logo {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
   margin-bottom: 1.75rem;
-}
-
-.auth-brand-icon {
-  width: 72px;
-  height: 72px;
-  border-radius: 16px;
-  filter: drop-shadow(0 4px 24px rgba(56, 189, 248, 0.2));
 }
 
 /* Legacy emoji fallback */
@@ -4040,23 +4032,6 @@ button.button-danger:focus {
 
 /* ── Turtle animations ──────────────────────────────────────────────── */
 /* Each page gives Shelly a different personality.                       */
-
-/* Login: gentle float — Shelly's waiting patiently for you */
-.turtle-bob { animation: turtle-bob 4s ease-in-out infinite; }
-@keyframes turtle-bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-8px); }
-}
-
-/* Setup: excited wiggle — Shelly's meeting someone new! */
-.turtle-wave { animation: turtle-wave 2s ease-in-out infinite; }
-@keyframes turtle-wave {
-  0%, 100% { transform: rotate(0deg) translateY(0); }
-  20%      { transform: rotate(-8deg) translateY(-3px); }
-  40%      { transform: rotate(8deg) translateY(-3px); }
-  60%      { transform: rotate(-5deg) translateY(-2px); }
-  80%      { transform: rotate(5deg) translateY(-2px); }
-}
 
 /* Fallback / default: subtle breathe */
 .turtle-breathe { animation: turtle-breathe 6s ease-in-out infinite; }
