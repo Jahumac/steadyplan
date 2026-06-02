@@ -106,6 +106,7 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     assert "Accessible vs locked" in html
     assert "Portfolio Value" not in html
     assert "ISA Allowance" not in html
+    assert "Pension allowance" not in html
     assert "Pension Allowance" not in html
     assert "No daily snapshots yet" not in html
     assert "Complete your first Monthly Update to start tracking net worth over time" not in html
@@ -247,7 +248,8 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
     assert "ISA Allowance" in html
     assert "Tax allowance progress" in html
     assert "Tax allowances" not in html
-    assert "Pension Allowance" in html
+    assert "Pension allowance" in html
+    assert "Pension Allowance" not in html
     assert "<p class=\"eyebrow\">Goals</p>" not in html
     assert "Emergency fund progress" not in html
 
@@ -1737,7 +1739,8 @@ def test_overview_pension_allowance_card_uses_specific_review_cta(app, client, m
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Pension Allowance" in html
+    assert "Pension allowance" in html
+    assert "Pension Allowance" not in html
     assert 'href="/allowance/#pension"' in html
     assert '>Review pension allowance</a>' in html
     assert '>Record pension contribution</a>' in html
