@@ -2,6 +2,18 @@ def _login(client, username, password):
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
 
+def _goal_projection_reference(accounts, assumptions, target):
+    from app.calculations import projected_account_value_at_month
+
+    month = 1
+    while month <= 50 * 12:
+        projected = sum(projected_account_value_at_month(account, assumptions, month) for account in accounts)
+        if projected >= float(target):
+            return month
+        month += 1
+    return None
+
+
 def test_projections_page_shows_assumption_visibility(app, client, make_user):
     uid, username, password = make_user(username="proj", password="password123")
 
@@ -234,3 +246,95 @@ def test_goals_route_fetches_contribution_overrides_in_one_batch(app, client, ma
 
     assert "Holiday" in body
     assert calls == [[first_account_id, second_account_id]]
+
+
+def test_goal_projection_loop_matches_reference_projection_months(monkeypatch):
+    import app.routes.goals as goals_route
+
+    class _FixedDate:
+        @staticmethod
+        def today():
+            from datetime import date
+            return date(2026, 4, 1)
+
+    monkeypatch.setattr(goals_route, "date", _FixedDate)
+
+    assumptions = {
+        "annual_growth_rate": 0.05,
+        "retirement_age": 60,
+        "date_of_birth": "1990-01-01",
+        "retirement_date_mode": "birthday",
+        "salary_day": 28,
+        "tax_band": "basic",
+    }
+    accounts = [
+        {
+            "id": 1,
+            "name": "LISA",
+            "wrapper_type": "Lifetime ISA",
+            "current_value": 5000,
+            "monthly_contribution": 200,
+            "employer_contribution": 0,
+            "contribution_method": "standard",
+            "contribution_fee_pct": 0,
+            "growth_mode": "custom",
+            "growth_rate_override": 0.05,
+            "annual_fee_pct": 0,
+            "platform_fee_pct": 0,
+            "platform_fee_flat": 0,
+            "platform_fee_cap": 0,
+            "fund_fee_pct": 0,
+            "_projection_start_month": "2026-04",
+            "_contribution_overrides": [
+                {"from_month": "2026-05", "to_month": "2026-05", "override_amount": 0},
+                {"from_month": "2026-06", "to_month": "2026-07", "override_amount": 300},
+            ],
+        },
+        {
+            "id": 2,
+            "name": "ISA",
+            "wrapper_type": "Stocks & Shares ISA",
+            "current_value": 4000,
+            "monthly_contribution": 150,
+            "employer_contribution": 0,
+            "contribution_method": "standard",
+            "contribution_fee_pct": 0,
+            "growth_mode": "custom",
+            "growth_rate_override": 0.04,
+            "annual_fee_pct": 0,
+            "platform_fee_pct": 0,
+            "platform_fee_flat": 0,
+            "platform_fee_cap": 0,
+            "fund_fee_pct": 0,
+            "_projection_start_month": "2026-04",
+            "_contribution_overrides": [
+                {"from_month": "2026-04", "to_month": "2026-04", "override_amount": 100},
+            ],
+        },
+    ]
+    target = 12000
+
+    expected_months = _goal_projection_reference(accounts, assumptions, target)
+    assert expected_months is not None
+    result = goals_route._project_goal(accounts, target, assumptions)
+
+    years, rem_months = divmod(expected_months, 12)
+    if years == 0:
+        expected_duration = f"{rem_months}m"
+    elif rem_months == 0:
+        expected_duration = f"{years}y"
+    else:
+        expected_duration = f"{years}y {rem_months}m"
+
+    eta_month_num = 4 + expected_months
+    eta_year = 2026 + (eta_month_num - 1) // 12
+    eta_month_num = (eta_month_num - 1) % 12 + 1
+    month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    expected_eta = f"{month_names[eta_month_num - 1]} {eta_year}"
+
+    assert result == {
+        "reached": False,
+        "total_months": expected_months,
+        "duration": expected_duration,
+        "eta_label": expected_eta,
+    }

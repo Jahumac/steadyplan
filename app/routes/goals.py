@@ -3,14 +3,16 @@ from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.calculations import (
+    account_growth_rate,
+    current_age_from_assumptions,
     effective_account_value,
-    projected_account_value_at_month,
     projection_monthly_contribution,
     projection_start_month_key,
     progress_to_goal,
     remaining_to_goal,
     to_float,
 )
+from app.models.accounts import PREMIUM_BONDS_MAX_BALANCE, is_premium_bonds_account
 from app.utils import optional_float, optional_int, split_tags as _split_tags
 from app.models import (
     fetch_assumptions,
@@ -62,12 +64,30 @@ def _project_goal(included_accounts, target, assumptions):
     MAX_MONTHS = 50 * 12
     month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    current_age = current_age_from_assumptions(assumptions)
+    account_states = [
+        {
+            "account": account,
+            "value": to_float(account["current_value"]),
+            "monthly_rate": account_growth_rate(account, assumptions) / 12.0,
+            "is_lisa": account["wrapper_type"] == "Lifetime ISA",
+            "is_premium_bonds": is_premium_bonds_account(account),
+        }
+        for account in included_accounts
+    ]
 
     for month in range(1, MAX_MONTHS + 1):
-        projected = sum(
-            projected_account_value_at_month(a, assumptions, month)
-            for a in included_accounts
-        )
+        projected = 0.0
+        month_index = month - 1
+        for state in account_states:
+            state["value"] *= (1 + state["monthly_rate"])
+            if not state["is_lisa"] or (current_age + month_index / 12.0) < 50:
+                state["value"] += projection_monthly_contribution(
+                    state["account"], assumptions, month_index
+                )
+            if state["is_premium_bonds"] and state["value"] > PREMIUM_BONDS_MAX_BALANCE:
+                state["value"] = PREMIUM_BONDS_MAX_BALANCE
+            projected += state["value"]
         if projected >= target_f:
             years, rem_months = divmod(month, 12)
             today = date.today()
