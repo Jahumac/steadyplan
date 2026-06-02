@@ -1759,6 +1759,8 @@ def test_overview_pension_allowance_card_uses_specific_review_cta(app, client, m
 
     assert "Pension allowance" in html
     assert "Pension Allowance" not in html
+    assert html.count("personal limit:") == 2
+    assert "Personal limit:" not in html
     assert 'href="/allowance/#pension"' in html
     assert '>Review pension allowance</a>' in html
     assert '>Record pension contribution</a>' in html
