@@ -105,6 +105,13 @@ def test_confirm_helper_js_no_longer_carries_dead_mascot_icon_wiring():
     assert "/static/icons/shelly/Accounts.png" not in js
 
 
+def test_lifetime_isa_preview_js_uses_specific_bonus_copy():
+    js = Path("/opt/data/steadyplan/app/static/js/app.js").read_text()
+
+    assert "+ Lifetime ISA bonus (25%)" in js
+    assert "+ government bonus (25%)" not in js
+
+
 def test_budget_setup_page_does_not_render_turtle_icon(auth_client):
     response = auth_client.get("/budget/items/?month=2026-04", follow_redirects=True)
 

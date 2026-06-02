@@ -1738,7 +1738,7 @@
         } else if (w === 'Lifetime ISA') {
           var eligible = Math.min(personal * 12, 4000);
           relief = (eligible * 0.25) / 12;
-          reliefLabel = '+ government bonus (25%)';
+          reliefLabel = '+ Lifetime ISA bonus (25%)';
           showRelief = relief > 0;
         }
 
