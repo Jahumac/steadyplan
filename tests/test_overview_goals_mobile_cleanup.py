@@ -90,7 +90,7 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     html = resp.get_data(as_text=True)
 
     assert 'class="card mb-1 overview-portfolio-card"' in html
-    assert '<summary>Where are you standing now</summary>' in html
+    assert '<summary>Where you stand now</summary>' in html
     assert '<summary>Goals</summary>' in html
     assert '<summary>Allowances</summary>' in html
     assert '<summary>Breakdown accounts</summary>' in html
