@@ -55,7 +55,7 @@
     <div class="card allowance-card">
       <h2>Lifetime ISA allowance</h2>
       <p>£{{ '{:,.0f}'.format(usage.lisa_used) }} <span class="allowance-denom">/ £{{ '{:,.0f}'.format(lisa_allowance) }}</span></p>
-      <div class="progress" role="progressbar" aria-valuenow="{{ (lisa_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="LISA allowance used"><div class="progress-bar" data-pct="{{ (lisa_progress * 100)|round(1) }}"></div></div>
+      <div class="progress" role="progressbar" aria-valuenow="{{ (lisa_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="Lifetime ISA allowance used"><div class="progress-bar" data-pct="{{ (lisa_progress * 100)|round(1) }}"></div></div>
       <small>{{ '{:.1f}'.format(lisa_progress * 100) }}% used</small>
       {% if lisa_age_warning %}
       <small class="block mt-025 text-danger">⚠ Contributions stop at age 50. ~{{ lisa_months_remaining }} month{{ 's' if lisa_months_remaining != 1 }} left.</small>

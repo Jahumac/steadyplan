@@ -32,3 +32,5 @@ def test_allowance_page_uses_lifetime_isa_heading(app, client, make_user):
     assert "<h2>Lifetime ISA allowance</h2>" in html
     assert "<h2>LISA Allowance</h2>" not in html
     assert "Lifetime ISA Allowance" not in html
+    assert 'aria-label="Lifetime ISA allowance used"' in html
+    assert 'aria-label="LISA allowance used"' not in html
