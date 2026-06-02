@@ -193,7 +193,8 @@ def test_overview_multi_account_state_restores_accounts_breakdown_panel(app, cli
 
     assert "<p class=\"eyebrow\">Accounts breakdown</p>" in html
     assert "<p class=\"eyebrow\">Breakdown</p>" not in html
-    assert "<h2>Accounts</h2>" in html
+    assert html.count("<h2>Accounts breakdown</h2>") == 2
+    assert "<h2>Accounts</h2>" not in html
     assert "Review accounts" in html
     assert "2 active" in html
 
