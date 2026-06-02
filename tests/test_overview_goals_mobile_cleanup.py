@@ -31,12 +31,16 @@ def test_goals_page_moves_primary_action_into_hero_for_mobile_cleanup(app, clien
     assert "flex-direction: column;" in css
     assert ".goals-hero-badges .badge {" in css
     assert ".subnav-mobile-family-goals .subnav-mobile-panel .badge {" in css
+    assert ".empty-state-icon {" not in css
 
     hero_idx = html.index('class="hero-actions-col goals-hero-actions"')
     create_idx = html.index('href="/goals/?mode=create">+ Create goal</a>')
     empty_state_idx = html.index('No goals yet')
 
     assert hero_idx < create_idx < empty_state_idx
+    empty_state_block = html.split('class="empty-state"', 1)[1].split('</div>', 1)[0]
+    assert 'empty-state-icon' not in empty_state_block
+    assert 'shelly-inline-icon' not in empty_state_block
 
 
 def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app, client, make_user):
