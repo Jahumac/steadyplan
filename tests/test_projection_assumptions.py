@@ -116,6 +116,25 @@ def test_settings_monthly_update_timing_helper_uses_monthly_update_wording(app, 
     assert "Used to estimate when your investments have settled and it's time to review" not in body
 
 
+def test_settings_uses_lifetime_isa_wording(app, client, make_user):
+    uid, username, password = make_user(username="settings-lifetime-isa-copy", password="password123")
+    _login(client, username, password)
+
+    edit_resp = client.get("/settings/?mode=edit")
+    assert edit_resp.status_code == 200
+    edit_body = edit_resp.data.decode("utf-8", errors="ignore")
+    assert "<span>Lifetime ISA allowance</span>" in edit_body
+    assert "Annual limit — includes Lifetime ISA" in edit_body
+    assert "<span>LISA allowance</span>" not in edit_body
+    assert "Annual limit — includes LISA" not in edit_body
+
+    view_resp = client.get("/settings/")
+    assert view_resp.status_code == 200
+    view_body = view_resp.data.decode("utf-8", errors="ignore")
+    assert "Lifetime ISA allowance" in view_body
+    assert "LISA allowance" not in view_body
+
+
 def test_overview_projected_retirement_stat_has_estimate_qualifier(app, client, make_user):
     uid, username, password = make_user(username="ov", password="password123")
 
