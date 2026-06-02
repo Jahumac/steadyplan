@@ -480,7 +480,7 @@
 {% if has_goal %}
 <section class="card-grid allowance-grid mb-1 overview-desktop-detail">
   <div class="card allowance-card">
-    <h2>ISA Allowance {{ metrics.tax_year }}</h2>
+    <h2>ISA allowance {{ metrics.tax_year }}</h2>
     <p>£{{ '{:,.0f}'.format(metrics.isa_used) }} <span class="allowance-denom">/ £{{ '{:,.0f}'.format(metrics.isa_allowance) }}</span></p>
     <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.isa_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="ISA allowance used"><div class="progress-bar" data-pct="{{ (metrics.isa_progress * 100)|round(1) }}"></div></div>
     <small>{{ '{:.1f}'.format(metrics.isa_progress * 100) }}% used · includes LISA · {{ metrics.tax_year_days_left }} days left in tax year</small>
@@ -528,7 +528,7 @@
   <div class="overview-compact-panel">
     <div class="card-grid allowance-grid">
       <div class="card allowance-card">
-        <h2>ISA Allowance {{ metrics.tax_year }}</h2>
+        <h2>ISA allowance {{ metrics.tax_year }}</h2>
         <p>£{{ '{:,.0f}'.format(metrics.isa_used) }} <span class="allowance-denom">/ £{{ '{:,.0f}'.format(metrics.isa_allowance) }}</span></p>
         <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.isa_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="ISA allowance used"><div class="progress-bar" data-pct="{{ (metrics.isa_progress * 100)|round(1) }}"></div></div>
         <small>{{ '{:.1f}'.format(metrics.isa_progress * 100) }}% used · includes LISA · {{ metrics.tax_year_days_left }} days left in tax year</small>
