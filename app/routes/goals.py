@@ -19,7 +19,7 @@ from app.models import (
     delete_goal,
     fetch_all_accounts,
     fetch_all_goals,
-    fetch_contribution_overrides,
+    fetch_contribution_overrides_for_accounts,
     fetch_goal,
     fetch_holding_totals_by_account,
     update_goal,
@@ -160,10 +160,11 @@ def goals():
     accounts = fetch_all_accounts(uid)
     holdings_totals = fetch_holding_totals_by_account(uid)
     start_month = projection_start_month_key(assumptions)
+    overrides_by_account = fetch_contribution_overrides_for_accounts([account["id"] for account in accounts])
     accounts = [
         {
             **dict(account),
-            "_contribution_overrides": fetch_contribution_overrides(account["id"]),
+            "_contribution_overrides": overrides_by_account.get(account["id"], []),
             "_projection_start_month": start_month,
         }
         for account in accounts
