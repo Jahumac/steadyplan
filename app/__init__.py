@@ -101,7 +101,7 @@ def create_app():
   <header class="site-header">
     <div class="site-header-row">
       <h1 class="site-logo">
-        <img src="/static/brand/steadyplan-mark.svg" alt="" class="site-logo-mark" aria-hidden="true">
+        <img src="/static/brand/steadyplan-mark.png" alt="" class="site-logo-mark" aria-hidden="true">
         <span>SteadyPlan</span>
       </h1>
     </div>
