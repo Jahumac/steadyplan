@@ -149,7 +149,7 @@
       <h2>Each Account at Retirement (Estimate)</h2>
     </div>
   </div>
-  <p class="helper-text">Scenario estimates for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, government bonuses, and employer contributions).</p>
+  <p class="helper-text">Scenario estimates for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, Lifetime ISA bonuses, and employer contributions).</p>
   <div class="budget-rows">
     {% for row in account_rows %}
     <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}">
@@ -160,7 +160,7 @@
             {%- if row.annual_fee_pct %} <span style="color:var(--muted);">({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
             {%- if row.effective_contribution != row.monthly_contribution or row.contribution_fee > 0 %} · you pay £{{ '{:,.2f}'.format(row.monthly_contribution) }}
               {%- if row.tax_relief %} + £{{ '{:,.2f}'.format(row.tax_relief) }} tax relief{% endif %}
-              {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} government bonus{% endif %}
+              {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} Lifetime ISA bonus{% endif %}
               {%- if row.employer %} + £{{ '{:,.2f}'.format(row.employer) }} employer{% endif %}
               {%- if row.contribution_fee > 0 %} − £{{ '{:,.2f}'.format(row.contribution_fee) }} contribution fee{% endif %}
               = £{{ '{:,.2f}'.format(row.effective_contribution) }}/mo into pot
@@ -231,7 +231,7 @@
         <h2>Each Account at Retirement (Estimate)</h2>
       </div>
     </div>
-    <p class="helper-text">Scenario estimates for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, government bonuses, and employer contributions).</p>
+    <p class="helper-text">Scenario estimates for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, Lifetime ISA bonuses, and employer contributions).</p>
     <div class="budget-rows">
       {% for row in account_rows %}
       <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}">
@@ -242,7 +242,7 @@
               {%- if row.annual_fee_pct %} <span style="color:var(--muted);">({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
               {%- if row.effective_contribution != row.monthly_contribution or row.contribution_fee > 0 %} · you pay £{{ '{:,.2f}'.format(row.monthly_contribution) }}
                 {%- if row.tax_relief %} + £{{ '{:,.2f}'.format(row.tax_relief) }} tax relief{% endif %}
-                {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} government bonus{% endif %}
+                {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} Lifetime ISA bonus{% endif %}
                 {%- if row.employer %} + £{{ '{:,.2f}'.format(row.employer) }} employer{% endif %}
                 {%- if row.contribution_fee > 0 %} − £{{ '{:,.2f}'.format(row.contribution_fee) }} contribution fee{% endif %}
                 = £{{ '{:,.2f}'.format(row.effective_contribution) }}/mo into pot

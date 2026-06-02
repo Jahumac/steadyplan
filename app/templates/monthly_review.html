@@ -140,7 +140,7 @@
               {% if br and br.total_into_pot > item.expected_contribution + 0.005 %}
                 {% set uplift = br.total_into_pot - item.expected_contribution %}
                 <span class="contrib-pot-chip"
-                      title="£{{ '{:,.2f}'.format(item.expected_contribution) }} from you{% if br.tax_relief %} · +£{{ '{:,.2f}'.format(br.tax_relief) }} tax relief{% endif %}{% if br.government_bonus %} · +£{{ '{:,.2f}'.format(br.government_bonus) }} bonus{% endif %}{% if br.employer %} · +£{{ '{:,.2f}'.format(br.employer) }} employer{% endif %}{% if br.contribution_fee %} · −£{{ '{:,.2f}'.format(br.contribution_fee) }} fee{% endif %} → £{{ '{:,.2f}'.format(br.total_into_pot) }} into pot">
+                      title="£{{ '{:,.2f}'.format(item.expected_contribution) }} from you{% if br.tax_relief %} · +£{{ '{:,.2f}'.format(br.tax_relief) }} tax relief{% endif %}{% if br.government_bonus %} · +£{{ '{:,.2f}'.format(br.government_bonus) }} Lifetime ISA bonus{% endif %}{% if br.employer %} · +£{{ '{:,.2f}'.format(br.employer) }} employer{% endif %}{% if br.contribution_fee %} · −£{{ '{:,.2f}'.format(br.contribution_fee) }} fee{% endif %} → £{{ '{:,.2f}'.format(br.total_into_pot) }} into pot">
                   +£{{ '{:,.0f}'.format(uplift) }} into pot
                 </span>
               {% endif %}

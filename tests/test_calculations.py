@@ -87,6 +87,7 @@ def test_contribution_breakdown_lisa_bonus_before_age_50():
     assert breakdown["personal"] == 100
     assert breakdown["government_bonus"] == 25
     assert breakdown["total_into_pot"] == 125
+    assert breakdown["method_label"] == "Lifetime ISA bonus (25%)"
 
 
 def test_contribution_breakdown_lisa_stops_from_age_50():

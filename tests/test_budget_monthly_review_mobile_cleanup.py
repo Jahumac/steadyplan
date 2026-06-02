@@ -185,6 +185,30 @@ def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(
     assert ">Show<" not in html
 
 
+def test_monthly_review_contribution_chip_spells_out_lifetime_isa_bonus(app, client, make_user):
+    uid, username, password = make_user(username="review-lifetime-isa-chip", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
+                VALUES (?, 'House deposit', 'Lifetime ISA', 5000, 100, 1)
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "+£25.00 Lifetime ISA bonus" in html
+    assert "+£25.00 bonus" not in html
+
 
 def test_monthly_review_zero_prize_result_uses_outcome_badge_wording(app, client, make_user):
     uid, username, password = make_user(username="review-zero-prize-badge", password="password123")
