@@ -515,7 +515,7 @@
     <p>£{{ '{:,.0f}'.format(metrics.pension_used) }} <span class="allowance-denom">/ £{{ '{:,.0f}'.format(metrics.pension_allowance) }}</span></p>
     <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.pension_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="Pension allowance used"><div class="progress-bar" data-pct="{{ (metrics.pension_progress * 100)|round(1) }}"></div></div>
     <small>
-      {{ '{:.1f}'.format(metrics.pension_progress * 100) }}% used · Personal limit: £{{ '{:,.0f}'.format(metrics.pension_personal_limit) }}
+      {{ '{:.1f}'.format(metrics.pension_progress * 100) }}% used · personal limit: £{{ '{:,.0f}'.format(metrics.pension_personal_limit) }}
     </small>
     {% if metrics.projected_pension != metrics.pension_used %}
     <small class="block mt-025 text-muted">
@@ -563,7 +563,7 @@
         <p>£{{ '{:,.0f}'.format(metrics.pension_used) }} <span class="allowance-denom">/ £{{ '{:,.0f}'.format(metrics.pension_allowance) }}</span></p>
         <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.pension_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="Pension allowance used"><div class="progress-bar" data-pct="{{ (metrics.pension_progress * 100)|round(1) }}"></div></div>
         <small>
-          {{ '{:.1f}'.format(metrics.pension_progress * 100) }}% used · Personal limit: £{{ '{:,.0f}'.format(metrics.pension_personal_limit) }}
+          {{ '{:.1f}'.format(metrics.pension_progress * 100) }}% used · personal limit: £{{ '{:,.0f}'.format(metrics.pension_personal_limit) }}
         </small>
         {% if metrics.projected_pension != metrics.pension_used %}
         <small class="block mt-025 text-muted">
