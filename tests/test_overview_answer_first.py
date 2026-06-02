@@ -1597,6 +1597,8 @@ def test_overview_isa_allowance_card_uses_specific_topup_cta(app, client, make_u
 
     assert "ISA allowance" in html
     assert "ISA Allowance" not in html
+    assert html.count("includes Lifetime ISA") == 2
+    assert "includes LISA" not in html
     assert html.count("days left in the tax year") == 2
     assert "days left in tax year" not in html
     assert 'href="/allowance/#topup"' in html

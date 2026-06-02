@@ -98,6 +98,8 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     assert '<summary>Tax allowance progress</summary>' in html
     assert '<summary>Tax allowances</summary>' not in html
     assert '<summary>Allowances</summary>' not in html
+    assert html.count('includes Lifetime ISA') == 2
+    assert 'includes LISA' not in html
     assert html.count('<h2>Pension annual allowance ') == 2
     assert '<h2>Pension allowance ' not in html
     assert '<summary>Accounts breakdown</summary>' in html
