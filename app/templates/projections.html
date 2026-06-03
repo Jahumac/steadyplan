@@ -52,10 +52,10 @@
     <span class="goal-track-icon">{% if on_track %}✓{% else %}⚠{% endif %}</span>
     <div style="flex:1; min-width:200px;">
       {% if on_track %}
-        <strong>Scenario estimate meets "{{ primary_goal.name }}"</strong>
+        <strong>Projection estimate meets "{{ primary_goal.name }}"</strong>
         <p class="helper-text m-0">Estimated £{{ '{:,.0f}'.format(metrics.total_projected) }} vs target £{{ '{:,.0f}'.format(primary_goal.target) }} (margin £{{ '{:,.0f}'.format(metrics.total_projected - primary_goal.target) }}).</p>
       {% else %}
-        <strong>Scenario estimate is below "{{ primary_goal.name }}"</strong>
+        <strong>Projection estimate is below "{{ primary_goal.name }}"</strong>
         <p class="helper-text m-0">Estimated £{{ '{:,.0f}'.format(metrics.total_projected) }} vs target £{{ '{:,.0f}'.format(primary_goal.target) }} (gap £{{ '{:,.0f}'.format(gap) }}).</p>
       {% endif %}
     </div>
@@ -149,7 +149,7 @@
       <h2>Each Account at Retirement (Estimate)</h2>
     </div>
   </div>
-  <p class="helper-text">Scenario estimates for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, Lifetime ISA bonuses, and employer contributions).</p>
+  <p class="helper-text">Projection estimates for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, Lifetime ISA bonuses, and employer contributions).</p>
   <div class="budget-rows">
     {% for row in account_rows %}
     <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}">
@@ -231,7 +231,7 @@
         <h2>Each Account at Retirement (Estimate)</h2>
       </div>
     </div>
-    <p class="helper-text">Scenario estimates for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, Lifetime ISA bonuses, and employer contributions).</p>
+    <p class="helper-text">Projection estimates for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, Lifetime ISA bonuses, and employer contributions).</p>
     <div class="budget-rows">
       {% for row in account_rows %}
       <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}">
@@ -351,7 +351,7 @@
     </div>
     <button class="badge badge-meta" id="wi_reset" type="button">Reset to plan</button>
   </div>
-  <p class="helper-text">Adjust inputs to see how the scenario estimate changes. Nothing is saved unless you explicitly save it elsewhere.</p>
+  <p class="helper-text">Adjust inputs to see how the projection estimate changes. Nothing here is saved unless you save changes elsewhere.</p>
 
   {# Global controls #}
   <div class="form-grid settings-form mb-1">
@@ -430,7 +430,7 @@
       </div>
       <button class="badge badge-meta" id="wi_reset_mobile" type="button">Reset to plan</button>
     </div>
-    <p class="helper-text">Adjust inputs to see how the scenario estimate changes. Nothing is saved unless you explicitly save it elsewhere.</p>
+    <p class="helper-text">Adjust inputs to see how the projection estimate changes. Nothing here is saved unless you save changes elsewhere.</p>
 
     <div class="form-grid settings-form mb-1">
       <label>
