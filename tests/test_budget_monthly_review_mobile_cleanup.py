@@ -56,6 +56,7 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert ".contribution-check-toggle .helper-text {" in css
     assert ".contribution-check-account p {" in css
     assert ".contribution-check-side .badge {" in css
+    assert "@media (max-width: 768px)" in css
     assert "grid-template-columns: minmax(0, 1fr);" in css
     assert "padding-left: 1.7rem;" in css
     assert "justify-content: space-between;" in css

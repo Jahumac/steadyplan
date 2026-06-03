@@ -6137,7 +6137,7 @@ a.link-accent:hover {
 .budget-diff-over  { color: var(--accent-danger, #dc2626); }
 .budget-diff-under { color: var(--accent-2, #22c55e); }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .contribution-check-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
