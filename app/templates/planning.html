@@ -195,13 +195,13 @@
         {% endif %}
       {% else %}
         <p class="planning-big-number">No bridge gap</p>
-        <p class="helper-text">Your selected retirement age is at or after pension access age in this scenario.</p>
+        <p class="helper-text">Your selected retirement age is at or after pension access age with this plan.</p>
       {% endif %}
     </div>
     <div class="card planning-mini-card">
       <h2>After State Pension starts</h2>
       <p class="planning-big-number">£{{ '{:,.0f}'.format(income_summary.private_after_state_needed) }}/yr</p>
-      <p class="helper-text">Private income needed after an illustrative State Pension of £{{ '{:,.0f}'.format(income_summary.state_pension_annual) }}/yr{% if income_summary.uses_goal_mode %} against your desired £{{ '{:,.0f}'.format(income_summary.desired_income) }}/yr{% else %}, using the balanced estimate as the income to model{% endif %}.</p>
+      <p class="helper-text">Private income needed after an illustrative State Pension of £{{ '{:,.0f}'.format(income_summary.state_pension_annual) }}/yr{% if income_summary.uses_goal_mode %} against your desired £{{ '{:,.0f}'.format(income_summary.desired_income) }}/yr{% else %}, using the balanced illustration as the income guide{% endif %}.</p>
     </div>
     <div class="card planning-mini-card">
       <h2>Weakest link</h2>
@@ -239,7 +239,7 @@
 
   <div class="card alert-banner alert-info planning-desktop-detail">
     <strong>Tax and withdrawal detail is deliberately light in this first version.</strong>
-    <p class="helper-text m-0">ISA withdrawals are usually tax-free; pension and State Pension income may be taxable. This page shows planning scenarios, not guaranteed safe withdrawal advice.</p>
+    <p class="helper-text m-0">ISA withdrawals are usually tax-free; pension and State Pension income may be taxable. This page shows planning illustrations, not guaranteed safe withdrawal advice.</p>
   </div>
 </section>
 
