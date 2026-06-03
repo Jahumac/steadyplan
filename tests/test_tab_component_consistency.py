@@ -114,6 +114,19 @@ def test_lifetime_isa_preview_js_uses_specific_bonus_copy():
     assert "The government tops it up with a lovely 25% bonus (up to £1,000/year)." not in js
 
 
+def test_account_wizard_hints_use_plain_neutral_tone():
+    js = Path("/opt/data/steadyplan/app/static/js/app.js").read_text()
+
+    assert "How much do you add to this Cash ISA each month?" in js
+    assert "How much do you stash away in this Cash ISA each month?" not in js
+    assert "Prize draws are tracked separately; projections use a cautious estimate." in js
+    assert "Prize draws are tracked separately; projections use a gentle estimate." not in js
+    assert "Your provider claims 25% tax relief from HMRC automatically." in js
+    assert "free money, basically" not in js
+    assert "You can always update this later." in js
+    assert "No pressure — you can always update this later." not in js
+
+
 def test_budget_setup_page_does_not_render_turtle_icon(auth_client):
     response = auth_client.get("/budget/items/?month=2026-04", follow_redirects=True)
 
