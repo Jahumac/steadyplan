@@ -46,6 +46,41 @@ def test_goals_page_moves_primary_action_into_hero_for_mobile_cleanup(app, clien
     assert 'shelly-inline-icon' not in empty_state_block
 
 
+def test_goals_page_uses_two_column_goal_grid_on_larger_mobile_widths(app, client, make_user):
+    uid, username, password = make_user(username="goals-tablet-grid", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes) VALUES (?, 'Retirement Goal', 1000000, '', '', '')",
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes) VALUES (?, 'Emergency Fund', 20000, '', '', '')",
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/goals/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'class="card-grid goal-grid"' in html
+    assert html.count('class="card goal-link-card"') == 2
+    assert 'Retirement Goal' in html
+    assert 'Emergency Fund' in html
+
+    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    assert ".goal-grid {" in css
+    assert "grid-template-columns: repeat(auto-fit, minmax(260px, 320px));" in css
+    assert "@media (min-width: 600px) and (max-width: 900px) {" in css
+    assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in css
+    assert "justify-content: stretch;" in css
+
+
 def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app, client, make_user):
     uid, username, password = make_user(username="overview-mobile-details", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)

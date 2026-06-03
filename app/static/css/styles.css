@@ -339,6 +339,13 @@ body.is-back-online .site-header {
   justify-content: center;
 }
 
+@media (min-width: 600px) and (max-width: 900px) {
+  .goal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+  }
+}
+
 .card {
   background: linear-gradient(180deg, var(--panel), var(--panel-2));
   border: 1px solid var(--border);
