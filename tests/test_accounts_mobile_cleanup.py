@@ -200,7 +200,8 @@ def test_accounts_edit_form_uses_cautious_premium_bonds_estimate_copy(app, clien
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'Used as a planning estimate for projections only.' in html
+    assert 'Used as a planning assumption for projections only.' in html
+    assert 'Used as a planning estimate for projections only.' not in html
     assert 'Used as a cautious estimate for projections only.' not in html
     assert 'Used as a rough estimate for projections only.' not in html
 
