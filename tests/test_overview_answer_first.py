@@ -309,6 +309,8 @@ def test_overview_multi_goal_state_restores_goal_progress_panel(app, client, mak
     assert "Emergency fund progress" in html
     assert "House deposit progress" in html
     assert "goal-track-status" in html
+    assert "goal-track-label" in html
+    assert "goal-track-detail" in html
     assert "set a monthly contribution" in html
     assert "est." in html
 

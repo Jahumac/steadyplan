@@ -427,6 +427,17 @@ body.is-back-online .site-header {
   color: var(--muted);
   font-size: 0.8rem;
   line-height: 1.3;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.4rem;
+}
+
+.goal-track-label {
+  font-weight: 600;
+}
+
+.goal-track-detail {
+  min-width: 0;
 }
 
 .goal-progress-pct {
@@ -461,6 +472,16 @@ body.is-back-online .site-header {
 @media (max-width: 480px) {
   .allowance-grid {
     grid-template-columns: 1fr;
+  }
+
+  .goal-row-header {
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+
+  .goal-progress-pct {
+    padding-top: 0.1rem;
+    flex-shrink: 0;
   }
 }
 

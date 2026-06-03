@@ -114,9 +114,19 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     assert '<p class="eyebrow">Breakdown</p>' not in html
     assert html.count('<p class="eyebrow">Goal progress</p>') == 2
     assert html.count('<h2>Goal progress</h2>') == 2
+    assert 'goal-track-label' in html
+    assert 'goal-track-detail' in html
     assert '<p class="eyebrow">Goals</p>' not in html
     assert 'class="card mb-1 overview-access-card overview-desktop-detail"' in html
     assert 'class="card-grid allowance-grid mb-1 overview-desktop-detail"' in html
+
+    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    assert ".goal-track-status {" in css
+    assert "flex-wrap: wrap;" in css
+    assert ".goal-track-label {" in css
+    assert ".goal-track-detail {" in css
+    assert "@media (max-width: 480px) {" in css
+    assert "gap: 0.6rem;" in css
 
     hero_idx = html.index('class="card highlight mb-1 month-accent-')
     access_idx = html.index('class="card mb-1 overview-access-card overview-desktop-detail"')
