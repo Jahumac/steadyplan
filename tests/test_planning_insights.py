@@ -141,6 +141,10 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"View account details" in response.data
     assert b"perfect retirement salary" not in response.data
     assert b"Weakest link" in response.data
+    assert b"Balanced illustration:" in response.data
+    assert b"Illustrative estimate, not guaranteed income." in response.data
+    assert b"Balanced estimate:" not in response.data
+    assert b"Scenario estimate, not guaranteed income." not in response.data
 
     css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
     assert ".planning-hero-strip {" in css
