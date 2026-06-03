@@ -1995,6 +1995,17 @@ button.button-danger:focus {
   margin: 0;
 }
 
+.review-hero-todo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.review-hero-todo .badge {
+  margin: 0;
+}
+
 .hero-helper {
   margin: 0.5rem 0 0;
   font-size: 0.85rem;
@@ -3975,6 +3986,11 @@ button.button-danger:focus {
   /* Subtitle: don't let it get too large on mobile */
   .review-hero-card .hero-subtitle {
     font-size: 0.82rem;
+  }
+
+  .review-hero-card .review-hero-todo {
+    gap: 0.4rem;
+    margin-top: 0.55rem;
   }
 }
 
