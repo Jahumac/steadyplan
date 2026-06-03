@@ -225,6 +225,15 @@ def overview():
     current_tax_year = uk_tax_year_label()
     now_date = datetime.now().date()
 
+    def _goal_track_status(projection, monthly_contribution, remaining):
+        if remaining <= 0 or (projection and projection.get("reached")):
+            return {"label": "Ahead", "detail": "target already reached", "tone": "ahead"}
+        if monthly_contribution <= 0:
+            return {"label": "Behind", "detail": "no contributions set", "tone": "behind"}
+        if projection and projection.get("total_months") is None:
+            return {"label": "Behind", "detail": "more than 50 years at current rate", "tone": "behind"}
+        return {"label": "On track", "detail": "at current pace", "tone": "on-track"}
+
     all_goals = fetch_all_goals(uid)
     goals_data = []
     for g in all_goals:
@@ -243,15 +252,18 @@ def overview():
         monthly_contribution = sum(
             projection_monthly_contribution(account, assumptions, 0) for account in included_accounts
         )
+        remaining = max(gt - current, 0)
+        projection = project_goal(included_accounts, gt, assumptions)
         goals_data.append({
             "id": g["id"],
             "name": g["name"],
             "target": gt,
             "current": current,
             "progress": gp,
-            "remaining": max(gt - current, 0),
+            "remaining": remaining,
             "monthly_contribution": monthly_contribution,
-            "projection": project_goal(included_accounts, gt, assumptions),
+            "projection": projection,
+            "track_status": _goal_track_status(projection, monthly_contribution, remaining),
         })
 
     # Primary goal year for hero stat
