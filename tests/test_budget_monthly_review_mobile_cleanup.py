@@ -49,6 +49,12 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert ".monthly-review-start-details .compact-flow-list {" in css
     assert ".review-hero-todo {" in css
     assert ".review-hero-todo .badge {" in css
+    assert ".contribution-check-main {" in css
+    assert ".contribution-check-toggle {" in css
+    assert ".contribution-check-side {" in css
+    assert ".contribution-check-status {" in css
+    assert ".contribution-check-toggle .helper-text {" in css
+    assert "grid-template-columns: minmax(0, 1fr) auto;" in css
     assert "display: none;" in css
     assert "justify-content: center;" in css
     assert "margin-bottom: 0.65rem;" in css
@@ -393,6 +399,11 @@ def test_monthly_review_contribution_checkbox_uses_explicit_label(app, client, m
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
+    assert 'class="contribution-check-main"' in html
+    assert 'class="contribution-check-toggle flex flex-center gap-05"' in html
+    assert 'class="contribution-check-account"' in html
+    assert 'class="contribution-check-side"' in html
+    assert 'class="contribution-check-status"' in html
     assert '<span class="helper-text m-0">Confirm contribution</span>' in html
     assert '<span class="helper-text m-0">Confirm</span>' not in html
     assert 'title="Confirm contribution happened"' in html

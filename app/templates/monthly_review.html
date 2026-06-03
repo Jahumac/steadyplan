@@ -122,9 +122,9 @@
         <div class="contribution-check-row simple-list-item{% if item.contribution_confirmed %} contribution-confirmed{% endif %}"
              data-item-id="{{ item.id }}"
              data-account-id="{{ item.account_id }}">
-          <div style="display:flex;align-items:center;gap:0.6rem;flex:1;min-width:0;">
+          <div class="contribution-check-main">
             {% if review.status != 'complete' and not is_skipped %}
-            <label class="flex flex-center gap-05" style="flex-shrink:0;cursor:pointer;">
+            <label class="contribution-check-toggle flex flex-center gap-05">
               <input type="checkbox" class="contribution-cb"
                      {% if item.contribution_confirmed %}checked{% endif %}
                      title="Confirm contribution happened"
@@ -132,14 +132,14 @@
               <span class="helper-text m-0">Confirm contribution</span>
             </label>
             {% endif %}
-            <div style="min-width:0;">
+            <div class="contribution-check-account">
               <strong>{{ item.account_name }}</strong>
               {% if is_skipped %}<span class="budget-pill" style="margin-left:0.4rem;">skipped</span>{% endif %}
               <p>{% if item.provider %}{{ item.provider }} · {% endif %}{{ item.wrapper_type or 'Account' }}</p>
             </div>
           </div>
-          <div style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
-            <div style="text-align:right;">
+          <div class="contribution-check-side">
+            <div class="contribution-check-status">
               <strong>£{{ '{:,.2f}'.format(item.expected_contribution) }}</strong>
               {% if is_skipped %}
                 <p class="helper-text m-0">Skipped this month</p>
