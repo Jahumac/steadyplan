@@ -112,6 +112,8 @@ def test_lifetime_isa_preview_js_uses_specific_bonus_copy():
     assert "+ government bonus (25%)" not in js
     assert "Your Lifetime ISA bonus adds 25% on top (up to £1,000/year)." in js
     assert "The government tops it up with a lovely 25% bonus (up to £1,000/year)." not in js
+    assert "How much do you put into this ISA each month? Even an estimate helps with projections." in js
+    assert "How much do you put into this ISA each month? Even a rough figure helps with projections." not in js
 
 
 def test_account_wizard_hints_use_plain_neutral_tone():

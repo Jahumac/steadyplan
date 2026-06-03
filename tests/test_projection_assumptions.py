@@ -104,6 +104,8 @@ def test_settings_growth_hint_no_longer_says_nominal_todays_money(app, client, m
     assert "These inputs feed Projections and goal estimates." in body
     assert "nominal (today's money)" not in body
     assert "nominal future pounds" in body
+    assert "cautious “today’s spending power” estimate" in body
+    assert "rough “today’s spending power” estimate" not in body
 
 
 
