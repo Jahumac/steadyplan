@@ -170,9 +170,9 @@
   {% if loop.first %}
   <p class="helper-text helper-text-section">Your take-home pay and any side income — used to show how much is available to allocate.</p>
   {% elif 'debt' in group.key %}
-  <p class="helper-text helper-text-section">Minimum payments and extra chunks you're throwing at debt — every pound here gets you closer to freedom.</p>
+  <p class="helper-text helper-text-section">Minimum payments and extra debt overpayments — use this section to track what you plan to repay this month.</p>
   {% elif 'invest' in group.key or 'saving' in group.key %}
-  <p class="helper-text helper-text-section">Pay yourself first! Items marked <em>linked</em> pull their amount from your account's monthly contribution automatically.</p>
+  <p class="helper-text helper-text-section">Set aside money for future goals. Items marked <em>linked</em> use the monthly contribution from that account.</p>
   {% elif 'fixed' in group.key or 'expense' in group.key %}
   <p class="helper-text helper-text-section">The essentials — bills, rent, subscriptions. These tend to stay steady month to month.</p>
   {% elif 'discretionary' in group.key or 'variable' in group.key or 'personal' in group.key %}

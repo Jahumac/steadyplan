@@ -17,6 +17,14 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert 'class="badge badge-meta budget-next-month"' in html
     assert 'class="helper-text m-0 budget-hero-mobile-hint">Edit numbers below to shape this month.</p>' in html
     assert "Budget Setup" in html
+    assert "Click any number and type to change it for this month." in html
+    assert "Just click any number and type to change it for this month." not in html
+    assert "Changes save as you edit." in html
+    assert "It saves automatically." not in html
+    assert "Minimum payments and extra debt overpayments — use this section to track what you plan to repay this month." in html
+    assert "Minimum payments and extra chunks you're throwing at debt — every pound here gets you closer to freedom." not in html
+    assert "Set aside money for future goals. Items marked <em>linked account</em> use the monthly contribution from that account." in html
+    assert "Pay yourself first! Items marked <em>linked account</em> pull their amount from your account's monthly contribution." not in html
     assert "Jump to budget" in html
     assert "Import / export tools" in html
     assert "Export month" in html
