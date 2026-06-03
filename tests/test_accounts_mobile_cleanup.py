@@ -132,21 +132,32 @@ def test_accounts_create_wizard_uses_general_investment_account_label(app, clien
     html = response.get_data(as_text=True)
     assert '<strong>General Investment Account</strong>' in html
     assert '<strong>General Investment</strong>' not in html
-    assert '25% government top-up, age limits' in html
+    assert '25% Lifetime ISA bonus, age limits' in html
+    assert '25% government top-up, age limits' not in html
     assert "25% gov't top-up, age limits" not in html
 
 
-def test_accounts_page_uses_government_bonus_wording(app, client, make_user):
+def test_accounts_page_uses_lifetime_isa_bonus_wording(app, client, make_user):
     uid, username, password = make_user(username="accounts-government-copy", password="password123")
 
+    payload = _account_payload()
+    payload["name"] = "Lifetime ISA"
+    payload["wrapper_type"] = "Lifetime ISA"
+
     with app.app_context():
-        create_account(_account_payload(), uid)
+        account_id = create_account(payload, uid)
 
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
-    response = client.get("/accounts/")
 
+    response = client.get("/accounts/")
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert 'Lifetime ISA bonus and employer top-ups' in html
     assert 'government bonus and employer top-ups' not in html
     assert "gov't bonus and employer top-ups" not in html
+
+    edit_response = client.get(f"/accounts/{account_id}?mode=edit")
+    assert edit_response.status_code == 200
+    edit_html = edit_response.get_data(as_text=True)
+    assert 'Your Lifetime ISA bonus adds 25% on top (up to £4,000/year contributions).' in edit_html
+    assert 'The government adds a 25% bonus (up to £4,000/year contributions).' not in edit_html
