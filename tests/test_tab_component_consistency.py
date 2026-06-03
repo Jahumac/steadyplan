@@ -138,6 +138,10 @@ def test_budget_setup_page_does_not_render_turtle_icon(auth_client):
     assert response.status_code == 200
     html = response.data.decode()
     assert "Budget Setup" in html
+    assert "Set aside money for future goals. Items marked <em>linked</em> use the monthly contribution from that account." in html
+    assert "Pay yourself first! Items marked <em>linked</em> pull their amount from your account's monthly contribution automatically." not in html
+    assert "Minimum payments and extra debt overpayments — use this section to track what you plan to repay this month." in html
+    assert "Minimum payments and extra chunks you're throwing at debt — every pound here gets you closer to freedom." not in html
     assert 'hero-turtle-wrap' not in html
 
 
