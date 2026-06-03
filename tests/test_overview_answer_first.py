@@ -1387,7 +1387,8 @@ def test_overview_portfolio_pending_review_helper_uses_sentence_case_monthly_upd
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "estimated from defaults — confirm in" in html
+    assert "still using defaults — confirm in" in html
+    assert "estimated from defaults — confirm in" not in html
     assert 'href="/monthly-review/" class="link-accent">monthly update</a>' in html
     assert 'href="/monthly-review/" class="link-accent">Monthly Update</a>' not in html
 

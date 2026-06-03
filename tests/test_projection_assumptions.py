@@ -227,7 +227,7 @@ def test_overview_projected_retirement_stat_has_estimate_qualifier(app, client, 
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Projected at retirement" in body
-    assert "<small>estimate</small>" in body
+    assert "<small>estimate</small>" not in body
     assert "Projection based on your current balances, contribution settings, and assumptions in Settings." in body
     assert "Scenario estimate based on your current balances, contribution settings, and assumptions in Settings." not in body
 
@@ -259,7 +259,8 @@ def test_goals_eta_helper_copy_present(app, client, make_user):
     resp = client.get("/goals/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Goal ETAs are estimates based on your current contributions and growth assumptions." in body
+    assert "Goal ETAs use your current contributions and growth assumptions." in body
+    assert "Goal ETAs are estimates based on your current contributions and growth assumptions." not in body
     assert "Goal ETAs are approximate scenario estimates based on your current contributions and growth assumptions." not in body
     assert "~" in body
 
