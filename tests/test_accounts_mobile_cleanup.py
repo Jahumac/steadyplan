@@ -135,7 +135,8 @@ def test_accounts_create_wizard_uses_general_investment_account_label(app, clien
     assert '25% Lifetime ISA bonus, age limits' in html
     assert '25% government top-up, age limits' not in html
     assert "25% gov't top-up, age limits" not in html
-    assert 'How much goes into this account each month? This is used for projections — even an estimate helps.' in html
+    assert 'How much goes into this account each month? This feeds into projections — an estimate is fine.' in html
+    assert 'How much goes into this account each month? This is used for projections — even an estimate helps.' not in html
     assert 'How much goes into this account each month? This is used for projections — even a rough number helps.' not in html
 
 
@@ -175,7 +176,8 @@ def test_accounts_page_uses_lifetime_isa_bonus_wording(app, client, make_user):
     sipp_edit_response = client.get(f"/accounts/{sipp_id}?mode=edit")
     assert sipp_edit_response.status_code == 200
     sipp_html = sipp_edit_response.get_data(as_text=True)
-    assert 'Your provider adds 25% basic-rate tax relief on top automatically.' in sipp_html
+    assert 'Your provider adds 25% basic-rate tax relief on top.' in sipp_html
+    assert 'Your provider adds 25% basic-rate tax relief on top automatically.' not in sipp_html
     assert 'your provider claims it from HMRC automatically.' not in sipp_html
 
 
@@ -221,3 +223,22 @@ def test_accounts_edit_form_uses_plain_pension_method_wording(app, client, make_
     assert 'Relief at source = your provider adds 20% basic-rate tax relief for you.' in html
     assert 'Salary sacrifice = pre-tax, no relief to claim.' not in html
     assert 'your provider claims 20% back from HMRC for you.' not in html
+
+
+def test_accounts_edit_form_uses_plain_contribution_guidance_copy(app, client, make_user):
+    uid, username, password = make_user(username="accounts-contrib-guidance-copy", password="password123")
+    payload = _account_payload()
+    payload["name"] = "ISA"
+    payload["wrapper_type"] = "Stocks & Shares ISA"
+    payload["category"] = "ISA"
+
+    with app.app_context():
+        account_id = create_account(payload, uid)
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}?mode=edit")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'If you link a budget item to this account, it can feed into your budget.' in html
+    assert 'If you link a budget item to this account, it can be used in your budget automatically.' not in html
