@@ -131,7 +131,8 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark monthly update complete</a>' in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark this month reviewed</a>' not in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark reviewed</a>' not in html
-    assert "Confirm expected contributions that happened this month. This is a monthly update flag (not a transaction record). Update holdings or manual balances below where needed." in html
+    assert "Confirm anything that happened this month. This is a monthly update flag — update balances below if needed." in html
+    assert "Confirm expected contributions that happened this month. This is a monthly update flag (not a transaction record). Update holdings or manual balances below where needed." not in html
     assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or manual balances below where needed." not in html
     assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or balances below where needed." not in html
     assert "No contributions to track this month." in html
@@ -466,7 +467,8 @@ def test_monthly_review_first_update_section_uses_update_balances_heading(app, c
     assert '<p class="eyebrow">Update balances</p>' in html
     assert '<p class="eyebrow">Step 2</p>' not in html
     assert "<h2>Update balances</h2>" in html
-    assert "Update holdings-based accounts first, then continue to any manual balances below." in html
+    assert "Update holdings first, then any manual balances below." in html
+    assert "Update holdings-based accounts first, then continue to any manual balances below." not in html
     assert "Start with holdings-based accounts, then continue to any manual balances below." not in html
     assert "Holdings-Based Accounts" not in html
 
@@ -482,7 +484,8 @@ def test_monthly_review_manual_section_uses_manual_balances_heading(app, client,
     assert '<p class="eyebrow">Manual balances</p>' in html
     assert '<p class="eyebrow">Manual</p>' not in html
     assert "<h2>Manual balances</h2>" in html
-    assert "Update balances for manually valued accounts." in html
+    assert "Update manually valued accounts." in html
+    assert "Update balances for manually valued accounts." not in html
     assert "Update balances for accounts that are valued manually." not in html
     assert "Manual Accounts" not in html
 
@@ -633,9 +636,11 @@ def test_monthly_review_manual_balances_shortcut_matches_section_anchor_and_head
 
     assert 'href="#manual-balances"' in html
     assert 'id="manual-balances"' in html
-    assert ">Manual balances<" in html
+    assert '>Manual balances<' in html
+    assert "Update manually valued accounts." in html
+    assert "Update balances for manually valued accounts." not in html
     assert "Update holdings or jump to manual balances when needed." in html
-    assert "Open holdings or jump to manual balances when needed." not in html
+
     assert 'href="#manual-accounts"' not in html
     assert "Update manual balances" not in html
     assert "No manual balances to update this month." in html
