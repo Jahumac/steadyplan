@@ -62,7 +62,7 @@
       <label>
         <span>Date of birth</span>
         <input type="date" name="date_of_birth" value="{{ assumptions.date_of_birth if assumptions and assumptions.date_of_birth else '' }}">
-        <small class="form-hint">Used to calculate your age automatically{% if computed_age %} — you're currently {{ computed_age }}{% endif %}</small>
+        <small class="form-hint">Used to work out your age{% if computed_age %} — currently {{ computed_age }}{% endif %}</small>
       </label>
       <label>
         <span>Retirement age</span>
@@ -143,7 +143,7 @@
           <option value="{{ d }}" {{ 'selected' if assumptions and assumptions.salary_day == d }}>{{ d }}{{ 'st' if d in [1,21,31] else ('nd' if d in [2,22] else ('rd' if d in [3,23] else 'th')) }}</option>
           {% endfor %}
         </select>
-        <small class="form-hint">The day your ISA contributions and standing orders go out — usually when your salary arrives or a day after. Settlement timing accounts for weekends automatically.</small>
+        <small class="form-hint">The day your ISA contributions and standing orders usually go out — often when your salary arrives or a day after. Weekend shifts are handled in the settlement timing.</small>
       </label>
     </div>
     <div class="badge-row mt-1">
