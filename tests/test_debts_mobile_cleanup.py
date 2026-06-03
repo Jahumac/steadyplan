@@ -29,3 +29,33 @@ def test_debts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, clie
     empty_idx = html.index('No debts tracked')
 
     assert hero_idx < add_idx < empty_idx
+
+
+def test_debt_edit_form_uses_plain_auto_tracking_copy(app, client, make_user):
+    uid, username, password = make_user(username="debts-auto-copy", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            debt_id = conn.execute(
+                """
+                INSERT INTO debts (user_id, name, original_amount, current_balance, monthly_payment, apr, start_date, is_active)
+                VALUES (?, 'Car loan', 12000, 9000, 250, 6.5, '2025-01-15', 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+    detail_resp = client.get(f"/budget/debts/?debt_id={debt_id}")
+    assert detail_resp.status_code == 200
+    detail_html = detail_resp.get_data(as_text=True)
+    assert 'title="Balance estimated from your first payment date and monthly payment schedule"' in detail_html
+    assert 'title="Balance calculated automatically from your first payment date — updates each month"' not in detail_html
+
+    edit_resp = client.get(f"/budget/debts/?mode=edit&debt_id={debt_id}")
+    assert edit_resp.status_code == 200
+    edit_html = edit_resp.get_data(as_text=True)
+    assert "Add this if you want SteadyPlan to estimate the current balance from the payment schedule." in edit_html
+    assert "Set this to calculate the current balance automatically — no manual updates needed." not in edit_html
