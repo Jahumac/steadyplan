@@ -1718,7 +1718,7 @@
             var gross = personal + relief;
             selfAssess = gross * (BAND_RATE - 0.20);
             showSelfAssess = true;
-            selfAssessNote = 'You\'re a ' + TAX_BAND + '-rate taxpayer (' + Math.round(BAND_RATE * 100) + '%). Your provider claims 20% automatically. You claim the extra ' + Math.round((BAND_RATE - 0.20) * 100) + '% back through your self-assessment tax return — it goes to you, not the pension.';
+            selfAssessNote = 'You\'re a ' + TAX_BAND + '-rate taxpayer (' + Math.round(BAND_RATE * 100) + '%). Your provider adds 20% basic-rate tax relief for you. Claim the extra ' + Math.round((BAND_RATE - 0.20) * 100) + '% through Self Assessment — it is paid back to you, not into the pension.';
           }
         } else if (w === 'Workplace Pension') {
           if (method === 'salary_sacrifice') {

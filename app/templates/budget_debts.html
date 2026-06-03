@@ -62,7 +62,7 @@
     <div>
       <p class="eyebrow">
         Debt detail
-        {% if selected_debt.auto_tracked %}<span class="budget-pill" title="Balance calculated automatically from your first payment date — updates each month">auto-tracked</span>{% endif %}
+        {% if selected_debt.auto_tracked %}<span class="budget-pill" title="Balance estimated from your first payment date and monthly payment schedule">auto-tracked</span>{% endif %}
       </p>
       <h2>{{ selected_debt.name }}</h2>
       <p class="helper-text">
@@ -293,7 +293,7 @@
       <label>
         <span>First payment date <span style="color:var(--muted);font-weight:400;">optional</span></span>
         <input type="date" name="start_date" value="{{ selected_debt.start_date or '' }}">
-        <small class="form-hint">Set this to calculate the current balance automatically — no manual updates needed.</small>
+        <small class="form-hint">Add this if you want SteadyPlan to estimate the current balance from the payment schedule.</small>
       </label>
       <label>
         <span>Manual balance override (£) <span style="color:var(--muted);font-weight:400;">optional</span></span>
