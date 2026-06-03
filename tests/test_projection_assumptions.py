@@ -56,9 +56,11 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Edit the inputs in" in body
     assert "What drives this projection" in body
     assert "What drives this estimate" not in body
-    assert "Projection estimates for each account at age 60" in body
+    assert "Projected values for each account at age 60" in body
+    assert "Projection estimates for each account at age 60" not in body
     assert "Scenario estimates for each account at age 60" not in body
-    assert "Adjust inputs to see how the projection estimate changes. Nothing here is saved unless you save changes elsewhere." in body
+    assert "Adjust inputs to see how the projection changes. Nothing here is saved unless you save changes elsewhere." in body
+    assert "Adjust inputs to see how the projection estimate changes. Nothing here is saved unless you save changes elsewhere." not in body
     assert "Adjust inputs to see how the scenario estimate changes. Nothing is saved unless you explicitly save it elsewhere." not in body
     assert "Inflation" in body
     assert "Retirement timing" in body
@@ -133,7 +135,9 @@ def test_projections_goal_callout_uses_projection_estimate_wording(app, client, 
     resp = client.get("/projections/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert 'Projection estimate meets "FI target"' in body or 'Projection estimate is below "FI target"' in body
+    assert 'Projection meets "FI target"' in body or 'Projection is below "FI target"' in body
+    assert 'Projection estimate meets "FI target"' not in body
+    assert 'Projection estimate is below "FI target"' not in body
     assert 'Scenario estimate meets "FI target"' not in body
     assert 'Scenario estimate is below "FI target"' not in body
 
