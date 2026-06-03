@@ -1,4 +1,3 @@
-import math
 import pytz
 from datetime import date, datetime, timedelta, timezone
 
@@ -19,6 +18,7 @@ from app.calculations import (
     pension_allowance_limits,
     progress_to_goal,
     projected_total_retirement_value,
+    projection_monthly_contribution,
     projection_start_month_key,
     review_ready_date,
     tag_totals,
@@ -54,6 +54,7 @@ from app.models import (
     fetch_completed_tax_year_contributions,
 )
 from app.services.data_health import build_data_health_summary
+from app.services.goal_projection import project_goal
 from app.services.planning_insights import build_accessible_security_summary
 
 overview_bp = Blueprint("overview", __name__)
@@ -224,30 +225,24 @@ def overview():
     current_tax_year = uk_tax_year_label()
     now_date = datetime.now().date()
 
-    # Build per-goal progress rows (used in the goals section)
-    def _goal_year_estimate(target, current, monthly, assum):
-        if target <= current or monthly <= 0 or not assum:
-            return None
-        try:
-            rate = to_float(assum.get("annual_growth_rate", 0.07))
-            mr = rate / 12
-            rem = target - current
-            months = math.log(1 + rem * mr / monthly) / math.log(1 + mr) if mr > 0 else rem / monthly
-            return now_date.year + int(months // 12) if 0 < months < 600 else None
-        except (ValueError, ZeroDivisionError):
-            return None
-
     all_goals = fetch_all_goals(uid)
     goals_data = []
     for g in all_goals:
         gt = float(g["target_value"] or 0)
-        # Use tag-filtered value if the goal has selected_tags, else total portfolio
         selected_tags = [t.strip() for t in (g["selected_tags"] or "").split(",") if t.strip()]
+        included_accounts = []
         if selected_tags:
-            current = goal_current_value(selected_tags, accounts, holdings_totals)
+            for account in accounts:
+                account_tags = [t.strip() for t in (account.get("tags") or "").split(",") if t.strip()]
+                if any(tag in account_tags for tag in selected_tags):
+                    included_accounts.append(account)
         else:
-            current = invested_total
+            included_accounts = list(accounts)
+        current = sum(float(account.get("current_value") or 0) for account in included_accounts) if selected_tags else invested_total
         gp = progress_to_goal(current, gt)
+        monthly_contribution = sum(
+            projection_monthly_contribution(account, assumptions, 0) for account in included_accounts
+        )
         goals_data.append({
             "id": g["id"],
             "name": g["name"],
@@ -255,11 +250,12 @@ def overview():
             "current": current,
             "progress": gp,
             "remaining": max(gt - current, 0),
-            "goal_year": _goal_year_estimate(gt, current, monthly_total, assumptions),
+            "monthly_contribution": monthly_contribution,
+            "projection": project_goal(included_accounts, gt, assumptions),
         })
 
     # Primary goal year for hero stat
-    goal_year = goals_data[0]["goal_year"] if goals_data else None
+    goal_year = goals_data[0].get("projection", {}).get("eta_label") if goals_data and goals_data[0].get("projection") else None
     try:
         salary_day = int(assumptions["salary_day"]) if assumptions and assumptions["salary_day"] else 0
     except (KeyError, TypeError):

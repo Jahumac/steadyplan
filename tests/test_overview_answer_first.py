@@ -311,6 +311,71 @@ def test_overview_multi_goal_state_restores_goal_progress_panel(app, client, mak
 
 
 
+def test_overview_goal_progress_uses_same_projection_copy_as_goals_page(app, client, make_user):
+    uid, username, password = make_user(username="overview-goal-projection-unified", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.calculations import effective_account_value, projection_start_month_key
+        from app.models import fetch_all_accounts, fetch_assumptions, fetch_contribution_overrides, get_connection
+        from app.services.goal_projection import project_goal
+
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01', annual_growth_rate = 0.05 WHERE user_id = ?",
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, current_value, monthly_contribution,
+                    employer_contribution, tags, is_active, valuation_mode
+                )
+                VALUES (?, 'House ISA', 'Stocks & Shares ISA', 1200, 180, 0, 'deposit', 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'House deposit', 5000, 'Tagged Goal', 'deposit', '')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 3000, 'Tagged Goal', 'deposit', '')
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+        assumptions = fetch_assumptions(uid)
+        start_month = projection_start_month_key(assumptions)
+        account = dict(fetch_all_accounts(uid)[0])
+        account["current_value"] = effective_account_value(account, {})
+        account["_contribution_overrides"] = fetch_contribution_overrides(account["id"])
+        account["_projection_start_month"] = start_month
+        projection = project_goal([account], 5000, assumptions)
+
+    overview = client.get("/")
+    goals = client.get("/goals/")
+    assert overview.status_code == 200
+    assert goals.status_code == 200
+    overview_html = overview.get_data(as_text=True)
+    goals_html = goals.get_data(as_text=True)
+
+    assert projection is not None
+    assert projection["total_months"]
+    expected = f"~ {projection['duration']} to go · {projection['eta_label']}"
+
+    assert expected in goals_html
+    assert expected in overview_html
+    assert f"~{date.today().year}" not in overview_html
+
+
+
 def test_overview_pre_goal_multi_holding_state_hides_allocation_panel(app, client, make_user):
     uid, username, password = make_user(username="overview-pre-goal-multi-holding", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
