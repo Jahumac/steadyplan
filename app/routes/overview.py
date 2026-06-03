@@ -229,12 +229,12 @@ def overview():
         if remaining <= 0 or (projection and projection.get("reached")):
             return {"label": "Ahead", "detail": "target already reached", "tone": "ahead"}
         if included_account_count == 0:
-            detail = "no tagged accounts linked" if selected_tags else "no accounts linked"
+            detail = "link an account to this goal" if selected_tags else "add an account to start tracking"
             return {"label": "Behind", "detail": detail, "tone": "behind"}
         if monthly_contribution <= 0:
-            return {"label": "Behind", "detail": "no contributions set", "tone": "behind"}
+            return {"label": "Behind", "detail": "set a monthly contribution", "tone": "behind"}
         if projection and projection.get("total_months") is None:
-            return {"label": "Behind", "detail": "current contributions too low", "tone": "behind"}
+            return {"label": "Behind", "detail": "increase contributions to bring this within range", "tone": "behind"}
         if projection and projection.get("eta_label"):
             return {"label": "On track", "detail": f"est. {projection['eta_label']}", "tone": "on-track"}
         return {"label": "On track", "detail": "at current pace", "tone": "on-track"}
