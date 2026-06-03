@@ -920,7 +920,7 @@ def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, m
     assert 'shelly-inline-icon' not in review_nudge
 
 
-def test_overview_monthly_review_card_uses_specific_monthly_update_cta(app, client, make_user):
+def test_overview_drops_resting_monthly_update_focus_card(app, client, make_user):
     uid, username, password = make_user(username="overview-monthly-review-card-cta", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
@@ -962,20 +962,17 @@ def test_overview_monthly_review_card_uses_specific_monthly_update_cta(app, clie
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Monthly update" in html
-    assert "Monthly review" not in html
-    assert "Open monthly update" in html
-    assert '>Open<' not in html
-    assert f'/monthly-review/?month={month_key}' in html
-    assert "Assets" in html
-    assert "After debts" not in html
-    assert "Total net worth" not in html
-    assert "Total Net Worth" not in html
-    assert html.index("budget-year-strip") < html.index("Assets")
-    assert html.index("Assets") < html.index("Monthly update")
-    assert html.index("Where you stand now") < html.index("Monthly update")
-
-
+    assert 'overview-focus-card' not in html
+    assert f'/monthly-review/?month={month_key}' not in html
+    assert 'Status: In progress' not in html
+    assert 'Status: Complete' not in html
+    assert 'class="card mb-1 overview-access-card overview-desktop-detail"' in html
+    assert 'class="card mb-1 overview-portfolio-card"' in html
+    assert html.index('class="card mb-1 overview-access-card overview-desktop-detail"') < html.index('class="card mb-1 overview-portfolio-card"')
+    assert 'Assets' in html
+    assert 'After debts' not in html
+    assert 'Total net worth' not in html
+    assert 'Total Net Worth' not in html
 
 def test_overview_missed_review_alert_uses_specific_monthly_update_cta(app, client, make_user):
     uid, username, password = make_user(username="overview-missed-review-alert", password="password123")

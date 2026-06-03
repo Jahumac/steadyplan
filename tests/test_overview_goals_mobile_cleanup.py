@@ -119,10 +119,12 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     assert 'class="card-grid allowance-grid mb-1 overview-desktop-detail"' in html
 
     hero_idx = html.index('class="card highlight mb-1 month-accent-')
-    portfolio_idx = html.index('class="card mb-1 overview-portfolio-card"')
     access_idx = html.index('class="card mb-1 overview-access-card overview-desktop-detail"')
+    accounts_idx = html.index('<h2>Accounts breakdown</h2>')
+    portfolio_idx = html.index('class="card mb-1 overview-portfolio-card"')
 
-    assert hero_idx < portfolio_idx < access_idx
+    assert hero_idx < access_idx < accounts_idx < portfolio_idx
+    assert 'overview-focus-card' not in html
 
     css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
     assert ".overview-compact-only {" in css
