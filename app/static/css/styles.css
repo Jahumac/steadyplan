@@ -6140,7 +6140,7 @@ a.link-accent:hover {
 @media (max-width: 600px) {
   .contribution-check-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.75rem;
     align-items: flex-start;
   }
@@ -6149,10 +6149,33 @@ a.link-accent:hover {
     min-width: 0;
   }
 
+  .contribution-check-account p {
+    display: none;
+  }
+
   .contribution-check-side {
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.4rem;
+    width: 100%;
+    padding-left: 1.7rem;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+
+  .contribution-check-status {
+    text-align: left;
+  }
+
+  .contrib-pot-chip,
+  .budget-diff-match,
+  .budget-diff-over,
+  .budget-diff-under {
+    white-space: normal;
+  }
+
+  .contribution-check-side .badge {
+    margin-left: auto;
   }
 
   .contribution-check-toggle .helper-text {
