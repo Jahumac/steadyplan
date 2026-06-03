@@ -51,11 +51,13 @@ def test_debt_edit_form_uses_plain_auto_tracking_copy(app, client, make_user):
     detail_resp = client.get(f"/budget/debts/?debt_id={debt_id}")
     assert detail_resp.status_code == 200
     detail_html = detail_resp.get_data(as_text=True)
-    assert 'title="Balance estimated from your first payment date and monthly payment schedule"' in detail_html
+    assert 'title="Balance worked out from your first payment date and monthly payment schedule"' in detail_html
+    assert 'title="Balance estimated from your first payment date and monthly payment schedule"' not in detail_html
     assert 'title="Balance calculated automatically from your first payment date — updates each month"' not in detail_html
 
     edit_resp = client.get(f"/budget/debts/?mode=edit&debt_id={debt_id}")
     assert edit_resp.status_code == 200
     edit_html = edit_resp.get_data(as_text=True)
-    assert "Add this if you want SteadyPlan to estimate the current balance from the payment schedule." in edit_html
+    assert "Add this to let SteadyPlan work out the current balance from the payment schedule." in edit_html
+    assert "Add this if you want SteadyPlan to estimate the current balance from the payment schedule." not in edit_html
     assert "Set this to calculate the current balance automatically — no manual updates needed." not in edit_html
