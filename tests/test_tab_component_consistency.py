@@ -112,7 +112,8 @@ def test_lifetime_isa_preview_js_uses_specific_bonus_copy():
     assert "+ government bonus (25%)" not in js
     assert "Your Lifetime ISA bonus adds 25% on top (up to £1,000/year)." in js
     assert "The government tops it up with a lovely 25% bonus (up to £1,000/year)." not in js
-    assert "How much do you put into this ISA each month? This feeds into projections — an estimate is fine." in js
+    assert "How much do you put into this ISA each month? This feeds into projections. You can update it later." in js
+    assert "How much do you put into this ISA each month? This feeds into projections — an estimate is fine." not in js
     assert "How much do you put into this ISA each month? Even an estimate helps with projections." not in js
     assert "How much do you put into this ISA each month? Even a rough figure helps with projections." not in js
 
@@ -126,7 +127,8 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "NS&amp;I, tax-free prize estimate" not in wizard_html
     assert "How much do you add to this Cash ISA each month?" in js
     assert "How much do you stash away in this Cash ISA each month?" not in js
-    assert "Prize draws are tracked separately; projections use a cautious estimate." in js
+    assert "Prize draws are tracked separately; projections use the planning rate." in js
+    assert "Prize draws are tracked separately; projections use a cautious estimate." not in js
     assert "Prize draws are tracked separately; projections use a gentle estimate." not in js
     assert "Premium Bonds do not pay guaranteed interest. Use this as a planning estimate only; NS&I can change the prize fund rate." in js
     assert "Premium Bonds do not pay guaranteed interest. This is a calm estimate only; NS&I can change the prize fund rate." not in js
