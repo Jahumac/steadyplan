@@ -47,7 +47,8 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
 
-    assert "Scenario estimate at retirement" in body
+    assert "Retirement projection estimate" in body
+    assert "Scenario estimate at retirement" not in body
     assert "About this estimate" in body
     assert "assumptions-based forecast, not a promise" in body
     assert "Edit the inputs in" in body
@@ -175,7 +176,8 @@ def test_overview_projected_retirement_stat_has_estimate_qualifier(app, client, 
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Projected at retirement" in body
     assert "<small>estimate</small>" in body
-    assert "Scenario estimate based on your current balances" in body
+    assert "Projection based on your current balances, contribution settings, and assumptions in Settings." in body
+    assert "Scenario estimate based on your current balances, contribution settings, and assumptions in Settings." not in body
 
 
 def test_goals_eta_helper_copy_present(app, client, make_user):
@@ -205,7 +207,8 @@ def test_goals_eta_helper_copy_present(app, client, make_user):
     resp = client.get("/goals/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Goal ETAs are approximate scenario estimates" in body
+    assert "Goal ETAs are estimates based on your current contributions and growth assumptions." in body
+    assert "Goal ETAs are approximate scenario estimates based on your current contributions and growth assumptions." not in body
     assert "~" in body
 
 
