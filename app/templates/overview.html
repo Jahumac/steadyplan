@@ -231,96 +231,6 @@
   </div>
 </section>
 
-{# ── Portfolio Value ───────────────────────────────────────────────────────── #}
-{% if has_portfolio_history %}
-<section class="card mb-1 overview-portfolio-card">
-  <div class="section-header mb-075">
-    <p class="chart-label m-0">Portfolio history</p>
-    <div class="period-selector flex gap-05">
-      <button class="period-btn" data-period="1D">1D</button>
-      <button class="period-btn" data-period="1M">1M</button>
-      <button class="period-btn" data-period="6M">6M</button>
-      <button class="period-btn" data-period="1Y">1Y</button>
-      <button class="period-btn active" data-period="ALL">ALL</button>
-    </div>
-  </div>
-
-  <div class="chart-wrap chart-wrap-md">
-    <canvas id="dailyPortfolioChart" height="220" role="img" aria-label="Portfolio history chart"
-      data-labels='{{ daily_labels | tojson | safe }}'
-      data-values='{{ daily_values | tojson | safe }}'
-      data-contributions='{{ daily_contributions | tojson | safe }}'
-      data-fallback='{{ metrics.invested_total }}'></canvas>
-  </div>
-  <p id="portfolio-chart-error" class="helper-text mt-05 hidden"></p>
-  <div id="chartStats" class="flex flex-between mt-075" style="font-size:0.9rem;">
-    <div>
-      <p class="text-muted m-0">Latest value</p>
-      <p id="latestValue" class="m-0 text-bold"></p>
-    </div>
-    <div class="text-right">
-      <p id="changeLabel" class="text-muted m-0">Change since start</p>
-      <p id="changeValue" class="m-0 text-bold"></p>
-    </div>
-  </div>
-  <div id="changeBreakdown" class="change-breakdown"></div>
-  {% if pending_review_months %}
-  <p class="helper-text mt-025" style="font-style: italic;">
-    {{ pending_review_months | length }} month{{ 's' if pending_review_months | length != 1 else '' }} still using defaults — confirm in <a href="/monthly-review/" class="link-accent">monthly update</a> for accurate tracking.
-  </p>
-  {% endif %}
-  <p class="helper-text mt-025">
-    To see how you're tracking against the {{ assumed_rate_pct }}% plan, see <a href="/performance/" class="link-accent">Performance</a>.
-  </p>
-  {% if daily_labels | length == 0 %}
-  <p class="helper-text mt-05">No daily snapshots yet — use Refresh prices now to save your first point.</p>
-  {% elif daily_labels | length == 1 %}
-  <p class="helper-text mt-05">One snapshot so far — a line appears once there are two days of data.</p>
-  {% endif %}
-
-  {% if daily_labels | length < 2 and history_labels | length >= 2 %}
-  <div class="mt-125">
-    <p class="chart-label">Net worth history</p>
-    <div class="chart-wrap chart-wrap-sm">
-      <canvas id="netWorthChart" height="120" role="img" aria-label="Net worth history chart"
-        data-labels='{{ history_labels | tojson | safe }}'
-        data-values='{{ history_values | tojson | safe }}'></canvas>
-    </div>
-  </div>
-  {% elif daily_labels | length < 2 and history_labels | length == 1 %}
-  <p class="helper-text mt-1">
-    One snapshot down — slow and steady. Complete next month's update to start seeing a trend line.
-  </p>
-  {% elif daily_labels | length < 2 %}
-  <p class="helper-text mt-1">
-    Complete your first monthly update to start tracking net worth over time. Remember: slow and steady wins the race.
-  </p>
-  {% endif %}
-
-  <div class="section-footer mt-1">
-    <div>
-      <p class="text-muted m-0 text-sm-2">Prices last updated</p>
-      <p class="m-0 text-bold">
-        {% if last_price_update_display %}{{ last_price_update_display }}{% elif last_price_update %}{{ last_price_update[:16] }}{% elif last_snapshot_date %}{{ last_snapshot_date }}{% else %}Never{% endif %}
-      </p>
-    </div>
-    {% if assumptions and assumptions.auto_update_prices and next_update_display %}
-    <div>
-      <p class="text-muted m-0 text-sm-2">Next auto-update</p>
-      <p class="m-0 text-bold">{{ next_update_display }}</p>
-    </div>
-    {% endif %}
-    <div class="flex flex-center gap-075">
-      <p class="text-muted m-0 text-sm-2">Auto-update: {{ 'On' if assumptions and assumptions.auto_update_prices else 'Off' }}</p>
-      <form method="post" action="/holdings/trigger-price-update" class="form-reset">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="badge badge-meta" title="Fetch latest prices now">Refresh prices now</button>
-      </form>
-    </div>
-  </div>
-</section>
-{% endif %}
-
 <section class="card mb-1 overview-access-card overview-desktop-detail">
   <div class="section-header mb-05 overview-access-header">
     <div>
@@ -393,32 +303,6 @@
     {% endif %}
   </div>
 </details>
-
-{% if (monthly_review_card or show_next_action) and steps_done >= 4 %}
-<section class="card mb-1 overview-focus-card">
-  <div class="section-header mb-05">
-    <div>
-      <p class="eyebrow m-0">{% if show_next_action %}{{ next_action.eyebrow }}{% else %}Monthly update{% endif %}</p>
-      <h2>{% if show_next_action %}{{ next_action.title }}{% else %}{{ monthly_review_card.month_label }}{% endif %}</h2>
-    </div>
-    {% if monthly_review_card %}
-    <span class="{{ monthly_review_card.badge_class }}">{{ monthly_review_card.status }}</span>
-    {% endif %}
-  </div>
-  {% if show_next_action %}
-  <p class="helper-text mt-0 mb-075">{{ next_action.body }}</p>
-  <div class="flex flex-center flex-wrap gap-075">
-    <a href="{{ next_action.cta_href }}" class="badge badge-primary-action">{{ next_action.cta_text }}</a>
-    {% if monthly_review_card %}
-    <small class="text-muted">{{ monthly_review_card.month_label }} · Status: {{ monthly_review_card.status }}</small>
-    {% endif %}
-  </div>
-  {% else %}
-  <p class="helper-text mt-0 mb-075">Status: {{ monthly_review_card.status }}</p>
-  <a href="{{ monthly_review_card.href }}" class="badge badge-meta">Open monthly update</a>
-  {% endif %}
-</section>
-{% endif %}
 
 {# ── Data Health (only when action is needed) ─────────────────────────────── #}
 {% if data_health_warnings %}
@@ -628,6 +512,96 @@
     </div>
   </div>
 </details>
+{% endif %}
+
+{# ── Portfolio Value ───────────────────────────────────────────────────────── #}
+{% if has_portfolio_history %}
+<section class="card mb-1 overview-portfolio-card">
+  <div class="section-header mb-075">
+    <p class="chart-label m-0">Portfolio history</p>
+    <div class="period-selector flex gap-05">
+      <button class="period-btn" data-period="1D">1D</button>
+      <button class="period-btn" data-period="1M">1M</button>
+      <button class="period-btn" data-period="6M">6M</button>
+      <button class="period-btn" data-period="1Y">1Y</button>
+      <button class="period-btn active" data-period="ALL">ALL</button>
+    </div>
+  </div>
+
+  <div class="chart-wrap chart-wrap-md">
+    <canvas id="dailyPortfolioChart" height="220" role="img" aria-label="Portfolio history chart"
+      data-labels='{{ daily_labels | tojson | safe }}'
+      data-values='{{ daily_values | tojson | safe }}'
+      data-contributions='{{ daily_contributions | tojson | safe }}'
+      data-fallback='{{ metrics.invested_total }}'></canvas>
+  </div>
+  <p id="portfolio-chart-error" class="helper-text mt-05 hidden"></p>
+  <div id="chartStats" class="flex flex-between mt-075" style="font-size:0.9rem;">
+    <div>
+      <p class="text-muted m-0">Latest value</p>
+      <p id="latestValue" class="m-0 text-bold"></p>
+    </div>
+    <div class="text-right">
+      <p id="changeLabel" class="text-muted m-0">Change since start</p>
+      <p id="changeValue" class="m-0 text-bold"></p>
+    </div>
+  </div>
+  <div id="changeBreakdown" class="change-breakdown"></div>
+  {% if pending_review_months %}
+  <p class="helper-text mt-025" style="font-style: italic;">
+    {{ pending_review_months | length }} month{{ 's' if pending_review_months | length != 1 else '' }} still using defaults — confirm in <a href="/monthly-review/" class="link-accent">monthly update</a> for accurate tracking.
+  </p>
+  {% endif %}
+  <p class="helper-text mt-025">
+    To see how you're tracking against the {{ assumed_rate_pct }}% plan, see <a href="/performance/" class="link-accent">Performance</a>.
+  </p>
+  {% if daily_labels | length == 0 %}
+  <p class="helper-text mt-05">No daily snapshots yet — use Refresh prices now to save your first point.</p>
+  {% elif daily_labels | length == 1 %}
+  <p class="helper-text mt-05">One snapshot so far — a line appears once there are two days of data.</p>
+  {% endif %}
+
+  {% if daily_labels | length < 2 and history_labels | length >= 2 %}
+  <div class="mt-125">
+    <p class="chart-label">Net worth history</p>
+    <div class="chart-wrap chart-wrap-sm">
+      <canvas id="netWorthChart" height="120" role="img" aria-label="Net worth history chart"
+        data-labels='{{ history_labels | tojson | safe }}'
+        data-values='{{ history_values | tojson | safe }}'></canvas>
+    </div>
+  </div>
+  {% elif daily_labels | length < 2 and history_labels | length == 1 %}
+  <p class="helper-text mt-1">
+    One snapshot down — slow and steady. Complete next month's update to start seeing a trend line.
+  </p>
+  {% elif daily_labels | length < 2 %}
+  <p class="helper-text mt-1">
+    Complete your first monthly update to start tracking net worth over time. Remember: slow and steady wins the race.
+  </p>
+  {% endif %}
+
+  <div class="section-footer mt-1">
+    <div>
+      <p class="text-muted m-0 text-sm-2">Prices last updated</p>
+      <p class="m-0 text-bold">
+        {% if last_price_update_display %}{{ last_price_update_display }}{% elif last_price_update %}{{ last_price_update[:16] }}{% elif last_snapshot_date %}{{ last_snapshot_date }}{% else %}Never{% endif %}
+      </p>
+    </div>
+    {% if assumptions and assumptions.auto_update_prices and next_update_display %}
+    <div>
+      <p class="text-muted m-0 text-sm-2">Next auto-update</p>
+      <p class="m-0 text-bold">{{ next_update_display }}</p>
+    </div>
+    {% endif %}
+    <div class="flex flex-center gap-075">
+      <p class="text-muted m-0 text-sm-2">Auto-update: {{ 'On' if assumptions and assumptions.auto_update_prices else 'Off' }}</p>
+      <form method="post" action="/holdings/trigger-price-update" class="form-reset">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="badge badge-meta" title="Fetch latest prices now">Refresh prices now</button>
+      </form>
+    </div>
+  </div>
+</section>
 {% endif %}
 
 {# ── Asset Allocation ─────────────────────────────────────────────────────── #}

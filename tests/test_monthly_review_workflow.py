@@ -47,9 +47,10 @@ def test_overview_renders_monthly_review_card_after_basic_onboarding_is_complete
     resp = client.get("/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-    assert "Monthly update" in html
+    assert "Monthly update" not in html
     assert "Monthly review" not in html
-    assert "Status:" in html
+    assert "Status:" not in html
+    assert "overview-focus-card" not in html
     assert "Checklist:" not in html
 
 
@@ -106,7 +107,8 @@ def test_overview_completed_monthly_review_does_not_show_stale_checklist(app, cl
     overview = client.get("/")
     assert overview.status_code == 200
     html = overview.get_data(as_text=True)
-    assert "Status: Complete" in html
+    assert "Status: Complete" not in html
+    assert "overview-focus-card" not in html
     assert "Checklist:" not in html
 
     review_page = client.get(f"/monthly-review/?month={month_key}")
