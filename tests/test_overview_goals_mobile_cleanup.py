@@ -93,12 +93,16 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     html = resp.get_data(as_text=True)
 
     assert 'class="card mb-1 overview-portfolio-card"' in html
+    assert '<details class="overview-compact-details overview-compact-only mb-1" open>' in html
     assert '<summary>Where you stand now</summary>' in html
+    assert html.count('<details class="overview-compact-details overview-compact-only mb-1" open>') == 2
     assert html.count('<h2>Where you stand now</h2>') == 2
     assert 'Accessible vs locked' not in html
     assert '<summary>Goal progress</summary>' in html
+    assert '<details class="overview-compact-details overview-compact-only mb-1" open>\n  <summary>Goal progress</summary>' in html
     assert '<summary>Goals</summary>' not in html
     assert '<summary>Tax allowance progress</summary>' in html
+    assert '<details class="overview-compact-details overview-compact-only mb-1">\n  <summary>Tax allowance progress</summary>' in html
     assert '<summary>Tax allowances</summary>' not in html
     assert '<summary>Allowances</summary>' not in html
     assert html.count('includes Lifetime ISA') == 2
@@ -108,6 +112,7 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     assert html.count('aria-label="Pension annual allowance used"') == 2
     assert 'aria-label="Pension allowance used"' not in html
     assert '<summary>Accounts breakdown</summary>' in html
+    assert '<details class="overview-compact-details overview-compact-only mb-1">\n  <summary>Accounts breakdown</summary>' in html
     assert html.count('<p class="eyebrow">Accounts breakdown</p>') == 2
     assert html.count('<h2>Accounts breakdown</h2>') == 2
     assert '<h2>Accounts</h2>' not in html
