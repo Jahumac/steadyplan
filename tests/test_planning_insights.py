@@ -143,6 +143,8 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"Weakest link" in response.data
     assert b"Balanced illustration:" in response.data
     assert b"Illustrative estimate, not guaranteed income." in response.data
+    assert b"planning illustrations, not guaranteed safe withdrawal advice." in response.data
+    assert b"planning scenarios, not guaranteed safe withdrawal advice." not in response.data
     assert b"Balanced estimate:" not in response.data
     assert b"Scenario estimate, not guaranteed income." not in response.data
 
@@ -152,3 +154,20 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert "@media (max-width: 520px) {" in css
     assert ".planning-hero-caveat {" in css
     assert "display: none;" in css
+
+
+def test_planning_page_no_goal_mode_uses_plan_wording(app, client, make_user):
+    uid, username, password = make_user()
+    with app.app_context():
+        create_account(_account("ISA", "Stocks & Shares ISA", 10000, 500), uid)
+        create_account(_account("Pension", "SIPP", 50000, 100), uid)
+
+    client.post("/login", data={"username": username, "password": password})
+    response = client.get("/planning/")
+
+    assert response.status_code == 200
+    html = response.data.decode("utf-8", errors="ignore")
+    assert "using the balanced illustration as the income guide" in html
+    assert "using the balanced estimate as the income to model" not in html
+    assert "with this plan." in html
+    assert "in this scenario." not in html
