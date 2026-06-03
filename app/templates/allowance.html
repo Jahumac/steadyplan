@@ -213,9 +213,9 @@
       <p>£{{ '{:,.0f}'.format(basic_relief) }} <span class="allowance-denom">basic rate</span></p>
       {% if tax_band in ('higher', 'additional') %}
       <p class="mt-025">£{{ '{:,.0f}'.format(extra_relief) }} <span class="allowance-denom">extra ({{ '20%' if tax_band == 'higher' else '25%' }})</span></p>
-      <small style="color:var(--accent-3)">Claim any extra relief through Self Assessment.</small>
+      <small style="color:var(--accent-3)">Claim the extra relief through Self Assessment.</small>
       {% else %}
-      <small class="text-muted">Your provider adds 20% basic-rate tax relief automatically.</small>
+      <small class="text-muted">Your provider adds 20% basic-rate tax relief.</small>
       {% endif %}
     </div>
     {% endif %}

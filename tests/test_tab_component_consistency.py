@@ -133,9 +133,10 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "Your provider adds 25% basic-rate tax relief on top." in js
     assert "Your provider adds 25% basic-rate tax relief on top automatically." not in js
     assert "Your provider claims 25% tax relief from HMRC automatically." not in js
-    assert "your provider adds 20% basic-rate tax relief for you (e.g. NEST)." in js
+    assert "your provider adds 20% basic-rate tax relief (e.g. NEST)." in js
+    assert "your provider adds 20% basic-rate tax relief for you (e.g. NEST)." not in js
     assert "your provider claims 20% tax relief from HMRC (e.g. NEST)." not in js
-    assert "Your provider adds 20% basic-rate tax relief for you. Claim the extra " in js
+    assert "Your provider adds 20% basic-rate tax relief. Claim the extra " in js
     assert " through Self Assessment — it is paid back to you, not into the pension." in js
     assert "Your provider claims 20% automatically." not in js
     assert "through your self-assessment tax return — it goes to you, not the pension." not in js

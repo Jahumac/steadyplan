@@ -1561,7 +1561,7 @@
         'Lifetime ISA':               { cat: 'ISA',     bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in each month? Your Lifetime ISA bonus adds 25% on top (up to £1,000/year).' },
         'Premium Bonds':              { cat: 'Savings', bal: 'premium_bonds', showEmployer: false, method: null, personalLabel: 'Monthly purchase', hint: 'How much do you usually add to Premium Bonds each month? Prize draws are tracked separately; projections use a cautious estimate.' },
         'SIPP':                       { cat: 'Pension', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in? Your provider adds 25% basic-rate tax relief on top.' },
-        'Workplace Pension':          { cat: 'Pension', bal: 'manual',   showEmployer: true,  method: ['salary_sacrifice','relief_at_source'], methodDefault: 'salary_sacrifice', personalLabel: 'Your employee contribution', hint: 'How is your workplace pension set up? Pick the method first, then fill in the amounts.', methodHints: { salary_sacrifice: 'Contributions come out of your pay before tax — no further relief needed.', relief_at_source: 'You pay from net pay; your provider adds 20% basic-rate tax relief for you (e.g. NEST).' } },
+        'Workplace Pension':          { cat: 'Pension', bal: 'manual',   showEmployer: true,  method: ['salary_sacrifice','relief_at_source'], methodDefault: 'salary_sacrifice', personalLabel: 'Your employee contribution', hint: 'How is your workplace pension set up? Pick the method first, then fill in the amounts.', methodHints: { salary_sacrifice: 'Contributions come out of your pay before tax — no further relief needed.', relief_at_source: 'You pay from net pay; your provider adds 20% basic-rate tax relief (e.g. NEST).' } },
         'General Investment Account': { cat: 'Taxable', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly investment', hint: 'How much do you invest into this account each month?' },
         'Other':                      { cat: null,      bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Monthly contribution', hint: 'How much goes in each month, if anything? You can always update this later.' }
       };
@@ -1718,7 +1718,7 @@
             var gross = personal + relief;
             selfAssess = gross * (BAND_RATE - 0.20);
             showSelfAssess = true;
-            selfAssessNote = 'You\'re a ' + TAX_BAND + '-rate taxpayer (' + Math.round(BAND_RATE * 100) + '%). Your provider adds 20% basic-rate tax relief for you. Claim the extra ' + Math.round((BAND_RATE - 0.20) * 100) + '% through Self Assessment — it is paid back to you, not into the pension.';
+            selfAssessNote = 'You\'re a ' + TAX_BAND + '-rate taxpayer (' + Math.round(BAND_RATE * 100) + '%). Your provider adds 20% basic-rate tax relief. Claim the extra ' + Math.round((BAND_RATE - 0.20) * 100) + '% through Self Assessment — it is paid back to you, not into the pension.';
           }
         } else if (w === 'Workplace Pension') {
           if (method === 'salary_sacrifice') {
