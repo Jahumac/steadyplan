@@ -11,6 +11,8 @@ def test_login_page_uses_brand_logo_without_auth_mascot_icon(client, make_user):
     assert response.status_code == 200
     html = response.data.decode()
     assert "Sign in" in html
+    assert "run retirement projections" in html
+    assert "run retirement scenario estimates" not in html
     assert 'brand/steadyplan-mark.png' in html
     assert 'class="auth-brand-mark auth-brand-mark--float"' in html
     assert 'auth-brand-icon' not in html
