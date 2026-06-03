@@ -130,7 +130,8 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "Prize draws are tracked separately; projections use the planning rate." in js
     assert "Prize draws are tracked separately; projections use a cautious estimate." not in js
     assert "Prize draws are tracked separately; projections use a gentle estimate." not in js
-    assert "Premium Bonds do not pay guaranteed interest. Use this as a planning estimate only; NS&I can change the prize fund rate." in js
+    assert "Premium Bonds do not pay guaranteed interest. Use this as a planning assumption only; NS&I can change the prize fund rate." in js
+    assert "Premium Bonds do not pay guaranteed interest. Use this as a planning estimate only; NS&I can change the prize fund rate." not in js
     assert "Premium Bonds do not pay guaranteed interest. This is a calm estimate only; NS&I can change the prize fund rate." not in js
     assert "Your provider adds 25% basic-rate tax relief on top." in js
     assert "Your provider adds 25% basic-rate tax relief on top automatically." not in js
