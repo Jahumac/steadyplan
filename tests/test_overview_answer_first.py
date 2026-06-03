@@ -1169,6 +1169,8 @@ def test_overview_unlinked_holdings_alert_uses_specific_price_source_cta(app, cl
     html = resp.get_data(as_text=True)
 
     assert "no price source linked" in html
+    assert "price won&#39;t refresh here" in html
+    assert "price won&#39;t update automatically" not in html
     assert "Link price sources" in html
     assert "Review holdings" not in html
 

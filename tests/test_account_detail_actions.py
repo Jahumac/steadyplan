@@ -52,6 +52,28 @@ def test_account_detail_actions_are_direct_not_overflow_menu(app, client, make_u
     assert "Delete" in html
 
 
+def test_account_detail_unlinked_holding_badge_uses_plain_refresh_copy(app, client, make_user):
+    uid, username, password = make_user(username="account-unlinked-holding-copy", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(), uid)
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO holdings (account_id, holding_name, ticker, value, units, price) VALUES (?, 'World ETF', 'VWRP', 1000, 10, 100)",
+                (account_id,),
+            )
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password})
+    resp = client.get(f"/accounts/{account_id}")
+
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "No price source linked — prices won" in html
+    assert "refresh here" in html
+    assert "No price source linked — prices won't update automatically" not in html
+    assert "no auto-price" in html
+
+
 def test_account_detail_helper_uses_lifetime_isa_bonus_wording(app, client, make_user):
     uid, username, password = make_user(username="account-lifetime-isa-bonus", password="password123")
     with app.app_context():
