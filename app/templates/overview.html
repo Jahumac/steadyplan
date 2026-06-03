@@ -337,7 +337,7 @@
       <span class="goal-progress-pct">{{ '{:.1f}'.format(g.progress * 100) }}%</span>
     </div>
     <div class="progress" role="progressbar" aria-valuenow="{{ (g.progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ g.name }} progress"><div class="progress-bar" data-pct="{{ [g.progress * 100, 100]|min }}"></div></div>
-    <small class="text-muted">£{{ '{:,.0f}'.format(g.current) }} / £{{ '{:,.0f}'.format(g.target) }}{% if g.remaining > 0 %} · £{{ '{:,.0f}'.format(g.remaining) }} to go{% endif %}{% if g.goal_year %} · ~{{ g.goal_year }}{% endif %}</small>
+    <small class="text-muted">£{{ '{:,.0f}'.format(g.current) }} / £{{ '{:,.0f}'.format(g.target) }}{% if g.remaining > 0 %} · £{{ '{:,.0f}'.format(g.remaining) }} to go{% endif %}{% if g.projection %}{% if g.projection.reached %} · Target reached{% elif g.projection.total_months %} · ~ {{ g.projection.duration }} to go{% if g.projection.eta_label %} · {{ g.projection.eta_label }}{% endif %}{% else %} · ~ More than 50 years at current rate{% endif %}{% elif g.monthly_contribution == 0 and g.remaining > 0 %} · No contributions set{% endif %}</small>
   </div>
   {% endfor %}
 </section>
@@ -359,7 +359,7 @@
         <span class="goal-progress-pct">{{ '{:.1f}'.format(g.progress * 100) }}%</span>
       </div>
       <div class="progress" role="progressbar" aria-valuenow="{{ (g.progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ g.name }} progress"><div class="progress-bar" data-pct="{{ [g.progress * 100, 100]|min }}"></div></div>
-      <small class="text-muted">£{{ '{:,.0f}'.format(g.current) }} / £{{ '{:,.0f}'.format(g.target) }}{% if g.remaining > 0 %} · £{{ '{:,.0f}'.format(g.remaining) }} to go{% endif %}{% if g.goal_year %} · ~{{ g.goal_year }}{% endif %}</small>
+      <small class="text-muted">£{{ '{:,.0f}'.format(g.current) }} / £{{ '{:,.0f}'.format(g.target) }}{% if g.remaining > 0 %} · £{{ '{:,.0f}'.format(g.remaining) }} to go{% endif %}{% if g.projection %}{% if g.projection.reached %} · Target reached{% elif g.projection.total_months %} · ~ {{ g.projection.duration }} to go{% if g.projection.eta_label %} · {{ g.projection.eta_label }}{% endif %}{% else %} · ~ More than 50 years at current rate{% endif %}{% elif g.monthly_contribution == 0 and g.remaining > 0 %} · No contributions set{% endif %}</small>
     </div>
     {% endfor %}
   </div>
