@@ -112,18 +112,21 @@ def test_lifetime_isa_preview_js_uses_specific_bonus_copy():
     assert "+ government bonus (25%)" not in js
     assert "Your Lifetime ISA bonus adds 25% on top (up to £1,000/year)." in js
     assert "The government tops it up with a lovely 25% bonus (up to £1,000/year)." not in js
-    assert "How much do you put into this ISA each month? Even an estimate helps with projections." in js
+    assert "How much do you put into this ISA each month? This feeds into projections — an estimate is fine." in js
+    assert "How much do you put into this ISA each month? Even an estimate helps with projections." not in js
     assert "How much do you put into this ISA each month? Even a rough figure helps with projections." not in js
 
 
 def test_account_wizard_hints_use_plain_neutral_tone():
     js = Path("/opt/data/steadyplan/app/static/js/app.js").read_text()
+    html = Path("/opt/data/steadyplan/app/templates/accounts.html").read_text()
 
     assert "How much do you add to this Cash ISA each month?" in js
     assert "How much do you stash away in this Cash ISA each month?" not in js
     assert "Prize draws are tracked separately; projections use a cautious estimate." in js
     assert "Prize draws are tracked separately; projections use a gentle estimate." not in js
-    assert "Your provider adds 25% basic-rate tax relief on top automatically." in js
+    assert "Your provider adds 25% basic-rate tax relief on top." in js
+    assert "Your provider adds 25% basic-rate tax relief on top automatically." not in js
     assert "Your provider claims 25% tax relief from HMRC automatically." not in js
     assert "your provider adds 20% basic-rate tax relief for you (e.g. NEST)." in js
     assert "your provider claims 20% tax relief from HMRC (e.g. NEST)." not in js
@@ -134,6 +137,8 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "free money, basically" not in js
     assert "You can always update this later." in js
     assert "No pressure — you can always update this later." not in js
+    assert "The contribution in use this month is shown at the top." in html
+    assert "The <strong>currently active</strong> contribution is shown at the top." not in html
 
 
 def test_budget_setup_page_does_not_render_turtle_icon(auth_client):

@@ -308,13 +308,13 @@
                 <span>Your Monthly Contribution</span>
                 <input type="number" step="0.01" name="monthly_contribution" value="{{ selected.monthly_contribution or 0 }}">
                 {% if 'sipp' in _wt_edit %}
-                <small class="form-hint">What you pay from your bank each month. Your provider adds 25% basic-rate tax relief on top automatically.</small>
+                <small class="form-hint">What you pay from your bank each month. Your provider adds 25% basic-rate tax relief on top.</small>
                 {% elif _is_pension %}
                 <small class="form-hint">Your share of the pension contribution — either from your net pay or salary sacrifice, depending on your scheme.</small>
                 {% elif 'lifetime' in _wt_edit %}
                 <small class="form-hint">What you pay in. Your Lifetime ISA bonus adds 25% on top (up to £4,000/year contributions).</small>
                 {% else %}
-                <small class="form-hint">How much you put in each month. If you link a budget item to this account, it can be used in your budget automatically.</small>
+                <small class="form-hint">How much you put in each month. If you link a budget item to this account, it can feed into your budget.</small>
                 {% endif %}
               </label>
               {% if _is_pension %}
@@ -811,7 +811,7 @@
           </div>
           <a class="badge badge-meta" href="/budget/?month={{ current_month_key }}">Edit in Budget</a>
         </div>
-        <p class="helper-text">The <strong>currently active</strong> contribution is shown at the top. Below it are any temporary adjustments you've set (e.g. holidays, bonuses). Routine month-to-month edits made in Budget are not listed here.</p>
+        <p class="helper-text">The contribution in use this month is shown at the top. Below it are any temporary adjustments you've set (e.g. holidays, bonuses). Routine month-to-month edits made in Budget are not listed here.</p>
 
         {% set life_overrides = overrides | rejectattr('reason', 'equalto', 'from budget') | list %}
         {% set active_override = namespace(ov=none) %}
