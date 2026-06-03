@@ -47,6 +47,8 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert ".monthly-review-start-details {" in css
     assert ".monthly-review-start-details summary {" in css
     assert ".monthly-review-start-details .compact-flow-list {" in css
+    assert ".review-hero-todo {" in css
+    assert ".review-hero-todo .badge {" in css
     assert "display: none;" in css
     assert "justify-content: center;" in css
     assert "margin-bottom: 0.65rem;" in css
@@ -102,11 +104,15 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert "3. Save a note and mark monthly update complete" in html
     assert "3. Save a note and mark this month reviewed" not in html
     assert "3. Save a note and mark reviewed" not in html
-    assert "Work top to bottom: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark monthly update complete." in html
+    assert "Confirm contributions, update balances, then finish with your note." in html
+    assert "Work top to bottom: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark monthly update complete." not in html
     assert "Work top to bottom: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark this month reviewed." not in html
     assert "Work top to bottom: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark the month reviewed." not in html
     assert "Work down the page: confirm expected contributions" not in html
-    assert "Still to do: 0 contributions to confirm · 0 accounts to update" in html
+    assert 'class="review-hero-todo" aria-label="Still to do"' in html
+    assert ">0 contributions left<" in html
+    assert ">0 accounts left<" in html
+    assert "Still to do: 0 contributions to confirm · 0 accounts to update" not in html
     assert "Still to do: 0 contributions to confirm · 0 accounts not updated" not in html
     assert "To do: 0 contributions to confirm · 0 accounts to update" not in html
     assert "Leave a quick reminder, then mark your monthly update complete when you are happy." in html
@@ -125,7 +131,8 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert "No contributions to track this month." in html
     assert "Set them up in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" in html
     assert "Set them up in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here.</p>" not in html
-    assert "log prize draw results if needed" in html
+    assert "log prize draw results if needed" not in html
+    assert "Confirm contributions, update balances, then finish with your note." in html
     assert "log Premium Bonds if needed" not in html
     assert "Related checks" in html
     assert "Review goals" in html

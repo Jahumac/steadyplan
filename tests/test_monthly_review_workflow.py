@@ -186,9 +186,11 @@ def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_u
     html = resp.get_data(as_text=True)
     assert "Monthly Update" in html
     assert "Monthly review" not in html
-    assert "Work top to bottom: confirm expected contributions" in html
+    assert "Confirm contributions, update balances, then finish with your note." in html
+    assert "Work top to bottom: confirm expected contributions" not in html
     assert "Work down the page: confirm expected contributions" not in html
-    assert "Still to do:" in html
+    assert "Still to do:" not in html
+    assert 'class="review-hero-todo" aria-label="Still to do"' in html
     assert "To do:" not in html
     assert "Holdings snapshot from holdings" in html
     assert "Quick checklist" not in html

@@ -24,10 +24,13 @@
     <div>
       <p class="eyebrow">Monthly Update</p>
       <h2 class="hero-value">{{ month_label }}</h2>
-      <p class="hero-subtitle">Work top to bottom: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark monthly update complete.</p>
+      <p class="hero-subtitle">Confirm contributions, update balances, then finish with your note.</p>
       {% if review.status != 'complete' %}
         {% set remaining_accounts = total_accounts - accounts_updated %}
-        <p class="helper-text m-0">Still to do: {{ unconfirmed_count }} contribution{{ '' if unconfirmed_count == 1 else 's' }} to confirm · {{ remaining_accounts }} account{{ '' if remaining_accounts == 1 else 's' }} to update</p>
+        <div class="review-hero-todo" aria-label="Still to do">
+          <span class="badge badge-meta">{{ unconfirmed_count }} contribution{{ '' if unconfirmed_count == 1 else 's' }} left</span>
+          <span class="badge badge-meta">{{ remaining_accounts }} account{{ '' if remaining_accounts == 1 else 's' }} left</span>
+        </div>
       {% endif %}
     </div>
     <div class="hero-actions-col">
