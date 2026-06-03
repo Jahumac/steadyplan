@@ -164,6 +164,20 @@ def test_accounts_page_uses_lifetime_isa_bonus_wording(app, client, make_user):
     assert 'Your Lifetime ISA bonus adds 25% on top (up to £4,000/year contributions).' in edit_html
     assert 'The government adds a 25% bonus (up to £4,000/year contributions).' not in edit_html
 
+    sipp_payload = _account_payload()
+    sipp_payload["name"] = "Pension"
+    sipp_payload["wrapper_type"] = "SIPP"
+    sipp_payload["category"] = "Pension"
+
+    with app.app_context():
+        sipp_id = create_account(sipp_payload, uid)
+
+    sipp_edit_response = client.get(f"/accounts/{sipp_id}?mode=edit")
+    assert sipp_edit_response.status_code == 200
+    sipp_html = sipp_edit_response.get_data(as_text=True)
+    assert 'Your provider adds 25% basic-rate tax relief on top automatically.' in sipp_html
+    assert 'your provider claims it from HMRC automatically.' not in sipp_html
+
 
 def test_accounts_edit_form_uses_cautious_premium_bonds_estimate_copy(app, client, make_user):
     uid, username, password = make_user(username="accounts-premium-bonds-copy", password="password123")
@@ -185,3 +199,25 @@ def test_accounts_edit_form_uses_cautious_premium_bonds_estimate_copy(app, clien
     html = response.get_data(as_text=True)
     assert 'Used as a cautious estimate for projections only.' in html
     assert 'Used as a rough estimate for projections only.' not in html
+
+
+def test_accounts_edit_form_uses_plain_pension_method_wording(app, client, make_user):
+    uid, username, password = make_user(username="accounts-pension-method-copy", password="password123")
+    payload = _account_payload()
+    payload["name"] = "Workplace pension"
+    payload["wrapper_type"] = "Workplace Pension"
+    payload["category"] = "Pension"
+    payload["contribution_method"] = "relief_at_source"
+
+    with app.app_context():
+        account_id = create_account(payload, uid)
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}?mode=edit")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'Salary sacrifice = pre-tax, nothing extra to claim.' in html
+    assert 'Relief at source = your provider adds 20% basic-rate tax relief for you.' in html
+    assert 'Salary sacrifice = pre-tax, no relief to claim.' not in html
+    assert 'your provider claims 20% back from HMRC for you.' not in html

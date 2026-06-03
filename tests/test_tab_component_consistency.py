@@ -123,7 +123,10 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "How much do you stash away in this Cash ISA each month?" not in js
     assert "Prize draws are tracked separately; projections use a cautious estimate." in js
     assert "Prize draws are tracked separately; projections use a gentle estimate." not in js
-    assert "Your provider claims 25% tax relief from HMRC automatically." in js
+    assert "Your provider adds 25% basic-rate tax relief on top automatically." in js
+    assert "Your provider claims 25% tax relief from HMRC automatically." not in js
+    assert "your provider adds 20% basic-rate tax relief for you (e.g. NEST)." in js
+    assert "your provider claims 20% tax relief from HMRC (e.g. NEST)." not in js
     assert "free money, basically" not in js
     assert "You can always update this later." in js
     assert "No pressure — you can always update this later." not in js
