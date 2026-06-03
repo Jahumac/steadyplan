@@ -309,7 +309,7 @@ def test_overview_multi_goal_state_restores_goal_progress_panel(app, client, mak
     assert "Emergency fund progress" in html
     assert "House deposit progress" in html
     assert "goal-track-status" in html
-    assert "no contributions set" in html
+    assert "set a monthly contribution" in html
     assert "est." in html
 
 
@@ -360,7 +360,7 @@ def test_overview_goal_progress_glance_statuses_cover_on_track_behind_and_ahead(
     assert ">On track<" in html
     assert "est. " in html
     assert ">Behind<" in html
-    assert "no contributions set" in html
+    assert "set a monthly contribution" in html
     assert ">Ahead<" in html
     assert "target already reached" in html
 
@@ -404,8 +404,8 @@ def test_overview_goal_progress_glance_statuses_flag_unlinked_and_too_low_goals(
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "current contributions too low" in html
-    assert "no tagged accounts linked" in html
+    assert "increase contributions to bring this within range" in html
+    assert "link an account to this goal" in html
 
 
 
