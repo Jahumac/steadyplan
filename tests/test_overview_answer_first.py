@@ -310,6 +310,7 @@ def test_overview_multi_goal_state_restores_goal_progress_panel(app, client, mak
     assert "House deposit progress" in html
     assert "goal-track-status" in html
     assert "no contributions set" in html
+    assert "est." in html
 
 
 
@@ -357,11 +358,54 @@ def test_overview_goal_progress_glance_statuses_cover_on_track_behind_and_ahead(
     html = resp.get_data(as_text=True)
 
     assert ">On track<" in html
-    assert "at current pace" in html
+    assert "est. " in html
     assert ">Behind<" in html
     assert "no contributions set" in html
     assert ">Ahead<" in html
     assert "target already reached" in html
+
+
+
+def test_overview_goal_progress_glance_statuses_flag_unlinked_and_too_low_goals(app, client, make_user):
+    uid, username, password = make_user(username="overview-goal-track-edge-states", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01', annual_growth_rate = 0.05 WHERE user_id = ?",
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, current_value, monthly_contribution,
+                    employer_contribution, tags, is_active, valuation_mode
+                )
+                VALUES (?, 'Tiny pot', 'Stocks & Shares ISA', 100, 1, 0, 'tiny', 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.executemany(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, ?, ?, 'Tagged Goal', ?, '')
+                """,
+                [
+                    (uid, 'Big dream', 5000000, 'tiny'),
+                    (uid, 'Missing link', 5000, 'missing'),
+                ],
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "current contributions too low" in html
+    assert "no tagged accounts linked" in html
 
 
 
