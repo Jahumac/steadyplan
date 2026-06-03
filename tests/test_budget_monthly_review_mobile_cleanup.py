@@ -21,6 +21,8 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert "Just click any number and type to change it for this month." not in html
     assert "Changes save as you edit." in html
     assert "It saves automatically." not in html
+    assert "Your take-home pay and any side income. This is the money you can allocate across the rest of the budget." in html
+    assert "Your take-home pay and any side income — used to show how much is available to allocate." not in html
     assert "Minimum payments and extra debt overpayments — use this section to track what you plan to repay this month." in html
     assert "Minimum payments and extra chunks you're throwing at debt — every pound here gets you closer to freedom." not in html
     assert "Set aside money for future goals. Items marked <em>linked account</em> use the monthly contribution from that account." in html
