@@ -81,12 +81,21 @@
   </div>
   {% endif %}
   <div class="review-hero-flow">
-    <p class="eyebrow">Start here</p>
-    <ol class="compact-flow-list">
-      <li><strong>1. Confirm contributions</strong><span>Confirm anything that happened this month.</span></li>
-      <li><strong>2. Update balances</strong><span>Update holdings or jump to manual balances when needed.</span></li>
-      <li><strong>3. Save a note and mark monthly update complete</strong><span>Leave a quick reminder, then mark your monthly update complete when you are happy.</span></li>
-    </ol>
+    <details class="monthly-review-start-details">
+      <summary>
+        <div>
+          <p class="eyebrow">Start here</p>
+          <strong>3-step monthly update flow</strong>
+          <p class="helper-text m-0">Confirm contributions, update balances, then finish with your note.</p>
+        </div>
+        <span class="badge badge-meta">Show steps</span>
+      </summary>
+      <ol class="compact-flow-list">
+        <li><strong>1. Confirm contributions</strong><span>Confirm anything that happened this month.</span></li>
+        <li><strong>2. Update balances</strong><span>Update holdings or jump to manual balances when needed.</span></li>
+        <li><strong>3. Save a note and mark monthly update complete</strong><span>Leave a quick reminder, then mark your monthly update complete when you are happy.</span></li>
+      </ol>
+    </details>
     <div class="badge-row review-hero-badges">
       <a href="#expected-contributions" class="badge">Expected contributions</a>
       <a href="#update-balances" class="badge badge-meta">Update balances</a>

@@ -3227,8 +3227,34 @@ button.button-danger:focus {
   border-top: 1px solid rgba(255,255,255,0.1);
 }
 
-.review-hero-flow .eyebrow {
-  margin-bottom: 0.5rem;
+.monthly-review-start-details {
+  margin-bottom: 0.85rem;
+}
+
+.monthly-review-start-details summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+
+.monthly-review-start-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.monthly-review-start-details summary .eyebrow {
+  margin-bottom: 0.35rem;
+}
+
+.monthly-review-start-details summary .helper-text {
+  margin-top: 0.25rem;
+}
+
+.monthly-review-start-details .compact-flow-list {
+  margin-top: 0.85rem;
+  margin-bottom: 0;
 }
 
 .review-hero-badges {

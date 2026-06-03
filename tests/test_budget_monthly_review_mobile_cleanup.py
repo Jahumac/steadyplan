@@ -44,6 +44,9 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert ".budget-hero-badges {" in css
     assert ".budget-hero-badges .badge {" in css
     assert ".budget-hero-mobile-hint {" in css
+    assert ".monthly-review-start-details {" in css
+    assert ".monthly-review-start-details summary {" in css
+    assert ".monthly-review-start-details .compact-flow-list {" in css
     assert "display: none;" in css
     assert "justify-content: center;" in css
     assert "margin-bottom: 0.65rem;" in css
@@ -82,6 +85,11 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert '<span>Accounts to review</span>' not in html
     assert '<div class="hero-strip-stat">\n      <span>Accounts</span>' not in html
     assert 'class="review-hero-flow"' in html
+    assert 'class="monthly-review-start-details"' in html
+    assert '<details class="monthly-review-start-details" open>' not in html
+    assert "3-step monthly update flow" in html
+    assert "Confirm contributions, update balances, then finish with your note." in html
+    assert ">Show steps<" in html
     assert 'class="badge-row review-hero-badges"' in html
     assert '<section class="card mb-1 monthly-review-start-card">' not in html
     assert "On a phone, keep the flow narrow: confirm, update, then finish." not in html
