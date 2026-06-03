@@ -120,11 +120,16 @@ def test_lifetime_isa_preview_js_uses_specific_bonus_copy():
 def test_account_wizard_hints_use_plain_neutral_tone():
     js = Path("/opt/data/steadyplan/app/static/js/app.js").read_text()
     html = Path("/opt/data/steadyplan/app/templates/accounts.html").read_text()
+    wizard_html = Path("/opt/data/steadyplan/app/templates/_account_create_wizard.html").read_text()
 
+    assert "NS&amp;I, tax-free prize planning" in wizard_html
+    assert "NS&amp;I, tax-free prize estimate" not in wizard_html
     assert "How much do you add to this Cash ISA each month?" in js
     assert "How much do you stash away in this Cash ISA each month?" not in js
     assert "Prize draws are tracked separately; projections use a cautious estimate." in js
     assert "Prize draws are tracked separately; projections use a gentle estimate." not in js
+    assert "Premium Bonds do not pay guaranteed interest. Use this as a planning estimate only; NS&I can change the prize fund rate." in js
+    assert "Premium Bonds do not pay guaranteed interest. This is a calm estimate only; NS&I can change the prize fund rate." not in js
     assert "Your provider adds 25% basic-rate tax relief on top." in js
     assert "Your provider adds 25% basic-rate tax relief on top automatically." not in js
     assert "Your provider claims 25% tax relief from HMRC automatically." not in js

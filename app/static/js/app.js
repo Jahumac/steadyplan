@@ -1657,7 +1657,7 @@
         }
         if (customRateHint) {
           customRateHint.textContent = w === 'Premium Bonds'
-            ? 'Premium Bonds do not pay guaranteed interest. This is a calm estimate only; NS&I can change the prize fund rate.'
+            ? 'Premium Bonds do not pay guaranteed interest. Use this as a planning estimate only; NS&I can change the prize fund rate.'
             : 'Enter as a percentage — 4.5 for 4.5%, 3.6 for 3.6%';
         }
 
