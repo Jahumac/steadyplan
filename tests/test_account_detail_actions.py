@@ -82,3 +82,17 @@ def test_account_detail_helper_uses_lifetime_isa_bonus_wording(app, client, make
     html = resp.get_data(as_text=True)
     assert "includes Lifetime ISA bonus, tax relief, and employer match where applicable" in html
     assert "includes LISA bonus, tax relief, and employer match where applicable" not in html
+
+
+def test_account_detail_contribution_adjustments_helper_uses_plain_wording(app, client, make_user):
+    uid, username, password = make_user(username="account-adjustment-copy", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(), uid)
+
+    client.post("/login", data={"username": username, "password": password})
+    resp = client.get(f"/accounts/{account_id}")
+
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Below it are any temporary adjustments you've set (e.g. holidays, bonuses)." in html
+    assert "Below it are any <em>life-happens</em> adjustments you've set (e.g. holidays, bonuses)." not in html
