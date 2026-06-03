@@ -482,7 +482,7 @@ def overview():
             count = len(unlinked)
             alerts.append({
                 "kind": "info",
-                "message": f"{count} holding{'s' if count != 1 else ''} {'have' if count != 1 else 'has'} a ticker but no price source linked — {'their' if count != 1 else 'its'} price won't update automatically.",
+                "message": f"{count} holding{'s' if count != 1 else ''} {'have' if count != 1 else 'has'} a ticker but no price source linked — {'their' if count != 1 else 'its'} price won't refresh here.",
                 "cta_text": "Link price sources",
                 "cta_href": "/holdings/",
             })
