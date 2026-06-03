@@ -156,7 +156,10 @@ def test_settings_growth_hint_no_longer_says_nominal_todays_money(app, client, m
     assert "more conservative “today’s spending power” view" in body
     assert "cautious “today’s spending power” estimate" not in body
     assert "rough “today’s spending power” estimate" not in body
-    assert "Used when checking your personal pension tax-relief limit" in body
+    assert "Affects pension tax relief and what you can reclaim" in body
+    assert "Used to calculate pension tax relief and show what you can reclaim" not in body
+    assert "Checks your personal pension tax-relief limit" in body
+    assert "Used when checking your personal pension tax-relief limit" not in body
     assert "Used to estimate your personal pension tax-relief limit" not in body
     assert "Shows your age" in body
     assert "Used to work out your age" not in body

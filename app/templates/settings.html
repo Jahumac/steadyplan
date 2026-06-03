@@ -57,7 +57,7 @@
           <option value="higher" {{ 'selected' if tb == 'higher' }}>Higher rate (40%)</option>
           <option value="additional" {{ 'selected' if tb == 'additional' }}>Additional rate (45%)</option>
         </select>
-        <small class="form-hint">Used to calculate pension tax relief and show what you can reclaim</small>
+        <small class="form-hint">Affects pension tax relief and what you can reclaim</small>
       </label>
       <label>
         <span>Date of birth</span>
@@ -96,7 +96,7 @@
       <label>
         <span>Annual income (£)</span>
         <input type="number" step="0.01" name="annual_income" value="{{ assumptions.annual_income if assumptions and assumptions.annual_income is not none else 0 }}">
-        <small class="form-hint">Used when checking your personal pension tax-relief limit (typically up to 100% of relevant earnings)</small>
+        <small class="form-hint">Checks your personal pension tax-relief limit (typically up to 100% of relevant earnings)</small>
       </label>
       <label>
         <span>Pension allowance (£)</span>
