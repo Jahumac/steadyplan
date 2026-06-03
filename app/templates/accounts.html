@@ -308,7 +308,7 @@
                 <span>Your Monthly Contribution</span>
                 <input type="number" step="0.01" name="monthly_contribution" value="{{ selected.monthly_contribution or 0 }}">
                 {% if 'sipp' in _wt_edit %}
-                <small class="form-hint">What you pay from your bank each month. 25% basic-rate tax relief is added on top — your provider claims it from HMRC automatically.</small>
+                <small class="form-hint">What you pay from your bank each month. Your provider adds 25% basic-rate tax relief on top automatically.</small>
                 {% elif _is_pension %}
                 <small class="form-hint">Your share of the pension contribution — either from your net pay or salary sacrifice, depending on your scheme.</small>
                 {% elif 'lifetime' in _wt_edit %}
@@ -330,7 +330,7 @@
                   <option value="salary_sacrifice" {{ 'selected' if cm == 'salary_sacrifice' }}>Salary sacrifice</option>
                   <option value="relief_at_source" {{ 'selected' if cm == 'relief_at_source' or cm == 'standard' }}>Relief at source (e.g. NEST)</option>
                 </select>
-                <small class="form-hint">Salary sacrifice = pre-tax, no relief to claim. Relief at source = your provider claims 20% back from HMRC for you.</small>
+                <small class="form-hint">Salary sacrifice = pre-tax, nothing extra to claim. Relief at source = your provider adds 20% basic-rate tax relief for you.</small>
               </label>
               <label>
                 <span>Pension contribution posting day</span>
