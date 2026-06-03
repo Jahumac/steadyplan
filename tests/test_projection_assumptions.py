@@ -53,6 +53,10 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "assumptions-based forecast, not a promise" in body
     assert "Edit the inputs in" in body
     assert "What drives this estimate" in body
+    assert "Projection estimates for each account at age 60" in body
+    assert "Scenario estimates for each account at age 60" not in body
+    assert "Adjust inputs to see how the projection estimate changes. Nothing here is saved unless you save changes elsewhere." in body
+    assert "Adjust inputs to see how the scenario estimate changes. Nothing is saved unless you explicitly save it elsewhere." not in body
     assert "Inflation" in body
     assert "Retirement timing" in body
     assert "Contributions" in body
@@ -93,6 +97,42 @@ def test_projections_page_uses_lifetime_isa_bonus_wording(app, client, make_user
     assert "government bonus" not in body
     assert "government bonuses" not in body
     assert "govt bonus" not in body
+
+
+def test_projections_goal_callout_uses_projection_estimate_wording(app, client, make_user):
+    uid, username, password = make_user(username="proj-goal-copy", password="password123")
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection, update_assumptions
+
+        assumptions = dict(fetch_assumptions(uid))
+        assumptions.update({
+            "annual_growth_rate": 0.05,
+            "retirement_age": 60,
+            "date_of_birth": "1990-01-01",
+        })
+        update_assumptions(assumptions, uid)
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 50000, 500, 1)
+                """,
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes) VALUES (?, 'FI target', 100000, '', '', '')",
+                (uid,),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    resp = client.get("/projections/")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert 'Projection estimate meets "FI target"' in body or 'Projection estimate is below "FI target"' in body
+    assert 'Scenario estimate meets "FI target"' not in body
+    assert 'Scenario estimate is below "FI target"' not in body
 
 
 def test_settings_growth_hint_no_longer_says_nominal_todays_money(app, client, make_user):
