@@ -333,7 +333,19 @@
   {% for g in goals_data %}
   <div class="goal-row{% if not loop.last %} goal-row-divider{% endif %}">
     <div class="goal-row-header">
-      <strong>{{ g.name }}</strong>
+      <div class="goal-row-title">
+        <strong>{{ g.name }}</strong>
+        <small class="goal-track-status">
+          {% if g.track_status.tone == 'ahead' %}
+            <span class="perf-positive">{{ g.track_status.label }}</span>
+          {% elif g.track_status.tone == 'behind' %}
+            <span class="perf-negative">{{ g.track_status.label }}</span>
+          {% else %}
+            <span>{{ g.track_status.label }}</span>
+          {% endif %}
+          · {{ g.track_status.detail }}
+        </small>
+      </div>
       <span class="goal-progress-pct">{{ '{:.1f}'.format(g.progress * 100) }}%</span>
     </div>
     <div class="progress" role="progressbar" aria-valuenow="{{ (g.progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ g.name }} progress"><div class="progress-bar" data-pct="{{ [g.progress * 100, 100]|min }}"></div></div>
@@ -355,7 +367,19 @@
     {% for g in goals_data %}
     <div class="goal-row{% if not loop.last %} goal-row-divider{% endif %}">
       <div class="goal-row-header">
-        <strong>{{ g.name }}</strong>
+        <div class="goal-row-title">
+          <strong>{{ g.name }}</strong>
+          <small class="goal-track-status">
+            {% if g.track_status.tone == 'ahead' %}
+              <span class="perf-positive">{{ g.track_status.label }}</span>
+            {% elif g.track_status.tone == 'behind' %}
+              <span class="perf-negative">{{ g.track_status.label }}</span>
+            {% else %}
+              <span>{{ g.track_status.label }}</span>
+            {% endif %}
+            · {{ g.track_status.detail }}
+          </small>
+        </div>
         <span class="goal-progress-pct">{{ '{:.1f}'.format(g.progress * 100) }}%</span>
       </div>
       <div class="progress" role="progressbar" aria-valuenow="{{ (g.progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ g.name }} progress"><div class="progress-bar" data-pct="{{ [g.progress * 100, 100]|min }}"></div></div>

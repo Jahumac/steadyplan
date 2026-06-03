@@ -417,6 +417,18 @@ body.is-back-online .site-header {
   margin-bottom: 0.3rem;
 }
 
+.goal-row-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.goal-track-status {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
 .goal-progress-pct {
   font-size: 1.1rem;
   font-weight: 700;

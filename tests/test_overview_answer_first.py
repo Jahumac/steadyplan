@@ -308,6 +308,60 @@ def test_overview_multi_goal_state_restores_goal_progress_panel(app, client, mak
     assert "Manage</a>" not in html
     assert "Emergency fund progress" in html
     assert "House deposit progress" in html
+    assert "goal-track-status" in html
+    assert "no contributions set" in html
+
+
+
+def test_overview_goal_progress_glance_statuses_cover_on_track_behind_and_ahead(app, client, make_user):
+    uid, username, password = make_user(username="overview-goal-track-statuses", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01', annual_growth_rate = 0.05 WHERE user_id = ?",
+                (uid,),
+            )
+            conn.executemany(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, current_value, monthly_contribution,
+                    employer_contribution, tags, is_active, valuation_mode
+                )
+                VALUES (?, ?, 'Stocks & Shares ISA', ?, ?, 0, ?, 1, 'manual')
+                """,
+                [
+                    (uid, 'Steady pot', 1200, 180, 'steady'),
+                    (uid, 'Paused pot', 900, 0, 'paused'),
+                    (uid, 'Done pot', 5000, 0, 'done'),
+                ],
+            )
+            conn.executemany(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, ?, ?, 'Tagged Goal', ?, '')
+                """,
+                [
+                    (uid, 'House deposit', 5000, 'steady'),
+                    (uid, 'Kitchen fund', 5000, 'paused'),
+                    (uid, 'Emergency fund', 3000, 'done'),
+                ],
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert ">On track<" in html
+    assert "at current pace" in html
+    assert ">Behind<" in html
+    assert "no contributions set" in html
+    assert ">Ahead<" in html
+    assert "target already reached" in html
 
 
 
