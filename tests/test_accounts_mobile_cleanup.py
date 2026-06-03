@@ -135,6 +135,8 @@ def test_accounts_create_wizard_uses_general_investment_account_label(app, clien
     assert '25% Lifetime ISA bonus, age limits' in html
     assert '25% government top-up, age limits' not in html
     assert "25% gov't top-up, age limits" not in html
+    assert 'How much goes into this account each month? This is used for projections — even an estimate helps.' in html
+    assert 'How much goes into this account each month? This is used for projections — even a rough number helps.' not in html
 
 
 def test_accounts_page_uses_lifetime_isa_bonus_wording(app, client, make_user):
@@ -161,3 +163,25 @@ def test_accounts_page_uses_lifetime_isa_bonus_wording(app, client, make_user):
     edit_html = edit_response.get_data(as_text=True)
     assert 'Your Lifetime ISA bonus adds 25% on top (up to £4,000/year contributions).' in edit_html
     assert 'The government adds a 25% bonus (up to £4,000/year contributions).' not in edit_html
+
+
+def test_accounts_edit_form_uses_cautious_premium_bonds_estimate_copy(app, client, make_user):
+    uid, username, password = make_user(username="accounts-premium-bonds-copy", password="password123")
+    payload = _account_payload()
+    payload["name"] = "Premium Bonds"
+    payload["wrapper_type"] = "Premium Bonds"
+    payload["category"] = "Savings"
+    payload["valuation_mode"] = "premium_bonds"
+    payload["growth_mode"] = "custom"
+    payload["growth_rate_override"] = 0.033
+
+    with app.app_context():
+        account_id = create_account(payload, uid)
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}?mode=edit")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'Used as a cautious estimate for projections only.' in html
+    assert 'Used as a rough estimate for projections only.' not in html
