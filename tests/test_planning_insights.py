@@ -142,11 +142,16 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"perfect retirement salary" not in response.data
     assert b"Weakest link" in response.data
     assert b"Balanced illustration:" in response.data
-    assert b"Illustrative estimate, not guaranteed income." in response.data
+    assert b"Illustration only, not guaranteed income." in response.data
+    assert b"Illustrative estimate, not guaranteed income." not in response.data
     assert b"planning illustrations, not guaranteed safe withdrawal advice." in response.data
     assert b"planning scenarios, not guaranteed safe withdrawal advice." not in response.data
     assert b"Balanced estimate:" not in response.data
     assert b"Scenario estimate, not guaranteed income." not in response.data
+    assert response.data.count(b"State Pension/year (illustrative)") == 2
+    assert b"State Pension/year estimate" not in response.data
+    assert b"State Pension assumption" in response.data
+    assert b"illustrative State Pension" not in response.data
 
     css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
     assert ".planning-hero-strip {" in css
@@ -169,5 +174,7 @@ def test_planning_page_no_goal_mode_uses_plan_wording(app, client, make_user):
     html = response.data.decode("utf-8", errors="ignore")
     assert "using the balanced illustration as the income guide" in html
     assert "using the balanced estimate as the income to model" not in html
+    assert "State Pension assumption" in html
+    assert "illustrative State Pension" not in html
     assert "with this plan." in html
     assert "in this scenario." not in html

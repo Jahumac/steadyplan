@@ -120,7 +120,7 @@
   <div class="card planning-mini-card planning-compact-only planning-income-summary">
     <p class="eyebrow">Illustrative retirement income</p>
     <h2>£{{ '{:,.0f}'.format(income_summary.withdrawal_ranges[0].annual_income) }}–£{{ '{:,.0f}'.format(income_summary.withdrawal_ranges[-1].annual_income) }}/yr</h2>
-    <p class="helper-text">Balanced illustration: <strong>£{{ '{:,.0f}'.format(income_summary.balanced_income) }}/yr</strong>. Illustrative estimate, not guaranteed income.</p>
+    <p class="helper-text">Balanced illustration: <strong>£{{ '{:,.0f}'.format(income_summary.balanced_income) }}/yr</strong>. Illustration only, not guaranteed income.</p>
   </div>
 
   <form method="get" class="planning-assumptions-form mb-1 planning-desktop-detail">
@@ -137,7 +137,7 @@
       <input type="number" step="1" min="0" name="state_pension_age" value="{{ '{:.0f}'.format(income_summary.state_pension_age) }}">
     </label>
     <label>
-      <span>State Pension/year estimate</span>
+      <span>State Pension/year (illustrative)</span>
       <input type="number" step="100" min="0" name="state_pension_annual" value="{{ '{:.0f}'.format(income_summary.state_pension_annual) }}">
     </label>
     <div class="planning-form-actions">
@@ -162,7 +162,7 @@
         <input type="number" step="1" min="0" name="state_pension_age" value="{{ '{:.0f}'.format(income_summary.state_pension_age) }}">
       </label>
       <label>
-        <span>State Pension/year estimate</span>
+        <span>State Pension/year (illustrative)</span>
         <input type="number" step="100" min="0" name="state_pension_annual" value="{{ '{:.0f}'.format(income_summary.state_pension_annual) }}">
       </label>
       <div class="planning-form-actions">
@@ -177,7 +177,7 @@
     <div class="card stat-card planning-mini-card">
       <h2>{{ row.label }} · {{ '{:.1f}'.format(row.rate * 100) }}%</h2>
       <p>£{{ '{:,.0f}'.format(row.annual_income) }}/yr</p>
-      <small>About £{{ '{:,.0f}'.format(row.monthly_income) }}/mo. Illustrative estimate, not guaranteed income. {{ row.note }}</small>
+      <small>About £{{ '{:,.0f}'.format(row.monthly_income) }}/mo. Illustration only, not guaranteed income. {{ row.note }}</small>
     </div>
     {% endfor %}
   </div>
@@ -201,7 +201,7 @@
     <div class="card planning-mini-card">
       <h2>After State Pension starts</h2>
       <p class="planning-big-number">£{{ '{:,.0f}'.format(income_summary.private_after_state_needed) }}/yr</p>
-      <p class="helper-text">Private income needed after an illustrative State Pension of £{{ '{:,.0f}'.format(income_summary.state_pension_annual) }}/yr{% if income_summary.uses_goal_mode %} against your desired £{{ '{:,.0f}'.format(income_summary.desired_income) }}/yr{% else %}, using the balanced illustration as the income guide{% endif %}.</p>
+      <p class="helper-text">Private income needed after a State Pension assumption of £{{ '{:,.0f}'.format(income_summary.state_pension_annual) }}/yr{% if income_summary.uses_goal_mode %} against your desired £{{ '{:,.0f}'.format(income_summary.desired_income) }}/yr{% else %}, using the balanced illustration as the income guide{% endif %}.</p>
     </div>
     <div class="card planning-mini-card">
       <h2>Weakest link</h2>
@@ -217,7 +217,7 @@
       <div class="card stat-card planning-mini-card">
         <h2>{{ row.label }} · {{ '{:.1f}'.format(row.rate * 100) }}%</h2>
         <p>£{{ '{:,.0f}'.format(row.annual_income) }}/yr</p>
-        <small>About £{{ '{:,.0f}'.format(row.monthly_income) }}/mo. Illustrative estimate, not guaranteed income.</small>
+        <small>About £{{ '{:,.0f}'.format(row.monthly_income) }}/mo. Illustration only, not guaranteed income.</small>
       </div>
       {% endfor %}
       <div class="card planning-mini-card">
@@ -232,7 +232,7 @@
       <div class="card planning-mini-card">
         <h2>After State Pension starts</h2>
         <p class="planning-big-number">£{{ '{:,.0f}'.format(income_summary.private_after_state_needed) }}/yr</p>
-        <p class="helper-text">Private income needed after an illustrative State Pension.</p>
+        <p class="helper-text">Private income needed after a State Pension assumption.</p>
       </div>
     </div>
   </details>
