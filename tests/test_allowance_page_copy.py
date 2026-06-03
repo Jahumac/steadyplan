@@ -79,6 +79,84 @@ def test_allowance_page_uses_pension_annual_progress_label(app, client, make_use
     assert 'aria-label="Pension allowance used"' not in html
 
 
+def test_allowance_page_uses_plain_basic_rate_relief_copy(app, client, make_user):
+    uid, username, password = make_user(username="allowance-basic-relief-copy", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE assumptions
+                SET date_of_birth = '1990-01-01', salary_day = 1, tax_band = 'basic'
+                WHERE user_id = ?
+                """,
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
+                VALUES (?, 'Pension', 'SIPP', 1000, 100, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+    client.post(
+        "/allowance/pension/add",
+        data={"account_id": account_id, "amount": "100", "kind": "personal", "contribution_date": "2026-04-10"},
+        follow_redirects=False,
+    )
+
+    resp = client.get("/allowance/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Your provider adds 20% basic-rate tax relief automatically." in html
+    assert "Applied automatically by your provider at 20%." not in html
+    assert "Regular contributions are already included." in html
+    assert "Regular contributions are counted automatically." not in html
+
+
+def test_allowance_page_uses_plain_higher_rate_relief_copy(app, client, make_user):
+    uid, username, password = make_user(username="allowance-higher-relief-copy", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE assumptions
+                SET date_of_birth = '1990-01-01', salary_day = 1, tax_band = 'higher'
+                WHERE user_id = ?
+                """,
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
+                VALUES (?, 'Pension', 'SIPP', 1000, 100, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+    client.post(
+        "/allowance/pension/add",
+        data={"account_id": account_id, "amount": "100", "kind": "personal", "contribution_date": "2026-04-10"},
+        follow_redirects=False,
+    )
+
+    resp = client.get("/allowance/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Claim any extra relief through Self Assessment." in html
+    assert "Claim extra relief via Self Assessment." not in html
+
+
 def test_allowance_page_spells_out_lifetime_isa_age_warning(app, client, make_user):
     uid, username, password = make_user(username="allowance-lifetime-isa-age-warning", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)

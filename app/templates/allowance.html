@@ -213,9 +213,9 @@
       <p>£{{ '{:,.0f}'.format(basic_relief) }} <span class="allowance-denom">basic rate</span></p>
       {% if tax_band in ('higher', 'additional') %}
       <p class="mt-025">£{{ '{:,.0f}'.format(extra_relief) }} <span class="allowance-denom">extra ({{ '20%' if tax_band == 'higher' else '25%' }})</span></p>
-      <small style="color:var(--accent-3)">Claim extra relief via Self Assessment.</small>
+      <small style="color:var(--accent-3)">Claim any extra relief through Self Assessment.</small>
       {% else %}
-      <small class="text-muted">Applied automatically by your provider at 20%.</small>
+      <small class="text-muted">Your provider adds 20% basic-rate tax relief automatically.</small>
       {% endif %}
     </div>
     {% endif %}
@@ -264,7 +264,7 @@
   <div id="pension-log-panel" class="allowance-log-panel hidden">
     <div class="allowance-log-panel-inner">
       <p class="eyebrow mt-0">One-off or bonus contribution</p>
-      <p class="helper-text mb-075">Regular contributions are counted automatically. Log extra payments here — salary sacrifice bonuses, SIPP top-ups, or carry-forward catch-ups.</p>
+      <p class="helper-text mb-075">Regular contributions are already included. Log extra payments here — salary sacrifice bonuses, SIPP top-ups, or carry-forward catch-ups.</p>
       {% if pension_accounts %}
       <form method="post" action="/allowance/pension/add" class="settings-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
