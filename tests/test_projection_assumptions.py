@@ -158,7 +158,8 @@ def test_settings_growth_hint_no_longer_says_nominal_todays_money(app, client, m
     assert "rough “today’s spending power” estimate" not in body
     assert "Used when checking your personal pension tax-relief limit" in body
     assert "Used to estimate your personal pension tax-relief limit" not in body
-    assert "Used to work out your age" in body
+    assert "Shows your age" in body
+    assert "Used to work out your age" not in body
     assert "Used to calculate your age automatically" not in body
     assert "— currently" in body
     assert "— you're currently" not in body
@@ -173,7 +174,8 @@ def test_settings_monthly_update_timing_helper_uses_monthly_update_wording(app, 
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Monthly Update Timing" in body
-    assert "Used to work out when your investments have settled and it's time for your monthly update" in body
+    assert "Helps decide when your investments have settled and it's time for your monthly update" in body
+    assert "Used to work out when your investments have settled and it's time for your monthly update" not in body
     assert "Used to estimate when your investments have settled and it's time for your monthly update" not in body
     assert "The day your ISA contributions and standing orders usually go out" in body
     assert "Weekend shifts are handled in the settlement timing." in body

@@ -62,7 +62,7 @@
       <label>
         <span>Date of birth</span>
         <input type="date" name="date_of_birth" value="{{ assumptions.date_of_birth if assumptions and assumptions.date_of_birth else '' }}">
-        <small class="form-hint">Used to work out your age{% if computed_age %} — currently {{ computed_age }}{% endif %}</small>
+        <small class="form-hint">Shows your age{% if computed_age %} — currently {{ computed_age }}{% endif %}</small>
       </label>
       <label>
         <span>Retirement age</span>
@@ -133,7 +133,7 @@
 
       <label class="form-full-col" style="border-top:1px solid var(--border); padding-top:1rem; margin-top:0.5rem;">
         <span style="font-weight:600; font-size:0.95rem;">Monthly Update Timing</span>
-        <small class="form-hint" style="margin-top:-0.25rem;">Used to work out when your investments have settled and it's time for your monthly update</small>
+        <small class="form-hint" style="margin-top:-0.25rem;">Helps decide when your investments have settled and it's time for your monthly update</small>
       </label>
       <label>
         <span>Investment day of month</span>
