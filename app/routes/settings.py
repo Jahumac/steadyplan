@@ -113,7 +113,7 @@ def _trust_posture_diagnostics():
 
     items = {
         "app_mode": {
-            "label": "OK" if is_production else "Deliberate local-style",
+            "label": "OK" if is_production else "Local/demo posture",
             "value": "Production" if is_production else "Development/local",
             "message": (
                 "Production mode is on. Pair this with HTTPS and secure cookies for real use."
@@ -122,7 +122,7 @@ def _trust_posture_diagnostics():
             ),
         },
         "secure_cookies": {
-            "label": "OK" if session_cookie_secure and remember_cookie_secure else ("Review recommended" if is_production else "Deliberate local-style"),
+            "label": "OK" if session_cookie_secure and remember_cookie_secure else ("Review recommended" if is_production else "Local/demo posture"),
             "value": "Secure" if session_cookie_secure and remember_cookie_secure else "Not secure",
             "message": (
                 "Secure session and remember cookies are on."
