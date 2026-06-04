@@ -55,6 +55,7 @@ from app.models import (
 )
 from app.services.data_health import build_data_health_summary
 from app.services.goal_projection import project_goal
+from app.services.goal_ui import goal_projection_copy, goal_track_status
 from app.services.planning_insights import build_accessible_security_summary
 
 overview_bp = Blueprint("overview", __name__)
@@ -225,20 +226,6 @@ def overview():
     current_tax_year = uk_tax_year_label()
     now_date = datetime.now().date()
 
-    def _goal_track_status(projection, monthly_contribution, remaining, included_account_count, selected_tags):
-        if remaining <= 0 or (projection and projection.get("reached")):
-            return {"label": "Ahead", "detail": "target already reached", "tone": "ahead"}
-        if included_account_count == 0:
-            detail = "link an account to this goal" if selected_tags else "add an account to start tracking"
-            return {"label": "Behind", "detail": detail, "tone": "behind"}
-        if monthly_contribution <= 0:
-            return {"label": "Behind", "detail": "set a monthly contribution", "tone": "behind"}
-        if projection and projection.get("total_months") is None:
-            return {"label": "Behind", "detail": "increase contributions to bring this within range", "tone": "behind"}
-        if projection and projection.get("eta_label"):
-            return {"label": "On track", "detail": f"est. {projection['eta_label']}", "tone": "on-track"}
-        return {"label": "On track", "detail": "at current pace", "tone": "on-track"}
-
     all_goals = fetch_all_goals(uid)
     goals_data = []
     for g in all_goals:
@@ -268,7 +255,14 @@ def overview():
             "remaining": remaining,
             "monthly_contribution": monthly_contribution,
             "projection": projection,
-            "track_status": _goal_track_status(
+            "track_status": goal_track_status(
+                projection,
+                monthly_contribution,
+                remaining,
+                len(included_accounts),
+                selected_tags,
+            ),
+            "projection_copy": goal_projection_copy(
                 projection,
                 monthly_contribution,
                 remaining,

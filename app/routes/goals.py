@@ -23,6 +23,7 @@ from app.models import (
     update_goal,
 )
 from app.services.goal_projection import project_goal
+from app.services.goal_ui import goal_projection_copy
 
 goals_bp = Blueprint("goals", __name__)
 
@@ -59,6 +60,7 @@ def _build_goal_card(goal, accounts, holdings_totals, assumptions=None):
 
     current_total = sum(a["current_value"] for a in included_accounts)
     target = float(goal["target_value"] or 0)
+    remaining = remaining_to_goal(current_total, target)
 
     monthly_contribution = sum(
         projection_monthly_contribution(a, assumptions, 0) for a in included_accounts
@@ -73,11 +75,18 @@ def _build_goal_card(goal, accounts, holdings_totals, assumptions=None):
         "current": current_total,
         "target": target,
         "progress": progress_to_goal(current_total, target),
-        "remaining": remaining_to_goal(current_total, target),
+        "remaining": remaining,
         "account_count": len(included_accounts),
         "notes": goal["notes"] or "",
         "monthly_contribution": monthly_contribution,
         "projection": projection,
+        "projection_copy": goal_projection_copy(
+            projection,
+            monthly_contribution,
+            remaining,
+            len(included_accounts),
+            selected_tags,
+        ),
     }
 
 
