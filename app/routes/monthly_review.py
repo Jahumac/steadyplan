@@ -26,6 +26,7 @@ from app.models import (
     fetch_holding_totals_by_account,
     fetch_monthly_review,
     fetch_monthly_review_items,
+    fetch_net_worth_history,
     fetch_or_create_monthly_review,
     fetch_primary_goal,
     fetch_prize_for_month,
@@ -180,6 +181,12 @@ def monthly_review():
     items = fetch_monthly_review_items(review["id"])
     parsed_notes = parse_monthly_review_notes(review.get("notes"))
     monthly_review_notes = parsed_notes["notes"]
+    has_history = bool(fetch_net_worth_history(uid, limit=1))
+    first_update_focus = (
+        request.args.get("focus") == "first_update"
+        and not has_history
+        and review.get("status") != "complete"
+    )
 
     def _is_pb(item):
         return (item["valuation_mode"] == "premium_bonds"
@@ -334,6 +341,7 @@ def monthly_review():
         total_into_pot=total_into_pot,
         total_uplift=total_uplift,
         monthly_review_notes=monthly_review_notes,
+        first_update_focus=first_update_focus,
         active_page="monthly_review",
     )
 
