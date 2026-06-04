@@ -65,6 +65,77 @@ def test_login_demo_callout_explains_read_only_boundaries(app, client, make_user
     assert "Try demo (read-only)" not in html
 
 
+def test_demo_monthly_review_get_does_not_create_review_rows(app, client, make_user):
+    app.config.update(DEMO_PUBLIC_LOGIN_ENABLED=True, DEMO_READ_ONLY_USERNAME="demo")
+    uid, _, _ = make_user(username="demo", password="password123")
+
+    login_resp = client.get("/demo", follow_redirects=False)
+    assert login_resp.status_code in (301, 302)
+
+    month_key = "2026-05"
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            before = conn.execute(
+                "SELECT COUNT(*) AS c FROM monthly_reviews WHERE user_id = ? AND month_key = ?",
+                (uid, month_key),
+            ).fetchone()["c"]
+
+    resp = client.get(f"/monthly-review/?month={month_key}")
+    assert resp.status_code == 200
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            after = conn.execute(
+                "SELECT COUNT(*) AS c FROM monthly_reviews WHERE user_id = ? AND month_key = ?",
+                (uid, month_key),
+            ).fetchone()["c"]
+
+    assert int(before) == 0
+    assert int(after) == 0
+
+
+def test_demo_overview_get_does_not_create_due_monthly_review(app, client, make_user):
+    app.config.update(DEMO_PUBLIC_LOGIN_ENABLED=True, DEMO_READ_ONLY_USERNAME="demo")
+    uid, _, _ = make_user(username="demo", password="password123")
+
+    with app.app_context():
+        from datetime import date
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute("UPDATE assumptions SET salary_day = 1 WHERE user_id = ?", (uid,))
+            conn.commit()
+        month_key = date.today().strftime("%Y-%m")
+        with get_connection() as conn:
+            before = conn.execute(
+                "SELECT COUNT(*) AS c FROM monthly_reviews WHERE user_id = ? AND month_key = ?",
+                (uid, month_key),
+            ).fetchone()["c"]
+
+    login_resp = client.get("/demo", follow_redirects=False)
+    assert login_resp.status_code in (301, 302)
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            after = conn.execute(
+                "SELECT COUNT(*) AS c FROM monthly_reviews WHERE user_id = ? AND month_key = ?",
+                (uid, month_key),
+            ).fetchone()["c"]
+
+    assert int(before) == 0
+    assert int(after) == 0
+
+
 def test_unauthenticated_redirects_to_login(app, client, make_user):
     # Need at least one user so the app doesn't redirect to /setup
     make_user()

@@ -49,7 +49,6 @@ from app.models import (
     fetch_pension_contributions,
     fetch_latest_price_update,
     fetch_net_worth_history,
-    fetch_or_create_monthly_review,
     fetch_primary_goal,
     fetch_daily_snapshots,
     fetch_completed_tax_year_contributions,
@@ -364,8 +363,8 @@ def overview():
     if salary_day:
         review_due = is_review_due(now_date, salary_day)
         if review_due:
-            review = fetch_or_create_monthly_review(current_month_key, uid)
-            if review["status"] != "complete":
+            review = fetch_monthly_review(current_month_key, uid)
+            if review is None or review["status"] != "complete":
                 review_nudge = True
                 review_ready = review_ready_date(now_date.year, now_date.month, salary_day)
 

@@ -36,6 +36,7 @@ from app.models import (
     fetch_prize_for_month,
     log_prize,
     mark_review_item_updated,
+    preview_monthly_review_items,
     remove_contribution_override_for_month,
     set_contribution_confirmed,
     update_account,
@@ -45,6 +46,7 @@ from app.models import (
     upsert_monthly_snapshot,
     upsert_single_month_contribution_override,
 )
+from app.demo import is_read_only_demo_user
 from app.utils import optional_float, optional_int, valid_month_key
 from app.services.monthly_review_checklist import parse_monthly_review_notes
 from app.services.financial_truth import apply_account_balance_update
@@ -180,9 +182,19 @@ def monthly_review():
                 log_prize(account_id, uid, month_key, prize_amount or 0.0)
         return redirect(url_for("monthly_review.monthly_review", month=month_key))
 
-    review = fetch_or_create_monthly_review(month_key, uid)
-    ensure_monthly_review_items(review["id"], uid)
-    items = fetch_monthly_review_items(review["id"])
+    if is_read_only_demo_user():
+        review = fetch_monthly_review(month_key, uid) or {
+            "id": None,
+            "user_id": uid,
+            "month_key": month_key,
+            "status": "not_started",
+            "notes": "",
+        }
+        items = preview_monthly_review_items(review, uid)
+    else:
+        review = fetch_or_create_monthly_review(month_key, uid)
+        ensure_monthly_review_items(review["id"], uid)
+        items = fetch_monthly_review_items(review["id"])
     parsed_notes = parse_monthly_review_notes(review.get("notes"))
     monthly_review_notes = parsed_notes["notes"]
     has_history = bool(fetch_net_worth_history(uid, limit=1))
