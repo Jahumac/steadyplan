@@ -160,8 +160,17 @@ def _trust_posture_diagnostics():
             ),
         },
     }
-    overall_label = "Review recommended" if any(item["label"] == "Review recommended" for item in items.values()) else "OK"
-    return {"overall_label": overall_label, "items": items}
+    needs_review = any(item["label"] == "Review recommended" for item in items.values())
+    if needs_review:
+        overall_label = "Review recommended"
+        overall_message = "One or more settings need review before treating this as a polished public deployment."
+    elif not is_production or demo_public_login_enabled:
+        overall_label = "Local/demo posture"
+        overall_message = "This instance looks deliberate for local evaluation or read-only demo use. Review production settings before exposing SteadyPlan publicly."
+    else:
+        overall_label = "OK"
+        overall_message = "Production-ready basics look in place for this trust checkpoint."
+    return {"overall_label": overall_label, "overall_message": overall_message, "items": items}
 
 
 def _safe_next_settings_url(raw):
@@ -688,6 +697,15 @@ def settings():
                 (uid,),
             ).fetchone()
             diagnostics["scheduler_last_run"] = dict(last_run) if last_run else None
+            diagnostics["scheduler_status"] = {
+                "short": f"{last_run['run_date']} {last_run['slot']}" if last_run else "Not yet",
+                "full": f"{last_run['run_date']} {last_run['slot']}" if last_run else "Not yet recorded",
+                "message": (
+                    "A scheduler run has been recorded for this user."
+                    if last_run
+                    else "No scheduler run has been recorded yet. That is normal on a fresh instance or when you mainly update prices and balances manually."
+                ),
+            }
 
             counts = conn.execute(
                 """

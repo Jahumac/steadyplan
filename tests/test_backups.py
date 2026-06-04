@@ -139,6 +139,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Trust posture checkpoint" in body
+    assert "Local/demo posture" in body
+    assert "This instance looks deliberate for local evaluation or read-only demo use." in body
     assert "App mode" in body
     assert "Development/local" in body
     assert "Deliberate local-style — Local/development mode is active." in body
@@ -150,6 +152,9 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "OK — Public demo login is off. Real accounts still require normal login." in body
     assert "Rate-limit storage" in body
     assert "OK — Process-local memory storage is fine with a single worker." in body
+    assert "Scheduler last run" in body
+    assert "Not yet recorded" in body
+    assert "No scheduler run has been recorded yet. That is normal on a fresh instance or when you mainly update prices and balances manually." in body
 
 
 def test_diagnostics_warns_when_trust_posture_needs_review(app, client, make_user, tmp_path):
