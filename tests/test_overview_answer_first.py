@@ -1789,7 +1789,7 @@ def test_overview_isa_allowance_card_uses_specific_topup_cta(app, client, make_u
     assert "includes LISA" not in html
     assert html.count("days left in the tax year") == 2
     assert "days left in tax year" not in html
-    assert 'href="/allowance/#topup"' in html
+    assert 'href="/allowance/#isa-log-panel"' in html
     assert '>Record ISA top-up</a>' in html
     assert '>Record top-up</a>' not in html
 
@@ -1843,9 +1843,9 @@ def test_overview_isa_allowance_card_uses_specific_review_cta(app, client, make_
 
     assert "ISA allowance" in html
     assert "ISA Allowance" not in html
-    assert 'href="/allowance/#topup"' in html
+    assert 'href="/allowance/#isa"' in html
     assert '>Review ISA allowance</a>' in html
-    assert 'href="/allowance/#topup" class="badge badge-sm">View breakdown</a>' not in html
+    assert 'href="/allowance/#isa" class="badge badge-sm">View breakdown</a>' not in html
 
 
 def test_overview_lisa_allowance_card_uses_specific_review_cta(app, client, make_user):
@@ -1898,14 +1898,14 @@ def test_overview_lisa_allowance_card_uses_specific_review_cta(app, client, make
     assert '<h2>Lifetime ISA allowance ' in html
     assert '<h2>LISA allowance ' not in html
     assert "Lifetime ISA Allowance" not in html
-    assert 'href="/allowance/#topup"' in html
+    assert 'href="/allowance/#isa"' in html
     assert '>Review Lifetime ISA allowance</a>' in html
     assert '>Review LISA allowance</a>' not in html
     assert '>Record Lifetime ISA top-up</a>' in html
     assert '>Record LISA top-up</a>' not in html
     assert 'aria-label="Lifetime ISA allowance used"' in html
     assert 'aria-label="LISA allowance used"' not in html
-    assert 'href="/allowance/#topup" class="badge badge-sm">View breakdown</a>' not in html
+    assert 'href="/allowance/#isa" class="badge badge-sm">View breakdown</a>' not in html
     assert '>Record top-up</a>' not in html
 
 
@@ -2022,5 +2022,5 @@ def test_overview_unused_isa_allowance_alert_uses_specific_topup_cta(app, client
     html = resp.get_data(as_text=True)
 
     assert "days left in the tax year" in html
-    assert 'href="/allowance/#topup"' in html
+    assert 'href="/allowance/#isa-log-panel"' in html
     assert '>Record ISA top-up</a>' in html

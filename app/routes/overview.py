@@ -490,7 +490,7 @@ def overview():
             "kind": "info",
             "message": f"{days_left} days left in the tax year — £{isa_remaining:,.0f} of your ISA allowance is still unused.",
             "cta_text": "Record ISA top-up",
-            "cta_href": "/allowance/#topup",
+            "cta_href": "/allowance/#isa-log-panel",
         })
 
     # Unlinked holdings: held via "holdings" valuation but no catalogue link → won't auto-price
