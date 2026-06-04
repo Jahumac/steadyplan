@@ -1638,6 +1638,21 @@ def export_performance():
         sub = ws_d.cell(row=2, column=1, value=f"Assumed growth: {assumed_rate*100:.1f}%")
         sub.font = _SUBTITLE_FONT
 
+        has_first_baseline_only = bool(
+            perf
+            and (perf.get("labels") or [])
+            and len(perf.get("labels") or []) == 1
+            and not perf.get("table_rows")
+        )
+        if has_first_baseline_only:
+            ws_d.cell(row=4, column=1, value="First baseline saved.").font = _DATA_FONT
+            ws_d.cell(
+                row=5,
+                column=1,
+                value="SteadyPlan has the first snapshot for this report. Come back after next month's monthly update and the month-by-month table will appear.",
+            ).font = _DATA_FONT
+            return
+
         if not perf or not perf.get("table_rows"):
             ws_d.cell(row=4, column=1, value="Not enough data yet (need at least two monthly snapshots).").font = _DATA_FONT
             return
