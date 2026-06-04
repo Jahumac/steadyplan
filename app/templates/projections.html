@@ -53,10 +53,10 @@
     <div style="flex:1; min-width:200px;">
       {% if on_track %}
         <strong>Scenario estimate meets "{{ primary_goal.name }}"</strong>
-        <p class="helper-text m-0">Projected £{{ '{:,.0f}'.format(metrics.total_projected) }} vs target £{{ '{:,.0f}'.format(primary_goal.target) }} (margin £{{ '{:,.0f}'.format(metrics.total_projected - primary_goal.target) }}).</p>
+        <p class="helper-text m-0">Scenario estimate £{{ '{:,.0f}'.format(metrics.total_projected) }} vs target £{{ '{:,.0f}'.format(primary_goal.target) }} (margin £{{ '{:,.0f}'.format(metrics.total_projected - primary_goal.target) }}).</p>
       {% else %}
         <strong>Scenario estimate is below "{{ primary_goal.name }}"</strong>
-        <p class="helper-text m-0">Projected £{{ '{:,.0f}'.format(metrics.total_projected) }} vs target £{{ '{:,.0f}'.format(primary_goal.target) }} (gap £{{ '{:,.0f}'.format(gap) }}).</p>
+        <p class="helper-text m-0">Scenario estimate £{{ '{:,.0f}'.format(metrics.total_projected) }} vs target £{{ '{:,.0f}'.format(primary_goal.target) }} (gap £{{ '{:,.0f}'.format(gap) }}).</p>
       {% endif %}
     </div>
     <a href="/goals/" class="badge badge-sm">View goals</a>
