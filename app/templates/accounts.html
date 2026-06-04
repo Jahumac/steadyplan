@@ -610,6 +610,7 @@
 
         {% set has_daily = account_daily_labels | length >= 2 %}
         {% set has_monthly = account_monthly_labels | length >= 2 %}
+        {% set has_first_baseline_only = (account_daily_labels | length == 1) or (account_monthly_labels | length == 1) %}
         {% if has_daily or has_monthly %}
         {% if has_daily %}
         <div class="chart-range-pills">
@@ -667,6 +668,10 @@
         <p class="helper-text mt-075">
           Actual vs plan for this account. The plan compounds at <strong>7% p.a.</strong> and credits contributions on your monthly update due date (salary day shifted for weekends, plus settlement). It uses your Budget overrides / monthly update entries and includes Lifetime ISA bonus, tax relief, and employer match where applicable.
         </p>
+        {% elif has_first_baseline_only %}
+        {{ empty_state('First baseline saved',
+                       'This account has its first snapshot. Come back after next month\'s monthly update and the chart will appear.',
+                       cta_text='Back to overview', cta_href='/') }}
         {% else %}
         <p class="helper-text">No history yet. Update your account balance or run the price scheduler to start recording daily snapshots.</p>
         {% endif %}
