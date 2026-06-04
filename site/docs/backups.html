@@ -48,6 +48,15 @@
         <p class="muted prose" style="margin:0;">
           SteadyPlan is self-hosted: your server, your backups. This page explains what to back up, what the in-app restore does (and does not do), and a simple routine that stays safe without becoming a chore.
         </p>
+        <div class="card pad" style="margin-top:1rem;">
+          <p class="feature-label">Trust checkpoint</p>
+          <p class="muted" style="margin:0.35rem 0 0.5rem 0;">
+            In-app restore is a validated, two-step overwrite flow for one user at a time.
+          </p>
+          <p class="note small" style="margin:0;">
+            SteadyPlan previews the export first and creates a fresh whole-instance SQLite backup automatically before confirmed overwrite. If that safety backup cannot be created, restore stops and leaves current data unchanged.
+          </p>
+        </div>
         <div class="hr"></div>
 
         <h2>Where data lives</h2>
@@ -65,7 +74,7 @@
         <h2>A simple routine (recommended)</h2>
         <ul class="muted prose">
           <li>Back up your whole app data directory on a schedule (this is the real “whole instance” backup).</li>
-          <li>Before risky changes: download a per-user JSON export and create a whole-instance SQLite backup from Diagnostics.</li>
+          <li>Before risky changes: download a fresh per-user JSON export. For restore, SteadyPlan will also create a fresh whole-instance SQLite backup automatically before overwrite.</li>
           <li>Occasionally do a restore drill to a test container, so you know your backups actually work.</li>
         </ul>
 
@@ -102,13 +111,16 @@
         <p class="muted">For best coverage, do both:</p>
         <ul class="muted">
           <li>Download a fresh per-user JSON export for the user you’re about to affect</li>
-          <li>Create a whole-instance SQLite backup</li>
+          <li>Create a whole-instance SQLite backup if you want a separate manual checkpoint as well</li>
         </ul>
+        <p class="note small">
+          During in-app restore, SteadyPlan validates the export first and then creates a fresh whole-instance SQLite backup automatically before confirmed overwrite. If that safety backup cannot be created, restore stops and leaves current data unchanged.
+        </p>
 
         <div class="hr"></div>
         <h2>How to restore</h2>
         <p class="muted">
-          Per-user restore happens inside the app via the JSON export/restore flow. It overwrites that user’s data, but does not change usernames/passwords.
+          Per-user restore happens inside the app via the JSON export/restore flow. You validate the export first, then confirm overwrite for that user only. SteadyPlan creates a fresh whole-instance SQLite backup before overwrite, and it does not change usernames/passwords.
         </p>
         <p class="muted">
           Whole-instance recovery is a server/admin task: stop the container and restore your appdata directory (at minimum <code>finance.db</code> and <code>secret_key.txt</code>) from your backup.
