@@ -933,6 +933,12 @@ def budget_items_view():
     selected = fetch_budget_item(selected_id, uid) if selected_id else None
     page_mode = request.args.get("mode", "view" if selected_id else "list")
     section_options = [(s["key"], s["label"]) for s in db_sections]
+    has_budget_basics = any(
+        (not item.get("linked_account_id")) or float(item.get("default_amount") or 0) > 0
+        for item in all_items
+    )
+    first_budget_focus = request.args.get("focus") == "first_budget" and not has_budget_basics
+    first_budget_section = next((s["key"] for s in db_sections if "income" in s["key"].lower()), None)
 
     # Track the month the user came from so "Back to Budget" returns there.
     month_key = valid_month_key(request.args.get("month")) or _default_month_key()
@@ -947,6 +953,8 @@ def budget_items_view():
         active_page="budget",
         month_key=month_key,
         month_label=_month_label(month_key),
+        first_budget_focus=first_budget_focus,
+        first_budget_section=first_budget_section,
     )
 
 

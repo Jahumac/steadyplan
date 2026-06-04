@@ -33,6 +33,7 @@ from app.calculations import (
 from app.models import (
     fetch_all_accounts,
     fetch_all_active_overrides,
+    fetch_budget_items,
     fetch_all_debts,
     fetch_all_goals,
     fetch_all_holdings,
@@ -178,6 +179,12 @@ def _build_daily_contributions_cumulative(uid, daily_labels, accounts, assumptio
 def overview():
     uid = current_user.id
     raw_accounts = fetch_all_accounts(uid)
+    budget_items = fetch_budget_items(uid)
+    budget_item_count = sum(
+        1
+        for item in budget_items
+        if not item.get("linked_account_id") or float(item.get("default_amount") or 0) > 0
+    )
     debts = fetch_all_debts(uid)
     assumptions = fetch_assumptions(uid)
     holdings_totals = fetch_holding_totals_by_account(uid)
@@ -698,6 +705,7 @@ def overview():
         hero_value=hero_value,
         hero_helper=hero_helper,
         has_debts=has_debts,
+        budget_item_count=budget_item_count,
         position_view=position_view,
     ))
     resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
