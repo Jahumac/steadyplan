@@ -47,19 +47,25 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
 
-    assert "Retirement projection · age 60" in body
+    assert "Retirement scenario estimate · age 60" in body
+    assert "Retirement projection · age 60" not in body
     assert "Retirement projection estimate" not in body
-    assert "Scenario estimate at retirement" not in body
-    assert "About this projection" in body
+    assert "Scenario estimate at retirement" in body
+    assert "Scenario Estimate at Retirement" not in body
+    assert "About this scenario estimate" in body
+    assert "About this projection" not in body
     assert "About this estimate" not in body
-    assert "assumptions-based forecast, not a promise" in body
+    assert "scenario estimate based on assumptions, not a promise" in body
+    assert "assumptions-based forecast, not a promise" not in body
     assert "Edit the inputs in" in body
-    assert "What drives this projection" in body
+    assert "What drives this scenario estimate" in body
+    assert "What drives this projection" not in body
     assert "What drives this estimate" not in body
-    assert "Projected values for each account at age 60" in body
+    assert "Scenario estimates for each account at age 60" in body
+    assert "Projected values for each account at age 60" not in body
     assert "Projection estimates for each account at age 60" not in body
-    assert "Scenario estimates for each account at age 60" not in body
-    assert "Adjust inputs to see how the projection changes. Nothing here is saved unless you save changes elsewhere." in body
+    assert "Adjust inputs to see how the scenario estimate changes. Nothing here is saved unless you save changes elsewhere." in body
+    assert "Adjust inputs to see how the projection changes. Nothing here is saved unless you save changes elsewhere." not in body
     assert "Adjust inputs to see how the projection estimate changes. Nothing here is saved unless you save changes elsewhere." not in body
     assert "Adjust inputs to see how the scenario estimate changes. Nothing is saved unless you explicitly save it elsewhere." not in body
     assert "Inflation" in body
@@ -104,7 +110,7 @@ def test_projections_page_uses_lifetime_isa_bonus_wording(app, client, make_user
     assert "govt bonus" not in body
 
 
-def test_projections_goal_callout_uses_projection_estimate_wording(app, client, make_user):
+def test_projections_goal_callout_uses_scenario_estimate_wording(app, client, make_user):
     uid, username, password = make_user(username="proj-goal-copy", password="password123")
 
     with app.app_context():
@@ -135,11 +141,11 @@ def test_projections_goal_callout_uses_projection_estimate_wording(app, client, 
     resp = client.get("/projections/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert 'Projection meets "FI target"' in body or 'Projection is below "FI target"' in body
+    assert 'Scenario estimate meets "FI target"' in body or 'Scenario estimate is below "FI target"' in body
+    assert 'Projection meets "FI target"' not in body
+    assert 'Projection is below "FI target"' not in body
     assert 'Projection estimate meets "FI target"' not in body
     assert 'Projection estimate is below "FI target"' not in body
-    assert 'Scenario estimate meets "FI target"' not in body
-    assert 'Scenario estimate is below "FI target"' not in body
 
 
 def test_settings_growth_hint_no_longer_says_nominal_todays_money(app, client, make_user):
