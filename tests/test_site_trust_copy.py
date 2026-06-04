@@ -47,3 +47,16 @@ def test_docs_and_install_pages_explain_safest_evaluation_path():
     assert "Evaluate safely first" in install
     assert "Best order: screenshots/tour first, then your own local install on LAN or VPN if you want hands-on evaluation." in install
     assert "Public demo access can be useful, but only as a deliberate read-only setup by the host" in install
+
+
+
+def test_public_site_projection_copy_uses_scenario_estimate_language():
+    homepage = _read("index.html")
+    about = _read("about.html")
+
+    assert "Scenario estimates are illustrative and based on your inputs." in homepage
+    assert "Projections are illustrative and based on your inputs." not in homepage
+    assert "retirement scenario estimates" in homepage
+    assert "retirement projections" not in homepage
+    assert "Scenario estimates are illustrative and based on your inputs, assumptions, and scenarios." in about
+    assert "Projections are illustrative and based on your inputs, assumptions, and scenarios." not in about
