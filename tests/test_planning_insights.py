@@ -127,11 +127,17 @@ def test_retirement_income_summary_has_withdrawal_ranges_and_bridge_signal(app, 
 def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     uid, username, password = make_user()
     with app.app_context():
+        assumptions = fetch_assumptions(uid)
+        update_assumptions({
+            **dict(assumptions),
+            "retirement_age": 55,
+            "date_of_birth": "1990-01-01",
+        }, uid)
         create_account(_account("ISA", "Stocks & Shares ISA", 10000, 500), uid)
         create_account(_account("Pension", "SIPP", 50000, 100), uid)
 
     client.post("/login", data={"username": username, "password": password})
-    response = client.get("/planning/?desired_income=24000")
+    response = client.get("/planning/?desired_income=24000&pension_access_age=60")
 
     assert response.status_code == 200
     assert b'budget-year-strip month-strip-global month-strip-mobile-hidden' in response.data
@@ -153,6 +159,9 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert response.data.count(b"State Pension/year (illustrative)") == 2
     assert b"State Pension/year estimate" not in response.data
     assert b"State Pension assumption" in response.data
+    assert b"Accessible pot estimate at retirement" in response.data
+    assert b"Accessible pot scenario estimate at retirement" not in response.data
+    assert b"Accessible pot projected at retirement" not in response.data
     assert b"illustrative State Pension" not in response.data
 
     css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
@@ -166,17 +175,26 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
 def test_planning_page_no_goal_mode_uses_plan_wording(app, client, make_user):
     uid, username, password = make_user()
     with app.app_context():
+        assumptions = fetch_assumptions(uid)
+        update_assumptions({
+            **dict(assumptions),
+            "retirement_age": 55,
+            "date_of_birth": "1990-01-01",
+        }, uid)
         create_account(_account("ISA", "Stocks & Shares ISA", 10000, 500), uid)
         create_account(_account("Pension", "SIPP", 50000, 100), uid)
 
     client.post("/login", data={"username": username, "password": password})
-    response = client.get("/planning/")
+    response = client.get("/planning/?pension_access_age=60")
 
     assert response.status_code == 200
     html = response.data.decode("utf-8", errors="ignore")
     assert "using the balanced illustration as the income guide" in html
+    assert "Accessible pot estimate at retirement" in html
+    assert "Accessible pot scenario estimate at retirement" not in html
+    assert "Accessible pot projected at retirement" not in html
     assert "using the balanced estimate as the income to model" not in html
     assert "State Pension assumption" in html
     assert "illustrative State Pension" not in html
-    assert "with this plan." in html
+    assert "From age 55 to 60." in html
     assert "in this scenario." not in html
