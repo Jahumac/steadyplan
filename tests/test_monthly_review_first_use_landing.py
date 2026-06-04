@@ -33,6 +33,50 @@ def test_monthly_review_first_use_focus_surfaces_baseline_reassurance(app, clien
     assert "If nothing changed yet, you can come back after your first contribution or balance move settles." in html
     assert "<p class=\"eyebrow\">Monthly Update</p>" not in html
     assert "Confirm contributions, update balances, then finish with your note." in html
+    assert "Start here this month" in html
+    assert "Use these three checks to create a clean first baseline." in html
+    assert "1 expected contribution to confirm for this month." in html
+    assert "1 account balance to check across holdings, manual balances, or Premium Bonds." in html
+    assert "No ISA allowance changes logged in " in html
+    assert "Only review this if you moved money in or out of an ISA and it changed your tracked room." in html
+    assert 'href="#expected-contributions" class="badge badge-primary-action">Confirm contributions</a>' in html
+    assert 'href="#update-balances" class="badge badge-primary-action">Update account balances</a>' in html
+    assert 'href="/allowance/#isa" class="badge badge-meta">Review ISA allowance changes</a>' in html
+
+
+def test_monthly_review_first_use_focus_summarises_logged_isa_allowance_changes(app, client, make_user):
+    uid, username, password = make_user(username="monthly-review-allowance-summary", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.calculations import uk_tax_year_label, uk_tax_year_start
+        from app.models import get_connection
+
+        ty_start = uk_tax_year_start().isoformat()
+        tax_year_label = uk_tax_year_label()
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, valuation_mode, monthly_contribution, current_value, is_active)
+                VALUES (?, 'Cash buffer ISA', 'Cash ISA', 'manual', 0, 2500, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, allowance_effect, created_at)
+                VALUES (?, ?, ?, -300, 'withdrawal', 'Flexible withdrawal', 'flexible_withdrawal', datetime('now'))
+                """,
+                (uid, account_id, ty_start),
+            )
+            conn.commit()
+
+    resp = client.get("/monthly-review/?focus=first_update&month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert f"1 explicit ISA allowance change logged in {tax_year_label}." in html
+    assert f"No ISA allowance changes logged in {tax_year_label}." not in html
 
 
 def test_monthly_review_without_first_use_focus_keeps_regular_hero(app, client, make_user):
@@ -60,3 +104,4 @@ def test_monthly_review_without_first_use_focus_keeps_regular_hero(app, client, 
     assert "<h2 class=\"hero-value\">April 2026</h2>" in html
     assert "Do your first monthly update" not in html
     assert "This screen is just for creating that first honest baseline." not in html
+    assert "Start here this month" not in html

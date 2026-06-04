@@ -86,6 +86,44 @@
   <div class="review-hero-flow">
     {% if first_update_focus %}
     <p class="helper-text mb-075">If nothing changed yet, you can come back after your first contribution or balance move settles. This screen is just for creating that first honest baseline.</p>
+    <section class="card" aria-label="Start here this month">
+      <div class="section-header">
+        <div>
+          <p class="eyebrow">This month</p>
+          <h3>Start here this month</h3>
+          <p class="helper-text m-0">Use these three checks to create a clean first baseline. The ISA allowance step only matters if money moved in or out in a way that changes tracked ISA room.</p>
+        </div>
+      </div>
+      <div class="simple-list">
+        <div class="simple-list-item">
+          <div>
+            <strong>Confirm contributions</strong>
+            <p class="helper-text m-0">{% if first_update_checkpoint.contribution_count %}{{ first_update_checkpoint.contribution_count }} expected contribution{{ '' if first_update_checkpoint.contribution_count == 1 else 's' }} to confirm for this month.{% else %}No expected contributions to confirm this month.{% endif %}</p>
+          </div>
+          <div class="badge-row">
+            <a href="#expected-contributions" class="badge badge-primary-action">Confirm contributions</a>
+          </div>
+        </div>
+        <div class="simple-list-item">
+          <div>
+            <strong>Update account balances</strong>
+            <p class="helper-text m-0">{% if first_update_checkpoint.account_balance_checks %}{{ first_update_checkpoint.account_balance_checks }} account balance{{ '' if first_update_checkpoint.account_balance_checks == 1 else 's' }} to check across holdings, manual balances, or Premium Bonds.{% else %}No account balances need checking yet. Add an account when you have something real to track.{% endif %}</p>
+          </div>
+          <div class="badge-row">
+            <a href="#update-balances" class="badge badge-primary-action">Update account balances</a>
+          </div>
+        </div>
+        <div class="simple-list-item">
+          <div>
+            <strong>Review ISA allowance changes</strong>
+            <p class="helper-text m-0">{% if first_update_checkpoint.isa_allowance_event_count %}{{ first_update_checkpoint.isa_allowance_event_count }} explicit ISA allowance change{{ '' if first_update_checkpoint.isa_allowance_event_count == 1 else 's' }} logged in {{ first_update_checkpoint.tax_year_label }}.{% else %}No ISA allowance changes logged in {{ first_update_checkpoint.tax_year_label }}. Only review this if you moved money in or out of an ISA and it changed your tracked room.{% endif %}</p>
+          </div>
+          <div class="badge-row">
+            <a href="/allowance/#isa" class="badge badge-meta">Review ISA allowance changes</a>
+          </div>
+        </div>
+      </div>
+    </section>
     {% endif %}
     <details class="monthly-review-start-details">
       <summary>
