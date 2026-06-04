@@ -35,3 +35,15 @@ def test_docs_hub_and_backups_page_explain_automatic_pre_restore_backup():
     assert "If that safety backup cannot be created, restore stops and leaves current data unchanged." in backups
     assert "You validate the export first, then confirm overwrite for that user only." in backups
     assert "download a per-user JSON export and create a whole-instance SQLite backup from Diagnostics" not in backups
+
+
+def test_docs_and_install_pages_explain_safest_evaluation_path():
+    docs_index = _read("docs/index.html")
+    install = _read("docs/install.html")
+
+    assert "Safest way to evaluate" in docs_index
+    assert "Start with the <a href=\"../tour.html\">product tour</a> and docs." in docs_index
+    assert "A public read-only demo can be useful, but it should be treated as an explicit opt-in host choice rather than the default way to try SteadyPlan." in docs_index
+    assert "Evaluate safely first" in install
+    assert "Best order: screenshots/tour first, then your own local install on LAN or VPN if you want hands-on evaluation." in install
+    assert "Public demo access can be useful, but only as a deliberate read-only setup by the host" in install
