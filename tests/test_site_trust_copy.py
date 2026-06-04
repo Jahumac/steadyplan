@@ -40,6 +40,7 @@ def test_docs_hub_and_backups_page_explain_automatic_pre_restore_backup():
 def test_docs_and_install_pages_explain_safest_evaluation_path():
     docs_index = _read("docs/index.html")
     install = _read("docs/install.html")
+    reverse_proxy = _read("docs/reverse-proxy.html")
 
     assert "Safest way to evaluate" in docs_index
     assert "Start with the <a href=\"../tour.html\">product tour</a> and docs." in docs_index
@@ -47,6 +48,8 @@ def test_docs_and_install_pages_explain_safest_evaluation_path():
     assert "Evaluate safely first" in install
     assert "Best order: screenshots/tour first, then your own local install on LAN or VPN if you want hands-on evaluation." in install
     assert "Public demo access can be useful, but only as a deliberate read-only setup by the host" in install
+    assert "FORWARDED_ALLOW_IPS" in reverse_proxy
+    assert "advanced choice rather than the default" in reverse_proxy
 
 
 

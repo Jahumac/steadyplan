@@ -136,6 +136,23 @@ def test_demo_overview_get_does_not_create_due_monthly_review(app, client, make_
     assert int(after) == 0
 
 
+def test_demo_read_only_blocks_non_post_mutations(app, client, make_user):
+    app.config.update(DEMO_PUBLIC_LOGIN_ENABLED=True, DEMO_READ_ONLY_USERNAME="demo")
+    make_user(username="demo", password="password123")
+
+    login_resp = client.get("/demo", follow_redirects=False)
+    assert login_resp.status_code in (301, 302)
+
+    resp = client.open(
+        "/api/v1/accounts/1/balance",
+        method="PATCH",
+        headers={"Accept": "application/json"},
+    )
+
+    assert resp.status_code == 403
+    assert resp.get_json() == {"error": "Demo account is read-only"}
+
+
 def test_unauthenticated_redirects_to_login(app, client, make_user):
     # Need at least one user so the app doesn't redirect to /setup
     make_user()

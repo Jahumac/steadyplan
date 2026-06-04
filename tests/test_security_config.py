@@ -66,3 +66,33 @@ def test_create_app_wraps_proxyfix_only_when_explicitly_enabled(monkeypatch):
 
     fresh_app = app_pkg.create_app()
     assert isinstance(fresh_app.wsgi_app, ProxyFix)
+
+
+def test_security_headers_ignore_forwarded_proto_by_default(app, client, make_user):
+    make_user(username="security-headers-default", password="password123")
+
+    resp = client.post(
+        "/login",
+        data={"username": "security-headers-default", "password": "password123"},
+        headers={"X-Forwarded-Proto": "https"},
+        follow_redirects=False,
+    )
+
+    assert resp.status_code in (301, 302)
+    assert "Strict-Transport-Security" not in resp.headers
+
+
+def test_security_headers_use_proxyfix_when_proxy_headers_are_trusted(app, client, make_user):
+    app.config["TRUST_PROXY_HEADERS"] = True
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
+    make_user(username="security-headers-proxy", password="password123")
+
+    resp = client.post(
+        "/login",
+        data={"username": "security-headers-proxy", "password": "password123"},
+        headers={"X-Forwarded-Proto": "https", "X-Forwarded-For": "203.0.113.9"},
+        follow_redirects=False,
+    )
+
+    assert resp.status_code in (301, 302)
+    assert resp.headers.get("Strict-Transport-Security") == "max-age=31536000; includeSubDomains"
