@@ -600,8 +600,10 @@ def settings():
         flash("Settings saved.", "success")
         return redirect(url_for("settings.settings"))
 
-    computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
     page_mode = request.args.get("mode", "view")
+    focus = request.args.get("focus", "")
+    focus_planning_dates = page_mode == "edit" and focus == "planning_dates"
+    computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
     diagnostics = None
     if page_mode == "diagnostics":
         diagnostics = {}
@@ -709,6 +711,7 @@ def settings():
             assumptions=assumptions,
             computed_age=computed_age,
             diagnostics=diagnostics,
+            focus_planning_dates=focus_planning_dates,
             page_mode=page_mode,
         ),
     )
