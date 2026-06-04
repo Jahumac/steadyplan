@@ -396,13 +396,12 @@ def test_overview_data_health_visible_when_warnings_exist(app, client, make_user
     resp = client.get("/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-    assert "Data health" in html
+    assert "Data health" not in html
     assert "Data Health" not in html
-    assert "Needs attention" in html
-    assert "/accounts/?mode=create" in html
-    assert "Add your first account" in html
+    assert "Needs attention" not in html
+    assert "No accounts set up" not in html
     assert ">Review<" not in html
-    assert "alert-warning" in html
+    assert "No accounts set up —" not in html
 
 
 def test_overview_data_health_missing_goal_uses_first_goal_cta(app, client, make_user):

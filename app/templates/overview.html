@@ -20,19 +20,37 @@
 {% if data_health_summary and data_health_summary.health_items %}
   {% set data_health_warnings = data_health_summary.health_items | selectattr('status', 'equalto', 'warning') | list %}
 {% endif %}
+{% set suppressed_data_health_titles = [] %}
+{% if steps_done < 4 %}
+  {% if not has_profile %}
+    {% set suppressed_data_health_titles = suppressed_data_health_titles + ['No assumptions set up'] %}
+  {% endif %}
+  {% if not has_accounts %}
+    {% set suppressed_data_health_titles = suppressed_data_health_titles + ['No accounts set up'] %}
+  {% endif %}
+  {% if not has_goal %}
+    {% set suppressed_data_health_titles = suppressed_data_health_titles + ['No financial goals set'] %}
+  {% endif %}
+{% endif %}
+{% set overview_warning = namespace(first=None) %}
+{% for item in data_health_warnings %}
+  {% if item.title not in suppressed_data_health_titles and overview_warning.first is none %}
+    {% set overview_warning.first = item %}
+  {% endif %}
+{% endfor %}
 
 {# ── Getting started (shown first for new users) ─────────────────────────── #}
 {% if steps_done < 4 %}
 {% if not has_profile %}
-  {% set onboarding_primary_eyebrow = 'Start here' %}
-  {% set onboarding_primary_title = 'Complete your profile' %}
-  {% set onboarding_primary_body = 'Just enough to make dates and projections line up later.' %}
+  {% set onboarding_primary_eyebrow = 'Next step' %}
+  {% set onboarding_primary_title = 'Finish the two basics first' %}
+  {% set onboarding_primary_body = 'Open the first unfinished basic below. Goals and monthly updates can wait until you have something real to track.' %}
   {% set onboarding_primary_href = '/settings/?mode=edit' %}
-  {% set onboarding_primary_cta = 'Complete your profile' %}
+  {% set onboarding_primary_cta = 'Add your planning dates' %}
 {% elif not has_accounts %}
-  {% set onboarding_primary_eyebrow = 'Start here' %}
-  {% set onboarding_primary_title = 'Add your first account' %}
-  {% set onboarding_primary_body = 'Start with one real account so Overview has something concrete to show.' %}
+  {% set onboarding_primary_eyebrow = 'Next step' %}
+  {% set onboarding_primary_title = 'Finish the two basics first' %}
+  {% set onboarding_primary_body = 'You already added your planning dates. Now add one real account so Overview has something concrete to show.' %}
   {% set onboarding_primary_href = '/accounts/?mode=create' %}
   {% set onboarding_primary_cta = 'Add your first account' %}
 {% elif not has_goal %}
@@ -81,12 +99,12 @@
     <a href="{{ onboarding_primary_href }}" class="badge badge-primary-action">{{ onboarding_primary_cta }}</a>
   </section>
 
-  <p class="onboarding-section-label">{% if essential_steps_done < 2 %}Essential to start{% else %}Basics done{% endif %}</p>
+  <p class="onboarding-section-label">{% if essential_steps_done < 2 %}Just these two basics first{% else %}Basics done{% endif %}</p>
   <div class="onboarding-steps">
     <a href="/settings/?mode=edit" class="onboarding-step {% if has_profile %}onboarding-done{% endif %}">
       <span class="onboarding-check">{% if has_profile %}✓{% else %}1{% endif %}</span>
       <div>
-        <strong>Complete your profile</strong>
+        <strong>Add your planning dates</strong>
         <small>Date of birth and retirement age are enough to make later dates and projections meaningful.</small>
       </div>
     </a>
@@ -102,7 +120,7 @@
   <details class="onboarding-later">
     <summary>
       {% if essential_steps_done < 2 %}
-      Optional after basics · {{ later_steps_done }}/2 complete
+      Can wait until later · {{ later_steps_done }}/2 complete
       {% else %}
       Helpful next steps · {{ 2 - later_steps_done }} remaining
       {% endif %}
@@ -180,17 +198,17 @@
 {% endfor %}
 
 {# ── Data Health (only when action is needed) ─────────────────────────────── #}
-{% if data_health_warnings and not has_accounts %}
+{% if overview_warning.first and not has_accounts %}
 <section class="card alert-banner alert-warning mb-1">
   <div class="flex flex-center flex-wrap gap-075">
     <div style="flex:1; min-width:200px;">
       <p class="eyebrow m-0">Data health</p>
       <strong>Needs attention</strong>
       <p class="helper-text m-0">
-        {{ data_health_warnings[0].title }}{% if data_health_warnings[0].explanation %} — {{ data_health_warnings[0].explanation }}{% endif %}
+        {{ overview_warning.first.title }}{% if overview_warning.first.explanation %} — {{ overview_warning.first.explanation }}{% endif %}
       </p>
     </div>
-    <a href="{{ data_health_warnings[0].link if data_health_warnings[0].link else '/settings/?mode=diagnostics' }}" class="badge badge-meta">{{ data_health_warnings[0].cta_text if data_health_warnings[0].cta_text else 'Review' }}</a>
+    <a href="{{ overview_warning.first.link if overview_warning.first.link else '/settings/?mode=diagnostics' }}" class="badge badge-meta">{{ overview_warning.first.cta_text if overview_warning.first.cta_text else 'Review' }}</a>
   </div>
 </section>
 {% endif %}
