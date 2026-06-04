@@ -182,7 +182,7 @@
     {% call hero_stat('Accounts') %}<strong>{{ diagnostics.counts.accounts if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
     {% call hero_stat('Holdings') %}<strong>{{ diagnostics.counts.holdings if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
     {% call hero_stat('Daily snapshots') %}<strong>{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
-    {% call hero_stat('Last scheduler run') %}<strong>{{ diagnostics.scheduler_last_run.run_date ~ ' ' ~ diagnostics.scheduler_last_run.slot if diagnostics and diagnostics.scheduler_last_run else '—' }}</strong>{% endcall %}
+    {% call hero_stat('Last scheduler run') %}<strong>{{ diagnostics.scheduler_status.short if diagnostics and diagnostics.scheduler_status else 'Not yet' }}</strong>{% endcall %}
     {% call hero_stat('Backups') %}
       {% if diagnostics and diagnostics.backups and diagnostics.backups.health_status == 'good' %}
         <strong class="text-accent-2">{{ diagnostics.backups.health_label }}</strong>
@@ -193,8 +193,10 @@
     {% call hero_stat('Trust posture') %}
       {% if diagnostics and diagnostics.trust_posture and diagnostics.trust_posture.overall_label == 'OK' %}
         <strong class="text-accent-2">{{ diagnostics.trust_posture.overall_label }}</strong>
+      {% elif diagnostics and diagnostics.trust_posture and diagnostics.trust_posture.overall_label == 'Review recommended' %}
+        <strong style="color:var(--accent-3);">{{ diagnostics.trust_posture.overall_label }}</strong>
       {% else %}
-        <strong style="color:var(--accent-3);">{{ diagnostics.trust_posture.overall_label if diagnostics and diagnostics.trust_posture and diagnostics.trust_posture.overall_label else 'Review recommended' }}</strong>
+        <strong>{{ diagnostics.trust_posture.overall_label if diagnostics and diagnostics.trust_posture and diagnostics.trust_posture.overall_label else 'Local/demo posture' }}</strong>
       {% endif %}
     {% endcall %}
   </div>
@@ -216,13 +218,7 @@
         </tr>
         <tr>
           <td>Scheduler last run</td>
-          <td class="num">
-            {% if diagnostics and diagnostics.scheduler_last_run %}
-              {{ diagnostics.scheduler_last_run.run_date }} {{ diagnostics.scheduler_last_run.slot }}
-            {% else %}
-              —
-            {% endif %}
-          </td>
+          <td class="num">{{ diagnostics.scheduler_status.full if diagnostics and diagnostics.scheduler_status else 'Not yet recorded' }}</td>
         </tr>
         <tr>
           <td>Latest portfolio snapshot</td>
@@ -241,6 +237,7 @@
       </tbody>
     </table>
   </div>
+  <p class="helper-text" style="margin-top:0.75rem;">{{ diagnostics.scheduler_status.message if diagnostics and diagnostics.scheduler_status else 'No scheduler run has been recorded yet.' }}</p>
 </section>
 
 <section class="panel mt-1">
@@ -253,11 +250,13 @@
   <p class="helper-text">
     Live runtime checks for the main trust settings on this instance. This is not a full security audit, but it should make the current posture easier to review.
   </p>
-  {% if diagnostics and diagnostics.trust_posture and diagnostics.trust_posture.overall_label != 'OK' %}
+  {% if diagnostics and diagnostics.trust_posture and diagnostics.trust_posture.overall_label == 'Review recommended' %}
     <section class="panel panel-compact alert-banner alert-warning mt-075" style="margin:0.85rem 0 0;">
       <strong>Trust posture</strong>
-      <p class="helper-text m-0">One or more settings need review before treating this as a polished public deployment.</p>
+      <p class="helper-text m-0">{{ diagnostics.trust_posture.overall_message }}</p>
     </section>
+  {% elif diagnostics and diagnostics.trust_posture and diagnostics.trust_posture.overall_message %}
+    <p class="helper-text" style="margin:0.85rem 0 0;">{{ diagnostics.trust_posture.overall_message }}</p>
   {% endif %}
   <div class="table-scroll">
     <table class="data-table">
