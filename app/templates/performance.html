@@ -32,8 +32,13 @@
           <p class="hero-subtitle">{{ daily_labels | length }} days tracked</p>
         {% endif %}
       {% else %}
+        {% if snapshot_count == 1 %}
+        <h2 class="hero-value">One snapshot down</h2>
+        <p class="hero-subtitle">Your first baseline is saved. Next month's monthly update will start the performance chart.</p>
+        {% else %}
         <h2 class="hero-value">No data yet</h2>
         <p class="hero-subtitle">Complete two monthly updates to start seeing performance charts</p>
+        {% endif %}
       {% endif %}
     </div>
   </div>
@@ -55,9 +60,15 @@
 
 {% if not has_data %}
 <section class="card">
+  {% if snapshot_count == 1 %}
+  {{ empty_state('First baseline saved',
+                 'SteadyPlan has your first snapshot. Come back after next month\'s monthly update and the performance chart will appear.',
+                 cta_text='Back to overview', cta_href='/') }}
+  {% else %}
   {{ empty_state('Not enough data yet',
                  'You need at least two data points to draw a line. Complete two monthly updates and the performance charts will appear.',
                  cta_text='Open monthly update', cta_href='/monthly-review/') }}
+  {% endif %}
 </section>
 
 {% else %}

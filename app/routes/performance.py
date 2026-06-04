@@ -40,7 +40,8 @@ def performance():
 
     # Daily snapshots for the chart (same as overview)
     daily_snapshots = fetch_daily_snapshots(uid, limit=730)
-    has_data = len(daily_snapshots) >= 2
+    snapshot_count = len(daily_snapshots)
+    has_data = snapshot_count >= 2
 
     daily_labels   = []  # raw YYYY-MM-DD for client-side period filtering
     daily_actual   = []
@@ -332,6 +333,7 @@ def performance():
     return render_template(
         "performance.html",
         has_data=has_data,
+        snapshot_count=snapshot_count,
         daily_labels=daily_labels,
         daily_actual=daily_actual,
         daily_plan=daily_plan,
