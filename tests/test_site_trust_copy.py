@@ -1,0 +1,37 @@
+from pathlib import Path
+
+
+SITE_ROOT = Path("/opt/data/steadyplan/site")
+
+
+def _read(relative_path: str) -> str:
+    return (SITE_ROOT / relative_path).read_text()
+
+
+def test_homepage_trust_card_mentions_restore_preview_and_safety_backup():
+    html = _read("index.html")
+
+    assert "per-user JSON exports, whole-instance SQLite backups, restore preview checks, and automatic pre-restore safety backups" in html
+    assert "See how JSON exports, whole-instance backups, and restore checks fit together" not in html
+
+
+def test_tour_trust_copy_matches_restore_safety_story():
+    html = _read("tour.html")
+
+    assert "Backups, validated restore steps, optional lookups, and privacy." in html
+    assert "A restore is previewed before anything is overwritten, and the app creates a fresh whole-instance SQLite backup before a confirmed overwrite can proceed." in html
+    assert "restore preview checks with an automatic pre-restore safety backup" in html
+    assert "validated restore flow and safety-backup story" in html
+
+
+def test_docs_hub_and_backups_page_explain_automatic_pre_restore_backup():
+    docs_index = _read("docs/index.html")
+    backups = _read("docs/backups.html")
+
+    assert "restore preview checks plus the automatic pre-restore safety backup" in docs_index
+    assert "Trust checkpoint" in backups
+    assert "In-app restore is a validated, two-step overwrite flow for one user at a time." in backups
+    assert "During in-app restore, SteadyPlan validates the export first and then creates a fresh whole-instance SQLite backup automatically before confirmed overwrite." in backups
+    assert "If that safety backup cannot be created, restore stops and leaves current data unchanged." in backups
+    assert "You validate the export first, then confirm overwrite for that user only." in backups
+    assert "download a per-user JSON export and create a whole-instance SQLite backup from Diagnostics" not in backups

@@ -57,7 +57,7 @@
           </a>
           <a class="card pad tile tile-link quick-link" href="#trust">
             <h3>Trust and ownership</h3>
-            <p>Backups, exports, restore confidence, and privacy.</p>
+            <p>Backups, validated restore steps, optional lookups, and privacy.</p>
           </a>
           <a class="card pad tile tile-link quick-link" href="#next-steps">
             <h3>Next steps</h3>
@@ -148,9 +148,9 @@
               SteadyPlan is not just about keeping data local in theory. It also needs to make backups, exports, restore behaviour, and optional external lookups understandable in practice.
             </p>
             <p class="muted prose">
-              That is why Settings, privacy notes, and backup guidance are part of the public story as well as the app itself.
+              That is why Settings, privacy notes, and backup guidance are part of the public story as well as the app itself. A restore is previewed before anything is overwritten, and the app creates a fresh whole-instance SQLite backup before a confirmed overwrite can proceed.
             </p>
-            <p class="note compact-note">Trust surfaces include per-user JSON exports, whole-instance SQLite backups, and plain-language notes on public exposure and optional external lookups.</p>
+            <p class="note compact-note">Trust surfaces include per-user JSON exports, whole-instance SQLite backups, restore preview checks with an automatic pre-restore safety backup, and plain-language notes on public exposure and optional external lookups.</p>
           </div>
           <figure class="tour-media">
             <img class="screenshot screenshot-large" src="./assets/screenshots/data-privacy.png" alt="SteadyPlan settings and data ownership screen with demo data">
@@ -170,7 +170,7 @@
             </a>
             <a class="card pad tile tile-link" href="./docs/backups.html">
               <h3>Backups and restore</h3>
-              <p>Understand the recovery story before trusting the app with real personal data.</p>
+              <p>Understand the validated restore flow and safety-backup story before trusting the app with real personal data.</p>
             </a>
             <a class="card pad tile tile-link" href="./about.html">
               <h3>Why it exists</h3>
