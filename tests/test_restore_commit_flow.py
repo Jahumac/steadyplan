@@ -63,6 +63,7 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
 
     with app.app_context():
         from app.models import get_connection
+        from app.services.backups import run_backup
 
         with get_connection() as conn:
             conn.execute(
@@ -78,6 +79,10 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
                 (uid2,),
             )
             conn.commit()
+
+        backup_dir = Path(app.config.get("DATA_DIR", Path(app.config["DB_PATH"]).parent)) / "backups"
+        pre_existing_daily_backup = run_backup(Path(app.config["DB_PATH"]), Path(app.config.get("DATA_DIR", Path(app.config["DB_PATH"]).parent)))
+        assert pre_existing_daily_backup.exists()
 
     _login(client, u1, p1)
     export_bytes = _export_json_bytes(client)
@@ -134,11 +139,14 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
     assert "Restore complete. Data for this user has been overwritten. Safety backup created first:" in body_ok
 
     with app.app_context():
-        import app.routes.settings as s
-        backup_files = sorted((Path(app.config.get("DATA_DIR", Path(app.config["DB_PATH"]).parent)) / "backups").glob("finance-*.db"))
+        backup_files = sorted(backup_dir.glob("finance*.db"))
         backup_files = [p for p in backup_files if not p.is_symlink()]
         assert backup_files
-        assert backup_files[-1].name in body_ok
+        assert pre_existing_daily_backup in backup_files
+
+        pre_restore_backups = [p for p in backup_files if p.name.startswith("finance-pre-restore-")]
+        assert pre_restore_backups
+        assert pre_restore_backups[-1].name in body_ok
 
         from app.models import get_connection
 
