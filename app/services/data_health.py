@@ -43,6 +43,7 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
             overall_status = HEALTH_STATUS_WARNING
         else:
             stale_accounts = []
+            missing_history_accounts = []
             for account in accounts:
                 # Check for recent monthly snapshots or account daily snapshots
                 # Assuming 'snapshot_date' is YYYY-MM-DD
@@ -61,16 +62,21 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
 
                 if latest_snapshot_row and latest_snapshot_row.get("max_date") is not None:
                     latest_date = datetime.datetime.strptime(latest_snapshot_row["max_date"], "%Y-%m-%d").date()
-                    if (datetime.date.today() - latest_date).days > 60: # More than 60 days old
+                    if (datetime.date.today() - latest_date).days > 60:  # More than 60 days old
                         stale_accounts.append(account["name"])
                 else:
-                    stale_accounts.append(account["name"]) # No snapshots found
+                    missing_history_accounts.append(account["name"])
 
-            if stale_accounts:
+            show_history_warning = bool(stale_accounts) or (
+                bool(missing_history_accounts) and len(missing_history_accounts) != len(accounts)
+            )
+            history_warning_accounts = stale_accounts + missing_history_accounts
+
+            if show_history_warning:
                 health_items.append({
                     "status": HEALTH_STATUS_WARNING,
                     "title": "Some accounts have stale or missing history",
-                    "explanation": f"The following accounts have no recent balance history: {', '.join(stale_accounts)}. Update them to ensure accurate projections.",
+                    "explanation": f"The following accounts have no recent balance history: {', '.join(history_warning_accounts)}. Update them to ensure accurate projections.",
                     "link": "/history",
                     "cta_text": "Review history",
                 })
