@@ -3,6 +3,26 @@ from ._conn import get_connection
 from .accounts import fetch_all_accounts
 
 
+def _expected_contribution_for_month(conn, account_id, month_key, fallback_monthly_contribution):
+    override = conn.execute(
+        """
+        SELECT override_amount
+        FROM contribution_overrides
+        WHERE account_id = ?
+          AND from_month <= ?
+          AND to_month >= ?
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (account_id, month_key, month_key),
+    ).fetchone()
+    return (
+        float(override["override_amount"])
+        if override is not None
+        else float(fallback_monthly_contribution or 0)
+    )
+
+
 def fetch_or_create_monthly_review(month_key, user_id):
     with get_connection() as conn:
         review = conn.execute(
@@ -70,22 +90,11 @@ def ensure_monthly_review_items(review_id, user_id):
         existing_map = {row["account_id"]: float(row["expected_contribution"] or 0) for row in existing_rows}
 
         for account in accounts:
-            override = conn.execute(
-                """
-                SELECT override_amount
-                FROM contribution_overrides
-                WHERE account_id = ?
-                  AND from_month <= ?
-                  AND to_month >= ?
-                ORDER BY id DESC
-                LIMIT 1
-                """,
-                (account["id"], month_key, month_key),
-            ).fetchone()
-            expected = (
-                float(override["override_amount"])
-                if override is not None
-                else float(account["monthly_contribution"] or 0)
+            expected = _expected_contribution_for_month(
+                conn,
+                account["id"],
+                month_key,
+                account.get("monthly_contribution"),
             )
 
             if account["id"] not in existing_map:
@@ -110,6 +119,50 @@ def ensure_monthly_review_items(review_id, user_id):
                     (expected, review_id, account["id"]),
                 )
         conn.commit()
+
+
+def preview_monthly_review_items(review, user_id):
+    """Build the monthly review rows without writing anything to the database."""
+    accounts = fetch_all_accounts(user_id)
+    month_key = review["month_key"]
+    is_complete = review["status"] == "complete"
+
+    with get_connection() as conn:
+        existing_rows = []
+        if review.get("id") is not None:
+            existing_rows = conn.execute(
+                "SELECT * FROM monthly_review_items WHERE review_id = ? ORDER BY account_id ASC",
+                (review["id"],),
+            ).fetchall()
+        existing_map = {row["account_id"]: row for row in existing_rows}
+        preview = []
+
+        for account in accounts:
+            expected = _expected_contribution_for_month(
+                conn,
+                account["id"],
+                month_key,
+                account.get("monthly_contribution"),
+            )
+            existing = existing_map.get(account["id"], {})
+            preview.append({
+                "id": existing.get("id"),
+                "review_id": review.get("id"),
+                "account_id": account["id"],
+                "expected_contribution": existing.get("expected_contribution") if (is_complete and existing) else expected,
+                "contribution_confirmed": existing.get("contribution_confirmed", 0),
+                "holdings_updated": existing.get("holdings_updated", 0),
+                "balance_updated": existing.get("balance_updated", 0),
+                "notes": existing.get("notes", ""),
+                "account_name": account["name"],
+                "provider": account.get("provider"),
+                "wrapper_type": account.get("wrapper_type"),
+                "valuation_mode": account.get("valuation_mode"),
+                "account_monthly_contribution": account.get("monthly_contribution"),
+                "current_value": account.get("current_value"),
+            })
+
+        return preview
 
 
 def update_monthly_review(review_id, status, notes, user_id=None):

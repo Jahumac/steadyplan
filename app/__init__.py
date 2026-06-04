@@ -4,6 +4,7 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .calculations import build_month_strip
+from .demo import is_read_only_demo_user
 from .models import count_users, fetch_assumptions, get_user_by_id, init_db, close_db
 from .services.scheduler import init_scheduler
 
@@ -161,14 +162,7 @@ def create_app():
 
     @app.before_request
     def enforce_read_only_demo():
-        if not current_user.is_authenticated:
-            return
-        demo_user = app.config.get("DEMO_READ_ONLY_USERNAME")
-        if not demo_user:
-            return
-        if not app.config.get("DEMO_PUBLIC_LOGIN_ENABLED", False):
-            return
-        if getattr(current_user, "username", None) != demo_user:
+        if not is_read_only_demo_user():
             return
         if request.method != "POST":
             return
