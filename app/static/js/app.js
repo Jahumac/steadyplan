@@ -145,7 +145,23 @@
       });
     });
 
-    // 0c. Holdings row collapse/expand on mobile
+    // 0c. Open targeted allowance panels from hash links like #isa-log-panel
+    (function() {
+      var hash = window.location.hash ? window.location.hash.slice(1) : '';
+      if (!hash) return;
+      var panel = document.getElementById(hash);
+      if (!panel || !panel.classList.contains('allowance-log-panel')) return;
+      panel.classList.remove('hidden');
+      var section = panel.closest('section');
+      if (section && hash.indexOf('isa-') === 0) {
+        var wrapper = document.getElementById('isa');
+        if (wrapper) wrapper.scrollIntoView({ block: 'start' });
+      }
+      var first = panel.querySelector('input, select, textarea');
+      if (first) first.focus();
+    })();
+
+    // 0d. Holdings row collapse/expand on mobile
     document.querySelectorAll('[data-holding-toggle]').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var row = btn.closest('.holdings-row');

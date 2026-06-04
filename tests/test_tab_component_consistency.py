@@ -105,6 +105,15 @@ def test_confirm_helper_js_no_longer_carries_dead_mascot_icon_wiring():
     assert "/static/icons/shelly/Accounts.png" not in js
 
 
+def test_allowance_hash_links_open_targeted_log_panels():
+    js = Path("/opt/data/steadyplan/app/static/js/app.js").read_text()
+
+    assert "window.location.hash ? window.location.hash.slice(1) : ''" in js
+    assert "panel.classList.contains('allowance-log-panel')" in js
+    assert "document.getElementById('isa')" in js
+    assert "panel.classList.remove('hidden')" in js
+
+
 def test_lifetime_isa_preview_js_uses_specific_bonus_copy():
     js = Path("/opt/data/steadyplan/app/static/js/app.js").read_text()
 
