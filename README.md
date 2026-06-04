@@ -40,6 +40,7 @@ It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, 
 ### Network posture (recommended)
 - Safe default: run SteadyPlan on your home LAN or VPN only. Do not port-forward it to the public internet.
 - Optional public access: use HTTPS on a reverse proxy (e.g. Nginx Proxy Manager) or a tunnel/VPN approach (e.g. Cloudflare Tunnel, Tailscale). Enable production cookie settings and add an extra auth layer.
+- If you publish behind HTTPS, set `APP_ENV=production`. If you also want SteadyPlan to honour client IP/protocol headers from that proxy, set `TRUST_PROXY_HEADERS=1` and widen Gunicorn's forwarded-header allowlist deliberately via `FORWARDED_ALLOW_IPS`.
 
 ---
 
@@ -127,7 +128,7 @@ docker exec -it steadyplan python scripts/seed_demo.py --username demo
 Enable a public read-only demo login:
 
 - Create a `demo` user (any password) and set `DEMO_PUBLIC_LOGIN_ENABLED=1`.
-- Then you can use `/demo` (or the “Try demo” button on the login page). The demo user is read-only: POST writes are blocked.
+- Then you can use `/demo` (or the “Try demo” button on the login page). The demo user is read-only: mutating requests are blocked.
 
 ---
 

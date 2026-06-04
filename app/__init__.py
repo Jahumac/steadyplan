@@ -164,7 +164,7 @@ def create_app():
     def enforce_read_only_demo():
         if not is_read_only_demo_user():
             return
-        if request.method != "POST":
+        if request.method in {"GET", "HEAD", "OPTIONS"}:
             return
         if request.headers.get("Accept", "").find("application/json") != -1 or request.path.find("/api/") != -1:
             return jsonify({"error": "Demo account is read-only"}), 403
@@ -237,7 +237,7 @@ def create_app():
     # ── Security headers ────────────────────────────────────────────────────
     @app.after_request
     def set_security_headers(response):
-        if request.is_secure or request.headers.get("X-Forwarded-Proto") == "https":
+        if request.is_secure:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
 
         try:

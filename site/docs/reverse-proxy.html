@@ -81,6 +81,9 @@
         <p class="muted prose">
           Only set <code>TRUST_PROXY_HEADERS=1</code> when SteadyPlan is behind a trusted reverse proxy that sets <code>X-Forwarded-For</code> and <code>X-Forwarded-Proto</code> correctly. Do not enable it if you access the container directly without a proxy.
         </p>
+        <p class="muted prose">
+          At the server layer, forwarded-header trust should also be widened deliberately via <code>FORWARDED_ALLOW_IPS</code> when your proxy/tunnel is not on localhost. Prefer an exact proxy IP/network if you can; treat <code>*</code> as an explicit advanced choice rather than the default.
+        </p>
 
         <div class="hr"></div>
         <h2>What this does not do</h2>

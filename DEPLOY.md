@@ -148,6 +148,17 @@ REMEMBER_COOKIE_SECURE=1
 
 Only override them back to `0` if you deliberately run over plain HTTP. If SteadyPlan sits behind a trusted reverse proxy and you need client IP/protocol headers honoured, also set `TRUST_PROXY_HEADERS=1`; leave it unset for direct access.
 
+At the server layer, Gunicorn now keeps forwarded-header trust locked to localhost unless you widen it deliberately. If your proxy/tunnel runs on another host/container and you want forwarded headers honoured, set an explicit allowlist such as:
+
+```yaml
+environment:
+  - APP_ENV=production
+  - TRUST_PROXY_HEADERS=1
+  - FORWARDED_ALLOW_IPS=127.0.0.1,::1
+```
+
+Or replace that allowlist with the exact proxy IP/network you trust. Use `*` only as a deliberate choice when you fully trust the fronting proxy/tunnel path.
+
 ### Rate-limit storage and workers
 
 SteadyPlan defaults to one Gunicorn worker:
