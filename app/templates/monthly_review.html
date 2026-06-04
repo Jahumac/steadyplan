@@ -22,9 +22,9 @@
 <section class="card highlight mb-1 month-accent-{{ current_month_num }} review-hero-card">
   <div class="hero-top">
     <div>
-      <p class="eyebrow">Monthly Update</p>
-      <h2 class="hero-value">{{ month_label }}</h2>
-      <p class="hero-subtitle">Confirm contributions, update balances, then finish with your note.</p>
+      <p class="eyebrow">{{ 'Start here' if first_update_focus else 'Monthly Update' }}</p>
+      <h2 class="hero-value">{{ 'Do your first monthly update' if first_update_focus else month_label }}</h2>
+      <p class="hero-subtitle">{% if first_update_focus %}One pass is enough to create your first snapshot. Confirm what happened, update any balances that changed, then finish with a quick note.{% else %}Confirm contributions, update balances, then finish with your note.{% endif %}</p>
       {% if review.status != 'complete' %}
         {% set remaining_accounts = total_accounts - accounts_updated %}
         <div class="review-hero-todo" aria-label="Still to do">
@@ -84,6 +84,9 @@
   </div>
   {% endif %}
   <div class="review-hero-flow">
+    {% if first_update_focus %}
+    <p class="helper-text mb-075">If nothing changed yet, you can come back after your first contribution or balance move settles. This screen is just for creating that first honest baseline.</p>
+    {% endif %}
     <details class="monthly-review-start-details">
       <summary>
         <div>

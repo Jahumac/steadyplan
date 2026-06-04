@@ -599,7 +599,7 @@ def overview():
                 "title": "Save your first snapshot",
                 "body": "Complete one Monthly Update to create a proper starting point for progress, performance, and projections.",
                 "cta_text": "Do first update",
-                "cta_href": "/monthly-review/",
+                "cta_href": "/monthly-review/?focus=first_update",
             }
         elif not salary_day:
             next_action = {

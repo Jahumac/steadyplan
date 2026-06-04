@@ -29,6 +29,8 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Complete your profile" not in html
     assert "Complete profile" not in html
     assert 'href="/settings/?mode=edit&amp;focus=planning_dates"' in html
+    assert '/goals/?mode=create&focus=first_goal' in html
+    assert '/monthly-review/?focus=first_update' in html
     assert "No accounts set up" not in html
     assert "Data health" not in html
     assert "/accounts/?mode=create&focus=first_account" in html
@@ -250,6 +252,7 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
     html = resp.get_data(as_text=True)
 
     assert "Do your first monthly update" in html
+    assert '/monthly-review/?focus=first_update' in html
     assert "Start first monthly update" not in html
     assert "Keep going" in html
     assert "Getting Started" not in html

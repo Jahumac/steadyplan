@@ -64,13 +64,13 @@
   {% set onboarding_primary_eyebrow = 'Next helpful step' %}
   {% set onboarding_primary_title = 'Set your first goal' %}
   {% set onboarding_primary_body = 'Optional, but useful once you want SteadyPlan to track progress toward something specific.' %}
-  {% set onboarding_primary_href = '/goals/?mode=create' %}
+  {% set onboarding_primary_href = '/goals/?mode=create&focus=first_goal' %}
   {% set onboarding_primary_cta = 'Set your first goal' %}
 {% else %}
   {% set onboarding_primary_eyebrow = 'Next helpful step' %}
   {% set onboarding_primary_title = 'Do your first monthly update' %}
   {% set onboarding_primary_body = 'Best once your first contribution or balance change has settled.' %}
-  {% set onboarding_primary_href = '/monthly-review/' %}
+  {% set onboarding_primary_href = '/monthly-review/?focus=first_update' %}
   {% set onboarding_primary_cta = 'Do your first monthly update' %}
 {% endif %}
 <section class="card onboarding-welcome mb-1">
@@ -145,7 +145,7 @@
       </a>
       {% endif %}
       {% if essential_steps_done < 2 or not has_history %}
-      <a href="/monthly-review/" class="onboarding-step {% if has_history %}onboarding-done{% endif %}">
+      <a href="/monthly-review/?focus=first_update" class="onboarding-step {% if has_history %}onboarding-done{% endif %}">
         <span class="onboarding-check">{% if has_history %}✓{% else %}4{% endif %}</span>
         <div>
           <strong>Do your first monthly update</strong>
