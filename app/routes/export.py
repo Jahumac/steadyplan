@@ -162,11 +162,11 @@ def export_projections():
     _set_col_width(ws, 4, 20)
     _set_col_width(ws, 5, 24)
 
-    _title_cell(ws, 1, "SteadyPlan — Retirement Projections", 5)
+    _title_cell(ws, 1, "SteadyPlan — Retirement Scenario Estimates", 5)
     cell = ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}")
     cell.font = _SUBTITLE_FONT
 
-    _header_row(ws, 4, ["Account", "Current Value", "You pay monthly", "Into pots monthly", "Projected at Retirement"])
+    _header_row(ws, 4, ["Account", "Current Value", "You pay monthly", "Into pots monthly", "Scenario estimate at retirement"])
 
     # UK pound formats
     GBP  = '£#,##0.00'
@@ -235,7 +235,7 @@ def export_projections():
 
     r += 2
     ws.cell(row=r, column=1, value="Accessible vs locked").font = _ACCENT_FONT
-    _header_row(ws, r + 1, ["Type", "Current value", "Projected at retirement", "Account count"])
+    _header_row(ws, r + 1, ["Type", "Current value", "Scenario estimate at retirement", "Account count"])
     access_rows = {"accessible": [0.0, 0.0, 0], "restricted": [0.0, 0.0, 0], "locked": [0.0, 0.0, 0]}
     for acc in accounts:
         access_type = classify_account(acc).access_type
@@ -259,7 +259,7 @@ def export_projections():
 
     # ── Sheet 2: Assumptions ─────────────────────────────────────────────────
     ws_ass = wb.create_sheet("Assumptions")
-    _title_cell(ws_ass, 1, "SteadyPlan — Projection Assumptions", 3)
+    _title_cell(ws_ass, 1, "SteadyPlan — Scenario Estimate Assumptions", 3)
     _set_col_width(ws_ass, 1, 32)
     _set_col_width(ws_ass, 2, 24)
     _set_col_width(ws_ass, 3, 52)
@@ -267,7 +267,7 @@ def export_projections():
     assumption_rows = [
         ("Generated", datetime.now().strftime("%d %b %Y at %H:%M"), "Snapshot date for this export."),
         ("Current age", int(current_age), "Derived from date of birth when available."),
-        ("Retirement age", int(retirement_age), "Target age used for this projection."),
+        ("Retirement age", int(retirement_age), "Target age used for this scenario estimate."),
         ("Years to retirement", round(exact_years, 1), "Exact years when a retirement date is available."),
         ("Projection start month", start_month, "First future contribution month considered by projections."),
         ("Annual growth rate", f"{growth_rate*100:.1f}%", "Default gross annual growth before account fees."),
@@ -309,8 +309,8 @@ def export_projections():
 
     # ── Sheet 4: Year by year ─────────────────────────────────────────────────
     ws2 = wb.create_sheet("Year by Year")
-    _title_cell(ws2, 1, "SteadyPlan — Year-by-Year Projection", 3)
-    _header_row(ws2, 3, ["Age", "Year", "Projected Total"])
+    _title_cell(ws2, 1, "SteadyPlan — Year-by-Year Scenario Estimate", 3)
+    _header_row(ws2, 3, ["Age", "Year", "Scenario estimate total"])
     _set_col_width(ws2, 1, 10)
     _set_col_width(ws2, 2, 10)
     _set_col_width(ws2, 3, 22)
@@ -336,8 +336,8 @@ def export_projections():
 
     # ── Sheet 3: Month by month (total portfolio) ────────────────────────────
     ws3 = wb.create_sheet("Month by Month")
-    _title_cell(ws3, 1, "SteadyPlan — Monthly Projection", 3)
-    _header_row(ws3, 3, ["Month", "Projected Total"])
+    _title_cell(ws3, 1, "SteadyPlan — Monthly Scenario Estimate", 3)
+    _header_row(ws3, 3, ["Month", "Scenario estimate total"])
     _set_col_width(ws3, 1, 16)
     _set_col_width(ws3, 2, 22)
 
@@ -442,7 +442,7 @@ def export_projections():
         if has_contrib_fee:
             summary_rows.append(("Contribution fee", f"{acc_contribution_fee_pct:.2f}% per contribution", None))
             summary_rows.append(("Total contribution fees paid", acc_total_contrib_fees, GBP0))
-        summary_rows.append(("Projected at retirement", acc_projected, GBP0))
+        summary_rows.append(("Scenario estimate at retirement", acc_projected, GBP0))
         if has_annual_fees:
             summary_rows.append(("Value without annual fees", acc_projected_no_fees, GBP0))
             summary_rows.append(("Lifetime cost of annual fees", acc_fee_impact, GBP0))
@@ -453,15 +453,15 @@ def export_projections():
         # Year-by-year table — columns vary by which fees apply
         yby_start = 5 + len(summary_rows) + 1
         if has_annual_fees and has_contrib_fee:
-            yby_headers = ["Age", "Year", "Projected Value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)", "Value (no ann. fees)", "Ann. Fee Impact"]
+            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)", "Value (no ann. fees)", "Ann. Fee Impact"]
         elif has_annual_fees:
-            yby_headers = ["Age", "Year", "Projected Value", "Growth", "You pay (yr)", "Into pot (yr)", "Value (no fees)", "Fee Impact"]
+            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Value (no fees)", "Fee Impact"]
         elif has_contrib_fee:
-            yby_headers = ["Age", "Year", "Projected Value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)"]
+            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)"]
         elif is_pb:
-            yby_headers = ["Age", "Year", "Projected Value", "Growth", "Cap adjustment", "You pay (yr)", "Into pot (yr)"]
+            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "Cap adjustment", "You pay (yr)", "Into pot (yr)"]
         else:
-            yby_headers = ["Age", "Year", "Projected Value", "Growth", "You pay (yr)", "Into pot (yr)"]
+            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)"]
         _header_row(ws_acc, yby_start, yby_headers)
         _set_col_width(ws_acc, 3, 22)
         _set_col_width(ws_acc, 4, 18)
@@ -561,13 +561,13 @@ def export_projections():
         mby_start = yearly_end + 2  # gap of 1 empty row
 
         if has_annual_fees and has_contrib_fee:
-            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Projected Value", "Contrib. Fee (mo)", "Value (no ann. fees)", "Ann. Fee Impact"])
+            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Scenario estimate value", "Contrib. Fee (mo)", "Value (no ann. fees)", "Ann. Fee Impact"])
         elif has_annual_fees:
-            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Projected Value", "Value (no fees)", "Fee Impact"])
+            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Scenario estimate value", "Value (no fees)", "Fee Impact"])
         elif has_contrib_fee:
-            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Projected Value", "Contrib. Fee (mo)"])
+            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Scenario estimate value", "Contrib. Fee (mo)"])
         else:
-            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Projected Value"])
+            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Scenario estimate value"])
 
         acc_total_months = int(exact_years * 12)
         for m in range(0, acc_total_months + 1):
