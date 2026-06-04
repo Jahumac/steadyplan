@@ -541,10 +541,16 @@
 
       {% if restore_check_result.valid and restore_token %}
         <div style="margin-top:0.75rem;padding:0.9rem;border:1px solid var(--border);border-radius:12px;background:var(--panel);">
-          <div style="font-weight:600;margin-bottom:0.25rem;">Restore from this export (overwrites data)</div>
+          <div style="font-weight:600;margin-bottom:0.25rem;">Restore from this export (overwrites this user's current data)</div>
           <p class="helper-text" style="margin:0.25rem 0 0.75rem 0;">
             Restoring replaces all data for this user with the contents of this export file. Any changes made since this export was created will be lost. Other users are not affected.
-            Consider downloading a fresh JSON export and/or creating a whole-instance SQLite backup from Diagnostics before you continue.
+          </p>
+          <div class="settings-section-divider" style="margin:0 0 0.75rem 0;">
+            <strong>Safety check before overwrite</strong>
+            <p class="helper-text m-0">SteadyPlan will create a fresh whole-instance SQLite backup first. If that safety backup cannot be created, restore stops and leaves your data unchanged.</p>
+          </div>
+          <p class="helper-text" style="margin:0 0 0.75rem 0;">
+            You can still download a fresh JSON export as an extra safety copy. Restore does not change your username or password.
           </p>
           <form method="post" action="/settings/restore/commit" style="margin:0;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

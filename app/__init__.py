@@ -28,7 +28,7 @@ from .routes.api import api_bp
 def create_app():
     app = Flask(__name__)
     app.config.from_object("app.config.Config")
-    if app.config.get("TRUST_PROXY_HEADERS", True):
+    if app.config.get("TRUST_PROXY_HEADERS", False):
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
     # ── Rate limiter ─────────────────────────────────────────────────────────
