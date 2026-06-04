@@ -38,7 +38,7 @@
     <div style="flex:1; min-width:220px;">
       <strong>About this projection</strong>
       <p class="helper-text m-0">Built from your current account balances (today) and your monthly contribution settings, then grown using your assumptions (growth rate, retirement timing, fees and tax/allowance settings).</p>
-      <p class="helper-text m-0">This is an assumptions-based forecast, not a promise. Edit the inputs in <a href="/settings/?mode=edit" class="link-accent">Settings</a>.</p>
+      <p class="helper-text m-0">This is a scenario estimate based on assumptions, not a promise. Edit the inputs in <a href="/settings/?mode=edit" class="link-accent">Settings</a>.</p>
     </div>
     <a href="/settings/?mode=edit" class="badge badge-meta">Edit assumptions</a>
   </div>
@@ -112,7 +112,7 @@
 {# ── Summary cards ────────────────────────────────────────────────────────── #}
 <section class="card-grid mb-1">
   <div class="card stat-card">
-    <h2>Scenario Estimate at Retirement</h2>
+    <h2>Scenario estimate at retirement</h2>
     <p>£{{ '{:,.0f}'.format(metrics.total_projected) }}</p>
     <small>Age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% annual growth (nominal)</small>
   </div>
@@ -146,10 +146,10 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Account breakdown</p>
-      <h2>Each Account at Retirement (Estimate)</h2>
+      <h2>Each account at retirement (scenario estimate)</h2>
     </div>
   </div>
-  <p class="helper-text">Projected values for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, Lifetime ISA bonuses, and employer contributions).</p>
+  <p class="helper-text">Scenario estimates for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, Lifetime ISA bonuses, and employer contributions).</p>
   <div class="budget-rows">
     {% for row in account_rows %}
     <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}">
@@ -228,10 +228,10 @@
     <div class="section-header">
       <div>
         <p class="eyebrow">Account breakdown</p>
-        <h2>Each Account at Retirement (Estimate)</h2>
+        <h2>Each account at retirement (scenario estimate)</h2>
       </div>
     </div>
-    <p class="helper-text">Projected values for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, Lifetime ISA bonuses, and employer contributions).</p>
+    <p class="helper-text">Scenario estimates for each account at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, Lifetime ISA bonuses, and employer contributions).</p>
     <div class="budget-rows">
       {% for row in account_rows %}
       <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}">
@@ -351,7 +351,7 @@
     </div>
     <button class="badge badge-meta" id="wi_reset" type="button">Reset to plan</button>
   </div>
-  <p class="helper-text">Adjust inputs to see how the projection changes. Nothing here is saved unless you save changes elsewhere.</p>
+  <p class="helper-text">Adjust inputs to see how the scenario estimate changes. Nothing here is saved unless you save changes elsewhere.</p>
 
   {# Global controls #}
   <div class="form-grid settings-form mb-1">
@@ -430,7 +430,7 @@
       </div>
       <button class="badge badge-meta" id="wi_reset_mobile" type="button">Reset to plan</button>
     </div>
-    <p class="helper-text">Adjust inputs to see how the projection changes. Nothing here is saved unless you save changes elsewhere.</p>
+    <p class="helper-text">Adjust inputs to see how the scenario estimate changes. Nothing here is saved unless you save changes elsewhere.</p>
 
     <div class="form-grid settings-form mb-1">
       <label>

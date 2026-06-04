@@ -49,17 +49,20 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
 
     assert "Retirement projection · age 60" in body
     assert "Retirement projection estimate" not in body
-    assert "Scenario estimate at retirement" not in body
+    assert "Scenario estimate at retirement" in body
+    assert "Scenario Estimate at Retirement" not in body
     assert "About this projection" in body
     assert "About this estimate" not in body
-    assert "assumptions-based forecast, not a promise" in body
+    assert "scenario estimate based on assumptions, not a promise" in body
+    assert "assumptions-based forecast, not a promise" not in body
     assert "Edit the inputs in" in body
     assert "What drives this projection" in body
     assert "What drives this estimate" not in body
-    assert "Projected values for each account at age 60" in body
+    assert "Scenario estimates for each account at age 60" in body
+    assert "Projected values for each account at age 60" not in body
     assert "Projection estimates for each account at age 60" not in body
-    assert "Scenario estimates for each account at age 60" not in body
-    assert "Adjust inputs to see how the projection changes. Nothing here is saved unless you save changes elsewhere." in body
+    assert "Adjust inputs to see how the scenario estimate changes. Nothing here is saved unless you save changes elsewhere." in body
+    assert "Adjust inputs to see how the projection changes. Nothing here is saved unless you save changes elsewhere." not in body
     assert "Adjust inputs to see how the projection estimate changes. Nothing here is saved unless you save changes elsewhere." not in body
     assert "Adjust inputs to see how the scenario estimate changes. Nothing is saved unless you explicitly save it elsewhere." not in body
     assert "Inflation" in body
