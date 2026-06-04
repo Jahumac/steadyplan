@@ -243,10 +243,11 @@ def test_overview_projected_retirement_stat_has_estimate_qualifier(app, client, 
     resp = client.get("/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Projected at retirement" in body
+    assert "Scenario estimate at retirement" in body
+    assert "Projected at retirement" not in body
     assert "<small>estimate</small>" not in body
-    assert "Projection based on your current balances, contribution settings, and assumptions in Settings." in body
-    assert "Scenario estimate based on your current balances, contribution settings, and assumptions in Settings." not in body
+    assert "Scenario estimate based on your current balances, contribution settings, and assumptions in Settings." in body
+    assert "Projection based on your current balances, contribution settings, and assumptions in Settings." not in body
 
 
 def test_goals_eta_helper_copy_present(app, client, make_user):
