@@ -48,6 +48,23 @@ def test_login_rejects_bad_password(app, client, make_user):
     assert b"Invalid" in resp.data or b"invalid" in resp.data
 
 
+def test_login_demo_callout_explains_read_only_boundaries(app, client, make_user):
+    app.config.update(DEMO_PUBLIC_LOGIN_ENABLED=True, DEMO_READ_ONLY_USERNAME="demo")
+    make_user(username="demo", password="password123")
+
+    resp = client.get("/login")
+
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Read-only demo" in html
+    assert "Take a quick look without risking real data" in html
+    assert "demo account with demo data only" in html
+    assert "No password is needed here, and writes are blocked." in html
+    assert "Safest real use is still your own install on LAN or VPN." in html
+    assert "Open read-only demo" in html
+    assert "Try demo (read-only)" not in html
+
+
 def test_unauthenticated_redirects_to_login(app, client, make_user):
     # Need at least one user so the app doesn't redirect to /setup
     make_user()
