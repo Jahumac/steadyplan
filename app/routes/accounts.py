@@ -539,6 +539,7 @@ def add_cash_event(account_id):
     kind = (request.form.get("cash_event_kind") or "transfer_out").strip()
     note = (request.form.get("cash_event_note") or "").strip()
     to_account_id = request.form.get("cash_event_to_account_id") or ""
+    allowance_effect = (request.form.get("cash_event_allowance_effect") or "none").strip().lower()
 
     amt_raw = request.form.get("cash_event_amount") or ""
     try:
@@ -554,6 +555,13 @@ def add_cash_event(account_id):
     if kind in ("transfer_out", "withdrawal"):
         signed = -amt
 
+    allowed_effects = {"none", "subscription", "flexible_withdrawal", "flexible_replacement"}
+    if allowance_effect not in allowed_effects:
+        allowance_effect = "none"
+    wrapper_type = (acc.get("wrapper_type") or "").strip()
+    if wrapper_type not in ISA_WRAPPER_TYPES:
+        allowance_effect = "none"
+
     payload = {
         "account_id": account_id,
         "event_date": event_date[:10],
@@ -561,6 +569,7 @@ def add_cash_event(account_id):
         "kind": kind,
         "counterparty_account_id": int(to_account_id) if str(to_account_id).isdigit() else None,
         "note": note,
+        "allowance_effect": allowance_effect,
     }
     added = add_cash_flow_event(payload, uid)
     if added and kind == "transfer_out":

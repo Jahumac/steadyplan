@@ -212,6 +212,7 @@ CREATE TABLE IF NOT EXISTS cash_flow_events (
     kind TEXT NOT NULL DEFAULT 'transfer',
     counterparty_account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL,
     note TEXT,
+    allowance_effect TEXT NOT NULL DEFAULT 'none',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -384,6 +385,13 @@ def _run_migrations(conn):
             conn.execute(col_sql)
         except Exception:
             pass
+
+    cash_flow_cols = {row['name'] for row in conn.execute("PRAGMA table_info(cash_flow_events)").fetchall()}
+    if "allowance_effect" not in cash_flow_cols:
+        try:
+            conn.execute("ALTER TABLE cash_flow_events ADD COLUMN allowance_effect TEXT NOT NULL DEFAULT 'none'")
+        except Exception as e:
+            _log_migration_error(e)
 
     # ── Legacy table creation ─────────────────────────────────────────────
     try:

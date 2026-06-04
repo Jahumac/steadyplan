@@ -148,9 +148,50 @@ def test_allowance_page_uses_plain_monthly_column_helper_copy(app, client, make_
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Monthly column uses each account's monthly contribution setting × months elapsed." in html
+    assert "Monthly column uses each account's monthly contribution setting × months elapsed. Cash-flow adjustments are only counted when you label a cash movement as affecting tracked ISA usage." in html
     assert "Monthly column is estimated from each account's contribution setting × months elapsed." not in html
     assert 'href="/accounts/" class="link-accent">monthly contribution setting</a>' in html
+
+
+def test_allowance_page_shows_cash_flow_adjustment_column_for_explicit_isa_effects(app, client, make_user):
+    uid, username, password = make_user(username="allowance-cash-flow-adjustment", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE assumptions
+                SET date_of_birth = '1990-01-01', salary_day = 1, isa_allowance = 20000, lisa_allowance = 4000
+                WHERE user_id = ?
+                """,
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
+                VALUES (?, 'Cash ISA', 'Cash ISA', 1000, 0, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, allowance_effect, created_at)
+                VALUES (?, ?, '2026-04-10', -150, 'withdrawal', 'Room restored', 'flexible_withdrawal', datetime('now'))
+                """,
+                (uid, account_id),
+            )
+            conn.commit()
+
+    resp = client.get("/allowance/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Cash-flow adj." in html
+    assert "Only set this when the cash movement changed your real tax-year ISA room." not in html
+    assert "£-150" in html
+
 
 def test_allowance_page_uses_plain_higher_rate_relief_copy(app, client, make_user):
     uid, username, password = make_user(username="allowance-higher-relief-copy", password="password123")

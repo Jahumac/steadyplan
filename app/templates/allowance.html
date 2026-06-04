@@ -77,6 +77,7 @@
           <th class="text-right">Monthly</th>
           <th class="text-right">× {{ usage.months }} mo</th>
           <th class="text-right">Top-ups</th>
+          <th class="text-right">Cash-flow adj.</th>
           <th class="text-right">Total</th>
         </tr>
       </thead>
@@ -88,7 +89,8 @@
           <td class="text-right">£{{ '{:,.0f}'.format(b.monthly_contribution) }}</td>
           <td class="text-right">£{{ '{:,.0f}'.format(b.monthly_total) }}</td>
           <td class="text-right">{% if b.adhoc_total %}£{{ '{:,.0f}'.format(b.adhoc_total) }}{% else %}–{% endif %}</td>
-          <td class="text-right"><strong>£{{ '{:,.0f}'.format(b.monthly_total + b.adhoc_total) }}</strong></td>
+          <td class="text-right">{% if b.allowance_adjustment %}£{{ '{:,.0f}'.format(b.allowance_adjustment) }}{% else %}–{% endif %}</td>
+          <td class="text-right"><strong>£{{ '{:,.0f}'.format(b.monthly_total + b.adhoc_total + b.allowance_adjustment) }}</strong></td>
         </tr>
         {% endfor %}
       </tbody>
@@ -96,12 +98,13 @@
         <tr>
           <td colspan="4"></td>
           <td class="text-right"><strong>£{{ '{:,.0f}'.format(usage.adhoc_isa) }}</strong></td>
+          <td class="text-right"><strong>{% if usage.allowance_adjustment_isa %}£{{ '{:,.0f}'.format(usage.allowance_adjustment_isa) }}{% else %}–{% endif %}</strong></td>
           <td class="text-right"><strong>£{{ '{:,.0f}'.format(usage.isa_used) }}</strong></td>
         </tr>
       </tfoot>
     </table>
   </div>
-  <p class="helper-text" style="font-size:0.78rem;">Monthly column uses each account's monthly contribution setting × months elapsed. If an amount looks wrong, check the account's <a href="/accounts/" class="link-accent">monthly contribution setting</a>.</p>
+  <p class="helper-text" style="font-size:0.78rem;">Monthly column uses each account's monthly contribution setting × months elapsed. Cash-flow adjustments are only counted when you label a cash movement as affecting tracked ISA usage. If an amount looks wrong, check the account's <a href="/accounts/" class="link-accent">monthly contribution setting</a>.</p>
   {% else %}
   <p class="helper-text">No ISA accounts yet. <a href="/accounts/?mode=create" class="link-accent">Add a Stocks &amp; Shares ISA, Cash ISA, or Lifetime ISA</a> to start tracking.</p>
   {% endif %}

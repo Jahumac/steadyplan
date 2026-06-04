@@ -710,6 +710,20 @@
                   {% endfor %}
                 </select>
               </label>
+              {% if selected.wrapper_type == 'Cash ISA' %}
+              <label class="form-full-col">
+                <span>ISA allowance effect</span>
+                <select name="cash_event_allowance_effect">
+                  <option value="none" selected>No effect on tracked ISA usage</option>
+                  <option value="subscription">Counts as a new ISA subscription</option>
+                  <option value="flexible_withdrawal">Flexible ISA withdrawal restores room</option>
+                  <option value="flexible_replacement">Replacement uses restored room</option>
+                </select>
+                <small class="form-hint">Only set this when the cash movement changed your real tax-year ISA room. Nothing is assumed by default.</small>
+              </label>
+              {% else %}
+              <input type="hidden" name="cash_event_allowance_effect" value="none">
+              {% endif %}
             </div>
             <label class="mt-05">
               <span>Note (optional)</span>
@@ -728,6 +742,7 @@
                   <th>Date</th>
                   <th>Type</th>
                   <th class="num">Amount</th>
+                  <th>Allowance effect</th>
                   <th>Note</th>
                   <th class="num">Action</th>
                 </tr>
@@ -742,6 +757,17 @@
                     <span class="{% if amt < 0 %}perf-negative{% else %}perf-positive{% endif %}">
                       {% if amt >= 0 %}+{% endif %}£{{ '{:,.2f}'.format(amt) }}
                     </span>
+                  </td>
+                  <td>
+                    {% if e.allowance_effect == 'subscription' %}
+                      New subscription
+                    {% elif e.allowance_effect == 'flexible_withdrawal' %}
+                      Flexible withdrawal restores room
+                    {% elif e.allowance_effect == 'flexible_replacement' %}
+                      Replacement uses restored room
+                    {% else %}
+                      –
+                    {% endif %}
                   </td>
                   <td>{{ e.note }}</td>
                   <td class="num">

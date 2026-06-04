@@ -241,6 +241,37 @@ def test_isa_projection_respects_reviewed_skip_in_year_end_projection():
     assert usage["breakdown"][0]["projected_total"] == 1100
 
 
+def test_isa_usage_applies_explicit_cash_flow_allowance_adjustments():
+    accounts = [
+        {
+            "id": 1,
+            "name": "Cash ISA",
+            "wrapper_type": "Cash ISA",
+            "monthly_contribution": 100,
+        }
+    ]
+    allowance_events = [
+        {"account_id": 1, "amount": 200, "allowance_effect": "subscription"},
+        {"account_id": 1, "amount": -150, "allowance_effect": "flexible_withdrawal"},
+        {"account_id": 1, "amount": 50, "allowance_effect": "flexible_replacement"},
+    ]
+
+    usage = calculate_isa_usage(
+        accounts,
+        ad_hoc_contributions=[],
+        today=date(2026, 6, 30),
+        salary_day=28,
+        allowance_events=allowance_events,
+    )
+
+    assert usage["monthly_isa"] == 300
+    assert usage["allowance_adjustment_isa"] == 100
+    assert usage["isa_used"] == 400
+    assert usage["projected_isa"] == 1300
+    assert usage["breakdown"][0]["allowance_adjustment"] == 100
+    assert usage["breakdown"][0]["projected_total"] == 1200
+
+
 def test_pension_projection_respects_reviewed_skip_in_year_end_projection():
     accounts = [
         {

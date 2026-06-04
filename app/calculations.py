@@ -909,6 +909,7 @@ def calculate_isa_usage(
     salary_day=0,
     isa_overrides=None,
     review_contributions=None,
+    allowance_events=None,
     lisa_contributions_allowed=True,
 ):
     """Auto-calculate ISA and LISA usage for the current tax year.
@@ -922,6 +923,7 @@ def calculate_isa_usage(
                    has account_id, month_key, expected_contribution, is_skipped).
                    When present, a finalised review item replaces the per-account
                    default for that month — the review is the user's confirmed truth.
+    allowance_events: explicit cash-flow rows marked to change tracked ISA usage.
     lisa_contributions_allowed: when false, ignore regular scheduled LISA
                    contributions (used once the user is age 50+), but keep
                    recorded ad-hoc/review contributions as historical truth.
@@ -950,6 +952,25 @@ def calculate_isa_usage(
             review_amount_map[key] = 0.0
         else:
             review_amount_map[key] = float(rc["expected_contribution"] or 0)
+
+    allowance_adjustment_map = {}
+    allowance_adjustment_isa = 0.0
+    for event in (allowance_events or []):
+        effect = str(event.get("allowance_effect") or "none").strip().lower()
+        try:
+            raw_amount = abs(float(event.get("amount") or 0))
+        except (TypeError, ValueError):
+            raw_amount = 0.0
+        signed_amount = 0.0
+        if effect in ("subscription", "flexible_replacement"):
+            signed_amount = raw_amount
+        elif effect == "flexible_withdrawal":
+            signed_amount = -raw_amount
+        if not signed_amount:
+            continue
+        account_id = event["account_id"]
+        allowance_adjustment_map[account_id] = allowance_adjustment_map.get(account_id, 0.0) + signed_amount
+        allowance_adjustment_isa += signed_amount
 
     monthly_isa = 0.0
     monthly_lisa = 0.0
@@ -989,6 +1010,7 @@ def calculate_isa_usage(
             "months": months,
             "monthly_total": total,
             "adhoc_total": 0.0,
+            "allowance_adjustment": allowance_adjustment_map.get(acc["id"], 0.0),
             "projected_total": projected,
         }
         monthly_isa += total
@@ -1017,13 +1039,14 @@ def calculate_isa_usage(
                 break
 
     return {
-        "isa_used": monthly_isa + adhoc_isa,
+        "isa_used": monthly_isa + adhoc_isa + allowance_adjustment_isa,
         "lisa_used": monthly_lisa + adhoc_lisa,
         "monthly_isa": monthly_isa,
         "monthly_lisa": monthly_lisa,
         "adhoc_isa": adhoc_isa,
         "adhoc_lisa": adhoc_lisa,
-        "projected_isa": projected_monthly_isa + adhoc_isa,
+        "allowance_adjustment_isa": allowance_adjustment_isa,
+        "projected_isa": projected_monthly_isa + adhoc_isa + allowance_adjustment_isa,
         "projected_lisa": projected_monthly_lisa + adhoc_lisa,
         "months": months,
         "total_months": total_months,

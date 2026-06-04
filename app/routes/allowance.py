@@ -31,6 +31,7 @@ from app.models import (
     fetch_assumptions,
     fetch_cgt_disposals,
     fetch_isa_contributions,
+    fetch_isa_allowance_cash_flow_events,
     fetch_isa_overrides_for_tax_year,
     fetch_pension_overrides_for_tax_year,
     fetch_pension_carry_forward,
@@ -63,6 +64,7 @@ def allowance_overview():
     ty_start = ty_start_date.isoformat()
     ty_end = ty_end_date.isoformat()
     ad_hoc = fetch_isa_contributions(uid, ty_start, ty_end)
+    allowance_events = fetch_isa_allowance_cash_flow_events(uid, ty_start, ty_end)
     isa_overrides = fetch_isa_overrides_for_tax_year(uid, ty_start, ty_end)
     review_contribs = fetch_completed_tax_year_contributions(
         uid,
@@ -75,6 +77,7 @@ def allowance_overview():
         accounts, ad_hoc, now_date, salary_day,
         isa_overrides=isa_overrides,
         review_contributions=review_contribs,
+        allowance_events=allowance_events,
         lisa_contributions_allowed=(not current_age or current_age < 50),
     )
 

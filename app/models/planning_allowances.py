@@ -378,6 +378,29 @@ def fetch_isa_overrides_for_tax_year(user_id, ty_start, ty_end):
         ).fetchall()
 
 
+def fetch_isa_allowance_cash_flow_events(user_id, ty_start, ty_end):
+    """Return ISA cash-flow events explicitly marked to affect tracked allowance usage."""
+    with get_connection() as conn:
+        return conn.execute(
+            """
+            SELECT c.*, a.name AS account_name, a.wrapper_type
+            FROM cash_flow_events c
+            JOIN accounts a ON a.id = c.account_id
+            WHERE c.user_id = ?
+              AND a.user_id = c.user_id
+              AND c.event_date >= ?
+              AND c.event_date <= ?
+              AND a.wrapper_type IN (
+                  'Stocks & Shares ISA', 'Cash ISA', 'Lifetime ISA',
+                  'Stocks and Shares ISA'
+              )
+              AND COALESCE(c.allowance_effect, 'none') != 'none'
+            ORDER BY c.event_date DESC, c.id DESC
+            """,
+            (user_id, ty_start, ty_end),
+        ).fetchall()
+
+
 def fetch_pension_overrides_for_tax_year(user_id, ty_start, ty_end):
     """Return all contribution overrides that overlap the tax year, for pension accounts only.
 
@@ -553,8 +576,8 @@ def add_cash_flow_event(payload, user_id):
         cursor = conn.execute(
             """
             INSERT INTO cash_flow_events
-              (user_id, account_id, event_date, amount, kind, counterparty_account_id, note, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              (user_id, account_id, event_date, amount, kind, counterparty_account_id, note, allowance_effect, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
@@ -564,6 +587,7 @@ def add_cash_flow_event(payload, user_id):
                 payload.get("kind") or "transfer",
                 counterparty,
                 payload.get("note") or "",
+                payload.get("allowance_effect") or "none",
                 datetime.now(timezone.utc).isoformat(),
             ),
         )
