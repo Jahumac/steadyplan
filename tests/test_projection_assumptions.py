@@ -65,6 +65,8 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Projected values for each account at age 60" not in body
     assert "Projection estimates for each account at age 60" not in body
     assert "Adjust inputs to see how the scenario estimate changes. Nothing here is saved unless you save changes elsewhere." in body
+    assert "Add rows like “from age 50 → £600/mo”. This saves to your plan and updates your scenario estimate." in body
+    assert "Add rows like “from age 50 → £600/mo”. This saves to your plan and updates projections." not in body
     assert "Adjust inputs to see how the projection changes. Nothing here is saved unless you save changes elsewhere." not in body
     assert "Adjust inputs to see how the projection estimate changes. Nothing here is saved unless you save changes elsewhere." not in body
     assert "Adjust inputs to see how the scenario estimate changes. Nothing is saved unless you explicitly save it elsewhere." not in body

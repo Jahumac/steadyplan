@@ -168,7 +168,8 @@ def test_accounts_create_wizard_uses_general_investment_account_label(app, clien
     assert '25% Lifetime ISA bonus, age limits' in html
     assert '25% government top-up, age limits' not in html
     assert "25% gov't top-up, age limits" not in html
-    assert 'How much goes into this account each month? This feeds into projections. You can update it later.' in html
+    assert 'How much goes into this account each month? This feeds into scenario estimates. You can update it later.' in html
+    assert 'How much goes into this account each month? This feeds into projections. You can update it later.' not in html
     assert 'How much goes into this account each month? This feeds into projections — an estimate is fine.' not in html
     assert 'How much goes into this account each month? This is used for projections — even an estimate helps.' not in html
     assert 'How much goes into this account each month? This is used for projections — even a rough number helps.' not in html
