@@ -799,6 +799,7 @@ def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, clien
     assert "Locked later" in html
     assert "Monthly contributions" in html
     assert "Scenario estimate at retirement" in html
+    assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." in html
     assert "Projected at retirement" not in html
     assert "Goal progress" not in html
     assert "Tax Year " not in html
@@ -955,6 +956,7 @@ def test_overview_hides_zero_locked_hero_stat(app, client, make_user):
     assert "Accessible now" in html
     assert "Monthly contributions" not in html
     assert "Scenario estimate at retirement" in html
+    assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." in html
     assert "Projected at retirement" not in html
     assert html.count("Locked later") >= 1
     assert "When you have locked money, the top summary keeps the headline amount visible." not in html
@@ -990,6 +992,7 @@ def test_overview_hides_retirement_projection_until_profile_exists(app, client, 
     assert "Monthly contributions" in html
     assert "Projected at retirement" not in html
     assert "Scenario estimate at retirement" not in html
+    assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in html
     assert "Scenario estimate based on your current balances, contribution settings, and assumptions in Settings." not in html
 
 

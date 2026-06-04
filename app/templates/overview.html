@@ -253,9 +253,12 @@
     {% call hero_stat('Monthly contributions') %}<strong>£{{ '{:,.0f}'.format(metrics.monthly_total) }}</strong>{% endcall %}
     {% endif %}
     {% if has_profile %}
-    {% call hero_stat('Scenario estimate at retirement') %}<strong title="Scenario estimate based on your current balances, contribution settings, and assumptions in Settings.">£{{ '{:,.0f}'.format(metrics.projected_total) }}</strong>{% endcall %}
+    {% call hero_stat('Scenario estimate at retirement') %}<strong title="Scenario estimate based on your current balances, contribution settings, and assumptions in Settings. It is not a guarantee.">£{{ '{:,.0f}'.format(metrics.projected_total) }}</strong>{% endcall %}
     {% endif %}
   </div>
+  {% if has_profile %}
+  <p class="helper-text mt-05 mb-0">Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee.</p>
+  {% endif %}
 </section>
 
 <section class="card mb-1 overview-access-card overview-desktop-detail">
