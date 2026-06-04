@@ -91,7 +91,7 @@
 <section class="card">
   {{ empty_state('No goals yet',
                  'Set a goal, tag the right accounts, and track progress toward your target over time.',
-                 cta_text='+ Create your first goal', cta_href='/goals/?mode=create') }}
+                 cta_text='+ Create your first goal', cta_href='/goals/?mode=create&focus=first_goal') }}
 </section>
 {% endif %}
 
@@ -99,14 +99,27 @@
 <section class="card mt-1" data-focus-panel>
   <div class="section-header">
     <div>
-      <p class="eyebrow">Goal Detail</p>
-      <h2>Create Goal</h2>
+      <p class="eyebrow">{{ 'Start here' if first_goal_focus else 'Goal Detail' }}</p>
+      <h2>{{ 'Add your first goal' if first_goal_focus else 'Create Goal' }}</h2>
+      {% if first_goal_focus %}
+      <p class="helper-text m-0">One clear target is enough to begin. Name it, set a target, and pick the account tag that should count toward it. Notes can wait until later.</p>
+      {% endif %}
     </div>
   </div>
   <form method="post" class="settings-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="form_name" value="create_goal">
     <div class="form-grid">
+      {% if first_goal_focus %}
+      <div class="form-full-col settings-focus-note">
+        <p class="eyebrow">Just these basics first</p>
+        <ul class="helper-list m-0">
+          <li>Add one goal name you care about</li>
+          <li>Set the target amount you want to reach</li>
+          <li>Pick the account tag that should count toward it</li>
+        </ul>
+      </div>
+      {% endif %}
       <label>
         <span>Goal name</span>
         <input type="text" name="name" required>
@@ -116,7 +129,7 @@
         <input type="number" step="0.01" name="target_value" required>
       </label>
       <label class="form-full-col">
-        <span>Include tags</span>
+        <span>{{ 'Account tag to include' if first_goal_focus else 'Include tags' }}</span>
         <div class="tag-picker">
           {% for tag in tag_options %}
           <label class="tag-chip">
@@ -126,13 +139,28 @@
           {% endfor %}
         </div>
       </label>
+      {% if first_goal_focus %}
+      <div class="form-full-col helper-text m-0">One tag is enough to start. You can come back later if you want to widen or refine the goal.</div>
+      <div class="form-full-col">
+        <details class="wizard-later-details">
+          <summary>Can wait until later</summary>
+          <div class="form-grid mt-075">
+            <label class="form-full-col">
+              <span>Notes <span style="color:var(--muted);font-weight:400;">(optional)</span></span>
+              <textarea name="notes" placeholder="Optional"></textarea>
+            </label>
+          </div>
+        </details>
+      </div>
+      {% else %}
       <label class="form-full-col">
         <span>Notes</span>
         <textarea name="notes" placeholder="Optional"></textarea>
       </label>
+      {% endif %}
     </div>
     <div class="badge-row mt-1">
-      <button type="submit">Create goal</button>
+      <button type="submit">{{ 'Create and continue' if first_goal_focus else 'Create goal' }}</button>
       <a class="badge" href="/goals/">Cancel</a>
     </div>
   </form>

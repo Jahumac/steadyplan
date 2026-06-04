@@ -136,7 +136,7 @@
     </summary>
     <div class="onboarding-steps onboarding-steps-secondary">
       {% if essential_steps_done < 2 or not has_goal %}
-      <a href="/goals/?mode=create" class="onboarding-step {% if has_goal %}onboarding-done{% endif %}">
+      <a href="/goals/?mode=create&focus=first_goal" class="onboarding-step {% if has_goal %}onboarding-done{% endif %}">
         <span class="onboarding-check">{% if has_goal %}✓{% else %}3{% endif %}</span>
         <div>
           <strong>Set your first goal</strong>
