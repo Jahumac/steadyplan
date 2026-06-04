@@ -1,7 +1,7 @@
 """Portfolio snapshots: monthly, daily, and performance history."""
 from datetime import datetime
 from ._conn import get_connection
-from app.calculations import effective_monthly_contribution
+from app.calculations import effective_monthly_contribution, select_best_matching_override
 
 
 # ── Monthly snapshots ─────────────────────────────────────────────────────────
@@ -96,19 +96,17 @@ def fetch_monthly_performance_data(user_id):
 
         overrides = conn.execute(
             """
-            SELECT co.account_id, co.from_month, co.to_month, co.override_amount
+            SELECT co.*
             FROM contribution_overrides co
             JOIN accounts a ON a.id = co.account_id
             WHERE a.user_id = ?
-            ORDER BY co.account_id, co.from_month
+            ORDER BY co.account_id ASC, co.id DESC
             """,
             (user_id,),
         ).fetchall()
         overrides_by_account = {}
         for ov in overrides:
-            overrides_by_account.setdefault(int(ov["account_id"]), []).append(
-                (ov["from_month"], ov["to_month"], float(ov["override_amount"] or 0))
-            )
+            overrides_by_account.setdefault(int(ov["account_id"]), []).append(ov)
 
         review_map = {}
         if months:
@@ -163,11 +161,8 @@ def fetch_monthly_performance_data(user_id):
                 aid = int(account["id"])
                 default_personal = float(account.get("monthly_contribution") or 0)
 
-                personal = None
-                for from_m, to_m, amt in overrides_by_account.get(aid, []):
-                    if from_m <= month_key <= to_m:
-                        personal = float(amt or 0)
-                        break
+                override = select_best_matching_override(overrides_by_account.get(aid, []), month_key)
+                personal = float(override["override_amount"] or 0) if override is not None else None
 
                 if personal == 0.0:
                     continue
@@ -230,19 +225,17 @@ def fetch_monthly_performance_data_by_account(user_id):
 
         overrides = conn.execute(
             """
-            SELECT co.account_id, co.from_month, co.to_month, co.override_amount
+            SELECT co.*
             FROM contribution_overrides co
             JOIN accounts a ON a.id = co.account_id
             WHERE a.user_id = ?
-            ORDER BY co.account_id, co.from_month
+            ORDER BY co.account_id ASC, co.id DESC
             """,
             (user_id,),
         ).fetchall()
         overrides_by_account = {}
         for ov in overrides:
-            overrides_by_account.setdefault(int(ov["account_id"]), []).append(
-                (ov["from_month"], ov["to_month"], float(ov["override_amount"] or 0))
-            )
+            overrides_by_account.setdefault(int(ov["account_id"]), []).append(ov)
 
         review_rows = conn.execute(
             """
@@ -267,11 +260,8 @@ def fetch_monthly_performance_data_by_account(user_id):
 
         month_key = r["month_key"]
         default_personal = float(r.get("monthly_contribution") or 0)
-        personal = None
-        for from_m, to_m, amt in overrides_by_account.get(aid, []):
-            if from_m <= month_key <= to_m:
-                personal = float(amt or 0)
-                break
+        override = select_best_matching_override(overrides_by_account.get(aid, []), month_key)
+        personal = float(override["override_amount"] or 0) if override is not None else None
         if personal == 0.0:
             contrib = 0.0
         else:
