@@ -45,7 +45,7 @@
   {% set onboarding_primary_eyebrow = 'Next step' %}
   {% set onboarding_primary_title = 'Finish the two basics first' %}
   {% set onboarding_primary_body = 'Open the first unfinished basic below. Goals and monthly updates can wait until you have something real to track.' %}
-  {% set onboarding_primary_href = '/settings/?mode=edit' %}
+  {% set onboarding_primary_href = '/settings/?mode=edit&focus=planning_dates' %}
   {% set onboarding_primary_cta = 'Add your planning dates' %}
 {% elif not has_accounts %}
   {% set onboarding_primary_eyebrow = 'Next step' %}
@@ -101,7 +101,7 @@
 
   <p class="onboarding-section-label">{% if essential_steps_done < 2 %}Just these two basics first{% else %}Basics done{% endif %}</p>
   <div class="onboarding-steps">
-    <a href="/settings/?mode=edit" class="onboarding-step {% if has_profile %}onboarding-done{% endif %}">
+    <a href="/settings/?mode=edit&focus=planning_dates" class="onboarding-step {% if has_profile %}onboarding-done{% endif %}">
       <span class="onboarding-check">{% if has_profile %}✓{% else %}1{% endif %}</span>
       <div>
         <strong>Add your planning dates</strong>

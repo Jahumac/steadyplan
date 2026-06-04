@@ -28,7 +28,7 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Do your first monthly update after your first contribution or balance change settles." in html
     assert "Complete your profile" not in html
     assert "Complete profile" not in html
-    assert 'href="/settings/?mode=edit"' in html
+    assert 'href="/settings/?mode=edit&amp;focus=planning_dates"' in html
     assert "No accounts set up" not in html
     assert "Data health" not in html
     assert 'href="/accounts/?mode=create"' in html

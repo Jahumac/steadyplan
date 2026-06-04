@@ -144,6 +144,18 @@ def test_projections_goal_callout_uses_projection_estimate_wording(app, client, 
 
 def test_settings_growth_hint_no_longer_says_nominal_todays_money(app, client, make_user):
     uid, username, password = make_user(username="settings", password="password123")
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            conn.commit()
+
     _login(client, username, password)
 
     resp = client.get("/settings/?mode=edit")

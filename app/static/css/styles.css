@@ -815,6 +815,25 @@ body.is-back-online .site-header {
   color: var(--muted);
 }
 
+.settings-focus-note,
+.settings-section-divider {
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+}
+
+.settings-focus-note strong {
+  display: block;
+  margin: 0.2rem 0 0.35rem;
+  color: var(--text);
+}
+
+.settings-section-divider {
+  border-style: dashed;
+  background: rgba(255,255,255,0.02);
+}
+
 .acct-budget-flags {
   display: grid;
   grid-template-columns: 1fr 1fr;
