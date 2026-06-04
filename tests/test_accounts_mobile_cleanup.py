@@ -1,4 +1,6 @@
-from app.models import create_account
+from datetime import date
+
+from app.models import create_account, get_connection
 
 
 def _account_payload():
@@ -64,6 +66,37 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     grid_idx = html.index('class="acct-grid"')
 
     assert hero_idx < add_idx < grid_idx
+
+
+def test_accounts_page_uses_plan_line_copy_for_account_comparison(app, client, make_user):
+    uid, username, password = make_user(username="accounts-plan-line-copy", password="password123")
+
+    with app.app_context():
+        account_id = create_account(_account_payload(), uid)
+        today = date.today()
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                (today.replace(day=1).isoformat(), account_id, 6000, today.strftime("%Y-%m")),
+            )
+            prev_month = today.month - 1 or 12
+            prev_year = today.year - 1 if today.month == 1 else today.year
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                (date(prev_year, prev_month, 1).isoformat(), account_id, 5500, f"{prev_year:04d}-{prev_month:02d}"),
+            )
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Plan line @7%" in html
+    assert "Should be @7%" not in html
+    assert "This compares your recorded balance with an assumptions-based plan line for this account." in html
+    assert "Use it as a planning guide, not a guarantee." in html
+    assert "Actual vs plan for this account." not in html
 
 
 def test_accounts_create_form_includes_junior_isa_wrapper_option(app, client, make_user):
