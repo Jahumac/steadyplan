@@ -879,6 +879,79 @@ def test_update_account_balance_succeeds_for_owner(app, client, token):
     assert resp.get_json()["current_value"] == 5555
 
 
+def test_update_account_balance_caps_premium_bonds_and_marks_review_progress(app, client, token):
+    with app.app_context():
+        from app.models import (
+            ensure_monthly_review_items,
+            fetch_or_create_monthly_review,
+            get_connection,
+            get_user_by_username,
+        )
+
+        uid = get_user_by_username("apiuser").id
+        with get_connection() as conn:
+            aid = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, valuation_mode, current_value, is_active
+                ) VALUES (?, 'PB', 'Premium Bonds', 'manual', 100, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+        review = fetch_or_create_monthly_review("2026-04", uid)
+        assert review is not None
+        ensure_monthly_review_items(review["id"], uid)
+        review_id = review["id"]
+
+    resp = client.post(
+        f"/api/v1/accounts/{aid}/balance",
+        json={"current_value": 60000, "month": "2026-04"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert resp.status_code == 200
+    assert resp.get_json()["current_value"] == 50000
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            account_row = conn.execute(
+                "SELECT current_value FROM accounts WHERE id = ?",
+                (aid,),
+            ).fetchone()
+            assert float(account_row["current_value"]) == 50000.0
+
+            snapshot_row = conn.execute(
+                "SELECT balance FROM monthly_snapshots WHERE account_id = ? AND month_key = ?",
+                (aid, "2026-04"),
+            ).fetchone()
+            assert snapshot_row is not None
+            assert float(snapshot_row["balance"]) == 50000.0
+
+            daily_total = conn.execute(
+                "SELECT total_value FROM portfolio_daily_snapshots WHERE user_id = ? ORDER BY snapshot_date DESC LIMIT 1",
+                (uid,),
+            ).fetchone()
+            assert daily_total is not None
+            assert float(daily_total["total_value"]) == 50000.0
+
+            daily_account = conn.execute(
+                "SELECT value FROM account_daily_snapshots WHERE user_id = ? AND account_id = ? ORDER BY snapshot_date DESC LIMIT 1",
+                (uid, aid),
+            ).fetchone()
+            assert daily_account is not None
+            assert float(daily_account["value"]) == 50000.0
+
+            review_item = conn.execute(
+                "SELECT balance_updated FROM monthly_review_items WHERE review_id = ? AND account_id = ?",
+                (review_id, aid),
+            ).fetchone()
+            assert review_item is not None
+            assert int(review_item["balance_updated"] or 0) == 1
+
+
 def test_update_account_balance_rejects_invalid_month_without_changing_balance(app, client, token):
     with app.app_context():
         from app.models import get_connection, get_user_by_username

@@ -193,46 +193,76 @@ def projection_start_month_key(assumptions=None, today=None):
     return current_key
 
 
-def contribution_override_for_month(account, month_key):
-    """Return a personal monthly contribution override for account/month, if any."""
-    overrides = _safe_get(account, "_contribution_overrides", []) or []
+def month_key_to_index(month_key):
+    try:
+        year, month = str(month_key).split("-")
+        return int(year) * 12 + int(month)
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+
+
+def override_span_months(override):
+    start = month_key_to_index(_safe_get(override, "from_month"))
+    end = month_key_to_index(_safe_get(override, "to_month"))
+    if start is None or end is None:
+        return None
+    return max(end - start, 0)
+
+
+
+def select_best_matching_override(overrides, month_key):
+    """Return the narrowest matching override; on ties prefer the newest record."""
     best = None
     best_span = None
+    best_order = None
 
-    def _mk_to_i(mk):
+    for override in overrides or []:
         try:
-            y, m = mk.split("-")
-            return int(y) * 12 + int(m)
-        except (ValueError, AttributeError):
-            return None
-
-    for override in overrides:
-        try:
-            from_m = override["from_month"]
-            to_m = override["to_month"]
-            if not (from_m <= month_key <= to_m):
-                continue
-            span = None
-            fi = _mk_to_i(from_m)
-            ti = _mk_to_i(to_m)
-            if fi is not None and ti is not None:
-                span = max(ti - fi, 0)
-            if best is None:
-                best = override
-                best_span = span
-                continue
-            if best_span is None:
-                if span is not None:
-                    best = override
-                    best_span = span
-                continue
-            if span is not None and span < best_span:
-                best = override
-                best_span = span
+            from_month = override["from_month"]
+            to_month = override["to_month"]
         except (KeyError, TypeError):
             continue
+        if not (from_month <= month_key <= to_month):
+            continue
 
-    return to_float(best["override_amount"]) if best is not None else None
+        span = override_span_months(override)
+        try:
+            order = int(_safe_get(override, "id", 0) or 0)
+        except (TypeError, ValueError):
+            order = 0
+
+        if best is None:
+            best = override
+            best_span = span
+            best_order = order
+            continue
+
+        if best_span is None and span is not None:
+            best = override
+            best_span = span
+            best_order = order
+            continue
+
+        if span is not None and best_span is not None and span < best_span:
+            best = override
+            best_span = span
+            best_order = order
+            continue
+
+        if span == best_span and order >= (best_order or 0):
+            best = override
+            best_span = span
+            best_order = order
+
+    return best
+
+
+
+def contribution_override_for_month(account, month_key):
+    """Return a personal monthly contribution override for account/month, if any."""
+    override = select_best_matching_override(_safe_get(account, "_contribution_overrides", []) or [], month_key)
+    return to_float(override["override_amount"]) if override is not None else None
 
 
 def projection_monthly_contribution(account, assumptions=None, month_index=0):
@@ -839,6 +869,39 @@ def _contribution_month_keys(today, salary_day):
     return keys
 
 
+
+def _tax_year_contribution_month_keys(today, salary_day):
+    """Return every scheduled contribution month in the current tax year."""
+    start = uk_tax_year_start(today)
+    contribution_day = salary_day if salary_day >= 1 else 1
+    if contribution_day >= 6:
+        y, m = start.year, start.month
+    else:
+        y, m = start.year, start.month + 1
+        if m > 12:
+            y, m = y + 1, 1
+    keys = []
+    for _ in range(full_year_contribution_months(salary_day)):
+        keys.append(f"{y}-{m:02d}")
+        if m == 12:
+            y, m = y + 1, 1
+        else:
+            m += 1
+    return keys
+
+
+
+def _effective_personal_amount_for_month(account_id, monthly_default, month_key, override_rows=None, review_amount_map=None):
+    review_amount_map = review_amount_map or {}
+    rkey = (account_id, month_key)
+    if rkey in review_amount_map:
+        return review_amount_map[rkey]
+    override = select_best_matching_override(override_rows or [], month_key)
+    if override is not None:
+        return float(override["override_amount"] or 0)
+    return monthly_default
+
+
 def calculate_isa_usage(
     accounts,
     ad_hoc_contributions,
@@ -868,16 +931,15 @@ def calculate_isa_usage(
     """
     today = today or date.today()
     month_keys = _contribution_month_keys(today, salary_day)
+    projection_month_keys = _tax_year_contribution_month_keys(today, salary_day)
     months = len(month_keys)
-    total_months = full_year_contribution_months(salary_day)
+    total_months = len(projection_month_keys)
 
-    # Build override lookup: account_id → list of (from_month, to_month, override_amount)
+    # Build override lookup: account_id → matching override rows
     override_map = {}
     for ov in (isa_overrides or []):
         aid = ov["account_id"]
-        override_map.setdefault(aid, []).append(
-            (ov["from_month"], ov["to_month"], float(ov["override_amount"]))
-        )
+        override_map.setdefault(aid, []).append(ov)
 
     # Build review lookup: (account_id, month_key) → expected personal amount.
     # is_skipped rows force £0 regardless of the stored expected_contribution.
@@ -888,18 +950,6 @@ def calculate_isa_usage(
             review_amount_map[key] = 0.0
         else:
             review_amount_map[key] = float(rc["expected_contribution"] or 0)
-
-    def _effective_monthly(account_id, monthly, month_key):
-        # 1. Finalised review wins — that's the user's confirmed truth.
-        rkey = (account_id, month_key)
-        if rkey in review_amount_map:
-            return review_amount_map[rkey]
-        # 2. Active override (skip / adjusted amount).
-        for from_m, to_m, amount in override_map.get(account_id, []):
-            if from_m <= month_key <= to_m:
-                return amount
-        # 3. Per-account default.
-        return monthly
 
     monthly_isa = 0.0
     monthly_lisa = 0.0
@@ -922,9 +972,15 @@ def calculate_isa_usage(
                 monthly = float(acc["monthly_contribution"] or 0)
             except (KeyError, TypeError):
                 monthly = 0.0
-        # Sum actual amounts month by month, respecting overrides
-        total = sum(_effective_monthly(acc["id"], monthly, mk) for mk in month_keys)
-        projected = monthly * total_months
+        override_rows = override_map.get(acc["id"], [])
+        total = sum(
+            _effective_personal_amount_for_month(acc["id"], monthly, mk, override_rows, review_amount_map)
+            for mk in month_keys
+        )
+        projected = sum(
+            _effective_personal_amount_for_month(acc["id"], monthly, mk, override_rows, review_amount_map)
+            for mk in projection_month_keys
+        )
         entry = {
             "account_id": acc["id"],
             "account_name": acc["name"],
@@ -1046,9 +1102,7 @@ def calculate_pension_usage(
     override_map = {}
     for ov in (pension_overrides or []):
         aid = ov["account_id"]
-        override_map.setdefault(aid, []).append(
-            (ov["from_month"], ov["to_month"], float(ov["override_amount"]))
-        )
+        override_map.setdefault(aid, []).append(ov)
 
     review_amount_map = {}
     for rc in (review_contributions or []):
@@ -1057,15 +1111,6 @@ def calculate_pension_usage(
             review_amount_map[key] = 0.0
         else:
             review_amount_map[key] = float(rc["expected_contribution"] or 0)
-
-    def _effective_personal_for_month(account_id, default_personal, month_key):
-        rkey = (account_id, month_key)
-        if rkey in review_amount_map:
-            return review_amount_map[rkey]
-        for from_m, to_m, amount in override_map.get(account_id, []):
-            if from_m <= month_key <= to_m:
-                return amount
-        return default_personal
 
     for acc in accounts:
         if not is_pension_account(acc):
@@ -1078,8 +1123,9 @@ def calculate_pension_usage(
         if not acc_day:
             acc_day = salary_day
         month_keys = _contribution_month_keys(today, acc_day)
+        projection_month_keys = _tax_year_contribution_month_keys(today, acc_day)
         acc_months = len(month_keys)
-        acc_total_months = full_year_contribution_months(acc_day)
+        acc_total_months = len(projection_month_keys)
 
         baseline = contribution_breakdown(acc, assumptions)
         monthly_total = float(baseline.get("total_into_pot") or 0)
@@ -1090,9 +1136,13 @@ def calculate_pension_usage(
 
         default_personal = float(_safe_get(acc, "monthly_contribution") or 0)
         method = (_safe_get(acc, "contribution_method") or "")
+        override_rows = override_map.get(int(acc["id"]), [])
 
         for mk in month_keys:
-            personal = float(_effective_personal_for_month(int(acc["id"]), default_personal, mk) or 0)
+            personal = float(
+                _effective_personal_amount_for_month(int(acc["id"]), default_personal, mk, override_rows, review_amount_map)
+                or 0
+            )
             if personal <= 0:
                 continue
             adjusted = dict(acc)
@@ -1114,7 +1164,17 @@ def calculate_pension_usage(
             personal_total += m_personal_gross
             employer_total += m_employer_gross
 
-        projected = monthly_total * acc_total_months
+        projected = 0.0
+        for mk in projection_month_keys:
+            personal = float(
+                _effective_personal_amount_for_month(int(acc["id"]), default_personal, mk, override_rows, review_amount_map)
+                or 0
+            )
+            if personal <= 0:
+                continue
+            adjusted = dict(acc)
+            adjusted["monthly_contribution"] = personal
+            projected += float(contribution_breakdown(adjusted, assumptions).get("total_into_pot") or 0)
 
         used_total += total
         used_personal += personal_total

@@ -1,5 +1,6 @@
 """Allowance tracking: ISA, pension, dividend, CGT, carry-forward, overrides."""
 from datetime import datetime, timezone
+from app.calculations import select_best_matching_override
 from ._conn import get_connection
 
 
@@ -341,23 +342,16 @@ def fetch_all_active_overrides(month_key, user_id):
             (month_key, month_key, user_id),
         ).fetchall()
 
-    best_by_account = {}
+    rows_by_account = {}
     for row in rows:
-        account_id = row["account_id"]
-        span = _override_span_months(row)
-        current = best_by_account.get(account_id)
-        if current is None:
-            best_by_account[account_id] = row
-            continue
+        rows_by_account.setdefault(row["account_id"], []).append(row)
 
-        current_span = _override_span_months(current)
-        if current_span is None and span is not None:
-            best_by_account[account_id] = row
-            continue
-        if span is not None and current_span is not None and span < current_span:
-            best_by_account[account_id] = row
-
-    return best_by_account
+    return {
+        account_id: best
+        for account_id, account_rows in rows_by_account.items()
+        for best in [select_best_matching_override(account_rows, month_key)]
+        if best is not None
+    }
 
 
 def fetch_isa_overrides_for_tax_year(user_id, ty_start, ty_end):

@@ -42,6 +42,7 @@ from app.models import (
 )
 from app.utils import optional_float, optional_int, valid_month_key
 from app.services.monthly_review_checklist import parse_monthly_review_notes
+from app.services.financial_truth import apply_account_balance_update
 from app.services.csv_parsers import (
     count_csv_rows,
     detect_csv_headers,
@@ -131,12 +132,15 @@ def monthly_review():
             account = fetch_account(account_id, uid) if account_id else None
             if account:
                 new_balance = _optional_float(request.form.get("current_value"), account["current_value"])
-                payload = {**account, "current_value": new_balance, "last_updated": datetime.now(timezone.utc).isoformat()}
-                update_account(payload, uid)
-                upsert_monthly_snapshot(account["id"], month_key, new_balance)
                 review = fetch_or_create_monthly_review(month_key, uid)
-                mark_review_item_updated(review["id"], account["id"], "balance_updated")
-                flash(f"{account['name']} balance updated to £{new_balance:,.2f}.", "success")
+                applied_balance = apply_account_balance_update(
+                    account,
+                    uid,
+                    new_balance,
+                    month_key,
+                    review_id=review["id"],
+                )
+                flash(f"{account['name']} balance updated to £{applied_balance:,.2f}.", "success")
         elif form_name == "mark_complete":
             review = fetch_or_create_monthly_review(month_key, uid)
             ensure_monthly_review_items(review["id"], uid)
@@ -398,12 +402,15 @@ def api_update_balance():
     if not account:
         return jsonify({"ok": False, "error": "Account not found"}), 404
 
-    payload = {**account, "current_value": new_balance, "last_updated": datetime.now(timezone.utc).isoformat()}
-    update_account(payload, uid)
-    upsert_monthly_snapshot(account_id, month_key, new_balance)
     review = fetch_or_create_monthly_review(month_key, uid)
-    mark_review_item_updated(review["id"], account_id, "balance_updated")
-    return jsonify({"ok": True, "balance": new_balance})
+    applied_balance = apply_account_balance_update(
+        account,
+        uid,
+        new_balance,
+        month_key,
+        review_id=review["id"],
+    )
+    return jsonify({"ok": True, "balance": applied_balance})
 
 
 @monthly_review_bp.route("/api/restore-contribution", methods=["POST"])

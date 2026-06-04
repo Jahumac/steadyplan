@@ -4,6 +4,7 @@ from app.calculations import (
     _retirement_target_date,
     age_from_dob,
     calculate_isa_usage,
+    calculate_pension_usage,
     contribution_breakdown,
     full_year_contribution_months,
     months_in_tax_year,
@@ -208,3 +209,67 @@ def test_isa_usage_keeps_recorded_lisa_contributions_after_age_50():
     assert usage["projected_lisa"] == 250
     assert usage["isa_used"] == 250
     assert usage["projected_isa"] == 250
+
+
+def test_isa_projection_respects_reviewed_skip_in_year_end_projection():
+    accounts = [
+        {
+            "id": 1,
+            "name": "ISA",
+            "wrapper_type": "Stocks & Shares ISA",
+            "monthly_contribution": 100,
+        }
+    ]
+
+    usage = calculate_isa_usage(
+        accounts,
+        ad_hoc_contributions=[],
+        today=date(2026, 6, 30),
+        salary_day=28,
+        review_contributions=[
+            {
+                "account_id": 1,
+                "month_key": "2026-05",
+                "expected_contribution": 100,
+                "is_skipped": 1,
+            }
+        ],
+    )
+
+    assert usage["monthly_isa"] == 200
+    assert usage["projected_isa"] == 1100
+    assert usage["breakdown"][0]["projected_total"] == 1100
+
+
+def test_pension_projection_respects_reviewed_skip_in_year_end_projection():
+    accounts = [
+        {
+            "id": 1,
+            "name": "SIPP",
+            "wrapper_type": "SIPP",
+            "category": "Pension",
+            "monthly_contribution": 80,
+            "employer_contribution": 0,
+            "contribution_method": "standard",
+            "pension_contribution_day": 28,
+        }
+    ]
+
+    usage = calculate_pension_usage(
+        accounts,
+        ad_hoc_contributions=[],
+        assumptions={"tax_band": "basic"},
+        today=date(2026, 6, 30),
+        salary_day=28,
+        review_contributions=[
+            {
+                "account_id": 1,
+                "month_key": "2026-05",
+                "expected_contribution": 80,
+                "is_skipped": 1,
+            }
+        ],
+    )
+
+    assert usage["pension_used"] == 200
+    assert usage["projected_total"] == 1100
