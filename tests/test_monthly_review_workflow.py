@@ -529,6 +529,48 @@ def test_confirm_import_marks_holdings_updated_on_selected_previous_month(app, c
             assert int(cur_flag["holdings_updated"] or 0) == 0
 
 
+def test_monthly_review_expected_contribution_prefers_narrowest_override(app, make_user):
+    uid, _, _ = make_user(username="mr-override-precedence", password="password123")
+
+    with app.app_context():
+        from app.models import ensure_monthly_review_items, fetch_or_create_monthly_review, get_connection
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, monthly_contribution, is_active)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 80, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO contribution_overrides (account_id, from_month, to_month, override_amount, reason, created_at)
+                VALUES (?, '2026-06', '2026-06', 250, 'narrow', datetime('now'))
+                """,
+                (account_id,),
+            )
+            conn.execute(
+                """
+                INSERT INTO contribution_overrides (account_id, from_month, to_month, override_amount, reason, created_at)
+                VALUES (?, '2026-05', '2026-07', 100, 'broad newer', datetime('now'))
+                """,
+                (account_id,),
+            )
+            conn.commit()
+
+        review = fetch_or_create_monthly_review('2026-06', uid)
+        ensure_monthly_review_items(review["id"], uid)
+
+        with get_connection() as conn:
+            item = conn.execute(
+                "SELECT expected_contribution FROM monthly_review_items WHERE review_id = ? AND account_id = ?",
+                (review["id"], account_id),
+            ).fetchone()
+
+    assert float(item["expected_contribution"] or 0) == 250.0
+
+
 def test_confirm_import_invalid_or_missing_month_falls_back_safely(app, client, make_user):
     from datetime import date
 

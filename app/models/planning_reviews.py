@@ -1,21 +1,22 @@
 """Monthly reviews: fetch, create, update, review items, contribution flags."""
+from app.calculations import select_best_matching_override
 from ._conn import get_connection
 from .accounts import fetch_all_accounts
 
 
 def _expected_contribution_for_month(conn, account_id, month_key, fallback_monthly_contribution):
-    override = conn.execute(
+    overrides = conn.execute(
         """
-        SELECT override_amount
+        SELECT *
         FROM contribution_overrides
         WHERE account_id = ?
           AND from_month <= ?
           AND to_month >= ?
         ORDER BY id DESC
-        LIMIT 1
         """,
         (account_id, month_key, month_key),
-    ).fetchone()
+    ).fetchall()
+    override = select_best_matching_override(overrides, month_key)
     return (
         float(override["override_amount"])
         if override is not None

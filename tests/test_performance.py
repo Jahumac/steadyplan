@@ -248,6 +248,57 @@ def test_performance_cash_flow_uses_into_pot_for_sipp(app, make_user):
         assert perf["total_market_gain"] == 0.0
 
 
+def test_performance_uses_narrowest_override_for_monthly_cash_flow(app, make_user):
+    uid, _, _ = make_user(username="perf-override-precedence", password="password123")
+
+    with app.app_context():
+        from app.models import fetch_monthly_performance_data, fetch_monthly_performance_data_by_account, get_connection
+
+        with get_connection() as conn:
+            isa = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, monthly_contribution, is_active)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 80, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, month_key, balance) VALUES ('2026-05-01', ?, '2026-05', 1000)",
+                (isa,),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, month_key, balance) VALUES ('2026-06-01', ?, '2026-06', 1250)",
+                (isa,),
+            )
+            conn.execute(
+                """
+                INSERT INTO contribution_overrides (account_id, from_month, to_month, override_amount, reason, created_at)
+                VALUES (?, '2026-06', '2026-06', 250, 'narrow', datetime('now'))
+                """,
+                (isa,),
+            )
+            conn.execute(
+                """
+                INSERT INTO contribution_overrides (account_id, from_month, to_month, override_amount, reason, created_at)
+                VALUES (?, '2026-05', '2026-07', 100, 'broad newer', datetime('now'))
+                """,
+                (isa,),
+            )
+            conn.commit()
+
+        monthly_data = fetch_monthly_performance_data(uid)
+        by_account = fetch_monthly_performance_data_by_account(uid)
+
+    assert monthly_data == [
+        ('2026-05', 1000.0, 100.0, 0),
+        ('2026-06', 1250.0, 250.0, 0),
+    ]
+    assert by_account[isa]["rows"] == [
+        ('2026-05', 1000.0, 100.0),
+        ('2026-06', 1250.0, 250.0),
+    ]
+
+
 def test_performance_draft_review_does_not_change_cash_flow(app, make_user):
     uid, _, _ = make_user()
 
