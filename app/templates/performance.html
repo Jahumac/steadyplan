@@ -15,19 +15,20 @@
 <section class="card highlight mb-1 month-accent-{{ current_month_num }}">
   <div class="hero-top">
     <div>
-      <p class="eyebrow">On track vs. plan</p>
+      <p class="eyebrow">Plan comparison</p>
       {% if has_data %}
         <h2 class="hero-value hero-value-xl">£{{ '{:,.0f}'.format(current_value) }}</h2>
         {% if plan_value is not none %}
           {% set vs_plan = current_value - plan_value %}
           <p class="hero-subtitle">
             {% if vs_plan >= 0 %}
-              <span class="perf-positive">£{{ '{:,.0f}'.format(vs_plan) }} ahead</span> of where you should be
+              <span class="perf-positive">£{{ '{:,.0f}'.format(vs_plan) }} ahead</span> of this plan line
             {% else %}
-              <span class="perf-negative">£{{ '{:,.0f}'.format(vs_plan | abs) }} behind</span> where you should be
+              <span class="perf-negative">£{{ '{:,.0f}'.format(vs_plan | abs) }} behind</span> this plan line
             {% endif %}
             · {{ daily_labels | length }} days tracked
           </p>
+          <p class="helper-text m-0">This compares your recorded portfolio value with an assumptions-based plan line. It is a planning guide, not a guarantee.</p>
         {% else %}
           <p class="hero-subtitle">{{ daily_labels | length }} days tracked</p>
         {% endif %}
@@ -47,7 +48,7 @@
     {% call hero_stat('Portfolio now') %}<strong>£{{ '{:,.0f}'.format(current_value) }}</strong>{% endcall %}
     {% if plan_value is not none %}
     {% set vs_plan = current_value - plan_value %}
-    {% call hero_stat('Should be') %}<strong>£{{ '{:,.0f}'.format(plan_value) }}</strong>{% endcall %}
+    {% call hero_stat('Plan line') %}<strong>£{{ '{:,.0f}'.format(plan_value) }}</strong>{% endcall %}
     {% call hero_stat('Difference') %}
       <strong class="{% if vs_plan >= 0 %}perf-positive{% else %}perf-negative{% endif %}">
         {% if vs_plan >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(vs_plan) }}
@@ -77,7 +78,7 @@
 <section class="card mb-1">
   <div class="section-header mb-075 perf-chart-header">
     <div>
-      <p class="chart-label m-0">Actual vs. Plan</p>
+      <p class="chart-label m-0">Actual vs. plan line</p>
       <div class="perf-legend mt-025">
         <span class="perf-legend-dot" style="background:var(--accent-2)"></span><span>Actual</span>
         <span class="perf-legend-dot" style="background:var(--muted);opacity:0.6"></span><span>Plan ({{ assumed_rate_pct }}%)</span>
@@ -105,7 +106,7 @@
       <p id="perfStatActual" class="m-0 text-bold">—</p>
     </div>
     <div class="perf-stat">
-      <p class="text-muted m-0 text-sm-2">Should be</p>
+      <p class="text-muted m-0 text-sm-2">Plan line</p>
       <p id="perfStatPlan" class="m-0 text-bold">—</p>
     </div>
     <div class="perf-stat">
@@ -123,7 +124,7 @@
     Plan uses your per-account contribution settings, adjusted by any contribution overrides and monthly update entries, and credits them on your monthly update due date (salary day shifted for weekends, plus settlement). It compounds at {{ assumed_rate_pct }}% p.a.
     {% if planned_monthly_avg is not none %}Over the period shown, that’s an average of £{{ '{:,.0f}'.format(planned_monthly_avg) }}/mo.{% endif %}
     The figure above includes tax relief, Lifetime ISA bonus, employer match — the *full* amount landing in each pot, not what comes out of your bank.
-    Short-term dips are normal — review yearly to see if you're still on track.
+    Short-term dips are normal — review yearly to see whether you're still broadly on track with this plan.
   </p>
   {% if contribution_breakdown_rows %}
   <details class="mt-075">
@@ -185,7 +186,7 @@
       <tr>
         <th>Account</th>
         <th class="num">Actual</th>
-        <th class="num">Should be</th>
+        <th class="num">Plan line</th>
         <th class="num">Difference</th>
       </tr>
     </thead>

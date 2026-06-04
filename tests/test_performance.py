@@ -102,6 +102,14 @@ def test_performance_helper_uses_sentence_case_monthly_update_copy(app, client, 
     assert "monthly update entries" in html
     assert "monthly update due date" in html
     assert "includes tax relief, Lifetime ISA bonus, employer match" in html
+    assert "This compares your recorded portfolio value with an assumptions-based plan line. It is a planning guide, not a guarantee." in html
+    assert "Actual vs. plan line" in html
+    assert ">Plan line<" in html
+    assert "of this plan line" in html
+    assert "where you should be" not in html
+    assert ">Should be<" not in html
+    assert "review yearly to see whether you're still broadly on track with this plan." in html
+    assert "review yearly to see if you're still on track." not in html
     assert ">Lifetime ISA bonus<" in html
     assert "includes tax relief, LISA bonus, employer match" not in html
     assert ">Bonus<" not in html
