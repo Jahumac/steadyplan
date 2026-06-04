@@ -49,6 +49,33 @@ def test_backup_is_a_readable_sqlite_db(app, tmp_path):
     assert "verify-user" in users
 
 
+def test_pre_restore_backup_is_unique_and_keeps_daily_backup(app, tmp_path):
+    from app.services.backups import run_backup, run_pre_restore_backup
+
+    with app.app_context():
+        db_path = Path(app.config["DB_PATH"])
+        from app.models import create_user
+        create_user("pre-restore-unique-user", "password123")
+
+    daily = run_backup(db_path, tmp_path)
+    pre_restore_1 = run_pre_restore_backup(db_path, tmp_path, now=datetime(2026, 6, 4, 12, 0, 0, 123456))
+    pre_restore_2 = run_pre_restore_backup(db_path, tmp_path, now=datetime(2026, 6, 4, 12, 0, 1, 123456))
+
+    assert daily.name.startswith("finance-")
+    assert not daily.name.startswith("finance-pre-restore-")
+    assert daily.exists()
+    assert pre_restore_1.exists()
+    assert pre_restore_2.exists()
+    assert pre_restore_1.name.startswith("finance-pre-restore-")
+    assert pre_restore_2.name.startswith("finance-pre-restore-")
+    assert pre_restore_1 != pre_restore_2
+
+    names = sorted(p.name for p in (tmp_path / "backups").glob("finance*.db") if not p.is_symlink())
+    assert daily.name in names
+    assert pre_restore_1.name in names
+    assert pre_restore_2.name in names
+
+
 def test_backup_rotation_keeps_last_n(app, tmp_path):
     """Simulate 35 daily backups, retention=30, verify only last 30 remain."""
     from app.services.backups import _prune_old_backups

@@ -11,7 +11,7 @@ from flask import Blueprint, Response, current_app, flash, redirect, render_temp
 from flask_login import current_user, login_required
 
 from app.calculations import current_age_from_assumptions
-from app.services.backups import list_backups, run_backup
+from app.services.backups import list_backups, run_backup, run_pre_restore_backup
 from app.services.restore_validation import validate_restore_backup_json
 from app.services.restore_service import RestoreValidationError, restore_backup_for_user
 from app.utils import optional_float, optional_int, valid_date
@@ -282,7 +282,7 @@ def _restore_staging_path(token):
 def _create_pre_restore_backup():
     db_path = Path(current_app.config["DB_PATH"])
     data_dir = Path(current_app.config.get("DATA_DIR", db_path.parent))
-    return run_backup(db_path, data_dir)
+    return run_pre_restore_backup(db_path, data_dir)
 
 
 def _cleanup_restore_staging(now_ts=None):
