@@ -159,6 +159,7 @@ from .planning import (
     fetch_account_snapshot_history,
     fetch_all_active_overrides,
     fetch_isa_overrides_for_tax_year,
+    fetch_isa_allowance_cash_flow_events,
     fetch_pension_overrides_for_tax_year,
     fetch_assumptions,
     fetch_contribution_overrides,

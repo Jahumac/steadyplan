@@ -118,3 +118,57 @@ def test_account_detail_contribution_adjustments_helper_uses_plain_wording(app, 
     html = resp.get_data(as_text=True)
     assert "Below it are any temporary adjustments you've set (e.g. holidays, bonuses)." in html
     assert "Below it are any <em>life-happens</em> adjustments you've set (e.g. holidays, bonuses)." not in html
+
+
+def test_cash_isa_account_detail_shows_explicit_allowance_effect_selector(app, client, make_user):
+    uid, username, password = make_user(username="cash-isa-allowance-selector", password="password123")
+    with app.app_context():
+        payload = _account_payload()
+        payload["name"] = "Cash ISA"
+        payload["wrapper_type"] = "Cash ISA"
+        payload["valuation_mode"] = "manual"
+        account_id = create_account(payload, uid)
+
+    client.post("/login", data={"username": username, "password": password})
+    resp = client.get(f"/accounts/{account_id}")
+
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "ISA allowance effect" in html
+    assert "No effect on tracked ISA usage" in html
+    assert "Flexible ISA withdrawal restores room" in html
+    assert "Nothing is assumed by default." in html
+
+
+def test_cash_isa_cash_flow_event_stores_explicit_allowance_effect(app, client, make_user):
+    uid, username, password = make_user(username="cash-isa-allowance-save", password="password123")
+    with app.app_context():
+        payload = _account_payload()
+        payload["name"] = "Cash ISA"
+        payload["wrapper_type"] = "Cash ISA"
+        payload["valuation_mode"] = "manual"
+        account_id = create_account(payload, uid)
+
+    client.post("/login", data={"username": username, "password": password})
+    resp = client.post(
+        f"/accounts/{account_id}/cash-events/add",
+        data={
+            "cash_event_date": "2026-04-10",
+            "cash_event_kind": "withdrawal",
+            "cash_event_amount": "150",
+            "cash_event_allowance_effect": "flexible_withdrawal",
+            "cash_event_note": "Move out",
+        },
+        follow_redirects=False,
+    )
+
+    assert resp.status_code == 302
+    with app.app_context():
+        with get_connection() as conn:
+            row = conn.execute(
+                "SELECT amount, allowance_effect FROM cash_flow_events WHERE user_id = ? AND account_id = ? ORDER BY id DESC LIMIT 1",
+                (uid, account_id),
+            ).fetchone()
+
+    assert row["amount"] == -150
+    assert row["allowance_effect"] == "flexible_withdrawal"
