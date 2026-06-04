@@ -10,6 +10,7 @@
 {# ── Onboarding state ────────────────────────────────────────────────────── #}
 {% set has_profile = assumptions and assumptions.date_of_birth %}
 {% set has_accounts = accounts | length > 0 %}
+{% set has_budget_items = budget_item_count > 0 %}
 {% set has_goal = goals_data | length > 0 %}
 {% set has_history = history_labels | length > 0 %}
 {% set has_portfolio_history = (daily_labels | length > 0) or has_history %}
@@ -53,6 +54,12 @@
   {% set onboarding_primary_body = 'You already added your planning dates. Now add one real account so Overview has something concrete to show.' %}
   {% set onboarding_primary_href = '/accounts/?mode=create&focus=first_account' %}
   {% set onboarding_primary_cta = 'Add your first account' %}
+{% elif not has_budget_items and not has_goal %}
+  {% set onboarding_primary_eyebrow = 'Next helpful step' %}
+  {% set onboarding_primary_title = 'Start your first budget' %}
+  {% set onboarding_primary_body = 'Useful once you want a simple monthly plan. Start with take-home pay and one or two essentials — the rest can wait.' %}
+  {% set onboarding_primary_href = '/budget/items/?mode=create&focus=first_budget' %}
+  {% set onboarding_primary_cta = 'Start your first budget' %}
 {% elif not has_goal %}
   {% set onboarding_primary_eyebrow = 'Next helpful step' %}
   {% set onboarding_primary_title = 'Set your first goal' %}
@@ -83,6 +90,8 @@
   <p class="helper-text mb-075">
     {% if essential_steps_done < 2 %}
       You only need the basics to begin. Goals and monthly updates can wait until you have something real to track.
+    {% elif not has_budget_items and not has_goal %}
+      You already have the basics in place. Start your first budget when you want a simple monthly plan. Goals and monthly updates can wait until later.
     {% elif not has_goal %}
       You already have the basics in place. Set your first goal or do your first monthly update when you want SteadyPlan to start tracking progress.
     {% else %}
