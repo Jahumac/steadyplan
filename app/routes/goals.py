@@ -149,6 +149,7 @@ def goals():
     selected_goal = None
     selected_goal_tags = []
     page_mode = request.args.get("mode", "view")
+    first_goal_focus = request.args.get("focus") == "first_goal" and not goal_rows and page_mode == "create"
     selected_goal_id = request.args.get("goal_id", type=int)
     if selected_goal_id:
         selected_goal = fetch_goal(selected_goal_id, uid)
@@ -163,5 +164,6 @@ def goals():
         selected_goal_tags=selected_goal_tags,
         tag_options=fetch_user_tags(current_user.id),
         page_mode=page_mode,
+        first_goal_focus=first_goal_focus,
         active_page="goals",
     )

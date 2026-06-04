@@ -115,6 +115,7 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     assert "Useful once you want a simple monthly plan. Start with take-home pay and one or two essentials — the rest can wait." in html
     assert '/budget/items/?mode=create&amp;focus=first_budget' in html
     assert "Set your first goal" in html
+    assert '/goals/?mode=create&focus=first_goal' in html
     assert "Set a first goal" not in html
     assert "Set first goal" not in html
     assert "Set your first goal or do your first monthly update" not in html

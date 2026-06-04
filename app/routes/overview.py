@@ -591,7 +591,7 @@ def overview():
                 "title": "Give this money a destination",
                 "body": "A goal turns the dashboard from a pile of numbers into a plan. Retirement, emergency fund, house deposit — one target is enough to start.",
                 "cta_text": "Create a goal",
-                "cta_href": "/goals/?mode=create",
+                "cta_href": "/goals/?mode=create&focus=first_goal",
             }
         elif not history_labels:
             next_action = {

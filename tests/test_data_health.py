@@ -250,7 +250,7 @@ def test_no_goals_warning_uses_first_goal_cta(app, setup_stale_account_user):
 
         summary = build_data_health_summary(setup_stale_account_user)
         goal_warning = next(item for item in summary["health_items"] if item["title"] == "No financial goals set")
-        assert goal_warning["link"] == "/goals/?mode=create"
+        assert goal_warning["link"] == "/goals/?mode=create&focus=first_goal"
         assert goal_warning["cta_text"] == "Set your first goal"
 
 
@@ -439,7 +439,7 @@ def test_overview_data_health_missing_goal_uses_first_goal_cta(app, client, make
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "No financial goals set" in html
-    assert 'href="/goals/?mode=create"' in html
+    assert 'href="/goals/?mode=create&amp;focus=first_goal"' in html
     assert "Set your first goal" in html
     assert ">Review<" not in html
 
