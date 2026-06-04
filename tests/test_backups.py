@@ -93,6 +93,68 @@ def test_diagnostics_renders_backup_panel_when_no_backups_exist(app, client, mak
     assert "secret_key.txt" in body
 
 
+def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_user, tmp_path):
+    app.config.update(
+        DATA_DIR=tmp_path,
+        IS_PRODUCTION=False,
+        SESSION_COOKIE_SECURE=False,
+        REMEMBER_COOKIE_SECURE=False,
+        TRUST_PROXY_HEADERS=False,
+        DEMO_PUBLIC_LOGIN_ENABLED=False,
+        WEB_CONCURRENCY=1,
+        RATELIMIT_STORAGE_URI="memory://",
+        RATELIMIT_STORAGE_WARNING=None,
+    )
+    uid, username, password = make_user(username="trust-admin-default", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/settings/?mode=diagnostics")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Trust posture checkpoint" in body
+    assert "App mode" in body
+    assert "Development/local" in body
+    assert "Deliberate local-style — Local/development mode is active." in body
+    assert "Secure cookies" in body
+    assert "Deliberate local-style — Secure cookies are off. That is normal on local HTTP, but turn them on behind HTTPS." in body
+    assert "Trusted proxy headers" in body
+    assert "OK — Forwarded proxy headers are ignored unless you explicitly opt in." in body
+    assert "Public demo login" in body
+    assert "OK — Public demo login is off. Real accounts still require normal login." in body
+    assert "Rate-limit storage" in body
+    assert "OK — Process-local memory storage is fine with a single worker." in body
+
+
+def test_diagnostics_warns_when_trust_posture_needs_review(app, client, make_user, tmp_path):
+    app.config.update(
+        DATA_DIR=tmp_path,
+        IS_PRODUCTION=True,
+        SESSION_COOKIE_SECURE=False,
+        REMEMBER_COOKIE_SECURE=False,
+        TRUST_PROXY_HEADERS=True,
+        DEMO_PUBLIC_LOGIN_ENABLED=True,
+        WEB_CONCURRENCY=2,
+        RATELIMIT_STORAGE_URI="memory://",
+        RATELIMIT_STORAGE_WARNING=(
+            "RATELIMIT_STORAGE_URI=memory:// is process-local. With multiple Gunicorn workers, login/API rate limits are tracked separately per worker. Set WEB_CONCURRENCY=1 or use shared storage such as Redis."
+        ),
+    )
+    uid, username, password = make_user(username="trust-admin-warning", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/settings/?mode=diagnostics")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Trust posture checkpoint" in body
+    assert "Review recommended" in body
+    assert "One or more settings need review before treating this as a polished public deployment." in body
+    assert "Production" in body
+    assert "Review recommended — Secure cookies are off while production mode is on. Turn them on behind HTTPS." in body
+    assert "Deliberate public/proxy — SteadyPlan trusts forwarded proxy headers. Only leave this on behind a trusted reverse proxy or tunnel." in body
+    assert "Deliberate public demo — Public read-only demo login is enabled. Keep it demo-data-only and treat it as an explicit host choice." in body
+    assert "Review recommended — RATELIMIT_STORAGE_URI=memory:// is process-local." in body
+
+
 def test_admin_can_run_manual_backup_from_settings(app, client, make_user, tmp_path):
     app.config["DATA_DIR"] = tmp_path
     uid, username, password = make_user(username="backup-admin", is_admin=True)

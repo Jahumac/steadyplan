@@ -190,6 +190,13 @@
         <strong style="color:var(--accent-3);">{{ diagnostics.backups.health_label if diagnostics and diagnostics.backups and diagnostics.backups.health_label else 'Needs backup' }}</strong>
       {% endif %}
     {% endcall %}
+    {% call hero_stat('Trust posture') %}
+      {% if diagnostics and diagnostics.trust_posture and diagnostics.trust_posture.overall_label == 'OK' %}
+        <strong class="text-accent-2">{{ diagnostics.trust_posture.overall_label }}</strong>
+      {% else %}
+        <strong style="color:var(--accent-3);">{{ diagnostics.trust_posture.overall_label if diagnostics and diagnostics.trust_posture and diagnostics.trust_posture.overall_label else 'Review recommended' }}</strong>
+      {% endif %}
+    {% endcall %}
   </div>
 </section>
 
@@ -230,6 +237,55 @@
         <tr>
           <td>Latest price update (raw)</td>
           <td class="num">{% if diagnostics and diagnostics.latest_price_update_utc %}{{ diagnostics.latest_price_update_utc }}{% else %}—{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel mt-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Trust</p>
+      <h3>Trust posture checkpoint</h3>
+    </div>
+  </div>
+  <p class="helper-text">
+    Live runtime checks for the main trust settings on this instance. This is not a full security audit, but it should make the current posture easier to review.
+  </p>
+  {% if diagnostics and diagnostics.trust_posture and diagnostics.trust_posture.overall_label != 'OK' %}
+    <section class="panel panel-compact alert-banner alert-warning mt-075" style="margin:0.85rem 0 0;">
+      <strong>Trust posture</strong>
+      <p class="helper-text m-0">One or more settings need review before treating this as a polished public deployment.</p>
+    </section>
+  {% endif %}
+  <div class="table-scroll">
+    <table class="data-table">
+      <tbody>
+        <tr>
+          <td>App mode</td>
+          <td class="num">{{ diagnostics.trust_posture['items']['app_mode'].value if diagnostics and diagnostics.trust_posture else '—' }}</td>
+          <td>{{ diagnostics.trust_posture['items']['app_mode'].label if diagnostics and diagnostics.trust_posture else '—' }} — {{ diagnostics.trust_posture['items']['app_mode'].message if diagnostics and diagnostics.trust_posture else '—' }}</td>
+        </tr>
+        <tr>
+          <td>Secure cookies</td>
+          <td class="num">{{ diagnostics.trust_posture['items']['secure_cookies'].value if diagnostics and diagnostics.trust_posture else '—' }}</td>
+          <td>{{ diagnostics.trust_posture['items']['secure_cookies'].label if diagnostics and diagnostics.trust_posture else '—' }} — {{ diagnostics.trust_posture['items']['secure_cookies'].message if diagnostics and diagnostics.trust_posture else '—' }}</td>
+        </tr>
+        <tr>
+          <td>Trusted proxy headers</td>
+          <td class="num">{{ diagnostics.trust_posture['items']['proxy_headers'].value if diagnostics and diagnostics.trust_posture else '—' }}</td>
+          <td>{{ diagnostics.trust_posture['items']['proxy_headers'].label if diagnostics and diagnostics.trust_posture else '—' }} — {{ diagnostics.trust_posture['items']['proxy_headers'].message if diagnostics and diagnostics.trust_posture else '—' }}</td>
+        </tr>
+        <tr>
+          <td>Public demo login</td>
+          <td class="num">{{ diagnostics.trust_posture['items']['demo_login'].value if diagnostics and diagnostics.trust_posture else '—' }}</td>
+          <td>{{ diagnostics.trust_posture['items']['demo_login'].label if diagnostics and diagnostics.trust_posture else '—' }} — {{ diagnostics.trust_posture['items']['demo_login'].message if diagnostics and diagnostics.trust_posture else '—' }}</td>
+        </tr>
+        <tr>
+          <td>Rate-limit storage</td>
+          <td class="num">{{ diagnostics.trust_posture['items']['rate_limits'].value if diagnostics and diagnostics.trust_posture else '—' }}</td>
+          <td>{{ diagnostics.trust_posture['items']['rate_limits'].label if diagnostics and diagnostics.trust_posture else '—' }} — {{ diagnostics.trust_posture['items']['rate_limits'].message if diagnostics and diagnostics.trust_posture else '—' }}</td>
         </tr>
       </tbody>
     </table>
