@@ -192,6 +192,35 @@ def test_stale_account_data_produces_warning(app, setup_stale_account_user):
         assert "Some accounts have stale or missing history" in titles
 
 
+def test_brand_new_accounts_do_not_count_as_stale_history_yet(app, new_user_id):
+    with app.app_context():
+        account_payload = _base_account_payload("Fresh Account")
+        create_account(account_payload, new_user_id)
+
+        summary = build_data_health_summary(new_user_id)
+        titles = [item["title"] for item in summary["health_items"]]
+        assert "Some accounts have stale or missing history" not in titles
+
+
+def test_missing_history_warning_still_shows_when_some_accounts_have_history(app, new_user_id):
+    with app.app_context():
+        first_payload = _base_account_payload("Tracked Account")
+        second_payload = _base_account_payload("Needs History")
+        tracked_id = create_account(first_payload, new_user_id)
+        create_account(second_payload, new_user_id)
+
+        today_str = date.today().strftime("%Y-%m-%d")
+        month_key = date.today().strftime("%Y-%m")
+        upsert_monthly_snapshot(tracked_id, month_key, 1000)
+        save_account_daily_snapshots(new_user_id, [(tracked_id, 1000)], today_str)
+
+        summary = build_data_health_summary(new_user_id)
+        titles = [item["title"] for item in summary["health_items"]]
+        assert "Some accounts have stale or missing history" in titles
+        stale_warning = next(item for item in summary["health_items"] if item["title"] == "Some accounts have stale or missing history")
+        assert "Needs History" in stale_warning["explanation"]
+
+
 def test_stale_account_warning_uses_review_history_cta(app, setup_stale_account_user):
     with app.app_context():
         conn = get_connection()
@@ -490,6 +519,57 @@ def test_overview_data_health_goal_target_warning_uses_review_goals_cta(app, cli
     assert "Review goals" in html
     assert ">Review<" not in html
 
+
+
+def test_overview_suppresses_stale_history_warning_before_first_snapshot(app, client, make_user):
+    uid, username, password = make_user(username="dh-first-snapshot", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = date.today().strftime("%Y-%m")
+
+    with app.app_context():
+        fetch_assumptions(uid)
+        conn = get_connection()
+        conn.execute(
+            "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+            (uid,),
+        )
+        conn.execute(
+            "UPDATE assumptions SET salary_day = 10, update_day = 12 WHERE user_id = ?",
+            (uid,),
+        )
+        conn.execute(
+            """
+            INSERT INTO accounts (user_id, name, provider, wrapper_type, category, current_value, is_active, valuation_mode, monthly_contribution)
+            VALUES (?, 'ISA', 'Vanguard', 'Stocks & Shares ISA', 'Investments', 1000, 1, 'manual', 150)
+            """,
+            (uid,),
+        )
+        conn.execute(
+            """
+            INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+            VALUES (?, 'Emergency fund', 5000, '', '', '')
+            """,
+            (uid,),
+        )
+        conn.execute(
+            "INSERT INTO budget_items (user_id, name, section, default_amount, sort_order, is_active) VALUES (?, 'Rent', 'fixed', 500, 0, 1)",
+            (uid,),
+        )
+        bid = conn.execute("SELECT id FROM budget_items WHERE user_id = ? LIMIT 1", (uid,)).fetchone()["id"]
+        conn.execute(
+            "INSERT INTO budget_entries (month_key, budget_item_id, amount) VALUES (?, ?, 500)",
+            (month_key, bid),
+        )
+        conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Some accounts have stale or missing history" not in html
+    assert "Review history" not in html
+    assert "Open monthly update" in html
+    assert "/monthly-review/" in html
 
 
 def test_overview_data_health_stale_history_warning_uses_review_history_cta(app, client, make_user):
