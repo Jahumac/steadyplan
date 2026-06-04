@@ -81,6 +81,31 @@ def allowance_overview():
         lisa_contributions_allowed=(not current_age or current_age < 50),
     )
 
+    cash_flow_used_room = 0.0
+    cash_flow_restored_room = 0.0
+    cash_flow_used_count = 0
+    cash_flow_restored_count = 0
+    for event in allowance_events:
+        effect = str(event.get("allowance_effect") or "none").strip().lower()
+        raw_amount = abs(float(event.get("amount") or 0.0))
+        if effect in {"subscription", "flexible_replacement"}:
+            cash_flow_used_room += raw_amount
+            cash_flow_used_count += 1
+        elif effect == "flexible_withdrawal":
+            cash_flow_restored_room += raw_amount
+            cash_flow_restored_count += 1
+
+    allowance_truth_checkpoint = {
+        "monthly_total": float(usage.get("monthly_isa") or 0.0),
+        "topups_total": float(usage.get("adhoc_isa") or 0.0),
+        "adjustments_total": float(usage.get("allowance_adjustment_isa") or 0.0),
+        "net_total": float(usage.get("isa_used") or 0.0),
+        "cash_flow_used_room": cash_flow_used_room,
+        "cash_flow_restored_room": cash_flow_restored_room,
+        "cash_flow_used_count": cash_flow_used_count,
+        "cash_flow_restored_count": cash_flow_restored_count,
+    }
+
     isa_allowance = float(assumptions["isa_allowance"]) if assumptions else 20000
     lisa_allowance = float(assumptions["lisa_allowance"]) if assumptions else 4000
 
@@ -149,6 +174,7 @@ def allowance_overview():
         "allowance.html",
         tax_year=uk_tax_year_label(now_date),
         usage=usage,
+        allowance_truth_checkpoint=allowance_truth_checkpoint,
         pension_usage=pension_usage,
         pension_limits=pension_limits_with_carry,
         isa_allowance=isa_allowance,
