@@ -142,6 +142,8 @@ def test_projections_goal_callout_uses_scenario_estimate_wording(app, client, ma
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert 'Scenario estimate meets "FI target"' in body or 'Scenario estimate is below "FI target"' in body
+    assert 'Scenario estimate £' in body
+    assert 'Projected £' not in body
     assert 'Projection meets "FI target"' not in body
     assert 'Projection is below "FI target"' not in body
     assert 'Projection estimate meets "FI target"' not in body
