@@ -12,6 +12,9 @@ from app.calculations import (
     review_ready_date as calc_review_ready_date,
     tag_totals,
     total_invested,
+    uk_tax_year_end,
+    uk_tax_year_label,
+    uk_tax_year_start,
 )
 from app.models import (
     ensure_monthly_review_items,
@@ -24,6 +27,7 @@ from app.models import (
     fetch_budget_items,
     fetch_holding,
     fetch_holding_totals_by_account,
+    fetch_isa_allowance_cash_flow_events,
     fetch_monthly_review,
     fetch_monthly_review_items,
     fetch_net_worth_history,
@@ -313,6 +317,20 @@ def monthly_review():
             total_into_pot += br["total_into_pot"]
     total_uplift = total_into_pot - total_personal
 
+    first_update_checkpoint = None
+    if first_update_focus:
+        now_date = date.today()
+        ty_start = uk_tax_year_start(now_date).isoformat()
+        ty_end = uk_tax_year_end(now_date).isoformat()
+        isa_allowance_events = fetch_isa_allowance_cash_flow_events(uid, ty_start, ty_end)
+        account_balance_checks = len(holdings_items) + len(manual_items) + len(premium_bonds_items)
+        first_update_checkpoint = {
+            "contribution_count": len(contribution_items),
+            "account_balance_checks": account_balance_checks,
+            "isa_allowance_event_count": len(isa_allowance_events),
+            "tax_year_label": uk_tax_year_label(now_date),
+        }
+
     return render_template(
         "monthly_review.html",
         review=review,
@@ -342,6 +360,7 @@ def monthly_review():
         total_uplift=total_uplift,
         monthly_review_notes=monthly_review_notes,
         first_update_focus=first_update_focus,
+        first_update_checkpoint=first_update_checkpoint,
         active_page="monthly_review",
     )
 
