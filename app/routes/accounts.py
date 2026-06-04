@@ -65,6 +65,7 @@ from app.models import (
     update_holding,
 )
 from app.services.prices import fetch_price, lookup_instrument, to_gbp
+from app.services.financial_truth import apply_account_balance_update, recompute_user_daily_snapshots
 from app.utils import optional_float, optional_int, split_tags, valid_month_key
 
 ASSET_TYPE_OPTIONS = ["ETF", "Fund", "Share", "Pension Fund", "Cash", "Bond", "Other"]
@@ -94,26 +95,6 @@ def _safe_next_accounts(raw):
     if raw.startswith("/accounts") or raw.startswith("/monthly-review"):
         return raw
     return None
-
-
-def _recompute_user_daily_snapshots(user_id):
-    holdings_totals = fetch_holding_totals_by_account(user_id)
-    accounts = fetch_all_accounts(user_id)
-    acct_vals = [(a["id"], effective_account_value(a, holdings_totals)) for a in accounts]
-    save_daily_snapshot(user_id, sum(v for _, v in acct_vals))
-    save_account_daily_snapshots(user_id, acct_vals)
-
-
-def _apply_balance_update_for_account(account, user_id, new_balance, month_key):
-    if (account.get("wrapper_type") or "").lower() == "premium bonds":
-        new_balance = min(float(new_balance), 50000.0)
-
-    payload = dict(account)
-    payload["current_value"] = float(new_balance)
-    payload["last_updated"] = datetime.now(timezone.utc).isoformat()
-    update_account(payload, user_id)
-    upsert_monthly_snapshot(int(account["id"]), month_key, float(new_balance))
-    return float(new_balance)
 
 
 def _account_payload_from_form(form):
@@ -916,14 +897,9 @@ def update_balance(account_id):
         return redirect(url_for("accounts.account_detail", account_id=account_id))
 
     month_key = valid_month_key(request.form.get("month_key")) or date.today().strftime("%Y-%m")
-    _apply_balance_update_for_account(account, uid, float(new_balance), month_key)
-    _recompute_user_daily_snapshots(uid)
+    applied_balance = apply_account_balance_update(account, uid, float(new_balance), month_key)
 
-    review = fetch_monthly_review(month_key, uid)
-    if review is not None:
-        mark_review_item_updated(review["id"], account_id, "balance_updated")
-
-    flash(f"{account['name']} balance updated.", "success")
+    flash(f"{account['name']} balance updated to £{applied_balance:,.2f}.", "success")
     nxt = _safe_next_accounts(request.form.get("next"))
     if nxt:
         return redirect(nxt)
@@ -990,16 +966,13 @@ def bulk_balance_update():
                     raw_by_id=raw_by_id,
                 )
 
+        review = fetch_monthly_review(month_key, uid)
+        review_id = review["id"] if review is not None else None
         for aid, value in updates.items():
             acc = accounts_by_id[aid]
-            _apply_balance_update_for_account(acc, uid, value, month_key)
+            apply_account_balance_update(acc, uid, value, month_key, review_id=review_id, recompute_daily=False)
 
-        _recompute_user_daily_snapshots(uid)
-
-        review = fetch_monthly_review(month_key, uid)
-        if review is not None:
-            for aid in updates.keys():
-                mark_review_item_updated(review["id"], aid, "balance_updated")
+        recompute_user_daily_snapshots(uid)
 
         flash(f"Updated {len(updates)} account balance{'s' if len(updates) != 1 else ''}.", "success")
         if nxt:

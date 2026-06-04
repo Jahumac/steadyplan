@@ -24,6 +24,7 @@ from app.services.assistant_api import (
     build_assistant_portfolio_overview,
 )
 from app.services.backups import list_backups
+from app.services.financial_truth import apply_account_balance_update
 from app.services.monthly_review_checklist import (
     encode_monthly_review_notes,
     parse_monthly_review_notes,
@@ -464,16 +465,10 @@ def update_account_balance(account_id):
     if month_key is None:
         return _err("bad_request", "month must be YYYY-MM", 400)
 
-    # Preserve all other fields — update_account needs a complete payload.
-    update_payload = dict(account)
-    update_payload["current_value"] = balance
-    update_payload["last_updated"] = datetime.now(timezone.utc).isoformat()
-    update_account(update_payload, g.api_user.id)
-
-    upsert_monthly_snapshot(account_id, month_key, balance)
+    applied_balance = apply_account_balance_update(account, g.api_user.id, balance, month_key)
 
     return jsonify({"ok": True, "account_id": account_id,
-                    "current_value": balance, "month": month_key})
+                    "current_value": applied_balance, "month": month_key})
 
 
 @api_bp.route("/contributions/isa", methods=["POST"])
