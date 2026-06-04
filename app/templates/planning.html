@@ -268,7 +268,7 @@
         </div>
         <div class="budget-row-right planning-account-values">
           <span class="muted-cell">Now: £{{ '{:,.0f}'.format(account.current) }}</span>
-          <strong>Projected at {{ '{:.0f}'.format(income_summary.retirement_age) }}: £{{ '{:,.0f}'.format(account.projected) }}</strong>
+          <strong>Estimate at {{ '{:.0f}'.format(income_summary.retirement_age) }}: £{{ '{:,.0f}'.format(account.projected) }}</strong>
         </div>
       </div>
       {% endfor %}
@@ -288,7 +288,7 @@
           </div>
           <div class="budget-row-right planning-account-values">
             <span class="muted-cell">Now: £{{ '{:,.0f}'.format(account.current) }}</span>
-            <strong>Projected at {{ '{:.0f}'.format(income_summary.retirement_age) }}: £{{ '{:,.0f}'.format(account.projected) }}</strong>
+            <strong>Estimate at {{ '{:.0f}'.format(income_summary.retirement_age) }}: £{{ '{:,.0f}'.format(account.projected) }}</strong>
           </div>
         </div>
         {% endfor %}

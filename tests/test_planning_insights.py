@@ -165,6 +165,8 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"Projected at age 55 under current balances, contributions and growth assumptions." not in response.data
     assert b"Private pot estimate at age 55:" in response.data
     assert b"Projected private pot at age 55:" not in response.data
+    assert response.data.count(b"Estimate at 55:") >= 2
+    assert b"Projected at 55:" not in response.data
 
     css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
     assert ".planning-hero-strip {" in css
@@ -198,6 +200,8 @@ def test_planning_page_no_goal_mode_uses_plan_wording(app, client, make_user):
     assert "Projected at age 55 under current balances, contributions and growth assumptions." not in html
     assert "Private pot estimate at age 55:" in html
     assert "Projected private pot at age 55:" not in html
+    assert html.count("Estimate at 55:") >= 2
+    assert "Projected at 55:" not in html
     assert "Accessible pot estimate at retirement" in html
     assert "State Pension assumption" in html
     assert "illustrative State Pension" not in html
