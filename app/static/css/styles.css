@@ -815,6 +815,7 @@ body.is-back-online .site-header {
   color: var(--muted);
 }
 
+.wizard-focus-note,
 .settings-focus-note,
 .settings-section-divider {
   padding: 0.9rem 1rem;
@@ -823,7 +824,8 @@ body.is-back-online .site-header {
   background: rgba(255,255,255,0.03);
 }
 
-.settings-focus-note strong {
+.settings-focus-note strong,
+.wizard-focus-note h3 {
   display: block;
   margin: 0.2rem 0 0.35rem;
   color: var(--text);
@@ -832,6 +834,20 @@ body.is-back-online .site-header {
 .settings-section-divider {
   border-style: dashed;
   background: rgba(255,255,255,0.02);
+}
+
+.wizard-later-details {
+  margin-top: 0.9rem;
+  border: 1px dashed rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  background: rgba(255,255,255,0.02);
+}
+
+.wizard-later-details summary {
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 600;
 }
 
 .acct-budget-flags {

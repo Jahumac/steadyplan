@@ -51,7 +51,7 @@
   {% set onboarding_primary_eyebrow = 'Next step' %}
   {% set onboarding_primary_title = 'Finish the two basics first' %}
   {% set onboarding_primary_body = 'You already added your planning dates. Now add one real account so Overview has something concrete to show.' %}
-  {% set onboarding_primary_href = '/accounts/?mode=create' %}
+  {% set onboarding_primary_href = '/accounts/?mode=create&focus=first_account' %}
   {% set onboarding_primary_cta = 'Add your first account' %}
 {% elif not has_goal %}
   {% set onboarding_primary_eyebrow = 'Next helpful step' %}
@@ -108,7 +108,7 @@
         <small>Date of birth and retirement age are enough to make later dates and projections meaningful.</small>
       </div>
     </a>
-    <a href="/accounts/?mode=create" class="onboarding-step {% if has_accounts %}onboarding-done{% endif %}">
+    <a href="/accounts/?mode=create&focus=first_account" class="onboarding-step {% if has_accounts %}onboarding-done{% endif %}">
       <span class="onboarding-check">{% if has_accounts %}✓{% else %}2{% endif %}</span>
       <div>
         <strong>Add your first account</strong>
