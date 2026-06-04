@@ -66,6 +66,54 @@
     {% endif %}
   </div>
 
+  <section class="card mb-1" aria-label="Allowance truth checkpoint">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Trust checkpoint</p>
+        <h3>Where your ISA usage figure comes from</h3>
+        <p class="helper-text m-0">This explains the ISA Allowance figure above. It only changes when you set a regular contribution, log a one-off top-up, or mark a cash transfer as using this tax year's ISA allowance.</p>
+      </div>
+      <a href="/accounts/" class="badge badge-meta">Review cash-flow events</a>
+    </div>
+    <div class="simple-list">
+      <div class="simple-list-item">
+        <div>
+          <strong>Scheduled monthly contributions</strong>
+          <p class="helper-text m-0">Regular ISA contributions from account settings.</p>
+        </div>
+        <strong>£{{ '{:,.0f}'.format(allowance_truth_checkpoint.monthly_total) }}</strong>
+      </div>
+      <div class="simple-list-item">
+        <div>
+          <strong>One-off top-ups</strong>
+          <p class="helper-text m-0">Extra transfers logged on this page.</p>
+        </div>
+        <strong>£{{ '{:,.0f}'.format(allowance_truth_checkpoint.topups_total) }}</strong>
+      </div>
+      <div class="simple-list-item">
+        <div>
+          <strong>Cash-flow adjustments</strong>
+          <p class="helper-text m-0">
+            {% if allowance_truth_checkpoint.cash_flow_used_count or allowance_truth_checkpoint.cash_flow_restored_count %}
+              {% if allowance_truth_checkpoint.cash_flow_used_count %}£{{ '{:,.0f}'.format(allowance_truth_checkpoint.cash_flow_used_room) }} used more room from labelled subscriptions or replacements{% if allowance_truth_checkpoint.cash_flow_restored_count %}; {% else %}.{% endif %}{% endif %}
+              {% if allowance_truth_checkpoint.cash_flow_restored_count %}£{{ '{:,.0f}'.format(allowance_truth_checkpoint.cash_flow_restored_room) }} restored room from labelled flexible withdrawals.{% endif %}
+            {% else %}
+              No cash movements have been labelled as changing tracked ISA room yet.
+            {% endif %}
+          </p>
+        </div>
+        <strong>{% if allowance_truth_checkpoint.adjustments_total %}£{{ '{:,.0f}'.format(allowance_truth_checkpoint.adjustments_total) }}{% else %}£0{% endif %}</strong>
+      </div>
+      <div class="simple-list-item">
+        <div>
+          <strong>Net tracked ISA usage</strong>
+          <p class="helper-text m-0">The number shown in the ISA allowance card above.</p>
+        </div>
+        <strong>£{{ '{:,.0f}'.format(allowance_truth_checkpoint.net_total) }}</strong>
+      </div>
+    </div>
+  </section>
+
   {# ── Breakdown table ── #}
   {% if usage.breakdown %}
   <div class="table-scroll mb-1">
@@ -75,7 +123,7 @@
           <th>Account</th>
           <th class="text-center">Type</th>
           <th class="text-right">Monthly</th>
-          <th class="text-right">× {{ usage.months }} mo</th>
+          <th class="text-right">Regular to date</th>
           <th class="text-right">Top-ups</th>
           <th class="text-right">Cash-flow adj.</th>
           <th class="text-right">Total</th>
@@ -104,7 +152,7 @@
       </tfoot>
     </table>
   </div>
-  <p class="helper-text" style="font-size:0.78rem;">Monthly column uses each account's monthly contribution setting × months elapsed. Cash-flow adjustments are only counted when you label a cash movement as affecting tracked ISA usage. If an amount looks wrong, check the account's <a href="/accounts/" class="link-accent">monthly contribution setting</a>.</p>
+  <p class="helper-text" style="font-size:0.78rem;">Monthly uses each account's regular contribution setting. Regular to date is that monthly amount multiplied by the months elapsed. Cash-flow adjustments only count when you label a movement as using ISA allowance. If an amount looks wrong, check the account's <a href="/accounts/" class="link-accent">monthly contribution setting</a>.</p>
   {% else %}
   <p class="helper-text">No ISA accounts yet. <a href="/accounts/?mode=create" class="link-accent">Add a Stocks &amp; Shares ISA, Cash ISA, or Lifetime ISA</a> to start tracking.</p>
   {% endif %}

@@ -148,7 +148,17 @@ def test_allowance_page_uses_plain_monthly_column_helper_copy(app, client, make_
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Monthly column uses each account's monthly contribution setting × months elapsed. Cash-flow adjustments are only counted when you label a cash movement as affecting tracked ISA usage." in html
+    assert "Where your ISA usage figure comes from" in html
+    assert "Scheduled monthly contributions" in html
+    assert "One-off top-ups" in html
+    assert "Cash-flow adjustments" in html
+    assert "Net tracked ISA usage" in html
+    assert "This explains the ISA Allowance figure above. It only changes when you set a regular contribution, log a one-off top-up, or mark a cash transfer as using this tax year's ISA allowance." in html
+    assert "No cash movements have been labelled as changing tracked ISA room yet." in html
+    assert 'href="/accounts/" class="badge badge-meta">Review cash-flow events</a>' in html
+    assert "Regular to date" in html
+    assert "Monthly uses each account's regular contribution setting. Regular to date is that monthly amount multiplied by the months elapsed. Cash-flow adjustments only count when you label a movement as using ISA allowance." in html
+    assert "Monthly column uses each account's monthly contribution setting × months elapsed. Cash-flow adjustments are only counted when you label a cash movement as affecting tracked ISA usage." not in html
     assert "Monthly column is estimated from each account's contribution setting × months elapsed." not in html
     assert 'href="/accounts/" class="link-accent">monthly contribution setting</a>' in html
 
@@ -182,6 +192,13 @@ def test_allowance_page_shows_cash_flow_adjustment_column_for_explicit_isa_effec
                 """,
                 (uid, account_id),
             )
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, allowance_effect, created_at)
+                VALUES (?, ?, '2026-04-18', 200, 'deposit', 'Replacement', 'flexible_replacement', datetime('now'))
+                """,
+                (uid, account_id),
+            )
             conn.commit()
 
     resp = client.get("/allowance/")
@@ -190,7 +207,10 @@ def test_allowance_page_shows_cash_flow_adjustment_column_for_explicit_isa_effec
 
     assert "Cash-flow adj." in html
     assert "Only set this when the cash movement changed your real tax-year ISA room." not in html
-    assert "£-150" in html
+    assert "£-150" not in html
+    assert "£50" in html
+    assert "£200 used more room from labelled subscriptions or replacements" in html
+    assert "£150 restored room from labelled flexible withdrawals." in html
 
 
 def test_allowance_page_uses_plain_higher_rate_relief_copy(app, client, make_user):
