@@ -270,6 +270,49 @@ def test_goals_eta_helper_copy_present(app, client, make_user):
     assert "~" in body
 
 
+def test_goals_page_uses_action_copy_for_unlinked_and_out_of_range_goals(app, client, make_user):
+    uid, username, password = make_user(username="goals-action-copy", password="password123")
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01', annual_growth_rate = 0.05 WHERE user_id = ?",
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, tags, current_value, monthly_contribution, is_active
+                )
+                VALUES (?, 'Tiny pot', 'Stocks & Shares ISA', 'tiny', 100, 1, 1)
+                """,
+                (uid,),
+            )
+            conn.executemany(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, ?, ?, 'Tagged Goal', ?, '')
+                """,
+                [
+                    (uid, 'Big dream', 5000000, 'tiny'),
+                    (uid, 'Missing link', 5000, 'missing'),
+                ],
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    resp = client.get("/goals/")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+
+    assert "Increase contributions to bring this within range" in body
+    assert "Link an account to this goal" in body
+    assert "More than 50 years at current rate" not in body
+    assert "No contributions set" not in body
+
+
 def test_goals_route_fetches_contribution_overrides_in_one_batch(app, client, make_user, monkeypatch):
     uid, username, password = make_user(username="goals-batch", password="password123")
 

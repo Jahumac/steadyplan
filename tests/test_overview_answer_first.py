@@ -408,6 +408,8 @@ def test_overview_goal_progress_glance_statuses_flag_unlinked_and_too_low_goals(
 
     assert "increase contributions to bring this within range" in html
     assert "link an account to this goal" in html
+    assert "More than 50 years at current rate" not in html
+    assert "No contributions set" not in html
 
 
 
