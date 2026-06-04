@@ -216,6 +216,12 @@ def _restore_staging_path(token):
     return path
 
 
+def _create_pre_restore_backup():
+    db_path = Path(current_app.config["DB_PATH"])
+    data_dir = Path(current_app.config.get("DATA_DIR", db_path.parent))
+    return run_backup(db_path, data_dir)
+
+
 def _cleanup_restore_staging(now_ts=None):
     now_ts = float(now_ts if now_ts is not None else time.time())
     staging_dir = _restore_staging_dir()
@@ -937,6 +943,30 @@ def commit_restore_backup():
         return redirect(url_for("settings.settings"))
 
     try:
+        backup_dest = _create_pre_restore_backup()
+    except Exception:
+        current_app.logger.exception("Pre-restore backup failed for user_id=%s", current_user.id)
+        flash(
+            "Restore stopped before any data was changed because SteadyPlan could not create a fresh whole-instance SQLite backup.",
+            "error",
+        )
+        uid = current_user.id
+        assumptions = fetch_assumptions(uid)
+        computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
+        return render_template(
+            "settings.html",
+            **_settings_template_context(
+                uid,
+                assumptions=assumptions,
+                computed_age=computed_age,
+                diagnostics=None,
+                page_mode="view",
+                restore_check_result=result,
+                restore_token=restore_token,
+            ),
+        )
+
+    try:
         with get_connection() as conn:
             restore_summary = restore_backup_for_user(current_user.id, payload, conn=conn)
     except RestoreValidationError as e:
@@ -969,7 +999,10 @@ def commit_restore_backup():
     _delete_staged_restore_file(restore_token)
     _clear_restore_staging_session()
     _cleanup_restore_staging()
-    flash("Restore complete. Data for this user has been overwritten.", "success")
+    flash(
+        f"Restore complete. Data for this user has been overwritten. Safety backup created first: {backup_dest.name}",
+        "success",
+    )
 
     uid = current_user.id
     assumptions = fetch_assumptions(uid)

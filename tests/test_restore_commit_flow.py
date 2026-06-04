@@ -2,6 +2,7 @@ import io
 import os
 import re
 import sqlite3
+from pathlib import Path
 
 
 def _login(client, username, password):
@@ -130,9 +131,15 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
         follow_redirects=True,
     )
     body_ok = resp_ok.data.decode("utf-8")
-    assert "Restore complete. Data for this user has been overwritten." in body_ok
+    assert "Restore complete. Data for this user has been overwritten. Safety backup created first:" in body_ok
 
     with app.app_context():
+        import app.routes.settings as s
+        backup_files = sorted((Path(app.config.get("DATA_DIR", Path(app.config["DB_PATH"]).parent)) / "backups").glob("finance-*.db"))
+        backup_files = [p for p in backup_files if not p.is_symlink()]
+        assert backup_files
+        assert backup_files[-1].name in body_ok
+
         from app.models import get_connection
 
         with get_connection() as conn:
@@ -368,3 +375,45 @@ def test_restore_commit_failure_rolls_back_and_shows_safe_error(app, client, mak
     assert "sqlite3" not in body.lower()
     after = _count_user_accounts(app, uid)
     assert after == before
+
+
+def test_restore_commit_stops_if_fresh_backup_cannot_be_created(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="restore-backup-stop", password="password123")
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution) VALUES (?, 'A1', 'isa', 1000, 100)",
+                (uid,),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    export_bytes = _export_json_bytes(client)
+
+    resp_validate = client.post(
+        "/settings/restore/validate",
+        data={"backup_file": (io.BytesIO(export_bytes), "backup.json")},
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+    body_validate = resp_validate.data.decode("utf-8")
+    token = _extract_restore_token(body_validate)
+
+    import app.routes.settings as s
+
+    monkeypatch.setattr(s, "_create_pre_restore_backup", lambda: (_ for _ in ()).throw(RuntimeError("disk full")))
+
+    before = _count_user_accounts(app, uid)
+    resp_commit = client.post(
+        "/settings/restore/commit",
+        data={"restore_token": token, "confirm_replace": "1", "confirm_phrase": "RESTORE"},
+        follow_redirects=True,
+    )
+    body = resp_commit.data.decode("utf-8")
+    assert "Restore stopped before any data was changed because SteadyPlan could not create a fresh whole-instance SQLite backup." in body
+    assert "Restore from this export (overwrites this user's current data)" in body
+    assert "Safety check before overwrite" in body
+    assert _count_user_accounts(app, uid) == before
