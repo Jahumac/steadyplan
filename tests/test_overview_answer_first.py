@@ -31,7 +31,7 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert 'href="/settings/?mode=edit&amp;focus=planning_dates"' in html
     assert "No accounts set up" not in html
     assert "Data health" not in html
-    assert 'href="/accounts/?mode=create"' in html
+    assert "/accounts/?mode=create&focus=first_account" in html
     assert "Review" not in html
     assert "Monthly review" not in html
     assert "Status:" not in html
@@ -72,7 +72,7 @@ def test_overview_getting_started_primary_action_moves_to_first_incomplete_basic
     assert "0/4 complete" not in html
     assert "Add your first account" in html
     assert "Add first account" not in html
-    assert 'href="/accounts/?mode=create"' in html
+    assert "/accounts/?mode=create&focus=first_account" in html
     assert "No accounts set up" not in html
     assert "Data health" not in html
     assert "Nothing in the shell yet" not in html

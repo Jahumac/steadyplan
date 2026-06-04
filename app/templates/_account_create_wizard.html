@@ -1,3 +1,6 @@
+{% set wizard_focus = request.args.get('focus', '') %}
+{% set is_first_account_focus = wizard_focus == 'first_account' %}
+
 {# Create-account wizard — step-by-step flow for new accounts.
    Rendered only when page_mode == 'create'. Contains the 6-step UI and its
    controller script; the script guards against running when the form is
@@ -14,13 +17,22 @@
     </div>
 
     <div class="settings-form" id="create-account-form" data-tax-band="{{ tax_band | default('basic') }}">
+      {% if is_first_account_focus %}
+      <div class="wizard-focus-note" aria-label="First account guidance">
+        <p class="eyebrow">Start here</p>
+        <h3>Add one real account</h3>
+        <p>Pick an ISA, pension, savings account, or anything else you already have. One real account is enough to get your picture started.</p>
+        <p class="helper-text m-0">You can leave the extra admin bits for later and come back once the basics are in place.</p>
+      </div>
+      {% endif %}
+
       {# ── Progress dots (visual only — not clickable) ────────────── #}
       <div class="cw-progress" id="cw-progress"></div>
 
       {# ── Step 1 · The basics ────────────────────────────────────── #}
       <div class="cw-panel cw-visible" data-cw="1">
-        <h3 class="cw-title">What's this account called?</h3>
-        <p class="cw-hint">Every penny needs a home. Name the account, set the provider and wrapper type, and you're ready to go.</p>
+        <h3 class="cw-title">{% if is_first_account_focus %}Which account do you want to start with?{% else %}What's this account called?{% endif %}</h3>
+        <p class="cw-hint">{% if is_first_account_focus %}Use one of the quick templates if it fits, or type your own name and wrapper below. You only need enough detail to recognise the account later.{% else %}Name the account, set the provider and wrapper type, and you're ready to go.{% endif %}</p>
         <div class="cw-template-grid" aria-label="Account templates">
           <button type="button" class="cw-template" data-cw-template="stocks_isa">
             <strong>Stocks &amp; Shares ISA</strong>
@@ -60,12 +72,7 @@
           <label>
             <span>Provider</span>
             <input type="text" name="provider" list="provider-list" placeholder="e.g. Hargreaves Lansdown" autocomplete="off">
-            <small class="form-hint">Start typing or pick from the list</small>
-          </label>
-          <label>
-            <span>Account holder <span style="color:var(--muted);font-weight:400;">(optional)</span></span>
-            <input type="text" name="owner" placeholder="e.g. Samuel, Me, Joint">
-            <small class="form-hint">Useful for household accounts so you know whose account this is.</small>
+            <small class="form-hint">Start typing or pick from the list. You can leave this blank for now.</small>
           </label>
           <label>
             <span>Wrapper type</span>
@@ -75,15 +82,26 @@
               {% endfor %}
             </select>
           </label>
-          <label>
-            <span>Category</span>
-            <select name="category" id="cw-category">
-              {% for option in category_options %}
-                <option value="{{ option }}">{{ option }}</option>
-              {% endfor %}
-            </select>
-          </label>
         </div>
+        <details class="wizard-later-details">
+          <summary>Can wait until later</summary>
+          <div class="form-grid mt-075">
+            <label>
+              <span>Account holder <span style="color:var(--muted);font-weight:400;">(optional)</span></span>
+              <input type="text" name="owner" placeholder="e.g. Samuel, Me, Joint">
+              <small class="form-hint">Useful for household accounts so you know whose account this is.</small>
+            </label>
+            <label>
+              <span>Category</span>
+              <select name="category" id="cw-category">
+                {% for option in category_options %}
+                  <option value="{{ option }}">{{ option }}</option>
+                {% endfor %}
+              </select>
+              <small class="form-hint">Just used for grouping. The default is fine if you're not sure.</small>
+            </label>
+          </div>
+        </details>
         <div class="cw-actions">
           <span></span>
           <button type="button" class="badge badge-accent" data-cw-next>Continue</button>

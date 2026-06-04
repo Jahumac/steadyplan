@@ -1,0 +1,27 @@
+def test_overview_first_account_cta_targets_focused_accounts_wizard(app, client, make_user):
+    _, username, password = make_user(username="accounts-first-use-overview", password="password123")
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "/accounts/?mode=create&focus=first_account" in html
+
+
+def test_accounts_first_use_focus_surfaces_calm_start_here_guidance(app, client, make_user):
+    _, username, password = make_user(username="accounts-first-use-focus", password="password123")
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/accounts/?mode=create&focus=first_account")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'aria-label="First account guidance"' in html
+    assert "Start here" in html
+    assert "Add one real account" in html
+    assert "One real account is enough to get your picture started." in html
+    assert "Can wait until later" in html
+    assert "Just used for grouping. The default is fine if you're not sure." in html
+    assert "Start typing or pick from the list. You can leave this blank for now." in html
+    assert "Every penny needs a home." not in html
