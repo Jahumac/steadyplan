@@ -101,6 +101,69 @@ def _backup_diagnostics():
     }
 
 
+def _trust_posture_diagnostics():
+    is_production = bool(current_app.config.get("IS_PRODUCTION", False))
+    session_cookie_secure = bool(current_app.config.get("SESSION_COOKIE_SECURE", False))
+    remember_cookie_secure = bool(current_app.config.get("REMEMBER_COOKIE_SECURE", False))
+    trust_proxy_headers = bool(current_app.config.get("TRUST_PROXY_HEADERS", False))
+    demo_public_login_enabled = bool(current_app.config.get("DEMO_PUBLIC_LOGIN_ENABLED", False))
+    rate_limit_warning = current_app.config.get("RATELIMIT_STORAGE_WARNING")
+    worker_count = int(current_app.config.get("WEB_CONCURRENCY", 1) or 1)
+    rate_limit_storage_uri = str(current_app.config.get("RATELIMIT_STORAGE_URI") or "memory://").strip().lower()
+
+    items = {
+        "app_mode": {
+            "label": "OK" if is_production else "Deliberate local-style",
+            "value": "Production" if is_production else "Development/local",
+            "message": (
+                "Production mode is on. Pair this with HTTPS and secure cookies for real use."
+                if is_production
+                else "Local/development mode is active. Fine for LAN/VPN evaluation, but review production settings before exposing SteadyPlan publicly."
+            ),
+        },
+        "secure_cookies": {
+            "label": "OK" if session_cookie_secure and remember_cookie_secure else ("Review recommended" if is_production else "Deliberate local-style"),
+            "value": "Secure" if session_cookie_secure and remember_cookie_secure else "Not secure",
+            "message": (
+                "Secure session and remember cookies are on."
+                if session_cookie_secure and remember_cookie_secure
+                else "Secure cookies are off while production mode is on. Turn them on behind HTTPS."
+                if is_production
+                else "Secure cookies are off. That is normal on local HTTP, but turn them on behind HTTPS."
+            ),
+        },
+        "proxy_headers": {
+            "label": "Deliberate public/proxy" if trust_proxy_headers else "OK",
+            "value": "Trusted" if trust_proxy_headers else "Ignored by default",
+            "message": (
+                "SteadyPlan trusts forwarded proxy headers. Only leave this on behind a trusted reverse proxy or tunnel."
+                if trust_proxy_headers
+                else "Forwarded proxy headers are ignored unless you explicitly opt in."
+            ),
+        },
+        "demo_login": {
+            "label": "Deliberate public demo" if demo_public_login_enabled else "OK",
+            "value": "Enabled" if demo_public_login_enabled else "Disabled",
+            "message": (
+                "Public read-only demo login is enabled. Keep it demo-data-only and treat it as an explicit host choice."
+                if demo_public_login_enabled
+                else "Public demo login is off. Real accounts still require normal login."
+            ),
+        },
+        "rate_limits": {
+            "label": "Review recommended" if rate_limit_warning else "OK",
+            "value": "Process-local memory" if rate_limit_storage_uri == "memory://" else "Shared storage",
+            "message": rate_limit_warning or (
+                "Process-local memory storage is fine with a single worker."
+                if rate_limit_storage_uri == "memory://" and worker_count == 1
+                else "Shared rate-limit storage is configured for multi-worker use."
+            ),
+        },
+    }
+    overall_label = "Review recommended" if any(item["label"] == "Review recommended" for item in items.values()) else "OK"
+    return {"overall_label": overall_label, "items": items}
+
+
 def _safe_next_settings_url(raw):
     raw = (raw or "").strip()
     if not raw:
@@ -709,6 +772,7 @@ def settings():
                 "health_label": "Needs backup",
                 "health_message": "Backup health could not be determined.",
             }
+        diagnostics["trust_posture"] = _trust_posture_diagnostics()
 
     return render_template(
         "settings.html",
