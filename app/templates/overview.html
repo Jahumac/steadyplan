@@ -176,10 +176,10 @@
 <section class="card review-nudge mb-1">
   <div class="flex flex-center flex-wrap gap-075">
     <div style="flex:1; min-width:200px;">
-      <strong>Your investments should be settled by now</strong>
+      <strong>Monthly update ready</strong>
       <p class="helper-text" style="margin:0.15rem 0 0;">
         {% if review_ready %}Ready since {{ review_ready.strftime('%-d %B') }}.{% endif %}
-        Time to check your holdings and lock in this month's numbers.
+        Complete it to confirm this month's balances and improve goal and performance tracking.
       </p>
     </div>
     <a href="/monthly-review/" class="badge badge-primary-action">Open monthly update</a>
@@ -244,7 +244,7 @@
   <div class="hero-strip">
     {% call hero_stat('Accessible now') %}<strong>£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</strong>{% endcall %}
     {% if access_summary.locked_current > 0 %}
-    {% call hero_stat('Locked later') %}<strong>£{{ '{:,.0f}'.format(access_summary.locked_current) }}</strong>{% endcall %}
+    {% call hero_stat('Locked for later') %}<strong>£{{ '{:,.0f}'.format(access_summary.locked_current) }}</strong>{% endcall %}
     {% endif %}
     {% if has_debts %}
     {% call hero_stat('Active debts') %}<strong>£{{ '{:,.0f}'.format(metrics.total_debt_balance) }}</strong>{% endcall %}
@@ -269,7 +269,7 @@
     </div>
     <a href="/planning/" class="link-accent text-sm">Review planning</a>
   </div>
-  <p class="helper-text">Use this as the quick truth: what you can usually reach before pension age, what has conditions, and what is doing longer-term retirement work.</p>
+  <p class="helper-text">Use this as the quick summary: what you can usually reach before pension age, what has conditions, and what is doing longer-term retirement work.</p>
   <div class="card-grid overview-access-grid">
     <div class="card overview-access-mini-card">
       <p class="eyebrow">Accessible now</p>
@@ -283,7 +283,7 @@
     </div>
     {% endif %}
     <div class="card overview-access-mini-card">
-      <p class="eyebrow">Locked later</p>
+      <p class="eyebrow">Locked for later</p>
       {% if access_summary.locked_current > 0 %}
       <p class="helper-text m-0">Pension-style money that is building for later rather than near-term flexibility. When you have locked money, the top summary keeps the headline amount visible.</p>
       {% else %}
@@ -306,7 +306,7 @@
       </div>
       <a href="/planning/" class="link-accent text-sm">Review planning</a>
     </div>
-    <p class="helper-text">Use this as the quick truth: what you can usually reach before pension age, what has conditions, and what is doing longer-term retirement work.</p>
+    <p class="helper-text">Use this as the quick summary: what you can usually reach before pension age, what has conditions, and what is doing longer-term retirement work.</p>
     <div class="card-grid overview-access-grid">
       <div class="card overview-access-mini-card">
         <p class="eyebrow">Accessible now</p>
@@ -320,7 +320,7 @@
       </div>
       {% endif %}
       <div class="card overview-access-mini-card">
-        <p class="eyebrow">Locked later</p>
+        <p class="eyebrow">Locked for later</p>
         {% if access_summary.locked_current > 0 %}
         <p class="helper-text m-0">Pension-style money that is building for later rather than near-term flexibility. When you have locked money, the top summary keeps the headline amount visible.</p>
         {% else %}

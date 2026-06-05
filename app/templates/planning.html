@@ -17,7 +17,7 @@
   </div>
   <div class="hero-strip planning-hero-strip">
     {% call hero_stat('Accessible now') %}<strong>£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</strong>{% endcall %}
-    {% call hero_stat('Locked later') %}<strong>£{{ '{:,.0f}'.format(access_summary.locked_current) }}</strong>{% endcall %}
+    {% call hero_stat('Locked for later') %}<strong>£{{ '{:,.0f}'.format(access_summary.locked_current) }}</strong>{% endcall %}
     {% call hero_stat('Restricted') %}<strong>£{{ '{:,.0f}'.format(access_summary.restricted_current) }}</strong>{% endcall %}
     {% call hero_stat('Accessible share') %}<strong>{{ '{:.0f}'.format(access_summary.accessible_pct) }}%</strong>{% endcall %}
   </div>
