@@ -123,6 +123,8 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     assert "Set your first goal or do your first monthly update" not in html
     assert "Start your first budget when you want a simple monthly plan. Goals and monthly updates can wait until later." in html
     assert html.count("<h2>Where you stand now</h2>") == 2
+    assert html.count("Use this as the quick summary") == 2
+    assert "Use this as the quick truth" not in html
     assert "Accessible vs locked" not in html
     assert "Portfolio Value" not in html
     assert "ISA Allowance" not in html
@@ -668,7 +670,8 @@ def test_overview_hides_restricted_summary_when_there_is_no_restricted_money(app
     assert html.count("<h2>Where you stand now</h2>") == 2
     assert "Accessible vs locked" not in html
     assert "Accessible now" in html
-    assert "Locked later" in html
+    assert "Locked for later" in html
+    assert "Locked later" not in html
     assert "Restricted" not in html
     assert 'class="overview-access-value"' not in html
 
@@ -717,7 +720,8 @@ def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
     assert "Where are you standing now" not in html
     assert "Accessible now" in html
     assert "Restricted" in html
-    assert "Locked later" in html
+    assert "Locked for later" in html
+    assert "Locked later" not in html
     assert html.count('class="overview-access-value"') >= 1
     assert "£2,000" in html
     assert "17% of your current total is usually reachable before pension age" in html
@@ -796,7 +800,8 @@ def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, clien
     assert "Active debts kept separate:" not in html
     assert "Active debts" not in html
     assert "Accessible now" in html
-    assert "Locked later" in html
+    assert "Locked for later" in html
+    assert "Locked later" not in html
     assert "Monthly contributions" in html
     assert "Scenario estimate at retirement" in html
     assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." in html
@@ -922,7 +927,8 @@ def test_overview_hides_zero_monthly_contribution_hero_stat(app, client, make_us
     html = resp.get_data(as_text=True)
 
     assert "Accessible now" in html
-    assert "Locked later" in html
+    assert "Locked for later" in html
+    assert "Locked later" not in html
     assert "Monthly contributions" not in html
 
 
@@ -958,7 +964,8 @@ def test_overview_hides_zero_locked_hero_stat(app, client, make_user):
     assert "Scenario estimate at retirement" in html
     assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." in html
     assert "Projected at retirement" not in html
-    assert html.count("Locked later") >= 1
+    assert html.count("Locked for later") >= 1
+    assert "Locked later" not in html
     assert "When you have locked money, the top summary keeps the headline amount visible." not in html
     assert "Pension-style money will appear here once you start building it." in html
     assert "Pension-style money will show up here once you start building it." not in html
@@ -988,7 +995,8 @@ def test_overview_hides_retirement_projection_until_profile_exists(app, client, 
 
     assert "Add your planning dates" in html
     assert "Accessible now" in html
-    assert "Locked later" in html
+    assert "Locked for later" in html
+    assert "Locked later" not in html
     assert "Monthly contributions" in html
     assert "Projected at retirement" not in html
     assert "Scenario estimate at retirement" not in html
@@ -1099,7 +1107,10 @@ def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, m
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Your investments should be settled by now" in html
+    assert "Monthly update ready" in html
+    assert "Complete it to confirm this month's balances and improve goal and performance tracking." in html
+    assert "Your investments should be settled by now" not in html
+    assert "Time to check your holdings and lock in this month's numbers." not in html
     assert "Open monthly update" in html
     assert "Start monthly update" not in html
     assert "Your next nudge" not in html
