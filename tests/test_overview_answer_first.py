@@ -1063,9 +1063,10 @@ def test_overview_payday_banner_uses_specific_budget_cta(app, client, make_user,
     html = resp.get_data(as_text=True)
 
     assert "investment day" in html
-    assert "check the budget now, then expect your monthly update nudge" in html
+    assert "check the budget now, then expect your monthly update nudge once this month's money has settled." in html
     assert "check the budget, then do your monthly update" not in html
     assert "check the budget, then do your Monthly Update" not in html
+    assert "in a day or two once everything settles" not in html
     assert '>Review budget</a>' in html
     assert '>Open budget</a>' not in html
     assert 'href="/budget/"' in html
@@ -1121,8 +1122,8 @@ def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, m
 
     assert "What to do next" in html
     assert "Monthly update ready" in html
-    assert "Best once this month's money has settled." in html
-    assert "Complete it to confirm balances and contributions, and keep goal and performance tracking based on confirmed numbers." in html
+    assert "Once this month's money has settled, complete it to confirm balances and contributions, and keep goal and performance tracking based on confirmed numbers." in html
+    assert "Best once this month's money has settled." not in html
     assert "Your investments should be settled by now" not in html
     assert "Time to check your holdings and lock in this month's numbers." not in html
     assert "Complete it to confirm this month's balances and improve goal and performance tracking." not in html
