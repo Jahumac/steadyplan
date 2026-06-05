@@ -19,4 +19,4 @@ EXPOSE 8000
 # Forwarded header trust is locked to localhost by default at the server layer.
 # If you deliberately run behind a trusted reverse proxy/tunnel and also enable
 # TRUST_PROXY_HEADERS=1 in the app, widen FORWARDED_ALLOW_IPS explicitly.
-CMD ["sh", "-c", "gunicorn --workers=${WEB_CONCURRENCY:-1} --bind=0.0.0.0:8000 --timeout=60 --forwarded-allow-ips='${FORWARDED_ALLOW_IPS:-127.0.0.1,::1}' 'app:create_app()'"]
+CMD ["sh", "-c", "gunicorn --workers=${WEB_CONCURRENCY:-1} --bind=0.0.0.0:8000 --timeout=60 --forwarded-allow-ips=\"${FORWARDED_ALLOW_IPS:-127.0.0.1,::1}\" 'app:create_app()'"]
