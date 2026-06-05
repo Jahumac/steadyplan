@@ -42,14 +42,14 @@
   <div class="card stat-card">
     <h2>Private pot estimate at retirement</h2>
     <p>£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</p>
-    <small>Estimate at age {{ '{:.0f}'.format(income_summary.retirement_age) }} under current balances, contributions and growth assumptions.</small>
+    <small>Scenario estimate at age {{ '{:.0f}'.format(income_summary.retirement_age) }} under current balances, contributions and growth assumptions. For planning only, not a guarantee.</small>
   </div>
 </section>
 
 <section class="card mb-1 planning-compact-only planning-signal-card">
   <p class="eyebrow">Current signal</p>
   <h2>{{ income_summary.limiting_factor }}</h2>
-  <p class="helper-text m-0">Private pot estimate at age {{ '{:.0f}'.format(income_summary.retirement_age) }}: <strong>£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</strong>.</p>
+  <p class="helper-text m-0">Private pot scenario estimate at age {{ '{:.0f}'.format(income_summary.retirement_age) }}: <strong>£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</strong>. For planning only, not a guarantee.</p>
 </section>
 
 <section class="card mb-1">
@@ -268,7 +268,7 @@
         </div>
         <div class="budget-row-right planning-account-values">
           <span class="muted-cell">Now: £{{ '{:,.0f}'.format(account.current) }}</span>
-          <strong>Estimate at {{ '{:.0f}'.format(income_summary.retirement_age) }}: £{{ '{:,.0f}'.format(account.projected) }}</strong>
+          <strong>Scenario estimate at {{ '{:.0f}'.format(income_summary.retirement_age) }}: £{{ '{:,.0f}'.format(account.projected) }}</strong>
         </div>
       </div>
       {% endfor %}
@@ -288,7 +288,7 @@
           </div>
           <div class="budget-row-right planning-account-values">
             <span class="muted-cell">Now: £{{ '{:,.0f}'.format(account.current) }}</span>
-            <strong>Estimate at {{ '{:.0f}'.format(income_summary.retirement_age) }}: £{{ '{:,.0f}'.format(account.projected) }}</strong>
+            <strong>Scenario estimate at {{ '{:.0f}'.format(income_summary.retirement_age) }}: £{{ '{:,.0f}'.format(account.projected) }}</strong>
           </div>
         </div>
         {% endfor %}
