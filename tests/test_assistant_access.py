@@ -154,11 +154,16 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert "Permissions" in settings_html
     assert "Read-only assistant answers" in settings_html
     assert "Budget write" in settings_html
+    assert "Read-only access lets Pip answer portfolio, budget, and affordability questions without changing your data." in settings_html
+    assert "Lets Pip answer portfolio, monthly budget, and affordability questions without changing your data." in settings_html
+    assert "It does not allow broader budget, account, or transaction edits." in settings_html
     assert "Transaction write (reserved)" not in settings_html
     assert "Reserved for future assistant transaction entry endpoints. Safe to leave off today." not in settings_html
     assert "Let Pip use SteadyPlan safely" not in settings_html
     assert "assistant-friendly endpoints" not in settings_html
     assert "Just a friendly label so you know what this token is for." not in settings_html
+    assert "assistant summary endpoints" not in settings_html
+    assert "assistant budget write endpoint" not in settings_html
 
     create_resp = client.post(
         "/settings/assistant-access/create",
