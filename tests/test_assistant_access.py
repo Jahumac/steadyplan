@@ -280,8 +280,13 @@ def test_settings_shows_clear_fallbacks_for_unlabelled_unused_assistant_tokens(a
     assert settings_resp.status_code == 200
     assert "Unlabelled assistant token" in settings_html
     assert "Not used yet" in settings_html
+    assert "Token label" in settings_html
+    assert "Created on" in settings_html
+    assert "Actions" in settings_html
     assert ">Never<" not in settings_html
     assert ">Assistant token<" not in settings_html
+    assert ">Label<" not in settings_html
+    assert ">Created<" not in settings_html
 
 
 
