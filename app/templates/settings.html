@@ -780,7 +780,7 @@
             <td>{{ event.token_label or 'Assistant token' }}</td>
             <td>{{ assistant_action_label(event.action_type) }}</td>
             <td>
-              {{ event.target_label or event.target_type or '—' }}
+              {{ assistant_target_label(event.target_label, event.target_type) }}
               {% if event.month_key %}<div class="helper-text" style="margin-top:0.2rem;">{{ event.month_key }}</div>{% endif %}
             </td>
             <td>

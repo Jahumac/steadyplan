@@ -255,6 +255,16 @@ def _assistant_amount_change_label(before_amount, after_amount):
     return f"£{float(before_amount):,.2f} → £{float(after_amount):,.2f}"
 
 
+def _assistant_target_label(target_label, target_type):
+    label_text = str(target_label or "").strip()
+    if label_text:
+        return label_text
+    target_text = str(target_type or "").strip().lower()
+    return {
+        "budget_item": "Budget item",
+    }.get(target_text, target_text or "—")
+
+
 def _normalise_requested_assistant_scopes(raw_scopes):
     ordered = []
     valid = {opt["key"] for opt in _assistant_scope_options(include_reserved=True)}
@@ -302,6 +312,7 @@ def _settings_template_context(uid, *, assumptions=None, computed_age=None, diag
         "assistant_scope_labels": _assistant_scope_labels,
         "assistant_action_label": _assistant_action_label,
         "assistant_amount_change_label": _assistant_amount_change_label,
+        "assistant_target_label": _assistant_target_label,
         "assistant_token_secret": assistant_token_secret,
         **extra,
     }

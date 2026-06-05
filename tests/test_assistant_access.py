@@ -293,3 +293,32 @@ def test_assistant_write_is_logged_and_visible_in_settings(app, client, make_use
     assert "2026-05" in settings_html
     assert "£50.00 → £799.00" in settings_html
     assert "50.0 → 799.0" not in settings_html
+
+
+def test_settings_formats_assistant_activity_target_fallback_label(app, client, make_user):
+    uid, username, password = make_user(username="assistant-audit-target-fallback")
+
+    with app.app_context():
+        from app.models import log_assistant_audit_event
+
+        log_assistant_audit_event(
+            uid,
+            token_label="Pip budget write",
+            token_kind="assistant",
+            action_type="budget_item_month_entry_updated",
+            endpoint="/api/v1/assistant/budget-items/123/month-entry",
+            target_type="budget_item",
+            target_label="",
+            month_key="2026-05",
+            before_state={"amount": 50},
+            after_state={"amount": 799},
+        )
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    settings_resp = client.get("/settings/")
+    settings_html = settings_resp.get_data(as_text=True)
+    assert settings_resp.status_code == 200
+    assert "Recent assistant activity" in settings_html
+    assert "Budget item" in settings_html
+    assert "budget_item" not in settings_html
+    assert "Budget month amount updated" in settings_html
