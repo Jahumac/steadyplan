@@ -258,7 +258,7 @@ def export_projections():
         ws.cell(row=r, column=1, value=note).font = _SUBTITLE_FONT
 
     # ── Sheet 2: Assumptions ─────────────────────────────────────────────────
-    ws_ass = wb.create_sheet("Assumptions")
+    ws_ass = wb.create_sheet("Scenario Estimate Assumptions")
     _title_cell(ws_ass, 1, "SteadyPlan — Scenario Estimate Assumptions", 3)
     _set_col_width(ws_ass, 1, 32)
     _set_col_width(ws_ass, 2, 24)

@@ -74,7 +74,8 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
     _login(client, username, password)
     wb = _workbook_from_response(client.get("/projections/export.xlsx"))
 
-    assert "Assumptions" in wb.sheetnames
+    assert "Scenario Estimate Assumptions" in wb.sheetnames
+    assert "Assumptions" not in wb.sheetnames
     assert "Contribution Schedule" in wb.sheetnames
 
     summary = wb["Summary"]
@@ -89,7 +90,7 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
     assert "Projected at Retirement" not in summary_values
     assert "Projected at retirement" not in summary_values
 
-    assumptions_sheet = wb["Assumptions"]
+    assumptions_sheet = wb["Scenario Estimate Assumptions"]
     assumption_values = [cell.value for row in assumptions_sheet.iter_rows() for cell in row]
     assert "Scenario estimate start month" in assumption_values
     assert "Inflation treatment" in assumption_values
