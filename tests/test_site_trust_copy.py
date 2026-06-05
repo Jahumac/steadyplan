@@ -3,6 +3,7 @@ from pathlib import Path
 
 SITE_ROOT = Path("/opt/data/steadyplan/site")
 README_PATH = Path("/opt/data/steadyplan/README.md")
+VOICE_AND_COPY_PATH = Path("/opt/data/steadyplan/docs/VOICE_AND_COPY.md")
 
 
 def _read(relative_path: str) -> str:
@@ -11,6 +12,10 @@ def _read(relative_path: str) -> str:
 
 def _read_readme() -> str:
     return README_PATH.read_text()
+
+
+def _read_voice_and_copy() -> str:
+    return VOICE_AND_COPY_PATH.read_text()
 
 
 def test_homepage_trust_card_mentions_restore_preview_and_safety_backup():
@@ -65,6 +70,7 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     concept_a = _read("concepts/concept-a/index.html")
     concept_b = _read("concepts/concept-b/index.html")
     readme = _read_readme()
+    voice_and_copy = _read_voice_and_copy()
 
     assert "Scenario estimates are illustrative and based on your inputs." in homepage
     assert "Projections are illustrative and based on your inputs." not in homepage
@@ -95,3 +101,17 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Export projections to Excel (.xlsx) with per-account breakdowns." not in readme
     assert 'Projections show "with fees" vs "without fees"' not in readme
     assert "**Projections** — retirement projections with fee impact and scenario planner" not in readme
+    assert "- Scenario estimate: calculated outcome based on assumptions" in voice_and_copy
+    assert "### Scenario estimates" in voice_and_copy
+    assert "Scenario estimate certainty and disclaimers" in voice_and_copy
+    assert "you will / you’ll have (for scenario estimates)" in voice_and_copy
+    assert "### Scenario estimate certainty" in voice_and_copy
+    assert "2. Scenario estimate labels and estimate disclaimers" in voice_and_copy
+    assert "Overview/Review/Scenario estimates/etc." in voice_and_copy
+    assert "- Projected: calculated scenario outcome based on assumptions" not in voice_and_copy
+    assert "### Projections" not in voice_and_copy
+    assert "Projection certainty and disclaimers" not in voice_and_copy
+    assert "you will / you’ll have (for projections)" not in voice_and_copy
+    assert "### Projections certainty" not in voice_and_copy
+    assert "2. Projections labels and estimate disclaimers" not in voice_and_copy
+    assert "Overview/Review/Projections/etc." not in voice_and_copy

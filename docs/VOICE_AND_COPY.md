@@ -54,7 +54,7 @@ Always distinguish:
 - Recorded: entered/saved as a value (may still be provisional)
 - Confirmed: explicitly confirmed by the user during Monthly Review
 - Estimated: inferred from defaults/assumptions (not user-confirmed)
-- Projected: calculated scenario outcome based on assumptions
+- Scenario estimate: calculated outcome based on assumptions
 
 ### Prefer clarity over cheerleading
 - Neutral, precise phrasing.
@@ -92,7 +92,7 @@ Rules:
 - State what completion changes: completed reviews become the source of truth.
 - Avoid guilt. Make it feel like maintenance, not judgement.
 
-### Projections
+### Scenario estimates
 Goal:
 - Explain scenarios, not promises.
 
@@ -174,7 +174,7 @@ Not allowed (hurts trust):
 - Tax and allowances breach warnings
 - Restore/delete/reset flows
 - Diagnostics and system health
-- Projection certainty and disclaimers
+- Scenario estimate certainty and disclaimers
 
 General rule:
 - If a user might feel anxious, uncertain, or risk-exposed, do not use mascot language.
@@ -196,7 +196,7 @@ General rule:
 
 ### Avoid
 - guaranteed
-- you will / you’ll have (for projections)
+- you will / you’ll have (for scenario estimates)
 - best / recommended / optimize (advice-coded)
 - beat the market / alpha / outperform (trading-coded)
 - grow your wealth fast (salesy)
@@ -217,7 +217,7 @@ General rule:
 - Before: “Works offline as a PWA”
 - After: “Installable as a PWA” / “Installable as an app (PWA). For privacy, financial pages aren’t stored for offline viewing.”
 
-### Projections certainty
+### Scenario estimate certainty
 - Before: “Projected at retirement”
 - After: “Projected at retirement (estimate)” / “Scenario estimate at retirement”
 
@@ -235,12 +235,12 @@ General rule:
 
 Audit order (highest trust risk first):
 1. Backup/Restore and Danger Zone wording
-2. Projections labels and estimate disclaimers
+2. Scenario estimate labels and estimate disclaimers
 3. Diagnostics, offline, and privacy wording consistency
 4. Overview CTAs and alert phrasing
 5. Empty states and onboarding warmth
 
 Method:
-- Inventory strings by surface (Overview/Review/Projections/etc.).
+- Inventory strings by surface (Overview/Review/Scenario estimates/etc.).
 - Tag each string as factual, estimate, warning, or action.
 - Apply the strictest rules to warnings, restores, and anything that could be read as advice.
