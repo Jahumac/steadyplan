@@ -226,6 +226,22 @@ def _assistant_scope_options(include_reserved=False):
     return options
 
 
+def _assistant_scope_label_map(include_reserved=False):
+    return {
+        opt["key"]: opt["label"]
+        for opt in _assistant_scope_options(include_reserved=include_reserved)
+    }
+
+
+def _assistant_scope_labels(scopes, *, include_reserved=False):
+    labels = []
+    label_map = _assistant_scope_label_map(include_reserved=include_reserved)
+    for scope in scopes or [ASSISTANT_SCOPE_READ]:
+        scope_text = str(scope or "").strip().lower()
+        labels.append(label_map.get(scope_text, scope_text or ASSISTANT_SCOPE_READ))
+    return labels
+
+
 def _normalise_requested_assistant_scopes(raw_scopes):
     ordered = []
     valid = {opt["key"] for opt in _assistant_scope_options(include_reserved=True)}
@@ -260,6 +276,7 @@ def _settings_template_context(uid, *, assumptions=None, computed_age=None, diag
     computed_age = computed_age if computed_age is not None else (int(current_age_from_assumptions(assumptions)) if assumptions else 0)
     assistant_tokens = fetch_api_tokens(uid, token_kind=API_TOKEN_KIND_ASSISTANT)
     assistant_audit_events = fetch_assistant_audit_events(uid, limit=12)
+    assistant_token_secret = _pop_plaintext_assistant_token()
     return {
         "assumptions": assumptions,
         "computed_age": computed_age,
@@ -269,7 +286,8 @@ def _settings_template_context(uid, *, assumptions=None, computed_age=None, diag
         "assistant_tokens": assistant_tokens,
         "assistant_audit_events": assistant_audit_events,
         "assistant_scope_options": _assistant_scope_options(),
-        "assistant_token_secret": _pop_plaintext_assistant_token(),
+        "assistant_scope_labels": _assistant_scope_labels,
+        "assistant_token_secret": assistant_token_secret,
         **extra,
     }
 
