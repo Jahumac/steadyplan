@@ -57,6 +57,8 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     homepage = _read("index.html")
     about = _read("about.html")
     tour = _read("tour.html")
+    concept_a = _read("concepts/concept-a/index.html")
+    concept_b = _read("concepts/concept-b/index.html")
 
     assert "Scenario estimates are illustrative and based on your inputs." in homepage
     assert "Projections are illustrative and based on your inputs." not in homepage
@@ -72,3 +74,9 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert '<p class="kicker">Projections</p>' not in tour
     assert "Projections let you explore what changes if you adjust contributions, retirement timing, or assumptions." not in tour
     assert "SteadyPlan projections screen with demo data" not in tour
+    assert "<strong>Scenario estimates</strong>" in concept_a
+    assert "<strong>Projections</strong>" not in concept_a
+    assert "Scenario estimates are assumptions-based estimates." in concept_b
+    assert "<strong>Scenario estimates</strong>" in concept_b
+    assert "Projections are assumptions-based estimates." not in concept_b
+    assert "<strong>Projections</strong>" not in concept_b
