@@ -207,12 +207,12 @@ def _assistant_scope_options(include_reserved=False):
         {
             "key": ASSISTANT_SCOPE_READ,
             "label": "Read-only assistant answers",
-            "hint": "Lets Pip read the assistant summary endpoints for portfolio, monthly budget headroom, and affordability checks.",
+            "hint": "Lets Pip answer portfolio, monthly budget, and affordability questions without changing your data.",
         },
         {
             "key": ASSISTANT_SCOPE_BUDGET_WRITE,
             "label": "Budget write",
-            "hint": "Lets Pip update one month at a time on existing manual, unlinked budget items via the narrow assistant budget write endpoint.",
+            "hint": "Lets Pip update one month's amount on an existing manual, unlinked budget item. It does not allow broader budget, account, or transaction edits.",
         },
     ]
     if include_reserved:
