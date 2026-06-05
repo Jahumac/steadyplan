@@ -25,8 +25,11 @@ def test_settings_focus_landing_prioritises_planning_dates_for_first_use(app, cl
     assert "Just these basics first" in html
     assert "Can wait until later" in html
     assert "Save and continue" in html
-    assert "You only need these basics to get timelines and projections started." in html
+    assert "You only need these basics to get timelines and scenario estimates started." in html
+    assert "You only need these basics to get timelines and projections started." not in html
     assert "Date of birth and retirement age are enough to start." in html
+    assert "These assumptions refine scenario estimates and reporting, but you do not need them to finish the basics." in html
+    assert "These assumptions refine projections and reporting, but you do not need them to finish the basics." not in html
 
     dob_idx = html.index("Date of birth")
     retirement_age_idx = html.index("Retirement age")
