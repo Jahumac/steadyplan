@@ -680,7 +680,7 @@
     <p class="helper-text" style="margin:0.35rem 0 0.75rem 0;">
       Copy this now. For safety, SteadyPlan will only show the raw token once.
     </p>
-    <div class="text-sm" style="margin-bottom:0.4rem;">Label: <strong>{{ assistant_token_secret.label }}</strong></div>
+    <div class="text-sm" style="margin-bottom:0.4rem;">Label: <strong>{{ assistant_token_label(assistant_token_secret.label) }}</strong></div>
     <div class="text-sm" style="margin-bottom:0.4rem;">Permissions: {{ assistant_scope_labels(assistant_token_secret.scopes)|join(', ') }}</div>
     <code data-assistant-token-value="{{ assistant_token_secret.value }}" style="display:block;overflow:auto;padding:0.75rem;border-radius:10px;background:rgba(0,0,0,0.2);">{{ assistant_token_secret.value }}</code>
   </div>
@@ -734,10 +734,10 @@
         <tbody>
           {% for token in assistant_tokens %}
           <tr>
-            <td>{{ token.label or 'Assistant token' }}</td>
+            <td>{{ assistant_token_label(token.label) }}</td>
             <td>{{ assistant_scope_labels(token.scopes)|join(', ') }}</td>
             <td>{{ token.created_at or '—' }}</td>
-            <td>{{ token.last_used_at or 'Never' }}</td>
+            <td>{{ assistant_token_last_used_label(token.last_used_at) }}</td>
             <td class="num">
               <div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">
                 <form method="post" action="/settings/assistant-access/{{ token.id }}/regenerate" style="margin:0;">
