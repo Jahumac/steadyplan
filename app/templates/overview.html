@@ -429,7 +429,7 @@
     <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.isa_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="ISA allowance used"><div class="progress-bar" data-pct="{{ (metrics.isa_progress * 100)|round(1) }}"></div></div>
     <small>{{ '{:.1f}'.format(metrics.isa_progress * 100) }}% used · includes Lifetime ISA · {{ metrics.tax_year_days_left }} days left in the tax year</small>
     {% if metrics.projected_isa != metrics.isa_used %}
-    <small class="block mt-025 text-muted">On track: £{{ '{:,.0f}'.format(metrics.projected_isa) }} / £{{ '{:,.0f}'.format(metrics.isa_allowance) }} by end of tax year</small>
+    <small class="block mt-025 text-muted">Estimated by tax year end: £{{ '{:,.0f}'.format(metrics.projected_isa) }} / £{{ '{:,.0f}'.format(metrics.isa_allowance) }}</small>
     {% endif %}
     <div class="mt-05">
       <a href="/allowance/#isa" class="badge badge-sm">Review ISA allowance</a>
@@ -457,7 +457,7 @@
     </small>
     {% if metrics.projected_pension != metrics.pension_used %}
     <small class="block mt-025 text-muted">
-      On track: £{{ '{:,.0f}'.format(metrics.projected_pension) }} / £{{ '{:,.0f}'.format(metrics.pension_allowance) }} by end of tax year
+      Estimated by tax year end: £{{ '{:,.0f}'.format(metrics.projected_pension) }} / £{{ '{:,.0f}'.format(metrics.pension_allowance) }}
     </small>
     {% endif %}
     <div class="mt-05">
@@ -477,7 +477,7 @@
         <div class="progress" role="progressbar" aria-valuenow="{{ (metrics.isa_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="ISA allowance used"><div class="progress-bar" data-pct="{{ (metrics.isa_progress * 100)|round(1) }}"></div></div>
         <small>{{ '{:.1f}'.format(metrics.isa_progress * 100) }}% used · includes Lifetime ISA · {{ metrics.tax_year_days_left }} days left in the tax year</small>
         {% if metrics.projected_isa != metrics.isa_used %}
-        <small class="block mt-025 text-muted">On track: £{{ '{:,.0f}'.format(metrics.projected_isa) }} / £{{ '{:,.0f}'.format(metrics.isa_allowance) }} by end of tax year</small>
+        <small class="block mt-025 text-muted">Estimated by tax year end: £{{ '{:,.0f}'.format(metrics.projected_isa) }} / £{{ '{:,.0f}'.format(metrics.isa_allowance) }}</small>
         {% endif %}
         <div class="mt-05">
           <a href="/allowance/#isa" class="badge badge-sm">Review ISA allowance</a>
@@ -505,7 +505,7 @@
         </small>
         {% if metrics.projected_pension != metrics.pension_used %}
         <small class="block mt-025 text-muted">
-          On track: £{{ '{:,.0f}'.format(metrics.projected_pension) }} / £{{ '{:,.0f}'.format(metrics.pension_allowance) }} by end of tax year
+          Estimated by tax year end: £{{ '{:,.0f}'.format(metrics.projected_pension) }} / £{{ '{:,.0f}'.format(metrics.pension_allowance) }}
         </small>
         {% endif %}
         <div class="mt-05">
