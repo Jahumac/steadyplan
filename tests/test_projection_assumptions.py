@@ -61,7 +61,8 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "About this estimate" not in body
     assert "scenario estimate based on assumptions, not a promise" in body
     assert "assumptions-based forecast, not a promise" not in body
-    assert "Edit the inputs in" in body
+    assert "Edit the scenario estimate assumptions in" in body
+    assert "Edit the inputs in" not in body
     assert body.count("Edit scenario estimate assumptions") == 3
     assert "Edit assumptions" not in body
     assert body.count("Scenario estimate assumptions") == 3
@@ -249,6 +250,8 @@ def test_settings_uses_lifetime_isa_wording(app, client, make_user):
     assert view_resp.status_code == 200
     view_body = view_resp.data.decode("utf-8", errors="ignore")
     assert "Lifetime ISA allowance" in view_body
+    assert "Edit scenario estimate assumptions" in view_body
+    assert "Edit settings" not in view_body
     assert "LISA allowance" not in view_body
 
 
