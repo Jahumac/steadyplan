@@ -112,6 +112,10 @@ def test_accounts_create_form_includes_junior_isa_wrapper_option(app, client, ma
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert '<option value="Junior ISA">Junior ISA</option>' in html
+    assert 'Use default growth rate from your scenario estimate assumptions' in html
+    assert 'Use default growth rate (from Settings)' not in html
+    assert 'Set 0 to use the investment day from your scenario estimate assumptions.' in html
+    assert 'Set 0 to use salary day from Settings.' not in html
 
 
 def test_accounts_edit_form_preserves_selected_legacy_wrapper_label(app, client, make_user):
@@ -129,6 +133,27 @@ def test_accounts_edit_form_preserves_selected_legacy_wrapper_label(app, client,
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert '<option value="Stocks and Shares ISA" selected>Stocks and Shares ISA</option>' in html
+
+
+def test_accounts_edit_form_uses_assumptions_wording_for_pension_posting_day(app, client, make_user):
+    uid, username, password = make_user(username="accounts-pension-posting-day", password="password123")
+    payload = _account_payload()
+    payload["name"] = "Workplace Pension"
+    payload["wrapper_type"] = "Workplace Pension"
+    payload["category"] = "Pension"
+
+    with app.app_context():
+        account_id = create_account(payload, uid)
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}?mode=edit")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'Use if workplace pension invests later than your investment day' in html
+    assert 'Set 0 to use the investment day from your scenario estimate assumptions.' in html
+    assert 'Use if workplace pension invests later than salary day' not in html
+    assert 'Set 0 to use salary day from Settings.' not in html
 
 
 def test_accounts_create_form_includes_investment_category_option(app, client, make_user):
