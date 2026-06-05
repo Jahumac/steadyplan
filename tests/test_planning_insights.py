@@ -144,6 +144,8 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"Accessible vs locked" in response.data
     assert b"Target retirement income/year" in response.data
     assert b"Accessible security milestones" in response.data
+    assert b"Timing estimate:" in response.data
+    assert b"Estimated:" not in response.data
     assert b"View account details" in response.data
     assert b"perfect retirement salary" not in response.data
     assert b"Weakest link" in response.data
