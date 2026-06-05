@@ -136,6 +136,16 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     uid, username, password = make_user(username="assistant-settings-user")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
+    settings_resp = client.get("/settings/")
+    settings_html = settings_resp.get_data(as_text=True)
+    assert settings_resp.status_code == 200
+    assert "Give Pip scoped access to SteadyPlan" in settings_html
+    assert "This creates a dedicated assistant token for SteadyPlan. Unlike a general API token, it only works with assistant endpoints and you can revoke or regenerate it here." in settings_html
+    assert "A local label to help you recognise this token later." in settings_html
+    assert "Let Pip use SteadyPlan safely" not in settings_html
+    assert "assistant-friendly endpoints" not in settings_html
+    assert "Just a friendly label so you know what this token is for." not in settings_html
+
     create_resp = client.post(
         "/settings/assistant-access/create",
         data={
