@@ -288,5 +288,7 @@ def test_assistant_write_is_logged_and_visible_in_settings(app, client, make_use
     assert settings_resp.status_code == 200
     assert "Recent assistant activity" in settings_html
     assert "Phone sinking fund" in settings_html
+    assert "Budget month amount updated" in settings_html
+    assert "budget_item_month_entry_updated" not in settings_html
     assert "2026-05" in settings_html
     assert "799" in settings_html
