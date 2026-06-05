@@ -778,7 +778,7 @@
           <tr>
             <td>{{ event.created_at or '—' }}</td>
             <td>{{ event.token_label or 'Assistant token' }}</td>
-            <td>{{ event.action_type }}</td>
+            <td>{{ assistant_action_label(event.action_type) }}</td>
             <td>
               {{ event.target_label or event.target_type or '—' }}
               {% if event.month_key %}<div class="helper-text" style="margin-top:0.2rem;">{{ event.month_key }}</div>{% endif %}
