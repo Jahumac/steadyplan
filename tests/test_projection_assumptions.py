@@ -61,7 +61,8 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "About this estimate" not in body
     assert "scenario estimate based on assumptions, not a promise" in body
     assert "assumptions-based forecast, not a promise" not in body
-    assert "You can change those assumptions in" in body
+    assert "You can change your <a href=\"/settings/?mode=edit\" class=\"link-accent\">scenario estimate assumptions</a>." in body
+    assert "You can change those assumptions in" not in body
     assert "Edit the scenario estimate assumptions in" not in body
     assert "Edit the inputs in" not in body
     assert body.count("Edit scenario estimate assumptions") == 3
@@ -288,10 +289,13 @@ def test_overview_projected_retirement_stat_has_estimate_qualifier(app, client, 
     assert "Scenario estimate at retirement" in body
     assert "Projected at retirement" not in body
     assert "<small>estimate</small>" not in body
-    assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." in body
-    assert "Scenario estimate based on your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." in body
+    assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." in body
+    assert "Scenario estimate based on your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." in body
+    assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in body
+    assert "Scenario estimate based on your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in body
     assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in body
     assert "Scenario estimate based on your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in body
+    assert "You can change those assumptions in <a href=\"/settings/?mode=edit\" class=\"link-accent\">Settings</a>." not in body
     assert "Projection based on your current balances, contribution settings, and assumptions in Settings." not in body
 
 
