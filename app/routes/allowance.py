@@ -6,6 +6,7 @@ from flask_login import current_user, login_required
 from app.utils import valid_date, valid_tax_year
 from app.calculations import (
     allowance_progress,
+    apply_pension_carry_forward,
     calculate_isa_usage,
     calculate_pension_usage,
     current_age_from_assumptions,
@@ -136,12 +137,11 @@ def allowance_overview():
     pension_limits = pension_allowance_limits(dict(assumptions) if assumptions else {})
     pension_accounts = [a for a in accounts if is_pension_account(dict(a))]
 
-    # Carry-forward: sum unused allowances from up to 3 prior years
     carry_forward_entries = fetch_pension_carry_forward(uid)
-    carry_forward_total = sum(float(e["unused_allowance"]) for e in carry_forward_entries[:3])
-    pension_limits_with_carry = dict(pension_limits)
-    pension_limits_with_carry["effective_allowance"] = pension_limits["effective_allowance"] + carry_forward_total
-    pension_limits_with_carry["carry_forward_total"] = carry_forward_total
+    pension_limits_with_carry = apply_pension_carry_forward(
+        pension_limits,
+        carry_forward_entries,
+    )
 
     _dividend_raw = assumptions["dividend_allowance"] if (assumptions is not None and "dividend_allowance" in assumptions) else None
     dividend_allowance = float(_dividend_raw) if _dividend_raw is not None else 500

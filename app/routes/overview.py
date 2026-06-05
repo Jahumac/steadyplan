@@ -7,6 +7,7 @@ from flask_login import current_user, login_required
 from app.calculations import (
     SCHEDULER_STALE_AFTER_HOURS,
     allowance_progress,
+    apply_pension_carry_forward,
     calculate_isa_usage,
     calculate_pension_usage,
     current_age_from_assumptions,
@@ -44,6 +45,7 @@ from app.models import (
     fetch_isa_contributions,
     fetch_isa_overrides_for_tax_year,
     fetch_pension_overrides_for_tax_year,
+    fetch_pension_carry_forward,
     fetch_monthly_review,
     fetch_monthly_review_items,
     fetch_pension_contributions,
@@ -321,7 +323,12 @@ def overview():
         review_contributions=pension_review_contribs,
     )
     pension_limits = pension_allowance_limits(dict(assumptions) if assumptions else {})
-    pension_allowance = pension_limits["effective_allowance"]
+    pension_carry_forward_entries = fetch_pension_carry_forward(uid)
+    pension_limits_with_carry = apply_pension_carry_forward(
+        pension_limits,
+        pension_carry_forward_entries,
+    )
+    pension_allowance = pension_limits_with_carry["effective_allowance"]
 
     now = datetime.now()
 
@@ -350,7 +357,7 @@ def overview():
         "isa_progress": allowance_progress(isa_used, float(assumptions["isa_allowance"]) if assumptions else 0),
         "lisa_progress": allowance_progress(lisa_used, float(assumptions["lisa_allowance"]) if assumptions else 0),
         "pension_progress": allowance_progress(pension_usage["pension_used"], pension_allowance),
-        "pension_personal_limit": pension_limits["personal_relief_limit"],
+        "pension_personal_limit": pension_limits_with_carry["personal_relief_limit"],
         "effective_values": {account["id"]: effective_account_value(account, holdings_totals) for account in accounts},
         "has_lisa": any("Lifetime" in (a.get("wrapper_type") or "") or "LISA" in (a.get("wrapper_type") or "") for a in raw_accounts),
     }
