@@ -39,7 +39,7 @@
       <a href="/" class="{% if active_page == 'overview' %}active{% endif %}">Overview</a>
       <a href="/accounts/" class="{% if active_page == 'accounts' %}active{% endif %}">Accounts</a>
       <a href="/budget/" class="{% if active_page in ('budget', 'monthly_review') %}active{% endif %}">Budget</a>
-      <a href="/goals/" class="{% if active_page in ('goals', 'projections', 'performance') %}active{% endif %}">Goals</a>
+      <a href="/goals/" class="{% if active_page in ('goals', 'projections', 'performance', 'contributions') %}active{% endif %}">Progress</a>
       <a href="/planning/" class="{% if active_page == 'planning' %}active{% endif %}">Planning</a>
       <a href="/settings/" class="{% if active_page in ('settings', 'users') %}active{% endif %}">Settings</a>
       {% if current_user.is_authenticated %}
@@ -77,9 +77,9 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
       <span>Budget</span>
     </a>
-    <a href="/goals/" class="bottom-nav-item {% if active_page in ('goals', 'projections', 'performance') %}bottom-nav-active{% endif %}">
+    <a href="/goals/" class="bottom-nav-item {% if active_page in ('goals', 'projections', 'performance', 'contributions') %}bottom-nav-active{% endif %}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-      <span>Goals</span>
+      <span>Progress</span>
     </a>
     <a href="/planning/" class="bottom-nav-item {% if active_page == 'planning' %}bottom-nav-active{% endif %}">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16l3-4 3 2 4-7"/></svg>
