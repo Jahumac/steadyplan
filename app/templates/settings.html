@@ -664,11 +664,11 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Assistant access</p>
-      <h3>Let Pip use SteadyPlan safely</h3>
+      <h3>Give Pip scoped access to SteadyPlan</h3>
     </div>
   </div>
   <p class="helper-text">
-    This creates a dedicated assistant token for SteadyPlan. Unlike a general API token, it is limited to assistant-friendly endpoints and can be revoked or regenerated here.
+    This creates a dedicated assistant token for SteadyPlan. Unlike a general API token, it only works with assistant endpoints and you can revoke or regenerate it here.
   </p>
   <p class="helper-text" style="margin-top:0.45rem;">
     Read-only access lets Pip answer portfolio, budget, and affordability questions. Budget write access additionally allows one narrow action today: updating a single month's amount on an existing manual, unlinked budget item.
@@ -692,7 +692,7 @@
       <label>
         <span>Token label</span>
         <input type="text" name="label" value="Pip" maxlength="64">
-        <small class="form-hint">Just a friendly label so you know what this token is for.</small>
+        <small class="form-hint">A local label to help you recognise this token later.</small>
       </label>
       <div class="form-full-col">
         <span style="display:block;font-weight:600;margin-bottom:0.55rem;">Permissions</span>
