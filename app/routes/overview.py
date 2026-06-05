@@ -540,7 +540,7 @@ def overview():
                 lm_label = datetime(lm_year, lm_month, 1).strftime("%B")
                 alerts.append({
                     "kind": "warning",
-                    "message": f"Your {lm_label} monthly update hasn't been completed yet.",
+                    "message": f"Your {lm_label} monthly update is still open — complete it so balances, contributions, and tracking stay based on confirmed numbers.",
                     "cta_text": "Open monthly update",
                     "cta_href": f"/monthly-review/?month={lm_key}",
                     "cta_form_action": None,

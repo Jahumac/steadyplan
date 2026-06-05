@@ -1216,6 +1216,9 @@ def test_overview_missed_review_alert_uses_specific_monthly_update_cta(app, clie
     html = resp.get_data(as_text=True)
 
     assert '/monthly-review/?month=' in html
+    assert "monthly update is still open" in html
+    assert "balances, contributions, and tracking stay based on confirmed numbers" in html
+    assert "monthly update hasn't been completed yet" not in html
     assert "Open monthly update" in html
     assert "Do it now" not in html
 
@@ -1588,7 +1591,9 @@ def test_overview_portfolio_pending_review_helper_uses_sentence_case_monthly_upd
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "still using defaults — confirm in" in html
+    assert "still waiting for confirmation — complete the" in html
+    assert "history and performance use confirmed balances and contributions" in html
+    assert "still using defaults — confirm in" not in html
     assert "estimated from defaults — confirm in" not in html
     assert 'href="/monthly-review/" class="link-accent">monthly update</a>' in html
     assert 'href="/monthly-review/" class="link-accent">Monthly Update</a>' not in html
