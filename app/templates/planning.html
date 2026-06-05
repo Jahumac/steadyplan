@@ -67,7 +67,7 @@
     <p class="eyebrow">Next milestone</p>
     <h2>£{{ '{:,.0f}'.format(access_summary.next_milestone.target) }} accessible</h2>
     <p class="planning-big-number">£{{ '{:,.0f}'.format(access_summary.next_milestone.remaining) }} to go</p>
-    <p class="helper-text">Estimated: <strong>{{ access_summary.next_milestone.duration }}</strong> · {{ '{:.0f}'.format(access_summary.next_milestone.progress) }}% complete.</p>
+    <p class="helper-text">Timing estimate: <strong>{{ access_summary.next_milestone.duration }}</strong> · {{ '{:.0f}'.format(access_summary.next_milestone.progress) }}% complete.</p>
     <div class="planning-progress" aria-hidden="true"><span style="width: {{ '{:.1f}'.format(access_summary.next_milestone.progress) }}%"></span></div>
   </div>
   {% endif %}
