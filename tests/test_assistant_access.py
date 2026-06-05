@@ -291,4 +291,5 @@ def test_assistant_write_is_logged_and_visible_in_settings(app, client, make_use
     assert "Budget month amount updated" in settings_html
     assert "budget_item_month_entry_updated" not in settings_html
     assert "2026-05" in settings_html
-    assert "799" in settings_html
+    assert "£50.00 → £799.00" in settings_html
+    assert "50.0 → 799.0" not in settings_html

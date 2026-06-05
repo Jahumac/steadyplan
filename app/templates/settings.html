@@ -787,7 +787,7 @@
               {% set before_amount = event.before_state.get('amount') %}
               {% set after_amount = event.after_state.get('amount') %}
               {% if before_amount is not none and after_amount is not none %}
-                {{ before_amount }} → {{ after_amount }}
+                {{ assistant_amount_change_label(before_amount, after_amount) }}
               {% else %}
                 —
               {% endif %}
