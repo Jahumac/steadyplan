@@ -230,7 +230,8 @@ def test_settings_monthly_update_timing_helper_uses_monthly_update_wording(app, 
     assert "Used to work out when your investments have settled and it's time for your monthly update" not in body
     assert "Used to estimate when your investments have settled and it's time for your monthly update" not in body
     assert "The day your ISA contributions and standing orders usually go out" in body
-    assert "Weekend shifts are handled in the settlement timing." in body
+    assert "SteadyPlan uses it to time monthly update nudges after settlement, with weekend shifts handled automatically." in body
+    assert "Weekend shifts are handled in the settlement timing." not in body
     assert "The day your ISA contributions and standing orders go out — usually when your salary arrives or a day after." not in body
     assert "Settlement timing accounts for weekends automatically." not in body
     assert "Used to estimate when your investments have settled and it's time to review" not in body

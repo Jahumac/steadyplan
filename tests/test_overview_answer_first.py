@@ -20,7 +20,8 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Finish the two basics first" in html
     assert "Open the first unfinished basic below. Goals and monthly updates can wait until you have something real to track." in html
     assert "Add your planning dates" in html
-    assert "Date of birth and retirement age are enough to make later dates and scenario estimates meaningful." in html
+    assert "Date of birth and retirement age are enough to start. Add your investment day when you want monthly update nudges to land at the right time." in html
+    assert "Date of birth and retirement age are enough to make later dates and scenario estimates meaningful." not in html
     assert "Date of birth and retirement age are enough to make later dates and projections meaningful." not in html
     assert "Add your first account" in html
     assert "Set your first goal" in html

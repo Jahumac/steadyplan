@@ -67,7 +67,7 @@
           <option value="{{ d }}" {{ 'selected' if assumptions and assumptions.salary_day == d }}>{{ d }}{{ 'st' if d in [1,21,31] else ('nd' if d in [2,22] else ('rd' if d in [3,23] else 'th')) }}</option>
           {% endfor %}
         </select>
-        <small class="form-hint">The day your ISA contributions and standing orders usually go out — often when your salary arrives or a day after. Weekend shifts are handled in the settlement timing.</small>
+        <small class="form-hint">The day your ISA contributions and standing orders usually go out — often when your salary arrives or a day after. SteadyPlan uses it to time monthly update nudges after settlement, with weekend shifts handled automatically.</small>
       </label>
       {% if settings_needs_planning_dates %}
       <div class="form-full-col settings-section-divider">
