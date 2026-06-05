@@ -249,6 +249,12 @@ def _assistant_action_label(action_type):
     }.get(action_text, action_text or "—")
 
 
+def _assistant_amount_change_label(before_amount, after_amount):
+    if before_amount is None or after_amount is None:
+        return "—"
+    return f"£{float(before_amount):,.2f} → £{float(after_amount):,.2f}"
+
+
 def _normalise_requested_assistant_scopes(raw_scopes):
     ordered = []
     valid = {opt["key"] for opt in _assistant_scope_options(include_reserved=True)}
@@ -295,6 +301,7 @@ def _settings_template_context(uid, *, assumptions=None, computed_age=None, diag
         "assistant_scope_options": _assistant_scope_options(),
         "assistant_scope_labels": _assistant_scope_labels,
         "assistant_action_label": _assistant_action_label,
+        "assistant_amount_change_label": _assistant_amount_change_label,
         "assistant_token_secret": assistant_token_secret,
         **extra,
     }
