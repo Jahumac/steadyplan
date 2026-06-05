@@ -76,7 +76,7 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
                 health_items.append({
                     "status": HEALTH_STATUS_WARNING,
                     "title": "Some accounts have stale or missing history",
-                    "explanation": f"The following accounts have no recent balance history: {', '.join(history_warning_accounts)}. Update them to ensure accurate projections.",
+                    "explanation": f"The following accounts have no recent balance history: {', '.join(history_warning_accounts)}. Update them to keep your scenario estimates grounded in recent balances.",
                     "link": "/history",
                     "cta_text": "Review history",
                 })
@@ -128,7 +128,7 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
             health_items.append({
                 "status": HEALTH_STATUS_WARNING,
                 "title": "No assumptions set up",
-                "explanation": "You haven't set up your financial assumptions. These are crucial for projections.",
+                "explanation": "You haven't set up your financial assumptions yet. These help SteadyPlan build scenario estimates that match your plans.",
                 "link": "/settings#assumptions",
             })
             if overall_status == HEALTH_STATUS_GOOD:
