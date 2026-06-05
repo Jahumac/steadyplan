@@ -312,12 +312,12 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Growth curve</p>
-      <h2>Portfolio Trajectory</h2>
+      <h2>Scenario estimate over time</h2>
     </div>
   </div>
-  <p class="helper-text">How your portfolio could grow year by year under your current assumptions and contributions.</p>
+  <p class="helper-text">How your portfolio scenario estimate could change year by year under your current assumptions and contributions.</p>
   <div class="chart-wrap-md">
-    <canvas id="projectionChart" role="img" aria-label="Projected portfolio growth chart"
+    <canvas id="projectionChart" role="img" aria-label="Portfolio scenario estimate growth chart"
       data-labels='{{ chart_labels | tojson | safe }}'
       data-values='{{ chart_values | tojson | safe }}'></canvas>
   </div>
@@ -329,12 +329,12 @@
     <div class="section-header">
       <div>
         <p class="eyebrow">Growth curve</p>
-        <h2>Portfolio Trajectory</h2>
+        <h2>Scenario estimate over time</h2>
       </div>
     </div>
-    <p class="helper-text">How your portfolio could grow year by year under your current assumptions and contributions.</p>
+    <p class="helper-text">How your portfolio scenario estimate could change year by year under your current assumptions and contributions.</p>
     <div class="chart-wrap-md">
-      <canvas id="projectionChartMobile" role="img" aria-label="Projected portfolio growth chart"
+      <canvas id="projectionChartMobile" role="img" aria-label="Portfolio scenario estimate growth chart"
         data-labels='{{ chart_labels | tojson | safe }}'
         data-values='{{ chart_values | tojson | safe }}'></canvas>
     </div>
