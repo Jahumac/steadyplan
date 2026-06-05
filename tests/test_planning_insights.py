@@ -161,11 +161,14 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"State Pension assumption" in response.data
     assert b"Private pot estimate at retirement" in response.data
     assert b"Projected private pot" not in response.data
-    assert b"Estimate at age 55 under current balances, contributions and growth assumptions." in response.data
+    assert b"Scenario estimate at age 55 under current balances, contributions and growth assumptions. For planning only, not a guarantee." in response.data
+    assert b"Estimate at age 55 under current balances, contributions and growth assumptions." not in response.data
     assert b"Projected at age 55 under current balances, contributions and growth assumptions." not in response.data
-    assert b"Private pot estimate at age 55:" in response.data
+    assert b"Private pot scenario estimate at age 55:" in response.data
+    assert b"Private pot estimate at age 55:" not in response.data
     assert b"Projected private pot at age 55:" not in response.data
-    assert response.data.count(b"Estimate at 55:") >= 2
+    assert response.data.count(b"Scenario estimate at 55:") >= 2
+    assert b"Estimate at 55:" not in response.data
     assert b"Projected at 55:" not in response.data
 
     css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
@@ -196,11 +199,14 @@ def test_planning_page_no_goal_mode_uses_plan_wording(app, client, make_user):
     assert "using the balanced illustration as the income guide" in html
     assert "Private pot estimate at retirement" in html
     assert "Projected private pot" not in html
-    assert "Estimate at age 55 under current balances, contributions and growth assumptions." in html
+    assert "Scenario estimate at age 55 under current balances, contributions and growth assumptions. For planning only, not a guarantee." in html
+    assert "Estimate at age 55 under current balances, contributions and growth assumptions." not in html
     assert "Projected at age 55 under current balances, contributions and growth assumptions." not in html
-    assert "Private pot estimate at age 55:" in html
+    assert "Private pot scenario estimate at age 55:" in html
+    assert "Private pot estimate at age 55:" not in html
     assert "Projected private pot at age 55:" not in html
-    assert html.count("Estimate at 55:") >= 2
+    assert html.count("Scenario estimate at 55:") >= 2
+    assert "Estimate at 55:" not in html
     assert "Projected at 55:" not in html
     assert "Accessible pot estimate at retirement" in html
     assert "State Pension assumption" in html
