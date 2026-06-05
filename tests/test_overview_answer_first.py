@@ -1107,10 +1107,13 @@ def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, m
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
+    assert "What to do next" in html
     assert "Monthly update ready" in html
-    assert "Complete it to confirm this month's balances and improve goal and performance tracking." in html
+    assert "Best once this month's money has settled." in html
+    assert "Complete it to confirm balances and contributions, and keep goal and performance tracking based on confirmed numbers." in html
     assert "Your investments should be settled by now" not in html
     assert "Time to check your holdings and lock in this month's numbers." not in html
+    assert "Complete it to confirm this month's balances and improve goal and performance tracking." not in html
     assert "Open monthly update" in html
     assert "Start monthly update" not in html
     assert "Your next nudge" not in html
