@@ -93,6 +93,14 @@ def api_auth_required(fn):
     return wrapper
 
 
+def _assistant_scope_label(scope):
+    scope_text = str(scope or "").strip().lower()
+    return {
+        ASSISTANT_SCOPE_READ: "Read-only assistant answers",
+        ASSISTANT_SCOPE_BUDGET_WRITE: "Budget write",
+    }.get(scope_text, scope_text or "This permission")
+
+
 def assistant_scope_required(scope):
     def decorator(fn):
         @wraps(fn)
@@ -102,7 +110,8 @@ def assistant_scope_required(scope):
                 return fn(*args, **kwargs)
             scopes = set(token_info.get("scopes") or [])
             if scope not in scopes:
-                return _err("insufficient_scope", f"This assistant token requires the '{scope}' scope", 403)
+                scope_label = _assistant_scope_label(scope)
+                return _err("insufficient_scope", f"This assistant token needs the {scope_label} permission.", 403)
             return fn(*args, **kwargs)
 
         return wrapper

@@ -36,7 +36,10 @@ def test_assistant_token_is_limited_to_assistant_endpoints(app, client, make_use
         headers=_bearer(token),
     )
     assert denied.status_code == 403
-    assert denied.get_json()["error"] == "insufficient_scope"
+    denied_body = denied.get_json()
+    assert denied_body["error"] == "insufficient_scope"
+    assert denied_body["message"] == "This assistant token is limited to assistant endpoints. Use a general API token for raw read/write endpoints."
+
 
 
 
@@ -58,7 +61,10 @@ def test_assistant_token_without_read_scope_is_rejected(app, client, make_user):
         headers=_bearer(token),
     )
     assert resp.status_code == 403
-    assert resp.get_json()["error"] == "insufficient_scope"
+    body = resp.get_json()
+    assert body["error"] == "insufficient_scope"
+    assert body["message"] == "This assistant token needs the Read-only assistant answers permission."
+    assert "assistant:read" not in body["message"]
 
 
 
@@ -128,7 +134,10 @@ def test_assistant_read_only_token_cannot_write_budget_entry(app, client, make_u
         json={"month": "2026-05", "amount": 799},
     )
     assert resp.status_code == 403
-    assert resp.get_json()["error"] == "insufficient_scope"
+    body = resp.get_json()
+    assert body["error"] == "insufficient_scope"
+    assert body["message"] == "This assistant token needs the Budget write permission."
+    assert "assistant:budget_write" not in body["message"]
 
 
 
