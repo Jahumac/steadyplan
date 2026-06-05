@@ -72,7 +72,9 @@ def test_accounts_page_uses_plan_line_copy_for_account_comparison(app, client, m
     uid, username, password = make_user(username="accounts-plan-line-copy", password="password123")
 
     with app.app_context():
-        account_id = create_account(_account_payload(), uid)
+        payload = _account_payload()
+        payload["goal_value"] = 10000
+        account_id = create_account(payload, uid)
         today = date.today()
         with get_connection() as conn:
             conn.execute(
@@ -94,6 +96,8 @@ def test_accounts_page_uses_plan_line_copy_for_account_comparison(app, client, m
     html = response.get_data(as_text=True)
     assert "Plan line @7%" in html
     assert "Should be @7%" not in html
+    assert "Goal timing estimate" in html
+    assert "Goal ETA" not in html
     assert "This compares your recorded balance with an assumptions-based plan line for this account." in html
     assert "Use it as a planning guide, not a guarantee." in html
     assert "Actual vs plan for this account." not in html

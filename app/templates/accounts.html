@@ -661,7 +661,7 @@
           </div>
           <div class="perf-stat">
             {% set _goal_target = (selected.goal_value or 0) | float %}
-            <p class="text-muted m-0 text-sm-2">Goal ETA{% if _goal_target > 0 %} @{{ '{:.1f}'.format(goal_eta_rate * 100) }}%{% endif %}</p>
+            <p class="text-muted m-0 text-sm-2">Goal timing estimate{% if _goal_target > 0 %} @{{ '{:.1f}'.format(goal_eta_rate * 100) }}%{% endif %}</p>
             <p class="m-0 text-bold">{% if goal_eta %}{{ goal_eta }}{% else %}—{% endif %}</p>
           </div>
         </div>
