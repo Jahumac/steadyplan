@@ -80,10 +80,12 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Projections are illustrative and based on your inputs, assumptions, and scenarios." not in about
     assert "<h3>Scenario estimates</h3>" in tour
     assert '<p class="kicker">Scenario estimates</p>' in tour
+    assert 'content="Product tour of SteadyPlan’s main screens using demo data: Overview, holdings, planning, scenario estimates, and trust/data-ownership flows."' in tour
     assert "Scenario estimates let you explore what changes if you adjust contributions, retirement timing, or assumptions." in tour
     assert "SteadyPlan scenario estimates screen with demo data" in tour
     assert "<h3>Projections</h3>" not in tour
     assert '<p class="kicker">Projections</p>' not in tour
+    assert 'content="Product tour of SteadyPlan’s main screens using demo data: Overview, holdings, planning, projections, and trust/data-ownership flows."' not in tour
     assert "Projections let you explore what changes if you adjust contributions, retirement timing, or assumptions." not in tour
     assert "SteadyPlan projections screen with demo data" not in tour
     assert "<strong>Scenario estimates</strong>" in concept_a
