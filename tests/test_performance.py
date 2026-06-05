@@ -100,7 +100,9 @@ def test_performance_helper_uses_sentence_case_monthly_update_copy(app, client, 
     html = resp.get_data(as_text=True)
 
     assert "monthly update entries" in html
-    assert "monthly update due date" in html
+    assert "investment day (shifted for weekends, plus settlement)" in html
+    assert "monthly update due date" not in html
+    assert "salary day shifted for weekends" not in html
     assert "includes tax relief, Lifetime ISA bonus, employer match" in html
     assert "This compares your recorded portfolio value with an assumptions-based plan line. It is a planning guide, not a guarantee." in html
     assert "Actual vs. plan line" in html
