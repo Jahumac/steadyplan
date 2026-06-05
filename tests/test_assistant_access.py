@@ -180,6 +180,7 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     create_html = create_resp.get_data(as_text=True)
     assert "Assistant access" in create_html
     assert "Assistant token created" in create_html
+    assert "New assistant token" in create_html
     assert "Permissions: Read-only assistant answers, Budget write" in create_html
     assert "Permissions: assistant:read" not in create_html
     assert "Permissions: assistant:budget_write" not in create_html
@@ -213,6 +214,7 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert regen_resp.status_code == 200
     regen_html = regen_resp.get_data(as_text=True)
     assert "Assistant token regenerated" in regen_html
+    assert "Replacement assistant token" in regen_html
     assert "Assistant token regenerated. The old token no longer works, and the new raw token is only shown once." in regen_html
     second_token = _extract_assistant_token(regen_html)
     assert second_token != first_token
