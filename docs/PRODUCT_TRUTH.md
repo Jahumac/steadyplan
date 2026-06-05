@@ -35,7 +35,7 @@ SteadyPlan is for people like earlier-me:
 
 A good default mental model:
 
-> Someone who wants a clear picture of their money and progress, but who may still feel intimidated by financial admin, projections, and long-term planning.
+> Someone who wants a clear picture of their money and progress, but who may still feel intimidated by financial admin, scenario estimates, and long-term planning.
 
 ---
 
@@ -92,7 +92,7 @@ Especially on phone-sized screens, the app should show the answer before the plu
 A less flashy flow that users trust is better than a more impressive flow that confuses them.
 
 ### 3. Truth must be visible
-Assumptions, estimates, projections, and confirmed numbers should not blur together.
+Assumptions, scenario estimates, and confirmed numbers should not blur together.
 
 ### 4. Privacy and local control matter
 SteadyPlan should continue to feel like a tool the user owns, not a platform that owns the user.
