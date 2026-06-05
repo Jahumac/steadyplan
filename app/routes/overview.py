@@ -530,9 +530,9 @@ def overview():
     if not salary_day and raw_accounts:
         alerts.append({
             "kind": "info",
-            "message": "Set your investment day in Settings — it tells SteadyPlan when to remind you to do your monthly update.",
+            "message": "Set your investment day — it tells SteadyPlan when to remind you to do your monthly update.",
             "cta_text": "Set your investment day",
-            "cta_href": "/settings/?mode=edit",
+            "cta_href": "/settings/?mode=edit&focus=planning_dates",
             "cta_form_action": None,
         })
 

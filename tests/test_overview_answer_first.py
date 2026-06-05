@@ -1320,10 +1320,13 @@ def test_overview_missing_salary_day_uses_single_settings_nudge(app, client, mak
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Set your investment day in Settings" in html
+    assert "Set your investment day — it tells SteadyPlan when to remind you to do your monthly update." in html
+    assert "Set your investment day in Settings" not in html
     assert "do your monthly update" in html
     assert "do your Monthly Update" not in html
     assert "Set your investment day" in html
+    assert 'href="/settings/?mode=edit&amp;focus=planning_dates"' in html
+    assert 'href="/settings/?mode=edit"' not in html
     assert "Open settings" not in html
     assert "Go to Settings" not in html
     assert "Your next nudge" not in html
