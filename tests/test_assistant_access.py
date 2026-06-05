@@ -142,6 +142,8 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert "Give Pip scoped access to SteadyPlan" in settings_html
     assert "This creates a dedicated assistant token for SteadyPlan. Unlike a general API token, it only works with assistant endpoints and you can revoke or regenerate it here." in settings_html
     assert "A local label to help you recognise this token later." in settings_html
+    assert "Transaction write (reserved)" not in settings_html
+    assert "Reserved for future assistant transaction entry endpoints. Safe to leave off today." not in settings_html
     assert "Let Pip use SteadyPlan safely" not in settings_html
     assert "assistant-friendly endpoints" not in settings_html
     assert "Just a friendly label so you know what this token is for." not in settings_html

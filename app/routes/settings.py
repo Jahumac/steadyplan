@@ -202,8 +202,8 @@ def _select_rows(conn, sql, params):
     return [dict(r) for r in (conn.execute(sql, params).fetchall() or [])]
 
 
-def _assistant_scope_options():
-    return [
+def _assistant_scope_options(include_reserved=False):
+    options = [
         {
             "key": ASSISTANT_SCOPE_READ,
             "label": "Read-only assistant answers",
@@ -214,17 +214,21 @@ def _assistant_scope_options():
             "label": "Budget write",
             "hint": "Lets Pip update one month at a time on existing manual, unlinked budget items via the narrow assistant budget write endpoint.",
         },
-        {
-            "key": ASSISTANT_SCOPE_TRANSACTIONS_WRITE,
-            "label": "Transaction write (reserved)",
-            "hint": "Reserved for future assistant transaction entry endpoints. Safe to leave off today.",
-        },
     ]
+    if include_reserved:
+        options.append(
+            {
+                "key": ASSISTANT_SCOPE_TRANSACTIONS_WRITE,
+                "label": "Transaction write (reserved)",
+                "hint": "Reserved for future assistant transaction entry endpoints. Safe to leave off today.",
+            }
+        )
+    return options
 
 
 def _normalise_requested_assistant_scopes(raw_scopes):
     ordered = []
-    valid = {opt["key"] for opt in _assistant_scope_options()}
+    valid = {opt["key"] for opt in _assistant_scope_options(include_reserved=True)}
     for scope in raw_scopes or []:
         scope_text = str(scope or "").strip().lower()
         if scope_text in valid and scope_text not in ordered:
