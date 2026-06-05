@@ -36,7 +36,7 @@ All notable changes to this project will be documented in this file.
 - Renamed the GitHub repository to `Jahumac/steadyplan` and updated local quick-start instructions.
 - Updated screenshot tooling to prefer `STEADYPLAN_*` environment variables while retaining legacy `SHELLY_*` aliases.
 - Clarified the distinction between per-user JSON exports and whole-instance SQLite/appdata backups.
-- Projection copy frames projections as scenario estimates.
+- Scenario estimate copy replaces leftover projections wording.
 - Monthly Review contribution copy uses “Confirmed” (does not imply a financial transaction was recorded).
 - Contribution truth hardening:
   - Draft Monthly Reviews no longer affect allowance usage or performance cash-flow calculations.

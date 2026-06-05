@@ -5,6 +5,7 @@ SITE_ROOT = Path("/opt/data/steadyplan/site")
 README_PATH = Path("/opt/data/steadyplan/README.md")
 VOICE_AND_COPY_PATH = Path("/opt/data/steadyplan/docs/VOICE_AND_COPY.md")
 PRODUCT_TRUTH_PATH = Path("/opt/data/steadyplan/docs/PRODUCT_TRUTH.md")
+CHANGELOG_PATH = Path("/opt/data/steadyplan/CHANGELOG.md")
 
 
 def _read(relative_path: str) -> str:
@@ -21,6 +22,10 @@ def _read_voice_and_copy() -> str:
 
 def _read_product_truth() -> str:
     return PRODUCT_TRUTH_PATH.read_text()
+
+
+def _read_changelog() -> str:
+    return CHANGELOG_PATH.read_text()
 
 
 def test_homepage_trust_card_mentions_restore_preview_and_safety_backup():
@@ -77,6 +82,7 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     readme = _read_readme()
     voice_and_copy = _read_voice_and_copy()
     product_truth = _read_product_truth()
+    changelog = _read_changelog()
 
     assert "Scenario estimates are illustrative and based on your inputs." in homepage
     assert "Projections are illustrative and based on your inputs." not in homepage
@@ -127,3 +133,5 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Assumptions, scenario estimates, and confirmed numbers should not blur together." in product_truth
     assert "intimidated by financial admin, projections, and long-term planning." not in product_truth
     assert "Assumptions, estimates, projections, and confirmed numbers should not blur together." not in product_truth
+    assert "Scenario estimate copy replaces leftover projections wording." in changelog
+    assert "Projection copy frames projections as scenario estimates." not in changelog
