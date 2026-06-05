@@ -177,11 +177,15 @@ def test_settings_growth_hint_no_longer_says_nominal_todays_money(app, client, m
     resp = client.get("/settings/?mode=edit")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "These inputs feed Projections and goal timing estimates." in body
+    assert "These inputs feed scenario estimates and goal timing estimates." in body
+    assert "These inputs feed Projections and goal timing estimates." not in body
     assert "These inputs feed Projections and goal ETAs." not in body
     assert "These inputs feed Projections and goal estimates." not in body
     assert "nominal (today's money)" not in body
-    assert "nominal future pounds" in body
+    assert "Scenario estimates are in nominal future pounds" in body
+    assert "Projections are in nominal future pounds" not in body
+    assert "affects scenario estimates and years-to-go" in body
+    assert "affects projections and years-to-go" not in body
     assert "more conservative “today’s spending power” view" in body
     assert "cautious “today’s spending power” estimate" not in body
     assert "rough “today’s spending power” estimate" not in body

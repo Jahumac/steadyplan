@@ -23,7 +23,7 @@
     <div>
       <p class="eyebrow">{{ 'Start here' if settings_needs_planning_dates else 'Global Settings' }}</p>
       <h2>{{ 'Add your planning dates' if settings_needs_planning_dates else 'Edit Assumptions' }}</h2>
-      <p class="helper-text m-0">{% if settings_needs_planning_dates %}You only need these basics to get timelines and projections started. Everything else here can wait until later.{% else %}These inputs feed Projections and goal timing estimates. Changing them does not change your saved balances or Monthly Update history.{% endif %}</p>
+      <p class="helper-text m-0">{% if settings_needs_planning_dates %}You only need these basics to get timelines and scenario estimates started. Everything else here can wait until later.{% else %}These inputs feed scenario estimates and goal timing estimates. Changing them does not change your saved balances or Monthly Update history.{% endif %}</p>
     </div>
     <a class="badge" href="/settings/">Cancel</a>
   </div>
@@ -57,7 +57,7 @@
           <option value="end_of_year" {{ 'selected' if rdm == 'end_of_year' }}>End of the calendar year</option>
           <option value="end_of_tax_year" {{ 'selected' if rdm == 'end_of_tax_year' }}>End of the tax year (5 April)</option>
         </select>
-        <small class="form-hint">When you should be counted as "retired" — affects projections and years-to-go</small>
+        <small class="form-hint">When you should be counted as "retired" — affects scenario estimates and years-to-go</small>
       </label>
       <label>
         <span>Investment day of month</span>
@@ -72,7 +72,7 @@
       {% if settings_needs_planning_dates %}
       <div class="form-full-col settings-section-divider">
         <p class="eyebrow m-0">Can wait until later</p>
-        <p class="helper-text m-0">These assumptions refine projections and reporting, but you do not need them to finish the basics.</p>
+        <p class="helper-text m-0">These assumptions refine scenario estimates and reporting, but you do not need them to finish the basics.</p>
       </div>
       {% endif %}
       <label class="form-full-col">
@@ -83,7 +83,7 @@
       <label>
         <span>Annual growth rate (%)</span>
         <input type="number" step="0.1" name="annual_growth_rate" value="{{ '{:.1f}'.format((assumptions.annual_growth_rate if assumptions else 0.07) * 100) }}" min="0" max="30">
-        <small class="form-hint">Enter as a percentage — e.g. 7 for 7%, 3.6 for 3.6%. Projections are in nominal future pounds (not inflation-adjusted). If you want a more conservative “today’s spending power” view, use a lower rate (e.g. 4–5% instead of 7%).</small>
+        <small class="form-hint">Enter as a percentage — e.g. 7 for 7%, 3.6 for 3.6%. Scenario estimates are in nominal future pounds (not inflation-adjusted). If you want a more conservative “today’s spending power” view, use a lower rate (e.g. 4–5% instead of 7%).</small>
       </label>
       <label>
         <span>Benchmark rate (%) <small class="text-muted">optional</small></span>
