@@ -142,6 +142,9 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert "Give Pip scoped access to SteadyPlan" in settings_html
     assert "This creates a dedicated assistant token for SteadyPlan. Unlike a general API token, it only works with assistant endpoints and you can revoke or regenerate it here." in settings_html
     assert "A local label to help you recognise this token later." in settings_html
+    assert "Permissions" in settings_html
+    assert "Read-only assistant answers" in settings_html
+    assert "Budget write" in settings_html
     assert "Transaction write (reserved)" not in settings_html
     assert "Reserved for future assistant transaction entry endpoints. Safe to leave off today." not in settings_html
     assert "Let Pip use SteadyPlan safely" not in settings_html
@@ -160,6 +163,9 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     create_html = create_resp.get_data(as_text=True)
     assert "Assistant access" in create_html
     assert "Assistant token created" in create_html
+    assert "Permissions: Read-only assistant answers, Budget write" in create_html
+    assert "Permissions: assistant:read" not in create_html
+    assert "Permissions: assistant:budget_write" not in create_html
     first_token = _extract_assistant_token(create_html)
 
     with app.app_context():
@@ -178,7 +184,10 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert first_token_resp.status_code == 200
 
     second_view = client.get("/settings/")
-    assert "data-assistant-token-value=" not in second_view.get_data(as_text=True)
+    second_view_html = second_view.get_data(as_text=True)
+    assert "data-assistant-token-value=" not in second_view_html
+    assert "Read-only assistant answers, Budget write" in second_view_html
+    assert "assistant:read, assistant:budget_write" not in second_view_html
 
     regen_resp = client.post(
         f"/settings/assistant-access/{first_id}/regenerate",
