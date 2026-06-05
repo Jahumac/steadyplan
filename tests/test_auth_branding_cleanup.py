@@ -36,6 +36,8 @@ def test_setup_page_uses_brand_logo_without_auth_mascot_icon(client, monkeypatch
     assert "Create your account" in html
     assert "Start privately," in html
     assert "on your own server." in html
+    assert "Retirement scenario estimates by account" in html
+    assert "Retirement projections by account" not in html
     assert "Slow and steady," not in html
     assert 'brand/steadyplan-mark.png' in html
     assert 'class="auth-brand-mark auth-brand-mark--float"' in html
