@@ -177,7 +177,8 @@ def test_settings_growth_hint_no_longer_says_nominal_todays_money(app, client, m
     resp = client.get("/settings/?mode=edit")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "These inputs feed Projections and goal ETAs." in body
+    assert "These inputs feed Projections and goal timing estimates." in body
+    assert "These inputs feed Projections and goal ETAs." not in body
     assert "These inputs feed Projections and goal estimates." not in body
     assert "nominal (today's money)" not in body
     assert "nominal future pounds" in body
@@ -331,7 +332,8 @@ def test_goals_eta_helper_copy_present(app, client, make_user):
     resp = client.get("/goals/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Goal ETAs use your current contributions and growth assumptions." in body
+    assert "Goal timing estimates use your current contributions and growth assumptions." in body
+    assert "Goal ETAs use your current contributions and growth assumptions." not in body
     assert "Goal ETAs are estimates based on your current contributions and growth assumptions." not in body
     assert "Goal ETAs are approximate scenario estimates based on your current contributions and growth assumptions." not in body
     assert "~" in body
