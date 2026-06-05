@@ -157,7 +157,8 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "NS&amp;I, tax-free prize estimate" not in wizard_html
     assert "How much do you add to this Cash ISA each month?" in js
     assert "How much do you stash away in this Cash ISA each month?" not in js
-    assert "Prize draws are tracked separately; projections use the planning rate." in js
+    assert "Prize draws are tracked separately; scenario estimates use the planning rate." in js
+    assert "Prize draws are tracked separately; projections use the planning rate." not in js
     assert "Prize draws are tracked separately; projections use a cautious estimate." not in js
     assert "Prize draws are tracked separately; projections use a gentle estimate." not in js
     assert "Premium Bonds do not pay guaranteed interest. Use this as a planning assumption only; NS&I can change the prize fund rate." in js
