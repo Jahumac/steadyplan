@@ -48,7 +48,7 @@
       <div class="progress" role="progressbar" aria-valuenow="{{ (isa_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="ISA allowance used"><div class="progress-bar" data-pct="{{ (isa_progress * 100)|round(1) }}"></div></div>
       <small>{{ '{:.1f}'.format(isa_progress * 100) }}% used{% if has_lisa %} · includes Lifetime ISA{% endif %}</small>
       {% if usage.projected_isa != usage.isa_used %}
-      <small class="block mt-025 text-muted">On track: £{{ '{:,.0f}'.format(usage.projected_isa) }} by end of tax year</small>
+      <small class="block mt-025 text-muted">Estimated by tax year end: £{{ '{:,.0f}'.format(usage.projected_isa) }}</small>
       {% endif %}
     </div>
     {% if has_lisa %}
@@ -255,7 +255,7 @@
         {% if pension_limits.carry_forward_total > 0 %} · Incl. £{{ '{:,.0f}'.format(pension_limits.carry_forward_total) }} carry-forward{% endif %}
       </small>
       {% if pension_usage.projected_total != pension_usage.pension_used %}
-      <small class="block mt-025 text-muted">On track: £{{ '{:,.0f}'.format(pension_usage.projected_total) }} by end of tax year</small>
+      <small class="block mt-025 text-muted">Estimated by tax year end: £{{ '{:,.0f}'.format(pension_usage.projected_total) }}</small>
       {% endif %}
     </div>
     {% if personal_pension_total > 0 %}
