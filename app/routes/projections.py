@@ -144,7 +144,7 @@ def _projection_assumption_summary(assumptions, accounts, account_rows, metrics)
     items.append({
         "title": "Inflation",
         "lines": [
-            "Projections are in nominal future pounds.",
+            "Scenario estimates are in nominal future pounds.",
             "SteadyPlan does not model inflation or convert to ‘today’s spending power’.",
         ],
     })
