@@ -89,7 +89,7 @@ exist yet for that month.
 Growth rate, retirement age, ISA/LISA allowances, etc.
 
 ### `GET /assistant/month-summary/<YYYY-MM>`
-Assistant-oriented read-only monthly budget roll-up using the same source rules as the Budget page. Assistant tokens need the `assistant:read` scope.
+Assistant-oriented read-only monthly budget roll-up using the same source rules as the Budget page. Assistant tokens need the **Read-only assistant answers** permission (`assistant:read`).
 
 Returns:
 - `summary.total_income`
@@ -246,7 +246,7 @@ Assistant tokens must carry the specific write scope required by that route.
 Assistant-only narrow write for updating a single month's planned amount on an
 existing **manual, unlinked** budget item. This is designed for safe cases like
 "set my phone sinking fund to £799 this month" without opening broad budget-edit
-powers. Assistant tokens need the `assistant:budget_write` scope.
+powers. Assistant tokens need the **Budget write** permission (`assistant:budget_write`).
 
 Rules:
 - `month` must be `YYYY-MM`
