@@ -64,6 +64,9 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Edit the inputs in" in body
     assert body.count("Edit scenario estimate assumptions") == 3
     assert "Edit assumptions" not in body
+    assert body.count("Scenario estimate assumptions") == 3
+    assert "<summary>Assumptions</summary>" not in body
+    assert '<p class="eyebrow">Assumptions</p>' not in body
     assert "What drives this scenario estimate" in body
     assert "What drives this projection" not in body
     assert "What drives this estimate" not in body

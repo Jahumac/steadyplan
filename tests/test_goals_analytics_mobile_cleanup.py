@@ -49,8 +49,9 @@ def test_projections_marks_global_month_strip_for_mobile_hiding(app, client, mak
     assert '<p class="eyebrow">Projections</p>' not in html
     assert 'class="subnav-active">Scenario estimates</a>' in html
     assert 'class="subnav-active">Projections</a>' not in html
-    assert '<summary>Assumptions</summary>' in html
-    assert '<summary>Account breakdown</summary>' in html
+    assert '<summary>Scenario estimate assumptions</summary>' in html
+    assert '<summary>Assumptions</summary>' not in html
+    assert html.count('<p class="eyebrow">Scenario estimate assumptions</p>') == 2
     assert '<summary>Growth curve</summary>' in html
     assert '<summary>Scenario planner</summary>' in html
     assert 'class="card mb-1 projections-desktop-detail"' in html
