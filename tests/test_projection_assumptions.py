@@ -188,6 +188,8 @@ def test_settings_growth_hint_no_longer_says_nominal_todays_money(app, client, m
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Edit scenario estimate assumptions" in body
     assert "Edit Assumptions" not in body
+    assert '<p class="eyebrow">Scenario estimate assumptions</p>' in body
+    assert '<p class="eyebrow">Global Settings</p>' not in body
     assert "These inputs feed scenario estimates and goal timing estimates." in body
     assert "These inputs feed Projections and goal timing estimates." not in body
     assert "These inputs feed Projections and goal ETAs." not in body
