@@ -1061,7 +1061,8 @@ def test_overview_payday_banner_uses_specific_budget_cta(app, client, make_user,
     html = resp.get_data(as_text=True)
 
     assert "investment day" in html
-    assert "check the budget, then do your monthly update" in html
+    assert "check the budget now, then expect your monthly update nudge" in html
+    assert "check the budget, then do your monthly update" not in html
     assert "check the budget, then do your Monthly Update" not in html
     assert '>Review budget</a>' in html
     assert '>Open budget</a>' not in html
@@ -1321,9 +1322,10 @@ def test_overview_missing_salary_day_uses_single_settings_nudge(app, client, mak
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Set your investment day — it tells SteadyPlan when to remind you to do your monthly update." in html
+    assert "Set your investment day — it helps SteadyPlan send monthly update nudges after your money has settled." in html
     assert "Set your investment day in Settings" not in html
-    assert "do your monthly update" in html
+    assert "monthly update nudges after your money has settled" in html
+    assert "remind you to do your monthly update" not in html
     assert "do your Monthly Update" not in html
     assert "Set your investment day" in html
     assert 'href="/settings/?mode=edit&amp;focus=planning_dates"' in html
