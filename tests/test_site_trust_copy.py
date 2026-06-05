@@ -2,10 +2,15 @@ from pathlib import Path
 
 
 SITE_ROOT = Path("/opt/data/steadyplan/site")
+README_PATH = Path("/opt/data/steadyplan/README.md")
 
 
 def _read(relative_path: str) -> str:
     return (SITE_ROOT / relative_path).read_text()
+
+
+def _read_readme() -> str:
+    return README_PATH.read_text()
 
 
 def test_homepage_trust_card_mentions_restore_preview_and_safety_backup():
@@ -59,6 +64,7 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     tour = _read("tour.html")
     concept_a = _read("concepts/concept-a/index.html")
     concept_b = _read("concepts/concept-b/index.html")
+    readme = _read_readme()
 
     assert "Scenario estimates are illustrative and based on your inputs." in homepage
     assert "Projections are illustrative and based on your inputs." not in homepage
@@ -80,3 +86,12 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "<strong>Scenario estimates</strong>" in concept_b
     assert "Projections are assumptions-based estimates." not in concept_b
     assert "<strong>Projections</strong>" not in concept_b
+    assert "### Retirement scenario estimates" in readme
+    assert "Year-by-year and month-by-month scenario estimates based on current balances, monthly contributions, and growth assumptions." in readme
+    assert "Export scenario estimates to Excel (.xlsx) with per-account breakdowns." in readme
+    assert 'Scenario estimates show "with fees" vs "without fees"' in readme
+    assert "**Scenario estimates** — retirement scenario estimates with fee impact and scenario planner" in readme
+    assert "### Retirement Projections" not in readme
+    assert "Export projections to Excel (.xlsx) with per-account breakdowns." not in readme
+    assert 'Projections show "with fees" vs "without fees"' not in readme
+    assert "**Projections** — retirement projections with fee impact and scenario planner" not in readme

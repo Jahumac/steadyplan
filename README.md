@@ -82,11 +82,11 @@ Monthly income, expenses and savings overview with auto-save. Navigate between m
 ### Goals
 Set savings targets and track progress. Goals can be linked to tagged accounts — e.g. tag your ISA accounts as "Retirement" and create a goal that tracks the combined balance.
 
-### Retirement Projections
-Year-by-year and month-by-month projections based on current balances, monthly contributions and growth assumptions. Projections are scenario estimates, not guarantees. Respects Lifetime ISA contribution rules (stops at age 50). Export projections to Excel (.xlsx) with per-account breakdowns.
+### Retirement scenario estimates
+Year-by-year and month-by-month scenario estimates based on current balances, monthly contributions, and growth assumptions. These scenario estimates are not guarantees. Respects Lifetime ISA contribution rules (stops at age 50). Export scenario estimates to Excel (.xlsx) with per-account breakdowns.
 
 ### Granular Fee Tracking
-Accounts support detailed fee modelling: platform fee (% with optional £ cap), flat annual platform fee (£), and fund fee / OCF (%). SteadyPlan combines these into an effective annual fee, subtracts it from your growth rate, and shows the lifetime cost of fees in both the app and Excel exports. All fee fields are optional — tucked behind an "Advanced: Fees" toggle so they don't clutter the setup for casual users. Projections show "with fees" vs "without fees" so you can see exactly what your broker and funds cost you over time.
+Accounts support detailed fee modelling: platform fee (% with optional £ cap), flat annual platform fee (£), and fund fee / OCF (%). SteadyPlan combines these into an effective annual fee, subtracts it from your growth rate, and shows the lifetime cost of fees in both the app and Excel exports. All fee fields are optional — tucked behind an "Advanced: Fees" toggle so they don't clutter the setup for casual users. Scenario estimates show "with fees" vs "without fees" so you can see exactly what your broker and funds cost you over time.
 
 ### Performance Tracking
 Track your actual portfolio returns over time using the modified Dietz method. Compare actual performance against a projected "on-plan" growth line. Contribution cash flow uses the effective “into pot” amount (tax relief, LISA bonus, employer contributions, minus any contribution fee) and only treats completed Monthly Reviews as confirmed truth.
@@ -310,7 +310,7 @@ data/
 
 ![Goals](Screenshots/demo/goals_desktop.png)
 
-**Projections** — retirement projections with fee impact and scenario planner
+**Scenario estimates** — retirement scenario estimates with fee impact and scenario planner
 
 ![Projections](Screenshots/demo/projections_desktop.png)
 
