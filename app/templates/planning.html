@@ -40,7 +40,7 @@
     <small>Money with rules, penalties or special access conditions.</small>
   </div>
   <div class="card stat-card">
-    <h2>Private pot estimate at retirement</h2>
+    <h2>Private pot scenario estimate at retirement</h2>
     <p>£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</p>
     <small>Scenario estimate at age {{ '{:.0f}'.format(income_summary.retirement_age) }} under current balances, contributions and growth assumptions. For planning only, not a guarantee.</small>
   </div>
@@ -187,7 +187,7 @@
       <h2>Bridge before pension access</h2>
       {% if income_summary.bridge_years > 0 %}
         <p class="planning-big-number">{{ '{:.0f}'.format(income_summary.bridge_years) }} years</p>
-        <p class="helper-text">From age {{ '{:.0f}'.format(income_summary.retirement_age) }} to {{ '{:.0f}'.format(income_summary.pension_access_age) }}. Accessible pot estimate at retirement: £{{ '{:,.0f}'.format(income_summary.accessible_at_retirement) }}.</p>
+        <p class="helper-text">From age {{ '{:.0f}'.format(income_summary.retirement_age) }} to {{ '{:.0f}'.format(income_summary.pension_access_age) }}. Accessible pot scenario estimate at retirement: £{{ '{:,.0f}'.format(income_summary.accessible_at_retirement) }}.</p>
         {% if income_summary.uses_goal_mode %}
           <p class="helper-text">At your entered income, simple bridge need is £{{ '{:,.0f}'.format(income_summary.bridge_need) }}. Surplus/gap: <strong class="{% if income_summary.bridge_surplus >= 0 %}text-gain{% else %}text-loss{% endif %}">£{{ '{:,.0f}'.format(income_summary.bridge_surplus) }}</strong>.</p>
         {% else %}
@@ -224,7 +224,7 @@
         <h2>Bridge before pension access</h2>
         {% if income_summary.bridge_years > 0 %}
           <p class="planning-big-number">{{ '{:.0f}'.format(income_summary.bridge_years) }} years</p>
-          <p class="helper-text">Accessible pot estimate at retirement: £{{ '{:,.0f}'.format(income_summary.accessible_at_retirement) }}.</p>
+          <p class="helper-text">Accessible pot scenario estimate at retirement: £{{ '{:,.0f}'.format(income_summary.accessible_at_retirement) }}.</p>
         {% else %}
           <p class="planning-big-number">No bridge gap</p>
         {% endif %}
