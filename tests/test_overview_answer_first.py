@@ -1489,8 +1489,56 @@ def test_overview_portfolio_card_uses_specific_refresh_prices_cta(app, client, m
     assert 'id="changeLabel" class="text-muted m-0">Change<' not in html
     assert "Complete your first monthly update to start tracking net worth over time" in html
     assert "Complete your first Monthly Update to start tracking net worth over time" not in html
+    assert "slow and steady wins the race" not in html
     assert "Refresh prices now" in html
     assert "↻ Refresh</button>" not in html
+
+
+def test_overview_first_baseline_helper_uses_calm_trend_line_copy(app, client, make_user):
+    uid, username, password = make_user(username="overview-first-baseline-copy", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    current_month = date.today().replace(day=1)
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 1000, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key)
+                VALUES (?, ?, ?, ?)
+                """,
+                (current_month.strftime('%Y-%m-%d'), account_id, 1000, current_month.strftime('%Y-%m')),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Your first baseline is saved. Complete next month's monthly update and the net worth trend line will appear." in html
+    assert "One snapshot down — slow and steady." not in html
+    assert "Remember: slow and steady wins the race." not in html
 
 
 def test_overview_fallback_net_worth_chart_uses_history_wording(app, client, make_user):
