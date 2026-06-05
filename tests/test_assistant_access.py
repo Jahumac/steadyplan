@@ -164,6 +164,8 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert "Just a friendly label so you know what this token is for." not in settings_html
     assert "assistant summary endpoints" not in settings_html
     assert "assistant budget write endpoint" not in settings_html
+    assert "No assistant tokens yet. Create one above when you want to give Pip scoped access." in settings_html
+    assert "No assistant writes logged yet. Read-only answers do not appear here; this table is for assistant write actions." in settings_html
 
     create_resp = client.post(
         "/settings/assistant-access/create",
