@@ -47,6 +47,8 @@ def test_projections_marks_global_month_strip_for_mobile_hiding(app, client, mak
     assert '<section class="budget-year-strip month-strip-global month-strip-mobile-hidden' in html
     assert '<p class="eyebrow">Scenario estimates</p>' in html
     assert '<p class="eyebrow">Projections</p>' not in html
+    assert 'class="subnav-active">Scenario estimates</a>' in html
+    assert 'class="subnav-active">Projections</a>' not in html
     assert '<summary>Assumptions</summary>' in html
     assert '<summary>Account breakdown</summary>' in html
     assert '<summary>Growth curve</summary>' in html
