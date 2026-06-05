@@ -275,6 +275,14 @@ def _assistant_token_last_used_label(last_used_at):
     return last_used_text or "Not used yet"
 
 
+def _assistant_token_secret_heading(action):
+    action_text = str(action or "").strip().lower()
+    return {
+        "created": "New assistant token",
+        "regenerated": "Replacement assistant token",
+    }.get(action_text, "Assistant token")
+
+
 def _normalise_requested_assistant_scopes(raw_scopes):
     ordered = []
     valid = {opt["key"] for opt in _assistant_scope_options(include_reserved=True)}
@@ -325,6 +333,7 @@ def _settings_template_context(uid, *, assumptions=None, computed_age=None, diag
         "assistant_target_label": _assistant_target_label,
         "assistant_token_label": _assistant_token_label,
         "assistant_token_last_used_label": _assistant_token_last_used_label,
+        "assistant_token_secret_heading": _assistant_token_secret_heading,
         "assistant_token_secret": assistant_token_secret,
         **extra,
     }

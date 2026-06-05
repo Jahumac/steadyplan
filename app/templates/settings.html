@@ -676,7 +676,7 @@
 
   {% if assistant_token_secret %}
   <div style="margin-top:0.85rem;padding:0.95rem;border:1px solid var(--border);border-radius:12px;background:var(--panel-2);">
-    <div style="font-weight:600;">Assistant token {{ assistant_token_secret.action }}</div>
+    <div style="font-weight:600;">{{ assistant_token_secret_heading(assistant_token_secret.action) }}</div>
     <p class="helper-text" style="margin:0.35rem 0 0.75rem 0;">
       Copy this now. For safety, SteadyPlan will only show the raw token once.
     </p>
