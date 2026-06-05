@@ -177,8 +177,16 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "free money, basically" not in js
     assert "You can always update this later." in js
     assert "No pressure — you can always update this later." not in js
+    assert "Use default growth rate from your scenario estimate assumptions" in wizard_html
+    assert "Use default growth rate (from Settings)" not in wizard_html
+    assert "Set 0 to use the investment day from your scenario estimate assumptions." in wizard_html
+    assert "Set 0 to use salary day from Settings." not in wizard_html
     assert "The contribution in use this month is shown at the top." in html
     assert "The <strong>currently active</strong> contribution is shown at the top." not in html
+    assert "Use if workplace pension invests later than your investment day" in html
+    assert "Set 0 to use the investment day from your scenario estimate assumptions." in html
+    assert "Use if workplace pension invests later than salary day" not in html
+    assert "Set 0 to use salary day from Settings." not in html
 
 
 def test_budget_setup_page_does_not_render_turtle_icon(auth_client):
