@@ -265,6 +265,16 @@ def _assistant_target_label(target_label, target_type):
     }.get(target_text, target_text or "—")
 
 
+def _assistant_token_label(label):
+    label_text = str(label or "").strip()
+    return label_text or "Unlabelled assistant token"
+
+
+def _assistant_token_last_used_label(last_used_at):
+    last_used_text = str(last_used_at or "").strip()
+    return last_used_text or "Not used yet"
+
+
 def _normalise_requested_assistant_scopes(raw_scopes):
     ordered = []
     valid = {opt["key"] for opt in _assistant_scope_options(include_reserved=True)}
@@ -281,7 +291,7 @@ def _pop_plaintext_assistant_token():
         return None
     return {
         "value": token,
-        "label": session.pop("assistant_plaintext_label", None) or "Assistant token",
+        "label": _assistant_token_label(session.pop("assistant_plaintext_label", None)),
         "scopes": session.pop("assistant_plaintext_scopes", []) or [],
         "action": session.pop("assistant_plaintext_action", "created"),
     }
@@ -289,7 +299,7 @@ def _pop_plaintext_assistant_token():
 
 def _stash_plaintext_assistant_token(*, token, label, scopes, action):
     session["assistant_plaintext_token"] = token
-    session["assistant_plaintext_label"] = label or "Assistant token"
+    session["assistant_plaintext_label"] = _assistant_token_label(label)
     session["assistant_plaintext_scopes"] = list(scopes or [])
     session["assistant_plaintext_action"] = action
 
@@ -313,6 +323,8 @@ def _settings_template_context(uid, *, assumptions=None, computed_age=None, diag
         "assistant_action_label": _assistant_action_label,
         "assistant_amount_change_label": _assistant_amount_change_label,
         "assistant_target_label": _assistant_target_label,
+        "assistant_token_label": _assistant_token_label,
+        "assistant_token_last_used_label": _assistant_token_last_used_label,
         "assistant_token_secret": assistant_token_secret,
         **extra,
     }

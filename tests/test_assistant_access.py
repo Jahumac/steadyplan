@@ -258,6 +258,31 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
 
 
 
+def test_settings_shows_clear_fallbacks_for_unlabelled_unused_assistant_tokens(app, client, make_user):
+    uid, username, password = make_user(username="assistant-unlabelled-user")
+
+    with app.app_context():
+        from app.models import create_api_token
+
+        create_api_token(
+            uid,
+            label="   ",
+            token_kind="assistant",
+            scopes=["assistant:read"],
+        )
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    settings_resp = client.get("/settings/")
+    settings_html = settings_resp.get_data(as_text=True)
+
+    assert settings_resp.status_code == 200
+    assert "Unlabelled assistant token" in settings_html
+    assert "Not used yet" in settings_html
+    assert ">Never<" not in settings_html
+    assert ">Assistant token<" not in settings_html
+
+
+
 def test_assistant_write_is_logged_and_visible_in_settings(app, client, make_user):
     uid, username, password = make_user(username="assistant-audit-user")
 
