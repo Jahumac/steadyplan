@@ -1975,7 +1975,8 @@ def test_overview_allowance_cards_use_estimated_tax_year_end_copy(app, client, m
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert html.count("Estimated by tax year end:") == 4
+    assert html.count("Tax year-end estimate:") == 4
+    assert "Estimated by tax year end:" not in html
     assert "On track:" not in html
 
 
