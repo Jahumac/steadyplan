@@ -1093,6 +1093,28 @@ def pension_allowance_limits(assumptions=None):
     }
 
 
+def apply_pension_carry_forward(pension_limits=None, carry_forward_entries=None):
+    pension_limits_with_carry = dict(pension_limits or {})
+
+    if pension_limits_with_carry.get("mpaa_enabled"):
+        pension_limits_with_carry["carry_forward_total"] = 0.0
+        return pension_limits_with_carry
+
+    carry_forward_total = 0.0
+
+    for entry in (carry_forward_entries or [])[:3]:
+        try:
+            carry_forward_total += float(_safe_get(entry, "unused_allowance") or 0)
+        except (TypeError, ValueError):
+            continue
+
+    pension_limits_with_carry["effective_allowance"] = float(
+        pension_limits_with_carry.get("effective_allowance") or 0
+    ) + carry_forward_total
+    pension_limits_with_carry["carry_forward_total"] = carry_forward_total
+    return pension_limits_with_carry
+
+
 def is_pension_account(account):
     if not account:
         return False

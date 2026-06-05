@@ -1757,6 +1757,64 @@ def test_overview_pension_allowance_alert_uses_specific_pension_cta(app, client,
     assert 'href="/allowance/#pension"' in html
 
 
+def test_overview_pension_allowance_alert_respects_carry_forward(app, client, make_user):
+    uid, username, password = make_user(username="overview-pension-carry-forward-alert", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = date.today().strftime("%Y-%m")
+    today_str = date.today().strftime("%Y-%m-%d")
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE assumptions
+                SET date_of_birth = '1990-01-01', salary_day = 1, pension_annual_allowance = 1000
+                WHERE user_id = ?
+                """,
+                (uid,),
+            )
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
+                VALUES (?, 'SIPP', 'SIPP', 1000, 500, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Retirement', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key)
+                VALUES (?, ?, ?, ?)
+                """,
+                (today_str, account_id, 1000, month_key),
+            )
+            conn.execute(
+                """
+                INSERT INTO pension_carry_forward (user_id, tax_year, unused_allowance)
+                VALUES (?, '2024-25', 10000)
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "At your current contribution pace, you&#39;re estimated to exceed your pension annual allowance" not in html
+    assert "At your current contribution pace, you&#39;re estimated to exceed your pension annual allowance by" not in html
+
+
 def test_overview_isa_allowance_card_uses_specific_topup_cta(app, client, make_user):
     uid, username, password = make_user(username="overview-isa-card-topup-cta", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
