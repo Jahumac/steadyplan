@@ -250,7 +250,7 @@ def export_projections():
     r += 3
     ws.cell(row=r, column=1, value="Notes").font = _ACCENT_FONT
     for note in [
-        "Values are nominal projections before inflation unless stated otherwise.",
+        "Values are nominal scenario estimates before inflation unless stated otherwise.",
         "You pay monthly is your personal contribution; into pots includes tax relief, employer contributions and bonuses where applicable.",
         "This is a planning estimate, not financial advice.",
     ]:
@@ -269,7 +269,7 @@ def export_projections():
         ("Current age", int(current_age), "Derived from date of birth when available."),
         ("Retirement age", int(retirement_age), "Target age used for this scenario estimate."),
         ("Years to retirement", round(exact_years, 1), "Exact years when a retirement date is available."),
-        ("Projection start month", start_month, "First future contribution month considered by projections."),
+        ("Scenario estimate start month", start_month, "First future contribution month considered by scenario estimates."),
         ("Annual growth rate", f"{growth_rate*100:.1f}%", "Default gross annual growth before account fees."),
         ("Inflation treatment", "Nominal", "Future values are not inflation-adjusted in this export."),
         ("Salary/review day", _safe_get(assumptions, "salary_day", "") if assumptions else "", "Used to decide whether the current month has already settled."),

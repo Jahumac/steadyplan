@@ -84,17 +84,21 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
     summary_values = [cell.value for row in summary.iter_rows() for cell in row]
     assert "Accessible vs locked" in summary_values
     assert "Locked for later" in summary_values
-    assert "Values are nominal projections before inflation unless stated otherwise." in summary_values
+    assert "Values are nominal scenario estimates before inflation unless stated otherwise." in summary_values
+    assert "Values are nominal projections before inflation unless stated otherwise." not in summary_values
     assert "Projected at Retirement" not in summary_values
     assert "Projected at retirement" not in summary_values
 
     assumptions_sheet = wb["Assumptions"]
     assumption_values = [cell.value for row in assumptions_sheet.iter_rows() for cell in row]
-    assert "Projection start month" in assumption_values
+    assert "Scenario estimate start month" in assumption_values
     assert "Inflation treatment" in assumption_values
     assert "Nominal" in assumption_values
     assert "Target age used for this scenario estimate." in assumption_values
     assert "Target age used for this projection." not in assumption_values
+    assert "Projection start month" not in assumption_values
+    assert "First future contribution month considered by scenario estimates." in assumption_values
+    assert "First future contribution month considered by projections." not in assumption_values
 
     workbook_values = [cell.value for sheet in wb.worksheets for row in sheet.iter_rows() for cell in row if cell.value is not None]
     assert "SteadyPlan — Retirement Scenario Estimates" in workbook_values
