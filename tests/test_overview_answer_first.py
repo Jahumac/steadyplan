@@ -28,7 +28,8 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Set your first goal once you know what you want to aim for." in html
     assert "Set a first goal" not in html
     assert "Set a goal once you know what you want to aim for." not in html
-    assert "Do your first monthly update after your first contribution or balance change settles." in html
+    assert "Do your first monthly update after your first contribution or balance change has settled." in html
+    assert "Do your first monthly update after your first contribution or balance change settles." not in html
     assert "Complete your profile" not in html
     assert "Complete profile" not in html
     assert 'href="/settings/?mode=edit&amp;focus=planning_dates"' in html
@@ -262,6 +263,7 @@ def test_overview_first_goal_state_restores_allowance_panels(app, client, make_u
     assert "Keep going" in html
     assert "Getting Started" not in html
     assert "You already have the basics in place." in html
+    assert "Best once your first contribution or balance change has settled." in html
     assert "Do your first monthly update when you want SteadyPlan to start tracking progress." in html
     assert "Set your first goal or do your first monthly update" not in html
     assert "Set a first goal or do your first monthly update" not in html
