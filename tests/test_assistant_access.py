@@ -166,6 +166,7 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert "assistant budget write endpoint" not in settings_html
     assert "No assistant tokens yet. Create one above when you want to give Pip scoped access." in settings_html
     assert "No assistant writes logged yet. Read-only answers do not appear here; this table is for assistant write actions." in settings_html
+    assert "Regenerate replaces the current token and shows the new raw value once. Revoke disables the token immediately." in settings_html
 
     create_resp = client.post(
         "/settings/assistant-access/create",
@@ -212,6 +213,7 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert regen_resp.status_code == 200
     regen_html = regen_resp.get_data(as_text=True)
     assert "Assistant token regenerated" in regen_html
+    assert "Assistant token regenerated. The old token no longer works, and the new raw token is only shown once." in regen_html
     second_token = _extract_assistant_token(regen_html)
     assert second_token != first_token
 
@@ -241,6 +243,7 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert revoke_resp.status_code == 200
     revoke_html = revoke_resp.get_data(as_text=True)
     assert "Assistant token revoked" in revoke_html
+    assert "Assistant token revoked. It no longer works." in revoke_html
 
     revoked_token_resp = client.get(
         "/api/v1/assistant/portfolio-overview",

@@ -890,7 +890,7 @@ def regenerate_assistant_access_token(token_id):
         scopes=existing.get("scopes") or [ASSISTANT_SCOPE_READ],
         action="regenerated",
     )
-    flash("Assistant token regenerated. The old token no longer works.", "success")
+    flash("Assistant token regenerated. The old token no longer works, and the new raw token is only shown once.", "success")
     return redirect(url_for("settings.settings"))
 
 
@@ -903,7 +903,7 @@ def revoke_assistant_access_token(token_id):
         return redirect(url_for("settings.settings"))
 
     revoke_api_token(token_id, current_user.id)
-    flash("Assistant token revoked.", "success")
+    flash("Assistant token revoked. It no longer works.", "success")
     return redirect(url_for("settings.settings"))
 
 
