@@ -74,10 +74,11 @@ def test_allowance_page_uses_pension_annual_progress_label(app, client, make_use
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "<h2>Annual Allowance</h2>" in html
+    assert '<h2>Annual Allowance</h2>' in html
     assert 'aria-label="Pension annual allowance used"' in html
     assert 'aria-label="Pension allowance used"' not in html
-    assert "Estimated by tax year end:" in html
+    assert "Tax year-end estimate:" in html
+    assert "Estimated by tax year end:" not in html
     assert "On track:" not in html
 
 
@@ -150,7 +151,8 @@ def test_allowance_page_uses_plain_monthly_column_helper_copy(app, client, make_
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Estimated by tax year end:" in html
+    assert "Tax year-end estimate:" in html
+    assert "Estimated by tax year end:" not in html
     assert "On track:" not in html
     assert "Where your ISA usage figure comes from" in html
     assert "Scheduled monthly contributions" in html
