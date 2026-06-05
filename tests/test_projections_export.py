@@ -79,18 +79,36 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
 
     summary = wb["Summary"]
     assert [summary.cell(4, c).value for c in range(1, 6)] == [
-        "Account", "Current Value", "You pay monthly", "Into pots monthly", "Projected at Retirement"
+        "Account", "Current Value", "You pay monthly", "Into pots monthly", "Scenario estimate at retirement"
     ]
     summary_values = [cell.value for row in summary.iter_rows() for cell in row]
     assert "Accessible vs locked" in summary_values
     assert "Locked for later" in summary_values
     assert "Values are nominal projections before inflation unless stated otherwise." in summary_values
+    assert "Projected at Retirement" not in summary_values
+    assert "Projected at retirement" not in summary_values
 
     assumptions_sheet = wb["Assumptions"]
     assumption_values = [cell.value for row in assumptions_sheet.iter_rows() for cell in row]
     assert "Projection start month" in assumption_values
     assert "Inflation treatment" in assumption_values
     assert "Nominal" in assumption_values
+    assert "Target age used for this scenario estimate." in assumption_values
+    assert "Target age used for this projection." not in assumption_values
+
+    workbook_values = [cell.value for sheet in wb.worksheets for row in sheet.iter_rows() for cell in row if cell.value is not None]
+    assert "SteadyPlan — Retirement Scenario Estimates" in workbook_values
+    assert "SteadyPlan — Scenario Estimate Assumptions" in workbook_values
+    assert "SteadyPlan — Year-by-Year Scenario Estimate" in workbook_values
+    assert "SteadyPlan — Monthly Scenario Estimate" in workbook_values
+    assert "Scenario estimate total" in workbook_values
+    assert "Scenario estimate value" in workbook_values
+    assert "SteadyPlan — Retirement Projections" not in workbook_values
+    assert "SteadyPlan — Projection Assumptions" not in workbook_values
+    assert "SteadyPlan — Year-by-Year Projection" not in workbook_values
+    assert "SteadyPlan — Monthly Projection" not in workbook_values
+    assert "Projected Total" not in workbook_values
+    assert "Projected Value" not in workbook_values
 
     schedule = wb["Contribution Schedule"]
     schedule_rows = [tuple(cell.value for cell in row) for row in schedule.iter_rows()]
@@ -117,7 +135,7 @@ def test_premium_bonds_cap_is_not_reported_as_negative_growth(app, client, make_
     headers = None
     header_row = None
     for idx, row in enumerate(ws.iter_rows(values_only=True), 1):
-        if row[:3] == ("Age", "Year", "Projected Value"):
+        if row[:3] == ("Age", "Year", "Scenario estimate value"):
             headers = row
             header_row = idx
             break
