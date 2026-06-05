@@ -806,7 +806,8 @@ def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, clien
     assert "Locked later" not in html
     assert "Monthly contributions" in html
     assert "Scenario estimate at retirement" in html
-    assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." in html
+    assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." in html
+    assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in html
     assert "Projected at retirement" not in html
     assert "Goal progress" not in html
     assert "Tax Year " not in html
@@ -964,7 +965,8 @@ def test_overview_hides_zero_locked_hero_stat(app, client, make_user):
     assert "Accessible now" in html
     assert "Monthly contributions" not in html
     assert "Scenario estimate at retirement" in html
-    assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." in html
+    assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." in html
+    assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in html
     assert "Projected at retirement" not in html
     assert html.count("Locked for later") >= 1
     assert "Locked later" not in html
@@ -1002,7 +1004,9 @@ def test_overview_hides_retirement_projection_until_profile_exists(app, client, 
     assert "Monthly contributions" in html
     assert "Projected at retirement" not in html
     assert "Scenario estimate at retirement" not in html
+    assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in html
+    assert "Scenario estimate based on your current balances, contribution settings, and the assumptions you set in Settings." not in html
     assert "Scenario estimate based on your current balances, contribution settings, and assumptions in Settings." not in html
 
 

@@ -61,7 +61,8 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "About this estimate" not in body
     assert "scenario estimate based on assumptions, not a promise" in body
     assert "assumptions-based forecast, not a promise" not in body
-    assert "Edit the scenario estimate assumptions in" in body
+    assert "You can change those assumptions in" in body
+    assert "Edit the scenario estimate assumptions in" not in body
     assert "Edit the inputs in" not in body
     assert body.count("Edit scenario estimate assumptions") == 3
     assert "Edit assumptions" not in body
@@ -249,6 +250,10 @@ def test_settings_uses_lifetime_isa_wording(app, client, make_user):
     view_resp = client.get("/settings/")
     assert view_resp.status_code == 200
     view_body = view_resp.data.decode("utf-8", errors="ignore")
+    assert '<p class="eyebrow">Scenario estimate assumptions</p>' in view_body
+    assert '<p class="eyebrow">Settings</p>' not in view_body
+    assert "The assumptions behind your scenario estimates — growth rates, ages, and allowances" in view_body
+    assert "The numbers used behind the scenes — growth rates, ages, and allowances" not in view_body
     assert "Lifetime ISA allowance" in view_body
     assert "Edit scenario estimate assumptions" in view_body
     assert "Edit settings" not in view_body
@@ -283,8 +288,10 @@ def test_overview_projected_retirement_stat_has_estimate_qualifier(app, client, 
     assert "Scenario estimate at retirement" in body
     assert "Projected at retirement" not in body
     assert "<small>estimate</small>" not in body
-    assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." in body
-    assert "Scenario estimate based on your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." in body
+    assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." in body
+    assert "Scenario estimate based on your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." in body
+    assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in body
+    assert "Scenario estimate based on your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in body
     assert "Projection based on your current balances, contribution settings, and assumptions in Settings." not in body
 
 
