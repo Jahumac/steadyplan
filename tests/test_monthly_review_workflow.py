@@ -212,6 +212,8 @@ def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_u
     assert 'href="/goals/' in html
     assert 'href="/budget/debts/' in html
     assert 'href="/settings/?mode=edit"' in html
+    assert "Edit scenario estimate assumptions" in html
+    assert "Review scenario estimate assumptions" not in html
 
 def test_monthly_review_notes_persist(app, client, make_user):
     uid, username, password = make_user(username="mr-save-note", password="password123")
