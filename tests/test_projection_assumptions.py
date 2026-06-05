@@ -294,7 +294,8 @@ def test_planning_page_uses_scenario_estimate_copy_for_retirement_outputs(app, c
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
 
-    assert "Private pot estimate at retirement" in body
+    assert "Private pot scenario estimate at retirement" in body
+    assert "Private pot estimate at retirement" not in body
     assert "Locked for later" in body
     assert "Locked later" not in body
     assert "Scenario estimate at age 60 under current balances, contributions and growth assumptions. For planning only, not a guarantee." in body

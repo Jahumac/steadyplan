@@ -161,7 +161,8 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert response.data.count(b"State Pension/year (illustrative)") == 2
     assert b"State Pension/year estimate" not in response.data
     assert b"State Pension assumption" in response.data
-    assert b"Private pot estimate at retirement" in response.data
+    assert b"Private pot scenario estimate at retirement" in response.data
+    assert b"Private pot estimate at retirement" not in response.data
     assert b"Projected private pot" not in response.data
     assert b"Scenario estimate at age 55 under current balances, contributions and growth assumptions. For planning only, not a guarantee." in response.data
     assert b"Estimate at age 55 under current balances, contributions and growth assumptions." not in response.data
@@ -199,7 +200,8 @@ def test_planning_page_no_goal_mode_uses_plan_wording(app, client, make_user):
     assert response.status_code == 200
     html = response.data.decode("utf-8", errors="ignore")
     assert "using the balanced illustration as the income guide" in html
-    assert "Private pot estimate at retirement" in html
+    assert "Private pot scenario estimate at retirement" in html
+    assert "Private pot estimate at retirement" not in html
     assert "Projected private pot" not in html
     assert "Scenario estimate at age 55 under current balances, contributions and growth assumptions. For planning only, not a guarantee." in html
     assert "Estimate at age 55 under current balances, contributions and growth assumptions." not in html
@@ -210,7 +212,8 @@ def test_planning_page_no_goal_mode_uses_plan_wording(app, client, make_user):
     assert html.count("Scenario estimate at 55:") >= 2
     assert "Estimate at 55:" not in html
     assert "Projected at 55:" not in html
-    assert "Accessible pot estimate at retirement" in html
+    assert html.count("Accessible pot scenario estimate at retirement") == 2
+    assert "Accessible pot estimate at retirement" not in html
     assert "State Pension assumption" in html
     assert "illustrative State Pension" not in html
     assert "From age 55 to 60." in html
