@@ -467,7 +467,7 @@ def overview():
         over = metrics["projected_isa"] - isa_allowance_val
         alerts.append({
             "kind": "danger",
-            "message": f"You're on track to exceed your ISA allowance by £{over:,.0f} this tax year.",
+            "message": f"At your current contribution pace, you're estimated to exceed your ISA allowance by £{over:,.0f} this tax year.",
             "cta_text": "Review ISA allowance",
             "cta_href": "/allowance/",
         })
@@ -477,7 +477,7 @@ def overview():
         over = metrics["projected_pension"] - pension_allowance
         alerts.append({
             "kind": "danger",
-            "message": f"You're on track to exceed your pension annual allowance by £{over:,.0f} this tax year.",
+            "message": f"At your current contribution pace, you're estimated to exceed your pension annual allowance by £{over:,.0f} this tax year.",
             "cta_text": "Review pension annual allowance",
             "cta_href": "/allowance/#pension",
         })
