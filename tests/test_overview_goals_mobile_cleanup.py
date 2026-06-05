@@ -21,7 +21,7 @@ def test_goals_page_moves_primary_action_into_hero_for_mobile_cleanup(app, clien
     html = resp.get_data(as_text=True)
 
     assert '<section class="budget-year-strip month-strip-global month-strip-mobile-hidden' in html
-    assert '<section class="subnav-mobile-family subnav-mobile-family-goals" aria-label="Goals views">' in html
+    assert '<section class="subnav-mobile-family subnav-mobile-family-goals" aria-label="Progress views">' in html
     assert 'class="subnav-mobile-current"' not in html
     assert 'href="/projections/">Projections</a>' in html
     assert 'class="hero-actions-col goals-hero-actions"' in html

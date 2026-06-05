@@ -70,6 +70,26 @@ def test_tabbed_pages_render_standard_tabs_without_turtle_icons(auth_client, pat
     assert 'hero-turtle-wrap' not in html
 
 
+def test_progress_group_pages_highlight_progress_in_shell_nav(auth_client):
+    grouped_pages = {
+        "/goals/": False,
+        "/projections/": True,
+        "/performance/": True,
+        "/performance/contributions/": True,
+    }
+
+    for path, expects_subnav_goal_link in grouped_pages.items():
+        response = auth_client.get(path, follow_redirects=True)
+
+        assert response.status_code == 200
+        html = response.data.decode()
+        assert 'href="/goals/" class="active">Progress</a>' in html
+        if expects_subnav_goal_link:
+            assert 'href="/goals/">Goals</a>' in html
+        assert 'href="/goals/" class="bottom-nav-item bottom-nav-active">' in html
+        assert '<span>Progress</span>' in html
+
+
 @pytest.mark.parametrize("path", MAIN_HERO_PATHS)
 def test_main_mobile_hero_pages_do_not_render_turtle_icons(auth_client, path):
     response = auth_client.get(path, follow_redirects=True)
