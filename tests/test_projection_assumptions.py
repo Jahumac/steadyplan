@@ -47,6 +47,10 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
 
+    assert "<title>Scenario estimates · SteadyPlan</title>" in body
+    assert "<title>Projections · SteadyPlan</title>" not in body
+    assert '<p class="eyebrow">Scenario estimates</p>' in body
+    assert '<p class="eyebrow">Projections</p>' not in body
     assert "Retirement scenario estimate · age 60" in body
     assert "Retirement projection · age 60" not in body
     assert "Retirement projection estimate" not in body

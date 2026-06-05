@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from '_macros.html' import hero_stat %}
-{% block title %}Projections · SteadyPlan{% endblock %}
+{% block title %}Scenario estimates · SteadyPlan{% endblock %}
 {% block content %}
 
 {% set active_key = 'projections' %}
@@ -15,7 +15,7 @@
 <section class="card highlight mb-1 month-accent-{{ current_month_num }}">
   <div class="hero-top">
     <div>
-      <p class="eyebrow">Projections</p>
+      <p class="eyebrow">Scenario estimates</p>
       <h2 class="hero-value">£{{ '{:,.0f}'.format(metrics.total_projected) }}</h2>
       <p class="hero-subtitle">Retirement scenario estimate · age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% annual growth (nominal)</p>
       <p class="helper-text m-0">Based on your current balances, contributions, and assumptions. Not a guarantee, and not financial advice.</p>
