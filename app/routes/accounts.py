@@ -1,4 +1,5 @@
 from datetime import date, datetime, timezone
+from urllib.parse import parse_qs, urlparse
 
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -97,6 +98,13 @@ def _safe_next_accounts(raw):
     return None
 
 
+def _monthly_review_month_from_next(next_url):
+    if not next_url or not next_url.startswith("/monthly-review"):
+        return None
+    month_values = parse_qs(urlparse(next_url).query).get("month") or []
+    return valid_month_key(month_values[0]) if month_values else None
+
+
 def _account_payload_from_form(form):
     return {
         "name": form.get("name", ""),
@@ -161,6 +169,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     # logged against each account this UK tax year. Empty for taxable (GIA) accounts.
     today = date.today()
     next_url = _safe_next_accounts(request.args.get("next"))
+    budget_context_month_key = _monthly_review_month_from_next(next_url) or today.strftime("%Y-%m")
     monthly_update_return_href = (
         next_url
         if next_url and next_url.startswith("/monthly-review")
@@ -513,6 +522,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         allocation_total=allocation_total,
         overrides=overrides,
         current_month_key=date.today().strftime("%Y-%m"),
+        budget_context_month_key=budget_context_month_key,
         next_url=next_url,
         monthly_update_return_href=monthly_update_return_href,
         tax_year_logged=tax_year_logged,
