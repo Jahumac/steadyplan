@@ -364,7 +364,7 @@ def overview():
 
     # ── Monthly review nudge ──────────────────────────────────────────────────
     current_month_key = now_date.strftime("%Y-%m")
-    current_monthly_update_href = f"/monthly-review/?month={current_month_key}"
+    current_monthly_update_href = f"/monthly-review/?month={current_month_key}#expected-contributions"
     review_nudge = False
     review_ready = None
     payday_banner = salary_day and is_salary_day(now_date, salary_day)
@@ -550,7 +550,7 @@ def overview():
                     "kind": "warning",
                     "message": f"Your {lm_label} monthly update is still open — complete it so balances, contributions, and tracking stay based on confirmed numbers.",
                     "cta_text": "Open monthly update",
-                    "cta_href": f"/monthly-review/?month={lm_key}",
+                    "cta_href": f"/monthly-review/?month={lm_key}#expected-contributions",
                     "cta_form_action": None,
                 })
 
@@ -577,7 +577,7 @@ def overview():
                 "kind": "info",
                 "message": f"Your {now_date.strftime('%B')} update is done but {len(unconfirmed)} contribution{'s' if len(unconfirmed) != 1 else ''} weren't confirmed — did they all arrive? ({names})",
                 "cta_text": "Open monthly update",
-                "cta_href": f"/monthly-review/?month={current_month_key}",
+                "cta_href": f"/monthly-review/?month={current_month_key}#expected-contributions",
                 "cta_form_action": None,
             })
 
