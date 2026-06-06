@@ -31,17 +31,16 @@ def _read_changelog() -> str:
 def test_homepage_trust_card_mentions_restore_preview_and_safety_backup():
     html = _read("index.html")
 
-    assert "per-user JSON exports, whole-instance SQLite backups, restore preview checks, and automatic pre-restore safety backups" in html
+    assert "SteadyPlan uses a local SQLite database and keeps backup and restore guidance close to the product so trust is explicit." in html
     assert "See how JSON exports, whole-instance backups, and restore checks fit together" not in html
 
 
 def test_tour_trust_copy_matches_restore_safety_story():
     html = _read("tour.html")
 
-    assert "Backups, validated restore steps, optional lookups, and privacy." in html
-    assert "A restore is previewed before anything is overwritten, and the app creates a fresh whole-instance SQLite backup before a confirmed overwrite can proceed." in html
-    assert "restore preview checks with an automatic pre-restore safety backup" in html
-    assert "validated restore flow and safety-backup story" in html
+    assert "SteadyPlan stores your data locally in a SQLite database on your own server/NAS/desktop. There is no hosted account and no public signup." in html
+    assert "Optional external price lookups can contact providers for ticker data. Everything else stays local unless you choose otherwise." in html
+    assert "<h2 class=\"section-title\">Data ownership</h2>" in html
 
 
 def test_docs_hub_and_backups_page_explain_automatic_pre_restore_backup():
@@ -90,14 +89,34 @@ def test_docs_and_install_pages_explain_safest_evaluation_path():
     assert "Evaluate safely first" in install
     assert "Best order: screenshots/tour first, then your own local install on LAN or VPN if you want hands-on evaluation." in install
     assert "Public demo access can be useful, but only as a deliberate read-only setup by the host" in install
-    assert "Safest order: use the tour and docs first, then your own local install on LAN or VPN for hands-on evaluation." in tour
-    assert "A public read-only demo is optional if a host deliberately enables one." in tour
+    assert "Safest default is LAN/VPN access. Public exposure requires a trusted reverse proxy and HTTPS." in tour
+    assert "Documentation" in tour
     assert "Safest order: screenshots/tour first, then your own local install on LAN or VPN for hands-on evaluation." in readme
     assert "the host can offer `/demo` (or the “Open read-only demo” button on the login page) for sample-data evaluation." in readme
     assert "Treat that public demo as an explicit host choice, not the default trust path for real use." in readme
     assert "Then you can use `/demo` (or the “Try demo” button on the login page)." not in readme
     assert "FORWARDED_ALLOW_IPS" in reverse_proxy
     assert "advanced choice rather than the default" in reverse_proxy
+
+
+
+def test_public_site_supports_manual_dark_mode_toggle():
+    homepage = _read("index.html")
+    docs_index = _read("docs/index.html")
+    site_css = _read("assets/site.css")
+    theme_toggle_js = _read("assets/theme-toggle.js")
+
+    assert '<meta name="color-scheme" content="light dark">' in homepage
+    assert 'data-theme-toggle' in homepage
+    assert 'theme-toggle.js?v=20260607a' in homepage
+    assert '<meta name="color-scheme" content="light dark">' in docs_index
+    assert 'data-theme-toggle' in docs_index
+    assert 'theme-toggle.js?v=20260607a' in docs_index
+    assert ':root[data-theme="dark"] {' in site_css
+    assert '.theme-toggle[aria-pressed="true"] {' in site_css
+    assert "steadyplan-site-theme" in theme_toggle_js
+    assert "Switch to dark mode" in theme_toggle_js
+    assert "Switch to light mode" in theme_toggle_js
 
 
 
@@ -112,19 +131,17 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     product_truth = _read_product_truth()
     changelog = _read_changelog()
 
-    assert "Scenario estimates are illustrative and based on your inputs." in homepage
+    assert "Projections are scenario estimates based on your inputs. No promises." in homepage
     assert "Projections are illustrative and based on your inputs." not in homepage
-    assert "retirement scenario estimates" in homepage
+    assert "Scenario estimates" in homepage
     assert "retirement projections" not in homepage
-    assert "Scenario estimates are illustrative and based on your inputs, assumptions, and scenarios." in about
+    assert "Built and maintained as a one-person project, with AI-assisted development, testing, and careful iteration." in about
     assert "Projections are illustrative and based on your inputs, assumptions, and scenarios." not in about
-    assert "<h3>Scenario estimates</h3>" in tour
-    assert '<p class="kicker">Scenario estimates</p>' in tour
-    assert 'content="Product tour of SteadyPlan’s main screens using demo data: Overview, holdings, planning, scenario estimates, and trust/data-ownership flows."' in tour
-    assert "Scenario estimates let you explore what changes if you adjust contributions, retirement timing, or assumptions." in tour
-    assert "SteadyPlan scenario estimates screen with demo data" in tour
+    assert "<h2 class=\"section-title\">Scenario estimates</h2>" in tour
+    assert 'content="Feature-led tour of SteadyPlan. See what each area does and why it exists, with grounded notes and demo screenshots."' in tour
+    assert "The projections view is built around assumptions you control. The goal is to support long-term thinking while staying clear about what is entered data and what is forecast output." in tour
+    assert "SteadyPlan scenario estimates summary card (demo data)" in tour
     assert "<h3>Projections</h3>" not in tour
-    assert '<p class="kicker">Projections</p>' not in tour
     assert 'content="Product tour of SteadyPlan’s main screens using demo data: Overview, holdings, planning, projections, and trust/data-ownership flows."' not in tour
     assert "Projections let you explore what changes if you adjust contributions, retirement timing, or assumptions." not in tour
     assert "SteadyPlan projections screen with demo data" not in tour
