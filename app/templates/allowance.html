@@ -154,7 +154,7 @@
   </div>
   <p class="helper-text" style="font-size:0.78rem;">Monthly uses each account's regular contribution setting. Regular to date is that monthly amount multiplied by the months elapsed. Cash-flow adjustments only count when you label a movement as using ISA allowance. If an amount looks wrong, check the account's <a href="/accounts/" class="link-accent">monthly contribution setting</a>.</p>
   {% else %}
-  <p class="helper-text">No ISA accounts yet. <a href="/accounts/?mode=create" class="link-accent">Add a Stocks &amp; Shares ISA, Cash ISA, or Lifetime ISA</a> to start tracking.</p>
+  <p class="helper-text">No ISA accounts yet. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add a Stocks &amp; Shares ISA, Cash ISA, or Lifetime ISA</a> to start tracking.</p>
   {% endif %}
 
   {# ── Log a contribution (collapsible) ── #}
@@ -193,7 +193,7 @@
         </div>
       </form>
       {% else %}
-      <p class="helper-text">No ISA accounts yet. <a href="/accounts/?mode=create" class="link-accent">Create one</a> first.</p>
+      <p class="helper-text">No ISA accounts yet. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Create one</a> first.</p>
       {% endif %}
     </div>
   </div>
@@ -308,7 +308,7 @@
     </table>
   </div>
   {% else %}
-  <p class="helper-text">No pension accounts yet. <a href="/accounts/?mode=create" class="link-accent">Add a SIPP or Workplace Pension</a> to start tracking.</p>
+  <p class="helper-text">No pension accounts yet. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add a SIPP or Workplace Pension</a> to start tracking.</p>
   {% endif %}
 
   {# ── Log a contribution (collapsible) ── #}
@@ -354,7 +354,7 @@
         </div>
       </form>
       {% else %}
-      <p class="helper-text">No pension accounts yet. <a href="/accounts/?mode=create" class="link-accent">Create one</a> first.</p>
+      <p class="helper-text">No pension accounts yet. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Create one</a> first.</p>
       {% endif %}
     </div>
   </div>
@@ -514,7 +514,7 @@
         </div>
       </form>
       {% else %}
-      <p class="helper-text">No taxable investment accounts found. <a href="/accounts/?mode=create" class="link-accent">Create one</a> first.</p>
+      <p class="helper-text">No taxable investment accounts found. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Create one</a> first.</p>
       {% endif %}
       {% if dividend_records %}
       <p class="eyebrow" style="margin:1rem 0 0.4rem;">Recorded Dividends ({{ tax_year }})</p>

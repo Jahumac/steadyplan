@@ -19,3 +19,16 @@ def test_goals_first_use_landing_surfaces_basics_first(app, client, make_user):
     assert "Create and continue" in html
     assert "Goal Detail" not in html
     assert ">Create goal<" not in html
+
+
+def test_goals_index_empty_state_uses_first_goal_focus_for_primary_create_links(app, client, make_user):
+    _, username, password = make_user(username="goals-index-first-goal-cta", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/goals/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'href="/goals/?mode=create&amp;focus=first_goal">+ Create goal</a>' in html
+    assert 'href="/goals/?mode=create&amp;focus=first_goal"' in html
+    assert 'href="/goals/?mode=create">+ Create goal</a>' not in html

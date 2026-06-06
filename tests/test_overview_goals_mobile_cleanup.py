@@ -27,7 +27,8 @@ def test_goals_page_moves_primary_action_into_hero_for_mobile_cleanup(app, clien
     assert 'href="/projections/">Projections</a>' not in html
     assert 'class="hero-actions-col goals-hero-actions"' in html
     assert 'class="badge-row goals-hero-badges"' in html
-    assert 'href="/goals/?mode=create">+ Create goal</a>' in html
+    assert 'href="/goals/?mode=create&amp;focus=first_goal">+ Create goal</a>' in html
+    assert 'href="/goals/?mode=create">+ Create goal</a>' not in html
     assert '<div class="row-end">' not in html
 
     css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
@@ -38,7 +39,7 @@ def test_goals_page_moves_primary_action_into_hero_for_mobile_cleanup(app, clien
     assert ".empty-state-icon {" not in css
 
     hero_idx = html.index('class="hero-actions-col goals-hero-actions"')
-    create_idx = html.index('href="/goals/?mode=create">+ Create goal</a>')
+    create_idx = html.index('href="/goals/?mode=create&amp;focus=first_goal">+ Create goal</a>')
     empty_state_idx = html.index('No goals yet')
 
     assert hero_idx < create_idx < empty_state_idx

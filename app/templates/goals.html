@@ -35,9 +35,9 @@
     <div class="hero-actions-col goals-hero-actions">
       <div class="badge-row goals-hero-badges">
         {% if page_mode == 'view' %}
-          <a class="badge badge-primary-action" href="/goals/?mode=create">+ Create goal</a>
+          <a class="badge badge-primary-action" href="{{ url_for('goals.goals', mode='create', focus='first_goal') if not goal_cards else url_for('goals.goals', mode='create') }}">+ Create goal</a>
         {% else %}
-          <a class="badge" href="/goals/">Back to goals</a>
+          <a class="badge" href="{{ url_for('goals.goals') }}">Back to goals</a>
         {% endif %}
       </div>
     </div>
@@ -59,7 +59,7 @@
 {% if goal_cards %}
 <section class="card-grid goal-grid">
   {% for goal in goal_cards %}
-    <a class="card goal-link-card" href="/goals/?mode=edit&goal_id={{ goal.id }}">
+    <a class="card goal-link-card" href="{{ url_for('goals.goals', mode='edit', goal_id=goal.id) }}">
       <div class="section-header mb-075 flex-start">
         <div>
           <h2 class="goal-card-title">{{ goal.name }}</h2>
@@ -91,7 +91,7 @@
 <section class="card">
   {{ empty_state('No goals yet',
                  'Set a goal, tag the right accounts, and track progress toward your target over time.',
-                 cta_text='+ Create your first goal', cta_href='/goals/?mode=create&focus=first_goal') }}
+                 cta_text='+ Create your first goal', cta_href=url_for('goals.goals', mode='create', focus='first_goal')) }}
 </section>
 {% endif %}
 
@@ -161,7 +161,7 @@
     </div>
     <div class="badge-row mt-1">
       <button type="submit">{{ 'Create and continue' if first_goal_focus else 'Create goal' }}</button>
-      <a class="badge" href="/goals/">Cancel</a>
+      <a class="badge" href="{{ url_for('goals.goals') }}">Cancel</a>
     </div>
   </form>
 </section>
@@ -173,8 +173,8 @@
       <h2>{{ selected_goal_card.item.name }}</h2>
     </div>
     <div class="badge-row">
-      {% if page_mode != 'edit' %}<a class="badge" href="/goals/?mode=edit&goal_id={{ selected_goal.id }}">Edit goal</a>{% endif %}
-      {% if page_mode != 'delete' %}<a class="badge badge-danger" href="/goals/?mode=delete&goal_id={{ selected_goal.id }}">Delete</a>{% endif %}
+      {% if page_mode != 'edit' %}<a class="badge" href="{{ url_for('goals.goals', mode='edit', goal_id=selected_goal.id) }}">Edit goal</a>{% endif %}
+      {% if page_mode != 'delete' %}<a class="badge badge-danger" href="{{ url_for('goals.goals', mode='delete', goal_id=selected_goal.id) }}">Delete</a>{% endif %}
     </div>
   </div>
 
@@ -212,7 +212,7 @@
 
       <div class="badge-row mt-1">
         <button type="submit">Save goal</button>
-        <a class="badge" id="goal-cancel-btn" href="/goals/">Cancel</a>
+        <a class="badge" id="goal-cancel-btn" href="{{ url_for('goals.goals') }}">Cancel</a>
       </div>
     </form>
 
@@ -224,7 +224,7 @@
       <input type="hidden" name="goal_id" value="{{ selected_goal.id }}">
       <div class="badge-row">
         <button type="submit" class="button-danger">Yes, delete goal</button>
-        <a class="badge" href="/goals/">Cancel</a>
+        <a class="badge" href="{{ url_for('goals.goals') }}">Cancel</a>
       </div>
     </form>
 
