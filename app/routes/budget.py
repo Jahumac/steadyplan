@@ -280,6 +280,7 @@ def budget():
         "budget.html",
         month_key=month_key,
         month_label=_month_label(month_key),
+        monthly_update_href=url_for("monthly_review.monthly_review", month=month_key),
         sections=sections,
         summary=summary,
         income_key=income_key,
