@@ -57,12 +57,13 @@ def test_login_demo_callout_explains_read_only_boundaries(app, client, make_user
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "Read-only demo" in html
-    assert "Take a quick look without risking real data" in html
+    assert "Take a quick look with sample data" in html
     assert "demo account with demo data only" in html
     assert "No password is needed here, and writes are blocked." in html
-    assert "Safest real use is still your own install on LAN or VPN." in html
+    assert "For hands-on evaluation you trust, use your own install on LAN or VPN." in html
     assert "Open read-only demo" in html
     assert "Try demo (read-only)" not in html
+    assert "Take a quick look without risking real data" not in html
 
 
 def test_demo_monthly_review_get_does_not_create_review_rows(app, client, make_user):

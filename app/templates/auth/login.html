@@ -65,12 +65,12 @@
         {% if demo_public %}
           <div class="card panel-soft" style="margin-top:0.9rem; padding:0.9rem 1rem; text-align:left;">
             <p class="eyebrow" style="margin-bottom:0.35rem;">Read-only demo</p>
-            <h3 style="margin:0 0 0.4rem 0; font-size:1rem;">Take a quick look without risking real data</h3>
+            <h3 style="margin:0 0 0.4rem 0; font-size:1rem;">Take a quick look with sample data</h3>
             <p class="auth-hint" style="margin:0;">
               This signs you into the <strong>{{ demo_username }}</strong> demo account with demo data only. No password is needed here, and writes are blocked.
             </p>
             <p class="auth-hint" style="margin:0.55rem 0 0 0;">
-              Good for a quick evaluation. Safest real use is still your own install on LAN or VPN.
+              Good for a quick product look. For hands-on evaluation you trust, use your own install on LAN or VPN.
             </p>
             <div style="margin-top:0.7rem;">
               <a class="badge" href="{{ url_for('auth.demo_login') }}">Open read-only demo</a>

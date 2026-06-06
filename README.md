@@ -110,6 +110,7 @@ Temporarily change a monthly contribution (e.g. parental leave, career break) wi
 - Android (Chrome): open the URL → menu → Install app / Add to Home screen
 
 ### Try Safely With Demo Data
+- Safest order: screenshots/tour first, then your own local install on LAN or VPN for hands-on evaluation.
 - SteadyPlan includes a demo seed script that populates realistic UK investor data (accounts, holdings, goals, budget, history).
 - You can explore the full UI without entering real financial data.
 
@@ -128,7 +129,8 @@ docker exec -it steadyplan python scripts/seed_demo.py --username demo
 Enable a public read-only demo login:
 
 - Create a `demo` user (any password) and set `DEMO_PUBLIC_LOGIN_ENABLED=1`.
-- Then you can use `/demo` (or the “Try demo” button on the login page). The demo user is read-only: mutating requests are blocked.
+- Then the host can offer `/demo` (or the “Open read-only demo” button on the login page) for sample-data evaluation. The demo user is read-only: mutating requests are blocked.
+- Treat that public demo as an explicit host choice, not the default trust path for real use.
 
 ---
 
