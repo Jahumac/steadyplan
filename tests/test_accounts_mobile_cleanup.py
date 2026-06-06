@@ -94,16 +94,20 @@ def test_accounts_page_uses_plan_line_copy_for_account_comparison(app, client, m
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert "Plan line @7%" in html
+    assert "Comparison line @7%" in html
     assert "Should be @7%" not in html
     assert "Goal timing estimate" in html
     assert "Goal ETA" not in html
-    assert "This compares your recorded balance with an assumptions-based plan line for this account." in html
+    assert "This compares your recorded balance with an assumptions-based comparison line for this account." in html
     assert "investment day (shifted for weekends, plus settlement)" in html
     assert "monthly update due date" not in html
     assert "salary day shifted for weekends" not in html
     assert "Use it as a planning guide, not a guarantee." in html
+    assert "comparison line treating transfers out as “being behind”" in html
     assert "Actual vs plan for this account." not in html
+    assert "Plan line @7%" not in html
+    assert "assumptions-based plan line for this account" not in html
+    assert "plan line treating transfers out as “being behind”" not in html
 
 
 def test_accounts_create_form_includes_junior_isa_wrapper_option(app, client, make_user):
