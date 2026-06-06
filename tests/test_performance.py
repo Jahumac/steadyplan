@@ -1,3 +1,6 @@
+from datetime import date
+
+
 def test_monthly_performance_carries_forward_missing_account_snapshots(app, make_user):
     """A partial month should not make untouched accounts look like £0.
 
@@ -46,6 +49,7 @@ def test_monthly_performance_carries_forward_missing_account_snapshots(app, make
 
 
 def test_performance_empty_state_uses_monthly_update_copy(auth_client):
+    month_key = date.today().strftime("%Y-%m")
     resp = auth_client.get("/performance/", follow_redirects=True)
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
@@ -55,10 +59,13 @@ def test_performance_empty_state_uses_monthly_update_copy(auth_client):
     assert "Complete two monthly updates and the performance charts will appear." in html
     assert "Complete two monthly reviews and the performance charts will appear." not in html
     assert ">Open monthly update<" in html
+    assert f'href="/monthly-review/?month={month_key}"' in html
+    assert 'href="/monthly-review/">Open monthly update</a>' not in html
     assert ">Go to Monthly Update<" not in html
 
 
 def test_contribution_summary_empty_state_uses_monthly_update_copy(auth_client):
+    month_key = date.today().strftime("%Y-%m")
     resp = auth_client.get("/performance/contributions/", follow_redirects=True)
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
@@ -66,6 +73,8 @@ def test_contribution_summary_empty_state_uses_monthly_update_copy(auth_client):
     assert "Complete some monthly updates and the contribution history will appear here." in html
     assert "Complete some monthly reviews and the contribution history will appear here." not in html
     assert ">Open monthly update<" in html
+    assert f'href="/monthly-review/?month={month_key}"' in html
+    assert 'href="/monthly-review/">Open monthly update</a>' not in html
     assert ">Go to Monthly Update<" not in html
 
 
