@@ -150,8 +150,9 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or manual balances below where needed." not in html
     assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or balances below where needed." not in html
     assert "No contributions to track this month." in html
-    assert "Set them up in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" in html
-    assert "Set them up in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here.</p>" not in html
+    assert "Set them up in <a href=\"/accounts/?mode=create&amp;focus=first_account\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" in html
+    assert "Set them up in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" not in html
+    assert "Set them up in <a href=\"/accounts/?mode=create&amp;focus=first_account\" class=\"link-accent\">Accounts</a> and they’ll appear here.</p>" not in html
     assert "log prize draw results if needed" not in html
     assert "Confirm contributions, update balances, then finish with your note." in html
     assert "log Premium Bonds if needed" not in html
@@ -593,6 +594,8 @@ def test_monthly_review_empty_holdings_state_uses_explicit_add_account_cta(app, 
     assert "show up ready for your monthly update" not in html
     assert "ready for your monthly check-in" not in html
     assert ">Add a holdings-based account<" in html
+    assert 'href="/accounts/?mode=create&amp;focus=first_account" class="badge badge-primary-action">Add a holdings-based account</a>' in html
+    assert 'href="/accounts/" class="badge badge-primary-action">Add a holdings-based account</a>' not in html
     assert ">Add holdings-based account<" not in html
     assert ">+ Add account<" not in html
 
@@ -619,8 +622,9 @@ def test_monthly_review_empty_account_helper_uses_monthly_update_wording(app, cl
     html = resp.get_data(as_text=True)
 
     assert "No holdings here yet." in html
-    assert "Add holdings in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" in html
-    assert "Add some in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" not in html
+    assert "Add holdings in <a href=\"/accounts/?mode=create&amp;focus=first_account\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" in html
+    assert "Add holdings in <a href=\"/accounts/\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" not in html
+    assert "Add some in <a href=\"/accounts/?mode=create&amp;focus=first_account\" class=\"link-accent\">Accounts</a> and they’ll appear here for your monthly update.</p>" not in html
     assert "show up for your monthly update" not in html
     assert "show up for your next update" not in html
 

@@ -220,7 +220,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <p class="helper-text">No contributions to track this month. Set them up in <a href="/accounts/" class="link-accent">Accounts</a> and they’ll appear here for your monthly update.</p>
+    <p class="helper-text">No contributions to track this month. Set them up in <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Accounts</a> and they’ll appear here for your monthly update.</p>
   {% endif %}
 </section>
 
@@ -304,7 +304,7 @@
               {% endfor %}
             </div>
           {% else %}
-            <p class="helper-text">No holdings here yet. Add holdings in <a href="/accounts/" class="link-accent">Accounts</a> and they’ll appear here for your monthly update.</p>
+            <p class="helper-text">No holdings here yet. Add holdings in <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Accounts</a> and they’ll appear here for your monthly update.</p>
           {% endif %}
         </section>
       {% endfor %}
@@ -313,7 +313,7 @@
     <div class="empty-state">
       <h3>No holdings-based accounts</h3>
       <p>Add a holdings-based account and it’ll appear here ready for your monthly update.</p>
-      <a href="/accounts/" class="badge badge-primary-action">Add a holdings-based account</a>
+      <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="badge badge-primary-action">Add a holdings-based account</a>
     </div>
   {% endif %}
 </section>
