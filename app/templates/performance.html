@@ -35,7 +35,7 @@
       {% else %}
         {% if snapshot_count == 1 %}
         <h2 class="hero-value">One snapshot down</h2>
-        <p class="hero-subtitle">Your first baseline is saved. Next month's monthly update will start the performance chart.</p>
+        <p class="hero-subtitle">Your first baseline is saved. Complete next month's monthly update and the performance chart will appear.</p>
         {% else %}
         <h2 class="hero-value">No data yet</h2>
         <p class="hero-subtitle">Complete two monthly updates to start seeing performance charts</p>
@@ -63,7 +63,7 @@
 <section class="card">
   {% if snapshot_count == 1 %}
   {{ empty_state('First baseline saved',
-                 'SteadyPlan has your first snapshot. Come back after next month\'s monthly update and the performance chart will appear.',
+                 'SteadyPlan has your first snapshot. Complete next month\'s monthly update and the performance chart will appear.',
                  cta_text='Back to overview', cta_href='/') }}
   {% else %}
   {{ empty_state('Not enough data yet',

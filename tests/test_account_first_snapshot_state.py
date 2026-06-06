@@ -66,7 +66,8 @@ def test_account_detail_acknowledges_first_daily_snapshot(app, client, make_user
     body = response.get_data(as_text=True)
     assert "First baseline saved" in body
     assert "This account has its first snapshot." in body
-    assert "monthly update and the chart will appear." in body
+    assert "Complete next month&#39;s monthly update and the chart will appear." in body
+    assert "Come back after next month&#39;s monthly update and the chart will appear." not in body
     assert "Back to overview" in body
     assert "No history yet. Update your account balance or run the price scheduler to start recording daily snapshots." not in body
 
@@ -89,5 +90,6 @@ def test_account_detail_acknowledges_first_monthly_snapshot_without_daily_histor
     body = response.get_data(as_text=True)
     assert "First baseline saved" in body
     assert "This account has its first snapshot." in body
-    assert "monthly update and the chart will appear." in body
+    assert "Complete next month&#39;s monthly update and the chart will appear." in body
+    assert "Come back after next month&#39;s monthly update and the chart will appear." not in body
     assert "No history yet. Update your account balance or run the price scheduler to start recording daily snapshots." not in body
