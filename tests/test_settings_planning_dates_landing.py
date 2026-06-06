@@ -43,3 +43,24 @@ def test_settings_focus_landing_prioritises_planning_dates_for_first_use(app, cl
     assert retirement_age_idx < annual_growth_idx
     assert investment_day_idx < dashboard_name_idx
     assert html.index("Can wait until later") < dashboard_name_idx
+
+
+def test_settings_focus_landing_prioritises_scenario_estimate_assumptions_when_requested(app, client, make_user):
+    _, username, password = make_user(username="settings-focus-assumptions", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/settings/?mode=edit&focus=scenario_estimate_assumptions")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Scenario estimate assumptions" in html
+    assert "Edit scenario estimate assumptions" in html
+    assert "These inputs feed scenario estimates and goal timing estimates. Changing them does not change your saved balances or Monthly Update history." in html
+    assert "Start here" not in html
+    assert "Add your planning dates" not in html
+    assert "Just these basics first" not in html
+    assert "Can wait until later" not in html
+    assert "Save settings" in html
+    assert "Save and continue" not in html
+
+

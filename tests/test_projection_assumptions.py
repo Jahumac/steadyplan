@@ -61,11 +61,13 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "About this estimate" not in body
     assert "scenario estimate based on assumptions, not a promise" in body
     assert "assumptions-based forecast, not a promise" not in body
-    assert "You can change your <a href=\"/settings/?mode=edit\" class=\"link-accent\">scenario estimate assumptions</a>." in body
+    assert "You can change your <a href=\"/settings/?mode=edit&amp;focus=scenario_estimate_assumptions\" class=\"link-accent\">scenario estimate assumptions</a>." in body
     assert "You can change those assumptions in" not in body
     assert "Edit the scenario estimate assumptions in" not in body
     assert "Edit the inputs in" not in body
     assert body.count("Edit scenario estimate assumptions") == 3
+    assert body.count('/settings/?mode=edit&amp;focus=scenario_estimate_assumptions') == 4
+    assert 'href="/settings/?mode=edit"' not in body
     assert "Edit assumptions" not in body
     assert body.count("Scenario estimate assumptions") == 3
     assert "<summary>Assumptions</summary>" not in body
@@ -262,6 +264,8 @@ def test_settings_uses_lifetime_isa_wording(app, client, make_user):
     assert "The numbers used behind the scenes — growth rates, ages, and allowances" not in view_body
     assert "Lifetime ISA allowance" in view_body
     assert "Edit scenario estimate assumptions" in view_body
+    assert 'href="/settings/?mode=edit&amp;focus=scenario_estimate_assumptions"' in view_body
+    assert 'href="/settings/?mode=edit"' not in view_body
     assert "Edit settings" not in view_body
     assert "LISA allowance" not in view_body
 

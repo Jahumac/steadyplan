@@ -162,6 +162,8 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"State Pension/year estimate" not in response.data
     assert b"State Pension assumption" in response.data
     assert response.data.count(b"Edit scenario estimate assumptions") == 2
+    assert response.data.count(b'/settings/?mode=edit&amp;focus=scenario_estimate_assumptions') == 2
+    assert b'href="/settings/?mode=edit"' not in response.data
     assert b"Edit growth/retirement age" not in response.data
     assert b"Adjust scenario estimate assumptions" in response.data
     assert b"Adjust assumptions" not in response.data

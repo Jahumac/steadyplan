@@ -152,6 +152,8 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert "Review goals" in html
     assert "Review debts" in html
     assert "Edit scenario estimate assumptions" in html
+    assert 'href="/settings/?mode=edit&amp;focus=scenario_estimate_assumptions"' in html
+    assert 'href="/settings/?mode=edit"' not in html
     assert "Review scenario estimate assumptions" not in html
     assert "Review assumptions" not in html
     assert "CSV import" in html
