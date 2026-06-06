@@ -148,6 +148,11 @@ def _category_options_for(selected=None):
 def _render_accounts_page(user_id, selected=None, detail_mode="view", position_error=None, position_added=False, edit_holding_id=None):
     rows = fetch_all_accounts(user_id)
     assumptions = fetch_assumptions(user_id)
+    account_create_href = (
+        url_for("accounts.accounts", mode="create", focus="first_account")
+        if not rows
+        else url_for("accounts.accounts", mode="create")
+    )
     holdings_totals = fetch_holding_totals_by_account(user_id)
     effective_values = {row["id"]: effective_account_value(row, holdings_totals) for row in rows}
     contrib_breakdowns = {row["id"]: contribution_breakdown(row, assumptions) for row in rows}
@@ -483,6 +488,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         ),
         total_into_pot_monthly=sum(float(b.get("total_into_pot", 0) or 0) for b in contrib_breakdowns.values()),
         contrib_breakdowns=contrib_breakdowns,
+        account_create_href=account_create_href,
         active_page="accounts",
         wrapper_type_options=_wrapper_type_options_for(selected),
         category_options=_category_options_for(selected),

@@ -51,6 +51,7 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     assert 'class="hero-actions-col accounts-hero-actions"' in html
     assert 'class="badge-row accounts-hero-badges"' in html
     assert 'href="/accounts/?mode=create">+ Add account</a>' in html
+    assert 'href="/accounts/?mode=create&amp;focus=first_account"' not in html
     assert 'href="/accounts/balances/bulk?month_key=' in html
     assert '<div class="row-end">' not in html
 
