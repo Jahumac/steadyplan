@@ -11,15 +11,26 @@ from flask import Blueprint, Response, current_app, flash, redirect, render_temp
 from flask_login import current_user, login_required
 
 from app.calculations import current_age_from_assumptions
+from app.services.assistant_access import (
+    assistant_action_label,
+    assistant_amount_change_label,
+    assistant_scope_labels,
+    assistant_scope_options,
+    assistant_target_label,
+    assistant_token_label,
+    assistant_token_last_used_label,
+    assistant_token_secret_heading,
+    normalise_requested_assistant_scopes,
+    pop_plaintext_assistant_token,
+    stash_plaintext_assistant_token,
+)
 from app.services.backups import list_backups, run_backup, run_pre_restore_backup
 from app.services.restore_validation import validate_restore_backup_json
 from app.services.restore_service import RestoreValidationError, restore_backup_for_user
 from app.utils import optional_float, optional_int, valid_date
 from app.models import (
     API_TOKEN_KIND_ASSISTANT,
-    ASSISTANT_SCOPE_BUDGET_WRITE,
     ASSISTANT_SCOPE_READ,
-    ASSISTANT_SCOPE_TRANSACTIONS_WRITE,
     create_api_token,
     fetch_api_token,
     fetch_api_tokens,
@@ -202,122 +213,12 @@ def _select_rows(conn, sql, params):
     return [dict(r) for r in (conn.execute(sql, params).fetchall() or [])]
 
 
-def _assistant_scope_options(include_reserved=False):
-    options = [
-        {
-            "key": ASSISTANT_SCOPE_READ,
-            "label": "Read-only assistant answers",
-            "hint": "Lets Pip answer portfolio, monthly budget, and affordability questions without changing your data.",
-        },
-        {
-            "key": ASSISTANT_SCOPE_BUDGET_WRITE,
-            "label": "Budget write",
-            "hint": "Lets Pip update one month's amount on an existing manual, unlinked budget item. It does not allow broader budget, account, or transaction edits.",
-        },
-    ]
-    if include_reserved:
-        options.append(
-            {
-                "key": ASSISTANT_SCOPE_TRANSACTIONS_WRITE,
-                "label": "Transaction write (reserved)",
-                "hint": "Reserved for future assistant transaction entry endpoints. Safe to leave off today.",
-            }
-        )
-    return options
-
-
-def _assistant_scope_label_map(include_reserved=False):
-    return {
-        opt["key"]: opt["label"]
-        for opt in _assistant_scope_options(include_reserved=include_reserved)
-    }
-
-
-def _assistant_scope_labels(scopes, *, include_reserved=False):
-    labels = []
-    label_map = _assistant_scope_label_map(include_reserved=include_reserved)
-    for scope in scopes or [ASSISTANT_SCOPE_READ]:
-        scope_text = str(scope or "").strip().lower()
-        labels.append(label_map.get(scope_text, scope_text or ASSISTANT_SCOPE_READ))
-    return labels
-
-
-def _assistant_action_label(action_type):
-    action_text = str(action_type or "").strip().lower()
-    return {
-        "budget_item_month_entry_updated": "Budget month amount updated",
-    }.get(action_text, action_text or "—")
-
-
-def _assistant_amount_change_label(before_amount, after_amount):
-    if before_amount is None or after_amount is None:
-        return "—"
-    return f"£{float(before_amount):,.2f} → £{float(after_amount):,.2f}"
-
-
-def _assistant_target_label(target_label, target_type):
-    label_text = str(target_label or "").strip()
-    if label_text:
-        return label_text
-    target_text = str(target_type or "").strip().lower()
-    return {
-        "budget_item": "Budget item",
-    }.get(target_text, target_text or "—")
-
-
-def _assistant_token_label(label):
-    label_text = str(label or "").strip()
-    return label_text or "Unlabelled assistant token"
-
-
-def _assistant_token_last_used_label(last_used_at):
-    last_used_text = str(last_used_at or "").strip()
-    return last_used_text or "Not used yet"
-
-
-def _assistant_token_secret_heading(action):
-    action_text = str(action or "").strip().lower()
-    return {
-        "created": "New assistant token",
-        "regenerated": "Replacement assistant token",
-    }.get(action_text, "Assistant token")
-
-
-def _normalise_requested_assistant_scopes(raw_scopes):
-    ordered = []
-    valid = {opt["key"] for opt in _assistant_scope_options(include_reserved=True)}
-    for scope in raw_scopes or []:
-        scope_text = str(scope or "").strip().lower()
-        if scope_text in valid and scope_text not in ordered:
-            ordered.append(scope_text)
-    return ordered or [ASSISTANT_SCOPE_READ]
-
-
-def _pop_plaintext_assistant_token():
-    token = session.pop("assistant_plaintext_token", None)
-    if not token:
-        return None
-    return {
-        "value": token,
-        "label": _assistant_token_label(session.pop("assistant_plaintext_label", None)),
-        "scopes": session.pop("assistant_plaintext_scopes", []) or [],
-        "action": session.pop("assistant_plaintext_action", "created"),
-    }
-
-
-def _stash_plaintext_assistant_token(*, token, label, scopes, action):
-    session["assistant_plaintext_token"] = token
-    session["assistant_plaintext_label"] = _assistant_token_label(label)
-    session["assistant_plaintext_scopes"] = list(scopes or [])
-    session["assistant_plaintext_action"] = action
-
-
 def _settings_template_context(uid, *, assumptions=None, computed_age=None, diagnostics=None, page_mode="view", **extra):
     assumptions = assumptions if assumptions is not None else fetch_assumptions(uid)
     computed_age = computed_age if computed_age is not None else (int(current_age_from_assumptions(assumptions)) if assumptions else 0)
     assistant_tokens = fetch_api_tokens(uid, token_kind=API_TOKEN_KIND_ASSISTANT)
     assistant_audit_events = fetch_assistant_audit_events(uid, limit=12)
-    assistant_token_secret = _pop_plaintext_assistant_token()
+    assistant_token_secret = pop_plaintext_assistant_token(session)
     return {
         "assumptions": assumptions,
         "computed_age": computed_age,
@@ -326,14 +227,14 @@ def _settings_template_context(uid, *, assumptions=None, computed_age=None, diag
         "active_page": "settings",
         "assistant_tokens": assistant_tokens,
         "assistant_audit_events": assistant_audit_events,
-        "assistant_scope_options": _assistant_scope_options(),
-        "assistant_scope_labels": _assistant_scope_labels,
-        "assistant_action_label": _assistant_action_label,
-        "assistant_amount_change_label": _assistant_amount_change_label,
-        "assistant_target_label": _assistant_target_label,
-        "assistant_token_label": _assistant_token_label,
-        "assistant_token_last_used_label": _assistant_token_last_used_label,
-        "assistant_token_secret_heading": _assistant_token_secret_heading,
+        "assistant_scope_options": assistant_scope_options(),
+        "assistant_scope_labels": assistant_scope_labels,
+        "assistant_action_label": assistant_action_label,
+        "assistant_amount_change_label": assistant_amount_change_label,
+        "assistant_target_label": assistant_target_label,
+        "assistant_token_label": assistant_token_label,
+        "assistant_token_last_used_label": assistant_token_last_used_label,
+        "assistant_token_secret_heading": assistant_token_secret_heading,
         "assistant_token_secret": assistant_token_secret,
         **extra,
     }
@@ -880,14 +781,14 @@ def settings():
 @login_required
 def create_assistant_access_token():
     label = request.form.get("label", "").strip() or "Pip"
-    scopes = _normalise_requested_assistant_scopes(request.form.getlist("scopes"))
+    scopes = normalise_requested_assistant_scopes(request.form.getlist("scopes"))
     token = create_api_token(
         current_user.id,
         label=label,
         token_kind=API_TOKEN_KIND_ASSISTANT,
         scopes=scopes,
     )
-    _stash_plaintext_assistant_token(token=token, label=label, scopes=scopes, action="created")
+    stash_plaintext_assistant_token(session, token=token, label=label, scopes=scopes, action="created")
     flash("Assistant token created. Copy it now — it will only be shown once.", "success")
     return redirect(url_for("settings.settings"))
 
@@ -907,7 +808,8 @@ def regenerate_assistant_access_token(token_id):
         scopes=existing.get("scopes") or [ASSISTANT_SCOPE_READ],
     )
     revoke_api_token(token_id, current_user.id)
-    _stash_plaintext_assistant_token(
+    stash_plaintext_assistant_token(
+        session,
         token=new_token,
         label=existing.get("label") or "Pip",
         scopes=existing.get("scopes") or [ASSISTANT_SCOPE_READ],
