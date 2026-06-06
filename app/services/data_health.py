@@ -103,8 +103,8 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
             if goals_missing_target:
                 health_items.append({
                     "status": HEALTH_STATUS_WARNING,
-                    "title": "Some goals are missing a target amount",
-                    "explanation": f"The following goals are missing a target amount: {', '.join(goals_missing_target)}. Update them to track progress effectively.",
+                    "title": "Some goals need a target amount",
+                    "explanation": f"The following goals do not have a target amount yet: {', '.join(goals_missing_target)}. Add one so progress and goal timing estimates stay meaningful.",
                     "link": "/goals",
                     "cta_text": "Review goals",
                 })
