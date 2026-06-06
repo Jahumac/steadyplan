@@ -202,6 +202,31 @@ def test_allowance_page_uses_plain_taxable_account_labels(app, client, make_user
     assert "Log asset sales from your GIA" not in html
 
 
+def test_allowance_empty_states_link_to_first_account_focus(app, client, make_user):
+    uid, username, password = make_user(username="allowance-first-account-focus", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE assumptions
+                SET date_of_birth = '1990-01-01', salary_day = 1, isa_allowance = 20000, lisa_allowance = 4000, dividend_allowance = 500
+                WHERE user_id = ?
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/allowance/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert html.count('/accounts/?mode=create&amp;focus=first_account') >= 5
+    assert '/accounts/?mode=create"' not in html
+
+
 def test_allowance_page_shows_cash_flow_adjustment_column_for_explicit_isa_effects(app, client, make_user):
     uid, username, password = make_user(username="allowance-cash-flow-adjustment", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
