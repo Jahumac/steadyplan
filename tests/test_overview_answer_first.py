@@ -1621,6 +1621,7 @@ def test_overview_portfolio_pending_review_helper_uses_sentence_case_monthly_upd
 
     previous_month_date = date.today().replace(day=1) - timedelta(days=1)
     previous_month_str = previous_month_date.strftime("%Y-%m-%d")
+    previous_month_key = previous_month_date.strftime("%Y-%m")
 
     with app.app_context():
         from app.models import fetch_assumptions, get_connection
@@ -1662,7 +1663,8 @@ def test_overview_portfolio_pending_review_helper_uses_sentence_case_monthly_upd
     assert "history and performance use confirmed balances and contributions" in html
     assert "still using defaults — confirm in" not in html
     assert "estimated from defaults — confirm in" not in html
-    assert 'href="/monthly-review/" class="link-accent">monthly update</a>' in html
+    assert f'href="/monthly-review/?month={previous_month_key}" class="link-accent">monthly update</a>' in html
+    assert 'href="/monthly-review/" class="link-accent">monthly update</a>' not in html
     assert 'href="/monthly-review/" class="link-accent">Monthly Update</a>' not in html
 
 

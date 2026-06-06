@@ -648,6 +648,12 @@ def overview():
     daily_contributions, pending_review_months = _build_daily_contributions_cumulative(
         uid, daily_labels, accounts, assumptions
     )
+    latest_pending_review_month = pending_review_months[-1] if pending_review_months else None
+    pending_review_month_href = (
+        f"/monthly-review/?month={latest_pending_review_month}"
+        if latest_pending_review_month
+        else "/monthly-review/"
+    )
 
     data_health_summary = build_data_health_summary(uid)
 
@@ -691,6 +697,7 @@ def overview():
         daily_values=daily_values,
         daily_contributions=daily_contributions,
         pending_review_months=pending_review_months,
+        pending_review_month_href=pending_review_month_href,
         last_snapshot_date=last_snapshot_date,
         last_price_update=last_price_update,
         last_price_update_display=last_price_update_display,
