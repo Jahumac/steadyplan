@@ -290,6 +290,12 @@ def monthly_review():
             "current": current,
             "pct": progress_to_goal(current, target) * 100,
         }
+    related_goals_href = (
+        url_for("goals.goals")
+        if goal_data
+        else url_for("goals.goals", mode="create", focus="first_goal")
+    )
+    related_goals_text = "Review goals" if goal_data else "Create your first goal"
 
     # Budget vs contributions comparison — keyed by account_id so the template can
     # look up each row's budgeted amount inline with the Expected Contributions list.
@@ -366,6 +372,8 @@ def monthly_review():
         unconfirmed_count=unconfirmed_count,
         unupdated_manual_names=unupdated_manual_names,
         goal_data=goal_data,
+        related_goals_href=related_goals_href,
+        related_goals_text=related_goals_text,
         budget_comparison_map=budget_comparison_map,
         contribution_breakdowns=contribution_breakdowns,
         total_personal=total_personal,

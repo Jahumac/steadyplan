@@ -544,7 +544,7 @@
   <details class="monthly-review-related-details mt-075">
     <summary>Related checks</summary>
     <div class="badge-row mt-075">
-      <a href="/goals/" class="badge badge-meta">Review goals</a>
+      <a href="{{ related_goals_href }}" class="badge badge-meta">{{ related_goals_text }}</a>
       <a href="/budget/debts/" class="badge badge-meta">Review debts</a>
       <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit scenario estimate assumptions</a>
     </div>

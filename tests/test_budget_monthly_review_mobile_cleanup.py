@@ -157,7 +157,10 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert "Confirm contributions, update balances, then finish with your note." in html
     assert "log Premium Bonds if needed" not in html
     assert "Related checks" in html
-    assert "Review goals" in html
+    assert "Create your first goal" in html
+    assert "Review goals" not in html
+    assert 'href="/goals/?mode=create&amp;focus=first_goal" class="badge badge-meta">Create your first goal</a>' in html
+    assert 'href="/goals/" class="badge badge-meta">Review goals</a>' not in html
     assert "Review debts" in html
     assert "Edit scenario estimate assumptions" in html
     assert 'href="/settings/?mode=edit&amp;focus=scenario_estimate_assumptions"' in html
