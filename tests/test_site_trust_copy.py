@@ -111,10 +111,20 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Export scenario estimates to Excel (.xlsx) with per-account breakdowns." in readme
     assert 'Scenario estimates show "with fees" vs "without fees"' in readme
     assert "**Scenario estimates** — retirement scenario estimates with fee impact and scenario planner" in readme
+    assert 'Compare actual performance against an assumptions-based "on-plan" growth line.' in readme
+    assert "├── calculations.py        # Scenario estimates, returns, goal tracking, tax year logic" in readme
+    assert "│   ├── projections.py     # Retirement scenario estimate engine" in readme
+    assert "│   ├── export.py          # Excel export (scenario estimates + budget)" in readme
+    assert "![Scenario estimates](Screenshots/demo/projections_desktop.png)" in readme
     assert "### Retirement Projections" not in readme
     assert "Export projections to Excel (.xlsx) with per-account breakdowns." not in readme
     assert 'Projections show "with fees" vs "without fees"' not in readme
     assert "**Projections** — retirement projections with fee impact and scenario planner" not in readme
+    assert 'Compare actual performance against a projected "on-plan" growth line.' not in readme
+    assert "├── calculations.py        # Projections, returns, goal tracking, tax year logic" not in readme
+    assert "│   ├── projections.py     # Retirement projection engine" not in readme
+    assert "│   ├── export.py          # Excel export (projections + budget)" not in readme
+    assert "![Projections](Screenshots/demo/projections_desktop.png)" not in readme
     assert "- Scenario estimate: calculated outcome based on assumptions" in voice_and_copy
     assert "### Scenario estimates" in voice_and_copy
     assert "Scenario estimate certainty and disclaimers" in voice_and_copy
