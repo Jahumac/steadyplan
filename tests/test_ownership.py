@@ -424,6 +424,8 @@ def test_admin_delete_warning_uses_monthly_update_copy(app, client, make_user):
     assert "Deleting a user removes" in html
     assert "Monthly updates" in html
     assert "Monthly reviews" not in html
+    assert "For best coverage, download a per-user JSON export and create a whole-instance SQLite backup first." in html
+    assert "Download a JSON export and/or create a whole-instance SQLite backup first." not in html
 
 
 def test_admin_delete_requires_typing_username(app, client, make_user):

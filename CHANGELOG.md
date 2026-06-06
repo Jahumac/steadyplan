@@ -26,7 +26,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - SteadyPlan public website, install docs, and demo-data screenshots.
 - New primary Docker image: `ghcr.io/jahumac/steadyplan`.
-- User JSON backup/export in Settings and a hardened JSON restore flow (validate preview + explicit confirmation, transactional, current-user scoped).
+- User JSON export in Settings and a hardened JSON restore flow (validate preview + explicit confirmation, transactional, current-user scoped).
 - Overview Data Health panel (read-only) for stale/missing inputs.
 - Monthly Update workflow (lightweight check-in with notes, contribution confirm/skip, and month completion snapshot).
 - Manual account balance update workflow for regular use/monthly update.

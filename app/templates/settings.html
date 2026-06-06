@@ -467,7 +467,7 @@
     SteadyPlan does not send account balances, budgets, goals, or history to a cloud service. Optional live price lookup may send ticker symbols/identifiers to external price sources.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
-    JSON export is per-user. SQLite backups are whole-instance backups.
+    JSON export is a per-user safety copy. Whole-instance recovery still depends on backing up the full app data directory.
   </p>
   <div class="callout-box" style="margin-top:0.85rem;">
     <div style="font-weight:600;margin-bottom:0.35rem;">Backup and restore at a glance</div>
@@ -475,6 +475,7 @@
       <li><strong>Local SQLite database:</strong> the live SteadyPlan data store for this instance.</li>
       <li><strong>JSON export:</strong> portable, per-user, and useful before risky actions.</li>
       <li><strong>Whole-instance SQLite backup:</strong> database copy for all users, stored under <code>data/backups</code>.</li>
+      <li><strong>Whole app data directory backup:</strong> the real disaster-recovery copy, including <code>finance.db</code>, <code>secret_key.txt</code>, and <code>backups/</code>.</li>
       <li><strong>Restore validation:</strong> checks a JSON file without changing data.</li>
       <li><strong>Restore commit:</strong> replaces this user’s data only after confirmation.</li>
       <li><strong>Delete user data:</strong> removes this user’s finance data, not the login account.</li>
@@ -512,10 +513,10 @@
     Downloads a portable JSON export of this user's data only. Useful before risky actions like restore or delete.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
-    It does not include other users, server-level secrets, or whole-instance database backups. Keep the downloaded file private — it contains financial data.
+    It does not include other users, server-level secrets, or whole-instance app data. Keep the downloaded file private — it contains financial data.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
-    This export does not include your login password.
+    This export does not include your login password, and it is not a full disaster-recovery backup for the whole instance.
   </p>
 </section>
 

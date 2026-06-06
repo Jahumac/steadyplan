@@ -57,6 +57,26 @@ def test_docs_hub_and_backups_page_explain_automatic_pre_restore_backup():
     assert "download a per-user JSON export and create a whole-instance SQLite backup from Diagnostics" not in backups
 
 
+def test_backup_boundary_copy_distinguishes_json_exports_from_whole_instance_backups():
+    privacy = _read("docs/privacy.html")
+    readme = _read_readme()
+    changelog = _read_changelog()
+
+    assert "Per-user JSON exports are useful, portable safety copies for one user." in privacy
+    assert "They are not the same as a whole-instance appdata backup" in privacy
+    assert "Per-user JSON exports are useful, portable backups" not in privacy
+    assert "### JSON Export & Restore" in readme
+    assert "Download a user-scoped JSON export from **Settings**, and restore from that file" in readme
+    assert "validate a JSON export in Settings" in readme
+    assert "- JSON export and restore flow (done)." in readme
+    assert "### Backup & Restore (JSON)" not in readme
+    assert "Export a user-scoped JSON backup from **Settings**" not in readme
+    assert "validate a JSON backup in Settings" not in readme
+    assert "- JSON backup/export and restore flow (done)." not in readme
+    assert "User JSON export in Settings and a hardened JSON restore flow" in changelog
+    assert "User JSON backup/export in Settings and a hardened JSON restore flow" not in changelog
+
+
 def test_docs_and_install_pages_explain_safest_evaluation_path():
     docs_index = _read("docs/index.html")
     install = _read("docs/install.html")
