@@ -9,6 +9,19 @@ def test_overview_first_account_cta_targets_focused_accounts_wizard(app, client,
     assert "/accounts/?mode=create&focus=first_account" in html
 
 
+def test_accounts_empty_state_cta_targets_focused_accounts_wizard(app, client, make_user):
+    _, username, password = make_user(username="accounts-first-use-empty-state", password="password123")
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/accounts/")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'href="/accounts/?mode=create&amp;focus=first_account"' in html
+    assert 'href="/accounts/?mode=create"' not in html
+    assert "+ Add your first account" in html
+
+
 def test_accounts_first_use_focus_surfaces_calm_start_here_guidance(app, client, make_user):
     _, username, password = make_user(username="accounts-first-use-focus", password="password123")
 
