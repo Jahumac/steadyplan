@@ -23,12 +23,12 @@
     </div>
   </div>
   <div class="hero-strip">
-    {% call hero_stat('Today') %}<strong>£{{ '{:,.0f}'.format(metrics.total_current) }}</strong>{% endcall %}
-    {% call hero_stat('Monthly in') %}<strong>£{{ '{:,.0f}'.format(metrics.total_monthly) }}</strong>{% endcall %}
-    {% call hero_stat('Years to go') %}<strong>{{ '{:.0f}'.format(metrics.years_remaining) }}</strong>{% endcall %}
-    {% call hero_stat('Your age') %}<strong>{{ metrics.current_age | int }} → {{ metrics.retirement_age }}</strong>{% endcall %}
+    {% call hero_stat('Current total') %}<strong>£{{ '{:,.0f}'.format(metrics.total_current) }}</strong>{% endcall %}
+    {% call hero_stat('Monthly contributions') %}<strong>£{{ '{:,.0f}'.format(metrics.total_monthly) }}</strong>{% endcall %}
+    {% call hero_stat('Years to retirement') %}<strong>{{ '{:.0f}'.format(metrics.years_remaining) }}</strong>{% endcall %}
+    {% call hero_stat('Current age → retirement') %}<strong>{{ metrics.current_age | int }} → {{ metrics.retirement_age }}</strong>{% endcall %}
     {% if metrics.total_fee_impact > 0 %}
-    {% call hero_stat('Cost of fees') %}<strong class="text-danger">£{{ '{:,.0f}'.format(metrics.total_fee_impact) }}</strong>{% endcall %}
+    {% call hero_stat('Cost of fees over time') %}<strong class="text-danger">£{{ '{:,.0f}'.format(metrics.total_fee_impact) }}</strong>{% endcall %}
     {% endif %}
   </div>
 </section>
