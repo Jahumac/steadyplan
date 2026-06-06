@@ -667,7 +667,8 @@ def test_monthly_review_manual_balances_shortcut_matches_section_anchor_and_head
     assert "Update manual balances" not in html
     assert "No manual balances to update this month." in html
     assert "No manual balances to review this month." not in html
-    assert "If you add any manually valued accounts, they’ll appear here for your monthly update." in html
+    assert "If you add any manually valued accounts in <a href=\"/accounts/?mode=create&amp;focus=first_account\" class=\"link-accent\">Accounts</a>, they’ll appear here for your monthly update." in html
+    assert "If you add any manually valued accounts, they’ll appear here for your monthly update." not in html
     assert "If you add any manually valued accounts, they’ll appear here." not in html
     assert "If you add any manual-value accounts, they’ll appear here." not in html
     assert "No manual accounts to review this month." not in html

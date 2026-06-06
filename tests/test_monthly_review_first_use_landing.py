@@ -80,6 +80,19 @@ def test_monthly_review_first_use_focus_summarises_logged_isa_allowance_changes(
     assert f"No ISA allowance changes logged in {tax_year_label}." not in html
 
 
+def test_monthly_review_first_use_focus_links_empty_balance_setup_to_first_account(app, client, make_user):
+    _, username, password = make_user(username="monthly-review-first-use-empty-balances", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/monthly-review/?focus=first_update&month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "No account balances need checking yet." in html
+    assert 'href="/accounts/?mode=create&amp;focus=first_account" class="link-accent">Add an account</a> when you have something real to track.' in html
+    assert "No account balances need checking yet. Add an account when you have something real to track." not in html
+
+
 def test_monthly_review_without_first_use_focus_keeps_regular_hero(app, client, make_user):
     uid, username, password = make_user(username="monthly-review-regular-hero", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
