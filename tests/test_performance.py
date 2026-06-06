@@ -116,7 +116,10 @@ def test_performance_helper_uses_sentence_case_monthly_update_copy(app, client, 
     assert "This compares your recorded portfolio value with an assumptions-based comparison line. It is a planning guide, not a guarantee." in html
     assert "Actual vs. comparison line" in html
     assert ">Comparison line<" in html
-    assert "of this comparison line" in html
+    assert "this comparison line" in html
+    assert "ahead</span> of this comparison line" not in html
+    assert "behind</span> this comparison line" not in html
+    assert "above</span> this comparison line" in html or "below</span> this comparison line" in html
     assert "Portfolio performance chart showing actual vs comparison line" in html
     assert "plan line stays meaningful" not in html
     assert "where you should be" not in html

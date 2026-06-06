@@ -22,9 +22,9 @@
           {% set vs_plan = current_value - plan_value %}
           <p class="hero-subtitle">
             {% if vs_plan >= 0 %}
-              <span class="perf-positive">£{{ '{:,.0f}'.format(vs_plan) }} ahead</span> of this comparison line
+              <span class="perf-positive">£{{ '{:,.0f}'.format(vs_plan) }} above</span> this comparison line
             {% else %}
-              <span class="perf-negative">£{{ '{:,.0f}'.format(vs_plan | abs) }} behind</span> this comparison line
+              <span class="perf-negative">£{{ '{:,.0f}'.format(vs_plan | abs) }} below</span> this comparison line
             {% endif %}
             · {{ daily_labels | length }} days tracked
           </p>
