@@ -104,12 +104,18 @@ def test_performance_helper_uses_sentence_case_monthly_update_copy(app, client, 
     assert "monthly update due date" not in html
     assert "salary day shifted for weekends" not in html
     assert "includes tax relief, Lifetime ISA bonus, employer match" in html
-    assert "This compares your recorded portfolio value with an assumptions-based plan line. It is a planning guide, not a guarantee." in html
-    assert "Actual vs. plan line" in html
-    assert ">Plan line<" in html
-    assert "of this plan line" in html
+    assert "This compares your recorded portfolio value with an assumptions-based comparison line. It is a planning guide, not a guarantee." in html
+    assert "Actual vs. comparison line" in html
+    assert ">Comparison line<" in html
+    assert "of this comparison line" in html
+    assert "Portfolio performance chart showing actual vs comparison line" in html
+    assert "plan line stays meaningful" not in html
     assert "where you should be" not in html
     assert ">Should be<" not in html
+    assert "Actual vs. plan line" not in html
+    assert ">Plan line<" not in html
+    assert "of this plan line" not in html
+    assert "Portfolio performance chart showing actual vs plan" not in html
     assert "review yearly to see whether you're still broadly on track with this plan." in html
     assert "review yearly to see if you're still on track." not in html
     assert ">Lifetime ISA bonus<" in html

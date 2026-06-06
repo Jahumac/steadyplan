@@ -22,13 +22,13 @@
           {% set vs_plan = current_value - plan_value %}
           <p class="hero-subtitle">
             {% if vs_plan >= 0 %}
-              <span class="perf-positive">£{{ '{:,.0f}'.format(vs_plan) }} ahead</span> of this plan line
+              <span class="perf-positive">£{{ '{:,.0f}'.format(vs_plan) }} ahead</span> of this comparison line
             {% else %}
-              <span class="perf-negative">£{{ '{:,.0f}'.format(vs_plan | abs) }} behind</span> this plan line
+              <span class="perf-negative">£{{ '{:,.0f}'.format(vs_plan | abs) }} behind</span> this comparison line
             {% endif %}
             · {{ daily_labels | length }} days tracked
           </p>
-          <p class="helper-text m-0">This compares your recorded portfolio value with an assumptions-based plan line. It is a planning guide, not a guarantee.</p>
+          <p class="helper-text m-0">This compares your recorded portfolio value with an assumptions-based comparison line. It is a planning guide, not a guarantee.</p>
         {% else %}
           <p class="hero-subtitle">{{ daily_labels | length }} days tracked</p>
         {% endif %}
@@ -48,7 +48,7 @@
     {% call hero_stat('Portfolio now') %}<strong>£{{ '{:,.0f}'.format(current_value) }}</strong>{% endcall %}
     {% if plan_value is not none %}
     {% set vs_plan = current_value - plan_value %}
-    {% call hero_stat('Plan line') %}<strong>£{{ '{:,.0f}'.format(plan_value) }}</strong>{% endcall %}
+    {% call hero_stat('Comparison line') %}<strong>£{{ '{:,.0f}'.format(plan_value) }}</strong>{% endcall %}
     {% call hero_stat('Difference') %}
       <strong class="{% if vs_plan >= 0 %}perf-positive{% else %}perf-negative{% endif %}">
         {% if vs_plan >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(vs_plan) }}
@@ -78,7 +78,7 @@
 <section class="card mb-1">
   <div class="section-header mb-075 perf-chart-header">
     <div>
-      <p class="chart-label m-0">Actual vs. plan line</p>
+      <p class="chart-label m-0">Actual vs. comparison line</p>
       <div class="perf-legend mt-025">
         <span class="perf-legend-dot" style="background:var(--accent-2)"></span><span>Actual</span>
         <span class="perf-legend-dot" style="background:var(--muted);opacity:0.6"></span><span>Plan ({{ assumed_rate_pct }}%)</span>
@@ -93,7 +93,7 @@
   </div>
 
   <div class="chart-wrap chart-wrap-md">
-    <canvas id="perfChart" role="img" aria-label="Portfolio performance chart showing actual vs plan"
+    <canvas id="perfChart" role="img" aria-label="Portfolio performance chart showing actual vs comparison line"
       data-labels='{{ daily_labels | tojson | safe }}'
       data-actual='{{ daily_actual | tojson | safe }}'
       data-plan='{{ daily_plan | tojson | safe }}'
@@ -106,7 +106,7 @@
       <p id="perfStatActual" class="m-0 text-bold">—</p>
     </div>
     <div class="perf-stat">
-      <p class="text-muted m-0 text-sm-2">Plan line</p>
+      <p class="text-muted m-0 text-sm-2">Comparison line</p>
       <p id="perfStatPlan" class="m-0 text-bold">—</p>
     </div>
     <div class="perf-stat">
@@ -186,7 +186,7 @@
       <tr>
         <th>Account</th>
         <th class="num">Actual</th>
-        <th class="num">Plan line</th>
+        <th class="num">Comparison line</th>
         <th class="num">Difference</th>
       </tr>
     </thead>
@@ -212,7 +212,7 @@
   </table>
   </div>
   <p class="helper-text mt-075">
-    Transfers between accounts will usually show as “behind” in the account you withdrew from and “ahead” in the account you moved into. For Cash ISA, you can log withdrawals/transfers on the account page so the plan line stays meaningful.
+    Transfers between accounts will usually show as “behind” in the account you withdrew from and “ahead” in the account you moved into. For Cash ISA, you can log withdrawals/transfers on the account page so the comparison line stays meaningful.
   </p>
 </section>
 {% elif account_perf %}
