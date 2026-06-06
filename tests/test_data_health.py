@@ -178,6 +178,18 @@ def test_empty_user_gets_warnings(app, new_user_id):
         assert "No assumptions set up" in titles
         assert "No budget entries for the current month" in titles
 
+        accounts_warning = next(item for item in summary["health_items"] if item["title"] == "No accounts set up")
+        assert accounts_warning["explanation"] == "You haven't added any financial accounts yet. Add one so totals, progress, and scenario estimates can start from real balances."
+        assert "Add accounts to track your finances" not in accounts_warning["explanation"]
+
+        goals_warning = next(item for item in summary["health_items"] if item["title"] == "No financial goals set")
+        assert goals_warning["explanation"] == "You haven't set any financial goals yet. Set one so progress and goal timing estimates have something to measure against."
+        assert "Define your goals to track progress" not in goals_warning["explanation"]
+
+        budget_warning = next(item for item in summary["health_items"] if item["title"] == "No budget entries for the current month")
+        assert budget_warning["explanation"] == f"You have no budget entries for {date.today().strftime('%Y-%m')}. Add some so Monthly Update has a plan to compare against."
+        assert "track your spending" not in budget_warning["explanation"]
+
 def test_healthy_user_gets_good_status(app, setup_healthy_user):
     with app.app_context():
         summary = build_data_health_summary(setup_healthy_user)
@@ -257,7 +269,8 @@ def test_missing_assumptions_warning_uses_scenario_estimate_wording(app, new_use
     with app.app_context():
         summary = build_data_health_summary(new_user_id)
         assumptions_warning = next(item for item in summary["health_items"] if item["title"] == "No assumptions set up")
-        assert assumptions_warning["explanation"] == "You haven't set up your financial assumptions yet. These help SteadyPlan build scenario estimates that match your plans."
+        assert assumptions_warning["explanation"] == "You haven't set up your financial assumptions yet. These help scenario estimates and goal timing estimates reflect your plans."
+        assert "build scenario estimates that match your plans" not in assumptions_warning["explanation"]
         assert "crucial for projections" not in assumptions_warning["explanation"]
 
 
@@ -294,6 +307,7 @@ def test_no_goals_warning_uses_first_goal_cta(app, setup_stale_account_user):
         goal_warning = next(item for item in summary["health_items"] if item["title"] == "No financial goals set")
         assert goal_warning["link"] == "/goals/?mode=create&focus=first_goal"
         assert goal_warning["cta_text"] == "Set your first goal"
+        assert goal_warning["explanation"] == "You haven't set any financial goals yet. Set one so progress and goal timing estimates have something to measure against."
 
 
 def test_default_assumptions_produces_info(app, setup_default_assumptions_user):
@@ -308,6 +322,9 @@ def test_no_budget_entry_produces_info(app, setup_no_budget_entry_user):
         summary = build_data_health_summary(setup_no_budget_entry_user)
         titles = [item["title"] for item in summary["health_items"]]
         assert "No budget entries for the current month" in titles
+        budget_warning = next(item for item in summary["health_items"] if item["title"] == "No budget entries for the current month")
+        assert budget_warning["explanation"] == f"You have no budget entries for {date.today().strftime('%Y-%m')}. Add some so Monthly Update has a plan to compare against."
+        assert "track your spending" not in budget_warning["explanation"]
 
 def test_data_health_summary_no_db_writes(app, setup_healthy_user):
     with app.app_context():
@@ -487,9 +504,11 @@ def test_overview_data_health_missing_goal_uses_first_goal_cta(app, client, make
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "No financial goals set" in html
+    assert "Set one so progress and goal timing estimates have something to measure against." in html
     assert 'href="/goals/?mode=create&amp;focus=first_goal"' in html
     assert "Set your first goal" in html
     assert ">Review<" not in html
+    assert "Define your goals to track progress." not in html
 
 
 def test_overview_data_health_goal_target_warning_uses_review_goals_cta(app, client, make_user):
