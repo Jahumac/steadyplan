@@ -569,6 +569,11 @@ def import_csv():
         db_only=db_only,
         csv_headers=csv_headers,
         month_key=selected_month_key,
+        monthly_update_href=(
+            url_for("monthly_review.monthly_review", month=selected_month_key)
+            if selected_month_key
+            else url_for("monthly_review.monthly_review")
+        ),
         active_page="monthly_review",
     )
 
