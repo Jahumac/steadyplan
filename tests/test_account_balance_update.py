@@ -102,8 +102,8 @@ def test_account_detail_open_monthly_update_uses_monthly_review_return_when_pres
 
         with get_connection() as conn:
             aid = conn.execute(
-                "INSERT INTO accounts (user_id, name, current_value, is_active, valuation_mode) "
-                "VALUES (?, 'Cash', 10, 1, 'manual')",
+                "INSERT INTO accounts (user_id, name, current_value, monthly_contribution, is_active, valuation_mode) "
+                "VALUES (?, 'Cash', 10, 25, 1, 'manual')",
                 (uid,),
             ).lastrowid
             conn.commit()
@@ -115,6 +115,33 @@ def test_account_detail_open_monthly_update_uses_monthly_review_return_when_pres
     assert 'name="next" value="/monthly-review/?month=2026-04"' in html
     assert 'href="/monthly-review/?month=2026-04">Open monthly update</a>' in html
     assert 'href="/monthly-review/?month=' in html
+    assert 'href="/budget/?month=2026-04">Edit in Budget</a>' in html
+    assert 'href="/budget/?month=2026-04">Budget</a>' in html
+    assert f'href="/budget/?month={date.today().strftime("%Y-%m")}">Edit in Budget</a>' not in html
+
+
+def test_account_detail_budget_links_fall_back_to_current_month_without_monthly_review_return(app, client, make_user):
+    uid, username, password = make_user(username="bal-detail-budget-fallback", password="password123")
+    _login(client, username, password)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            aid = conn.execute(
+                "INSERT INTO accounts (user_id, name, current_value, monthly_contribution, is_active, valuation_mode) "
+                "VALUES (?, 'Cash', 10, 25, 1, 'manual')",
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+    resp = client.get(f"/accounts/{aid}?mode=view")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    current_month = date.today().strftime("%Y-%m")
+    assert f'href="/budget/?month={current_month}">Edit in Budget</a>' in html
+    assert f'href="/budget/?month={current_month}">Budget</a>' in html
 
 
 def test_invalid_balance_rejected_without_changes(app, client, make_user):
