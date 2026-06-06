@@ -70,7 +70,8 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert body.count("Scenario estimate assumptions") == 3
     assert "<summary>Assumptions</summary>" not in body
     assert '<p class="eyebrow">Assumptions</p>' not in body
-    assert "What drives this scenario estimate" in body
+    assert body.count("Assumptions used here") == 2
+    assert "What drives this scenario estimate" not in body
     assert "What drives this projection" not in body
     assert "What drives this estimate" not in body
     assert "Scenario estimates for each account at age 60" in body
@@ -82,11 +83,14 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Portfolio Trajectory" not in body
     assert "How your portfolio could grow year by year under your current assumptions and contributions." not in body
     assert "aria-label=\"Projected portfolio growth chart\"" not in body
-    assert "Adjust inputs to see how the scenario estimate changes. Nothing here is saved unless you save changes elsewhere." in body
+    assert body.count("Try a different scenario") == 2
+    assert "Try different retirement ages, growth rates, or monthly contributions to see how the scenario estimate changes. Nothing here is saved unless you save changes elsewhere." in body
     assert "Add rows like “from age 50 → £600/mo”. This saves to your plan and updates your scenario estimate." in body
     assert "Add rows like “from age 50 → £600/mo”. This saves to your plan and updates projections." not in body
+    assert "What If?" not in body
     assert "Adjust inputs to see how the projection changes. Nothing here is saved unless you save changes elsewhere." not in body
     assert "Adjust inputs to see how the projection estimate changes. Nothing here is saved unless you save changes elsewhere." not in body
+    assert "Adjust inputs to see how the scenario estimate changes. Nothing here is saved unless you save changes elsewhere." not in body
     assert "Adjust inputs to see how the scenario estimate changes. Nothing is saved unless you explicitly save it elsewhere." not in body
     assert "Inflation" in body
     assert "Retirement timing" in body
