@@ -81,6 +81,8 @@ def test_docs_and_install_pages_explain_safest_evaluation_path():
     docs_index = _read("docs/index.html")
     install = _read("docs/install.html")
     reverse_proxy = _read("docs/reverse-proxy.html")
+    tour = _read("tour.html")
+    readme = _read_readme()
 
     assert "Safest way to evaluate" in docs_index
     assert "Start with the <a href=\"../tour.html\">product tour</a> and docs." in docs_index
@@ -88,6 +90,12 @@ def test_docs_and_install_pages_explain_safest_evaluation_path():
     assert "Evaluate safely first" in install
     assert "Best order: screenshots/tour first, then your own local install on LAN or VPN if you want hands-on evaluation." in install
     assert "Public demo access can be useful, but only as a deliberate read-only setup by the host" in install
+    assert "Safest order: use the tour and docs first, then your own local install on LAN or VPN for hands-on evaluation." in tour
+    assert "A public read-only demo is optional if a host deliberately enables one." in tour
+    assert "Safest order: screenshots/tour first, then your own local install on LAN or VPN for hands-on evaluation." in readme
+    assert "the host can offer `/demo` (or the “Open read-only demo” button on the login page) for sample-data evaluation." in readme
+    assert "Treat that public demo as an explicit host choice, not the default trust path for real use." in readme
+    assert "Then you can use `/demo` (or the “Try demo” button on the login page)." not in readme
     assert "FORWARDED_ALLOW_IPS" in reverse_proxy
     assert "advanced choice rather than the default" in reverse_proxy
 
