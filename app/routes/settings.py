@@ -750,6 +750,7 @@ def settings():
     page_mode = request.args.get("mode", "view")
     focus = request.args.get("focus", "")
     focus_planning_dates = page_mode == "edit" and focus == "planning_dates"
+    focus_scenario_estimate_assumptions = page_mode == "edit" and focus == "scenario_estimate_assumptions"
     computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
     diagnostics = None
     if page_mode == "diagnostics":
@@ -869,6 +870,7 @@ def settings():
             computed_age=computed_age,
             diagnostics=diagnostics,
             focus_planning_dates=focus_planning_dates,
+            focus_scenario_estimate_assumptions=focus_scenario_estimate_assumptions,
             page_mode=page_mode,
         ),
     )

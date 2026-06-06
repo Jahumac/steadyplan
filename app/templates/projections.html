@@ -38,9 +38,9 @@
     <div style="flex:1; min-width:220px;">
       <strong>About this scenario estimate</strong>
       <p class="helper-text m-0">Built from your current account balances (today) and your monthly contribution settings, then grown using your assumptions (growth rate, retirement timing, fees and tax/allowance settings).</p>
-      <p class="helper-text m-0">This is a scenario estimate based on assumptions, not a promise. You can change your <a href="/settings/?mode=edit" class="link-accent">scenario estimate assumptions</a>.</p>
+      <p class="helper-text m-0">This is a scenario estimate based on assumptions, not a promise. You can change your <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="link-accent">scenario estimate assumptions</a>.</p>
     </div>
-    <a href="/settings/?mode=edit" class="badge badge-meta">Edit scenario estimate assumptions</a>
+    <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit scenario estimate assumptions</a>
   </div>
 </section>
 
@@ -75,7 +75,7 @@
       <p class="eyebrow">Scenario estimate assumptions</p>
       <h2>Assumptions used here</h2>
     </div>
-    <a class="badge badge-sm" href="/settings/?mode=edit">Edit scenario estimate assumptions</a>
+    <a class="badge badge-sm" href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit scenario estimate assumptions</a>
   </div>
   {% for item in assumption_summary.items_list %}
     <div class="mb-075">
@@ -95,7 +95,7 @@
         <p class="eyebrow">Scenario estimate assumptions</p>
         <h2>Assumptions used here</h2>
       </div>
-      <a class="badge badge-sm" href="/settings/?mode=edit">Edit scenario estimate assumptions</a>
+      <a class="badge badge-sm" href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit scenario estimate assumptions</a>
     </div>
     {% for item in assumption_summary.items_list %}
       <div class="mb-075">
