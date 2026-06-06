@@ -447,7 +447,7 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Taxable Accounts</p>
-      <h3>GIA Annual Limits</h3>
+      <h3>Taxable account limits</h3>
     </div>
     <div class="badge-row">
       <button class="badge badge-sm" data-allowance-toggle="dividend-log-panel">+ Log dividend</button>
@@ -462,7 +462,7 @@
       <h2>Dividend Allowance</h2>
       <p>£{{ '{:,.0f}'.format(dividend_used) }} <span class="allowance-denom">/ £{{ '{:,.0f}'.format(dividend_allowance) }}</span></p>
       <div class="progress" role="progressbar" aria-valuenow="{{ (dividend_progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="Dividend allowance used"><div class="progress-bar" data-pct="{{ (dividend_progress * 100)|round(1) }}"></div></div>
-      <small>{{ '{:.1f}'.format(dividend_progress * 100) }}% used · GIA accounts only</small>
+      <small>{{ '{:.1f}'.format(dividend_progress * 100) }}% used · taxable accounts only</small>
     </div>
     <div class="card allowance-card">
       <h2>CGT Exemption</h2>
@@ -483,7 +483,7 @@
   <div id="dividend-log-panel" class="allowance-log-panel hidden">
     <div class="allowance-log-panel-inner">
       <p class="eyebrow mt-0">Record dividend income</p>
-      <p class="helper-text mb-075">Dividends inside an ISA or pension are tax-free and not counted here — only log GIA dividends.</p>
+      <p class="helper-text mb-075">Dividends inside an ISA or pension are tax-free and not counted here — only log dividends from taxable accounts.</p>
       {% if taxable_accounts %}
       <form method="post" action="/allowance/dividend/add" class="settings-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -514,7 +514,7 @@
         </div>
       </form>
       {% else %}
-      <p class="helper-text">No taxable (GIA) accounts found. <a href="/accounts/?mode=create" class="link-accent">Create one</a> first.</p>
+      <p class="helper-text">No taxable investment accounts found. <a href="/accounts/?mode=create" class="link-accent">Create one</a> first.</p>
       {% endif %}
       {% if dividend_records %}
       <p class="eyebrow" style="margin:1rem 0 0.4rem;">Recorded Dividends ({{ tax_year }})</p>
@@ -547,7 +547,7 @@
   <div id="cgt-log-panel" class="allowance-log-panel hidden">
     <div class="allowance-log-panel-inner">
       <p class="eyebrow mt-0">Record a CGT disposal</p>
-      <p class="helper-text mb-075">Log asset sales from your GIA to track gains and losses against the £{{ '{:,.0f}'.format(cgt_annual_exemption) }} annual exemption. Gains inside an ISA or pension are not subject to CGT.</p>
+      <p class="helper-text mb-075">Log asset sales from your taxable accounts to track gains and losses against the £{{ '{:,.0f}'.format(cgt_annual_exemption) }} annual exemption. Gains inside an ISA or pension are not subject to CGT.</p>
       {% if cgt_disposals %}
       {% if cgt_over_exemption > 0 %}
       <p class="helper-text mb-075 text-danger">⚠ Net gains exceed the annual exemption by <strong>£{{ '{:,.2f}'.format(cgt_over_exemption) }}</strong>. Declare this on your Self Assessment.</p>

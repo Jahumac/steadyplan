@@ -169,6 +169,39 @@ def test_allowance_page_uses_plain_monthly_column_helper_copy(app, client, make_
     assert 'href="/accounts/" class="link-accent">monthly contribution setting</a>' in html
 
 
+def test_allowance_page_uses_plain_taxable_account_labels(app, client, make_user):
+    uid, username, password = make_user(username="allowance-taxable-account-labels", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE assumptions
+                SET date_of_birth = '1990-01-01', salary_day = 1, dividend_allowance = 500
+                WHERE user_id = ?
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/allowance/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "<h3>Taxable account limits</h3>" in html
+    assert "GIA Annual Limits" not in html
+    assert "taxable accounts only" in html
+    assert "GIA accounts only" not in html
+    assert "only log dividends from taxable accounts." in html
+    assert "only log GIA dividends." not in html
+    assert "No taxable investment accounts found." in html
+    assert "No taxable (GIA) accounts found." not in html
+    assert "Log asset sales from your taxable accounts" in html
+    assert "Log asset sales from your GIA" not in html
+
+
 def test_allowance_page_shows_cash_flow_adjustment_column_for_explicit_isa_effects(app, client, make_user):
     uid, username, password = make_user(username="allowance-cash-flow-adjustment", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
