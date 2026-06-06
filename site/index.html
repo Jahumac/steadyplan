@@ -13,8 +13,8 @@
   <header class="site-header">
     <div class="container">
       <div class="site-header-inner">
-        <a class="brand" href="./index.html">
-          <span class="brand-dot" aria-hidden="true"></span>
+        <a class="brand" href="./index.html" aria-current="page">
+          <img class="brand-icon" src="./assets/brand/steadyplan-app-icon-1024.png" alt="SteadyPlan icon">
           <span>SteadyPlan</span>
         </a>
         <nav class="nav" aria-label="Primary">
@@ -30,137 +30,194 @@
   </header>
 
   <main>
-    <section class="hero hero-home">
+    <section class="hero-minimal">
       <div class="container">
-        <div class="hero-shell card">
-          <div class="hero-copy">
-            <h1 class="hero-title">Long-term money planning, without the noise.</h1>
-            <p class="lead lead-strong">
-              SteadyPlan helps you understand where you are, what is available now, what is locked for later, and how today’s choices connect to your long-term future.
+        <div class="hero-split">
+          <div>
+            <div class="logo-lockup" aria-label="SteadyPlan">
+              <img class="logo-icon" src="./assets/brand/steadyplan-app-icon-1024.png" alt="SteadyPlan icon">
+              <div class="logo-word">SteadyPlan</div>
+            </div>
+            <h1 class="hero-headline">Long-term money planning, without the noise.</h1>
+            <p class="hero-support">
+              SteadyPlan helps you understand where you are today, what is available now, what is locked for later, and how today's decisions shape your future.
             </p>
-            <div class="cta-row hero-actions">
+            <div class="hero-actions-min" aria-label="Primary actions">
               <a class="btn btn-primary" href="./tour.html">Explore the tour</a>
               <a class="btn" href="./roadmap.html">View the roadmap</a>
-              <a class="link-quiet" href="./docs/index.html">Read the docs</a>
+              <a class="btn-link" href="./docs/index.html">Documentation</a>
             </div>
-            <p class="note compact-note">SteadyPlan is self-hosted. No pricing, no public signup, no promised launch dates. Not financial advice.</p>
+            <p class="disclaimer">Self-hosted today. Not financial advice.</p>
+          </div>
+
+          <div class="window" aria-label="SteadyPlan product preview">
+            <div class="window-bar">
+              <span class="preview-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+              <span class="window-title">SteadyPlan preview</span>
+              <span>Demo data</span>
+            </div>
+            <div class="window-body">
+              <img class="screenshot" src="./assets/screenshots/overview.png" alt="SteadyPlan overview screenshot (demo data)">
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="section">
+    <section class="section-min">
       <div class="container">
-        <div class="section-intro">
-          <p class="kicker">Product truth</p>
-          <h2>Planning and visibility — on your own server</h2>
-        </div>
-        <div class="grid-3">
-          <div class="card pad tile feature-card">
-            <h3>See where you stand</h3>
-            <p>Bring accounts, debts, savings, investments and goals into one view you control.</p>
+        <h2 class="section-title">Three core benefits</h2>
+        <div class="benefits">
+          <div class="benefit">
+            <div class="benefit-dot" aria-hidden="true"></div>
+            <div>
+              <h3>Know where you stand</h3>
+              <p>A clearer picture of accounts, debts, savings, investments and goals — in one place you control.</p>
+            </div>
           </div>
-          <div class="card pad tile feature-card">
-            <h3>Separate accessible vs locked money</h3>
-            <p>Keep “available now” distinct from money reserved for later or tied to long-term plans.</p>
+          <div class="benefit">
+            <div class="benefit-dot" aria-hidden="true"></div>
+            <div>
+              <h3>See the whole picture</h3>
+              <p>Separate accessible money from money that is locked for later, and keep the story honest.</p>
+            </div>
           </div>
-          <div class="card pad tile feature-card">
-            <h3>Connect monthly choices to long-term scenarios</h3>
-            <p>Use assumptions-based projections to explore trade-offs without pretending the future is guaranteed.</p>
-          </div>
-        </div>
-        <div class="grid-3" style="margin-top:0.95rem;">
-          <div class="card pad tile feature-card">
-            <h3>Keep control of your data</h3>
-            <p>Local SQLite database on your own hardware. No cloud sync.</p>
-          </div>
-          <div class="card pad tile feature-card">
-            <h3>Back up and restore</h3>
-            <p>Clear guidance for exports, backups, and what “restore” actually means.</p>
-          </div>
-          <div class="card pad tile feature-card">
-            <h3>Use it from any device</h3>
-            <p>Run SteadyPlan on a server/NAS/desktop and access it from desktop, tablet, or phone browser. PWA where supported.</p>
+          <div class="benefit">
+            <div class="benefit-dot" aria-hidden="true"></div>
+            <div>
+              <h3>Plan with confidence</h3>
+              <p>Use assumptions-based scenarios to explore trade-offs without financial hype or false certainty.</p>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="section section-contrast">
+    <section class="section-min">
       <div class="container">
-        <div class="section-intro">
-          <p class="kicker">Visual preview</p>
-          <h2>A small look inside</h2>
-          <p class="muted prose">A single screenshot, presented as a preview — not as proof. Screenshot uses demo data and may not reflect every detail of the current UI.</p>
-        </div>
-        <div class="preview-frame">
-          <div class="preview-chrome" aria-label="Preview chrome">
-            <span class="preview-dots" aria-hidden="true"><span></span><span></span><span></span></span>
-            <span>SteadyPlan (demo)</span>
-            <span class="muted">Self-hosted</span>
-          </div>
-          <div class="preview-body">
-            <img class="screenshot" src="./assets/screenshots/overview.png" alt="SteadyPlan preview screenshot (demo data)">
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="container">
+        <h2 class="section-title">Product showcase</h2>
         <div class="two-col">
-          <div class="card pad">
-            <p class="kicker">Hosted roadmap</p>
-            <h2>Hosted SteadyPlan is being explored — not launched.</h2>
-            <p class="muted prose">
-              The current focus is making SteadyPlan clearer, safer, easier to use, and more trustworthy before any hosted option is offered.
+          <div>
+            <p class="hero-support">
+              SteadyPlan is a planning and visibility tool. It is not a bank, broker, adviser, or trading platform. It is designed for long-term thinking and practical clarity.
             </p>
-            <div class="cta-row">
-              <a class="btn btn-primary" href="./roadmap.html">See the roadmap</a>
+            <p class="disclaimer">Projections are scenario estimates based on your inputs. No promises.</p>
+          </div>
+          <div class="window" aria-label="Scenario estimates preview">
+            <div class="window-bar">
+              <span class="preview-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+              <span class="window-title">Scenario estimates</span>
+              <span>Demo data</span>
+            </div>
+            <div class="window-body">
+              <img class="screenshot" src="./assets/screenshots/projections.png" alt="SteadyPlan projections screenshot (demo data)">
             </div>
           </div>
-          <div class="card pad">
-            <p class="kicker">Founder</p>
-            <h2>Built because facing the numbers matters</h2>
-            <p class="muted prose">
-              SteadyPlan started as a personal project after serious money stress and debt/IVA. Visibility was the turning point: one place to see the full picture without handing everything to another platform.
+        </div>
+        <div class="divider"></div>
+        <div class="two-col">
+          <div class="window" aria-label="Data ownership preview">
+            <div class="window-bar">
+              <span class="preview-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+              <span class="window-title">Data ownership</span>
+              <span>Demo data</span>
+            </div>
+            <div class="window-body">
+              <img class="screenshot" src="./assets/screenshots/data-privacy.png" alt="SteadyPlan settings and data ownership screenshot (demo data)">
+            </div>
+          </div>
+          <div>
+            <p class="hero-support">
+              Your data stays on your server. SteadyPlan uses a local SQLite database and keeps backup and restore guidance close to the product so trust is explicit.
             </p>
-            <p class="muted prose">Shared as a self-hosted/open-source project for people who value local control, repairability, and backups.</p>
-            <div class="cta-row">
+            <div class="hero-actions-min">
+              <a class="btn-link" href="./docs/privacy.html">Privacy</a>
+              <a class="btn-link" href="./docs/backups.html">Backups</a>
+              <a class="btn-link" href="./docs/install.html">Install</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-min">
+      <div class="container">
+        <h2 class="section-title">Why SteadyPlan exists</h2>
+        <div class="two-col">
+          <div>
+            <p class="hero-support">
+              SteadyPlan started as a personal project after serious money stress and debt/IVA. The turning point was visibility: facing the numbers clearly instead of avoiding them.
+            </p>
+            <p class="hero-support">
+              It is shared because self-hosting and open-source tools matter — systems you can inspect, repair, back up, and own.
+            </p>
+            <div class="hero-actions-min">
               <a class="btn" href="./about.html">Read the story</a>
+              <a class="btn-link" href="./roadmap.html">See what’s next</a>
+            </div>
+          </div>
+          <div class="window" aria-label="SteadyPlan identity">
+            <div class="window-bar">
+              <span class="preview-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+              <span class="window-title">SteadyPlan</span>
+              <span>Self-hosted</span>
+            </div>
+            <div class="window-body" style="display:flex; align-items:center; justify-content:center; padding:1.35rem 0;">
+              <img src="./assets/brand/steadyplan-mark.png" alt="SteadyPlan logo mark" style="max-width:420px; width:80%; opacity:0.95;">
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="section">
+    <section class="section-min">
       <div class="container">
-        <div class="section-intro">
-          <p class="kicker">What it is / what it is not</p>
-          <h2>Clear boundaries, plain language</h2>
-        </div>
-        <div class="two-col">
-          <div class="card pad">
-            <h3>What it is</h3>
-            <ul class="plain-list muted">
-              <li>A self-hosted planning and visibility tool</li>
-              <li>Built for UK-focused long-term planning</li>
-              <li>Useful for accounts, debts, savings, investments, goals and retirement scenarios</li>
-              <li>Designed around calm clarity</li>
-            </ul>
+        <h2 class="section-title">Roadmap preview</h2>
+        <div class="roadmap-mini">
+          <div class="window">
+            <div class="window-bar">
+              <span class="window-title">Available now</span>
+              <span>Self-hosted</span>
+            </div>
+            <div class="window-body">
+              <ul>
+                <li>UK-focused accounts and planning</li>
+                <li>Goals, holdings, and retirement scenarios</li>
+                <li>Privacy-first local data model</li>
+              </ul>
+            </div>
           </div>
-          <div class="card pad">
-            <h3>What it is not</h3>
-            <ul class="plain-list muted">
-              <li>Not a bank</li>
-              <li>Not a broker</li>
-              <li>Not financial advice</li>
-              <li>Not a trading or get-rich-quick product</li>
-              <li>Not a paid hosted SaaS product yet</li>
-            </ul>
+          <div class="window">
+            <div class="window-bar">
+              <span class="window-title">Improving next</span>
+              <span>Clarity</span>
+            </div>
+            <div class="window-body">
+              <ul>
+                <li>Clearer onboarding and first-use</li>
+                <li>Better mobile and PWA experience</li>
+                <li>More polished public tour</li>
+              </ul>
+            </div>
+          </div>
+          <div class="window">
+            <div class="window-bar">
+              <span class="window-title">Exploring later</span>
+              <span>No timeline</span>
+            </div>
+            <div class="window-body">
+              <ul>
+                <li>Hosted SteadyPlan (exploratory)</li>
+                <li>Invite-only private testing</li>
+                <li>Only if safety and supportability are good enough</li>
+              </ul>
+            </div>
           </div>
         </div>
+        <div class="hero-actions-min">
+          <a class="btn btn-primary" href="./roadmap.html">View the full roadmap</a>
+        </div>
+        <p class="disclaimer">Hosted SteadyPlan is being explored — not launched.</p>
       </div>
     </section>
   </main>
@@ -169,10 +226,9 @@
     <div class="container">
       <div class="footer-row">
         <div class="footer-links small">
-          <a href="./index.html">Home</a><span class="dot-sep">·</span>
+          <a href="./docs/index.html">Documentation</a><span class="dot-sep">·</span>
           <a href="./tour.html">Tour</a><span class="dot-sep">·</span>
           <a href="./roadmap.html">Roadmap</a><span class="dot-sep">·</span>
-          <a href="./docs/index.html">Docs</a><span class="dot-sep">·</span>
           <a href="./about.html">About</a><span class="dot-sep">·</span>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>

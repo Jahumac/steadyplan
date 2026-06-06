@@ -14,7 +14,7 @@
     <div class="container">
       <div class="site-header-inner">
         <a class="brand" href="./index.html">
-          <span class="brand-dot" aria-hidden="true"></span>
+          <img class="brand-icon" src="./assets/brand/steadyplan-app-icon-1024.png" alt="SteadyPlan icon">
           <span>SteadyPlan</span>
         </a>
         <nav class="nav" aria-label="Primary">
@@ -29,92 +29,111 @@
     </div>
   </header>
 
-  <main class="section">
-    <div class="container">
-      <div class="card pad page-shell-wide">
-        <p class="page-crumbs"><a href="./index.html">Home</a> <span class="muted">/</span> <a href="./roadmap.html" aria-current="page">Roadmap</a></p>
-        <div class="page-intro">
-          <h1>Roadmap</h1>
-          <p class="lead lead-strong">SteadyPlan is self-hosted today. The focus is clarity, safety, trust, and usability.</p>
-          <p class="lead">This roadmap is intentionally grounded. It describes what exists, what is improving next, and what is only being explored later.</p>
-        </div>
-        <p class="note compact-note">Hosted SteadyPlan is being explored — not launched. No timeline yet. Only if data safety, supportability, and trust are good enough.</p>
-
-        <div class="hr"></div>
-
-        <div class="two-col">
-          <div class="card pad roadmap-card inner-card">
-            <p class="kicker">Available now</p>
-            <h2>Self-hosted app</h2>
-            <ul class="plain-list muted">
-              <li>UK-focused accounts and long-term planning</li>
-              <li>Goals, budget, holdings, retirement scenarios</li>
-              <li>Privacy-first local data model (SQLite)</li>
-              <li>Backup/export/restore guidance</li>
-            </ul>
-          </div>
-          <div class="card pad roadmap-card inner-card">
-            <p class="kicker">Improving next</p>
-            <h2>Clarity and first-use</h2>
-            <ul class="plain-list muted">
-              <li>Clearer onboarding</li>
-              <li>Better mobile/PWA experience</li>
-              <li>Simpler first-use journey</li>
-              <li>Better demo/sample walkthrough</li>
-              <li>More polished public tour</li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="hr"></div>
-
-        <div class="card pad roadmap-card inner-card">
-          <p class="kicker">Exploring later</p>
-          <h2>Hosted SteadyPlan (only if it becomes supportable)</h2>
-          <ul class="plain-list muted">
-            <li>Invite-only private testing</li>
-            <li>No timeline yet</li>
-            <li>Only if data safety, supportability, and trust are good enough</li>
-          </ul>
-        </div>
-
-        <div class="hr"></div>
-
-        <div class="two-col">
-          <div class="card pad inner-card">
-            <p class="kicker">Start</p>
-            <h2>Where to go next</h2>
-            <p class="muted prose">If you want to evaluate SteadyPlan, start with the tour and the on-site docs.</p>
-            <div class="cta-row">
-              <a class="btn btn-primary" href="./tour.html">Explore the tour</a>
-              <a class="btn" href="./docs/index.html">Read the docs</a>
+  <main>
+    <section class="hero-minimal">
+      <div class="container">
+        <div class="hero-split">
+          <div>
+            <div class="logo-lockup">
+              <img class="logo-icon" src="./assets/brand/steadyplan-app-icon-1024.png" alt="SteadyPlan icon">
+              <div class="logo-word">SteadyPlan</div>
             </div>
-          </div>
-          <div class="card pad inner-card">
-            <p class="kicker">GitHub</p>
-            <h2>Engineering home</h2>
-            <p class="muted prose">GitHub is the source, releases, and issue tracker. The website is the human-readable guide.</p>
-            <p class="muted" style="margin:0;">
-              <a href="https://github.com/Jahumac/steadyplan/releases" target="_blank" rel="noopener noreferrer">Releases</a>
-              <span class="muted"> · </span>
-              <a href="https://github.com/Jahumac/steadyplan/issues" target="_blank" rel="noopener noreferrer">Issues</a>
-              <span class="muted"> · </span>
-              <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">Source</a>
+            <h1 class="hero-headline">Roadmap</h1>
+            <p class="hero-support">
+              SteadyPlan is self-hosted today. The focus is clarity, safety, trust, and usability.
             </p>
+            <p class="hero-support">
+              This roadmap describes direction, not promises. It shows what exists, what is improving next, and what is only being explored later.
+            </p>
+            <p class="disclaimer">Hosted SteadyPlan is being explored — not launched. No timeline yet.</p>
+          </div>
+          <div class="window">
+            <div class="window-bar">
+              <span class="preview-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+              <span class="window-title">Product direction</span>
+              <span>Grounded</span>
+            </div>
+            <div class="window-body">
+              <ul>
+                <li>Clearer first-use and onboarding</li>
+                <li>Better mobile and PWA experience</li>
+                <li>More polished public tour and docs</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
+
+    <section class="section-min">
+      <div class="container">
+        <h2 class="section-title">Three horizons</h2>
+        <div class="roadmap-mini">
+          <div class="window">
+            <div class="window-bar">
+              <span class="window-title">Available now</span>
+              <span>Self-hosted</span>
+            </div>
+            <div class="window-body">
+              <ul>
+                <li>UK-focused accounts and planning</li>
+                <li>Goals, holdings, and retirement scenarios</li>
+                <li>Privacy-first local data model (SQLite)</li>
+                <li>Backup/export/restore guidance</li>
+              </ul>
+            </div>
+          </div>
+          <div class="window">
+            <div class="window-bar">
+              <span class="window-title">Improving next</span>
+              <span>Clarity</span>
+            </div>
+            <div class="window-body">
+              <ul>
+                <li>Clearer onboarding</li>
+                <li>Simpler first-use journey</li>
+                <li>Better demo/sample walkthrough</li>
+                <li>More polished public tour</li>
+              </ul>
+            </div>
+          </div>
+          <div class="window">
+            <div class="window-bar">
+              <span class="window-title">Exploring later</span>
+              <span>No timeline</span>
+            </div>
+            <div class="window-body">
+              <ul>
+                <li>Hosted SteadyPlan (exploratory)</li>
+                <li>Invite-only private testing</li>
+                <li>Only if safety and supportability are good enough</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <p class="disclaimer">Hosted SteadyPlan is only considered if it becomes clear, safe, trustworthy, and supportable.</p>
+      </div>
+    </section>
+
+    <section class="section-min">
+      <div class="container">
+        <h2 class="section-title">Where to go next</h2>
+        <div class="hero-actions-min">
+          <a class="btn btn-primary" href="./tour.html">Explore the tour</a>
+          <a class="btn" href="./docs/index.html">Documentation</a>
+          <a class="btn-link" href="./about.html">Why it exists</a>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="footer">
     <div class="container">
       <div class="footer-row">
         <div class="footer-links small">
-          <a href="./index.html">Home</a><span class="dot-sep">·</span>
+          <a href="./docs/index.html">Documentation</a><span class="dot-sep">·</span>
           <a href="./tour.html">Tour</a><span class="dot-sep">·</span>
           <a href="./roadmap.html">Roadmap</a><span class="dot-sep">·</span>
-          <a href="./docs/index.html">Docs</a><span class="dot-sep">·</span>
           <a href="./about.html">About</a><span class="dot-sep">·</span>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
