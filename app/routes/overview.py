@@ -364,6 +364,7 @@ def overview():
 
     # ── Monthly review nudge ──────────────────────────────────────────────────
     current_month_key = now_date.strftime("%Y-%m")
+    current_monthly_update_href = f"/monthly-review/?month={current_month_key}"
     review_nudge = False
     review_ready = None
     payday_banner = salary_day and is_salary_day(now_date, salary_day)
@@ -589,7 +590,7 @@ def overview():
                 "title": "Monthly update is ready",
                 "body": "A quick check keeps your history honest. Update balances, confirm contributions, then SteadyPlan can draw the next little line.",
                 "cta_text": "Open monthly update",
-                "cta_href": "/monthly-review/",
+                "cta_href": current_monthly_update_href,
             }
         elif not goals_data:
             next_action = {
@@ -621,7 +622,7 @@ def overview():
     show_next_action = bool(
         next_action
         and next_action_href not in alert_cta_targets
-        and not (review_nudge and next_action_href == "/monthly-review/")
+        and not (review_nudge and next_action_href == current_monthly_update_href)
         and not (payday_banner and next_action_href == "/budget/")
     )
 
@@ -696,6 +697,7 @@ def overview():
         next_update_display=next_update_display,
         review_nudge=review_nudge,
         review_ready=review_ready,
+        current_monthly_update_href=current_monthly_update_href,
         payday_banner=payday_banner,
         alerts=alerts,
         next_action=next_action,
