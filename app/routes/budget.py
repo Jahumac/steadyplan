@@ -261,6 +261,16 @@ def budget():
 
     sections, summary = _build_monthly_data(month_key, uid)
     db_sections = fetch_budget_sections(uid)
+    all_items = fetch_budget_items(uid)
+    has_budget_basics = any(
+        (not item.get("linked_account_id")) or float(item.get("default_amount") or 0) > 0
+        for item in all_items
+    )
+    budget_setup_href = (
+        url_for("budget.budget_items_view", mode="create", focus="first_budget", month=month_key)
+        if not has_budget_basics
+        else url_for("budget.budget_items_view", month=month_key)
+    )
     _income_sec = next((s for s in db_sections if "income" in s["key"].lower()), None)
     income_key = _income_sec["key"] if _income_sec else (db_sections[0]["key"] if db_sections else "income")
 
@@ -275,6 +285,8 @@ def budget():
         income_key=income_key,
         month_strip=month_strip,
         is_inherited=is_inherited,
+        budget_setup_href=budget_setup_href,
+        has_budget_basics=has_budget_basics,
         active_page="budget",
     )
 
@@ -942,6 +954,11 @@ def budget_items_view():
 
     # Track the month the user came from so "Back to Budget" returns there.
     month_key = valid_month_key(request.args.get("month")) or _default_month_key()
+    budget_create_href = (
+        url_for("budget.budget_items_view", mode="create", focus="first_budget", month=month_key)
+        if not has_budget_basics
+        else url_for("budget.budget_items_view", mode="create", month=month_key)
+    )
 
     return render_template(
         "budget_items.html",
@@ -955,6 +972,8 @@ def budget_items_view():
         month_label=_month_label(month_key),
         first_budget_focus=first_budget_focus,
         first_budget_section=first_budget_section,
+        has_budget_basics=has_budget_basics,
+        budget_create_href=budget_create_href,
     )
 
 

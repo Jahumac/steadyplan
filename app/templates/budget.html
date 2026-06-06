@@ -32,7 +32,7 @@
       {% if is_inherited %}
       <p class="hero-subtitle">Carried forward from your last saved month — tweak any number to make this month your own.</p>
       {% elif sections | length == 0 %}
-      <p class="hero-subtitle">Your budget is a blank canvas. Hit <a href="/budget/items/" class="link-accent">Edit Budget</a> to add items to track.</p>
+      <p class="hero-subtitle">Your budget is a blank canvas. Hit <a href="{{ budget_setup_href }}" class="link-accent">Edit Budget</a> to add items to track.</p>
       {% else %}
       <p class="hero-subtitle">Here's where the money goes — this view keeps score so you don't have to.</p>
       {% endif %}
@@ -41,7 +41,7 @@
     <div class="hero-actions-col budget-hero-actions">
       <div class="badge-row budget-hero-badges">
         <a class="badge" href="#{{ income_key | replace('_', '-') }}">Jump to budget</a>
-        <a class="badge badge-meta" href="/budget/items/?month={{ month_key }}">Budget Setup</a>
+        <a class="badge badge-meta" href="{{ budget_setup_href }}">Budget Setup</a>
       </div>
       <div class="budget-month-nav budget-hero-month-nav">
         <button type="button" class="badge badge-meta budget-prev-month" title="Previous month">◀</button>
@@ -154,7 +154,7 @@
     {% endfor %}
   </div>
   {% else %}
-  <p class="helper-text">Nothing here yet — <a href="/budget/items/?mode=create&section={{ section.key }}&month={{ month_key }}" class="link-accent">+ Add item</a></p>
+  <p class="helper-text">Nothing here yet — <a href="{{ url_for('budget.budget_items_view', mode='create', section=section.key, month=month_key, focus='first_budget') if not has_budget_basics else url_for('budget.budget_items_view', mode='create', section=section.key, month=month_key) }}" class="link-accent">+ Add item</a></p>
   {% endif %}
 </section>
 {% endfor %}
