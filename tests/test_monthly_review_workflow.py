@@ -209,7 +209,8 @@ def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_u
     assert 'href="#manual-balances"' in html
     assert "/accounts/balances/bulk" not in html
     assert 'href="/accounts/' in html
-    assert 'href="/goals/' in html
+    assert 'href="/goals/?mode=create&amp;focus=first_goal"' in html
+    assert 'href="/goals/" class="badge badge-meta">Review goals</a>' not in html
     assert 'href="/budget/debts/' in html
     assert 'href="/settings/?mode=edit&amp;focus=scenario_estimate_assumptions"' in html
     assert 'href="/settings/?mode=edit"' not in html
@@ -239,6 +240,31 @@ def test_monthly_review_notes_persist(app, client, make_user):
         review = fetch_monthly_review(month_key, uid)
         assert review is not None
         assert review["notes"] == note
+
+
+def test_monthly_review_related_goals_link_stays_review_focused_when_goal_exists(app, client, make_user):
+    uid, username, password = make_user(username="mr-related-goals", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Emergency fund', 5000, '', '', '')
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/monthly-review/?month=2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'href="/goals/" class="badge badge-meta">Review goals</a>' in html
+    assert 'href="/goals/?mode=create&amp;focus=first_goal" class="badge badge-meta">Create your first goal</a>' not in html
 
 
 def test_mark_complete_does_not_wipe_saved_monthly_review_notes(app, client, make_user):
