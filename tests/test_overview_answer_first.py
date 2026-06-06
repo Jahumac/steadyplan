@@ -381,12 +381,15 @@ def test_overview_goal_progress_glance_statuses_cover_on_track_behind_and_ahead(
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert ">On track<" in html
+    assert ">On course<" in html
     assert "est. " in html
-    assert ">Behind<" in html
+    assert ">Needs attention<" in html
     assert "set a monthly contribution" in html
-    assert ">Ahead<" in html
+    assert ">Reached<" in html
     assert "target already reached" in html
+    assert ">On track<" not in html
+    assert ">Behind<" not in html
+    assert ">Ahead<" not in html
 
 
 
