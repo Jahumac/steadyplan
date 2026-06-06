@@ -1,7 +1,7 @@
 <section class="subnav-mobile-family subnav-mobile-family-budget" aria-label="Budget views">
   <div class="subnav-mobile-panel badge-row" aria-label="Budget views">
     {% if active_key != 'budget' %}<a class="badge" href="/budget/">Budget Plan</a>{% endif %}
-    {% if active_key != 'monthly_review' %}<a class="badge" href="/monthly-review/">Monthly Update</a>{% endif %}
+    {% if active_key != 'monthly_review' %}<a class="badge" href="{{ monthly_update_href | default('/monthly-review/') }}">Monthly Update</a>{% endif %}
     {% if active_key != 'allowance' %}<a class="badge" href="/allowance/">Allowances</a>{% endif %}
     {% if active_key != 'trend' %}<a class="badge" href="/budget/trend/">Trend</a>{% endif %}
     {% if active_key != 'debts' %}<a class="badge" href="/budget/debts/">Debts</a>{% endif %}
@@ -9,7 +9,7 @@
 </section>
 <nav class="subnav subnav-page subnav-budget">
   <a href="/budget/"{% if active_key == 'budget' %} class="subnav-active"{% endif %}>Budget Plan</a>
-  <a href="/monthly-review/"{% if active_key == 'monthly_review' %} class="subnav-active"{% endif %}>Monthly Update</a>
+  <a href="{{ monthly_update_href | default('/monthly-review/') }}"{% if active_key == 'monthly_review' %} class="subnav-active"{% endif %}>Monthly Update</a>
   <a href="/allowance/"{% if active_key == 'allowance' %} class="subnav-active"{% endif %}>Allowances</a>
   <a href="/budget/trend/"{% if active_key == 'trend' %} class="subnav-active"{% endif %}>Trend</a>
   <a href="/budget/debts/"{% if active_key == 'debts' %} class="subnav-active"{% endif %}>Debts</a>

@@ -1,3 +1,6 @@
+from datetime import date
+
+
 def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup(app, client, make_user):
     _, username, password = make_user(username="budget-mobile", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
@@ -5,10 +8,12 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     resp = client.get("/budget/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
+    month_key = date.today().strftime("%Y-%m")
 
     assert '<section class="subnav-mobile-family subnav-mobile-family-budget" aria-label="Budget views">' in html
     assert 'class="subnav-mobile-current"' not in html
-    assert 'href="/monthly-review/">Monthly Update</a>' in html
+    assert html.count(f'href="/monthly-review/?month={month_key}">Monthly Update</a>') == 2
+    assert 'href="/monthly-review/">Monthly Update</a>' not in html
     assert '<section class="budget-year-strip month-strip-mobile-hidden month-accent-' in html
     assert 'class="hero-actions-col budget-hero-actions"' in html
     assert 'class="badge-row budget-hero-badges"' in html
