@@ -1132,7 +1132,7 @@ def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, m
     assert "Your next nudge" not in html
     assert "Status:" not in html
     review_nudge = html.split('<section class="card review-nudge mb-1">', 1)[1].split('</section>', 1)[0]
-    assert f'href="/monthly-review/?month={month_key}"' in review_nudge
+    assert f'href="/monthly-review/?month={month_key}#expected-contributions"' in review_nudge
     assert 'href="/monthly-review/" class="badge badge-primary-action">Open monthly update</a>' not in review_nudge
     assert 'shelly-inline-icon' not in review_nudge
 
@@ -1231,6 +1231,7 @@ def test_overview_missed_review_alert_uses_specific_monthly_update_cta(app, clie
     html = resp.get_data(as_text=True)
 
     assert '/monthly-review/?month=' in html
+    assert '#expected-contributions' in html
     assert "monthly update is still open" in html
     assert "balances, contributions, and tracking stay based on confirmed numbers" in html
     assert "monthly update hasn't been completed yet" not in html
@@ -1283,6 +1284,7 @@ def test_overview_unconfirmed_contributions_alert_uses_monthly_update_cta(app, c
     assert "Open monthly update" in html
     assert "Check contributions" not in html
     assert '/monthly-review/?month=' in html
+    assert '#expected-contributions' in html
 
 
 def test_overview_missing_salary_day_uses_single_settings_nudge(app, client, make_user):
