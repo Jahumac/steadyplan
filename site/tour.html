@@ -6,8 +6,18 @@
   <title>SteadyPlan · Product tour</title>
   <meta name="description" content="Feature-led tour of SteadyPlan. See what each area does and why it exists, with grounded notes and demo screenshots.">
   <link rel="canonical" href="https://steadyplan.co.uk/tour">
-  <meta name="color-scheme" content="light">
-  <link rel="stylesheet" href="./assets/site.css?v=20260607a">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      try {
+        var storedTheme = localStorage.getItem('steadyplan-site-theme');
+        if (storedTheme === 'dark' || storedTheme === 'light') {
+          document.documentElement.dataset.theme = storedTheme;
+        }
+      } catch (error) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="./assets/site.css?v=20260607c">
 </head>
 <body>
   <header class="site-header">
@@ -24,6 +34,7 @@
           <a href="./docs/index.html">Docs</a>
           <a href="./about.html">About</a>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
         </nav>
       </div>
     </div>
@@ -229,5 +240,6 @@
   </dialog>
 
   <script src="./assets/lightbox.js?v=20260607a"></script>
+  <script src="./assets/theme-toggle.js?v=20260607a"></script>
 </body>
 </html>

@@ -6,8 +6,18 @@
   <title>SteadyPlan Docs · Install</title>
   <meta name="description" content="Install SteadyPlan on Docker or Unraid: persist /app/data, first run, where data lives, and how to update safely.">
   <link rel="canonical" href="https://steadyplan.co.uk/docs/install">
-  <meta name="color-scheme" content="light">
-  <link rel="stylesheet" href="../assets/site.css?v=20260606">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    (function () {
+      try {
+        var storedTheme = localStorage.getItem('steadyplan-site-theme');
+        if (storedTheme === 'dark' || storedTheme === 'light') {
+          document.documentElement.dataset.theme = storedTheme;
+        }
+      } catch (error) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="../assets/site.css?v=20260607c">
 </head>
 <body>
   <header class="site-header">
@@ -24,6 +34,7 @@
           <a href="./index.html">Docs</a>
           <a href="../about.html">About</a>
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
         </nav>
       </div>
     </div>
@@ -165,5 +176,6 @@ docker restart steadyplan</pre>
       </div>
     </div>
   </footer>
+  <script src="../assets/theme-toggle.js?v=20260607a"></script>
 </body>
 </html>
