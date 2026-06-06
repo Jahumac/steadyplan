@@ -1132,6 +1132,8 @@ def test_overview_review_due_does_not_repeat_monthly_update_nudge(app, client, m
     assert "Your next nudge" not in html
     assert "Status:" not in html
     review_nudge = html.split('<section class="card review-nudge mb-1">', 1)[1].split('</section>', 1)[0]
+    assert f'href="/monthly-review/?month={month_key}"' in review_nudge
+    assert 'href="/monthly-review/" class="badge badge-primary-action">Open monthly update</a>' not in review_nudge
     assert 'shelly-inline-icon' not in review_nudge
 
 
