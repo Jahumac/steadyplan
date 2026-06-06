@@ -5,7 +5,7 @@
 
 <nav class="subnav subnav-page">
   <a href="/budget/">Budget Plan</a>
-  <a href="/monthly-review/" class="subnav-active">Monthly Update</a>
+  <a href="{{ monthly_update_href }}" class="subnav-active">Monthly Update</a>
 </nav>
 
 <section class="card highlight mb-1">
@@ -15,7 +15,7 @@
       <h2 class="hero-value">{{ platform_label }} Import</h2>
       <p class="hero-subtitle">Matched your CSV against existing holdings. Review what's below, tick the ones you want, and confirm.</p>
     </div>
-    <a href="{% if month_key %}/monthly-review/?month={{ month_key }}{% else %}/monthly-review/{% endif %}" class="badge">Cancel</a>
+    <a href="{{ monthly_update_href }}" class="badge">Cancel</a>
   </div>
   <div class="hero-strip">
     {% call hero_stat('Matched') %}<strong>{{ matched | length }}</strong>{% endcall %}
@@ -121,7 +121,7 @@
 
       <div class="import-confirm-bar">
         <button type="submit" class="badge badge-primary-action">Apply Selected Updates</button>
-        <a href="{% if month_key %}/monthly-review/?month={{ month_key }}{% else %}/monthly-review/{% endif %}" class="badge">Cancel</a>
+        <a href="{{ monthly_update_href }}" class="badge">Cancel</a>
       </div>
 
     {% else %}

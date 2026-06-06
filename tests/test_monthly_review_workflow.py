@@ -459,6 +459,12 @@ def test_csv_import_preserves_selected_month_in_session(app, client, make_user):
     with client.session_transaction() as sess:
         assert sess.get("csv_import", {}).get("month_key") == prev_month
 
+    html = resp.get_data(as_text=True)
+    assert f'href="/monthly-review/?month={prev_month}" class="subnav-active">Monthly Update</a>' in html
+    assert html.count(f'href="/monthly-review/?month={prev_month}" class="badge">Cancel</a>') == 2
+    assert 'href="/monthly-review/" class="subnav-active">Monthly Update</a>' not in html
+    assert 'href="/monthly-review/" class="badge">Cancel</a>' not in html
+
 
 def test_confirm_import_marks_holdings_updated_on_selected_previous_month(app, client, make_user):
     from datetime import date
