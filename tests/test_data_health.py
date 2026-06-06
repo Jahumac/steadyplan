@@ -370,12 +370,18 @@ def test_settings_explains_backup_restore_scope_at_a_glance(app, client, make_us
     assert "the live SteadyPlan data store" in html
     assert "JSON export" in html
     assert "portable, per-user, and useful before risky actions" in html
+    assert "Whole app data directory backup" in html
+    assert "the real disaster-recovery copy" in html
+    assert "secret_key.txt" in html
     assert "Restore validation" in html
     assert "checks a JSON file without changing data" in html
     assert "Restore commit" in html
     assert "replaces this user’s data only after confirmation" in html
     assert "Delete user data" in html
     assert "removes this user’s finance data, not the login account" in html
+    assert "JSON export is a per-user safety copy" in html
+    assert "This export does not include your login password, and it is not a full disaster-recovery backup for the whole instance." in html
+    assert "JSON export is per-user. SQLite backups are whole-instance backups." not in html
 
 
 def test_overview_data_health_quiet_when_no_warnings(app, client, make_user):

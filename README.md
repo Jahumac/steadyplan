@@ -49,8 +49,8 @@ It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, 
 ### Accounts & Holdings
 Track any combination of investment accounts: Stocks & Shares ISA, Cash ISA, Lifetime ISA, SIPP, Workplace Pension, GIA, and more. Each account can be valued manually (enter a balance) or built up from individual holdings with live price lookups via Twelve Data and Yahoo Finance (with automatic FX conversion for USD/EUR holdings).
 
-### Backup & Restore (JSON)
-Export a user-scoped JSON backup from **Settings**, and restore from a backup via a two-step flow: validate/dry-run preview first, then explicit confirmation to replace your data for the current user only.
+### JSON Export & Restore
+Download a user-scoped JSON export from **Settings**, and restore from that file via a two-step flow: validate/dry-run preview first, then explicit confirmation to replace your data for the current user only.
 
 ### Broker CSV Import
 Import holdings directly from your broker's CSV export. Supported platforms:
@@ -148,7 +148,7 @@ Suggested simple routine for self-hosters:
 
 - Back up the `data/` volume on a schedule (NAS snapshot, rsync, borg, etc.).
 - Periodically download a JSON export for an additional “belt and braces” copy.
-- Before relying on backups, do a restore drill: validate a JSON backup in Settings, and (separately) restore a copy of `data/` into a test container.
+- Before relying on backups, do a restore drill: validate a JSON export in Settings, and (separately) restore a copy of `data/` into a test container.
 
 ---
 
@@ -327,7 +327,7 @@ data/
 ## Roadmap
 
 - Read‑only demo mode for public try‑outs (done).
-- JSON backup/export and restore flow (done).
+- JSON export and restore flow (done).
 - Overview Data Health panel (done).
 - Monthly Update workflow and manual balance updates (done).
 - Better offline experience: cached read‑only views with clear “offline” indicators.
