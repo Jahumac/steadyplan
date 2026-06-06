@@ -93,6 +93,30 @@ def test_account_detail_balance_panel_uses_open_monthly_update_cta(app, client, 
     assert 'Monthly Review entries' not in html
 
 
+def test_account_detail_open_monthly_update_uses_monthly_review_return_when_present(app, client, make_user):
+    uid, username, password = make_user(username="bal-detail-next", password="password123")
+    _login(client, username, password)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            aid = conn.execute(
+                "INSERT INTO accounts (user_id, name, current_value, is_active, valuation_mode) "
+                "VALUES (?, 'Cash', 10, 1, 'manual')",
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+    resp = client.get(f"/accounts/{aid}?mode=view&next=%2Fmonthly-review%2F%3Fmonth%3D2026-04")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'name="next" value="/monthly-review/?month=2026-04"' in html
+    assert 'href="/monthly-review/?month=2026-04">Open monthly update</a>' in html
+    assert 'href="/monthly-review/?month=' in html
+
+
 def test_invalid_balance_rejected_without_changes(app, client, make_user):
     uid, username, password = make_user(username="bal-invalid", password="password123")
     _login(client, username, password)
