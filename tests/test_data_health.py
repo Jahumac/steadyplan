@@ -266,15 +266,18 @@ def test_missing_goal_produces_warning(app, setup_missing_goal_user):
         summary = build_data_health_summary(setup_missing_goal_user)
         assert summary["overall_status"] == HEALTH_STATUS_WARNING
         titles = [item["title"] for item in summary["health_items"]]
-        assert "Some goals are missing a target amount" in titles
+        assert "Some goals need a target amount" in titles
+        assert "Some goals are missing a target amount" not in titles
 
 
 def test_missing_goal_warning_uses_review_goals_cta(app, setup_missing_goal_user):
     with app.app_context():
         summary = build_data_health_summary(setup_missing_goal_user)
-        goal_warning = next(item for item in summary["health_items"] if item["title"] == "Some goals are missing a target amount")
+        goal_warning = next(item for item in summary["health_items"] if item["title"] == "Some goals need a target amount")
         assert goal_warning["link"] == "/goals"
         assert goal_warning["cta_text"] == "Review goals"
+        assert goal_warning["explanation"] == "The following goals do not have a target amount yet: Vacation. Add one so progress and goal timing estimates stay meaningful."
+        assert "track progress effectively" not in goal_warning["explanation"]
 
 
 def test_no_goals_warning_uses_first_goal_cta(app, setup_stale_account_user):
@@ -524,10 +527,13 @@ def test_overview_data_health_goal_target_warning_uses_review_goals_cta(app, cli
     resp = client.get("/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-    assert "Some goals are missing a target amount" in html
+    assert "Some goals need a target amount" in html
+    assert "The following goals do not have a target amount yet: Emergency fund. Add one so progress and goal timing estimates stay meaningful." in html
     assert 'href="/goals"' in html
     assert "Review goals" in html
     assert ">Review<" not in html
+    assert "Some goals are missing a target amount" not in html
+    assert "track progress effectively" not in html
 
 
 
