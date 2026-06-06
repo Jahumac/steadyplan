@@ -570,7 +570,7 @@
         <form method="post" action="/accounts/{{ selected.id }}/balance" class="settings-form">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="month_key" value="{{ current_month_key }}">
-          {% if request.args.get('next') %}<input type="hidden" name="next" value="{{ request.args.get('next') }}">{% endif %}
+          {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
           <div class="form-grid">
             <label class="form-field">
               <span class="form-label">Current balance (£)</span>
@@ -582,7 +582,7 @@
           </div>
           <div class="form-actions">
             <button type="submit" class="badge badge-primary-action">Update balance</button>
-            <a class="badge badge-meta" href="/monthly-review/?month={{ current_month_key }}">Open monthly update</a>
+            <a class="badge badge-meta" href="{{ monthly_update_return_href }}">Open monthly update</a>
           </div>
         </form>
       </section>

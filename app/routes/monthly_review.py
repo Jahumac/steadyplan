@@ -347,6 +347,7 @@ def monthly_review():
         "monthly_review.html",
         review=review,
         month_key=month_key,
+        monthly_review_href=url_for("monthly_review.monthly_review", month=month_key),
         month_label=month_label(month_key),
         current_month_num=mk_month,
         holdings_items=holdings_items,

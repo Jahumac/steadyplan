@@ -160,6 +160,12 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     # Tax-year logged contributions per account: sum of isa/pension contributions
     # logged against each account this UK tax year. Empty for taxable (GIA) accounts.
     today = date.today()
+    next_url = _safe_next_accounts(request.args.get("next"))
+    monthly_update_return_href = (
+        next_url
+        if next_url and next_url.startswith("/monthly-review")
+        else url_for("monthly_review.monthly_review", month=today.strftime("%Y-%m"))
+    )
     ty_start_iso = uk_tax_year_start(today).isoformat()
     ty_end_iso = uk_tax_year_end(today).isoformat()
     tax_year_logged = {}
@@ -507,6 +513,8 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         allocation_total=allocation_total,
         overrides=overrides,
         current_month_key=date.today().strftime("%Y-%m"),
+        next_url=next_url,
+        monthly_update_return_href=monthly_update_return_href,
         tax_year_logged=tax_year_logged,
         tax_year_label=uk_tax_year_label(today),
         tax_advantaged_ids=tax_advantaged_ids,
