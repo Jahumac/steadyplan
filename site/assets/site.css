@@ -865,6 +865,43 @@ pre {
   background: var(--bg-soft);
 }
 
+.screenshot-trigger {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.screenshot-trigger:hover {
+  text-decoration: none;
+}
+
+.screenshot-trigger .screenshot {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  cursor: zoom-in;
+}
+
+.screenshot-trigger:hover .screenshot,
+.screenshot-trigger:focus-visible .screenshot {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft);
+  border-color: var(--border-strong);
+}
+
+.screenshot-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.6rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.screenshot-hint::before {
+  content: "↗";
+  color: var(--muted-strong);
+}
+
 .screenshot-preview {
   height: 320px;
   object-fit: contain;
@@ -888,6 +925,98 @@ pre {
 
 .screenshot-meta a:hover {
   color: var(--text);
+}
+
+.lightbox {
+  width: min(96vw, 1200px);
+  max-height: min(92vh, 960px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: transparent;
+  box-shadow: var(--shadow);
+}
+
+.lightbox::backdrop {
+  background: rgba(11, 18, 32, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.lightbox-shell {
+  display: grid;
+  gap: 0.9rem;
+  background: var(--panel-2);
+  border-radius: 24px;
+  padding: 1rem;
+}
+
+.lightbox-bar {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.9rem;
+}
+
+.lightbox-title,
+.lightbox-caption {
+  margin: 0;
+}
+
+.lightbox-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.lightbox-caption {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.lightbox-close {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 999px;
+  min-height: 2.5rem;
+  padding: 0.6rem 0.95rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lightbox-image {
+  display: block;
+  width: 100%;
+  max-height: calc(92vh - 8.5rem);
+  object-fit: contain;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+}
+
+@media (max-width: 640px) {
+  .lightbox {
+    width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    border: 0;
+  }
+
+  .lightbox-shell {
+    min-height: 100vh;
+    border-radius: 0;
+    padding: 0.9rem;
+  }
+
+  .lightbox-bar {
+    align-items: center;
+  }
+
+  .lightbox-image {
+    max-height: calc(100vh - 7.75rem);
+  }
 }
 
 .tour-section {

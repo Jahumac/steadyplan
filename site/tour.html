@@ -7,7 +7,7 @@
   <meta name="description" content="Feature-led tour of SteadyPlan. See what each area does and why it exists, with grounded notes and demo screenshots.">
   <link rel="canonical" href="https://steadyplan.co.uk/tour">
   <meta name="color-scheme" content="light">
-  <link rel="stylesheet" href="./assets/site.css?v=20260606">
+  <link rel="stylesheet" href="./assets/site.css?v=20260607a">
 </head>
 <body>
   <header class="site-header">
@@ -56,7 +56,10 @@
               <span>Demo data</span>
             </div>
             <div class="window-body">
-              <img class="screenshot" src="./assets/screenshots/overview.png" alt="SteadyPlan overview screenshot (demo data)">
+              <a class="screenshot-trigger" href="./assets/screenshots/overview.png" data-lightbox-title="Overview" data-lightbox-caption="Demo data · Full screenshot" aria-label="Open full overview screenshot">
+                <img class="screenshot" src="./assets/screenshots/overview.png" alt="SteadyPlan overview screenshot (demo data)">
+                <span class="screenshot-hint">Click to expand</span>
+              </a>
             </div>
           </div>
         </div>
@@ -109,7 +112,10 @@
               <span>Demo data</span>
             </div>
             <div class="window-body">
-              <img class="screenshot" src="./assets/screenshots/projections.png" alt="SteadyPlan projections screenshot (demo data)">
+              <a class="screenshot-trigger" href="./assets/screenshots/projections.png" data-lightbox-title="Scenario estimates" data-lightbox-caption="Demo data · Full screenshot" aria-label="Open full scenario estimates screenshot">
+                <img class="screenshot" src="./assets/screenshots/projections.png" alt="SteadyPlan projections screenshot (demo data)">
+                <span class="screenshot-hint">Click to expand</span>
+              </a>
             </div>
           </div>
         </div>
@@ -122,7 +128,10 @@
               <span>Demo data</span>
             </div>
             <div class="window-body">
-              <img class="screenshot" src="./assets/screenshots/data-privacy.png" alt="SteadyPlan settings and data ownership screenshot (demo data)">
+              <a class="screenshot-trigger" href="./assets/screenshots/data-privacy.png" data-lightbox-title="Data ownership" data-lightbox-caption="Demo data · Full screenshot" aria-label="Open full data ownership screenshot">
+                <img class="screenshot" src="./assets/screenshots/data-privacy.png" alt="SteadyPlan settings and data ownership screenshot (demo data)">
+                <span class="screenshot-hint">Click to expand</span>
+              </a>
             </div>
           </div>
           <div>
@@ -190,10 +199,10 @@
       </div>
     </section>
   </main>
-          <a class="btn" href="./roadmap.html">View the roadmap</a>
-          <a class="link-quiet" href="./about.html">Why it exists</a>
-        </div>
-      </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-row">
         <div class="footer-links small">
           <a href="./docs/index.html">Documentation</a><span class="dot-sep">·</span>
           <a href="./tour.html">Tour</a><span class="dot-sep">·</span>
@@ -202,8 +211,23 @@
           <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
         <div class="small muted">Not financial advice.</div>
-          <a href="./roadmap.html">Roadmap</a><span class="dot-sep">·</span>
-          <a href="./docs/index.html">Docs</a><span class="dot-sep">·</span>
-          <a href="./about.html">About</a><span class="dot-sep">·</span>
-          <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <dialog class="lightbox" aria-label="Full screenshot preview">
+    <div class="lightbox-shell">
+      <div class="lightbox-bar">
+        <div>
+          <p class="lightbox-title">Screenshot</p>
+          <p class="lightbox-caption">Full preview</p>
         </div>
+        <button class="lightbox-close" type="button" aria-label="Close screenshot preview">Close</button>
+      </div>
+      <img class="lightbox-image" alt="">
+    </div>
+  </dialog>
+
+  <script src="./assets/lightbox.js?v=20260607a"></script>
+</body>
+</html>
