@@ -76,7 +76,20 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "What drives this scenario estimate" not in body
     assert "What drives this projection" not in body
     assert "What drives this estimate" not in body
-    assert "Scenario estimates for each account at age 60" in body
+    assert "Current total" in body
+    assert "Current Total" not in body
+    assert "Years to retirement" in body
+    assert "Years to Go" not in body
+    assert "Monthly contributions" in body
+    assert "Monthly Contributions" not in body
+    assert "Cost of fees over time" in body
+    assert "Lifetime Cost of Fees" not in body
+    assert body.count("Account scenario estimates at retirement") == 2
+    assert "Each account at retirement (scenario estimate)" not in body
+    assert "See how each account could look at age 60" in body
+    assert "Scenario estimates for each account at age 60" not in body
+    assert body.count("Change contributions by age") == 2
+    assert "Change contributions at certain ages" not in body
     assert "Projected values for each account at age 60" not in body
     assert "Projection estimates for each account at age 60" not in body
     assert body.count("Scenario estimate over time") == 2
