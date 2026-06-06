@@ -16,6 +16,8 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert 'class="badge badge-meta budget-prev-month"' in html
     assert 'class="badge badge-meta budget-next-month"' in html
     assert 'class="helper-text m-0 budget-hero-mobile-hint">Edit numbers below to shape this month.</p>' in html
+    assert 'href="/budget/items/?mode=create&amp;focus=first_budget&amp;month=' in html
+    assert 'href="/budget/items/?month=' not in html
     assert "Budget Setup" in html
     assert "Click any number and type to change it for this month." in html
     assert "Just click any number and type to change it for this month." not in html

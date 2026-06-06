@@ -37,8 +37,8 @@
 {# ── Edit toolbar ────────────────────────────────────────────────────────── #}
 <div class="budget-toolbar">
   <div class="badge-row">
-    <a class="badge" href="/budget/items/?mode=create&month={{ month_key }}">+ Add Item</a>
-    <a class="badge badge-sm" href="/budget/items/?mode=add_section&month={{ month_key }}">+ Add Section</a>
+    <a class="badge" href="{{ budget_create_href }}">+ Add Item</a>
+    <a class="badge badge-sm" href="{{ url_for('budget.budget_items_view', mode='add_section', month=month_key) }}">+ Add Section</a>
   </div>
 </div>
 
@@ -218,11 +218,11 @@
     {% endfor %}
   </div>
   <p class="budget-section-add-hint">
-    <a href="/budget/items/?mode=create&section={{ group.key }}&month={{ month_key }}" class="link-accent">+ Add another item</a> to {{ group.label | lower }}
+    <a href="{{ url_for('budget.budget_items_view', mode='create', section=group.key, month=month_key, focus='first_budget') if not has_budget_basics else url_for('budget.budget_items_view', mode='create', section=group.key, month=month_key) }}" class="link-accent">+ Add another item</a> to {{ group.label | lower }}
   </p>
   {% else %}
   <p class="budget-section-add-hint">
-    Nothing here yet — <a href="/budget/items/?mode=create&section={{ group.key }}&month={{ month_key }}" class="link-accent">+ Add an item</a> to start tracking it.
+    Nothing here yet — <a href="{{ url_for('budget.budget_items_view', mode='create', section=group.key, month=month_key, focus='first_budget') if not has_budget_basics else url_for('budget.budget_items_view', mode='create', section=group.key, month=month_key) }}" class="link-accent">+ Add an item</a> to start tracking it.
   </p>
   {% endif %}
 </section>
