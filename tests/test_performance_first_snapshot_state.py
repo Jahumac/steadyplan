@@ -7,6 +7,7 @@ def test_performance_page_keeps_zero_snapshot_empty_state(client, make_user):
     _, username, password = make_user(username="perf-zero-snapshots", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
+    month_key = date.today().strftime("%Y-%m")
     response = client.get("/performance/")
     assert response.status_code == 200
     body = response.get_data(as_text=True)
@@ -14,6 +15,8 @@ def test_performance_page_keeps_zero_snapshot_empty_state(client, make_user):
     assert "No data yet" in body
     assert "Complete two monthly updates to start seeing performance charts" in body
     assert "Open monthly update" in body
+    assert f'href="/monthly-review/?month={month_key}"' in body
+    assert 'href="/monthly-review/">Open monthly update</a>' not in body
     assert "One snapshot down" not in body
     assert "First baseline saved" not in body
 
