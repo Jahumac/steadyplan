@@ -36,7 +36,7 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
             health_items.append({
                 "status": HEALTH_STATUS_WARNING,
                 "title": "No accounts set up",
-                "explanation": "You haven't added any financial accounts yet. Add accounts to track your finances.",
+                "explanation": "You haven't added any financial accounts yet. Add one so totals, progress, and scenario estimates can start from real balances.",
                 "link": "/accounts/?mode=create",
                 "cta_text": "Add your first account",
             })
@@ -89,7 +89,7 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
             health_items.append({
                 "status": HEALTH_STATUS_WARNING,
                 "title": "No financial goals set",
-                "explanation": "You haven't set any financial goals yet. Define your goals to track progress.",
+                "explanation": "You haven't set any financial goals yet. Set one so progress and goal timing estimates have something to measure against.",
                 "link": "/goals/?mode=create&focus=first_goal",
                 "cta_text": "Set your first goal",
             })
@@ -128,7 +128,7 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
             health_items.append({
                 "status": HEALTH_STATUS_WARNING,
                 "title": "No assumptions set up",
-                "explanation": "You haven't set up your financial assumptions yet. These help SteadyPlan build scenario estimates that match your plans.",
+                "explanation": "You haven't set up your financial assumptions yet. These help scenario estimates and goal timing estimates reflect your plans.",
                 "link": "/settings#assumptions",
             })
             if overall_status == HEALTH_STATUS_GOOD:
@@ -151,7 +151,7 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
             health_items.append({
                 "status": HEALTH_STATUS_INFO,
                 "title": "No budget entries for the current month",
-                "explanation": f"You have no budget entries for {current_month_key}. Consider adding some to track your spending.",
+                "explanation": f"You have no budget entries for {current_month_key}. Add some so Monthly Update has a plan to compare against.",
                 "link": "/budget",
             })
 
