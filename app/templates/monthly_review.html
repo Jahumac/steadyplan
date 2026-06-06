@@ -247,7 +247,7 @@
               <p>{% if item.provider %}{{ item.provider }} · {% endif %}{{ item.wrapper_type or 'Account' }}</p>
             </div>
             <div class="badge-row">
-              <a class="badge" href="/accounts/{{ item.account_id }}">Open account</a>
+              <a class="badge" href="{{ url_for('accounts.account_detail', account_id=item.account_id, mode='view', next=monthly_review_href) }}#holdings-section">Open account</a>
             </div>
           </div>
 
@@ -388,7 +388,7 @@
               {% elif existing_prize %}
                 <span class="pb-prize-nil">No prize won</span>
               {% endif %}
-              <a class="badge" href="/accounts/{{ item.account_id }}">Open account</a>
+              <a class="badge" href="{{ url_for('accounts.account_detail', account_id=item.account_id, mode='view', next=monthly_review_href) }}#prize-history">Open account</a>
             </div>
           </div>
 

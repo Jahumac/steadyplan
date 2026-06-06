@@ -466,7 +466,7 @@ def test_csv_import_preserves_selected_month_in_session(app, client, make_user):
     assert 'href="/monthly-review/" class="badge">Cancel</a>' not in html
 
 
-def test_monthly_review_open_account_link_preserves_selected_month_return(app, client, make_user):
+def test_monthly_review_open_account_links_preserve_selected_month_return(app, client, make_user):
     uid, username, password = make_user(username="mr-account-next", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
@@ -476,8 +476,20 @@ def test_monthly_review_open_account_link_preserves_selected_month_return(app, c
         from app.models import get_connection
 
         with get_connection() as conn:
-            account_id = conn.execute(
+            manual_account_id = conn.execute(
                 "INSERT INTO accounts (user_id, name, valuation_mode, current_value, is_active) VALUES (?, 'Cash', 'manual', 100, 1)",
+                (uid,),
+            ).lastrowid
+            holdings_account_id = conn.execute(
+                "INSERT INTO accounts (user_id, name, valuation_mode, current_value, is_active) VALUES (?, 'Holdings', 'holdings', 250, 1)",
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO holdings (account_id, holding_name, ticker, value, units, price) VALUES (?, 'AAA', 'AAA', 250, 5, 50)",
+                (holdings_account_id,),
+            )
+            premium_bonds_account_id = conn.execute(
+                "INSERT INTO accounts (user_id, name, wrapper_type, valuation_mode, current_value, is_active) VALUES (?, 'PB', 'Premium Bonds', 'premium_bonds', 5678, 1)",
                 (uid,),
             ).lastrowid
             conn.commit()
@@ -486,11 +498,21 @@ def test_monthly_review_open_account_link_preserves_selected_month_return(app, c
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    expected_href = (
-        f'href="/accounts/{account_id}?mode=view&amp;next=/monthly-review/?month%3D{month_key}#balance-update"'
+    manual_expected_href = (
+        f'href="/accounts/{manual_account_id}?mode=view&amp;next=/monthly-review/?month%3D{month_key}#balance-update"'
     )
-    assert expected_href in html
-    assert f'/accounts/{account_id}?mode=view#balance-update&amp;next=' not in html
+    holdings_expected_href = (
+        f'href="/accounts/{holdings_account_id}?mode=view&amp;next=/monthly-review/?month%3D{month_key}#holdings-section"'
+    )
+    premium_bonds_expected_href = (
+        f'href="/accounts/{premium_bonds_account_id}?mode=view&amp;next=/monthly-review/?month%3D{month_key}#prize-history"'
+    )
+    assert manual_expected_href in html
+    assert holdings_expected_href in html
+    assert premium_bonds_expected_href in html
+    assert f'/accounts/{manual_account_id}?mode=view#balance-update&amp;next=' not in html
+    assert f'/accounts/{holdings_account_id}">Open account</a>' not in html
+    assert f'/accounts/{premium_bonds_account_id}">Open account</a>' not in html
 
 
 def test_confirm_import_marks_holdings_updated_on_selected_previous_month(app, client, make_user):
