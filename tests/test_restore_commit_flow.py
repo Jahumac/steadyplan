@@ -183,9 +183,9 @@ def test_restore_commit_revalidates_before_writing(app, client, make_user):
     token = _extract_restore_token(resp_validate.data.decode("utf-8"))
 
     with app.app_context():
-        from app.routes.settings import _restore_staging_dir
+        from app.services.restore_staging import restore_staging_dir
 
-        staged = _restore_staging_dir() / f"{token}.json"
+        staged = restore_staging_dir(app.config) / f"{token}.json"
         assert staged.exists()
         staged.write_bytes(b"{")
 
@@ -226,12 +226,12 @@ def test_restore_commit_rejects_expired_staged_token_and_deletes_file(app, clien
     token = _extract_restore_token(resp_validate.data.decode("utf-8"))
 
     with app.app_context():
-        import app.routes.settings as s
+        import app.services.restore_staging as s
 
         now = s.time.time()
         monkeypatch.setattr(s.time, "time", lambda: now + s.RESTORE_STAGING_TTL_SECONDS + 1)
 
-        staged = s._restore_staging_dir() / f"{token}.json"
+        staged = s.restore_staging_dir(app.config) / f"{token}.json"
         assert staged.exists()
 
     before = _count_user_accounts(app, uid)
@@ -246,9 +246,9 @@ def test_restore_commit_rejects_expired_staged_token_and_deletes_file(app, clien
     assert after == before
 
     with app.app_context():
-        import app.routes.settings as s
+        from app.services.restore_staging import restore_staging_dir
 
-        staged = s._restore_staging_dir() / f"{token}.json"
+        staged = restore_staging_dir(app.config) / f"{token}.json"
         assert not staged.exists()
 
 
@@ -257,9 +257,9 @@ def test_restore_staging_cleanup_is_scoped_and_removes_expired_files(app, client
     _login(client, username, password)
 
     with app.app_context():
-        import app.routes.settings as s
+        import app.services.restore_staging as s
 
-        staging_dir = s._restore_staging_dir()
+        staging_dir = s.restore_staging_dir(app.config)
         staging_dir.mkdir(parents=True, exist_ok=True)
 
         expired = staging_dir / "expired-test.json"
@@ -281,10 +281,11 @@ def test_restore_staging_cleanup_is_scoped_and_removes_expired_files(app, client
     assert resp.status_code == 200
 
     with app.app_context():
-        import app.routes.settings as s
+        from app.services.restore_staging import restore_staging_dir
 
-        assert not (s._restore_staging_dir() / "expired-test.json").exists()
-        assert (_restore_path := (s._restore_staging_dir().parent / "unrelated.txt")).exists()
+        staging_dir = restore_staging_dir(app.config)
+        assert not (staging_dir / "expired-test.json").exists()
+        assert (_restore_path := (staging_dir.parent / "unrelated.txt")).exists()
         assert _restore_path.read_text() == "keep"
 
 
@@ -412,7 +413,7 @@ def test_restore_commit_stops_if_fresh_backup_cannot_be_created(app, client, mak
 
     import app.routes.settings as s
 
-    monkeypatch.setattr(s, "_create_pre_restore_backup", lambda: (_ for _ in ()).throw(RuntimeError("disk full")))
+    monkeypatch.setattr(s, "create_pre_restore_backup", lambda config: (_ for _ in ()).throw(RuntimeError("disk full")))
 
     before = _count_user_accounts(app, uid)
     resp_commit = client.post(
