@@ -1649,7 +1649,7 @@ def export_performance():
             ws_d.cell(
                 row=5,
                 column=1,
-                value="SteadyPlan has the first snapshot for this report. Come back after next month's monthly update and the month-by-month table will appear.",
+                value="SteadyPlan has the first snapshot for this report. Complete next month's monthly update and the month-by-month table will appear.",
             ).font = _DATA_FONT
             return
 
