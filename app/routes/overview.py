@@ -32,6 +32,7 @@ from app.calculations import (
     days_until_tax_year_end,
 )
 from app.models import (
+    build_debt_card,
     fetch_all_accounts,
     fetch_all_active_overrides,
     fetch_budget_items,
@@ -200,7 +201,8 @@ def overview():
         accounts.append(row)
 
     invested_total = total_invested(accounts, holdings_totals)
-    total_debt_balance = round(sum(float(d["current_balance"] or 0) for d in debts), 2)
+    debt_cards = [build_debt_card(d) for d in debts]
+    total_debt_balance = round(sum(float(d["current_balance"] or 0) for d in debt_cards), 2)
     has_debts = total_debt_balance > 0
     position_view = request.args.get("position")
     if position_view not in {"assets", "after_debts"}:
