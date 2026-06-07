@@ -1,0 +1,201 @@
+"""Broker and external integration connection records."""
+
+from datetime import datetime, timezone
+
+from ._conn import get_connection
+
+
+PROVIDER_TRADING212 = "trading212"
+TRADING212_ENV_LIVE = "live"
+TRADING212_ENV_DEMO = "demo"
+VALID_TRADING212_ENVS = {TRADING212_ENV_LIVE, TRADING212_ENV_DEMO}
+
+
+def _row_to_connection(row):
+    if not row:
+        return None
+    item = dict(row)
+    item["is_active"] = bool(item.get("is_active", 1))
+    return item
+
+
+def fetch_broker_connections(user_id, provider=None, include_inactive=False):
+    query = "SELECT * FROM broker_connections WHERE user_id = ?"
+    params = [user_id]
+    if provider:
+        query += " AND provider = ?"
+        params.append(provider)
+    if not include_inactive:
+        query += " AND is_active = 1"
+    query += " ORDER BY provider ASC, environment ASC, id ASC"
+    with get_connection() as conn:
+        rows = conn.execute(query, tuple(params)).fetchall()
+    return [_row_to_connection(row) for row in rows]
+
+
+def fetch_broker_connection(connection_id, user_id):
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT * FROM broker_connections WHERE id = ? AND user_id = ? LIMIT 1",
+            (connection_id, user_id),
+        ).fetchone()
+    return _row_to_connection(row)
+
+
+def upsert_broker_connection(
+    *,
+    user_id,
+    provider,
+    environment,
+    label,
+    access_mode,
+    api_key_ciphertext,
+    api_secret_ciphertext,
+    status,
+    last_error=None,
+    last_tested_at=None,
+    external_account_id=None,
+    external_account_currency=None,
+    external_total_value=None,
+):
+    now = datetime.now(timezone.utc).isoformat()
+    tested_at = last_tested_at or now
+    with get_connection() as conn:
+        existing = conn.execute(
+            """
+            SELECT id
+            FROM broker_connections
+            WHERE user_id = ? AND provider = ? AND environment = ?
+            LIMIT 1
+            """,
+            (user_id, provider, environment),
+        ).fetchone()
+        if existing:
+            conn.execute(
+                """
+                UPDATE broker_connections
+                SET label = ?,
+                    access_mode = ?,
+                    api_key_ciphertext = ?,
+                    api_secret_ciphertext = ?,
+                    status = ?,
+                    last_error = ?,
+                    last_tested_at = ?,
+                    external_account_id = ?,
+                    external_account_currency = ?,
+                    external_total_value = ?,
+                    is_active = 1,
+                    updated_at = ?
+                WHERE id = ? AND user_id = ?
+                """,
+                (
+                    label,
+                    access_mode,
+                    api_key_ciphertext,
+                    api_secret_ciphertext,
+                    status,
+                    last_error,
+                    tested_at,
+                    external_account_id,
+                    external_account_currency,
+                    external_total_value,
+                    now,
+                    existing["id"],
+                    user_id,
+                ),
+            )
+            connection_id = existing["id"]
+        else:
+            cursor = conn.execute(
+                """
+                INSERT INTO broker_connections (
+                    user_id,
+                    provider,
+                    label,
+                    environment,
+                    access_mode,
+                    api_key_ciphertext,
+                    api_secret_ciphertext,
+                    status,
+                    last_error,
+                    last_tested_at,
+                    external_account_id,
+                    external_account_currency,
+                    external_total_value,
+                    is_active,
+                    created_at,
+                    updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+                """,
+                (
+                    user_id,
+                    provider,
+                    label,
+                    environment,
+                    access_mode,
+                    api_key_ciphertext,
+                    api_secret_ciphertext,
+                    status,
+                    last_error,
+                    tested_at,
+                    external_account_id,
+                    external_account_currency,
+                    external_total_value,
+                    now,
+                    now,
+                ),
+            )
+            connection_id = cursor.lastrowid
+        conn.commit()
+    return fetch_broker_connection(connection_id, user_id)
+
+
+def update_broker_connection_status(
+    connection_id,
+    user_id,
+    *,
+    status,
+    last_error=None,
+    last_tested_at=None,
+    external_account_id=None,
+    external_account_currency=None,
+    external_total_value=None,
+):
+    now = datetime.now(timezone.utc).isoformat()
+    tested_at = last_tested_at or now
+    with get_connection() as conn:
+        conn.execute(
+            """
+            UPDATE broker_connections
+            SET status = ?,
+                last_error = ?,
+                last_tested_at = ?,
+                external_account_id = ?,
+                external_account_currency = ?,
+                external_total_value = ?,
+                updated_at = ?
+            WHERE id = ? AND user_id = ?
+            """,
+            (
+                status,
+                last_error,
+                tested_at,
+                external_account_id,
+                external_account_currency,
+                external_total_value,
+                now,
+                connection_id,
+                user_id,
+            ),
+        )
+        conn.commit()
+    return fetch_broker_connection(connection_id, user_id)
+
+
+def delete_broker_connection(connection_id, user_id):
+    with get_connection() as conn:
+        conn.execute(
+            "DELETE FROM broker_connections WHERE id = ? AND user_id = ?",
+            (connection_id, user_id),
+        )
+        conn.commit()
