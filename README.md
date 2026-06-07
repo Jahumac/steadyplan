@@ -15,8 +15,10 @@ Legacy image (during transition): `ghcr.io/jahumac/shelly-finance:latest`
 ## Website
 
 - Static website source lives in `site/`
-- Intended deployment target: Cloudflare Pages (build: none, output directory: `site`)
+- Public site is deployed from `site/` on Cloudflare Pages (build: none, output directory: `site`)
 - Canonical product domain: **steadyplan.co.uk**
+- Main public pages: Home, Tour, Roadmap, Docs, and About
+- Public site supports a manual light/dark toggle without a build step
 
 ---
 
@@ -66,12 +68,12 @@ Import holdings directly from your broker's CSV export. Supported platforms:
 
 Don't use any of these? Download the [CSV template](app/static/steadyplan-holdings-template.csv) and fill in your holdings manually. (The legacy `shelly-holdings-template.csv` filename is kept as a compatibility alias.)
 
-### Monthly Review
-A lightweight monthly check-in to keep your numbers fresh: update account balances, review expected contributions (confirm/skip), add an optional note, and mark the month reviewed.
+### Monthly Update
+A lightweight monthly check-in to keep your numbers fresh: update account balances, review expected contributions (confirm/skip), add an optional note, and mark the month complete.
 
-Draft Monthly Review data supports editing, but **only completed Monthly Reviews are treated as financial truth** for allowance and performance calculations.
+Draft monthly updates support editing, but **only completed monthly updates are treated as financial truth** for allowance and performance calculations.
 
-Marking a month reviewed saves snapshots so you can track how your portfolio changes over time. Holdings-based accounts snapshot from holdings value; manual/Premium Bonds accounts snapshot only if their balance was updated in that review (to avoid silently recording stale values as truth).
+Completing a monthly update saves snapshots so you can track how your portfolio changes over time. Holdings-based accounts snapshot from holdings value; manual/Premium Bonds accounts snapshot only if their balance was updated in that update (to avoid silently recording stale values as truth).
 
 ### Data Health
 If something needs attention (e.g. no accounts, stale snapshots, missing assumptions), SteadyPlan surfaces a compact warning on **Overview**. Healthy status is kept out of the dashboard so Overview stays focused on your financial summary.
@@ -89,7 +91,7 @@ Year-by-year and month-by-month scenario estimates based on current balances, mo
 Accounts support detailed fee modelling: platform fee (% with optional £ cap), flat annual platform fee (£), and fund fee / OCF (%). SteadyPlan combines these into an effective annual fee, subtracts it from your growth rate, and shows the lifetime cost of fees in both the app and Excel exports. All fee fields are optional — tucked behind an "Advanced: Fees" toggle so they don't clutter the setup for casual users. Scenario estimates show "with fees" vs "without fees" so you can see exactly what your broker and funds cost you over time.
 
 ### Performance Tracking
-Track your actual portfolio returns over time using the modified Dietz method. Compare actual performance against an assumptions-based "on-plan" growth line. Contribution cash flow uses the effective “into pot” amount (tax relief, LISA bonus, employer contributions, minus any contribution fee) and only treats completed Monthly Reviews as confirmed truth.
+Track your actual portfolio returns over time using the modified Dietz method. Compare actual performance against an assumptions-based "on-plan" growth line. Contribution cash flow uses the effective “into pot” amount (tax relief, LISA bonus, employer contributions, minus any contribution fee) and only treats completed monthly updates as confirmed truth.
 
 ### Tax Year Tracking
 ISA and Lifetime ISA allowance progress bars, tax year countdown, and automatic tax year labelling (April 6 boundary).
@@ -97,8 +99,14 @@ ISA and Lifetime ISA allowance progress bars, tax year countdown, and automatic 
 ### Multi-User Support
 Multiple users can share a single SteadyPlan instance, each with their own accounts, budgets and data. Admin user manages access.
 
+### Assistant access
+Settings includes scoped **Assistant access** for Pip. Unlike a general API token, an assistant token only works on assistant endpoints, can be regenerated or revoked in the UI, and can be limited to read-only answers or one narrow budget-write permission.
+
 ### Contribution Overrides
 Temporarily change a monthly contribution (e.g. parental leave, career break) without losing your long-term plan.
+
+### Diagnostics & backup health
+Settings → Diagnostics shows whole-instance backup status, lets admins create SQLite backups, and keeps backup/restore guidance close to the product so trust boundaries stay explicit.
 
 ### PWA & Mobile
 - Install SteadyPlan as a phone app — visit the URL in your mobile browser and tap "Add to Home Screen". Works full-screen with its own icon.
@@ -234,7 +242,7 @@ See [DEPLOY.md](DEPLOY.md) for step-by-step instructions on deploying to Unraid 
 
 ### From Your Broker
 
-1. Go to **Monthly Review** in SteadyPlan
+1. Go to **Monthly Update** in SteadyPlan
 2. Select your broker from the dropdown
 3. Upload the CSV file your broker provides (usually found under "Statements", "Export", or "Download" in your broker's app/website)
 4. SteadyPlan will match the CSV rows to your existing holdings, showing you a preview
@@ -246,7 +254,7 @@ If your broker isn't listed, or you prefer to enter holdings manually in bulk:
 
 1. Download [`steadyplan-holdings-template.csv`](app/static/steadyplan-holdings-template.csv)
 2. Fill in your holdings — one row per holding with: `name`, `ticker`, `units`, `price`, `value`
-3. Import using the **Generic CSV** option in Monthly Review
+3. Import using the **Generic CSV** option in Monthly Update
 
 The template looks like this:
 
@@ -265,32 +273,53 @@ iShares Core MSCI World ETF,SWDA,42.0000,82.15,3450.30
 
 ```
 app/
-├── __init__.py            # App factory, blueprint registration, login manager
-├── config.py              # Database path, secret key management
-├── models.py              # SQLite schema + all data access functions
+├── __init__.py            # App factory, blueprint registration, login manager, demo/read-only guard
+├── config.py              # Environment config, database path, secret key management
 ├── calculations.py        # Scenario estimates, returns, goal tracking, tax year logic
+├── demo.py                # Demo-user helpers and read-only enforcement
+├── extensions.py          # CSRF, limiter, cache-busting helpers, scheduler wiring
 ├── routes/
 │   ├── auth.py            # Login, setup, user management
 │   ├── overview.py        # Dashboard with metrics and net worth chart
 │   ├── accounts.py        # Account + holdings CRUD, allocation charts
-│   ├── holdings.py        # Ticker lookup API (Yahoo Finance)
-│   ├── budget.py          # Budget CRUD, AJAX auto-save, monthly navigation
+│   ├── holdings.py        # Holdings catalogue, prices, refresh actions
+│   ├── budget.py          # Budget CRUD, auto-save, annual import, debts, trends
 │   ├── goals.py           # Goal tracking with tag-based account linking
-│   ├── projections.py     # Retirement scenario estimate engine
+│   ├── projections.py     # Scenario estimates views and account series endpoints
 │   ├── performance.py     # Modified Dietz returns tracking
-│   ├── monthly_review.py  # Monthly update workflow + CSV import
-│   ├── export.py          # Excel export (scenario estimates + budget)
-│   └── settings.py        # Global assumptions (growth rate, ages, allowances)
+│   ├── monthly_review.py  # Monthly Update workflow, notes, checklist, CSV import
+│   ├── allowance.py       # ISA, pension, dividend, and CGT allowance tracking
+│   ├── planning.py        # Accessible vs locked money view and insights
+│   ├── api.py             # General API + scoped assistant endpoints
+│   ├── export.py          # Excel export (scenario estimates, budget, performance)
+│   └── settings.py        # Assumptions, assistant access, backups, diagnostics, reset
+├── models/
+│   ├── accounts.py        # Accounts, holdings, imports, balances
+│   ├── budget.py          # Budget items, debts, linked entries
+│   ├── goals.py           # Goal storage and account-tag linking
+│   ├── users.py           # Users, API tokens, assistant audit log
+│   ├── planning*.py       # Assumptions, allowances, snapshots, review helpers
+│   └── schema.py          # SQLite schema + migrations
 ├── services/
-│   ├── csv_parsers.py     # 8 broker-specific CSV parsers
-│   └── prices.py          # Yahoo Finance price fetcher
-├── templates/             # Jinja2 HTML templates (dark theme)
+│   ├── assistant_access.py        # Assistant token labels, permissions, activity helpers
+│   ├── assistant_api.py           # Assistant budget/portfolio/affordability payload builders
+│   ├── backups.py                 # Backup health and SQLite backup helpers
+│   ├── csv_parsers.py             # Broker-specific CSV parsers
+│   ├── data_health.py             # Overview attention summary
+│   ├── monthly_review_checklist.py# Monthly Update notes/checklist helpers
+│   ├── prices.py                  # Twelve Data / Yahoo price services
+│   └── restore_*.py               # JSON restore staging, validation, commit helpers
+├── templates/             # Jinja2 HTML templates (private app shell)
 └── static/
-    ├── css/styles.css     # Single stylesheet — dark theme design system
+    ├── css/styles.css     # Main app stylesheet
     ├── js/charts.js       # Chart rendering
+    ├── js/app.js          # App shell behaviour
     ├── manifest.json      # PWA manifest
     ├── sw.js              # Service worker
+    ├── brand/             # Logo mark + app icon assets
     └── icons/             # App icons (180px, 192px, 512px)
+site/                      # Public website + lightweight docs hub
+scripts/                   # Seed demo data, screenshots, backups, token CLI
 data/
 ├── finance.db             # SQLite database (auto-created, git-ignored)
 └── secret_key.txt         # Flask secret key (auto-generated, git-ignored)
@@ -328,16 +357,22 @@ data/
 
 ## Roadmap
 
-- Read‑only demo mode for public try‑outs (done).
-- JSON export and restore flow (done).
-- Overview Data Health panel (done).
-- Monthly Update workflow and manual balance updates (done).
-- Better offline experience: cached read‑only views with clear “offline” indicators.
-- Diagnostics page: last scheduler run, Yahoo price fetch status, DB health.
-- Import UX: smarter column matching and validation hints.
-- Alerts: allowance nearing limits, spending spikes, price update failures.
-- Desktop packaging: Tauri/Electron wrapper.
-- Optional migration to versioned API endpoints to simplify mobile-native clients.
+### Available now
+- Self-hosted private finance planning with local SQLite storage
+- Monthly Update workflow, Data Health, JSON export/restore, and Diagnostics
+- Assistant access with scoped read-only answers and one narrow budget-write permission
+- Public website with Tour, Roadmap, docs hub, and optional read-only demo path
+
+### Improving next
+- Clearer onboarding and first-use guidance
+- Better compact-screen/PWA usability
+- More polished public tour, docs, and evaluation flow
+- Import and validation polish around everyday data entry
+
+### Exploring later
+- Hosted SteadyPlan only if safety, supportability, and trust are strong enough
+- Invite-only private testing before any broader hosted offering
+- API evolution that stays narrow and safe for external clients
 
 ---
 
