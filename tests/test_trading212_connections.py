@@ -307,10 +307,11 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert "Apple Inc" in body
     assert "Vanguard FTSE All-World" in body
     assert "diff +50.00" in body
-    assert "Possible tracked matches:" in body
+    assert "Possible tracked matches" in body
     assert "Vanguard FTSE Global All Cap" in body
     assert "Trading 212 ISA" in body
-    assert "shared terms:" in body
+    assert "Name clues" in body
+    assert "shared terms:" not in body
 
     with app.app_context():
         after_rows = fetch_broker_connections(uid, provider=PROVIDER_TRADING212)
