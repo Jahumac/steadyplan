@@ -200,23 +200,52 @@
         </div>
       </dl>
       {% if row.possible_matches %}
+      {% set mobile_matches = row.possible_matches[:2] %}
+      {% set mobile_overflow_matches = row.possible_matches[2:] %}
       <div class="trading212-candidate-heading">Possible tracked matches</div>
       <div class="trading212-candidate-list">
-        {% for candidate in row.possible_matches %}
+        {% for candidate in mobile_matches %}
         <div class="trading212-candidate-card">
           <div class="trading212-candidate-title">{{ candidate.holding.holding_name }}</div>
           <div class="trading212-candidate-account">{{ candidate.holding.account_name }}</div>
           {% if candidate.overlap_tokens %}
           <div class="badge-row trading212-candidate-clues">
             <span class="badge badge-meta badge-sm">Name clues</span>
-            {% for token in candidate.overlap_tokens %}
+            {% for token in candidate.overlap_tokens[:3] %}
             <span class="badge badge-tag badge-sm">{{ token }}</span>
             {% endfor %}
+            {% if candidate.overlap_tokens|length > 3 %}
+            <span class="badge badge-meta badge-sm">+{{ candidate.overlap_tokens|length - 3 }} more</span>
+            {% endif %}
           </div>
           {% endif %}
         </div>
         {% endfor %}
       </div>
+      {% if mobile_overflow_matches %}
+      <details class="trading212-mobile-candidate-overflow">
+        <summary>Show {{ mobile_overflow_matches|length }} more possible {{ 'match' if mobile_overflow_matches|length == 1 else 'matches' }}</summary>
+        <div class="trading212-candidate-list trading212-candidate-list-overflow">
+          {% for candidate in mobile_overflow_matches %}
+          <div class="trading212-candidate-card">
+            <div class="trading212-candidate-title">{{ candidate.holding.holding_name }}</div>
+            <div class="trading212-candidate-account">{{ candidate.holding.account_name }}</div>
+            {% if candidate.overlap_tokens %}
+            <div class="badge-row trading212-candidate-clues">
+              <span class="badge badge-meta badge-sm">Name clues</span>
+              {% for token in candidate.overlap_tokens[:3] %}
+              <span class="badge badge-tag badge-sm">{{ token }}</span>
+              {% endfor %}
+              {% if candidate.overlap_tokens|length > 3 %}
+              <span class="badge badge-meta badge-sm">+{{ candidate.overlap_tokens|length - 3 }} more</span>
+              {% endif %}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </details>
+      {% endif %}
       {% endif %}
     </article>
     {% endfor %}
