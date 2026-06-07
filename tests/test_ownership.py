@@ -682,6 +682,115 @@ def test_user_reset_deletes_only_own_allowance_tracking(app, two_users):
         assert rows == [{"user_id": two_users["bob"]["uid"], "isa_used": 999}]
 
 
+def test_user_reset_clears_premium_bonds_and_aux_user_state(app, two_users):
+    from app.models import get_connection, reset_all_user_data
+
+    with app.app_context():
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO premium_bonds_prizes (user_id, account_id, month_key, prize_amount, logged_at)
+                VALUES (?, ?, '2026-05', 25, '2026-05-01T00:00:00')
+                """,
+                (two_users["alice"]["uid"], two_users["alice"]["account"]),
+            )
+            conn.execute(
+                """
+                INSERT INTO premium_bonds_prizes (user_id, account_id, month_key, prize_amount, logged_at)
+                VALUES (?, ?, '2026-05', 50, '2026-05-01T00:00:00')
+                """,
+                (two_users["bob"]["uid"], two_users["bob"]["account"]),
+            )
+            conn.execute(
+                "INSERT INTO hidden_tags (user_id, tag) VALUES (?, 'cash')",
+                (two_users["alice"]["uid"],),
+            )
+            conn.execute(
+                "INSERT INTO hidden_tags (user_id, tag) VALUES (?, 'cash')",
+                (two_users["bob"]["uid"],),
+            )
+            conn.execute(
+                "INSERT INTO custom_tags (user_id, tag) VALUES (?, 'manual-tag')",
+                (two_users["alice"]["uid"],),
+            )
+            conn.execute(
+                "INSERT INTO custom_tags (user_id, tag) VALUES (?, 'manual-tag')",
+                (two_users["bob"]["uid"],),
+            )
+            conn.execute(
+                "INSERT INTO scheduler_runs (user_id, run_date, slot) VALUES (?, '2026-05-01', 'morning')",
+                (two_users["alice"]["uid"],),
+            )
+            conn.execute(
+                "INSERT INTO scheduler_runs (user_id, run_date, slot) VALUES (?, '2026-05-01', 'morning')",
+                (two_users["bob"]["uid"],),
+            )
+            conn.execute(
+                "INSERT INTO api_tokens (user_id, token, label, token_kind, scopes) VALUES (?, 'alice-token', 'Alice token', 'assistant', 'assistant:read')",
+                (two_users["alice"]["uid"],),
+            )
+            conn.execute(
+                "INSERT INTO api_tokens (user_id, token, label, token_kind, scopes) VALUES (?, 'bob-token', 'Bob token', 'assistant', 'assistant:read')",
+                (two_users["bob"]["uid"],),
+            )
+            alice_token_id = conn.execute(
+                "SELECT id FROM api_tokens WHERE token = 'alice-token'"
+            ).fetchone()["id"]
+            bob_token_id = conn.execute(
+                "SELECT id FROM api_tokens WHERE token = 'bob-token'"
+            ).fetchone()["id"]
+            conn.execute(
+                """
+                INSERT INTO assistant_audit_events
+                    (user_id, token_id, token_label, token_kind, action_type, endpoint, before_state, after_state)
+                VALUES (?, ?, 'Alice token', 'assistant', 'read', '/api/assistant/month-summary', '{}', '{}')
+                """,
+                (two_users["alice"]["uid"], alice_token_id),
+            )
+            conn.execute(
+                """
+                INSERT INTO assistant_audit_events
+                    (user_id, token_id, token_label, token_kind, action_type, endpoint, before_state, after_state)
+                VALUES (?, ?, 'Bob token', 'assistant', 'read', '/api/assistant/month-summary', '{}', '{}')
+                """,
+                (two_users["bob"]["uid"], bob_token_id),
+            )
+            conn.commit()
+
+        reset_all_user_data(two_users["alice"]["uid"])
+
+        with get_connection() as conn:
+            prize_rows = conn.execute(
+                "SELECT user_id, prize_amount FROM premium_bonds_prizes ORDER BY user_id ASC"
+            ).fetchall()
+            hidden_rows = conn.execute(
+                "SELECT user_id, tag FROM hidden_tags ORDER BY user_id ASC"
+            ).fetchall()
+            custom_rows = conn.execute(
+                "SELECT user_id, tag FROM custom_tags ORDER BY user_id ASC"
+            ).fetchall()
+            scheduler_rows = conn.execute(
+                "SELECT user_id, slot FROM scheduler_runs ORDER BY user_id ASC"
+            ).fetchall()
+            token_rows = conn.execute(
+                "SELECT user_id, token FROM api_tokens ORDER BY user_id ASC"
+            ).fetchall()
+            audit_rows = conn.execute(
+                "SELECT user_id, token_label FROM assistant_audit_events ORDER BY user_id ASC"
+            ).fetchall()
+            account_rows = conn.execute(
+                "SELECT user_id, name FROM accounts ORDER BY user_id ASC"
+            ).fetchall()
+
+        assert prize_rows == [{"user_id": two_users["bob"]["uid"], "prize_amount": 50}]
+        assert hidden_rows == [{"user_id": two_users["bob"]["uid"], "tag": 'cash'}]
+        assert custom_rows == [{"user_id": two_users["bob"]["uid"], "tag": 'manual-tag'}]
+        assert scheduler_rows == [{"user_id": two_users["bob"]["uid"], "slot": 'morning'}]
+        assert token_rows == [{"user_id": two_users["bob"]["uid"], "token": 'bob-token'}]
+        assert audit_rows == [{"user_id": two_users["bob"]["uid"], "token_label": 'Bob token'}]
+        assert account_rows == [{"user_id": two_users["bob"]["uid"], "name": 'Bob ISA'}]
+
+
 # ── Budget → contribution_overrides back-sync ────────────────────────────────
 
 def test_linked_budget_edit_creates_contribution_override(app, two_users):
