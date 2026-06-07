@@ -189,6 +189,16 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "Set 0 to use salary day from Settings." not in html
 
 
+def test_daily_portfolio_period_buttons_are_scoped_to_the_chart_not_overview_headline_toggle():
+    js = Path("/opt/data/steadyplan/app/static/js/charts.js").read_text()
+
+    assert "var dailyPortfolioBtns = Array.prototype.filter.call(" in js
+    assert "card && card.querySelector('#dailyPortfolioChart') && btn.dataset.period" in js
+    assert "dailyPortfolioBtns.forEach(function(btn) {" in js
+    assert "dailyPortfolioBtns.forEach(function(b) { b.classList.remove('active'); });" in js
+    assert "document.querySelectorAll('.period-btn').forEach(function(btn) {" not in js
+
+
 def test_budget_setup_page_does_not_render_turtle_icon(auth_client):
     response = auth_client.get("/budget/items/?month=2026-04", follow_redirects=True)
 

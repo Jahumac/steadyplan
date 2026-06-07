@@ -855,8 +855,8 @@ def test_overview_shows_assets_after_debts_toggle_when_active_debts_exist(app, c
     html = resp.get_data(as_text=True)
 
     assert 'aria-label="Overview headline view"' in html
-    assert 'href="/" class="period-btn active">Assets<' in html
-    assert 'href="/?position=after_debts" class="period-btn">After debts<' in html
+    assert 'href="/" class="overview-toggle-btn active">Assets<' in html
+    assert 'href="/?position=after_debts" class="overview-toggle-btn">After debts<' in html
     assert "Active debts kept separate: £1,234.56." in html
     assert "Subtracting £1,234.56 in active debts." not in html
     assert "Active debts" in html
@@ -899,8 +899,8 @@ def test_overview_after_debts_view_updates_headline_value_and_helper(app, client
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert 'href="/?position=after_debts" class="period-btn active">After debts<' in html
-    assert 'href="/" class="period-btn">Assets<' in html
+    assert 'href="/?position=after_debts" class="overview-toggle-btn active">After debts<' in html
+    assert 'href="/" class="overview-toggle-btn">Assets<' in html
     assert "<p class=\"eyebrow\">After debts</p>" in html
     assert "Subtracting £1,234.56 in active debts." in html
     assert "Active debts kept separate: £1,234.56." not in html

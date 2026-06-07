@@ -5553,7 +5553,8 @@ button.button-danger:focus {
 .cursor-pointer { cursor: pointer; }
 
 /* Period selector buttons (overview chart, potentially others) */
-.period-btn {
+.period-btn,
+.overview-toggle-btn {
   padding: 0.3rem 0.65rem;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -5570,20 +5571,23 @@ button.button-danger:focus {
   transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 
-.period-btn.active {
+.period-btn.active,
+.overview-toggle-btn.active {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
   box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25);
 }
 
-.period-btn:hover:not(.active) {
+.period-btn:hover:not(.active),
+.overview-toggle-btn:hover:not(.active) {
   border-color: rgba(56, 189, 248, 0.45);
   color: var(--text);
   background: rgba(56, 189, 248, 0.06);
 }
 
-.period-btn:active {
+.period-btn:active,
+.overview-toggle-btn:active {
   transform: translateY(1px);
 }
 
