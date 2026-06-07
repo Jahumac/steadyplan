@@ -241,6 +241,36 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
             },
             uid,
         )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Vanguard FTSE Emerging Markets ETF",
+                "ticker": "VFEM",
+                "asset_type": "fund",
+                "bucket": "stocks",
+                "value": 325.0,
+                "units": 2.9,
+                "price": 112.0,
+                "notes": "",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Vanguard FTSE Developed World ex-U.K. Equity Index Fund",
+                "ticker": "DEVWORLD",
+                "asset_type": "fund",
+                "bucket": "stocks",
+                "value": 118.0,
+                "units": 1.0,
+                "price": 118.0,
+                "notes": "",
+            },
+            uid,
+        )
 
     def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
         assert api_key == "live-preview-key"
@@ -317,6 +347,8 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert "trading212-position-facts" in body
     assert "trading212-desktop-only" in body
     assert "trading212-mobile-only" in body
+    assert "trading212-mobile-candidate-overflow" in body
+    assert "Show 1 more possible match" in body
 
     with app.app_context():
         after_rows = fetch_broker_connections(uid, provider=PROVIDER_TRADING212)
