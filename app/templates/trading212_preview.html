@@ -146,17 +146,25 @@
         {% for row in preview.broker_only %}
         <tr>
           <td>
-            {{ row.name }}
+            <div class="trading212-position-name">{{ row.name }}</div>
             {% if row.possible_matches %}
-            <div class="helper-text" style="margin-top:0.2rem;">Possible tracked matches:</div>
-            {% for candidate in row.possible_matches %}
-            <div class="helper-text" style="margin-top:0.15rem;">
-              {{ candidate.holding.holding_name }} — {{ candidate.holding.account_name }}
-              {% if candidate.overlap_tokens %}
-              · shared terms: {{ candidate.overlap_tokens|join(', ') }}
-              {% endif %}
+            <div class="trading212-candidate-heading">Possible tracked matches</div>
+            <div class="trading212-candidate-list">
+              {% for candidate in row.possible_matches %}
+              <div class="trading212-candidate-card">
+                <div class="trading212-candidate-title">{{ candidate.holding.holding_name }}</div>
+                <div class="trading212-candidate-account">{{ candidate.holding.account_name }}</div>
+                {% if candidate.overlap_tokens %}
+                <div class="badge-row trading212-candidate-clues">
+                  <span class="badge badge-meta badge-sm">Name clues</span>
+                  {% for token in candidate.overlap_tokens %}
+                  <span class="badge badge-tag badge-sm">{{ token }}</span>
+                  {% endfor %}
+                </div>
+                {% endif %}
+              </div>
+              {% endfor %}
             </div>
-            {% endfor %}
             {% endif %}
           </td>
           <td>{{ row.ticker or '—' }}</td>

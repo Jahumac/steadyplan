@@ -6280,6 +6280,48 @@ a.link-accent:hover {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+.trading212-position-name {
+  font-weight: 600;
+}
+.trading212-candidate-heading {
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.trading212-candidate-list {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+}
+.trading212-candidate-card {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.35);
+}
+.trading212-candidate-title {
+  font-weight: 600;
+  color: var(--text);
+}
+.trading212-candidate-account {
+  margin-top: 0.2rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.trading212-candidate-clues {
+  margin-top: 0.5rem;
+  gap: 0.35rem;
+}
+@media (max-width: 640px) {
+  .trading212-candidate-card {
+    padding: 0.55rem 0.65rem;
+  }
+
+  .trading212-candidate-clues .badge {
+    max-width: 100%;
+  }
+}
 .mini-table {
   width: 100%;
   border-collapse: collapse;
