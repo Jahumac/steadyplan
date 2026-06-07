@@ -205,6 +205,20 @@ a:hover {
   margin-top: 0.9rem;
 }
 
+.brand-showcase-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.35rem 0;
+}
+
+.brand-showcase-mark {
+  display: block;
+  width: min(80%, 420px);
+  max-width: 420px;
+  height: auto;
+}
+
 .section-min {
   padding: 3.25rem 0;
 }
