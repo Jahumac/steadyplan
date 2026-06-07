@@ -6,6 +6,8 @@ from email.message import Message
 
 from app.models import (
     PROVIDER_TRADING212,
+    add_holding,
+    create_account,
     fetch_broker_connections,
     upsert_broker_connection,
 )
@@ -14,6 +16,7 @@ from app.services.trading212 import (
     decrypt_trading212_credential,
     encrypt_trading212_credential,
     fetch_trading212_account_summary,
+    fetch_trading212_positions,
 )
 
 
@@ -92,6 +95,7 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Saved Trading 212 ISA as a read-only Trading 212 live connection." in body
     assert "SIPP data is not available through the broker API yet" in body
+    assert "Preview holdings snapshot" in body
     assert "live…3456" in body
     assert "998877" in body
     assert "GBP" in body
@@ -160,6 +164,138 @@ def test_retest_trading212_failure_updates_status(app, client, make_user, monkey
         assert row["last_error"] == "Trading 212 rate-limited the request. Please wait a moment and try again."
 
 
+def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="t212-preview")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("live-preview-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("live-preview-secret"),
+            status="connected",
+            last_tested_at="2026-06-07T18:10:00+00:00",
+            external_account_id="ACC-123",
+            external_account_currency="GBP",
+            external_total_value=3100.0,
+        )
+        assert connection is not None
+        account_id = create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "ISA",
+                "category": "investments",
+                "tags": "",
+                "current_value": 3000.0,
+                "monthly_contribution": 0.0,
+                "goal_value": 0.0,
+                "valuation_mode": "holdings",
+                "growth_mode": "rate",
+                "growth_rate_override": 0.0,
+                "owner": "joint",
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-07",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Apple Inc",
+                "ticker": "AAPL_US_EQ",
+                "asset_type": "stock",
+                "bucket": "stocks",
+                "value": 2400.0,
+                "units": 10.0,
+                "price": 240.0,
+                "notes": "",
+            },
+            uid,
+        )
+
+    def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
+        assert api_key == "live-preview-key"
+        assert api_secret == "live-preview-secret"
+        assert environment == "live"
+        return {
+            "environment": "live",
+            "fetched_at": "2026-06-08T09:30:00+00:00",
+            "summary": {
+                "environment": "live",
+                "account_id": "ACC-123",
+                "currency": "GBP",
+                "available_to_trade": 150.0,
+                "cash_in_pies": 25.0,
+                "cash_reserved_for_orders": 5.0,
+                "investments_current_value": 2950.0,
+                "investments_total_cost": 2500.0,
+                "investments_unrealized_profit_loss": 450.0,
+                "investments_realized_profit_loss": 0.0,
+                "total_value": 3100.0,
+                "fetched_at": "2026-06-08T09:30:00+00:00",
+            },
+            "positions": [
+                {
+                    "ticker": "AAPL_US_EQ",
+                    "name": "Apple Inc",
+                    "units": 10.0,
+                    "price": 245.0,
+                    "value": 2450.0,
+                    "currency": "GBP",
+                },
+                {
+                    "ticker": "VWRP_LSE_EQ",
+                    "name": "Vanguard FTSE All-World",
+                    "units": 4.0,
+                    "price": 125.0,
+                    "value": 500.0,
+                    "currency": "GBP",
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.routes.settings.fetch_trading212_portfolio_snapshot",
+        fake_fetch_trading212_portfolio_snapshot,
+    )
+
+    with app.app_context():
+        before_rows = fetch_broker_connections(uid, provider=PROVIDER_TRADING212)
+        before_count = len(before_rows)
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/preview",
+        data={},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Preview holdings snapshot" in body
+    assert "Nothing in SteadyPlan has been changed." in body
+    assert "Matched holdings" in body
+    assert "Broker-only positions" in body
+    assert "Tracked holdings not seen in this snapshot" in body
+    assert "Apple Inc" in body
+    assert "Vanguard FTSE All-World" in body
+    assert "diff +50.00" in body
+
+    with app.app_context():
+        after_rows = fetch_broker_connections(uid, provider=PROVIDER_TRADING212)
+        assert len(after_rows) == before_count
+        row = after_rows[0]
+        assert row is not None
+        assert row["status"] == "connected"
+        assert row["last_error"] is None
+        assert row["external_total_value"] == 3100.0
+
+
 def test_fetch_trading212_account_summary_sends_basic_auth_and_parses_response(app, monkeypatch):
     captured = {}
 
@@ -207,6 +343,58 @@ def test_fetch_trading212_account_summary_sends_basic_auth_and_parses_response(a
     assert summary["available_to_trade"] == 120.5
     assert summary["investments_current_value"] == 900.0
     assert summary["total_value"] == 1025.75
+
+
+def test_fetch_trading212_positions_normalises_response(app, monkeypatch):
+    captured = {}
+
+    def fake_urlopen(request, timeout=0):
+        captured["url"] = request.full_url
+        captured["authorization"] = request.headers.get("Authorization")
+        captured["timeout"] = timeout
+        return _FakeHttpResponse(
+            [
+                {
+                    "averagePricePaid": 101.25,
+                    "createdAt": "2026-06-08T09:00:00Z",
+                    "currentPrice": 123.45,
+                    "instrument": {
+                        "ticker": "VWRP_LSE_EQ",
+                        "name": "Vanguard FTSE All-World",
+                        "currencyCode": "GBP",
+                    },
+                    "quantity": 4,
+                    "quantityAvailableForTrading": 3,
+                    "quantityInPies": 1,
+                }
+            ]
+        )
+
+    monkeypatch.setattr("app.services.trading212.urllib.request.urlopen", fake_urlopen)
+
+    with app.app_context():
+        payload = fetch_trading212_positions(
+            api_key="demo-key",
+            api_secret="demo-secret",
+            environment="demo",
+        )
+
+    expected_auth = "Basic " + base64.b64encode(b"demo-key:demo-secret").decode("ascii")
+    assert captured["url"] == "https://demo.trading212.com/api/v0/equity/positions"
+    assert captured["authorization"] == expected_auth
+    assert captured["timeout"] == 12
+    assert payload["environment"] == "demo"
+    assert len(payload["positions"]) == 1
+    row = payload["positions"][0]
+    assert row["ticker"] == "VWRP_LSE_EQ"
+    assert row["name"] == "Vanguard FTSE All-World"
+    assert row["units"] == 4.0
+    assert row["price"] == 123.45
+    assert row["value"] == 493.8
+    assert row["average_price_paid"] == 101.25
+    assert row["currency"] == "GBP"
+    assert row["quantity_available_for_trading"] == 3.0
+    assert row["quantity_in_pies"] == 1.0
 
 
 def test_fetch_trading212_account_summary_surfaces_friendly_403(app, monkeypatch):

@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% block title %}Trading 212 preview · SteadyPlan{% endblock %}
+{% block content %}
+{% set preview = trading212_preview %}
+{% set summary = preview.summary %}
+{% set connection = preview.connection %}
+
+<section class="panel">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Trading 212 sync (beta)</p>
+      <h2>Preview holdings snapshot</h2>
+    </div>
+    <div>
+      <a class="badge" href="/settings/#trading212-access">Back to settings</a>
+    </div>
+  </div>
+  <p class="helper-text" style="margin-top:0;">
+    This is a preview only. SteadyPlan fetched a read-only broker snapshot and compared it with your current tracked holdings. Nothing in SteadyPlan has been changed.
+  </p>
+  <p class="helper-text" style="margin-top:0.45rem;">
+    {{ trading212_sync_support_note() }}
+  </p>
+
+  <div class="metrics-grid" style="margin-top:1rem;">
+    <div class="metric-card">
+      <div class="metric-label">Broker positions</div>
+      <div class="metric-value">{{ preview.stats.positions_count }}</div>
+      <div class="helper-text">{{ '%.2f'|format(preview.stats.position_value_total) }} {{ summary.currency or connection.external_account_currency or '' }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Matched to tracked holdings</div>
+      <div class="metric-value">{{ preview.stats.matched_count }}</div>
+      <div class="helper-text">{{ '%.2f'|format(preview.stats.matched_value) }} {{ summary.currency or connection.external_account_currency or '' }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Broker-only positions</div>
+      <div class="metric-value">{{ preview.stats.broker_only_count }}</div>
+      <div class="helper-text">{{ '%.2f'|format(preview.stats.broker_only_value) }} {{ summary.currency or connection.external_account_currency or '' }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Tracked-only holdings</div>
+      <div class="metric-value">{{ preview.stats.db_only_count }}</div>
+      <div class="helper-text">{{ '%.2f'|format(preview.stats.db_only_value) }} GBP tracked</div>
+    </div>
+  </div>
+
+  <div class="badge-row mt-1">
+    <span class="badge badge-meta">{{ connection.label }}</span>
+    <span class="badge">{{ trading212_environment_label(connection.environment) }}</span>
+    {% if summary.account_id %}<span class="badge badge-meta">Account {{ summary.account_id }}</span>{% endif %}
+    {% if summary.currency %}<span class="badge badge-meta">{{ summary.currency }}</span>{% endif %}
+    {% if preview.fetched_at %}<span class="badge badge-meta">Fetched {{ preview.fetched_at }}</span>{% endif %}
+  </div>
+</section>
+
+<section class="panel mt-1">
+  <div class="section-header">
+    <div>
+      <h3>Broker snapshot summary</h3>
+    </div>
+  </div>
+  <div class="table-scroll">
+    <table class="data-table">
+      <tbody>
+        <tr><th>Total value</th><td class="num">{{ '%.2f'|format(summary.total_value or 0) }} {{ summary.currency or '' }}</td></tr>
+        <tr><th>Available to trade</th><td class="num">{{ '%.2f'|format(summary.available_to_trade or 0) }} {{ summary.currency or '' }}</td></tr>
+        <tr><th>Cash in pies</th><td class="num">{{ '%.2f'|format(summary.cash_in_pies or 0) }} {{ summary.currency or '' }}</td></tr>
+        <tr><th>Reserved for orders</th><td class="num">{{ '%.2f'|format(summary.cash_reserved_for_orders or 0) }} {{ summary.currency or '' }}</td></tr>
+        <tr><th>Investments current value</th><td class="num">{{ '%.2f'|format(summary.investments_current_value or 0) }} {{ summary.currency or '' }}</td></tr>
+        <tr><th>Investments unrealised P/L</th><td class="num">{{ '%.2f'|format(summary.investments_unrealized_profit_loss or 0) }} {{ summary.currency or '' }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel mt-1">
+  <div class="section-header">
+    <div>
+      <h3>Matched holdings</h3>
+      <p class="helper-text" style="margin:0;">Ticker matches are used first, then a cautious name fallback.</p>
+    </div>
+  </div>
+  {% if preview.matched %}
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Broker position</th>
+          <th>Tracked holding</th>
+          <th>Match</th>
+          <th class="num">Units</th>
+          <th class="num">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pair in preview.matched %}
+        <tr>
+          <td>
+            {{ pair.csv.name }}
+            {% if pair.csv.ticker %}<div class="helper-text" style="margin-top:0.2rem;">{{ pair.csv.ticker }}</div>{% endif %}
+          </td>
+          <td>
+            {{ pair.holding.holding_name }}
+            <div class="helper-text" style="margin-top:0.2rem;">{{ pair.holding.account_name }}</div>
+          </td>
+          <td>{{ pair.match_type|title }}</td>
+          <td class="num">
+            {{ '%.4f'|format(pair.csv.units or 0) }} broker
+            <div class="helper-text" style="margin-top:0.2rem;">{{ '%.4f'|format(pair.holding.units or 0) }} tracked{% if pair.units_difference is not none %} · diff {{ '%+.4f'|format(pair.units_difference) }}{% endif %}</div>
+          </td>
+          <td class="num">
+            {{ '%.2f'|format(pair.csv.value or 0) }} {{ summary.currency or '' }}
+            <div class="helper-text" style="margin-top:0.2rem;">{{ '%.2f'|format(pair.holding.value or 0) }} tracked{% if pair.value_difference is not none %} · diff {{ '%+.2f'|format(pair.value_difference) }}{% endif %}</div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="helper-text" style="margin:0;">No existing tracked holdings matched this broker snapshot yet.</p>
+  {% endif %}
+</section>
+
+<section class="panel mt-1">
+  <div class="section-header">
+    <div>
+      <h3>Broker-only positions</h3>
+      <p class="helper-text" style="margin:0;">These came from Trading 212 but do not currently match a tracked holding.</p>
+    </div>
+  </div>
+  {% if preview.broker_only %}
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Ticker</th>
+          <th class="num">Units</th>
+          <th class="num">Current price</th>
+          <th class="num">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in preview.broker_only %}
+        <tr>
+          <td>{{ row.name }}</td>
+          <td>{{ row.ticker or '—' }}</td>
+          <td class="num">{{ '%.4f'|format(row.units or 0) }}</td>
+          <td class="num">{{ '%.4f'|format(row.price or 0) }}</td>
+          <td class="num">{{ '%.2f'|format(row.value or 0) }} {{ row.currency or summary.currency or '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="helper-text" style="margin:0;">Every broker position found a likely tracked holding.</p>
+  {% endif %}
+</section>
+
+<section class="panel mt-1">
+  <div class="section-header">
+    <div>
+      <h3>Tracked holdings not seen in this snapshot</h3>
+      <p class="helper-text" style="margin:0;">Useful for spotting accounts, wrappers, or pension holdings that still need CSV/manual handling.</p>
+    </div>
+  </div>
+  {% if preview.db_only %}
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Holding</th>
+          <th>Account</th>
+          <th>Ticker</th>
+          <th class="num">Tracked value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in preview.db_only %}
+        <tr>
+          <td>{{ row.holding_name }}</td>
+          <td>{{ row.account_name }}</td>
+          <td>{{ row.ticker or '—' }}</td>
+          <td class="num">{{ '%.2f'|format(row.value or 0) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="helper-text" style="margin:0;">No extra tracked holdings were left unmatched.</p>
+  {% endif %}
+</section>
+{% endblock %}

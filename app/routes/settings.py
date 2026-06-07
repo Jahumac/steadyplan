@@ -22,6 +22,7 @@ from app.services.assistant_access import (
     stash_plaintext_assistant_token,
 )
 from app.services.backups import list_backups, run_backup
+from app.services.csv_parsers import match_parsed_to_holdings
 from app.services.restore_service import RestoreValidationError, restore_backup_for_user
 from app.services.restore_staging import (
     cleanup_restore_staging,
@@ -37,6 +38,7 @@ from app.services.trading212 import (
     Trading212CredentialError,
     decrypt_trading212_credential,
     encrypt_trading212_credential,
+    fetch_trading212_portfolio_snapshot,
     mask_trading212_key,
     probe_trading212_connection,
     trading212_environment_label,
@@ -251,6 +253,67 @@ def _prepare_trading212_connections(rows):
             item["masked_api_key"] = "Unavailable"
         prepared.append(item)
     return prepared
+
+
+def _preview_holdings_rows(user_id):
+    with get_connection() as conn:
+        return _select_rows(
+            conn,
+            """
+            SELECT
+                h.id,
+                h.account_id,
+                h.holding_name,
+                h.ticker,
+                h.units,
+                h.price,
+                h.value,
+                a.name AS account_name,
+                a.provider AS account_provider,
+                a.wrapper_type AS account_wrapper_type
+            FROM holdings h
+            JOIN accounts a ON a.id = h.account_id
+            WHERE a.user_id = ?
+            ORDER BY a.name ASC, h.holding_name ASC, h.id ASC
+            """,
+            (user_id,),
+        )
+
+
+def _build_trading212_preview(user_id, connection, snapshot):
+    positions = list(snapshot.get("positions") or [])
+    existing_holdings = _preview_holdings_rows(user_id)
+    matched, broker_only, db_only = match_parsed_to_holdings(positions, existing_holdings)
+    for pair in matched:
+        broker_row = pair.get("csv") or {}
+        holding_row = pair.get("holding") or {}
+        broker_units = broker_row.get("units")
+        tracked_units = holding_row.get("units")
+        broker_value = broker_row.get("value")
+        tracked_value = holding_row.get("value")
+        pair["units_difference"] = None if broker_units is None or tracked_units is None else float(broker_units) - float(tracked_units)
+        pair["value_difference"] = None if broker_value is None or tracked_value is None else float(broker_value) - float(tracked_value)
+    summary = snapshot.get("summary") or {}
+    return {
+        "connection": dict(connection),
+        "summary": summary,
+        "positions": positions,
+        "matched": matched,
+        "broker_only": broker_only,
+        "db_only": db_only,
+        "stats": {
+            "positions_count": len(positions),
+            "matched_count": len(matched),
+            "broker_only_count": len(broker_only),
+            "db_only_count": len(db_only),
+            "position_value_total": sum(float((row or {}).get("value") or 0) for row in positions),
+            "matched_value": sum(float((pair.get("csv") or {}).get("value") or 0) for pair in matched),
+            "broker_only_value": sum(float((row or {}).get("value") or 0) for row in broker_only),
+            "db_only_value": sum(float((row or {}).get("value") or 0) for row in db_only),
+            "available_to_trade": float(summary.get("available_to_trade") or 0),
+        },
+        "fetched_at": snapshot.get("fetched_at") or summary.get("fetched_at"),
+    }
 
 
 def _select_rows(conn, sql, params):
@@ -860,6 +923,55 @@ def retest_trading212(connection_id):
         )
         flash(str(exc), "error")
     return _settings_trading212_redirect()
+
+
+@settings_bp.route("/trading212/<int:connection_id>/preview", methods=["POST"])
+@login_required
+def preview_trading212(connection_id):
+    connection = fetch_broker_connection(connection_id, current_user.id)
+    if connection is None or connection.get("provider") != PROVIDER_TRADING212:
+        flash("Trading 212 connection not found.", "error")
+        return _settings_trading212_redirect()
+
+    try:
+        api_key = decrypt_trading212_credential(connection.get("api_key_ciphertext"))
+        api_secret = decrypt_trading212_credential(connection.get("api_secret_ciphertext"))
+        snapshot = fetch_trading212_portfolio_snapshot(
+            api_key=api_key,
+            api_secret=api_secret,
+            environment=connection.get("environment") or "live",
+        )
+        summary = snapshot["summary"]
+        update_broker_connection_status(
+            connection_id,
+            current_user.id,
+            status="connected",
+            last_error=None,
+            last_tested_at=summary["fetched_at"],
+            external_account_id=summary["account_id"],
+            external_account_currency=summary["currency"],
+            external_total_value=summary["total_value"],
+        )
+    except (Trading212ConnectionError, Trading212CredentialError) as exc:
+        update_broker_connection_status(
+            connection_id,
+            current_user.id,
+            status="error",
+            last_error=str(exc),
+            last_tested_at=datetime.now(timezone.utc).isoformat(),
+        )
+        flash(str(exc), "error")
+        return _settings_trading212_redirect()
+
+    refreshed_connection = fetch_broker_connection(connection_id, current_user.id) or connection
+    preview = _build_trading212_preview(current_user.id, refreshed_connection, snapshot)
+    return render_template(
+        "trading212_preview.html",
+        active_page="settings",
+        trading212_preview=preview,
+        trading212_environment_label=trading212_environment_label,
+        trading212_sync_support_note=trading212_sync_support_note,
+    )
 
 
 @settings_bp.route("/trading212/<int:connection_id>/disconnect", methods=["POST"])
