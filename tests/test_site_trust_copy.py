@@ -102,18 +102,29 @@ def test_docs_and_install_pages_explain_safest_evaluation_path():
 
 def test_public_site_supports_manual_dark_mode_toggle():
     homepage = _read("index.html")
+    about = _read("about.html")
     docs_index = _read("docs/index.html")
     site_css = _read("assets/site.css")
     theme_toggle_js = _read("assets/theme-toggle.js")
 
     assert '<meta name="color-scheme" content="light dark">' in homepage
     assert 'data-theme-toggle' in homepage
+    assert 'site.css?v=20260608a' in homepage
     assert 'theme-toggle.js?v=20260607a' in homepage
+    assert 'class="window-body brand-showcase-panel"' in homepage
+    assert 'class="brand-showcase-mark"' in homepage
+    assert 'opacity:0.95' not in homepage
+    assert 'class="window-body brand-showcase-panel"' in about
+    assert 'class="brand-showcase-mark"' in about
+    assert 'opacity:0.95' not in about
     assert '<meta name="color-scheme" content="light dark">' in docs_index
     assert 'data-theme-toggle' in docs_index
+    assert 'site.css?v=20260608a' in docs_index
     assert 'theme-toggle.js?v=20260607a' in docs_index
     assert ':root[data-theme="dark"] {' in site_css
     assert '.theme-toggle[aria-pressed="true"] {' in site_css
+    assert '.brand-showcase-panel {' in site_css
+    assert '.brand-showcase-mark {' in site_css
     assert "steadyplan-site-theme" in theme_toggle_js
     assert "Switch to dark mode" in theme_toggle_js
     assert "Switch to light mode" in theme_toggle_js
