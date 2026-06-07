@@ -6280,8 +6280,59 @@ a.link-accent:hover {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
+.trading212-mobile-only {
+  display: none;
+}
 .trading212-position-name {
   font-weight: 600;
+}
+.trading212-mobile-position-list {
+  display: none;
+  gap: 0.85rem;
+}
+.trading212-mobile-position-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.35);
+}
+.trading212-mobile-position-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.trading212-mobile-position-value {
+  flex-shrink: 0;
+  text-align: right;
+  font-weight: 700;
+  color: var(--text);
+}
+.trading212-position-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+}
+.trading212-position-facts div {
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.3);
+}
+.trading212-position-facts dt {
+  margin: 0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.trading212-position-facts dd {
+  margin: 0.25rem 0 0;
+  font-weight: 600;
+  color: var(--text);
 }
 .trading212-candidate-heading {
   margin-top: 0.45rem;
@@ -6314,6 +6365,30 @@ a.link-accent:hover {
   gap: 0.35rem;
 }
 @media (max-width: 640px) {
+  .trading212-desktop-only {
+    display: none;
+  }
+
+  .trading212-mobile-only {
+    display: grid;
+  }
+
+  .trading212-mobile-position-card {
+    padding: 0.8rem;
+  }
+
+  .trading212-mobile-position-top {
+    flex-direction: column;
+  }
+
+  .trading212-mobile-position-value {
+    text-align: left;
+  }
+
+  .trading212-position-facts {
+    grid-template-columns: 1fr;
+  }
+
   .trading212-candidate-card {
     padding: 0.55rem 0.65rem;
   }

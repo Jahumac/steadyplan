@@ -131,7 +131,7 @@
     </div>
   </div>
   {% if preview.broker_only %}
-  <div class="table-scroll">
+  <div class="table-scroll trading212-desktop-only">
     <table class="data-table">
       <thead>
         <tr>
@@ -175,6 +175,51 @@
         {% endfor %}
       </tbody>
     </table>
+  </div>
+  <div class="trading212-mobile-position-list trading212-mobile-only">
+    {% for row in preview.broker_only %}
+    <article class="trading212-mobile-position-card">
+      <div class="trading212-mobile-position-top">
+        <div>
+          <div class="trading212-position-name">{{ row.name }}</div>
+          <div class="badge-row mt-05">
+            <span class="badge badge-meta badge-sm">{{ row.ticker or 'No ticker' }}</span>
+            <span class="badge badge-meta badge-sm">{{ row.currency or summary.currency or '—' }}</span>
+          </div>
+        </div>
+        <div class="trading212-mobile-position-value">{{ '%.2f'|format(row.value or 0) }} {{ row.currency or summary.currency or '' }}</div>
+      </div>
+      <dl class="trading212-position-facts">
+        <div>
+          <dt>Units</dt>
+          <dd>{{ '%.4f'|format(row.units or 0) }}</dd>
+        </div>
+        <div>
+          <dt>Current price</dt>
+          <dd>{{ '%.4f'|format(row.price or 0) }}</dd>
+        </div>
+      </dl>
+      {% if row.possible_matches %}
+      <div class="trading212-candidate-heading">Possible tracked matches</div>
+      <div class="trading212-candidate-list">
+        {% for candidate in row.possible_matches %}
+        <div class="trading212-candidate-card">
+          <div class="trading212-candidate-title">{{ candidate.holding.holding_name }}</div>
+          <div class="trading212-candidate-account">{{ candidate.holding.account_name }}</div>
+          {% if candidate.overlap_tokens %}
+          <div class="badge-row trading212-candidate-clues">
+            <span class="badge badge-meta badge-sm">Name clues</span>
+            {% for token in candidate.overlap_tokens %}
+            <span class="badge badge-tag badge-sm">{{ token }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </article>
+    {% endfor %}
   </div>
   {% else %}
   <p class="helper-text" style="margin:0;">Every broker position found a likely tracked holding.</p>

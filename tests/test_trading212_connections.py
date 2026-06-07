@@ -312,6 +312,11 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert "Trading 212 ISA" in body
     assert "Name clues" in body
     assert "shared terms:" not in body
+    assert "trading212-mobile-position-list" in body
+    assert "trading212-mobile-position-card" in body
+    assert "trading212-position-facts" in body
+    assert "trading212-desktop-only" in body
+    assert "trading212-mobile-only" in body
 
     with app.app_context():
         after_rows = fetch_broker_connections(uid, provider=PROVIDER_TRADING212)
