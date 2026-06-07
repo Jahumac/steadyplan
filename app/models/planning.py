@@ -273,6 +273,30 @@ def reset_all_user_data(user_id):
     The user row itself is kept so they can log straight back in.
     """
     with get_connection() as conn:
+        table_names = {
+            row["name"]
+            for row in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'"
+            ).fetchall()
+        }
+
+        def _has_table(name):
+            return name in table_names
+
+        def _delete(sql, params):
+            conn.execute(sql, params)
+
+        if _has_table("assistant_audit_events"):
+            _delete("DELETE FROM assistant_audit_events WHERE user_id = ?", (user_id,))
+        if _has_table("api_tokens"):
+            _delete("DELETE FROM api_tokens WHERE user_id = ?", (user_id,))
+        if _has_table("scheduler_runs"):
+            _delete("DELETE FROM scheduler_runs WHERE user_id = ?", (user_id,))
+        if _has_table("hidden_tags"):
+            _delete("DELETE FROM hidden_tags WHERE user_id = ?", (user_id,))
+        if _has_table("custom_tags"):
+            _delete("DELETE FROM custom_tags WHERE user_id = ?", (user_id,))
+
         conn.execute(
             "DELETE FROM holdings WHERE account_id IN "
             "(SELECT id FROM accounts WHERE user_id = ?)", (user_id,))
@@ -285,6 +309,18 @@ def reset_all_user_data(user_id):
         conn.execute(
             "DELETE FROM account_daily_snapshots WHERE account_id IN "
             "(SELECT id FROM accounts WHERE user_id = ?)", (user_id,))
+        if _has_table("cash_flow_events"):
+            _delete(
+                "DELETE FROM cash_flow_events WHERE account_id IN "
+                "(SELECT id FROM accounts WHERE user_id = ?)",
+                (user_id,),
+            )
+        if _has_table("premium_bonds_prizes"):
+            _delete(
+                "DELETE FROM premium_bonds_prizes WHERE account_id IN "
+                "(SELECT id FROM accounts WHERE user_id = ?)",
+                (user_id,),
+            )
         conn.execute("DELETE FROM accounts WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM goals WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM assumptions WHERE user_id = ?", (user_id,))
@@ -305,4 +341,6 @@ def reset_all_user_data(user_id):
             "(SELECT id FROM budget_items WHERE user_id = ?)", (user_id,))
         conn.execute("DELETE FROM budget_items WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM budget_sections WHERE user_id = ?", (user_id,))
+        if _has_table("debts"):
+            _delete("DELETE FROM debts WHERE user_id = ?", (user_id,))
         conn.commit()
