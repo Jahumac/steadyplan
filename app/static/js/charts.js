@@ -1088,10 +1088,17 @@
         }
       }
 
-      document.querySelectorAll('.period-btn').forEach(function(btn) {
+      var dailyPortfolioBtns = Array.prototype.filter.call(
+        document.querySelectorAll('.period-selector .period-btn'),
+        function (btn) {
+          var card = btn.closest('.card');
+          return card && card.querySelector('#dailyPortfolioChart') && btn.dataset.period;
+        }
+      );
+      dailyPortfolioBtns.forEach(function(btn) {
         btn.addEventListener('click', function(e) {
           e.preventDefault();
-          document.querySelectorAll('.period-btn').forEach(function(b) { b.classList.remove('active'); });
+          dailyPortfolioBtns.forEach(function(b) { b.classList.remove('active'); });
           this.classList.add('active');
           updateChart(this.dataset.period);
         });
