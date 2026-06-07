@@ -805,6 +805,119 @@
   </div>
 </section>
 
+<section class="panel mt-1" id="trading212-access">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Trading 212 sync (beta)</p>
+      <h3>Add a read-only Trading 212 connection</h3>
+    </div>
+  </div>
+  <p class="helper-text">
+    This is the safest first step for Trading 212 integration: SteadyPlan can test a read-only connection and store the key pair encrypted on this server using this app's secret key.
+  </p>
+  <p class="helper-text" style="margin-top:0.45rem;">
+    {{ trading212_sync_support_note() }}
+  </p>
+  <p class="helper-text" style="margin-top:0.45rem;">
+    SteadyPlan's own price service and CSV/manual imports stay in place. This connection is for broker snapshot sync groundwork, not order placement or money-moving.
+  </p>
+
+  <form method="post" action="/settings/trading212/connect" class="settings-form" style="margin-top:1rem;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-grid">
+      <label>
+        <span>Connection label</span>
+        <input type="text" name="label" value="Trading 212" maxlength="64">
+        <small class="form-hint">A local label so you can recognise this connection later.</small>
+      </label>
+      <label>
+        <span>Environment</span>
+        <select name="environment">
+          {% for option in trading212_environment_options %}
+          <option value="{{ option.key }}">{{ option.label }}</option>
+          {% endfor %}
+        </select>
+        <small class="form-hint">Start with Demo if you want a no-risk connection check first.</small>
+      </label>
+      <label>
+        <span>API key</span>
+        <input type="password" name="api_key" autocomplete="off" spellcheck="false">
+        <small class="form-hint">Your Trading 212 Public API key.</small>
+      </label>
+      <label>
+        <span>API secret</span>
+        <input type="password" name="api_secret" autocomplete="off" spellcheck="false">
+        <small class="form-hint">Your Trading 212 Public API secret.</small>
+      </label>
+    </div>
+    <div class="badge-row mt-1">
+      <button type="submit">Save and test Trading 212 connection</button>
+    </div>
+  </form>
+
+  <div style="margin-top:1rem;">
+    <div class="text-sm" style="font-weight:600;margin-bottom:0.45rem;">Saved Trading 212 connections</div>
+    <p class="helper-text" style="margin:0 0 0.45rem 0;">Each saved connection is read-only. Retest refreshes the latest account summary check. Remove deletes the stored encrypted key pair from SteadyPlan.</p>
+    {% if trading212_connections %}
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Label</th>
+            <th>Environment</th>
+            <th>Status</th>
+            <th>Masked key</th>
+            <th>Account</th>
+            <th>Last tested</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for connection in trading212_connections %}
+          <tr>
+            <td>
+              {{ connection.label }}
+              <div class="helper-text" style="margin-top:0.2rem;">{{ connection.access_mode.replace('_', ' ')|title }}</div>
+            </td>
+            <td>{{ trading212_environment_label(connection.environment) }}</td>
+            <td>
+              {{ trading212_status_label(connection) }}
+              {% if connection.last_error %}
+              <div class="helper-text text-danger" style="margin-top:0.2rem;">{{ connection.last_error }}</div>
+              {% endif %}
+            </td>
+            <td>{{ connection.masked_api_key }}</td>
+            <td>
+              {% if connection.external_account_id %}
+                {{ connection.external_account_id }}{% if connection.external_account_currency %}<div class="helper-text" style="margin-top:0.2rem;">{{ connection.external_account_currency }}</div>{% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td>{{ broker_connection_last_tested_label(connection.last_tested_at) }}</td>
+            <td class="num">
+              <div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">
+                <form method="post" action="/settings/trading212/{{ connection.id }}/retest" style="margin:0;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="badge">Retest</button>
+                </form>
+                <form method="post" action="/settings/trading212/{{ connection.id }}/disconnect" style="margin:0;">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="badge badge-danger">Remove</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="helper-text" style="margin:0;">No Trading 212 connection saved yet. CSV import remains available even if you never connect the broker API.</p>
+    {% endif %}
+  </div>
+</section>
+
 {# ── Danger Zone · Reset ─────────────────────────────────────────────────── #}
 <section class="panel mt-1 danger-zone" id="danger-zone">
   <div class="section-header">

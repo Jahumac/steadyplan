@@ -32,21 +32,38 @@ from app.services.restore_staging import (
     stage_restore_file,
 )
 from app.services.restore_validation import validate_restore_backup_json
+from app.services.trading212 import (
+    Trading212ConnectionError,
+    Trading212CredentialError,
+    decrypt_trading212_credential,
+    encrypt_trading212_credential,
+    mask_trading212_key,
+    probe_trading212_connection,
+    trading212_environment_label,
+    trading212_environment_options,
+    trading212_status_label,
+)
 from app.utils import optional_float, optional_int, valid_date
 from app.models import (
     API_TOKEN_KIND_ASSISTANT,
     ASSISTANT_SCOPE_READ,
+    PROVIDER_TRADING212,
     create_api_token,
+    delete_broker_connection,
     fetch_api_token,
     fetch_api_tokens,
     fetch_assistant_audit_events,
     fetch_assumptions,
+    fetch_broker_connection,
+    fetch_broker_connections,
     fetch_holding_catalogue_in_use,
     fetch_latest_price_update,
     get_connection,
     reset_all_user_data,
     revoke_api_token,
     update_assumptions,
+    update_broker_connection_status,
+    upsert_broker_connection,
 )
 
 settings_bp = Blueprint("settings", __name__)
@@ -211,6 +228,31 @@ def _safe_next_settings_url(raw):
     return out
 
 
+def broker_connection_last_tested_label(value):
+    return value or "Not yet tested"
+
+
+def trading212_sync_support_note():
+    return (
+        "Trading 212's Public API currently only covers Invest and Stocks ISA accounts. "
+        "SIPP data is not available through the broker API yet, so keep CSV/manual paths for pension tracking."
+    )
+
+
+def _prepare_trading212_connections(rows):
+    prepared = []
+    for row in rows or []:
+        item = dict(row)
+        try:
+            item["masked_api_key"] = mask_trading212_key(
+                decrypt_trading212_credential(item.get("api_key_ciphertext"))
+            )
+        except Trading212CredentialError:
+            item["masked_api_key"] = "Unavailable"
+        prepared.append(item)
+    return prepared
+
+
 def _select_rows(conn, sql, params):
     return [dict(r) for r in (conn.execute(sql, params).fetchall() or [])]
 
@@ -221,6 +263,9 @@ def _settings_template_context(uid, *, assumptions=None, computed_age=None, diag
     assistant_tokens = fetch_api_tokens(uid, token_kind=API_TOKEN_KIND_ASSISTANT)
     assistant_audit_events = fetch_assistant_audit_events(uid, limit=12)
     assistant_token_secret = pop_plaintext_assistant_token(session)
+    trading212_connections = _prepare_trading212_connections(
+        fetch_broker_connections(uid, provider=PROVIDER_TRADING212)
+    )
     return {
         "assumptions": assumptions,
         "computed_age": computed_age,
@@ -238,6 +283,13 @@ def _settings_template_context(uid, *, assumptions=None, computed_age=None, diag
         "assistant_token_last_used_label": assistant_token_last_used_label,
         "assistant_token_secret_heading": assistant_token_secret_heading,
         "assistant_token_secret": assistant_token_secret,
+        "trading212_connections": trading212_connections,
+        "trading212_environment_options": trading212_environment_options(),
+        "trading212_environment_label": trading212_environment_label,
+        "trading212_status_label": trading212_status_label,
+        "mask_trading212_key": mask_trading212_key,
+        "broker_connection_last_tested_label": broker_connection_last_tested_label,
+        "trading212_sync_support_note": trading212_sync_support_note,
         **extra,
     }
 
@@ -716,6 +768,110 @@ def revoke_assistant_access_token(token_id):
     revoke_api_token(token_id, current_user.id)
     flash("Assistant token revoked. It no longer works.", "success")
     return redirect(url_for("settings.settings"))
+
+
+def _settings_trading212_redirect():
+    return redirect(url_for("settings.settings") + "#trading212-access")
+
+
+@settings_bp.route("/trading212/connect", methods=["POST"])
+@login_required
+def connect_trading212():
+    label = request.form.get("label", "").strip() or "Trading 212"
+    environment = (request.form.get("environment", "live") or "live").strip().lower()
+    api_key = request.form.get("api_key", "").strip()
+    api_secret = request.form.get("api_secret", "").strip()
+    if not api_key or not api_secret:
+        flash("Enter both the Trading 212 API key and API secret.", "error")
+        return _settings_trading212_redirect()
+
+    try:
+        probe = probe_trading212_connection(
+            api_key=api_key,
+            api_secret=api_secret,
+            environment=environment,
+        )
+        summary = probe["summary"]
+        upsert_broker_connection(
+            user_id=current_user.id,
+            provider=PROVIDER_TRADING212,
+            environment=summary["environment"],
+            label=label,
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential(api_key),
+            api_secret_ciphertext=encrypt_trading212_credential(api_secret),
+            status="connected",
+            last_error=None,
+            last_tested_at=summary["fetched_at"],
+            external_account_id=summary["account_id"],
+            external_account_currency=summary["currency"],
+            external_total_value=summary["total_value"],
+        )
+    except (Trading212ConnectionError, Trading212CredentialError) as exc:
+        flash(str(exc), "error")
+        return _settings_trading212_redirect()
+
+    flash(
+        f"Saved {label} as a read-only Trading 212 {trading212_environment_label(summary['environment']).lower()} connection. "
+        f"{trading212_sync_support_note()}",
+        "success",
+    )
+    return _settings_trading212_redirect()
+
+
+@settings_bp.route("/trading212/<int:connection_id>/retest", methods=["POST"])
+@login_required
+def retest_trading212(connection_id):
+    connection = fetch_broker_connection(connection_id, current_user.id)
+    if connection is None or connection.get("provider") != PROVIDER_TRADING212:
+        flash("Trading 212 connection not found.", "error")
+        return _settings_trading212_redirect()
+
+    try:
+        api_key = decrypt_trading212_credential(connection.get("api_key_ciphertext"))
+        api_secret = decrypt_trading212_credential(connection.get("api_secret_ciphertext"))
+        probe = probe_trading212_connection(
+            api_key=api_key,
+            api_secret=api_secret,
+            environment=connection.get("environment") or "live",
+        )
+        summary = probe["summary"]
+        update_broker_connection_status(
+            connection_id,
+            current_user.id,
+            status="connected",
+            last_error=None,
+            last_tested_at=summary["fetched_at"],
+            external_account_id=summary["account_id"],
+            external_account_currency=summary["currency"],
+            external_total_value=summary["total_value"],
+        )
+        flash(
+            f"Trading 212 {trading212_environment_label(summary['environment']).lower()} connection retested successfully.",
+            "success",
+        )
+    except (Trading212ConnectionError, Trading212CredentialError) as exc:
+        update_broker_connection_status(
+            connection_id,
+            current_user.id,
+            status="error",
+            last_error=str(exc),
+            last_tested_at=datetime.now(timezone.utc).isoformat(),
+        )
+        flash(str(exc), "error")
+    return _settings_trading212_redirect()
+
+
+@settings_bp.route("/trading212/<int:connection_id>/disconnect", methods=["POST"])
+@login_required
+def disconnect_trading212(connection_id):
+    connection = fetch_broker_connection(connection_id, current_user.id)
+    if connection is None or connection.get("provider") != PROVIDER_TRADING212:
+        flash("Trading 212 connection not found.", "error")
+        return _settings_trading212_redirect()
+    delete_broker_connection(connection_id, current_user.id)
+    flash("Trading 212 connection removed. CSV/manual imports remain available.", "success")
+    return _settings_trading212_redirect()
 
 
 @settings_bp.route("/backups/run", methods=["POST"])

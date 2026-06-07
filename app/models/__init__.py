@@ -59,6 +59,19 @@ from .users import (
     update_user,
 )
 
+# External integrations / broker connections
+from .integrations import (
+    PROVIDER_TRADING212,
+    TRADING212_ENV_DEMO,
+    TRADING212_ENV_LIVE,
+    VALID_TRADING212_ENVS,
+    delete_broker_connection,
+    fetch_broker_connection,
+    fetch_broker_connections,
+    update_broker_connection_status,
+    upsert_broker_connection,
+)
+
 # Debts
 from .debts import (
     build_debt_card,

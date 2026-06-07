@@ -174,6 +174,7 @@ def delete_user(user_id):
                 "custom_tags",
                 "assistant_audit_events",
                 "api_tokens",
+                "broker_connections",
                 "budget_items",
                 "budget_sections",
                 "monthly_reviews",

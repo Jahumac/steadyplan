@@ -333,6 +333,27 @@ CREATE TABLE IF NOT EXISTS assistant_audit_events (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS broker_connections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider TEXT NOT NULL,
+    label TEXT NOT NULL,
+    environment TEXT NOT NULL DEFAULT 'live',
+    access_mode TEXT NOT NULL DEFAULT 'read_only',
+    api_key_ciphertext TEXT NOT NULL,
+    api_secret_ciphertext TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'unverified',
+    last_error TEXT,
+    last_tested_at TEXT,
+    external_account_id TEXT,
+    external_account_currency TEXT,
+    external_total_value REAL,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(user_id, provider, environment)
+);
+
 CREATE TABLE IF NOT EXISTS debts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -405,6 +426,32 @@ def _run_migrations(conn):
                 reason TEXT,
                 created_at TEXT,
                 FOREIGN KEY(account_id) REFERENCES accounts(id)
+            )
+        """)
+    except Exception as e:
+        _log_migration_error(e)
+
+    try:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS broker_connections (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                provider TEXT NOT NULL,
+                label TEXT NOT NULL,
+                environment TEXT NOT NULL DEFAULT 'live',
+                access_mode TEXT NOT NULL DEFAULT 'read_only',
+                api_key_ciphertext TEXT NOT NULL,
+                api_secret_ciphertext TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'unverified',
+                last_error TEXT,
+                last_tested_at TEXT,
+                external_account_id TEXT,
+                external_account_currency TEXT,
+                external_total_value REAL,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                UNIQUE(user_id, provider, environment)
             )
         """)
     except Exception as e:
