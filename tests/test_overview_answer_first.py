@@ -910,6 +910,57 @@ def test_overview_after_debts_view_updates_headline_value_and_helper(app, client
 
 
 
+def test_overview_after_debts_uses_auto_tracked_debt_balance(app, client, make_user):
+    uid, username, password = make_user(username="overview-auto-tracked-debt", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import fetch_assumptions, get_connection
+        from app.models.debts import build_debt_card
+
+        fetch_assumptions(uid)
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET date_of_birth = '1990-01-01' WHERE user_id = ?",
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, is_active, valuation_mode)
+                VALUES (?, 'Cash', 'Cash', 100, 1, 'manual')
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO debts (
+                    user_id, name, original_amount, current_balance, monthly_payment, apr, start_date, is_active
+                )
+                VALUES (?, 'Card', 1000, 10, 250, 0, '2026-04-01', 1)
+                """,
+                (uid,),
+            )
+            debt_row = conn.execute(
+                "SELECT * FROM debts WHERE user_id = ? AND name = 'Card'",
+                (uid,),
+            ).fetchone()
+            conn.commit()
+
+        debt_card = build_debt_card(debt_row)
+
+    resp = client.get('/?position=after_debts')
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert debt_card["auto_tracked"] is True
+    assert debt_card["current_balance"] > 100
+    assert "<p class=\"eyebrow\">After debts</p>" in html
+    assert f"Subtracting £{debt_card['current_balance']:,.2f} in active debts." in html
+    assert "Subtracting £10.00 in active debts." not in html
+    assert f"£{100 - debt_card['current_balance']:,.2f}" in html
+
+
+
 def test_overview_hides_zero_monthly_contribution_hero_stat(app, client, make_user):
     uid, username, password = make_user(username="overview-zero-contribution", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
