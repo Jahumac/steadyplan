@@ -226,6 +226,21 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
             },
             uid,
         )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Vanguard FTSE Global All Cap",
+                "ticker": "VAFTGAG",
+                "asset_type": "fund",
+                "bucket": "stocks",
+                "value": 600.0,
+                "units": 5.0,
+                "price": 120.0,
+                "notes": "",
+            },
+            uid,
+        )
 
     def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
         assert api_key == "live-preview-key"
@@ -292,6 +307,10 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert "Apple Inc" in body
     assert "Vanguard FTSE All-World" in body
     assert "diff +50.00" in body
+    assert "Possible tracked matches:" in body
+    assert "Vanguard FTSE Global All Cap" in body
+    assert "Trading 212 ISA" in body
+    assert "shared terms:" in body
 
     with app.app_context():
         after_rows = fetch_broker_connections(uid, provider=PROVIDER_TRADING212)

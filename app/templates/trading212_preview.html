@@ -127,7 +127,7 @@
   <div class="section-header">
     <div>
       <h3>Broker-only positions</h3>
-      <p class="helper-text" style="margin:0;">These came from Trading 212 but do not currently match a tracked holding.</p>
+      <p class="helper-text" style="margin:0;">These came from Trading 212 but do not currently match a tracked holding. When SteadyPlan sees a close name clue, it shows possible tracked candidates without auto-matching them yet.</p>
     </div>
   </div>
   {% if preview.broker_only %}
@@ -145,7 +145,20 @@
       <tbody>
         {% for row in preview.broker_only %}
         <tr>
-          <td>{{ row.name }}</td>
+          <td>
+            {{ row.name }}
+            {% if row.possible_matches %}
+            <div class="helper-text" style="margin-top:0.2rem;">Possible tracked matches:</div>
+            {% for candidate in row.possible_matches %}
+            <div class="helper-text" style="margin-top:0.15rem;">
+              {{ candidate.holding.holding_name }} — {{ candidate.holding.account_name }}
+              {% if candidate.overlap_tokens %}
+              · shared terms: {{ candidate.overlap_tokens|join(', ') }}
+              {% endif %}
+            </div>
+            {% endfor %}
+            {% endif %}
+          </td>
           <td>{{ row.ticker or '—' }}</td>
           <td class="num">{{ '%.4f'|format(row.units or 0) }}</td>
           <td class="num">{{ '%.4f'|format(row.price or 0) }}</td>

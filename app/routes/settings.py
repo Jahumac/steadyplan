@@ -1,4 +1,5 @@
 import json
+import re
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -280,6 +281,73 @@ def _preview_holdings_rows(user_id):
         )
 
 
+_TRADING212_MATCH_STOPWORDS = {
+    "acc",
+    "accumulating",
+    "class",
+    "etf",
+    "fund",
+    "gbp",
+    "global",
+    "inc",
+    "income",
+    "ltd",
+    "markets",
+    "plc",
+    "shares",
+    "stock",
+    "ucits",
+    "usd",
+}
+
+
+def _preview_match_tokens(*values):
+    tokens = set()
+    for value in values:
+        text = str(value or "").lower()
+        for token in re.findall(r"[a-z0-9]+", text):
+            if len(token) <= 2:
+                continue
+            if token in _TRADING212_MATCH_STOPWORDS:
+                continue
+            tokens.add(token)
+    return tokens
+
+
+def _preview_possible_holding_matches(position, existing_holdings, *, limit=3):
+    position_tokens = _preview_match_tokens(position.get("name"), position.get("ticker"))
+    if not position_tokens:
+        return []
+
+    candidates = []
+    for holding in existing_holdings:
+        holding_tokens = _preview_match_tokens(holding.get("holding_name"), holding.get("ticker"))
+        if not holding_tokens:
+            continue
+        overlap = sorted(position_tokens & holding_tokens)
+        if len(overlap) < 2:
+            continue
+        score = len(overlap)
+        if holding.get("account_provider") == "Trading 212":
+            score += 1
+        candidates.append(
+            {
+                "holding": dict(holding),
+                "overlap_tokens": overlap,
+                "score": score,
+            }
+        )
+
+    candidates.sort(
+        key=lambda row: (
+            -row["score"],
+            row["holding"].get("account_name") or "",
+            row["holding"].get("holding_name") or "",
+        )
+    )
+    return candidates[:limit]
+
+
 def _build_trading212_preview(user_id, connection, snapshot):
     positions = list(snapshot.get("positions") or [])
     existing_holdings = _preview_holdings_rows(user_id)
@@ -293,6 +361,8 @@ def _build_trading212_preview(user_id, connection, snapshot):
         tracked_value = holding_row.get("value")
         pair["units_difference"] = None if broker_units is None or tracked_units is None else float(broker_units) - float(tracked_units)
         pair["value_difference"] = None if broker_value is None or tracked_value is None else float(broker_value) - float(tracked_value)
+    for row in broker_only:
+        row["possible_matches"] = _preview_possible_holding_matches(row, existing_holdings)
     summary = snapshot.get("summary") or {}
     return {
         "connection": dict(connection),
