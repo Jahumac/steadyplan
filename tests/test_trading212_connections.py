@@ -3,6 +3,7 @@ import io
 import json
 import urllib.error
 from email.message import Message
+from pathlib import Path
 
 from app.models import (
     PROVIDER_TRADING212,
@@ -32,6 +33,12 @@ class _FakeHttpResponse:
 
     def __exit__(self, exc_type, exc, tb):
         return False
+
+
+def test_requirements_include_cryptography_for_trading212_runtime():
+    requirements = Path(__file__).resolve().parents[1] / "requirements.txt"
+    lines = [line.strip() for line in requirements.read_text(encoding="utf-8").splitlines()]
+    assert any(line.lower().startswith("cryptography") for line in lines)
 
 
 def test_settings_renders_trading212_panel_and_support_boundary(app, client, make_user):
