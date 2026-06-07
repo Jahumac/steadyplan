@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- Public roadmap page and a manual light/dark toggle on the public website.
+- Scoped assistant access in Settings with UI-managed tokens, permission labels, and recent write activity.
+
+### Changed
+- Refreshed GitHub-facing docs so README/API/site notes match the current Monthly Update, Diagnostics, assistant access, and public-site experience.
+- Refreshed public demo screenshots and the public marketing/docs site presentation.
+
+### Fixed
+- Test-account reset now clears dependent user-owned rows safely instead of failing on SQLite foreign-key constraints.
+- Public dark-mode logo rendering no longer uses the semi-transparent showcase mark that caused pale edge haloing.
+
 ## [2026.5.0] - 2026-05-25
 
 ### Added

@@ -10,12 +10,12 @@ Bearer-token HTTP JSON API for external clients (Android, desktop, scripts).
 
 ## Minting a token
 
-SteadyPlan now supports two token styles:
+SteadyPlan supports two token styles:
 
 - **General API token** — created from the server CLI, keeps the legacy broad API access.
 - **Assistant token** — created from **Settings → Assistant access** in the web UI, limited to assistant endpoints and explicit scopes.
 
-Tokens are created from the command line on the server:
+General API tokens are created from the command line on the server:
 
 ```bash
 python scripts/api_token.py create <username> "my android phone"
@@ -28,7 +28,7 @@ python scripts/api_token.py list <username>
 python scripts/api_token.py revoke <token_id>
 ```
 
-Assistant tokens are created and rotated in the Settings page so the raw value is only shown once.
+Assistant tokens are created and rotated in **Settings → Assistant access** so the raw value is only shown once.
 
 Tokens are stored in the `api_tokens` table alongside `last_used_at`, `token_kind`, and scope metadata so you
 can see which tokens are active.
@@ -263,7 +263,7 @@ Returns the saved amount plus the previous effective amount/source so the
 assistant can explain what changed.
 
 Every successful assistant write is also recorded in SteadyPlan's assistant
-activity log, which is visible on the Settings page.
+activity log, which is visible in **Settings → Assistant access**.
 
 ### `POST /accounts/<id>/balance`
 Update a manual-valuation account's balance. Also records a monthly
@@ -293,8 +293,9 @@ Log a dividend receipt.
 ```
 
 ### `POST /monthly-review/<YYYY-MM>/complete`
-Mark a month's review as complete. Takes a snapshot of every account's
-effective current value (same as the web UI's "mark complete" button).
+Mark a month's review as complete. This is the API route behind the web UI's
+**Monthly Update** completion action, and it takes a snapshot of every account's
+effective current value.
 
 Snapshot rules on completion:
 - Holdings-based accounts: always snapshot from effective holdings value.

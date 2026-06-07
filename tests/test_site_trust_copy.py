@@ -6,6 +6,7 @@ README_PATH = Path("/opt/data/steadyplan/README.md")
 VOICE_AND_COPY_PATH = Path("/opt/data/steadyplan/docs/VOICE_AND_COPY.md")
 PRODUCT_TRUTH_PATH = Path("/opt/data/steadyplan/docs/PRODUCT_TRUTH.md")
 CHANGELOG_PATH = Path("/opt/data/steadyplan/CHANGELOG.md")
+SITE_README_PATH = Path("/opt/data/steadyplan/site/README.md")
 
 
 def _read(relative_path: str) -> str:
@@ -26,6 +27,10 @@ def _read_product_truth() -> str:
 
 def _read_changelog() -> str:
     return CHANGELOG_PATH.read_text()
+
+
+def _read_site_readme() -> str:
+    return SITE_README_PATH.read_text()
 
 
 def test_homepage_trust_card_mentions_restore_preview_and_safety_backup():
@@ -67,7 +72,7 @@ def test_backup_boundary_copy_distinguishes_json_exports_from_whole_instance_bac
     assert "### JSON Export & Restore" in readme
     assert "Download a user-scoped JSON export from **Settings**, and restore from that file" in readme
     assert "validate a JSON export in Settings" in readme
-    assert "- JSON export and restore flow (done)." in readme
+    assert "- Monthly Update workflow, Data Health, JSON export/restore, and Diagnostics" in readme
     assert "### Backup & Restore (JSON)" not in readme
     assert "Export a user-scoped JSON backup from **Settings**" not in readme
     assert "validate a JSON backup in Settings" not in readme
@@ -106,6 +111,7 @@ def test_public_site_supports_manual_dark_mode_toggle():
     docs_index = _read("docs/index.html")
     site_css = _read("assets/site.css")
     theme_toggle_js = _read("assets/theme-toggle.js")
+    site_readme = _read_site_readme()
 
     assert '<meta name="color-scheme" content="light dark">' in homepage
     assert 'data-theme-toggle' in homepage
@@ -128,6 +134,26 @@ def test_public_site_supports_manual_dark_mode_toggle():
     assert "steadyplan-site-theme" in theme_toggle_js
     assert "Switch to dark mode" in theme_toggle_js
     assert "Switch to light mode" in theme_toggle_js
+    assert "roadmap.html" in site_readme
+    assert "manual light/dark toggle" in site_readme
+    assert "live Cloudflare Pages deployment" in site_readme
+    assert "future static host deployment" not in site_readme
+
+
+def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
+    readme = _read_readme()
+    changelog = _read_changelog()
+
+    assert "### Monthly Update" in readme
+    assert "### Assistant access" in readme
+    assert "### Diagnostics & backup health" in readme
+    assert "Public site supports a manual light/dark toggle without a build step" in readme
+    assert "Monthly Review" not in readme
+    assert "Settings includes scoped **Assistant access** for Pip." in readme
+    assert "Public website with Tour, Roadmap, docs hub, and optional read-only demo path" in readme
+    assert "Public roadmap page and a manual light/dark toggle on the public website." in changelog
+    assert "Scoped assistant access in Settings with UI-managed tokens, permission labels, and recent write activity." in changelog
+    assert "README/API/site notes match the current Monthly Update, Diagnostics, assistant access, and public-site experience." in changelog
 
 
 
@@ -169,8 +195,8 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "**Scenario estimates** — retirement scenario estimates with fee impact and scenario planner" in readme
     assert 'Compare actual performance against an assumptions-based "on-plan" growth line.' in readme
     assert "├── calculations.py        # Scenario estimates, returns, goal tracking, tax year logic" in readme
-    assert "│   ├── projections.py     # Retirement scenario estimate engine" in readme
-    assert "│   ├── export.py          # Excel export (scenario estimates + budget)" in readme
+    assert "│   ├── projections.py     # Scenario estimates views and account series endpoints" in readme
+    assert "│   ├── export.py          # Excel export (scenario estimates, budget, performance)" in readme
     assert "![Scenario estimates](Screenshots/demo/projections_desktop.png)" in readme
     assert "### Retirement Projections" not in readme
     assert "Export projections to Excel (.xlsx) with per-account breakdowns." not in readme
