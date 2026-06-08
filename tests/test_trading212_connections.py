@@ -12,6 +12,7 @@ from app.models import (
     delete_broker_connection,
     fetch_account,
     fetch_broker_connections,
+    fetch_holdings_for_account,
     update_account,
     upsert_broker_connection,
 )
@@ -705,7 +706,9 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     assert "Broker vs tracked value gap" in body
     assert "+550.00 GBP" in body
     assert "Compare <strong>2950.00 GBP</strong> from Trading 212 against <strong>2400.00 GBP</strong> currently tracked in SteadyPlan." in body
-    assert "A future apply step should still require confirmation before any account or holding write." in body
+    assert "Apply reviewed matched changes" in body
+    assert "This first write step only updates already matched holdings on <strong>Trading 212 ISA</strong>." in body
+    assert "This preview found differences to review. Any write step should stay explicit, account-scoped, and non-destructive." in body
     assert "Back to account" in body
     assert "Preview linked broker snapshot" not in body
     assert "Apple Inc" in body
@@ -714,6 +717,254 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     assert "Broker-only positions" in body
     assert "Other broker account" not in body
     assert "Tracked holdings not seen in this snapshot" in body
+
+
+def test_apply_trading212_reviewed_changes_updates_only_matched_holdings(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="t212-apply-reviewed")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("apply-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("apply-secret"),
+            status="connected",
+            last_tested_at="2026-06-09T08:00:00+00:00",
+            external_account_id="ACC-APPLY-1",
+            external_account_currency="GBP",
+            external_total_value=3200.0,
+        )
+        account_id = create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "ISA",
+                "category": "investments",
+                "tags": "",
+                "current_value": 3000.0,
+                "monthly_contribution": 0.0,
+                "goal_value": 0.0,
+                "valuation_mode": "holdings",
+                "growth_mode": "rate",
+                "growth_rate_override": 0.0,
+                "owner": "joint",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-09",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Apple Inc",
+                "ticker": "AAPL_US_EQ",
+                "asset_type": "stock",
+                "bucket": "stocks",
+                "value": 2400.0,
+                "units": 10.0,
+                "price": 240.0,
+                "notes": "",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Manual fund",
+                "ticker": "MANUAL1",
+                "asset_type": "fund",
+                "bucket": "stocks",
+                "value": 600.0,
+                "units": 6.0,
+                "price": 100.0,
+                "notes": "",
+            },
+            uid,
+        )
+
+    def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
+        assert api_key == "apply-key"
+        assert api_secret == "apply-secret"
+        assert environment == "live"
+        return {
+            "environment": "live",
+            "fetched_at": "2026-06-09T08:30:00+00:00",
+            "summary": {
+                "environment": "live",
+                "account_id": "ACC-APPLY-1",
+                "currency": "GBP",
+                "available_to_trade": 150.0,
+                "cash_in_pies": 0.0,
+                "cash_reserved_for_orders": 0.0,
+                "investments_current_value": 3050.0,
+                "investments_total_cost": 2500.0,
+                "investments_unrealized_profit_loss": 550.0,
+                "investments_realized_profit_loss": 0.0,
+                "total_value": 3200.0,
+                "fetched_at": "2026-06-09T08:30:00+00:00",
+            },
+            "positions": [
+                {
+                    "ticker": "AAPL_US_EQ",
+                    "name": "Apple Inc",
+                    "units": 11.0,
+                    "price": 245.0,
+                    "value": 2695.0,
+                    "currency": "GBP",
+                },
+                {
+                    "ticker": "NEWFUND_EQ",
+                    "name": "New fund",
+                    "units": 1.0,
+                    "price": 355.0,
+                    "value": 355.0,
+                    "currency": "GBP",
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.routes.settings.fetch_trading212_portfolio_snapshot",
+        fake_fetch_trading212_portfolio_snapshot,
+    )
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/apply-reviewed",
+        data={"account_id": str(account_id), "confirm_apply_matched": "yes"},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Applied 1 matched Trading 212 holding update." in body
+    assert "1 broker-only position and 1 tracked-only holding were left untouched for review." in body
+
+    with app.app_context():
+        holdings = list(fetch_holdings_for_account(account_id))
+        apple = next(row for row in holdings if row["ticker"] == "AAPL_US_EQ")
+        manual = next(row for row in holdings if row["ticker"] == "MANUAL1")
+        assert apple["units"] == 11.0
+        assert apple["price"] == 245.0
+        assert apple["value"] == 2695.0
+        assert manual["units"] == 6.0
+        assert manual["price"] == 100.0
+        assert manual["value"] == 600.0
+        assert len(holdings) == 2
+
+
+def test_apply_trading212_reviewed_changes_requires_confirmation(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="t212-apply-review-confirm")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("confirm-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("confirm-secret"),
+            status="connected",
+            last_tested_at="2026-06-09T08:00:00+00:00",
+            external_account_id="ACC-CONFIRM-1",
+            external_account_currency="GBP",
+            external_total_value=3200.0,
+        )
+        account_id = create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "ISA",
+                "category": "investments",
+                "tags": "",
+                "current_value": 3000.0,
+                "monthly_contribution": 0.0,
+                "goal_value": 0.0,
+                "valuation_mode": "holdings",
+                "growth_mode": "rate",
+                "growth_rate_override": 0.0,
+                "owner": "joint",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-09",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Apple Inc",
+                "ticker": "AAPL_US_EQ",
+                "asset_type": "stock",
+                "bucket": "stocks",
+                "value": 2400.0,
+                "units": 10.0,
+                "price": 240.0,
+                "notes": "",
+            },
+            uid,
+        )
+
+    def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
+        return {
+            "environment": "live",
+            "fetched_at": "2026-06-09T08:30:00+00:00",
+            "summary": {
+                "environment": "live",
+                "account_id": "ACC-CONFIRM-1",
+                "currency": "GBP",
+                "available_to_trade": 150.0,
+                "cash_in_pies": 0.0,
+                "cash_reserved_for_orders": 0.0,
+                "investments_current_value": 2695.0,
+                "investments_total_cost": 2500.0,
+                "investments_unrealized_profit_loss": 195.0,
+                "investments_realized_profit_loss": 0.0,
+                "total_value": 2845.0,
+                "fetched_at": "2026-06-09T08:30:00+00:00",
+            },
+            "positions": [
+                {
+                    "ticker": "AAPL_US_EQ",
+                    "name": "Apple Inc",
+                    "units": 11.0,
+                    "price": 245.0,
+                    "value": 2695.0,
+                    "currency": "GBP",
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.routes.settings.fetch_trading212_portfolio_snapshot",
+        fake_fetch_trading212_portfolio_snapshot,
+    )
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/apply-reviewed",
+        data={"account_id": str(account_id)},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Tick the confirmation box before applying reviewed Trading 212 changes." in body
+    assert "Apply reviewed matched changes" in body
+
+    with app.app_context():
+        apple = next(row for row in fetch_holdings_for_account(account_id) if row["ticker"] == "AAPL_US_EQ")
+        assert apple["units"] == 10.0
+        assert apple["price"] == 240.0
+        assert apple["value"] == 2400.0
 
 
 def test_linked_preview_normalises_trading212_alias_tickers_and_etf_names(app, client, make_user, monkeypatch):

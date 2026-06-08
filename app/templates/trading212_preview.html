@@ -90,8 +90,22 @@
       <li>Review any matched holding with a units or value difference before writing anything back.</li>
       <li>Keep unmatched broker-only and tracked-only items explicit so nothing is silently added, removed, or merged.</li>
     </ul>
+    {% if preview.apply_plan.can_apply_matched_changes %}
+    <form method="post" action="{{ url_for('settings.apply_trading212_reviewed_changes', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-apply-form">
+      <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
+      <h4 style="margin:0;">Apply reviewed matched changes</h4>
+      <p class="helper-text" style="margin:0.45rem 0 0;">This first write step only updates already matched holdings on <strong>{{ preview.linked_account.name }}</strong>. Broker-only positions and tracked-only holdings stay untouched for manual review.</p>
+      <label class="checkbox-row" style="margin-top:0.75rem; align-items:flex-start; gap:0.55rem;">
+        <input type="checkbox" name="confirm_apply_matched" value="yes">
+        <span>I reviewed the matched holding differences and want SteadyPlan to update those matched holdings only.</span>
+      </label>
+      <div class="button-row mt-1">
+        <button type="submit" class="btn btn-primary">Apply reviewed matched changes</button>
+      </div>
+    </form>
+    {% endif %}
     {% if preview.apply_plan.needs_changes %}
-    <p class="helper-text" style="margin-top:0.75rem; margin-bottom:0;">This preview found differences to review. A future apply step should still require confirmation before any account or holding write.</p>
+    <p class="helper-text" style="margin-top:0.75rem; margin-bottom:0;">This preview found differences to review. Any write step should stay explicit, account-scoped, and non-destructive.</p>
     {% else %}
     <p class="helper-text" style="margin-top:0.75rem; margin-bottom:0;">This preview already lines up cleanly. A future apply step could stay a no-op unless you explicitly choose otherwise.</p>
     {% endif %}

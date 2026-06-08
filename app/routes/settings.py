@@ -60,6 +60,7 @@ from app.models import (
     fetch_assumptions,
     fetch_broker_connection,
     fetch_broker_connections,
+    fetch_holding,
     fetch_holding_catalogue_in_use,
     fetch_latest_price_update,
     get_connection,
@@ -67,6 +68,7 @@ from app.models import (
     revoke_api_token,
     update_assumptions,
     update_broker_connection_status,
+    update_holding,
     upsert_broker_connection,
 )
 
@@ -405,6 +407,7 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
             "tracked_value_total": tracked_value_total,
             "value_gap": value_gap,
             "needs_changes": bool(matched_updates or broker_only or db_only or abs(value_gap) >= 0.005),
+            "can_apply_matched_changes": bool(matched_updates),
         }
     return {
         "connection": dict(connection),
@@ -412,12 +415,27 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
         "linked_account": dict(linked_account) if linked_account else None,
         "positions": positions,
         "matched": matched,
+        "matched_updates": matched_updates,
         "broker_only": broker_only,
         "db_only": db_only,
         "apply_plan": apply_plan,
         "stats": stats,
         "fetched_at": snapshot.get("fetched_at") or summary.get("fetched_at"),
     }
+
+
+def _render_trading212_preview(preview):
+    linked_account = preview.get("linked_account")
+    account_id = linked_account.get("id") if linked_account else None
+    return render_template(
+        "trading212_preview.html",
+        active_page="accounts" if linked_account else "settings",
+        trading212_preview=preview,
+        trading212_environment_label=trading212_environment_label,
+        trading212_sync_support_note=trading212_sync_support_note,
+        preview_back_href=url_for("accounts.account_detail", account_id=account_id) if linked_account else "/settings/#trading212-access",
+        preview_back_label="Back to account" if linked_account else "Back to settings",
+    )
 
 
 def _select_rows(conn, sql, params):
@@ -1079,15 +1097,114 @@ def preview_trading212(connection_id):
             flash("That account is not linked to this Trading 212 connection.", "error")
             return redirect(url_for("accounts.account_detail", account_id=account_id))
     preview = _build_trading212_preview(current_user.id, refreshed_connection, snapshot, linked_account=linked_account)
-    return render_template(
-        "trading212_preview.html",
-        active_page="accounts" if linked_account else "settings",
-        trading212_preview=preview,
-        trading212_environment_label=trading212_environment_label,
-        trading212_sync_support_note=trading212_sync_support_note,
-        preview_back_href=url_for("accounts.account_detail", account_id=account_id) if linked_account else "/settings/#trading212-access",
-        preview_back_label="Back to account" if linked_account else "Back to settings",
-    )
+    return _render_trading212_preview(preview)
+
+
+@settings_bp.route("/trading212/<int:connection_id>/apply-reviewed", methods=["POST"])
+@login_required
+def apply_trading212_reviewed_changes(connection_id):
+    connection = fetch_broker_connection(connection_id, current_user.id)
+    if connection is None or connection.get("provider") != PROVIDER_TRADING212:
+        flash("Trading 212 connection not found.", "error")
+        return _settings_trading212_redirect()
+
+    account_id = optional_int(request.form.get("account_id"), default=None)
+    if not account_id:
+        flash("Choose the linked account before applying reviewed changes.", "error")
+        return _settings_trading212_redirect()
+
+    linked_account = fetch_account(account_id, current_user.id)
+    if linked_account is None:
+        flash("Linked account not found.", "error")
+        return _settings_trading212_redirect()
+    if linked_account.get("linked_broker_connection_id") != connection_id:
+        flash("That account is not linked to this Trading 212 connection.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+    try:
+        api_key = decrypt_trading212_credential(connection.get("api_key_ciphertext"))
+        api_secret = decrypt_trading212_credential(connection.get("api_secret_ciphertext"))
+        snapshot = fetch_trading212_portfolio_snapshot(
+            api_key=api_key,
+            api_secret=api_secret,
+            environment=connection.get("environment") or "live",
+        )
+        summary = snapshot["summary"]
+        update_broker_connection_status(
+            connection_id,
+            current_user.id,
+            status="connected",
+            last_error=None,
+            last_tested_at=summary["fetched_at"],
+            external_account_id=summary["account_id"],
+            external_account_currency=summary["currency"],
+            external_total_value=summary["total_value"],
+        )
+    except (Trading212ConnectionError, Trading212CredentialError) as exc:
+        update_broker_connection_status(
+            connection_id,
+            current_user.id,
+            status="error",
+            last_error=str(exc),
+            last_tested_at=datetime.now(timezone.utc).isoformat(),
+        )
+        flash(str(exc), "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+    refreshed_connection = fetch_broker_connection(connection_id, current_user.id) or connection
+    preview = _build_trading212_preview(current_user.id, refreshed_connection, snapshot, linked_account=linked_account)
+
+    if request.form.get("confirm_apply_matched") != "yes":
+        flash("Tick the confirmation box before applying reviewed Trading 212 changes.", "error")
+        return _render_trading212_preview(preview)
+
+    matched_updates = list(preview.get("matched_updates") or [])
+    if not matched_updates:
+        flash("No matched Trading 212 changes were ready to apply.", "info")
+        return _render_trading212_preview(preview)
+
+    updated = 0
+    skipped = 0
+    for pair in matched_updates:
+        holding_row = pair.get("holding") or {}
+        broker_row = pair.get("csv") or {}
+        holding = fetch_holding(int(holding_row.get("id") or 0), current_user.id)
+        if not holding or int(holding.get("account_id") or 0) != account_id:
+            skipped += 1
+            continue
+        broker_units = float(broker_row.get("units") or 0)
+        broker_price = float(broker_row.get("price") or 0)
+        broker_value = float(broker_row.get("value") or (broker_units * broker_price))
+        if update_holding({
+            "id": holding["id"],
+            "account_id": holding["account_id"],
+            "holding_catalogue_id": holding["holding_catalogue_id"],
+            "holding_name": holding["holding_name"],
+            "ticker": holding["ticker"] or "",
+            "asset_type": holding["asset_type"] or "",
+            "bucket": holding["bucket"] or "",
+            "value": broker_value,
+            "units": broker_units,
+            "price": broker_price,
+            "book_cost": holding["book_cost"],
+            "notes": holding["notes"] or "",
+        }, current_user.id):
+            updated += 1
+        else:
+            skipped += 1
+
+    untouched_broker = len(preview.get("broker_only") or [])
+    untouched_tracked = len(preview.get("db_only") or [])
+    if updated:
+        flash(
+            f"Applied {updated} matched Trading 212 holding update{'s' if updated != 1 else ''}. "
+            f"{untouched_broker} broker-only position{'s' if untouched_broker != 1 else ''} and "
+            f"{untouched_tracked} tracked-only holding{'s' if untouched_tracked != 1 else ''} were left untouched for review.",
+            "success",
+        )
+    if skipped:
+        flash(f"{skipped} matched holding{'s' if skipped != 1 else ''} could not be applied.", "info")
+    return redirect(url_for("accounts.account_detail", account_id=account_id))
 
 
 @settings_bp.route("/trading212/<int:connection_id>/disconnect", methods=["POST"])
