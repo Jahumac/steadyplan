@@ -257,9 +257,14 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     rows = fetch_all_accounts(user_id)
     assumptions = fetch_assumptions(user_id)
     trading212_connection_options = _trading212_connection_options_for(user_id)
+    trading212_connections = {
+        int(connection["id"]): connection
+        for connection in fetch_broker_connections(user_id, provider=PROVIDER_TRADING212)
+        if connection and connection.get("id") is not None
+    }
     linked_trading212_connection = None
     if selected and selected.get("linked_broker_connection_id"):
-        linked_trading212_connection = fetch_broker_connection(selected["linked_broker_connection_id"], user_id)
+        linked_trading212_connection = trading212_connections.get(int(selected["linked_broker_connection_id"])) or fetch_broker_connection(selected["linked_broker_connection_id"], user_id)
     account_create_href = (
         url_for("accounts.accounts", mode="create", focus="first_account")
         if not rows
@@ -268,8 +273,21 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     holdings_totals = fetch_holding_totals_by_account(user_id)
     effective_values = {row["id"]: effective_account_value(row, holdings_totals) for row in rows}
     linked_trading212_summary = None
+    linked_trading212_summaries = {}
+    for row in rows:
+        connection_id = row.get("linked_broker_connection_id")
+        if not connection_id:
+            continue
+        connection = trading212_connections.get(int(connection_id))
+        if not connection:
+            continue
+        linked_trading212_summaries[int(row["id"])] = _linked_trading212_health_summary(
+            row,
+            connection,
+            effective_values.get(int(row["id"]), 0),
+        )
     if selected and linked_trading212_connection:
-        linked_trading212_summary = _linked_trading212_health_summary(
+        linked_trading212_summary = linked_trading212_summaries.get(int(selected["id"])) or _linked_trading212_health_summary(
             selected,
             linked_trading212_connection,
             effective_values.get(int(selected["id"]), 0),
@@ -621,6 +639,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         trading212_connection_options=trading212_connection_options,
         linked_trading212_connection=linked_trading212_connection,
         linked_trading212_summary=linked_trading212_summary,
+        linked_trading212_summaries=linked_trading212_summaries,
         tag_options=fetch_user_tags(user_id),
         custom_tags=fetch_custom_tags(user_id),
         default_tags=DEFAULT_TAG_OPTIONS,

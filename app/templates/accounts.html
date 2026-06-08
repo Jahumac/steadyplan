@@ -104,6 +104,7 @@
 <div class="acct-grid">
   {% for account in accounts %}
   {% set val = effective_values[account.id] %}
+  {% set linked_source = linked_trading212_summaries.get(account.id) %}
   {% set _wt = account.wrapper_type | lower %}
   {% set pill_type = 'isa' if 'stocks' in _wt else ('cash-isa' if 'cash' in _wt else ('lisa' if 'lifetime' in _wt else ('premium-bonds' if 'premium bonds' in _wt else ('sipp' if 'sipp' in _wt else ('pension' if 'pension' in _wt else ('gia' if 'general' in _wt else '')))))) %}
   <a class="acct-card" href="/accounts/{{ account.id }}?mode=view">
@@ -123,6 +124,9 @@
       <div class="acct-balance">£{{ '{:,.0f}'.format(val) }}</div>
       <div class="acct-name">{{ account.name }}</div>
       <div class="acct-provider">{{ account.provider }}{% if account.owner %} · {{ account.owner }}{% endif %}</div>
+      {% if linked_source %}
+      <div class="text-sm text-muted">Account source: <strong>{{ linked_source.source_mode_label }}</strong></div>
+      {% endif %}
     </div>
     <div class="acct-card-foot">
       {% set cb = contrib_breakdowns.get(account.id, {}) %}
