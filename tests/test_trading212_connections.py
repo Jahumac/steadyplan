@@ -9,7 +9,10 @@ from app.models import (
     PROVIDER_TRADING212,
     add_holding,
     create_account,
+    delete_broker_connection,
+    fetch_account,
     fetch_broker_connections,
+    update_account,
     upsert_broker_connection,
 )
 from app.services.trading212 import (
@@ -216,6 +219,196 @@ def test_connect_trading212_keeps_multiple_live_accounts_separate(app, client, m
         assert row_invest is not None
         assert decrypt_trading212_credential(row_isa["api_key_ciphertext"]) == "live-key-isa"
         assert decrypt_trading212_credential(row_invest["api_key_ciphertext"]) == "live-key-invest"
+
+
+def test_accounts_edit_form_offers_saved_trading212_linking(app, client, make_user):
+    uid, username, password = make_user(username="t212-account-link-form")
+    with app.app_context():
+        account_id = create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "Stocks & Shares ISA",
+                "category": "Investments",
+                "tags": "",
+                "current_value": 12000.0,
+                "monthly_contribution": 200.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": None,
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-08T10:00:00+00:00",
+            },
+            uid,
+        )
+        upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("isa-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("isa-secret"),
+            status="connected",
+            last_tested_at="2026-06-08T10:00:00+00:00",
+            external_account_id="ISA-111",
+            external_account_currency="GBP",
+            external_total_value=12000.0,
+        )
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}?mode=edit")
+    assert response.status_code == 200
+    body = response.data.decode("utf-8", errors="ignore")
+    assert "Optional Trading 212 link" in body
+    assert "Saved Trading 212 connection" in body
+    assert "Trading 212 ISA live · ISA-111 · GBP" in body
+    assert "This does not overwrite balances or holdings yet." in body
+
+
+def test_account_edit_can_link_existing_account_to_saved_trading212_connection(app, client, make_user):
+    uid, username, password = make_user(username="t212-account-link-save")
+    with app.app_context():
+        account_id = create_account(
+            {
+                "name": "Existing ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "Stocks & Shares ISA",
+                "category": "Investments",
+                "tags": "",
+                "current_value": 8000.0,
+                "monthly_contribution": 150.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": None,
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-08T10:00:00+00:00",
+            },
+            uid,
+        )
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("isa-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("isa-secret"),
+            status="connected",
+            last_tested_at="2026-06-08T10:00:00+00:00",
+            external_account_id="ISA-111",
+            external_account_currency="GBP",
+            external_total_value=12000.0,
+        )
+        assert connection is not None
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.post(
+        f"/accounts/{account_id}",
+        data={
+            "form_name": "account",
+            "name": "Existing ISA",
+            "provider": "Trading 212",
+            "wrapper_type": "Stocks & Shares ISA",
+            "category": "Investments",
+            "current_value": "8000",
+            "monthly_contribution": "150",
+            "valuation_mode": "manual",
+            "growth_mode": "default",
+            "linked_broker_connection_id": str(connection["id"]),
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    body = response.data.decode("utf-8", errors="ignore")
+    assert "Linked Trading 212 connection:" in body
+    assert "Trading 212 ISA live" in body
+    assert "ISA-111" in body
+
+    with app.app_context():
+        account = fetch_account(account_id, uid)
+        assert account is not None
+        assert account["linked_broker_connection_id"] == connection["id"]
+
+
+def test_delete_trading212_connection_clears_linked_account_reference(app, make_user):
+    uid, _, _ = make_user(username="t212-account-link-delete", password="password123")
+    with app.app_context():
+        account_id = create_account(
+            {
+                "name": "Existing ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "Stocks & Shares ISA",
+                "category": "Investments",
+                "tags": "",
+                "current_value": 8000.0,
+                "monthly_contribution": 150.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": None,
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-08T10:00:00+00:00",
+            },
+            uid,
+        )
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("isa-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("isa-secret"),
+            status="connected",
+            last_tested_at="2026-06-08T10:00:00+00:00",
+            external_account_id="ISA-111",
+            external_account_currency="GBP",
+            external_total_value=12000.0,
+        )
+        assert connection is not None
+        account = fetch_account(account_id, uid)
+        assert account is not None
+        account_payload = dict(account)
+        account_payload["linked_broker_connection_id"] = connection["id"]
+        update_fields = {
+            "id": account_id,
+            "name": account_payload["name"],
+            "provider": account_payload["provider"],
+            "wrapper_type": account_payload["wrapper_type"],
+            "category": account_payload["category"],
+            "tags": account_payload.get("tags") or "",
+            "current_value": account_payload.get("current_value") or 0,
+            "monthly_contribution": account_payload.get("monthly_contribution") or 0,
+            "pension_contribution_day": account_payload.get("pension_contribution_day") or 0,
+            "goal_value": account_payload.get("goal_value"),
+            "valuation_mode": account_payload.get("valuation_mode") or "manual",
+            "growth_mode": account_payload.get("growth_mode") or "default",
+            "growth_rate_override": account_payload.get("growth_rate_override"),
+            "owner": account_payload.get("owner") or "",
+            "linked_broker_connection_id": connection["id"],
+            "notes": account_payload.get("notes") or "",
+            "last_updated": "2026-06-08T10:05:00+00:00",
+        }
+        update_account(update_fields, uid)
+        delete_broker_connection(connection["id"], uid)
+        refreshed = fetch_account(account_id, uid)
+        assert refreshed is not None
+        assert refreshed["linked_broker_connection_id"] is None
 
 
 def test_retest_trading212_failure_updates_status(app, client, make_user, monkeypatch):
@@ -536,6 +729,62 @@ def test_broker_connections_migration_drops_env_uniqueness_for_multiple_live_acc
                 (uid,),
             ).fetchone()["n"]
             assert count == 2
+
+
+def test_accounts_migration_adds_linked_broker_connection_column(app):
+    from app.models import get_connection
+    from app.models.schema import init_db
+
+    with app.app_context():
+        with get_connection() as conn:
+            conn.execute("DROP TABLE IF EXISTS accounts")
+            conn.execute(
+                """
+                CREATE TABLE accounts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    name TEXT NOT NULL,
+                    provider TEXT,
+                    wrapper_type TEXT,
+                    category TEXT,
+                    tags TEXT DEFAULT '',
+                    current_value REAL DEFAULT 0,
+                    monthly_contribution REAL DEFAULT 0,
+                    pension_contribution_day INTEGER DEFAULT 0,
+                    goal_value REAL,
+                    valuation_mode TEXT DEFAULT 'manual',
+                    growth_mode TEXT DEFAULT 'default',
+                    growth_rate_override REAL,
+                    owner TEXT,
+                    is_active INTEGER DEFAULT 1,
+                    notes TEXT,
+                    last_updated TEXT,
+                    employer_contribution REAL DEFAULT 0,
+                    contribution_method TEXT DEFAULT 'standard',
+                    annual_fee_pct REAL DEFAULT 0,
+                    platform_fee_pct REAL DEFAULT 0,
+                    platform_fee_flat REAL DEFAULT 0,
+                    platform_fee_cap REAL DEFAULT 0,
+                    fund_fee_pct REAL DEFAULT 0,
+                    contribution_fee_pct REAL DEFAULT 0,
+                    uninvested_cash REAL DEFAULT 0,
+                    cash_interest_rate REAL DEFAULT 0,
+                    interest_payment_day INTEGER DEFAULT 0,
+                    include_in_budget INTEGER DEFAULT 1,
+                    pre_salary INTEGER DEFAULT 0
+                )
+                """
+            )
+            conn.commit()
+
+        init_db()
+
+        with get_connection() as conn:
+            columns = {
+                row["name"]
+                for row in conn.execute("PRAGMA table_info(accounts)").fetchall()
+            }
+            assert "linked_broker_connection_id" in columns
 
 
 def test_fetch_trading212_account_summary_sends_basic_auth_and_parses_response(app, monkeypatch):

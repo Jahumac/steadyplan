@@ -17,6 +17,7 @@ from app.calculations import (
     review_ready_date,
 )
 from app.models import (
+    PROVIDER_TRADING212,
     CATEGORY_OPTIONS,
     DEFAULT_TAG_OPTIONS,
     WRAPPER_TYPE_OPTIONS,
@@ -31,6 +32,8 @@ from app.models import (
     delete_prize,
     fetch_account,
     fetch_all_accounts,
+    fetch_broker_connection,
+    fetch_broker_connections,
     fetch_catalogue_with_prices,
     fetch_contribution_overrides,
     fetch_cash_flow_events_for_account,
@@ -120,6 +123,7 @@ def _account_payload_from_form(form):
         "growth_mode": form.get("growth_mode", "default"),
         "growth_rate_override": optional_float(form.get("growth_rate_override"), None, divide_by_100=True),
         "owner": form.get("owner", ""),
+        "linked_broker_connection_id": optional_int(form.get("linked_broker_connection_id"), default=None),
         "notes": form.get("notes", ""),
         "last_updated": datetime.now(timezone.utc).isoformat(),
         "employer_contribution": optional_float(form.get("employer_contribution"), 0.0, min_val=0.0),
@@ -153,9 +157,47 @@ def _category_options_for(selected=None):
     return options
 
 
+def _trading212_connection_options_for(user_id):
+    connections = fetch_broker_connections(user_id, provider=PROVIDER_TRADING212)
+    options = []
+    for connection in connections:
+        if not connection:
+            continue
+        bits = [connection.get("label") or "Trading 212"]
+        external_account_id = (connection.get("external_account_id") or "").strip()
+        if external_account_id:
+            bits.append(external_account_id)
+        currency = (connection.get("external_account_currency") or "").strip()
+        if currency:
+            bits.append(currency)
+        environment = (connection.get("environment") or "").strip().lower()
+        if environment == "demo":
+            bits.append("demo")
+        options.append({
+            "id": connection["id"],
+            "label": " · ".join(bits),
+        })
+    return options
+
+
+def _valid_linkable_trading212_connection(connection_id, user_id):
+    if connection_id in (None, ""):
+        return None
+    connection = fetch_broker_connection(connection_id, user_id)
+    if not connection:
+        return None
+    if connection.get("provider") != PROVIDER_TRADING212:
+        return None
+    return connection
+
+
 def _render_accounts_page(user_id, selected=None, detail_mode="view", position_error=None, position_added=False, edit_holding_id=None):
     rows = fetch_all_accounts(user_id)
     assumptions = fetch_assumptions(user_id)
+    trading212_connection_options = _trading212_connection_options_for(user_id)
+    linked_trading212_connection = None
+    if selected and selected.get("linked_broker_connection_id"):
+        linked_trading212_connection = fetch_broker_connection(selected["linked_broker_connection_id"], user_id)
     account_create_href = (
         url_for("accounts.accounts", mode="create", focus="first_account")
         if not rows
@@ -507,6 +549,8 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         active_page="accounts",
         wrapper_type_options=_wrapper_type_options_for(selected),
         category_options=_category_options_for(selected),
+        trading212_connection_options=trading212_connection_options,
+        linked_trading212_connection=linked_trading212_connection,
         tag_options=fetch_user_tags(user_id),
         custom_tags=fetch_custom_tags(user_id),
         default_tags=DEFAULT_TAG_OPTIONS,
@@ -646,6 +690,10 @@ def accounts():
         if not payload["name"].strip():
             flash("Account name is required.", "error")
             return redirect(url_for("accounts.accounts"))
+        linked_connection_id = payload.get("linked_broker_connection_id")
+        if linked_connection_id and not _valid_linkable_trading212_connection(linked_connection_id, uid):
+            flash("Pick a valid saved Trading 212 connection.", "error")
+            return redirect(url_for("accounts.accounts", mode="create"))
         new_id = create_account(payload, uid)
         return redirect(url_for("accounts.accounts"))
 
@@ -698,6 +746,9 @@ def api_create_account():
     payload = _account_payload_from_form(request.form)
     if not payload["name"].strip():
         return jsonify({"ok": False, "error": "Account name is required"}), 400
+    linked_connection_id = payload.get("linked_broker_connection_id")
+    if linked_connection_id and not _valid_linkable_trading212_connection(linked_connection_id, uid):
+        return jsonify({"ok": False, "error": "Pick a valid saved Trading 212 connection"}), 400
     new_id = create_account(payload, uid)
     return jsonify({"ok": True, "account_id": new_id})
 
@@ -889,6 +940,10 @@ def account_detail(account_id):
         if not payload["name"].strip():
             flash("Account name is required.", "error")
             return redirect(url_for("accounts.account_detail", account_id=account_id))
+        linked_connection_id = payload.get("linked_broker_connection_id")
+        if linked_connection_id and not _valid_linkable_trading212_connection(linked_connection_id, uid):
+            flash("Pick a valid saved Trading 212 connection.", "error")
+            return redirect(url_for("accounts.account_detail", account_id=account_id, mode="edit"))
         # preserve fields managed by separate forms, not the main edit form
         if payload.get("cash_interest_rate") is None:
             payload["cash_interest_rate"] = (selected or {}).get("cash_interest_rate", 0) or 0
