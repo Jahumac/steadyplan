@@ -59,6 +59,58 @@
   </div>
 </section>
 
+{% if preview.sync_history and preview.sync_history.events %}
+<section class="panel mt-1">
+  <div class="section-header">
+    <div>
+      <h3>Recent sync activity</h3>
+      <p class="helper-text" style="margin:0;">Keep a visible record of the last preview and reviewed write steps on this linked broker connection.</p>
+    </div>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">Last preview</div>
+      <div class="metric-value" style="font-size:1rem;">{{ preview.sync_history.last_preview.created_label if preview.sync_history.last_preview else '—' }}</div>
+      <div class="helper-text">{{ preview.sync_history.last_preview.action_label if preview.sync_history.last_preview else 'No preview saved yet' }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Last reviewed write</div>
+      <div class="metric-value" style="font-size:1rem;">{{ preview.sync_history.last_apply.created_label if preview.sync_history.last_apply else '—' }}</div>
+      <div class="helper-text">{{ preview.sync_history.last_apply.action_label if preview.sync_history.last_apply else 'No reviewed write saved yet' }}</div>
+    </div>
+  </div>
+  <div class="table-scroll mt-1">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Action</th>
+          <th>When</th>
+          <th class="num">Matched updates</th>
+          <th class="num">Added</th>
+          <th class="num">Held back</th>
+          <th class="num">Tracked-only</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in preview.sync_history.events %}
+        <tr>
+          <td>{{ event.action_label }}</td>
+          <td>
+            {{ event.created_label }}
+            {% if event.snapshot_at %}<div class="helper-text" style="margin-top:0.2rem;">Snapshot {{ event.snapshot_label }}</div>{% endif %}
+          </td>
+          <td class="num">{{ event.matched_updates_count }}</td>
+          <td class="num">{{ event.broker_add_count }}</td>
+          <td class="num">{{ event.held_back_broker_count }}</td>
+          <td class="num">{{ event.tracked_only_count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
   {% if preview.linked_account and preview.apply_plan %}
   <section class="panel mt-1">
     <div class="section-header">

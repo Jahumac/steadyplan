@@ -61,10 +61,12 @@ from app.models import (
     fetch_assumptions,
     fetch_broker_connection,
     fetch_broker_connections,
+    fetch_broker_sync_events,
     fetch_holding,
     fetch_holding_catalogue_in_use,
     fetch_latest_price_update,
     get_connection,
+    log_broker_sync_event,
     reset_all_user_data,
     revoke_api_token,
     update_assumptions,
@@ -430,6 +432,13 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
 def _render_trading212_preview(preview):
     linked_account = preview.get("linked_account")
     account_id = linked_account.get("id") if linked_account else None
+    preview = dict(preview)
+    connection = preview.get("connection") or {}
+    preview["sync_history"] = _recent_trading212_sync_state(current_user.id, int(connection.get("id") or 0)) if connection.get("id") else {
+        "events": [],
+        "last_preview": None,
+        "last_apply": None,
+    }
     return render_template(
         "trading212_preview.html",
         active_page="accounts" if linked_account else "settings",
@@ -473,6 +482,70 @@ def _build_trading212_added_holding_payload(account_id, broker_row):
         "price": price,
         "notes": "Added from reviewed Trading 212 broker-only position.",
     }
+
+
+def _broker_sync_event_action_label(action_type):
+    labels = {
+        "preview": "Previewed snapshot",
+        "apply_matched": "Applied matched updates",
+        "apply_broker_additions": "Added broker-only positions",
+    }
+    return labels.get(action_type, str(action_type or "Sync event").replace("_", " ").title())
+
+
+def _broker_sync_event_time_label(value):
+    if not value:
+        return "—"
+    try:
+        dt = datetime.fromisoformat(str(value))
+        return dt.astimezone(timezone.utc).strftime("%d %b %Y, %H:%M UTC")
+    except Exception:
+        return str(value)
+
+
+def _prepare_broker_sync_events(events):
+    prepared = []
+    for raw in (events or []):
+        event = dict(raw)
+        event["action_label"] = _broker_sync_event_action_label(event.get("action_type"))
+        event["created_label"] = _broker_sync_event_time_label(event.get("created_at"))
+        event["snapshot_label"] = _broker_sync_event_time_label(event.get("snapshot_at"))
+        prepared.append(event)
+    return prepared
+
+
+def _recent_trading212_sync_state(user_id, connection_id):
+    events = _prepare_broker_sync_events(fetch_broker_sync_events(user_id, connection_id, limit=5))
+    last_preview = next((event for event in events if event.get("action_type") == "preview"), None)
+    last_apply = next(
+        (
+            event
+            for event in events
+            if event.get("action_type") in {"apply_matched", "apply_broker_additions"}
+        ),
+        None,
+    )
+    return {
+        "events": events,
+        "last_preview": last_preview,
+        "last_apply": last_apply,
+    }
+
+
+def _log_trading212_sync_event(*, user_id, connection_id, account_id=None, action_type, snapshot_at=None, matched_updates_count=0, broker_add_count=0, held_back_broker_count=0, tracked_only_count=0, notes=None):
+    return log_broker_sync_event(
+        user_id=user_id,
+        connection_id=connection_id,
+        account_id=account_id,
+        provider=PROVIDER_TRADING212,
+        action_type=action_type,
+        snapshot_at=snapshot_at,
+        matched_updates_count=matched_updates_count,
+        broker_add_count=broker_add_count,
+        held_back_broker_count=held_back_broker_count,
+        tracked_only_count=tracked_only_count,
+        notes=notes,
+    )
 
 
 def _select_rows(conn, sql, params):
@@ -1134,6 +1207,18 @@ def preview_trading212(connection_id):
             flash("That account is not linked to this Trading 212 connection.", "error")
             return redirect(url_for("accounts.account_detail", account_id=account_id))
     preview = _build_trading212_preview(current_user.id, refreshed_connection, snapshot, linked_account=linked_account)
+    _log_trading212_sync_event(
+        user_id=current_user.id,
+        connection_id=connection_id,
+        account_id=account_id,
+        action_type="preview",
+        snapshot_at=summary.get("fetched_at"),
+        matched_updates_count=len(preview.get("matched_updates") or []),
+        broker_add_count=len(_trading212_addable_broker_rows(preview)),
+        held_back_broker_count=len(preview.get("broker_only") or []) - len(_trading212_addable_broker_rows(preview)),
+        tracked_only_count=len(preview.get("db_only") or []),
+        notes={"broker_only_count": len(preview.get("broker_only") or [])},
+    )
     return _render_trading212_preview(preview)
 
 
@@ -1239,6 +1324,17 @@ def apply_trading212_reviewed_changes(connection_id):
             f"{untouched_tracked} tracked-only holding{'s' if untouched_tracked != 1 else ''} were left untouched for review.",
             "success",
         )
+        _log_trading212_sync_event(
+            user_id=current_user.id,
+            connection_id=connection_id,
+            account_id=account_id,
+            action_type="apply_matched",
+            snapshot_at=summary.get("fetched_at"),
+            matched_updates_count=updated,
+            broker_add_count=0,
+            held_back_broker_count=untouched_broker,
+            tracked_only_count=untouched_tracked,
+        )
     if skipped:
         flash(f"{skipped} matched holding{'s' if skipped != 1 else ''} could not be applied.", "info")
     return redirect(url_for("accounts.account_detail", account_id=account_id))
@@ -1323,6 +1419,17 @@ def apply_trading212_reviewed_broker_additions(connection_id):
             f"{held_back_broker} broker-only position{'s' if held_back_broker != 1 else ''} stayed out for manual review and "
             f"{tracked_only} tracked-only holding{'s' if tracked_only != 1 else ''} stayed untouched.",
             "success",
+        )
+        _log_trading212_sync_event(
+            user_id=current_user.id,
+            connection_id=connection_id,
+            account_id=account_id,
+            action_type="apply_broker_additions",
+            snapshot_at=summary.get("fetched_at"),
+            matched_updates_count=0,
+            broker_add_count=added,
+            held_back_broker_count=held_back_broker,
+            tracked_only_count=tracked_only,
         )
     if skipped:
         flash(f"{skipped} reviewed broker-only position{'s' if skipped != 1 else ''} could not be added.", "info")

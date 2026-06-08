@@ -12,7 +12,9 @@ from app.models import (
     delete_broker_connection,
     fetch_account,
     fetch_broker_connections,
+    fetch_broker_sync_events,
     fetch_holdings_for_account,
+    log_broker_sync_event,
     update_account,
     upsert_broker_connection,
 )
@@ -712,6 +714,9 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     assert "This step only adds broker-only positions with no possible tracked match clues." in body
     assert "This preview found differences to review. Any write step should stay explicit, account-scoped, and non-destructive." in body
     assert "Back to account" in body
+    assert "Recent sync activity" in body
+    assert "Previewed snapshot" in body
+    assert "Last reviewed write" in body
     assert "Preview linked broker snapshot" not in body
     assert "Apple Inc" in body
     assert "Vanguard FTSE All-World" in body
@@ -859,6 +864,140 @@ def test_apply_trading212_reviewed_changes_updates_only_matched_holdings(app, cl
         assert manual["price"] == 100.0
         assert manual["value"] == 600.0
         assert len(holdings) == 2
+        events = fetch_broker_sync_events(uid, connection["id"], limit=3)
+        assert events[0]["action_type"] == "apply_matched"
+        assert events[0]["matched_updates_count"] == 1
+        assert events[0]["broker_add_count"] == 0
+        assert events[0]["held_back_broker_count"] == 1
+        assert events[0]["tracked_only_count"] == 1
+
+
+def test_preview_trading212_shows_recent_sync_history(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="t212-sync-history")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("history-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("history-secret"),
+            status="connected",
+            last_tested_at="2026-06-09T08:00:00+00:00",
+            external_account_id="ACC-HISTORY-1",
+            external_account_currency="GBP",
+            external_total_value=3200.0,
+        )
+        account_id = create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "ISA",
+                "category": "investments",
+                "tags": "",
+                "current_value": 3000.0,
+                "monthly_contribution": 0.0,
+                "goal_value": 0.0,
+                "valuation_mode": "holdings",
+                "growth_mode": "rate",
+                "growth_rate_override": 0.0,
+                "owner": "joint",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-09",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Apple Inc",
+                "ticker": "AAPL_US_EQ",
+                "asset_type": "stock",
+                "bucket": "stocks",
+                "value": 2400.0,
+                "units": 10.0,
+                "price": 240.0,
+                "notes": "",
+            },
+            uid,
+        )
+        log_broker_sync_event(
+            user_id=uid,
+            connection_id=connection["id"],
+            account_id=account_id,
+            provider=PROVIDER_TRADING212,
+            action_type="apply_matched",
+            snapshot_at="2026-06-09T08:30:00+00:00",
+            matched_updates_count=1,
+            held_back_broker_count=1,
+            tracked_only_count=1,
+        )
+        log_broker_sync_event(
+            user_id=uid,
+            connection_id=connection["id"],
+            account_id=account_id,
+            provider=PROVIDER_TRADING212,
+            action_type="apply_broker_additions",
+            snapshot_at="2026-06-09T08:45:00+00:00",
+            broker_add_count=1,
+            held_back_broker_count=1,
+            tracked_only_count=1,
+        )
+
+    def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
+        return {
+            "environment": "live",
+            "fetched_at": "2026-06-09T09:00:00+00:00",
+            "summary": {
+                "environment": "live",
+                "account_id": "ACC-HISTORY-1",
+                "currency": "GBP",
+                "available_to_trade": 150.0,
+                "cash_in_pies": 0.0,
+                "cash_reserved_for_orders": 0.0,
+                "investments_current_value": 2695.0,
+                "investments_total_cost": 2500.0,
+                "investments_unrealized_profit_loss": 195.0,
+                "investments_realized_profit_loss": 0.0,
+                "total_value": 2845.0,
+                "fetched_at": "2026-06-09T09:00:00+00:00",
+            },
+            "positions": [
+                {
+                    "ticker": "AAPL_US_EQ",
+                    "name": "Apple Inc",
+                    "units": 11.0,
+                    "price": 245.0,
+                    "value": 2695.0,
+                    "currency": "GBP",
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.routes.settings.fetch_trading212_portfolio_snapshot",
+        fake_fetch_trading212_portfolio_snapshot,
+    )
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/preview",
+        data={"account_id": str(account_id)},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Recent sync activity" in body
+    assert "Applied matched updates" in body
+    assert "Added broker-only positions" in body
+    assert "Previewed snapshot" in body
+    assert "Matched updates" in body
+    assert "Held back" in body
 
 
 def test_apply_trading212_reviewed_changes_requires_confirmation(app, client, make_user, monkeypatch):
@@ -1116,6 +1255,12 @@ def test_apply_trading212_reviewed_broker_additions_adds_only_clear_broker_only_
         assert new_fund["units"] == 1.0
         assert new_fund["price"] == 355.0
         assert new_fund["value"] == 355.0
+        events = fetch_broker_sync_events(uid, connection["id"], limit=3)
+        assert events[0]["action_type"] == "apply_broker_additions"
+        assert events[0]["matched_updates_count"] == 0
+        assert events[0]["broker_add_count"] == 1
+        assert events[0]["held_back_broker_count"] == 1
+        assert events[0]["tracked_only_count"] == 1
 
 
 def test_apply_trading212_reviewed_broker_additions_requires_confirmation(app, client, make_user, monkeypatch):

@@ -68,6 +68,8 @@ from .integrations import (
     delete_broker_connection,
     fetch_broker_connection,
     fetch_broker_connections,
+    fetch_broker_sync_events,
+    log_broker_sync_event,
     update_broker_connection_status,
     upsert_broker_connection,
 )
