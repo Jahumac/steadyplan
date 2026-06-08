@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     growth_mode TEXT DEFAULT 'default',
     growth_rate_override REAL,
     owner TEXT,
+    linked_broker_connection_id INTEGER,
     is_active INTEGER DEFAULT 1,
     notes TEXT,
     last_updated TEXT
@@ -384,6 +385,7 @@ def _run_migrations(conn):
         ("growth_rate_override", "REAL"),
         ("tags", "TEXT DEFAULT ''"),
         ("pension_contribution_day", "INTEGER DEFAULT 0"),
+        ("linked_broker_connection_id", "INTEGER"),
     ]:
         if col_name not in existing_cols:
             try:
@@ -995,6 +997,7 @@ def _run_migrations(conn):
                         growth_mode TEXT DEFAULT 'default',
                         growth_rate_override REAL,
                         owner TEXT,
+                        linked_broker_connection_id INTEGER,
                         is_active INTEGER DEFAULT 1,
                         notes TEXT,
                         last_updated TEXT,

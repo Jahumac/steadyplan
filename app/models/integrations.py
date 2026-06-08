@@ -210,6 +210,10 @@ def update_broker_connection_status(
 def delete_broker_connection(connection_id, user_id):
     with get_connection() as conn:
         conn.execute(
+            "UPDATE accounts SET linked_broker_connection_id = NULL WHERE user_id = ? AND linked_broker_connection_id = ?",
+            (user_id, connection_id),
+        )
+        conn.execute(
             "DELETE FROM broker_connections WHERE id = ? AND user_id = ?",
             (connection_id, user_id),
         )

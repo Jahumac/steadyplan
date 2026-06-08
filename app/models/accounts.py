@@ -150,6 +150,7 @@ def update_account(payload, user_id=None):
                 growth_mode = ?,
                 growth_rate_override = ?,
                 owner = ?,
+                linked_broker_connection_id = ?,
                 notes = ?,
                 last_updated = ?,
                 employer_contribution = ?,
@@ -181,6 +182,7 @@ def update_account(payload, user_id=None):
                 payload["growth_mode"],
                 payload["growth_rate_override"],
                 payload["owner"],
+                payload.get("linked_broker_connection_id"),
                 payload["notes"],
                 payload["last_updated"],
                 payload.get("employer_contribution", 0),
@@ -251,12 +253,12 @@ def create_account(payload, user_id):
             INSERT INTO accounts (
                 user_id, name, provider, wrapper_type, category, tags, current_value,
                 monthly_contribution, pension_contribution_day, goal_value, valuation_mode, growth_mode,
-                growth_rate_override, owner, is_active, notes, last_updated,
+                growth_rate_override, owner, linked_broker_connection_id, is_active, notes, last_updated,
                 employer_contribution, contribution_method, annual_fee_pct,
                 platform_fee_pct, platform_fee_flat, platform_fee_cap, fund_fee_pct,
                 contribution_fee_pct, uninvested_cash, cash_interest_rate, interest_payment_day
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
@@ -273,6 +275,7 @@ def create_account(payload, user_id):
                 payload["growth_mode"],
                 payload["growth_rate_override"],
                 payload["owner"],
+                payload.get("linked_broker_connection_id"),
                 payload.get("is_active", 1),
                 payload["notes"],
                 payload["last_updated"],
