@@ -163,6 +163,10 @@
         {% if linked_trading212_summary %}
         <div class="form-grid mt-1" style="max-width:52rem; gap:0.9rem 1.2rem;">
           <div>
+            <p class="text-sm text-muted" style="margin:0;">Account source</p>
+            <strong>{{ linked_trading212_summary.source_mode_label }}</strong>
+          </div>
+          <div>
             <p class="text-sm text-muted" style="margin:0;">Broker status</p>
             <strong>{{ linked_trading212_summary.status_label }}</strong>
           </div>
@@ -182,6 +186,7 @@
         {% if linked_trading212_summary.difference_value is not none %}
         <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ linked_trading212_summary.difference_direction }}: <strong>{% if linked_trading212_summary.difference_value > 0 %}+{% endif %}£{{ '{:,.2f}'.format(linked_trading212_summary.difference_value) }}</strong></p>
         {% endif %}
+        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ linked_trading212_summary.source_mode_hint }}</p>
         {% if linked_trading212_summary.last_error %}
         <p class="text-sm perf-negative mt-05" style="margin-bottom:0;">Last broker error: {{ linked_trading212_summary.last_error }}</p>
         {% else %}

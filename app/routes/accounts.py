@@ -231,6 +231,13 @@ def _linked_trading212_health_summary(selected, linked_connection, effective_val
         else:
             difference_direction = "Broker total is below tracked value"
 
+    if status == "connected" and broker_total is not None:
+        source_mode_label = "Broker primary"
+        source_mode_hint = "Trading 212 is currently the live source for this linked account. Manual tracking remains the fallback if the broker snapshot is unavailable."
+    else:
+        source_mode_label = "Manual fallback"
+        source_mode_hint = "SteadyPlan is currently relying on its stored/manual tracking for this linked account because the broker snapshot is unavailable or incomplete."
+
     return {
         "status": status,
         "status_label": status_label,
@@ -241,6 +248,8 @@ def _linked_trading212_health_summary(selected, linked_connection, effective_val
         "difference_value": difference_value,
         "difference_direction": difference_direction,
         "last_error": (linked_connection.get("last_error") or "").strip() or None,
+        "source_mode_label": source_mode_label,
+        "source_mode_hint": source_mode_hint,
     }
 
 
