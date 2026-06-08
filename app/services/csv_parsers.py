@@ -2,6 +2,7 @@
 
 import csv
 import io
+import re
 from datetime import datetime
 
 
@@ -11,6 +12,82 @@ def _safe_float(value, default=0.0):
         return float((value or "").replace(",", "").strip())
     except (ValueError, TypeError):
         return default
+
+
+_HOLDINGS_MATCH_NAME_EQUIVALENTS = {
+    "accumulation": "acc",
+    "accumulating": "acc",
+    "distribution": "dist",
+    "distributing": "dist",
+}
+
+_HOLDINGS_MATCH_NAME_STOPWORDS = {
+    "etf",
+    "fund",
+    "gbp",
+    "inc",
+    "ltd",
+    "plc",
+    "shares",
+    "stock",
+    "ucits",
+    "usd",
+}
+
+_HOLDINGS_TICKER_ALIASES = {
+    "VFEGL": "VFEG",
+    "VHVGL": "VHVG",
+    "VUSAL": "VUSA",
+    "VUAGL": "VUAG",
+    "VWRPL": "VWRP",
+}
+
+_HOLDINGS_TICKER_STOPWORDS = {
+    "EQ",
+    "GB",
+    "LSE",
+    "NASDAQ",
+    "NYSE",
+    "UK",
+    "US",
+}
+
+
+def _ticker_variants(value):
+    raw = (value or "").strip().upper()
+    if not raw:
+        return set()
+
+    variants = {raw}
+    stripped = raw.replace(".L", "")
+    variants.add(stripped)
+
+    for part in re.split(r"[^A-Z0-9]+", stripped):
+        part = part.strip()
+        if not part:
+            continue
+        if len(part) <= 2 or part in _HOLDINGS_TICKER_STOPWORDS:
+            continue
+        variants.add(part)
+        alias = _HOLDINGS_TICKER_ALIASES.get(part)
+        if alias:
+            variants.add(alias)
+        if len(part) == 5 and part.endswith("L"):
+            variants.add(part[:-1])
+
+    return {item for item in variants if item}
+
+
+def _name_match_tokens(value):
+    tokens = []
+    for token in re.findall(r"[a-z0-9]+", (value or "").lower()):
+        token = _HOLDINGS_MATCH_NAME_EQUIVALENTS.get(token, token)
+        if len(token) <= 2:
+            continue
+        if token in _HOLDINGS_MATCH_NAME_STOPWORDS:
+            continue
+        tokens.append(token)
+    return tuple(dict.fromkeys(tokens))
 
 
 def diagnose_parsed_holdings(holdings, raw_row_count):
@@ -576,8 +653,9 @@ def match_parsed_to_holdings(parsed_rows, existing_holdings):
     Match parsed CSV rows to existing holdings.
 
     Matching priority:
-      1. Exact ticker match (case-insensitive)
-      2. Partial name match (CSV name contains or is contained by holding name)
+      1. Exact or alias-normalised ticker match (case-insensitive)
+      2. Partial raw name match (CSV name contains or is contained by holding name)
+      3. Normalised name-token signature match for common ETF/fund naming variants
 
     Returns:
         matched   — list of {csv_row, holding} pairs
@@ -591,15 +669,17 @@ def match_parsed_to_holdings(parsed_rows, existing_holdings):
     for csv_row in parsed_rows:
         csv_ticker = (csv_row.get("ticker") or "").upper().strip()
         csv_name = (csv_row.get("name") or "").lower().strip()
+        csv_ticker_variants = _ticker_variants(csv_row.get("ticker"))
+        csv_name_tokens = _name_match_tokens(csv_row.get("name"))
 
         best = None
         match_type = None
 
-        # Pass 1: exact ticker match
+        # Pass 1: exact or alias-normalised ticker match
         if csv_ticker:
             for h in existing_holdings:
-                h_ticker = (h["ticker"] or "").upper().strip()
-                if h_ticker and h_ticker == csv_ticker:
+                h_ticker_variants = _ticker_variants(h.get("ticker"))
+                if h_ticker_variants and (h_ticker_variants & csv_ticker_variants):
                     best = h
                     match_type = "ticker"
                     break
@@ -611,6 +691,15 @@ def match_parsed_to_holdings(parsed_rows, existing_holdings):
                 if (csv_name in h_name or h_name in csv_name) and len(csv_name) > 3:
                     best = h
                     match_type = "name"
+                    break
+
+        # Pass 3: normalised token signature match
+        if best is None and csv_name_tokens:
+            for h in existing_holdings:
+                h_name_tokens = _name_match_tokens(h.get("holding_name"))
+                if len(csv_name_tokens) >= 3 and csv_name_tokens == h_name_tokens:
+                    best = h
+                    match_type = "name_normalized"
                     break
 
         if best is not None:

@@ -716,6 +716,143 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     assert "Tracked holdings not seen in this snapshot" in body
 
 
+def test_linked_preview_normalises_trading212_alias_tickers_and_etf_names(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="t212-linked-preview-aliases")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("alias-preview-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("alias-preview-secret"),
+            status="connected",
+            last_tested_at="2026-06-09T07:15:00+00:00",
+            external_account_id="ACC-ALIAS-123",
+            external_account_currency="GBP",
+            external_total_value=9150.0,
+        )
+        account_id = create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "ISA",
+                "category": "investments",
+                "tags": "",
+                "current_value": 9150.0,
+                "monthly_contribution": 0.0,
+                "goal_value": 0.0,
+                "valuation_mode": "holdings",
+                "growth_mode": "rate",
+                "growth_rate_override": 0.0,
+                "owner": "joint",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-09",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Vanguard FTSE Developed World UCITS ETF USD Accumulation",
+                "ticker": "VHVG",
+                "asset_type": "fund",
+                "bucket": "stocks",
+                "value": 5000.0,
+                "units": 100.0,
+                "price": 50.0,
+                "notes": "",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Vanguard FTSE Emerging Markets UCITS ETF USD Accumulation",
+                "ticker": "VFEG",
+                "asset_type": "fund",
+                "bucket": "stocks",
+                "value": 4000.0,
+                "units": 80.0,
+                "price": 50.0,
+                "notes": "",
+            },
+            uid,
+        )
+
+    def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
+        assert api_key == "alias-preview-key"
+        assert api_secret == "alias-preview-secret"
+        assert environment == "live"
+        return {
+            "environment": "live",
+            "fetched_at": "2026-06-09T07:20:00+00:00",
+            "summary": {
+                "environment": "live",
+                "account_id": "ACC-ALIAS-123",
+                "currency": "GBP",
+                "available_to_trade": 150.0,
+                "cash_in_pies": 0.0,
+                "cash_reserved_for_orders": 0.0,
+                "investments_current_value": 9150.0,
+                "investments_total_cost": 8000.0,
+                "investments_unrealized_profit_loss": 1150.0,
+                "investments_realized_profit_loss": 0.0,
+                "total_value": 9300.0,
+                "fetched_at": "2026-06-09T07:20:00+00:00",
+            },
+            "positions": [
+                {
+                    "ticker": "VHVGL_EQ",
+                    "name": "Vanguard FTSE Developed World (Acc)",
+                    "units": 100.0,
+                    "price": 51.0,
+                    "value": 5100.0,
+                    "currency": "GBP",
+                },
+                {
+                    "ticker": "VFEGL_EQ",
+                    "name": "Vanguard FTSE Emerging Markets (Acc)",
+                    "units": 80.0,
+                    "price": 50.625,
+                    "value": 4050.0,
+                    "currency": "GBP",
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.routes.settings.fetch_trading212_portfolio_snapshot",
+        fake_fetch_trading212_portfolio_snapshot,
+    )
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/preview",
+        data={"account_id": str(account_id)},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Matched holdings to update" in body
+    assert ">2<" in body
+    assert "Broker-only positions to add" in body
+    assert ">0<" in body
+    assert "Tracked-only holdings to review" in body
+    assert "No extra tracked holdings were left unmatched." in body
+    assert "VHVGL_EQ" in body
+    assert "VFEGL_EQ" in body
+    assert "Vanguard FTSE Developed World UCITS ETF USD Accumulation" in body
+    assert "Vanguard FTSE Emerging Markets UCITS ETF USD Accumulation" in body
+    assert "Possible tracked matches" not in body
+
+
 def test_retest_trading212_failure_updates_status(app, client, make_user, monkeypatch):
     uid, username, password = make_user(username="t212-retest")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
