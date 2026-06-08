@@ -707,7 +707,9 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     assert "+550.00 GBP" in body
     assert "Compare <strong>2950.00 GBP</strong> from Trading 212 against <strong>2400.00 GBP</strong> currently tracked in SteadyPlan." in body
     assert "Apply reviewed matched changes" in body
+    assert "Add reviewed broker-only positions" in body
     assert "This first write step only updates already matched holdings on <strong>Trading 212 ISA</strong>." in body
+    assert "This step only adds broker-only positions with no possible tracked match clues." in body
     assert "This preview found differences to review. Any write step should stay explicit, account-scoped, and non-destructive." in body
     assert "Back to account" in body
     assert "Preview linked broker snapshot" not in body
@@ -965,6 +967,269 @@ def test_apply_trading212_reviewed_changes_requires_confirmation(app, client, ma
         assert apple["units"] == 10.0
         assert apple["price"] == 240.0
         assert apple["value"] == 2400.0
+
+
+def test_apply_trading212_reviewed_broker_additions_adds_only_clear_broker_only_positions(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="t212-apply-additions")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("additions-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("additions-secret"),
+            status="connected",
+            last_tested_at="2026-06-09T08:00:00+00:00",
+            external_account_id="ACC-ADD-1",
+            external_account_currency="GBP",
+            external_total_value=3200.0,
+        )
+        account_id = create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "ISA",
+                "category": "investments",
+                "tags": "",
+                "current_value": 3000.0,
+                "monthly_contribution": 0.0,
+                "goal_value": 0.0,
+                "valuation_mode": "holdings",
+                "growth_mode": "rate",
+                "growth_rate_override": 0.0,
+                "owner": "joint",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-09",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Apple Inc",
+                "ticker": "AAPL_US_EQ",
+                "asset_type": "stock",
+                "bucket": "stocks",
+                "value": 2400.0,
+                "units": 10.0,
+                "price": 240.0,
+                "notes": "",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Vanguard FTSE Global All Cap",
+                "ticker": "VAFTGAG",
+                "asset_type": "fund",
+                "bucket": "stocks",
+                "value": 600.0,
+                "units": 6.0,
+                "price": 100.0,
+                "notes": "",
+            },
+            uid,
+        )
+
+    def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
+        assert api_key == "additions-key"
+        assert api_secret == "additions-secret"
+        assert environment == "live"
+        return {
+            "environment": "live",
+            "fetched_at": "2026-06-09T08:30:00+00:00",
+            "summary": {
+                "environment": "live",
+                "account_id": "ACC-ADD-1",
+                "currency": "GBP",
+                "available_to_trade": 150.0,
+                "cash_in_pies": 0.0,
+                "cash_reserved_for_orders": 0.0,
+                "investments_current_value": 3200.0,
+                "investments_total_cost": 2500.0,
+                "investments_unrealized_profit_loss": 700.0,
+                "investments_realized_profit_loss": 0.0,
+                "total_value": 3350.0,
+                "fetched_at": "2026-06-09T08:30:00+00:00",
+            },
+            "positions": [
+                {
+                    "ticker": "AAPL_US_EQ",
+                    "name": "Apple Inc",
+                    "units": 10.0,
+                    "price": 240.0,
+                    "value": 2400.0,
+                    "currency": "GBP",
+                },
+                {
+                    "ticker": "NEWFUND_EQ",
+                    "name": "New fund",
+                    "units": 1.0,
+                    "price": 355.0,
+                    "value": 355.0,
+                    "currency": "GBP",
+                },
+                {
+                    "ticker": "VWRP_LSE_EQ",
+                    "name": "Vanguard FTSE All-World",
+                    "units": 5.0,
+                    "price": 119.0,
+                    "value": 595.0,
+                    "currency": "GBP",
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.routes.settings.fetch_trading212_portfolio_snapshot",
+        fake_fetch_trading212_portfolio_snapshot,
+    )
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/apply-reviewed-additions",
+        data={"account_id": str(account_id), "confirm_apply_broker_additions": "yes"},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Added 1 reviewed Trading 212 broker-only position." in body
+    assert "1 broker-only position stayed out for manual review and 1 tracked-only holding stayed untouched." in body
+
+    with app.app_context():
+        holdings = list(fetch_holdings_for_account(account_id))
+        tickers = {row["ticker"] for row in holdings}
+        assert "NEWFUND_EQ" in tickers
+        assert "VWRP_LSE_EQ" not in tickers
+        new_fund = next(row for row in holdings if row["ticker"] == "NEWFUND_EQ")
+        assert new_fund["holding_name"] == "New fund"
+        assert new_fund["asset_type"] == "fund"
+        assert new_fund["bucket"] == "stocks"
+        assert new_fund["units"] == 1.0
+        assert new_fund["price"] == 355.0
+        assert new_fund["value"] == 355.0
+
+
+def test_apply_trading212_reviewed_broker_additions_requires_confirmation(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="t212-apply-additions-confirm")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("additions-confirm-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("additions-confirm-secret"),
+            status="connected",
+            last_tested_at="2026-06-09T08:00:00+00:00",
+            external_account_id="ACC-ADD-CONFIRM-1",
+            external_account_currency="GBP",
+            external_total_value=3200.0,
+        )
+        account_id = create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "ISA",
+                "category": "investments",
+                "tags": "",
+                "current_value": 3000.0,
+                "monthly_contribution": 0.0,
+                "goal_value": 0.0,
+                "valuation_mode": "holdings",
+                "growth_mode": "rate",
+                "growth_rate_override": 0.0,
+                "owner": "joint",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-09",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Apple Inc",
+                "ticker": "AAPL_US_EQ",
+                "asset_type": "stock",
+                "bucket": "stocks",
+                "value": 2400.0,
+                "units": 10.0,
+                "price": 240.0,
+                "notes": "",
+            },
+            uid,
+        )
+
+    def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
+        return {
+            "environment": "live",
+            "fetched_at": "2026-06-09T08:30:00+00:00",
+            "summary": {
+                "environment": "live",
+                "account_id": "ACC-ADD-CONFIRM-1",
+                "currency": "GBP",
+                "available_to_trade": 150.0,
+                "cash_in_pies": 0.0,
+                "cash_reserved_for_orders": 0.0,
+                "investments_current_value": 2400.0,
+                "investments_total_cost": 2500.0,
+                "investments_unrealized_profit_loss": -100.0,
+                "investments_realized_profit_loss": 0.0,
+                "total_value": 2550.0,
+                "fetched_at": "2026-06-09T08:30:00+00:00",
+            },
+            "positions": [
+                {
+                    "ticker": "AAPL_US_EQ",
+                    "name": "Apple Inc",
+                    "units": 10.0,
+                    "price": 240.0,
+                    "value": 2400.0,
+                    "currency": "GBP",
+                },
+                {
+                    "ticker": "NEWFUND_EQ",
+                    "name": "New fund",
+                    "units": 1.0,
+                    "price": 355.0,
+                    "value": 355.0,
+                    "currency": "GBP",
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.routes.settings.fetch_trading212_portfolio_snapshot",
+        fake_fetch_trading212_portfolio_snapshot,
+    )
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/apply-reviewed-additions",
+        data={"account_id": str(account_id)},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Tick the confirmation box before adding reviewed broker-only positions." in body
+    assert "Add reviewed broker-only positions" in body
+
+    with app.app_context():
+        holdings = list(fetch_holdings_for_account(account_id))
+        assert {row['ticker'] for row in holdings} == {"AAPL_US_EQ"}
 
 
 def test_linked_preview_normalises_trading212_alias_tickers_and_etf_names(app, client, make_user, monkeypatch):

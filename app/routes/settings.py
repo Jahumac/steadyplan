@@ -51,6 +51,7 @@ from app.models import (
     API_TOKEN_KIND_ASSISTANT,
     ASSISTANT_SCOPE_READ,
     PROVIDER_TRADING212,
+    add_holding,
     create_api_token,
     delete_broker_connection,
     fetch_api_token,
@@ -408,6 +409,8 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
             "value_gap": value_gap,
             "needs_changes": bool(matched_updates or broker_only or db_only or abs(value_gap) >= 0.005),
             "can_apply_matched_changes": bool(matched_updates),
+            "addable_broker_count": len([row for row in broker_only if not (row.get("possible_matches") or [])]),
+            "can_apply_broker_additions": bool([row for row in broker_only if not (row.get("possible_matches") or [])]),
         }
     return {
         "connection": dict(connection),
@@ -436,6 +439,40 @@ def _render_trading212_preview(preview):
         preview_back_href=url_for("accounts.account_detail", account_id=account_id) if linked_account else "/settings/#trading212-access",
         preview_back_label="Back to account" if linked_account else "Back to settings",
     )
+
+
+def _trading212_addable_broker_rows(preview):
+    return [row for row in (preview.get("broker_only") or []) if not (row.get("possible_matches") or [])]
+
+
+def _infer_trading212_holding_asset_type(row):
+    text = " ".join(
+        [
+            str((row or {}).get("name") or ""),
+            str((row or {}).get("ticker") or ""),
+        ]
+    ).lower()
+    if any(token in text for token in ("etf", "fund", "vanguard", "ishares", "acc", "dist", "ucits")):
+        return "fund"
+    return "stock"
+
+
+def _build_trading212_added_holding_payload(account_id, broker_row):
+    units = float((broker_row or {}).get("units") or 0)
+    price = float((broker_row or {}).get("price") or 0)
+    value = float((broker_row or {}).get("value") or (units * price))
+    return {
+        "account_id": account_id,
+        "holding_catalogue_id": None,
+        "holding_name": (broker_row or {}).get("name") or ((broker_row or {}).get("ticker") or "Trading 212 holding"),
+        "ticker": (broker_row or {}).get("ticker") or "",
+        "asset_type": _infer_trading212_holding_asset_type(broker_row),
+        "bucket": "stocks",
+        "value": value,
+        "units": units,
+        "price": price,
+        "notes": "Added from reviewed Trading 212 broker-only position.",
+    }
 
 
 def _select_rows(conn, sql, params):
@@ -1204,6 +1241,91 @@ def apply_trading212_reviewed_changes(connection_id):
         )
     if skipped:
         flash(f"{skipped} matched holding{'s' if skipped != 1 else ''} could not be applied.", "info")
+    return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+
+@settings_bp.route("/trading212/<int:connection_id>/apply-reviewed-additions", methods=["POST"])
+@login_required
+def apply_trading212_reviewed_broker_additions(connection_id):
+    connection = fetch_broker_connection(connection_id, current_user.id)
+    if connection is None or connection.get("provider") != PROVIDER_TRADING212:
+        flash("Trading 212 connection not found.", "error")
+        return _settings_trading212_redirect()
+
+    account_id = optional_int(request.form.get("account_id"), default=None)
+    if not account_id:
+        flash("Choose the linked account before adding reviewed broker-only positions.", "error")
+        return _settings_trading212_redirect()
+
+    linked_account = fetch_account(account_id, current_user.id)
+    if linked_account is None:
+        flash("Linked account not found.", "error")
+        return _settings_trading212_redirect()
+    if linked_account.get("linked_broker_connection_id") != connection_id:
+        flash("That account is not linked to this Trading 212 connection.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+    try:
+        api_key = decrypt_trading212_credential(connection.get("api_key_ciphertext"))
+        api_secret = decrypt_trading212_credential(connection.get("api_secret_ciphertext"))
+        snapshot = fetch_trading212_portfolio_snapshot(
+            api_key=api_key,
+            api_secret=api_secret,
+            environment=connection.get("environment") or "live",
+        )
+        summary = snapshot["summary"]
+        update_broker_connection_status(
+            connection_id,
+            current_user.id,
+            status="connected",
+            last_error=None,
+            last_tested_at=summary["fetched_at"],
+            external_account_id=summary["account_id"],
+            external_account_currency=summary["currency"],
+            external_total_value=summary["total_value"],
+        )
+    except (Trading212ConnectionError, Trading212CredentialError) as exc:
+        update_broker_connection_status(
+            connection_id,
+            current_user.id,
+            status="error",
+            last_error=str(exc),
+            last_tested_at=datetime.now(timezone.utc).isoformat(),
+        )
+        flash(str(exc), "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+    refreshed_connection = fetch_broker_connection(connection_id, current_user.id) or connection
+    preview = _build_trading212_preview(current_user.id, refreshed_connection, snapshot, linked_account=linked_account)
+
+    if request.form.get("confirm_apply_broker_additions") != "yes":
+        flash("Tick the confirmation box before adding reviewed broker-only positions.", "error")
+        return _render_trading212_preview(preview)
+
+    addable_broker_rows = _trading212_addable_broker_rows(preview)
+    if not addable_broker_rows:
+        flash("No broker-only Trading 212 positions were ready to add safely.", "info")
+        return _render_trading212_preview(preview)
+
+    added = 0
+    skipped = 0
+    for broker_row in addable_broker_rows:
+        if add_holding(_build_trading212_added_holding_payload(account_id, broker_row), current_user.id):
+            added += 1
+        else:
+            skipped += 1
+
+    held_back_broker = len(preview.get("broker_only") or []) - len(addable_broker_rows)
+    tracked_only = len(preview.get("db_only") or [])
+    if added:
+        flash(
+            f"Added {added} reviewed Trading 212 broker-only position{'s' if added != 1 else ''}. "
+            f"{held_back_broker} broker-only position{'s' if held_back_broker != 1 else ''} stayed out for manual review and "
+            f"{tracked_only} tracked-only holding{'s' if tracked_only != 1 else ''} stayed untouched.",
+            "success",
+        )
+    if skipped:
+        flash(f"{skipped} reviewed broker-only position{'s' if skipped != 1 else ''} could not be added.", "info")
     return redirect(url_for("accounts.account_detail", account_id=account_id))
 
 
