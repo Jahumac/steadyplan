@@ -1,5 +1,6 @@
 """Broker and external integration connection records."""
 
+import json
 from datetime import datetime, timezone
 
 from ._conn import get_connection
@@ -205,6 +206,82 @@ def update_broker_connection_status(
         )
         conn.commit()
     return fetch_broker_connection(connection_id, user_id)
+
+
+def log_broker_sync_event(
+    *,
+    user_id,
+    connection_id,
+    provider,
+    action_type,
+    account_id=None,
+    status="success",
+    snapshot_at=None,
+    matched_updates_count=0,
+    broker_add_count=0,
+    held_back_broker_count=0,
+    tracked_only_count=0,
+    notes=None,
+):
+    created_at = datetime.now(timezone.utc).isoformat()
+    payload = notes
+    if isinstance(payload, (dict, list)):
+        payload = json.dumps(payload, sort_keys=True)
+    with get_connection() as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO broker_sync_events (
+                user_id,
+                connection_id,
+                account_id,
+                provider,
+                action_type,
+                status,
+                snapshot_at,
+                matched_updates_count,
+                broker_add_count,
+                held_back_broker_count,
+                tracked_only_count,
+                notes,
+                created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                connection_id,
+                account_id,
+                provider,
+                action_type,
+                status,
+                snapshot_at,
+                int(matched_updates_count or 0),
+                int(broker_add_count or 0),
+                int(held_back_broker_count or 0),
+                int(tracked_only_count or 0),
+                payload,
+                created_at,
+            ),
+        )
+        conn.commit()
+        event_id = cursor.lastrowid
+    with get_connection() as conn:
+        row = conn.execute("SELECT * FROM broker_sync_events WHERE id = ?", (event_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def fetch_broker_sync_events(user_id, connection_id, limit=5):
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT *
+            FROM broker_sync_events
+            WHERE user_id = ? AND connection_id = ?
+            ORDER BY datetime(created_at) DESC, id DESC
+            LIMIT ?
+            """,
+            (user_id, connection_id, int(limit or 5)),
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def delete_broker_connection(connection_id, user_id):

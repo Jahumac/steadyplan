@@ -354,6 +354,23 @@ CREATE TABLE IF NOT EXISTS broker_connections (
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS broker_sync_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    connection_id INTEGER NOT NULL REFERENCES broker_connections(id) ON DELETE CASCADE,
+    account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL,
+    provider TEXT NOT NULL,
+    action_type TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'success',
+    snapshot_at TEXT,
+    matched_updates_count INTEGER NOT NULL DEFAULT 0,
+    broker_add_count INTEGER NOT NULL DEFAULT 0,
+    held_back_broker_count INTEGER NOT NULL DEFAULT 0,
+    tracked_only_count INTEGER NOT NULL DEFAULT 0,
+    notes TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS debts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -452,6 +469,28 @@ def _run_migrations(conn):
                 is_active INTEGER NOT NULL DEFAULT 1,
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
                 updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+    except Exception as e:
+        _log_migration_error(e)
+
+    try:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS broker_sync_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                connection_id INTEGER NOT NULL REFERENCES broker_connections(id) ON DELETE CASCADE,
+                account_id INTEGER REFERENCES accounts(id) ON DELETE SET NULL,
+                provider TEXT NOT NULL,
+                action_type TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'success',
+                snapshot_at TEXT,
+                matched_updates_count INTEGER NOT NULL DEFAULT 0,
+                broker_add_count INTEGER NOT NULL DEFAULT 0,
+                held_back_broker_count INTEGER NOT NULL DEFAULT 0,
+                tracked_only_count INTEGER NOT NULL DEFAULT 0,
+                notes TEXT,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
             )
         """)
     except Exception as e:
@@ -1185,6 +1224,8 @@ def _ensure_indexes(conn):
         "CREATE INDEX IF NOT EXISTS idx_api_tokens_user ON api_tokens(user_id)",
         "CREATE INDEX IF NOT EXISTS idx_assistant_audit_user_created ON assistant_audit_events(user_id, created_at)",
         "CREATE INDEX IF NOT EXISTS idx_assistant_audit_token ON assistant_audit_events(token_id)",
+        "CREATE INDEX IF NOT EXISTS idx_broker_sync_events_connection_created ON broker_sync_events(connection_id, created_at)",
+        "CREATE INDEX IF NOT EXISTS idx_broker_sync_events_user_created ON broker_sync_events(user_id, created_at)",
         "CREATE INDEX IF NOT EXISTS idx_cgt_disposals_user ON cgt_disposals(user_id, disposal_date)",
         "CREATE INDEX IF NOT EXISTS idx_cgt_disposals_account ON cgt_disposals(account_id)",
         "CREATE INDEX IF NOT EXISTS idx_account_daily_account_date ON account_daily_snapshots(account_id, snapshot_date)",
