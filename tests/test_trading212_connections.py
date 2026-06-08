@@ -698,6 +698,14 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Focused on linked account <strong>Trading 212 ISA</strong>" in body
     assert "Only holdings from this SteadyPlan account were compared with the broker snapshot." in body
+    assert "Proposed apply plan" in body
+    assert "Matched holdings to update" in body
+    assert "Broker-only positions to add" in body
+    assert "Tracked-only holdings to review" in body
+    assert "Broker vs tracked value gap" in body
+    assert "+550.00 GBP" in body
+    assert "Compare <strong>2950.00 GBP</strong> from Trading 212 against <strong>2400.00 GBP</strong> currently tracked in SteadyPlan." in body
+    assert "A future apply step should still require confirmation before any account or holding write." in body
     assert "Back to account" in body
     assert "Preview linked broker snapshot" not in body
     assert "Apple Inc" in body
@@ -934,6 +942,7 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert "trading212-mobile-only" in body
     assert "trading212-mobile-candidate-overflow" in body
     assert "Show 1 more possible match" in body
+    assert "Proposed apply plan" not in body
 
     with app.app_context():
         after_rows = fetch_broker_connections(uid, provider=PROVIDER_TRADING212)

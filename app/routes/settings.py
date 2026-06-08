@@ -360,6 +360,7 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
         preferred_account_id = int(linked_account["id"])
     existing_holdings = _preview_holdings_rows(user_id, account_id=preferred_account_id)
     matched, broker_only, db_only = match_parsed_to_holdings(positions, existing_holdings)
+    matched_updates = []
     for pair in matched:
         broker_row = pair.get("csv") or {}
         holding_row = pair.get("holding") or {}
@@ -369,6 +370,11 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
         tracked_value = holding_row.get("value")
         pair["units_difference"] = None if broker_units is None or tracked_units is None else float(broker_units) - float(tracked_units)
         pair["value_difference"] = None if broker_value is None or tracked_value is None else float(broker_value) - float(tracked_value)
+        if (
+            (pair["units_difference"] is not None and abs(pair["units_difference"]) >= 0.0001)
+            or (pair["value_difference"] is not None and abs(pair["value_difference"]) >= 0.005)
+        ):
+            matched_updates.append(pair)
     for row in broker_only:
         row["possible_matches"] = _preview_possible_holding_matches(
             row,
@@ -376,6 +382,30 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
             preferred_account_id=preferred_account_id,
         )
     summary = snapshot.get("summary") or {}
+    stats = {
+        "positions_count": len(positions),
+        "matched_count": len(matched),
+        "broker_only_count": len(broker_only),
+        "db_only_count": len(db_only),
+        "position_value_total": sum(float((row or {}).get("value") or 0) for row in positions),
+        "matched_value": sum(float((pair.get("csv") or {}).get("value") or 0) for pair in matched),
+        "broker_only_value": sum(float((row or {}).get("value") or 0) for row in broker_only),
+        "db_only_value": sum(float((row or {}).get("value") or 0) for row in db_only),
+        "available_to_trade": float(summary.get("available_to_trade") or 0),
+    }
+    apply_plan = None
+    if linked_account:
+        tracked_value_total = sum(float((row or {}).get("value") or 0) for row in existing_holdings)
+        value_gap = stats["position_value_total"] - tracked_value_total
+        apply_plan = {
+            "matched_updates_count": len(matched_updates),
+            "broker_add_count": len(broker_only),
+            "tracked_review_count": len(db_only),
+            "broker_value_total": stats["position_value_total"],
+            "tracked_value_total": tracked_value_total,
+            "value_gap": value_gap,
+            "needs_changes": bool(matched_updates or broker_only or db_only or abs(value_gap) >= 0.005),
+        }
     return {
         "connection": dict(connection),
         "summary": summary,
@@ -384,17 +414,8 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
         "matched": matched,
         "broker_only": broker_only,
         "db_only": db_only,
-        "stats": {
-            "positions_count": len(positions),
-            "matched_count": len(matched),
-            "broker_only_count": len(broker_only),
-            "db_only_count": len(db_only),
-            "position_value_total": sum(float((row or {}).get("value") or 0) for row in positions),
-            "matched_value": sum(float((pair.get("csv") or {}).get("value") or 0) for pair in matched),
-            "broker_only_value": sum(float((row or {}).get("value") or 0) for row in broker_only),
-            "db_only_value": sum(float((row or {}).get("value") or 0) for row in db_only),
-            "available_to_trade": float(summary.get("available_to_trade") or 0),
-        },
+        "apply_plan": apply_plan,
+        "stats": stats,
         "fetched_at": snapshot.get("fetched_at") or summary.get("fetched_at"),
     }
 

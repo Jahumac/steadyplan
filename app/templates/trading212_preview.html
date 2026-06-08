@@ -59,6 +59,45 @@
   </div>
 </section>
 
+  {% if preview.linked_account and preview.apply_plan %}
+  <section class="panel mt-1">
+    <div class="section-header">
+      <div>
+        <h3>Proposed apply plan</h3>
+        <p class="helper-text" style="margin:0;">Still preview only. If a later write step is added, this is the safest shape of work SteadyPlan should ask you to confirm for <strong>{{ preview.linked_account.name }}</strong>.</p>
+      </div>
+    </div>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Matched holdings to update</div>
+        <div class="metric-value">{{ preview.apply_plan.matched_updates_count }}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Broker-only positions to add</div>
+        <div class="metric-value">{{ preview.apply_plan.broker_add_count }}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Tracked-only holdings to review</div>
+        <div class="metric-value">{{ preview.apply_plan.tracked_review_count }}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Broker vs tracked value gap</div>
+        <div class="metric-value">{% if preview.apply_plan.value_gap > 0 %}+{% endif %}{{ '%.2f'|format(preview.apply_plan.value_gap) }} {{ summary.currency or connection.external_account_currency or '' }}</div>
+      </div>
+    </div>
+    <ul class="helper-text" style="margin:0.9rem 0 0 1rem; padding:0; display:grid; gap:0.35rem;">
+      <li>Compare <strong>{{ '%.2f'|format(preview.apply_plan.broker_value_total) }} {{ summary.currency or connection.external_account_currency or '' }}</strong> from Trading 212 against <strong>{{ '%.2f'|format(preview.apply_plan.tracked_value_total) }} GBP</strong> currently tracked in SteadyPlan.</li>
+      <li>Review any matched holding with a units or value difference before writing anything back.</li>
+      <li>Keep unmatched broker-only and tracked-only items explicit so nothing is silently added, removed, or merged.</li>
+    </ul>
+    {% if preview.apply_plan.needs_changes %}
+    <p class="helper-text" style="margin-top:0.75rem; margin-bottom:0;">This preview found differences to review. A future apply step should still require confirmation before any account or holding write.</p>
+    {% else %}
+    <p class="helper-text" style="margin-top:0.75rem; margin-bottom:0;">This preview already lines up cleanly. A future apply step could stay a no-op unless you explicitly choose otherwise.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+
 <section class="panel mt-1">
   <div class="section-header">
     <div>
