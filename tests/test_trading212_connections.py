@@ -274,6 +274,99 @@ def test_accounts_edit_form_offers_saved_trading212_linking(app, client, make_us
     assert "This does not overwrite balances or holdings yet." in body
 
 
+def test_accounts_edit_form_hides_trading212_picker_for_unsupported_wrapper(app, client, make_user):
+    uid, username, password = make_user(username="t212-cash-isa-link-form")
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 Cash ISA live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("cash-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("cash-secret"),
+            status="connected",
+            last_tested_at="2026-06-08T10:00:00+00:00",
+            external_account_id="CASH-111",
+            external_account_currency="GBP",
+            external_total_value=7000.0,
+        )
+        assert connection is not None
+        account_id = create_account(
+            {
+                "name": "Trading 212 Cash ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "Cash ISA",
+                "category": "Cash",
+                "tags": "",
+                "current_value": 7000.0,
+                "monthly_contribution": 100.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-08T10:00:00+00:00",
+            },
+            uid,
+        )
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}?mode=edit")
+    assert response.status_code == 200
+    body = response.data.decode("utf-8", errors="ignore")
+    assert "Optional Trading 212 link" in body
+    assert "Trading 212 Public API currently supports Invest and Stocks ISA only. Keep this account manual/CSV-tracked for now." in body
+    assert "Trading 212 Cash ISA live · CASH-111 · GBP" not in body
+    assert 'name="linked_broker_connection_id" value="%s"' % connection["id"] in body
+
+
+def test_api_create_account_rejects_trading212_link_for_unsupported_wrapper(app, client, make_user):
+    uid, username, password = make_user(username="t212-cash-isa-create")
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 Cash ISA live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("cash-create-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("cash-create-secret"),
+            status="connected",
+            last_tested_at="2026-06-08T10:00:00+00:00",
+            external_account_id="CASH-222",
+            external_account_currency="GBP",
+            external_total_value=6500.0,
+        )
+        assert connection is not None
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.post(
+        "/accounts/api/create",
+        data={
+            "name": "Trading 212 Cash ISA",
+            "provider": "Trading 212",
+            "wrapper_type": "Cash ISA",
+            "category": "Cash",
+            "current_value": "6500",
+            "monthly_contribution": "100",
+            "valuation_mode": "manual",
+            "growth_mode": "default",
+            "linked_broker_connection_id": str(connection["id"]),
+        },
+    )
+    assert response.status_code == 400
+    payload = response.get_json()
+    assert payload == {
+        "ok": False,
+        "error": "Trading 212 linking is currently limited to Invest and Stocks ISA accounts",
+    }
+
+
 def test_account_edit_can_link_existing_account_to_saved_trading212_connection(app, client, make_user):
     uid, username, password = make_user(username="t212-account-link-save")
     with app.app_context():
@@ -437,6 +530,60 @@ def test_account_detail_shows_linked_trading212_error_state(app, client, make_us
     assert "Broker total (GBP)" in body
     assert "Not fetched yet" not in body
     assert "Use the linked broker preview before changing holdings or manually adjusting this account." not in body
+
+
+def test_account_detail_hides_broker_primary_status_for_unsupported_wrapper(app, client, make_user):
+    uid, username, password = make_user(username="t212-cash-isa-detail")
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 Cash ISA live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("cash-detail-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("cash-detail-secret"),
+            status="connected",
+            last_tested_at="2026-06-08T10:00:00+00:00",
+            external_account_id="CASH-111",
+            external_account_currency="GBP",
+            external_total_value=7000.0,
+        )
+        assert connection is not None
+        account_id = create_account(
+            {
+                "name": "Trading 212 Cash ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "Cash ISA",
+                "category": "Cash",
+                "tags": "",
+                "current_value": 7000.0,
+                "monthly_contribution": 100.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-08T10:00:00+00:00",
+            },
+            uid,
+        )
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}")
+    assert response.status_code == 200
+    body = response.data.decode("utf-8", errors="ignore")
+    assert "Linked Trading 212 connection:" in body
+    assert "Trading 212 Public API currently supports Invest and Stocks ISA only. Keep this account manual/CSV-tracked for now." in body
+    assert "Account source" not in body
+    assert "Broker status" not in body
+    assert "Broker primary" not in body
+    assert "Manual fallback" not in body
+    assert "Preview linked broker snapshot" not in body
 
 
 def test_account_list_shows_trading212_account_source_summary(app, client, make_user):

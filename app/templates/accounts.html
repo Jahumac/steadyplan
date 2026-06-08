@@ -163,6 +163,9 @@
         <h2>{{ selected.name }}</h2>
         {% if linked_trading212_connection %}
         <p class="text-sm text-muted mt-05">Linked Trading 212 connection: <strong>{{ linked_trading212_connection.label }}</strong>{% if linked_trading212_connection.external_account_id %} · {{ linked_trading212_connection.external_account_id }}{% endif %}{% if linked_trading212_connection.external_account_currency %} · {{ linked_trading212_connection.external_account_currency }}{% endif %}</p>
+        {% if not selected_supports_trading212_public_api %}
+        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ selected_trading212_support_hint }}</p>
+        {% endif %}
         {% endif %}
         {% if linked_trading212_summary %}
         <div class="form-grid mt-1" style="max-width:52rem; gap:0.9rem 1.2rem;">
@@ -200,7 +203,7 @@
       </div>
       <div class="badge-row account-detail-actions">
         <a class="badge" href="/accounts/">← Back</a>
-        {% if linked_trading212_connection and detail_mode != 'edit' %}
+        {% if linked_trading212_connection and selected_supports_trading212_public_api and detail_mode != 'edit' %}
         <form method="post" action="/settings/trading212/{{ linked_trading212_connection.id }}/preview" class="form-reset">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="account_id" value="{{ selected.id }}">
@@ -271,6 +274,7 @@
               <h4 class="edit-card-title">Optional Trading 212 link</h4>
             </div>
             <div class="form-grid">
+              {% if selected_supports_trading212_public_api %}
               <label class="form-full-col">
                 <span>Saved Trading 212 connection</span>
                 <select name="linked_broker_connection_id">
@@ -285,6 +289,15 @@
                 <small class="form-hint">No saved Trading 212 connections yet. Add one in Settings first if you want to link this account for future preview and sync work.</small>
                 {% endif %}
               </label>
+              {% else %}
+              {% if selected.linked_broker_connection_id %}
+              <input type="hidden" name="linked_broker_connection_id" value="{{ selected.linked_broker_connection_id }}">
+              {% endif %}
+              <div class="form-full-col">
+                <span>Saved Trading 212 connection</span>
+                <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ selected_trading212_support_hint }}</p>
+              </div>
+              {% endif %}
             </div>
           </div>
 

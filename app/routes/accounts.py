@@ -180,13 +180,38 @@ def _trading212_connection_options_for(user_id):
     return options
 
 
-def _valid_linkable_trading212_connection(connection_id, user_id):
+_TRADING212_SUPPORTED_WRAPPER_TYPES = {
+    "general investment account",
+    "stocks & shares isa",
+    "stocks and shares isa",
+}
+
+
+def _supports_trading212_public_api(wrapper_type):
+    return ((wrapper_type or "").strip().lower()) in _TRADING212_SUPPORTED_WRAPPER_TYPES
+
+
+def _trading212_wrapper_support_hint(wrapper_type):
+    if _supports_trading212_public_api(wrapper_type):
+        return None
+    return (
+        "Trading 212 Public API currently supports Invest and Stocks ISA only. "
+        "Keep this account manual/CSV-tracked for now."
+    )
+
+
+def _valid_linkable_trading212_connection(connection_id, user_id, *, wrapper_type=None, existing_connection_id=None):
     if connection_id in (None, ""):
         return None
     connection = fetch_broker_connection(connection_id, user_id)
     if not connection:
         return None
     if connection.get("provider") != PROVIDER_TRADING212:
+        return None
+    connection_db_id = connection.get("id")
+    if not _supports_trading212_public_api(wrapper_type):
+        if existing_connection_id not in (None, "") and connection_db_id is not None and int(connection_db_id) == int(existing_connection_id):
+            return connection
         return None
     return connection
 
@@ -208,6 +233,8 @@ def _format_iso_datetime_short(value):
 
 def _linked_trading212_health_summary(selected, linked_connection, effective_value):
     if not selected or not linked_connection:
+        return None
+    if not _supports_trading212_public_api((selected or {}).get("wrapper_type")):
         return None
 
     status = (linked_connection.get("status") or "unknown").strip().lower() or "unknown"
@@ -265,6 +292,8 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     linked_trading212_connection = None
     if selected and selected.get("linked_broker_connection_id"):
         linked_trading212_connection = trading212_connections.get(int(selected["linked_broker_connection_id"])) or fetch_broker_connection(selected["linked_broker_connection_id"], user_id)
+    selected_supports_trading212_public_api = _supports_trading212_public_api((selected or {}).get("wrapper_type"))
+    selected_trading212_support_hint = _trading212_wrapper_support_hint((selected or {}).get("wrapper_type"))
     account_create_href = (
         url_for("accounts.accounts", mode="create", focus="first_account")
         if not rows
@@ -640,6 +669,8 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         linked_trading212_connection=linked_trading212_connection,
         linked_trading212_summary=linked_trading212_summary,
         linked_trading212_summaries=linked_trading212_summaries,
+        selected_supports_trading212_public_api=selected_supports_trading212_public_api,
+        selected_trading212_support_hint=selected_trading212_support_hint,
         tag_options=fetch_user_tags(user_id),
         custom_tags=fetch_custom_tags(user_id),
         default_tags=DEFAULT_TAG_OPTIONS,
@@ -780,8 +811,12 @@ def accounts():
             flash("Account name is required.", "error")
             return redirect(url_for("accounts.accounts"))
         linked_connection_id = payload.get("linked_broker_connection_id")
-        if linked_connection_id and not _valid_linkable_trading212_connection(linked_connection_id, uid):
-            flash("Pick a valid saved Trading 212 connection.", "error")
+        if linked_connection_id and not _valid_linkable_trading212_connection(
+            linked_connection_id,
+            uid,
+            wrapper_type=payload.get("wrapper_type"),
+        ):
+            flash("Trading 212 linking is currently limited to Invest and Stocks ISA accounts.", "error")
             return redirect(url_for("accounts.accounts", mode="create"))
         new_id = create_account(payload, uid)
         return redirect(url_for("accounts.accounts"))
@@ -836,8 +871,12 @@ def api_create_account():
     if not payload["name"].strip():
         return jsonify({"ok": False, "error": "Account name is required"}), 400
     linked_connection_id = payload.get("linked_broker_connection_id")
-    if linked_connection_id and not _valid_linkable_trading212_connection(linked_connection_id, uid):
-        return jsonify({"ok": False, "error": "Pick a valid saved Trading 212 connection"}), 400
+    if linked_connection_id and not _valid_linkable_trading212_connection(
+        linked_connection_id,
+        uid,
+        wrapper_type=payload.get("wrapper_type"),
+    ):
+        return jsonify({"ok": False, "error": "Trading 212 linking is currently limited to Invest and Stocks ISA accounts"}), 400
     new_id = create_account(payload, uid)
     return jsonify({"ok": True, "account_id": new_id})
 
@@ -1030,8 +1069,13 @@ def account_detail(account_id):
             flash("Account name is required.", "error")
             return redirect(url_for("accounts.account_detail", account_id=account_id))
         linked_connection_id = payload.get("linked_broker_connection_id")
-        if linked_connection_id and not _valid_linkable_trading212_connection(linked_connection_id, uid):
-            flash("Pick a valid saved Trading 212 connection.", "error")
+        if linked_connection_id and not _valid_linkable_trading212_connection(
+            linked_connection_id,
+            uid,
+            wrapper_type=payload.get("wrapper_type"),
+            existing_connection_id=(selected or {}).get("linked_broker_connection_id"),
+        ):
+            flash("Trading 212 linking is currently limited to Invest and Stocks ISA accounts.", "error")
             return redirect(url_for("accounts.account_detail", account_id=account_id, mode="edit"))
         # preserve fields managed by separate forms, not the main edit form
         if payload.get("cash_interest_rate") is None:
