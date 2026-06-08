@@ -243,8 +243,8 @@ def broker_connection_last_tested_label(value):
 
 def trading212_sync_support_note():
     return (
-        "Trading 212's Public API currently only covers Invest and Stocks ISA accounts. "
-        "SIPP data is not available through the broker API yet, so keep CSV/manual paths for pension tracking."
+        "Trading 212's Public API currently supports Invest and Stocks ISA only. "
+        "Cash ISA and SIPP accounts should stay manual/CSV-tracked for now."
     )
 
 

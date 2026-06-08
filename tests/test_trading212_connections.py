@@ -57,8 +57,9 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "Trading 212 sync (beta)" in body
     assert "Add a read-only Trading 212 connection" in body
     assert "store the key pair encrypted on this server using this app's secret key" in body
-    assert "Public API currently only covers Invest and Stocks ISA accounts" in body
-    assert "SIPP data is not available through the broker API yet" in body
+    assert "Public API currently supports Invest and Stocks ISA only" in body
+    assert "Cash ISA and SIPP accounts should stay manual/CSV-tracked for now" in body
+    assert "SIPP data is not available through the broker API yet" not in body
     assert "SteadyPlan can keep more than one read-only Trading 212 connection" in body
     assert "CSV import remains available" in body
 
@@ -108,7 +109,8 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Saved Trading 212 ISA as a read-only Trading 212 live connection." in body
-    assert "SIPP data is not available through the broker API yet" in body
+    assert "Cash ISA and SIPP accounts should stay manual/CSV-tracked for now" in body
+    assert "SIPP data is not available through the broker API yet" not in body
     assert "Preview holdings snapshot" in body
     assert "live…3456" in body
     assert "998877" in body
