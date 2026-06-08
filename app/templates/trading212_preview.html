@@ -104,6 +104,20 @@
       </div>
     </form>
     {% endif %}
+    {% if preview.apply_plan.can_apply_broker_additions %}
+    <form method="post" action="{{ url_for('settings.apply_trading212_reviewed_broker_additions', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-apply-form trading212-apply-additions-form">
+      <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
+      <h4 style="margin:0;">Add reviewed broker-only positions</h4>
+      <p class="helper-text" style="margin:0.45rem 0 0;">This step only adds broker-only positions with no possible tracked match clues. Positions with possible matches stay out for manual review.</p>
+      <label class="checkbox-row" style="margin-top:0.75rem; align-items:flex-start; gap:0.55rem;">
+        <input type="checkbox" name="confirm_apply_broker_additions" value="yes">
+        <span>I reviewed the broker-only positions and want SteadyPlan to add the {{ preview.apply_plan.addable_broker_count }} position{{ '' if preview.apply_plan.addable_broker_count == 1 else 's' }} with no possible tracked matches.</span>
+      </label>
+      <div class="button-row mt-1">
+        <button type="submit" class="btn btn-secondary">Add reviewed broker-only positions</button>
+      </div>
+    </form>
+    {% endif %}
     {% if preview.apply_plan.needs_changes %}
     <p class="helper-text" style="margin-top:0.75rem; margin-bottom:0;">This preview found differences to review. Any write step should stay explicit, account-scoped, and non-destructive.</p>
     {% else %}
