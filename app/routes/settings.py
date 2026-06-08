@@ -56,6 +56,7 @@ from app.models import (
     fetch_api_token,
     fetch_api_tokens,
     fetch_assistant_audit_events,
+    fetch_account,
     fetch_assumptions,
     fetch_broker_connection,
     fetch_broker_connections,
@@ -256,11 +257,9 @@ def _prepare_trading212_connections(rows):
     return prepared
 
 
-def _preview_holdings_rows(user_id):
+def _preview_holdings_rows(user_id, account_id=None):
     with get_connection() as conn:
-        return _select_rows(
-            conn,
-            """
+        sql = """
             SELECT
                 h.id,
                 h.account_id,
@@ -275,10 +274,13 @@ def _preview_holdings_rows(user_id):
             FROM holdings h
             JOIN accounts a ON a.id = h.account_id
             WHERE a.user_id = ?
-            ORDER BY a.name ASC, h.holding_name ASC, h.id ASC
-            """,
-            (user_id,),
-        )
+        """
+        params = [user_id]
+        if account_id is not None:
+            sql += " AND a.id = ?"
+            params.append(account_id)
+        sql += " ORDER BY a.name ASC, h.holding_name ASC, h.id ASC"
+        return _select_rows(conn, sql, tuple(params))
 
 
 _TRADING212_MATCH_STOPWORDS = {
@@ -314,7 +316,7 @@ def _preview_match_tokens(*values):
     return tokens
 
 
-def _preview_possible_holding_matches(position, existing_holdings, *, limit=3):
+def _preview_possible_holding_matches(position, existing_holdings, *, preferred_account_id=None, limit=3):
     position_tokens = _preview_match_tokens(position.get("name"), position.get("ticker"))
     if not position_tokens:
         return []
@@ -330,11 +332,14 @@ def _preview_possible_holding_matches(position, existing_holdings, *, limit=3):
         score = len(overlap)
         if holding.get("account_provider") == "Trading 212":
             score += 1
+        if preferred_account_id and holding.get("account_id") == preferred_account_id:
+            score += 3
         candidates.append(
             {
                 "holding": dict(holding),
                 "overlap_tokens": overlap,
                 "score": score,
+                "preferred_account": bool(preferred_account_id and holding.get("account_id") == preferred_account_id),
             }
         )
 
@@ -348,9 +353,12 @@ def _preview_possible_holding_matches(position, existing_holdings, *, limit=3):
     return candidates[:limit]
 
 
-def _build_trading212_preview(user_id, connection, snapshot):
+def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=None):
     positions = list(snapshot.get("positions") or [])
-    existing_holdings = _preview_holdings_rows(user_id)
+    preferred_account_id = None
+    if linked_account and linked_account.get("id"):
+        preferred_account_id = int(linked_account["id"])
+    existing_holdings = _preview_holdings_rows(user_id, account_id=preferred_account_id)
     matched, broker_only, db_only = match_parsed_to_holdings(positions, existing_holdings)
     for pair in matched:
         broker_row = pair.get("csv") or {}
@@ -362,11 +370,16 @@ def _build_trading212_preview(user_id, connection, snapshot):
         pair["units_difference"] = None if broker_units is None or tracked_units is None else float(broker_units) - float(tracked_units)
         pair["value_difference"] = None if broker_value is None or tracked_value is None else float(broker_value) - float(tracked_value)
     for row in broker_only:
-        row["possible_matches"] = _preview_possible_holding_matches(row, existing_holdings)
+        row["possible_matches"] = _preview_possible_holding_matches(
+            row,
+            existing_holdings,
+            preferred_account_id=preferred_account_id,
+        )
     summary = snapshot.get("summary") or {}
     return {
         "connection": dict(connection),
         "summary": summary,
+        "linked_account": dict(linked_account) if linked_account else None,
         "positions": positions,
         "matched": matched,
         "broker_only": broker_only,
@@ -1034,13 +1047,25 @@ def preview_trading212(connection_id):
         return _settings_trading212_redirect()
 
     refreshed_connection = fetch_broker_connection(connection_id, current_user.id) or connection
-    preview = _build_trading212_preview(current_user.id, refreshed_connection, snapshot)
+    linked_account = None
+    account_id = optional_int(request.form.get("account_id"), default=None)
+    if account_id:
+        linked_account = fetch_account(account_id, current_user.id)
+        if linked_account is None:
+            flash("Linked account not found.", "error")
+            return _settings_trading212_redirect()
+        if linked_account.get("linked_broker_connection_id") != connection_id:
+            flash("That account is not linked to this Trading 212 connection.", "error")
+            return redirect(url_for("accounts.account_detail", account_id=account_id))
+    preview = _build_trading212_preview(current_user.id, refreshed_connection, snapshot, linked_account=linked_account)
     return render_template(
         "trading212_preview.html",
-        active_page="settings",
+        active_page="accounts" if linked_account else "settings",
         trading212_preview=preview,
         trading212_environment_label=trading212_environment_label,
         trading212_sync_support_note=trading212_sync_support_note,
+        preview_back_href=url_for("accounts.account_detail", account_id=account_id) if linked_account else "/settings/#trading212-access",
+        preview_back_label="Back to account" if linked_account else "Back to settings",
     )
 
 

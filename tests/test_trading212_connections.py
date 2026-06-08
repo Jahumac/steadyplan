@@ -411,6 +411,214 @@ def test_delete_trading212_connection_clears_linked_account_reference(app, make_
         assert refreshed["linked_broker_connection_id"] is None
 
 
+def test_account_detail_shows_preview_button_for_linked_trading212_connection(app, client, make_user):
+    uid, username, password = make_user(username="t212-account-preview-button")
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("isa-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("isa-secret"),
+            status="connected",
+            last_tested_at="2026-06-08T10:00:00+00:00",
+            external_account_id="ISA-111",
+            external_account_currency="GBP",
+            external_total_value=12000.0,
+        )
+        assert connection is not None
+        account_id = create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "Stocks & Shares ISA",
+                "category": "Investments",
+                "tags": "",
+                "current_value": 12000.0,
+                "monthly_contribution": 200.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "holdings",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-08T10:00:00+00:00",
+            },
+            uid,
+        )
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}")
+    assert response.status_code == 200
+    body = response.data.decode("utf-8", errors="ignore")
+    assert "Preview linked broker snapshot" in body
+    assert f'action="/settings/trading212/{connection["id"]}/preview"' in body
+    assert 'name="account_id" value="%s"' % account_id in body
+
+
+def test_account_linked_preview_only_compares_holdings_from_that_account(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="t212-linked-preview-focus")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("live-preview-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("live-preview-secret"),
+            status="connected",
+            last_tested_at="2026-06-07T18:10:00+00:00",
+            external_account_id="ACC-123",
+            external_account_currency="GBP",
+            external_total_value=3100.0,
+        )
+        assert connection is not None
+        linked_account_id = create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "ISA",
+                "category": "investments",
+                "tags": "",
+                "current_value": 2400.0,
+                "monthly_contribution": 0.0,
+                "goal_value": 0.0,
+                "valuation_mode": "holdings",
+                "growth_mode": "rate",
+                "growth_rate_override": 0.0,
+                "owner": "joint",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-07",
+            },
+            uid,
+        )
+        other_account_id = create_account(
+            {
+                "name": "Other broker account",
+                "provider": "Trading 212",
+                "wrapper_type": "GIA",
+                "category": "investments",
+                "tags": "",
+                "current_value": 500.0,
+                "monthly_contribution": 0.0,
+                "goal_value": 0.0,
+                "valuation_mode": "holdings",
+                "growth_mode": "rate",
+                "growth_rate_override": 0.0,
+                "owner": "joint",
+                "linked_broker_connection_id": None,
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-07",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": linked_account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Apple Inc",
+                "ticker": "AAPL_US_EQ",
+                "asset_type": "stock",
+                "bucket": "stocks",
+                "value": 2400.0,
+                "units": 10.0,
+                "price": 240.0,
+                "notes": "",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": other_account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Vanguard FTSE All-World",
+                "ticker": "VWRP_LSE_EQ",
+                "asset_type": "fund",
+                "bucket": "stocks",
+                "value": 500.0,
+                "units": 4.0,
+                "price": 125.0,
+                "notes": "",
+            },
+            uid,
+        )
+
+    def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
+        assert api_key == "live-preview-key"
+        assert api_secret == "live-preview-secret"
+        assert environment == "live"
+        return {
+            "environment": "live",
+            "fetched_at": "2026-06-08T09:30:00+00:00",
+            "summary": {
+                "environment": "live",
+                "account_id": "ACC-123",
+                "currency": "GBP",
+                "available_to_trade": 150.0,
+                "cash_in_pies": 25.0,
+                "cash_reserved_for_orders": 5.0,
+                "investments_current_value": 2950.0,
+                "investments_total_cost": 2500.0,
+                "investments_unrealized_profit_loss": 450.0,
+                "investments_realized_profit_loss": 0.0,
+                "total_value": 3100.0,
+                "fetched_at": "2026-06-08T09:30:00+00:00",
+            },
+            "positions": [
+                {
+                    "ticker": "AAPL_US_EQ",
+                    "name": "Apple Inc",
+                    "units": 10.0,
+                    "price": 245.0,
+                    "value": 2450.0,
+                    "currency": "GBP",
+                },
+                {
+                    "ticker": "VWRP_LSE_EQ",
+                    "name": "Vanguard FTSE All-World",
+                    "units": 4.0,
+                    "price": 125.0,
+                    "value": 500.0,
+                    "currency": "GBP",
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.routes.settings.fetch_trading212_portfolio_snapshot",
+        fake_fetch_trading212_portfolio_snapshot,
+    )
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/preview",
+        data={"account_id": str(linked_account_id)},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Focused on linked account <strong>Trading 212 ISA</strong>" in body
+    assert "Only holdings from this SteadyPlan account were compared with the broker snapshot." in body
+    assert "Back to account" in body
+    assert "Preview linked broker snapshot" not in body
+    assert "Apple Inc" in body
+    assert "Vanguard FTSE All-World" in body
+    assert "Matched holdings" in body
+    assert "Broker-only positions" in body
+    assert "Other broker account" not in body
+    assert "Tracked holdings not seen in this snapshot" in body
+
+
 def test_retest_trading212_failure_updates_status(app, client, make_user, monkeypatch):
     uid, username, password = make_user(username="t212-retest")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
