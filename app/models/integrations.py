@@ -60,16 +60,31 @@ def upsert_broker_connection(
 ):
     now = datetime.now(timezone.utc).isoformat()
     tested_at = last_tested_at or now
+    external_account_id = (str(external_account_id).strip() if external_account_id is not None else None) or None
     with get_connection() as conn:
-        existing = conn.execute(
-            """
-            SELECT id
-            FROM broker_connections
-            WHERE user_id = ? AND provider = ? AND environment = ?
-            LIMIT 1
-            """,
-            (user_id, provider, environment),
-        ).fetchone()
+        if external_account_id:
+            existing = conn.execute(
+                """
+                SELECT id
+                FROM broker_connections
+                WHERE user_id = ?
+                  AND provider = ?
+                  AND environment = ?
+                  AND external_account_id = ?
+                LIMIT 1
+                """,
+                (user_id, provider, environment, external_account_id),
+            ).fetchone()
+        else:
+            existing = conn.execute(
+                """
+                SELECT id
+                FROM broker_connections
+                WHERE user_id = ? AND provider = ? AND environment = ? AND label = ?
+                LIMIT 1
+                """,
+                (user_id, provider, environment, label),
+            ).fetchone()
         if existing:
             conn.execute(
                 """

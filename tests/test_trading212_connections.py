@@ -53,6 +53,7 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "store the key pair encrypted on this server using this app's secret key" in body
     assert "Public API currently only covers Invest and Stocks ISA accounts" in body
     assert "SIPP data is not available through the broker API yet" in body
+    assert "SteadyPlan can keep more than one read-only Trading 212 connection" in body
     assert "CSV import remains available" in body
 
 
@@ -121,6 +122,100 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
         assert row["api_secret_ciphertext"] != "live-secret-abcdef"
         assert decrypt_trading212_credential(row["api_key_ciphertext"]) == "live-key-123456"
         assert decrypt_trading212_credential(row["api_secret_ciphertext"]) == "live-secret-abcdef"
+
+
+def test_connect_trading212_keeps_multiple_live_accounts_separate(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="t212-multi-live")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    probes = [
+        {
+            "ok": True,
+            "message": "ok",
+            "summary": {
+                "environment": "live",
+                "account_id": "ISA-111",
+                "currency": "GBP",
+                "available_to_trade": 100.0,
+                "cash_in_pies": 0.0,
+                "cash_reserved_for_orders": 0.0,
+                "investments_current_value": 2400.0,
+                "investments_total_cost": 2100.0,
+                "investments_unrealized_profit_loss": 300.0,
+                "investments_realized_profit_loss": 0.0,
+                "total_value": 2500.0,
+                "fetched_at": "2026-06-07T18:00:00+00:00",
+            },
+        },
+        {
+            "ok": True,
+            "message": "ok",
+            "summary": {
+                "environment": "live",
+                "account_id": "INVEST-222",
+                "currency": "GBP",
+                "available_to_trade": 50.0,
+                "cash_in_pies": 5.0,
+                "cash_reserved_for_orders": 0.0,
+                "investments_current_value": 1450.0,
+                "investments_total_cost": 1300.0,
+                "investments_unrealized_profit_loss": 150.0,
+                "investments_realized_profit_loss": 0.0,
+                "total_value": 1500.0,
+                "fetched_at": "2026-06-07T18:05:00+00:00",
+            },
+        },
+    ]
+
+    def fake_probe_trading212_connection(*, api_key, api_secret, environment):
+        assert environment == "live"
+        return probes.pop(0)
+
+    monkeypatch.setattr(
+        "app.routes.settings.probe_trading212_connection",
+        fake_probe_trading212_connection,
+    )
+
+    first = client.post(
+        "/settings/trading212/connect",
+        data={
+            "label": "Trading 212 ISA",
+            "environment": "live",
+            "api_key": "live-key-isa",
+            "api_secret": "live-secret-isa",
+        },
+        follow_redirects=True,
+    )
+    assert first.status_code == 200
+
+    second = client.post(
+        "/settings/trading212/connect",
+        data={
+            "label": "Trading 212 Invest",
+            "environment": "live",
+            "api_key": "live-key-invest",
+            "api_secret": "live-secret-invest",
+        },
+        follow_redirects=True,
+    )
+    assert second.status_code == 200
+    body = second.data.decode("utf-8", errors="ignore")
+    assert "Trading 212 ISA" in body
+    assert "Trading 212 Invest" in body
+    assert "ISA-111" in body
+    assert "INVEST-222" in body
+
+    with app.app_context():
+        rows = fetch_broker_connections(uid, provider=PROVIDER_TRADING212)
+        assert len(rows) == 2
+        assert [row["external_account_id"] for row in rows] == ["ISA-111", "INVEST-222"]
+        by_account = {row["external_account_id"]: row for row in rows}
+        row_isa = by_account["ISA-111"]
+        row_invest = by_account["INVEST-222"]
+        assert row_isa is not None
+        assert row_invest is not None
+        assert decrypt_trading212_credential(row_isa["api_key_ciphertext"]) == "live-key-isa"
+        assert decrypt_trading212_credential(row_invest["api_key_ciphertext"]) == "live-key-invest"
 
 
 def test_retest_trading212_failure_updates_status(app, client, make_user, monkeypatch):
@@ -358,6 +453,89 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
         assert row["status"] == "connected"
         assert row["last_error"] is None
         assert row["external_total_value"] == 3100.0
+
+
+def test_broker_connections_migration_drops_env_uniqueness_for_multiple_live_accounts(app, make_user):
+    uid, _, _ = make_user(username="t212-migration", password="password123")
+
+    from app.models import get_connection
+    from app.models.schema import init_db
+
+    with app.app_context():
+        with get_connection() as conn:
+            conn.execute("DELETE FROM schema_migrations WHERE name = 'v11_broker_connections_multi_account'")
+            conn.execute("DROP TABLE IF EXISTS broker_connections")
+            conn.execute(
+                """
+                CREATE TABLE broker_connections (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    provider TEXT NOT NULL,
+                    label TEXT NOT NULL,
+                    environment TEXT NOT NULL DEFAULT 'live',
+                    access_mode TEXT NOT NULL DEFAULT 'read_only',
+                    api_key_ciphertext TEXT NOT NULL,
+                    api_secret_ciphertext TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'unverified',
+                    last_error TEXT,
+                    last_tested_at TEXT,
+                    external_account_id TEXT,
+                    external_account_currency TEXT,
+                    external_total_value REAL,
+                    is_active INTEGER NOT NULL DEFAULT 1,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    UNIQUE(user_id, provider, environment)
+                )
+                """
+            )
+            conn.execute(
+                """
+                INSERT INTO broker_connections (
+                    user_id, provider, label, environment, access_mode,
+                    api_key_ciphertext, api_secret_ciphertext, status,
+                    external_account_id, external_account_currency, external_total_value
+                ) VALUES (?, 'trading212', 'Legacy ISA', 'live', 'read_only', ?, ?, 'connected', 'LEGACY-1', 'GBP', 123.45)
+                """,
+                (
+                    uid,
+                    encrypt_trading212_credential("legacy-key"),
+                    encrypt_trading212_credential("legacy-secret"),
+                ),
+            )
+            conn.commit()
+
+        init_db()
+
+        with get_connection() as conn:
+            rows = conn.execute(
+                "SELECT label, environment, external_account_id FROM broker_connections WHERE user_id = ? ORDER BY id ASC",
+                (uid,),
+            ).fetchall()
+            assert len(rows) == 1
+            assert rows[0]["label"] == "Legacy ISA"
+            assert rows[0]["environment"] == "live"
+            assert rows[0]["external_account_id"] == "LEGACY-1"
+            conn.execute(
+                """
+                INSERT INTO broker_connections (
+                    user_id, provider, label, environment, access_mode,
+                    api_key_ciphertext, api_secret_ciphertext, status,
+                    external_account_id, external_account_currency, external_total_value
+                ) VALUES (?, 'trading212', 'Legacy Invest', 'live', 'read_only', ?, ?, 'connected', 'LEGACY-2', 'GBP', 456.78)
+                """,
+                (
+                    uid,
+                    encrypt_trading212_credential("second-key"),
+                    encrypt_trading212_credential("second-secret"),
+                ),
+            )
+            conn.commit()
+            count = conn.execute(
+                "SELECT COUNT(*) AS n FROM broker_connections WHERE user_id = ? AND provider = 'trading212' AND environment = 'live'",
+                (uid,),
+            ).fetchone()["n"]
+            assert count == 2
 
 
 def test_fetch_trading212_account_summary_sends_basic_auth_and_parses_response(app, monkeypatch):

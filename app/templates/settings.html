@@ -821,6 +821,9 @@
   <p class="helper-text" style="margin-top:0.45rem;">
     SteadyPlan's own price service and CSV/manual imports stay in place. This connection is for broker snapshot sync groundwork, not order placement or money-moving.
   </p>
+  <p class="helper-text" style="margin-top:0.45rem;">
+    SteadyPlan can keep more than one read-only Trading 212 connection, so separate Invest and ISA accounts can be saved side by side.
+  </p>
 
   <form method="post" action="/settings/trading212/connect" class="settings-form" style="margin-top:1rem;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
