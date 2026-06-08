@@ -61,6 +61,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "Cash ISA and SIPP accounts should stay manual/CSV-tracked for now" in body
     assert "SIPP data is not available through the broker API yet" not in body
     assert "SteadyPlan can keep more than one read-only Trading 212 connection" in body
+    assert "separate Invest and Stocks ISA accounts can be saved side by side" in body
+    assert "separate Invest and ISA accounts can be saved side by side" not in body
     assert "CSV import remains available" in body
 
 
