@@ -358,6 +358,10 @@ def _preview_possible_holding_matches(position, existing_holdings, *, preferred_
     return candidates[:limit]
 
 
+def _trading212_broker_row_key(row, index):
+    return f"{index}:{(row or {}).get('ticker') or ''}:{(row or {}).get('name') or ''}"
+
+
 def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=None):
     positions = list(snapshot.get("positions") or [])
     preferred_account_id = None
@@ -386,6 +390,8 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
             existing_holdings,
             preferred_account_id=preferred_account_id,
         )
+    for idx, row in enumerate(broker_only):
+        row["preview_key"] = _trading212_broker_row_key(row, idx)
     summary = snapshot.get("summary") or {}
     stats = {
         "positions_count": len(positions),
@@ -413,6 +419,8 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
             "can_apply_matched_changes": bool(matched_updates),
             "addable_broker_count": len([row for row in broker_only if not (row.get("possible_matches") or [])]),
             "can_apply_broker_additions": bool([row for row in broker_only if not (row.get("possible_matches") or [])]),
+            "resolvable_possible_match_count": len([row for row in broker_only if (row.get("possible_matches") or [])]),
+            "can_resolve_possible_matches": bool([row for row in broker_only if (row.get("possible_matches") or [])]),
         }
     return {
         "connection": dict(connection),
@@ -454,6 +462,37 @@ def _trading212_addable_broker_rows(preview):
     return [row for row in (preview.get("broker_only") or []) if not (row.get("possible_matches") or [])]
 
 
+def _trading212_resolvable_broker_rows(preview):
+    return [row for row in (preview.get("broker_only") or []) if (row.get("possible_matches") or [])]
+
+
+def _trading212_broker_row_by_key(preview, preview_key):
+    for row in (preview.get("broker_only") or []):
+        if row.get("preview_key") == preview_key:
+            return row
+    return None
+
+
+def _trading212_update_existing_holding_from_broker_row(holding, broker_row):
+    broker_units = float((broker_row or {}).get("units") or 0)
+    broker_price = float((broker_row or {}).get("price") or 0)
+    broker_value = float((broker_row or {}).get("value") or (broker_units * broker_price))
+    return {
+        "id": holding["id"],
+        "account_id": holding["account_id"],
+        "holding_catalogue_id": holding["holding_catalogue_id"],
+        "holding_name": holding["holding_name"],
+        "ticker": holding["ticker"] or "",
+        "asset_type": holding["asset_type"] or "",
+        "bucket": holding["bucket"] or "",
+        "value": broker_value,
+        "units": broker_units,
+        "price": broker_price,
+        "book_cost": holding["book_cost"],
+        "notes": holding["notes"] or "",
+    }
+
+
 def _infer_trading212_holding_asset_type(row):
     text = " ".join(
         [
@@ -489,6 +528,7 @@ def _broker_sync_event_action_label(action_type):
         "preview": "Previewed snapshot",
         "apply_matched": "Applied matched updates",
         "apply_broker_additions": "Added broker-only positions",
+        "resolve_possible_match": "Resolved possible match",
     }
     return labels.get(action_type, str(action_type or "Sync event").replace("_", " ").title())
 
@@ -1433,6 +1473,115 @@ def apply_trading212_reviewed_broker_additions(connection_id):
         )
     if skipped:
         flash(f"{skipped} reviewed broker-only position{'s' if skipped != 1 else ''} could not be added.", "info")
+    return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+
+@settings_bp.route("/trading212/<int:connection_id>/resolve-possible-match", methods=["POST"])
+@login_required
+def resolve_trading212_possible_match(connection_id):
+    connection = fetch_broker_connection(connection_id, current_user.id)
+    if connection is None or connection.get("provider") != PROVIDER_TRADING212:
+        flash("Trading 212 connection not found.", "error")
+        return _settings_trading212_redirect()
+
+    account_id = optional_int(request.form.get("account_id"), default=None)
+    if not account_id:
+        flash("Choose the linked account before resolving a possible match.", "error")
+        return _settings_trading212_redirect()
+
+    linked_account = fetch_account(account_id, current_user.id)
+    if linked_account is None:
+        flash("Linked account not found.", "error")
+        return _settings_trading212_redirect()
+    if linked_account.get("linked_broker_connection_id") != connection_id:
+        flash("That account is not linked to this Trading 212 connection.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+    try:
+        api_key = decrypt_trading212_credential(connection.get("api_key_ciphertext"))
+        api_secret = decrypt_trading212_credential(connection.get("api_secret_ciphertext"))
+        snapshot = fetch_trading212_portfolio_snapshot(
+            api_key=api_key,
+            api_secret=api_secret,
+            environment=connection.get("environment") or "live",
+        )
+        summary = snapshot["summary"]
+        update_broker_connection_status(
+            connection_id,
+            current_user.id,
+            status="connected",
+            last_error=None,
+            last_tested_at=summary["fetched_at"],
+            external_account_id=summary["account_id"],
+            external_account_currency=summary["currency"],
+            external_total_value=summary["total_value"],
+        )
+    except (Trading212ConnectionError, Trading212CredentialError) as exc:
+        update_broker_connection_status(
+            connection_id,
+            current_user.id,
+            status="error",
+            last_error=str(exc),
+            last_tested_at=datetime.now(timezone.utc).isoformat(),
+        )
+        flash(str(exc), "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+    refreshed_connection = fetch_broker_connection(connection_id, current_user.id) or connection
+    preview = _build_trading212_preview(current_user.id, refreshed_connection, snapshot, linked_account=linked_account)
+
+    if request.form.get("confirm_resolve_possible_match") != "yes":
+        flash("Tick the confirmation box before resolving a reviewed possible match.", "error")
+        return _render_trading212_preview(preview)
+
+    preview_key = (request.form.get("preview_key") or "").strip()
+    selected_holding_id = optional_int(request.form.get("selected_holding_id"), default=None)
+    if not preview_key or not selected_holding_id:
+        flash("Choose one tracked holding before resolving this possible match.", "error")
+        return _render_trading212_preview(preview)
+
+    broker_row = _trading212_broker_row_by_key(preview, preview_key)
+    if not broker_row or not (broker_row.get("possible_matches") or []):
+        flash("That reviewed possible match is no longer available in this snapshot.", "error")
+        return _render_trading212_preview(preview)
+
+    candidate = next(
+        (row for row in (broker_row.get("possible_matches") or []) if int(((row.get("holding") or {}).get("id") or 0)) == selected_holding_id),
+        None,
+    )
+    if candidate is None:
+        flash("Choose one of the reviewed possible match options shown for this broker position.", "error")
+        return _render_trading212_preview(preview)
+
+    holding = fetch_holding(selected_holding_id, current_user.id)
+    if not holding or int(holding.get("account_id") or 0) != account_id:
+        flash("That tracked holding is not available on this linked account anymore.", "error")
+        return _render_trading212_preview(preview)
+
+    if not update_holding(_trading212_update_existing_holding_from_broker_row(holding, broker_row), current_user.id):
+        flash("SteadyPlan could not apply that reviewed possible match.", "error")
+        return _render_trading212_preview(preview)
+
+    untouched_broker = max(0, len(preview.get("broker_only") or []) - 1)
+    tracked_only = max(0, len(preview.get("db_only") or []) - 1)
+    flash(
+        f"Resolved 1 reviewed possible match for {holding.get('holding_name') or 'the tracked holding'}. "
+        f"{untouched_broker} broker-only position{'s' if untouched_broker != 1 else ''} and "
+        f"{tracked_only} tracked-only holding{'s' if tracked_only != 1 else ''} stayed untouched.",
+        "success",
+    )
+    _log_trading212_sync_event(
+        user_id=current_user.id,
+        connection_id=connection_id,
+        account_id=account_id,
+        action_type="resolve_possible_match",
+        snapshot_at=summary.get("fetched_at"),
+        matched_updates_count=1,
+        broker_add_count=0,
+        held_back_broker_count=untouched_broker,
+        tracked_only_count=tracked_only,
+        notes={"holding_id": selected_holding_id, "broker_name": broker_row.get("name"), "broker_ticker": broker_row.get("ticker")},
+    )
     return redirect(url_for("accounts.account_detail", account_id=account_id))
 
 

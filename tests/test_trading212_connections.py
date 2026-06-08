@@ -1263,6 +1263,153 @@ def test_apply_trading212_reviewed_broker_additions_adds_only_clear_broker_only_
         assert events[0]["tracked_only_count"] == 1
 
 
+def test_resolve_trading212_reviewed_possible_match_updates_selected_holding(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="t212-resolve-possible-match")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("resolve-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("resolve-secret"),
+            status="connected",
+            last_tested_at="2026-06-09T08:00:00+00:00",
+            external_account_id="ACC-RESOLVE-1",
+            external_account_currency="GBP",
+            external_total_value=3200.0,
+        )
+        account_id = create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "ISA",
+                "category": "investments",
+                "tags": "",
+                "current_value": 3000.0,
+                "monthly_contribution": 0.0,
+                "goal_value": 0.0,
+                "valuation_mode": "holdings",
+                "growth_mode": "rate",
+                "growth_rate_override": 0.0,
+                "owner": "joint",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-09",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Acme Income Growth",
+                "ticker": "ACME_HINT",
+                "asset_type": "fund",
+                "bucket": "stocks",
+                "value": 550.0,
+                "units": 5.0,
+                "price": 110.0,
+                "notes": "",
+            },
+            uid,
+        )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Apple Inc",
+                "ticker": "AAPL_US_EQ",
+                "asset_type": "stock",
+                "bucket": "stocks",
+                "value": 2400.0,
+                "units": 10.0,
+                "price": 240.0,
+                "notes": "",
+            },
+            uid,
+        )
+        target_holding_id = next(row for row in fetch_holdings_for_account(account_id) if row["ticker"] == "ACME_HINT")["id"]
+
+    def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
+        assert api_key == "resolve-key"
+        assert api_secret == "resolve-secret"
+        assert environment == "live"
+        return {
+            "environment": "live",
+            "fetched_at": "2026-06-09T08:30:00+00:00",
+            "summary": {
+                "environment": "live",
+                "account_id": "ACC-RESOLVE-1",
+                "currency": "GBP",
+                "available_to_trade": 150.0,
+                "cash_in_pies": 0.0,
+                "cash_reserved_for_orders": 0.0,
+                "investments_current_value": 3050.0,
+                "investments_total_cost": 2500.0,
+                "investments_unrealized_profit_loss": 550.0,
+                "investments_realized_profit_loss": 0.0,
+                "total_value": 3200.0,
+                "fetched_at": "2026-06-09T08:30:00+00:00",
+            },
+            "positions": [
+                {
+                    "ticker": "AAPL_US_EQ",
+                    "name": "Apple Inc",
+                    "units": 10.0,
+                    "price": 240.0,
+                    "value": 2400.0,
+                    "currency": "GBP",
+                },
+                {
+                    "ticker": "ACMEG_EQ",
+                    "name": "Acme Global Growth",
+                    "units": 4.0,
+                    "price": 125.0,
+                    "value": 500.0,
+                    "currency": "GBP",
+                },
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.routes.settings.fetch_trading212_portfolio_snapshot",
+        fake_fetch_trading212_portfolio_snapshot,
+    )
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/resolve-possible-match",
+        data={
+            "account_id": str(account_id),
+            "preview_key": "0:ACMEG_EQ:Acme Global Growth",
+            "selected_holding_id": str(target_holding_id),
+            "confirm_resolve_possible_match": "yes",
+        },
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Resolved 1 reviewed possible match for Acme Income Growth." in body
+    assert "0 broker-only positions and 0 tracked-only holdings stayed untouched." in body
+
+    with app.app_context():
+        holdings = list(fetch_holdings_for_account(account_id))
+        resolved = next(row for row in holdings if row["id"] == target_holding_id)
+        assert resolved["units"] == 4.0
+        assert resolved["price"] == 125.0
+        assert resolved["value"] == 500.0
+        events = fetch_broker_sync_events(uid, connection["id"], limit=3)
+        assert events[0]["action_type"] == "resolve_possible_match"
+        assert events[0]["matched_updates_count"] == 1
+        assert events[0]["broker_add_count"] == 0
+        assert events[0]["held_back_broker_count"] == 0
+        assert events[0]["tracked_only_count"] == 0
+
+
 def test_apply_trading212_reviewed_broker_additions_requires_confirmation(app, client, make_user, monkeypatch):
     uid, username, password = make_user(username="t212-apply-additions-confirm")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
