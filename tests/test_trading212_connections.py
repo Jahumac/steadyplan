@@ -1907,6 +1907,8 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert "Likely stale/manual" in body
     assert "Similar broker snapshot rows exist, so this tracked holding likely needs a careful rematch rather than a fresh add." in body
     assert "No similar broker snapshot row was found, so this is more likely an older manual entry, a sold position, or something still tracked outside this API snapshot." in body
+    assert "Next step: compare this holding with the broker clue first, then use the reviewed match flow if it is genuinely the same position." in body
+    assert "Next step: review whether this holding should stay tracked manually, be archived, or be removed after you confirm it is no longer in the broker account." in body
     assert "Cash Reserve Jar" in body
     assert "Proposed apply plan" not in body
 

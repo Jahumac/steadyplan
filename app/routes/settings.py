@@ -398,9 +398,11 @@ def _annotate_trading212_tracked_only_rows(rows, broker_positions):
         if broker_candidates:
             item["review_label"] = "Needs rematch"
             item["review_hint"] = "Similar broker snapshot rows exist, so this tracked holding likely needs a careful rematch rather than a fresh add."
+            item["next_step_hint"] = "Next step: compare this holding with the broker clue first, then use the reviewed match flow if it is genuinely the same position."
         else:
             item["review_label"] = "Likely stale/manual"
             item["review_hint"] = "No similar broker snapshot row was found, so this is more likely an older manual entry, a sold position, or something still tracked outside this API snapshot."
+            item["next_step_hint"] = "Next step: review whether this holding should stay tracked manually, be archived, or be removed after you confirm it is no longer in the broker account."
         annotated.append(item)
     return annotated
 
