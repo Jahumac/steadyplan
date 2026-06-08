@@ -1643,7 +1643,7 @@ def disconnect_trading212(connection_id):
         flash("Trading 212 connection not found.", "error")
         return _settings_trading212_redirect()
     delete_broker_connection(connection_id, current_user.id)
-    flash("Trading 212 connection removed. CSV/manual imports remain available.", "success")
+    flash("Trading 212 connection removed. Manual/CSV imports remain available.", "success")
     return _settings_trading212_redirect()
 
 
