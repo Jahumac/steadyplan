@@ -334,11 +334,100 @@ def test_account_edit_can_link_existing_account_to_saved_trading212_connection(a
     assert "Linked Trading 212 connection:" in body
     assert "Trading 212 ISA live" in body
     assert "ISA-111" in body
+    assert "Broker status" in body
+    assert "Connected" in body
+    assert "Last successful broker fetch" in body
+    assert "2026-06-08 10:00 UTC" in body
+    assert "Broker total (GBP)" in body
+    assert "Tracked value in SteadyPlan" in body
+    assert "£12,000.00" in body
+    assert "£8,000.00" in body
+    assert "Broker total is above tracked value" in body
+    assert "+£4,000.00" in body
+    assert "Use the linked broker preview before changing holdings or manually adjusting this account." in body
 
     with app.app_context():
         account = fetch_account(account_id, uid)
         assert account is not None
         assert account["linked_broker_connection_id"] == connection["id"]
+
+
+def test_account_detail_shows_linked_trading212_error_state(app, client, make_user):
+    uid, username, password = make_user(username="t212-account-link-error")
+    with app.app_context():
+        account_id = create_account(
+            {
+                "name": "Existing ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "Stocks & Shares ISA",
+                "category": "Investments",
+                "tags": "",
+                "current_value": 5000.0,
+                "monthly_contribution": 150.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": None,
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-08T10:00:00+00:00",
+            },
+            uid,
+        )
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("isa-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("isa-secret"),
+            status="error",
+            last_error="Broker timeout while fetching snapshot",
+            last_tested_at="2026-06-09T07:15:00+00:00",
+            external_account_id="ISA-111",
+            external_account_currency="GBP",
+            external_total_value=None,
+        )
+        assert connection is not None
+        account = fetch_account(account_id, uid)
+        assert account is not None
+        account_payload = dict(account)
+        account_payload["linked_broker_connection_id"] = connection["id"]
+        update_fields = {
+            "id": account_id,
+            "name": account_payload["name"],
+            "provider": account_payload["provider"],
+            "wrapper_type": account_payload["wrapper_type"],
+            "category": account_payload["category"],
+            "tags": account_payload.get("tags") or "",
+            "current_value": account_payload.get("current_value") or 0,
+            "monthly_contribution": account_payload.get("monthly_contribution") or 0,
+            "pension_contribution_day": account_payload.get("pension_contribution_day") or 0,
+            "goal_value": account_payload.get("goal_value"),
+            "valuation_mode": account_payload.get("valuation_mode") or "manual",
+            "growth_mode": account_payload.get("growth_mode") or "default",
+            "growth_rate_override": account_payload.get("growth_rate_override"),
+            "owner": account_payload.get("owner") or "",
+            "linked_broker_connection_id": connection["id"],
+            "notes": account_payload.get("notes") or "",
+            "last_updated": "2026-06-09T07:20:00+00:00",
+        }
+        update_account(update_fields, uid)
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}")
+    assert response.status_code == 200
+    body = response.data.decode("utf-8", errors="ignore")
+    assert "Broker status" in body
+    assert "Needs attention" in body
+    assert "Last broker error: Broker timeout while fetching snapshot" in body
+    assert "Broker total (GBP)" in body
+    assert "Not fetched yet" not in body
+    assert "Use the linked broker preview before changing holdings or manually adjusting this account." not in body
 
 
 def test_delete_trading212_connection_clears_linked_account_reference(app, make_user):

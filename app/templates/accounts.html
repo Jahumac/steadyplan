@@ -160,6 +160,34 @@
         {% if linked_trading212_connection %}
         <p class="text-sm text-muted mt-05">Linked Trading 212 connection: <strong>{{ linked_trading212_connection.label }}</strong>{% if linked_trading212_connection.external_account_id %} · {{ linked_trading212_connection.external_account_id }}{% endif %}{% if linked_trading212_connection.external_account_currency %} · {{ linked_trading212_connection.external_account_currency }}{% endif %}</p>
         {% endif %}
+        {% if linked_trading212_summary %}
+        <div class="form-grid mt-1" style="max-width:52rem; gap:0.9rem 1.2rem;">
+          <div>
+            <p class="text-sm text-muted" style="margin:0;">Broker status</p>
+            <strong>{{ linked_trading212_summary.status_label }}</strong>
+          </div>
+          <div>
+            <p class="text-sm text-muted" style="margin:0;">Last successful broker fetch</p>
+            <strong>{{ linked_trading212_summary.last_checked_label or 'Not fetched yet' }}</strong>
+          </div>
+          <div>
+            <p class="text-sm text-muted" style="margin:0;">Broker total{% if linked_trading212_summary.broker_currency %} ({{ linked_trading212_summary.broker_currency }}){% endif %}</p>
+            <strong>{% if linked_trading212_summary.broker_total is not none %}£{{ '{:,.2f}'.format(linked_trading212_summary.broker_total) }}{% else %}—{% endif %}</strong>
+          </div>
+          <div>
+            <p class="text-sm text-muted" style="margin:0;">Tracked value in SteadyPlan</p>
+            <strong>£{{ '{:,.2f}'.format(linked_trading212_summary.tracked_value or 0) }}</strong>
+          </div>
+        </div>
+        {% if linked_trading212_summary.difference_value is not none %}
+        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ linked_trading212_summary.difference_direction }}: <strong>{% if linked_trading212_summary.difference_value > 0 %}+{% endif %}£{{ '{:,.2f}'.format(linked_trading212_summary.difference_value) }}</strong></p>
+        {% endif %}
+        {% if linked_trading212_summary.last_error %}
+        <p class="text-sm perf-negative mt-05" style="margin-bottom:0;">Last broker error: {{ linked_trading212_summary.last_error }}</p>
+        {% else %}
+        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">Use the linked broker preview before changing holdings or manually adjusting this account.</p>
+        {% endif %}
+        {% endif %}
       </div>
       <div class="badge-row account-detail-actions">
         <a class="badge" href="/accounts/">← Back</a>
