@@ -429,7 +429,7 @@
   <div class="section-header">
     <div>
       <h3>Tracked holdings not seen in this snapshot</h3>
-      <p class="helper-text" style="margin:0;">Useful for spotting accounts, wrappers, or pension holdings that still need CSV/manual handling.</p>
+      <p class="helper-text" style="margin:0;">Useful for spotting holdings that are probably stale/manual versus ones that still need a careful rematch on this linked account.</p>
     </div>
   </div>
   {% if preview.db_only %}
@@ -446,7 +446,16 @@
       <tbody>
         {% for row in preview.db_only %}
         <tr>
-          <td>{{ row.holding_name }}</td>
+          <td>
+            <div><strong>{{ row.holding_name }}</strong></div>
+            <div class="helper-text" style="margin-top:0.25rem;">{{ row.review_hint }}</div>
+            <div class="badge-row mt-1">
+              <span class="badge badge-meta">{{ row.review_label }}</span>
+              {% for candidate in row.possible_broker_matches %}
+              <span class="badge">{{ candidate.broker_row.name or candidate.broker_row.ticker or 'Broker clue' }}</span>
+              {% endfor %}
+            </div>
+          </td>
           <td>{{ row.account_name }}</td>
           <td>{{ row.ticker or '—' }}</td>
           <td class="num">{{ '%.2f'|format(row.value or 0) }}</td>

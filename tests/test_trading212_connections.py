@@ -1809,6 +1809,21 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
             },
             uid,
         )
+        add_holding(
+            {
+                "account_id": account_id,
+                "holding_catalogue_id": None,
+                "holding_name": "Cash Reserve Jar",
+                "ticker": "CASHJAR",
+                "asset_type": "cash",
+                "bucket": "cash",
+                "value": 80.0,
+                "units": 1.0,
+                "price": 80.0,
+                "notes": "",
+            },
+            uid,
+        )
 
     def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
         assert api_key == "live-preview-key"
@@ -1887,6 +1902,12 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert "trading212-mobile-only" in body
     assert "trading212-mobile-candidate-overflow" in body
     assert "Show 1 more possible match" in body
+    assert "Useful for spotting holdings that are probably stale/manual versus ones that still need a careful rematch on this linked account." in body
+    assert "Needs rematch" in body
+    assert "Likely stale/manual" in body
+    assert "Similar broker snapshot rows exist, so this tracked holding likely needs a careful rematch rather than a fresh add." in body
+    assert "No similar broker snapshot row was found, so this is more likely an older manual entry, a sold position, or something still tracked outside this API snapshot." in body
+    assert "Cash Reserve Jar" in body
     assert "Proposed apply plan" not in body
 
     with app.app_context():

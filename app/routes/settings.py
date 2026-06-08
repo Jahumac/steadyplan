@@ -358,6 +358,53 @@ def _preview_possible_holding_matches(position, existing_holdings, *, preferred_
     return candidates[:limit]
 
 
+def _preview_possible_broker_matches_for_holding(holding, broker_positions, *, limit=2):
+    holding_tokens = _preview_match_tokens(holding.get("holding_name"), holding.get("ticker"))
+    if not holding_tokens:
+        return []
+
+    candidates = []
+    for row in broker_positions:
+        broker_tokens = _preview_match_tokens(row.get("name"), row.get("ticker"))
+        if not broker_tokens:
+            continue
+        overlap = sorted(holding_tokens & broker_tokens)
+        if len(overlap) < 2:
+            continue
+        candidates.append(
+            {
+                "broker_row": dict(row),
+                "overlap_tokens": overlap,
+                "score": len(overlap),
+            }
+        )
+
+    candidates.sort(
+        key=lambda item: (
+            -item["score"],
+            item["broker_row"].get("name") or "",
+            item["broker_row"].get("ticker") or "",
+        )
+    )
+    return candidates[:limit]
+
+
+def _annotate_trading212_tracked_only_rows(rows, broker_positions):
+    annotated = []
+    for row in rows:
+        item = dict(row)
+        broker_candidates = _preview_possible_broker_matches_for_holding(item, broker_positions)
+        item["possible_broker_matches"] = broker_candidates
+        if broker_candidates:
+            item["review_label"] = "Needs rematch"
+            item["review_hint"] = "Similar broker snapshot rows exist, so this tracked holding likely needs a careful rematch rather than a fresh add."
+        else:
+            item["review_label"] = "Likely stale/manual"
+            item["review_hint"] = "No similar broker snapshot row was found, so this is more likely an older manual entry, a sold position, or something still tracked outside this API snapshot."
+        annotated.append(item)
+    return annotated
+
+
 def _trading212_broker_row_key(row, index):
     return f"{index}:{(row or {}).get('ticker') or ''}:{(row or {}).get('name') or ''}"
 
@@ -390,6 +437,7 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
             existing_holdings,
             preferred_account_id=preferred_account_id,
         )
+    db_only = _annotate_trading212_tracked_only_rows(db_only, positions)
     for idx, row in enumerate(broker_only):
         row["preview_key"] = _trading212_broker_row_key(row, idx)
     summary = snapshot.get("summary") or {}
