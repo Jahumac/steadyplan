@@ -350,8 +350,7 @@ CREATE TABLE IF NOT EXISTS broker_connections (
     external_total_value REAL,
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    UNIQUE(user_id, provider, environment)
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS debts (
@@ -450,12 +449,56 @@ def _run_migrations(conn):
                 external_total_value REAL,
                 is_active INTEGER NOT NULL DEFAULT 1,
                 created_at TEXT NOT NULL DEFAULT (datetime('now')),
-                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-                UNIQUE(user_id, provider, environment)
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
             )
         """)
     except Exception as e:
         _log_migration_error(e)
+
+    # ── broker_connections: drop env-level uniqueness to allow multiple live accounts ──
+    if not conn.execute(
+        "SELECT 1 FROM schema_migrations WHERE name = 'v11_broker_connections_multi_account'"
+    ).fetchone():
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS broker_connections_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                provider TEXT NOT NULL,
+                label TEXT NOT NULL,
+                environment TEXT NOT NULL DEFAULT 'live',
+                access_mode TEXT NOT NULL DEFAULT 'read_only',
+                api_key_ciphertext TEXT NOT NULL,
+                api_secret_ciphertext TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'unverified',
+                last_error TEXT,
+                last_tested_at TEXT,
+                external_account_id TEXT,
+                external_account_currency TEXT,
+                external_total_value REAL,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+        conn.execute("""
+            INSERT INTO broker_connections_new (
+                id, user_id, provider, label, environment, access_mode,
+                api_key_ciphertext, api_secret_ciphertext, status, last_error,
+                last_tested_at, external_account_id, external_account_currency,
+                external_total_value, is_active, created_at, updated_at
+            )
+            SELECT
+                id, user_id, provider, label, environment, access_mode,
+                api_key_ciphertext, api_secret_ciphertext, status, last_error,
+                last_tested_at, external_account_id, external_account_currency,
+                external_total_value, is_active, created_at, updated_at
+            FROM broker_connections
+        """)
+        conn.execute("DROP TABLE IF EXISTS broker_connections")
+        conn.execute("ALTER TABLE broker_connections_new RENAME TO broker_connections")
+        conn.execute(
+            "INSERT INTO schema_migrations (name) VALUES ('v11_broker_connections_multi_account')"
+        )
 
     for col in ["last_price REAL", "price_currency TEXT", "price_change_pct REAL", "price_updated_at TEXT"]:
         try:
