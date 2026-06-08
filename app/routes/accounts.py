@@ -191,6 +191,59 @@ def _valid_linkable_trading212_connection(connection_id, user_id):
     return connection
 
 
+def _format_iso_datetime_short(value):
+    if not value:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace(" UTC", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    except (TypeError, ValueError):
+        return text[:16]
+
+
+def _linked_trading212_health_summary(selected, linked_connection, effective_value):
+    if not selected or not linked_connection:
+        return None
+
+    status = (linked_connection.get("status") or "unknown").strip().lower() or "unknown"
+    status_label = {
+        "connected": "Connected",
+        "error": "Needs attention",
+    }.get(status, "Not checked")
+
+    try:
+        broker_total = float(linked_connection.get("external_total_value")) if linked_connection.get("external_total_value") is not None else None
+    except (TypeError, ValueError):
+        broker_total = None
+    tracked_value = float(effective_value or 0)
+    difference_value = None if broker_total is None else float(broker_total) - tracked_value
+    difference_direction = None
+    if difference_value is not None:
+        if abs(difference_value) < 0.005:
+            difference_direction = "Broker total currently matches tracked value"
+        elif difference_value > 0:
+            difference_direction = "Broker total is above tracked value"
+        else:
+            difference_direction = "Broker total is below tracked value"
+
+    return {
+        "status": status,
+        "status_label": status_label,
+        "last_checked_label": _format_iso_datetime_short(linked_connection.get("last_tested_at")),
+        "broker_total": broker_total,
+        "broker_currency": (linked_connection.get("external_account_currency") or "").strip() or None,
+        "tracked_value": tracked_value,
+        "difference_value": difference_value,
+        "difference_direction": difference_direction,
+        "last_error": (linked_connection.get("last_error") or "").strip() or None,
+    }
+
+
 def _render_accounts_page(user_id, selected=None, detail_mode="view", position_error=None, position_added=False, edit_holding_id=None):
     rows = fetch_all_accounts(user_id)
     assumptions = fetch_assumptions(user_id)
@@ -205,6 +258,13 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     )
     holdings_totals = fetch_holding_totals_by_account(user_id)
     effective_values = {row["id"]: effective_account_value(row, holdings_totals) for row in rows}
+    linked_trading212_summary = None
+    if selected and linked_trading212_connection:
+        linked_trading212_summary = _linked_trading212_health_summary(
+            selected,
+            linked_trading212_connection,
+            effective_values.get(int(selected["id"]), 0),
+        )
     contrib_breakdowns = {row["id"]: contribution_breakdown(row, assumptions) for row in rows}
 
     # Tax-year logged contributions per account: sum of isa/pension contributions
@@ -551,6 +611,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         category_options=_category_options_for(selected),
         trading212_connection_options=trading212_connection_options,
         linked_trading212_connection=linked_trading212_connection,
+        linked_trading212_summary=linked_trading212_summary,
         tag_options=fetch_user_tags(user_id),
         custom_tags=fetch_custom_tags(user_id),
         default_tags=DEFAULT_TAG_OPTIONS,
