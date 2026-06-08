@@ -439,6 +439,119 @@ def test_account_detail_shows_linked_trading212_error_state(app, client, make_us
     assert "Use the linked broker preview before changing holdings or manually adjusting this account." not in body
 
 
+def test_account_list_shows_trading212_account_source_summary(app, client, make_user):
+    uid, username, password = make_user(username="t212-account-source-list")
+    with app.app_context():
+        connected_connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("isa-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("isa-secret"),
+            status="connected",
+            last_tested_at="2026-06-08T10:00:00+00:00",
+            external_account_id="ISA-111",
+            external_account_currency="GBP",
+            external_total_value=12000.0,
+        )
+        assert connected_connection is not None
+        fallback_connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 Invest live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("invest-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("invest-secret"),
+            status="error",
+            last_error="Broker timeout while fetching snapshot",
+            last_tested_at="2026-06-09T07:15:00+00:00",
+            external_account_id="INVEST-222",
+            external_account_currency="GBP",
+            external_total_value=None,
+        )
+        assert fallback_connection is not None
+        create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "Stocks & Shares ISA",
+                "category": "Investments",
+                "tags": "",
+                "current_value": 8000.0,
+                "monthly_contribution": 150.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": connected_connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-08T10:00:00+00:00",
+            },
+            uid,
+        )
+        create_account(
+            {
+                "name": "Trading 212 Invest",
+                "provider": "Trading 212",
+                "wrapper_type": "General Investment Account",
+                "category": "Investments",
+                "tags": "",
+                "current_value": 5000.0,
+                "monthly_contribution": 100.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": fallback_connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-09T07:20:00+00:00",
+            },
+            uid,
+        )
+        create_account(
+            {
+                "name": "Manual Cash Pot",
+                "provider": "Monzo",
+                "wrapper_type": "Cash Savings",
+                "category": "Cash",
+                "tags": "",
+                "current_value": 1200.0,
+                "monthly_contribution": 25.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": None,
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-09T07:20:00+00:00",
+            },
+            uid,
+        )
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/accounts/")
+    assert response.status_code == 200
+    body = response.data.decode("utf-8", errors="ignore")
+    assert "Trading 212 ISA" in body
+    assert "Trading 212 Invest" in body
+    assert "Manual Cash Pot" in body
+    assert body.count("Account source:") == 2
+    assert "Account source: <strong>Broker primary</strong>" in body
+    assert "Account source: <strong>Manual fallback</strong>" in body
+
+
 def test_delete_trading212_connection_clears_linked_account_reference(app, make_user):
     uid, _, _ = make_user(username="t212-account-link-delete", password="password123")
     with app.app_context():
