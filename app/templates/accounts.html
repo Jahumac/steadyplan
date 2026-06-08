@@ -163,6 +163,13 @@
       </div>
       <div class="badge-row account-detail-actions">
         <a class="badge" href="/accounts/">← Back</a>
+        {% if linked_trading212_connection and detail_mode != 'edit' %}
+        <form method="post" action="/settings/trading212/{{ linked_trading212_connection.id }}/preview" class="form-reset">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="account_id" value="{{ selected.id }}">
+          <button type="submit" class="badge">Preview linked broker snapshot</button>
+        </form>
+        {% endif %}
         {% if detail_mode != 'edit' %}<a class="badge" href="/accounts/{{ selected.id }}?mode=edit">Edit</a>{% endif %}
         {% if detail_mode != 'edit' and selected.valuation_mode == 'holdings' %}<button type="button" class="badge" id="top-add-holding">+ Add holding</button>{% endif %}
         <form method="post" class="form-reset account-delete-form">
