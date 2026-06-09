@@ -7,6 +7,8 @@ VOICE_AND_COPY_PATH = Path("/opt/data/steadyplan/docs/VOICE_AND_COPY.md")
 PRODUCT_TRUTH_PATH = Path("/opt/data/steadyplan/docs/PRODUCT_TRUTH.md")
 CHANGELOG_PATH = Path("/opt/data/steadyplan/CHANGELOG.md")
 SITE_README_PATH = Path("/opt/data/steadyplan/site/README.md")
+ROADMAP_PATH = Path("/opt/data/steadyplan/STEADYPLAN_ROADMAP_2026-05-29.md")
+ROADMAP_EXECUTION_PATH = Path("/opt/data/steadyplan/docs/plans/2026-05-29-roadmap-execution.md")
 
 
 def _read(relative_path: str) -> str:
@@ -31,6 +33,14 @@ def _read_changelog() -> str:
 
 def _read_site_readme() -> str:
     return SITE_README_PATH.read_text()
+
+
+def _read_roadmap() -> str:
+    return ROADMAP_PATH.read_text()
+
+
+def _read_roadmap_execution() -> str:
+    return ROADMAP_EXECUTION_PATH.read_text()
 
 
 def test_homepage_trust_card_mentions_restore_preview_and_safety_backup():
@@ -147,6 +157,8 @@ def test_public_site_supports_manual_dark_mode_toggle():
 def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     readme = _read_readme()
     changelog = _read_changelog()
+    roadmap = _read_roadmap()
+    roadmap_execution = _read_roadmap_execution()
 
     assert "### Monthly Update" in readme
     assert "### Assistant access" in readme
@@ -157,6 +169,13 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "Public website with Tour, Roadmap, docs hub, and optional read-only demo path" in readme
     assert "│   ├── planning.py        # Accessible, restricted, and locked money view and insights" in readme
     assert "│   ├── planning.py        # Accessible vs locked money view and insights" not in readme
+    assert "understand cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap
+    assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap_execution
+    assert "what is cash-accessible, invested-accessible, restricted, or locked for later?" in roadmap_execution
+    assert "Accessible vs locked money" not in roadmap_execution
+    assert "accessible vs locked money" not in roadmap
+    assert "understand what is accessible vs locked" not in roadmap
+    assert "what is accessible vs locked?" not in roadmap_execution
     assert "Public roadmap page and a manual light/dark toggle on the public website." in changelog
     assert "Scoped assistant access in Settings with UI-managed tokens, permission labels, and recent write activity." in changelog
     assert "README/API/site notes match the current Monthly Update, Diagnostics, assistant access, and public-site experience." in changelog
