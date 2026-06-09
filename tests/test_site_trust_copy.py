@@ -229,10 +229,12 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Overview/Review/Projections/etc." not in voice_and_copy
     assert "intimidated by financial admin, scenario estimates, and long-term planning." in product_truth
     assert "Assumptions, scenario estimates, and confirmed numbers should not blur together." in product_truth
+    assert "understand cash-accessible, invested-accessible, restricted, and locked-for-later money" in product_truth
     assert "See accessible, restricted, and locked money" in product_truth
     assert "Users should understand what cash they can use now, what invested money is still reachable, what has penalties/restrictions, and what is for later retirement." in product_truth
     assert "intimidated by financial admin, projections, and long-term planning." not in product_truth
     assert "Assumptions, estimates, projections, and confirmed numbers should not blur together." not in product_truth
+    assert "understand what is accessible now vs restricted or locked for later" not in product_truth
     assert "See accessible vs locked money" not in product_truth
     assert "Users should understand what they can use now, what has penalties/restrictions, and what is for later retirement." not in product_truth
     assert "Scenario estimate copy replaces leftover projections wording." in changelog
