@@ -43,7 +43,7 @@ A good default mental model:
 
 SteadyPlan should help users:
 1. see where they stand
-2. understand what is accessible now vs restricted or locked for later
+2. understand cash-accessible, invested-accessible, restricted, and locked-for-later money
 3. connect monthly life with long-term plans
 4. build financial steadiness without salesy pressure or false certainty
 
