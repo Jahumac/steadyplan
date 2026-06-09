@@ -47,7 +47,13 @@ def _account(name, wrapper_type, value=0, monthly=0):
 
 
 def test_classify_accounts_by_access_type():
-    assert classify_account(_account("ISA", "Stocks & Shares ISA")).access_type == ACCESSIBLE
+    isa = classify_account(_account("ISA", "Stocks & Shares ISA"))
+    cash_isa = classify_account(_account("Cash ISA", "Cash ISA"))
+
+    assert isa.access_type == ACCESSIBLE
+    assert isa.label == "Invested accessible"
+    assert cash_isa.access_type == ACCESSIBLE
+    assert cash_isa.label == "Cash accessible"
     assert classify_account(_account("LISA", "Lifetime ISA")).access_type == RESTRICTED
     assert classify_account(_account("SIPP", "SIPP")).access_type == LOCKED
     assert classify_account(_account("Work", "Workplace Pension")).access_type == LOCKED
@@ -86,16 +92,19 @@ def test_accessible_summary_splits_current_money_and_milestones(app, make_user):
         assumptions = fetch_assumptions(uid)
         accounts = [
             _account("S&S ISA", "Stocks & Shares ISA", 9500, 1000),
+            _account("Cash ISA", "Cash ISA", 1500, 0),
             _account("SIPP", "SIPP", 50000, 200),
             _account("LISA", "Lifetime ISA", 500, 0),
         ]
         summary = build_accessible_security_summary(accounts, assumptions)
 
-    assert summary["accessible_current"] == 9500
+    assert summary["accessible_current"] == 11000
     assert summary["locked_current"] == 50000
     assert summary["restricted_current"] == 500
+    assert summary["accessible_cash_current"] == 1500
+    assert summary["accessible_invested_current"] == 9500
     assert summary["milestones"][0]["target"] == 20000
-    assert summary["milestones"][0]["months"] == 11
+    assert summary["milestones"][0]["months"] == 9
     assert summary["next_milestone"]["target"] == 20000
 
 
@@ -144,6 +153,8 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"Accessible vs locked" in response.data
     assert b"Target retirement income/year" in response.data
     assert b"Accessible security milestones" in response.data
+    assert b"Cash accessible:" in response.data
+    assert b"Invested accessible:" in response.data
     assert b"Timing estimate:" in response.data
     assert b"Estimated:" not in response.data
     assert b"View account details" in response.data
