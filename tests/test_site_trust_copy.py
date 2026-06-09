@@ -46,6 +46,10 @@ def test_tour_trust_copy_matches_restore_safety_story():
     assert "SteadyPlan stores your data locally in a SQLite database on your own server/NAS/desktop. There is no hosted account and no public signup." in html
     assert "Optional external price lookups can contact providers for ticker data. Everything else stays local unless you choose otherwise." in html
     assert "<h2 class=\"section-title\">Data ownership</h2>" in html
+    assert "Accessible, restricted, and locked money" in html
+    assert "Long-term planning is easier when you separate cash you could reach now, invested money you could sell, money with conditions, and money reserved for later." in html
+    assert "Accessible vs locked money" not in html
+    assert "Long-term planning is easier when you keep “available now” separate from money reserved for later." not in html
 
 
 def test_docs_hub_and_backups_page_explain_automatic_pre_restore_backup():
