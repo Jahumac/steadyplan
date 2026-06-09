@@ -60,6 +60,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "Public API currently supports Invest and Stocks ISA only" in body
     assert "Cash ISA and SIPP accounts should stay manual/CSV-tracked for now" in body
     assert "SIPP data is not available through the broker API yet" not in body
+    assert "SteadyPlan's own price service and manual/CSV imports stay in place" in body
+    assert "SteadyPlan's own price service and CSV/manual imports stay in place" not in body
     assert "SteadyPlan can keep more than one read-only Trading 212 connection" in body
     assert "separate Invest and Stocks ISA accounts can be saved side by side" in body
     assert "separate Invest and ISA accounts can be saved side by side" not in body
@@ -112,6 +114,8 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Saved Trading 212 ISA as a read-only Trading 212 live connection." in body
     assert "Cash ISA and SIPP accounts should stay manual/CSV-tracked for now" in body
+    assert "SteadyPlan's own price service and manual/CSV imports stay in place" in body
+    assert "SteadyPlan's own price service and CSV/manual imports stay in place" not in body
     assert "SIPP data is not available through the broker API yet" not in body
     assert "Preview holdings snapshot" in body
     assert "live…3456" in body
@@ -132,6 +136,38 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
         assert row["api_secret_ciphertext"] != "live-secret-abcdef"
         assert decrypt_trading212_credential(row["api_key_ciphertext"]) == "live-key-123456"
         assert decrypt_trading212_credential(row["api_secret_ciphertext"]) == "live-secret-abcdef"
+
+
+def test_disconnect_trading212_keeps_manual_csv_path_message(app, client, make_user):
+    uid, username, password = make_user(username="t212-disconnect")
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("live-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("live-secret"),
+            status="connected",
+            last_tested_at="2026-06-08T10:00:00+00:00",
+            external_account_id="ISA-111",
+            external_account_currency="GBP",
+            external_total_value=12000.0,
+        )
+        assert connection is not None
+        connection_id = connection["id"]
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    resp = client.post(f"/settings/trading212/{connection_id}/disconnect", follow_redirects=True)
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Trading 212 connection removed. Manual/CSV imports remain available." in body
+    assert "Trading 212 connection removed. CSV/manual imports remain available." not in body
+
+    with app.app_context():
+        rows = fetch_broker_connections(uid, provider=PROVIDER_TRADING212)
+        assert rows == []
 
 
 def test_connect_trading212_keeps_multiple_live_accounts_separate(app, client, make_user, monkeypatch):
