@@ -284,7 +284,7 @@
                   {% endfor %}
                 </select>
                 {% if trading212_connection_options %}
-                <small class="form-hint">Link this account to an existing read-only Trading 212 connection so future preview and sync tools know which broker account it belongs to. This does not overwrite balances or holdings yet.</small>
+                <small class="form-hint">Link this account to a saved read-only Trading 212 connection so broker previews know which account to compare. Manual/CSV tracking stays in place until you apply reviewed updates.</small>
                 {% else %}
                 <small class="form-hint">No saved Trading 212 connections yet. Manual/CSV tracking stays available until you choose to add a read-only connection in Settings.</small>
                 {% endif %}
