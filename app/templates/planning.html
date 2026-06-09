@@ -28,6 +28,7 @@
     <h2>Accessible security</h2>
     <p>£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</p>
     <small>Money normally usable before pension age: ISA, cash, GIA, Premium Bonds and similar accounts.</small>
+    <small>Cash accessible: £{{ '{:,.0f}'.format(access_summary.accessible_cash_current) }} · Invested accessible: £{{ '{:,.0f}'.format(access_summary.accessible_invested_current) }}</small>
   </div>
   <div class="card stat-card">
     <h2>Locked for later</h2>
@@ -61,6 +62,7 @@
     <a class="badge badge-sm" href="/accounts/">Review accounts</a>
   </div>
   <p class="helper-text">Track when accessible money starts giving you more breathing room. Pension totals are deliberately kept out so the signal stays honest.</p>
+  <p class="helper-text">Accessible now currently splits into <strong>cash accessible £{{ '{:,.0f}'.format(access_summary.accessible_cash_current) }}</strong> and <strong>invested accessible £{{ '{:,.0f}'.format(access_summary.accessible_invested_current) }}</strong>.</p>
 
   {% if access_summary.next_milestone %}
   <div class="card planning-mini-card planning-compact-only planning-next-card">

@@ -24,6 +24,8 @@ from app.calculations import (
 ACCESSIBLE = "accessible"
 RESTRICTED = "restricted"
 LOCKED = "locked"
+ACCESSIBLE_CASH = "cash_accessible"
+ACCESSIBLE_INVESTED = "invested_accessible"
 
 DEFAULT_ACCESSIBLE_MILESTONES = (20_000, 50_000, 100_000)
 WITHDRAWAL_RATES = (
@@ -42,6 +44,37 @@ class AccessClassification:
 
 def _contains_any(text: str, needles: Iterable[str]) -> bool:
     return any(n in text for n in needles)
+
+
+def _accessible_subtype(account) -> tuple[str, str, str]:
+    wrapper = (account.get("wrapper_type") or "").strip().lower()
+    category = (account.get("category") or "").strip().lower()
+    combined = f"{wrapper} {category}"
+
+    if _contains_any(
+        combined,
+        (
+            "cash isa",
+            "premium bonds",
+            "savings",
+            "current account",
+            "checking",
+            "easy access",
+            "instant access",
+            "cash",
+        ),
+    ):
+        return (
+            ACCESSIBLE_CASH,
+            "Cash accessible",
+            "Usually reachable without needing to sell investments first.",
+        )
+
+    return (
+        ACCESSIBLE_INVESTED,
+        "Invested accessible",
+        "Usually reachable before pension age, but still invested so values can move and access may mean selling holdings.",
+    )
 
 
 def classify_account(account) -> AccessClassification:
@@ -80,9 +113,11 @@ def classify_account(account) -> AccessClassification:
             "investment",
         ),
     ):
-        return AccessClassification(ACCESSIBLE, "Accessible before pension age", "Usually usable before pension age, subject to normal account rules and market risk.")
+        _subtype_key, subtype_label, subtype_reason = _accessible_subtype(account)
+        return AccessClassification(ACCESSIBLE, subtype_label, subtype_reason)
 
-    return AccessClassification(ACCESSIBLE, "Accessible before pension age", "No pension/restricted label found; review this classification if the account has special rules.")
+    _subtype_key, subtype_label, subtype_reason = _accessible_subtype(account)
+    return AccessClassification(ACCESSIBLE, subtype_label, subtype_reason)
 
 
 def _years_months_label(months: int | None) -> str:
@@ -118,6 +153,10 @@ def build_accessible_security_summary(accounts, assumptions):
         RESTRICTED: {"key": RESTRICTED, "label": "Restricted", "current": 0.0, "projected": 0.0, "monthly": 0.0, "accounts": []},
         LOCKED: {"key": LOCKED, "label": "Locked", "current": 0.0, "projected": 0.0, "monthly": 0.0, "accounts": []},
     }
+    accessible_breakdown = {
+        ACCESSIBLE_CASH: {"key": ACCESSIBLE_CASH, "label": "Cash accessible", "current": 0.0, "projected": 0.0, "monthly": 0.0, "accounts": []},
+        ACCESSIBLE_INVESTED: {"key": ACCESSIBLE_INVESTED, "label": "Invested accessible", "current": 0.0, "projected": 0.0, "monthly": 0.0, "accounts": []},
+    }
 
     for account in accounts:
         classification = classify_account(account)
@@ -128,7 +167,7 @@ def build_accessible_security_summary(accounts, assumptions):
         groups[key]["current"] += current
         groups[key]["projected"] += projected
         groups[key]["monthly"] += monthly
-        groups[key]["accounts"].append({
+        account_summary = {
             "id": account.get("id"),
             "name": account.get("name") or "Account",
             "wrapper_type": account.get("wrapper_type") or "",
@@ -138,7 +177,18 @@ def build_accessible_security_summary(accounts, assumptions):
             "access_type": key,
             "access_label": classification.label,
             "access_reason": classification.reason,
-        })
+        }
+        groups[key]["accounts"].append(account_summary)
+        if key == ACCESSIBLE:
+            subtype_key, subtype_label, _subtype_reason = _accessible_subtype(account)
+            accessible_breakdown[subtype_key]["current"] += current
+            accessible_breakdown[subtype_key]["projected"] += projected
+            accessible_breakdown[subtype_key]["monthly"] += monthly
+            accessible_breakdown[subtype_key]["accounts"].append({
+                **account_summary,
+                "accessible_subtype": subtype_key,
+                "accessible_subtype_label": subtype_label,
+            })
 
     total_current = sum(g["current"] for g in groups.values())
     total_projected = sum(g["projected"] for g in groups.values())
@@ -176,6 +226,11 @@ def build_accessible_security_summary(accounts, assumptions):
         "milestones": milestones,
         "next_milestone": next_milestone,
         "accessible_accounts": accessible_accounts,
+        "accessible_breakdown": accessible_breakdown,
+        "accessible_cash_current": accessible_breakdown[ACCESSIBLE_CASH]["current"],
+        "accessible_invested_current": accessible_breakdown[ACCESSIBLE_INVESTED]["current"],
+        "accessible_cash_projected": accessible_breakdown[ACCESSIBLE_CASH]["projected"],
+        "accessible_invested_projected": accessible_breakdown[ACCESSIBLE_INVESTED]["projected"],
     }
 
 

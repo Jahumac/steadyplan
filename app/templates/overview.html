@@ -275,6 +275,10 @@
     <div class="card overview-access-mini-card">
       <p class="eyebrow">Accessible now</p>
       <p class="helper-text m-0">{{ '{:.0f}'.format(access_summary.accessible_pct) }}% of your current total is usually reachable before pension age. ISA, cash, GIA, Premium Bonds and similar accounts sit here.</p>
+      <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.accessible_cash_current) }}</p>
+      <p class="helper-text m-0">Cash accessible — money you can usually reach without selling investments first.</p>
+      <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.accessible_invested_current) }}</p>
+      <p class="helper-text m-0">Invested accessible — still reachable, but usually by selling invested holdings.</p>
     </div>
     {% if access_summary.restricted_current > 0 %}
     <div class="card overview-access-mini-card">
@@ -312,6 +316,10 @@
       <div class="card overview-access-mini-card">
         <p class="eyebrow">Accessible now</p>
         <p class="helper-text m-0">{{ '{:.0f}'.format(access_summary.accessible_pct) }}% of your current total is usually reachable before pension age. ISA, cash, GIA, Premium Bonds and similar accounts sit here.</p>
+        <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.accessible_cash_current) }}</p>
+        <p class="helper-text m-0">Cash accessible — money you can usually reach without selling investments first.</p>
+        <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.accessible_invested_current) }}</p>
+        <p class="helper-text m-0">Invested accessible — still reachable, but usually by selling invested holdings.</p>
       </div>
       {% if access_summary.restricted_current > 0 %}
       <div class="card overview-access-mini-card">

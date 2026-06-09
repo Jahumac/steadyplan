@@ -678,10 +678,12 @@ def test_overview_hides_restricted_summary_when_there_is_no_restricted_money(app
     assert html.count("<h2>Where you stand now</h2>") == 2
     assert "Accessible vs locked" not in html
     assert "Accessible now" in html
+    assert "Cash accessible — money you can usually reach without selling investments first." in html
+    assert "Invested accessible — still reachable, but usually by selling invested holdings." in html
     assert "Locked for later" in html
     assert "Locked later" not in html
     assert "Restricted" not in html
-    assert 'class="overview-access-value"' not in html
+    assert html.count('class="overview-access-value"') >= 2
 
 
 
@@ -731,6 +733,9 @@ def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
     assert "Locked for later" in html
     assert "Locked later" not in html
     assert html.count('class="overview-access-value"') >= 1
+    assert "Cash accessible — money you can usually reach without selling investments first." in html
+    assert "Invested accessible — still reachable, but usually by selling invested holdings." in html
+    assert "£0" in html
     assert "£2,000" in html
     assert "17% of your current total is usually reachable before pension age" in html
     assert "When you have locked money, the top summary keeps the headline amount visible." in html
@@ -763,6 +768,8 @@ def test_overview_hides_completed_accessible_milestone_nudge(app, client, make_u
     assert html.count("<h2>Where you stand now</h2>") == 2
     assert "Accessible vs locked" not in html
     assert "Accessible now" in html
+    assert "Cash accessible — money you can usually reach without selling investments first." in html
+    assert "Invested accessible — still reachable, but usually by selling invested holdings." in html
     assert "Next accessible milestone:" not in html
     assert "£0 to go" not in html
 
@@ -808,6 +815,8 @@ def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, clien
     assert "Active debts kept separate:" not in html
     assert "Active debts" not in html
     assert "Accessible now" in html
+    assert "Cash accessible — money you can usually reach without selling investments first." in html
+    assert "Invested accessible — still reachable, but usually by selling invested holdings." in html
     assert "Locked for later" in html
     assert "Locked later" not in html
     assert "Monthly contributions" in html
@@ -1022,6 +1031,8 @@ def test_overview_hides_zero_locked_hero_stat(app, client, make_user):
 
     assert "Accessible now" in html
     assert "Monthly contributions" not in html
+    assert "Cash accessible — money you can usually reach without selling investments first." in html
+    assert "Invested accessible — still reachable, but usually by selling invested holdings." in html
     assert "Scenario estimate at retirement" in html
     assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." in html
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in html
