@@ -65,6 +65,10 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "SteadyPlan can keep more than one read-only Trading 212 connection" in body
     assert "separate Invest and Stocks ISA accounts can be saved side by side" in body
     assert "separate Invest and ISA accounts can be saved side by side" not in body
+    assert "Save and test read-only Trading 212 connection" in body
+    assert "Save and test Trading 212 connection" not in body
+    assert "Saved read-only Trading 212 connections" in body
+    assert "Saved Trading 212 connections" not in body
     assert "Manual/CSV imports remain available even if you never connect the broker API" in body
     assert "CSV import remains available" not in body
 
@@ -309,6 +313,8 @@ def test_accounts_edit_form_offers_saved_trading212_linking(app, client, make_us
     response = client.get(f"/accounts/{account_id}?mode=edit")
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
+    assert "Read-only broker link" in body
+    assert "Broker link" not in body
     assert "Optional read-only Trading 212 link" in body
     assert "Optional Trading 212 link" not in body
     assert "Saved read-only Trading 212 connection" in body
@@ -400,6 +406,8 @@ def test_accounts_edit_form_hides_trading212_picker_for_unsupported_wrapper(app,
     response = client.get(f"/accounts/{account_id}?mode=edit")
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
+    assert "Read-only broker link" in body
+    assert "Broker link" not in body
     assert "Optional read-only Trading 212 link" in body
     assert "Optional Trading 212 link" not in body
     assert "Saved read-only Trading 212 connection" in body
@@ -511,7 +519,8 @@ def test_account_edit_can_link_existing_account_to_saved_trading212_connection(a
     )
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
-    assert "Linked Trading 212 connection:" in body
+    assert "Linked read-only Trading 212 connection:" in body
+    assert "Linked Trading 212 connection:" not in body
     assert "Trading 212 ISA live" in body
     assert "ISA-111" in body
     assert "Broker status" in body
@@ -661,7 +670,8 @@ def test_account_detail_hides_broker_primary_status_for_unsupported_wrapper(app,
     response = client.get(f"/accounts/{account_id}")
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
-    assert "Linked Trading 212 connection:" in body
+    assert "Linked read-only Trading 212 connection:" in body
+    assert "Linked Trading 212 connection:" not in body
     assert "Trading 212 Public API currently supports Invest and Stocks ISA only. Keep this account manual/CSV-tracked for now." in body
     assert "Account source" not in body
     assert "Broker status" not in body

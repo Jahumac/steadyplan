@@ -162,7 +162,7 @@
         <p class="eyebrow">{{ selected.provider }} · {{ selected.wrapper_type }}</p>
         <h2>{{ selected.name }}</h2>
         {% if linked_trading212_connection %}
-        <p class="text-sm text-muted mt-05">Linked Trading 212 connection: <strong>{{ linked_trading212_connection.label }}</strong>{% if linked_trading212_connection.external_account_id %} · {{ linked_trading212_connection.external_account_id }}{% endif %}{% if linked_trading212_connection.external_account_currency %} · {{ linked_trading212_connection.external_account_currency }}{% endif %}</p>
+        <p class="text-sm text-muted mt-05">Linked read-only Trading 212 connection: <strong>{{ linked_trading212_connection.label }}</strong>{% if linked_trading212_connection.external_account_id %} · {{ linked_trading212_connection.external_account_id }}{% endif %}{% if linked_trading212_connection.external_account_currency %} · {{ linked_trading212_connection.external_account_currency }}{% endif %}</p>
         {% if not selected_supports_trading212_public_api %}
         <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ selected_trading212_support_hint }}</p>
         {% endif %}
@@ -270,7 +270,7 @@
 
           <div class="edit-card">
             <div class="edit-card-header">
-              <p class="edit-card-eyebrow">Broker link</p>
+              <p class="edit-card-eyebrow">Read-only broker link</p>
               <h4 class="edit-card-title">Optional read-only Trading 212 link</h4>
             </div>
             <div class="form-grid">
