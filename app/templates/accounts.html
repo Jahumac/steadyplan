@@ -276,7 +276,7 @@
             <div class="form-grid">
               {% if selected_supports_trading212_public_api %}
               <label class="form-full-col">
-                <span>Saved Trading 212 connection</span>
+                <span>Saved read-only Trading 212 connection</span>
                 <select name="linked_broker_connection_id">
                   <option value="">Not linked</option>
                   {% for option in trading212_connection_options %}
@@ -294,7 +294,7 @@
               <input type="hidden" name="linked_broker_connection_id" value="{{ selected.linked_broker_connection_id }}">
               {% endif %}
               <div class="form-full-col">
-                <span>Saved Trading 212 connection</span>
+                <span>Saved read-only Trading 212 connection</span>
                 <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ selected_trading212_support_hint }}</p>
               </div>
               {% endif %}
