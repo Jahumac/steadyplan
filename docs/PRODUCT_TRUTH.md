@@ -55,8 +55,8 @@ These jobs should outrank lower-value feature work:
 
 1. **Understand current position**
    - Net worth, key balances, and what needs attention should be obvious.
-2. **See accessible vs locked money**
-   - Users should understand what they can use now, what has penalties/restrictions, and what is for later retirement.
+2. **See accessible, restricted, and locked money**
+   - Users should understand what cash they can use now, what invested money is still reachable, what has penalties/restrictions, and what is for later retirement.
 3. **Track whether they are on course**
    - Goals, retirement estimates, and monthly update state should feel understandable rather than overwhelming.
 4. **Connect short-term actions to long-term goals**

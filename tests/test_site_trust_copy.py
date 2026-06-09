@@ -155,6 +155,8 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "Monthly Review" not in readme
     assert "Settings includes scoped **Assistant access** for Pip." in readme
     assert "Public website with Tour, Roadmap, docs hub, and optional read-only demo path" in readme
+    assert "│   ├── planning.py        # Accessible, restricted, and locked money view and insights" in readme
+    assert "│   ├── planning.py        # Accessible vs locked money view and insights" not in readme
     assert "Public roadmap page and a manual light/dark toggle on the public website." in changelog
     assert "Scoped assistant access in Settings with UI-managed tokens, permission labels, and recent write activity." in changelog
     assert "README/API/site notes match the current Monthly Update, Diagnostics, assistant access, and public-site experience." in changelog
@@ -227,7 +229,11 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Overview/Review/Projections/etc." not in voice_and_copy
     assert "intimidated by financial admin, scenario estimates, and long-term planning." in product_truth
     assert "Assumptions, scenario estimates, and confirmed numbers should not blur together." in product_truth
+    assert "See accessible, restricted, and locked money" in product_truth
+    assert "Users should understand what cash they can use now, what invested money is still reachable, what has penalties/restrictions, and what is for later retirement." in product_truth
     assert "intimidated by financial admin, projections, and long-term planning." not in product_truth
     assert "Assumptions, estimates, projections, and confirmed numbers should not blur together." not in product_truth
+    assert "See accessible vs locked money" not in product_truth
+    assert "Users should understand what they can use now, what has penalties/restrictions, and what is for later retirement." not in product_truth
     assert "Scenario estimate copy replaces leftover projections wording." in changelog
     assert "Projection copy frames projections as scenario estimates." not in changelog
