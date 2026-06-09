@@ -92,7 +92,7 @@ Make Overview answer the most important user questions first, especially on smal
 - where do I stand?
 - what needs attention?
 - what should I do next?
-- what is accessible vs locked?
+- what is cash-accessible, invested-accessible, restricted, or locked for later?
 
 **Required outcomes:**
 - Reduce repeated or secondary information near the top of Overview.
@@ -132,7 +132,7 @@ Make first use feel guided rather than like a wall of finance.
 **Priority flows:**
 1. Overview / where do I stand
 2. Monthly position / budget
-3. Accessible vs locked money
+3. Cash-accessible, invested-accessible, restricted, and locked-for-later money
 4. Goals / progress
 5. Important next action or monthly review prompt
 
