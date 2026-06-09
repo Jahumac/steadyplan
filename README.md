@@ -289,7 +289,7 @@ app/
 │   ├── performance.py     # Modified Dietz returns tracking
 │   ├── monthly_review.py  # Monthly Update workflow, notes, checklist, CSV import
 │   ├── allowance.py       # ISA, pension, dividend, and CGT allowance tracking
-│   ├── planning.py        # Accessible vs locked money view and insights
+│   ├── planning.py        # Accessible, restricted, and locked money view and insights
 │   ├── api.py             # General API + scoped assistant endpoints
 │   ├── export.py          # Excel export (scenario estimates, budget, performance)
 │   └── settings.py        # Assumptions, assistant access, backups, diagnostics, reset
