@@ -55,6 +55,8 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     assert 'href="/accounts/balances/bulk?month_key=' in html
     assert '<span>Into pots monthly</span>' in html
     assert '<span>Monthly in</span>' not in html
+    assert 'You pay monthly £1,300' in html
+    assert '£1,300/mo' not in html
     assert '<div class="row-end">' not in html
 
     css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
@@ -131,6 +133,26 @@ def test_account_detail_mobile_hero_uses_clearer_monthly_labels(app, client, mak
     assert '<small class="text-muted">you pay £200.00</small>' in html
     assert '<span class="acct-hero-label">Into pot / mo</span>' not in html
     assert '<span class="acct-hero-label">Monthly</span>' not in html
+
+
+def test_accounts_list_card_uses_clearer_into_pot_monthly_copy(app, client, make_user):
+    uid, username, password = make_user(username="accounts-list-monthly-copy", password="password123")
+
+    with app.app_context():
+        payload = _account_payload()
+        payload["monthly_contribution"] = 200
+        payload["employer_contribution"] = 50
+        create_account(payload, uid)
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/accounts/")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'Into pots monthly £250' in html
+    assert 'title="You pay £200 → £250 goes into pot"' in html
+    assert '£250/mo' not in html
+    assert '£200/mo' not in html
 
 
 def test_accounts_create_form_includes_junior_isa_wrapper_option(app, client, make_user):
