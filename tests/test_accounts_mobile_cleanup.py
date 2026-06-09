@@ -53,6 +53,8 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     assert 'href="/accounts/?mode=create">+ Add account</a>' in html
     assert 'href="/accounts/?mode=create&amp;focus=first_account"' not in html
     assert 'href="/accounts/balances/bulk?month_key=' in html
+    assert '<span>Into pots monthly</span>' in html
+    assert '<span>Monthly in</span>' not in html
     assert '<div class="row-end">' not in html
 
     css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
@@ -109,6 +111,26 @@ def test_accounts_page_uses_plan_line_copy_for_account_comparison(app, client, m
     assert "Plan line @7%" not in html
     assert "assumptions-based plan line for this account" not in html
     assert "plan line treating transfers out as “being behind”" not in html
+
+
+def test_account_detail_mobile_hero_uses_clearer_monthly_labels(app, client, make_user):
+    uid, username, password = make_user(username="accounts-mobile-monthly-labels", password="password123")
+
+    with app.app_context():
+        payload = _account_payload()
+        payload["monthly_contribution"] = 200
+        payload["employer_contribution"] = 50
+        account_id = create_account(payload, uid)
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert '<span class="acct-hero-label">Into pot monthly</span>' in html
+    assert '<small class="text-muted">you pay £200.00</small>' in html
+    assert '<span class="acct-hero-label">Into pot / mo</span>' not in html
+    assert '<span class="acct-hero-label">Monthly</span>' not in html
 
 
 def test_accounts_create_form_includes_junior_isa_wrapper_option(app, client, make_user):
