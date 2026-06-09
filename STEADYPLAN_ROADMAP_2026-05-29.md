@@ -58,7 +58,7 @@ SteadyPlan should help users:
 ### Core user jobs
 The app should prioritise helping users:
 1. understand their current position
-2. see available vs restricted/locked money
+2. see cash-accessible, invested-accessible, restricted, and locked-for-later money
 3. track whether they are on course
 4. connect short-term actions to long-term goals
 5. stop avoiding the overall picture
