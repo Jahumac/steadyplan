@@ -29,7 +29,7 @@
   </div>
   <div class="hero-strip">
     {% call hero_stat('Total value') %}<strong>£{{ '{:,.0f}'.format(total_value) }}</strong>{% endcall %}
-    {% call hero_stat('Monthly in', stat_id='accounts-monthly-in') %}
+    {% call hero_stat('Into pots monthly', stat_id='accounts-monthly-in') %}
       <strong title="Total landing in your accounts each month — your contributions plus any tax relief, Lifetime ISA bonus and employer top-ups">£{{ '{:,.0f}'.format(total_into_pot_monthly) }}</strong>
     {% endcall %}
     {% call hero_stat('Holdings tracked') %}<strong>{{ accounts | selectattr('valuation_mode', 'equalto', 'holdings') | list | length }}</strong>{% endcall %}
@@ -553,7 +553,7 @@
 
     {% else %}
       {# ── View mode ──────────────────────────────────────────────────────── #}
-      {# Mobile-only hero: merges Balance + 30-day delta + Monthly into a
+      {# Mobile-only hero: merges Balance + 30-day delta + monthly contribution into a
          single condensed card so the top of the screen is more useful at a
          glance than the original 3-tile strip. Desktop continues to use the
          stats grid below. #}
@@ -582,11 +582,11 @@
           </div>
           <div class="acct-hero-monthly">
             {% if _hero_scb.get('total_into_pot', 0) != (selected.monthly_contribution or 0) and _hero_scb.get('total_into_pot', 0) > 0 %}
-              <span class="acct-hero-label">Into pot / mo</span>
+              <span class="acct-hero-label">Into pot monthly</span>
               <strong style="color:var(--accent-2)">£{{ '{:,.2f}'.format(_hero_scb.total_into_pot) }}</strong>
               <small class="text-muted">you pay £{{ '{:,.2f}'.format(selected.monthly_contribution or 0) }}</small>
             {% else %}
-              <span class="acct-hero-label">Monthly</span>
+              <span class="acct-hero-label">You pay monthly</span>
               <strong>£{{ '{:,.2f}'.format(selected.monthly_contribution or 0) }}</strong>
             {% endif %}
           </div>
