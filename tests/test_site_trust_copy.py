@@ -170,10 +170,12 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "│   ├── planning.py        # Accessible, restricted, and locked money view and insights" in readme
     assert "│   ├── planning.py        # Accessible vs locked money view and insights" not in readme
     assert "understand cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap
+    assert "see cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap
     assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap_execution
     assert "what is cash-accessible, invested-accessible, restricted, or locked for later?" in roadmap_execution
     assert "Accessible vs locked money" not in roadmap_execution
     assert "accessible vs locked money" not in roadmap
+    assert "available vs restricted/locked money" not in roadmap
     assert "understand what is accessible vs locked" not in roadmap
     assert "what is accessible vs locked?" not in roadmap_execution
     assert "Public roadmap page and a manual light/dark toggle on the public website." in changelog
