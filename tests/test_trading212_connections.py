@@ -65,7 +65,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "SteadyPlan can keep more than one read-only Trading 212 connection" in body
     assert "separate Invest and Stocks ISA accounts can be saved side by side" in body
     assert "separate Invest and ISA accounts can be saved side by side" not in body
-    assert "CSV import remains available" in body
+    assert "Manual/CSV imports remain available even if you never connect the broker API" in body
+    assert "CSV import remains available" not in body
 
 
 def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client, make_user, monkeypatch):
