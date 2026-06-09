@@ -131,9 +131,9 @@
     <div class="acct-card-foot">
       {% set cb = contrib_breakdowns.get(account.id, {}) %}
       {% if cb.get('total_into_pot', 0) != (account.monthly_contribution or 0) and cb.get('total_into_pot', 0) > 0 %}
-      <span title="You pay £{{ '{:,.0f}'.format(account.monthly_contribution or 0) }} → £{{ '{:,.0f}'.format(cb.total_into_pot) }} goes into pot">£{{ '{:,.0f}'.format(cb.total_into_pot) }}/mo</span>
+      <span title="You pay £{{ '{:,.0f}'.format(account.monthly_contribution or 0) }} → £{{ '{:,.0f}'.format(cb.total_into_pot) }} goes into pot">Into pots monthly £{{ '{:,.0f}'.format(cb.total_into_pot) }}</span>
       {% else %}
-      <span>£{{ '{:,.0f}'.format(account.monthly_contribution or 0) }}/mo</span>
+      <span>You pay monthly £{{ '{:,.0f}'.format(account.monthly_contribution or 0) }}</span>
       {% endif %}
       <span class="acct-mode-dot {% if account.valuation_mode == 'holdings' %}dot-positions{% else %}dot-manual{% endif %}"
             title="{{ 'Built from holdings' if account.valuation_mode == 'holdings' else ('Premium Bonds' if account.valuation_mode == 'premium_bonds' else 'Manual') }}"></span>
