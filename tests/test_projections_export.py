@@ -61,6 +61,7 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
         })
         update_assumptions(assumptions, uid)
         isa_id = create_account(_account("ISA", "Stocks & Shares ISA", 10000, 500), uid)
+        create_account(_account("Cash ISA", "Cash ISA", 2000, 0), uid)
         create_account(_account("SIPP", "SIPP", 50000, 100, contribution_method="relief_at_source"), uid)
         create_account(_account("LISA", "Lifetime ISA", 1000, 0), uid)
         create_contribution_override({
@@ -83,7 +84,11 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
         "Account", "Current Value", "You pay monthly", "Into pots monthly", "Scenario estimate at retirement"
     ]
     summary_values = [cell.value for row in summary.iter_rows() for cell in row]
-    assert "Accessible vs locked" in summary_values
+    assert "Accessible now vs locked" in summary_values
+    assert "Accessible vs locked" not in summary_values
+    assert "Cash accessible" in summary_values
+    assert "Invested accessible" in summary_values
+    assert "Accessible" not in summary_values
     assert "Locked for later" in summary_values
     assert "Values are nominal scenario estimates before inflation unless stated otherwise." in summary_values
     assert "Values are nominal projections before inflation unless stated otherwise." not in summary_values

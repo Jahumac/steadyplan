@@ -234,18 +234,28 @@ def export_projections():
         ws.cell(row=r, column=2, value=val).font = _DATA_FONT
 
     r += 2
-    ws.cell(row=r, column=1, value="Accessible vs locked").font = _ACCENT_FONT
+    ws.cell(row=r, column=1, value="Accessible now vs locked").font = _ACCENT_FONT
     _header_row(ws, r + 1, ["Type", "Current value", "Scenario estimate at retirement", "Account count"])
-    access_rows = {"accessible": [0.0, 0.0, 0], "restricted": [0.0, 0.0, 0], "locked": [0.0, 0.0, 0]}
+    access_rows = {
+        "Cash accessible": [0.0, 0.0, 0],
+        "Invested accessible": [0.0, 0.0, 0],
+        "Restricted": [0.0, 0.0, 0],
+        "Locked for later": [0.0, 0.0, 0],
+    }
     for acc in accounts:
-        access_type = classify_account(acc).access_type
-        access_rows[access_type][0] += to_float(acc["current_value"])
-        access_rows[access_type][1] += projected_account_value(acc, assumptions)
-        access_rows[access_type][2] += 1
-    for access_type in ["accessible", "restricted", "locked"]:
+        classification = classify_account(acc)
+        if classification.access_type == "accessible":
+            label = classification.label
+        elif classification.access_type == "restricted":
+            label = "Restricted"
+        else:
+            label = "Locked for later"
+        access_rows[label][0] += to_float(acc["current_value"])
+        access_rows[label][1] += projected_account_value(acc, assumptions)
+        access_rows[label][2] += 1
+    for label in ["Cash accessible", "Invested accessible", "Restricted", "Locked for later"]:
         r += 1
-        label = access_type.title() if access_type != "locked" else "Locked for later"
-        _data_row(ws, r + 1, [label, access_rows[access_type][0], access_rows[access_type][1], access_rows[access_type][2]], num_formats={2: GBP, 3: GBP0})
+        _data_row(ws, r + 1, [label, access_rows[label][0], access_rows[label][1], access_rows[label][2]], num_formats={2: GBP, 3: GBP0})
 
     r += 3
     ws.cell(row=r, column=1, value="Notes").font = _ACCENT_FONT
