@@ -315,6 +315,41 @@ def test_accounts_edit_form_offers_saved_trading212_linking(app, client, make_us
     assert "This does not overwrite balances or holdings yet." in body
 
 
+def test_accounts_edit_form_empty_state_keeps_manual_csv_path(app, client, make_user):
+    uid, username, password = make_user(username="t212-account-link-empty")
+    with app.app_context():
+        account_id = create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "Stocks & Shares ISA",
+                "category": "Investments",
+                "tags": "",
+                "current_value": 12000.0,
+                "monthly_contribution": 200.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": None,
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-08T10:00:00+00:00",
+            },
+            uid,
+        )
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}?mode=edit")
+    assert response.status_code == 200
+    body = response.data.decode("utf-8", errors="ignore")
+    assert "No saved Trading 212 connections yet." in body
+    assert "Manual/CSV tracking stays available until you choose to add a read-only connection in Settings." in body
+    assert "Add one in Settings first if you want to link this account for future preview and sync work." not in body
+
+
 def test_accounts_edit_form_hides_trading212_picker_for_unsupported_wrapper(app, client, make_user):
     uid, username, password = make_user(username="t212-cash-isa-link-form")
     with app.app_context():
