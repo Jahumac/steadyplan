@@ -902,7 +902,7 @@
               <div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">
                 <form method="post" action="/settings/trading212/{{ connection.id }}/preview" style="margin:0;">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="badge">Preview holdings snapshot</button>
+                  <button type="submit" class="badge">Preview read-only holdings snapshot</button>
                 </form>
                 <form method="post" action="/settings/trading212/{{ connection.id }}/retest" style="margin:0;">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
