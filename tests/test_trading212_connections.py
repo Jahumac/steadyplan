@@ -115,6 +115,33 @@ def test_settings_renders_untested_trading212_connection_last_check_fallback(app
     assert "Not yet tested" not in body
 
 
+def test_settings_renders_unchecked_trading212_connection_status_fallback(app, client, make_user):
+    uid, username, password = make_user(username="t212-unchecked-status")
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("live-key-status"),
+            api_secret_ciphertext=encrypt_trading212_credential("live-secret-status"),
+            status="pending",
+            external_account_id="ISA-111",
+            external_account_currency="GBP",
+            external_total_value=12000.0,
+        )
+        assert connection is not None
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    resp = client.get("/settings/")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Status" in body
+    assert "No successful check yet" in body
+    assert "Unverified" not in body
+
+
 def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client, make_user, monkeypatch):
     uid, username, password = make_user(username="t212-connect")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
