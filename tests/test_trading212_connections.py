@@ -63,7 +63,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "SIPP data is not available through the broker API yet" not in body
     assert "SteadyPlan's own price service and manual/CSV imports stay in place" in body
     assert "SteadyPlan's own price service and CSV/manual imports stay in place" not in body
-    assert "SteadyPlan can keep more than one read-only Trading 212 connection" in body
+    assert "SteadyPlan can keep more than one read-only broker connection" in body
+    assert "SteadyPlan can keep more than one read-only Trading 212 connection" not in body
     assert "separate Invest and Stocks ISA accounts can be saved side by side" in body
     assert "separate Invest and ISA accounts can be saved side by side" not in body
     assert "Save and test read-only broker connection" in body
