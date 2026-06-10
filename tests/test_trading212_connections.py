@@ -55,7 +55,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Trading 212 sync (beta)" in body
-    assert "Add a read-only Trading 212 connection" in body
+    assert "Add a read-only broker connection" in body
+    assert "Add a read-only Trading 212 connection" not in body
     assert "store the key pair encrypted on this server using this app's secret key" in body
     assert "Public API currently supports Invest and Stocks ISA only" in body
     assert "Cash ISA and SIPP accounts should stay manual/CSV-tracked for now" in body
@@ -65,10 +66,12 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "SteadyPlan can keep more than one read-only Trading 212 connection" in body
     assert "separate Invest and Stocks ISA accounts can be saved side by side" in body
     assert "separate Invest and ISA accounts can be saved side by side" not in body
-    assert "Save and test read-only Trading 212 connection" in body
+    assert "Save and test read-only broker connection" in body
+    assert "Save and test read-only Trading 212 connection" not in body
     assert "Save and test Trading 212 connection" not in body
-    assert "Each saved connection is read-only. Retest connection refreshes the latest account summary check. Remove connection deletes the stored encrypted key pair from SteadyPlan." in body
-    assert "Each saved connection is read-only. Retest refreshes the latest account summary check. Remove deletes the stored encrypted key pair from SteadyPlan." not in body
+    assert "Saved read-only broker connections" in body
+    assert "Saved read-only Trading 212 connections" not in body
+    assert "Saved Trading 212 connections" not in body
     assert "Manual/CSV imports remain available even if you never connect the broker API" in body
     assert "CSV import remains available" not in body
 
