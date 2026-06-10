@@ -115,8 +115,8 @@
   <section class="panel mt-1">
     <div class="section-header">
       <div>
-        <h3>Proposed apply plan</h3>
-        <p class="helper-text" style="margin:0;">Still preview only. If a later write step is added, this is the safest shape of work SteadyPlan should ask you to confirm for <strong>{{ preview.linked_account.name }}</strong>.</p>
+        <h3>Reviewed apply steps</h3>
+        <p class="helper-text" style="margin:0;">Still preview only. If you choose a write step later, SteadyPlan should ask you to confirm each step separately for <strong>{{ preview.linked_account.name }}</strong>.</p>
       </div>
     </div>
     <div class="metrics-grid">
@@ -181,9 +181,9 @@
     </form>
     {% endif %}
     {% if preview.apply_plan.needs_changes %}
-    <p class="helper-text" style="margin-top:0.75rem; margin-bottom:0;">This preview found differences to review. Any write step should stay explicit, account-scoped, and non-destructive.</p>
+    <p class="helper-text" style="margin-top:0.75rem; margin-bottom:0;">This preview found differences to review. Nothing runs automatically from here; any later write should stay explicit, account-scoped, and non-destructive.</p>
     {% else %}
-    <p class="helper-text" style="margin-top:0.75rem; margin-bottom:0;">This preview already lines up cleanly. A future apply step could stay a no-op unless you explicitly choose otherwise.</p>
+    <p class="helper-text" style="margin-top:0.75rem; margin-bottom:0;">This preview already lines up cleanly. No write step is needed unless you explicitly choose one later.</p>
     {% endif %}
   </section>
   {% endif %}

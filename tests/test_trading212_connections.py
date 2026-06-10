@@ -1061,7 +1061,8 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Focused on linked account <strong>Trading 212 ISA</strong>" in body
     assert "Only holdings from this SteadyPlan account were compared with the broker snapshot." in body
-    assert "Proposed apply plan" in body
+    assert "Reviewed apply steps" in body
+    assert "Proposed apply plan" not in body
     assert "Matched holdings to update" in body
     assert "Broker-only positions to add" in body
     assert "Tracked-only holdings to review" in body
@@ -1072,7 +1073,10 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     assert "Add reviewed broker-only positions" in body
     assert "This first write step only updates already matched holdings on <strong>Trading 212 ISA</strong>." in body
     assert "This step only adds broker-only positions with no possible tracked match clues." in body
-    assert "This preview found differences to review. Any write step should stay explicit, account-scoped, and non-destructive." in body
+    assert "Still preview only. If you choose a write step later, SteadyPlan should ask you to confirm each step separately for <strong>Trading 212 ISA</strong>." in body
+    assert "This preview found differences to review. Nothing runs automatically from here; any later write should stay explicit, account-scoped, and non-destructive." in body
+    assert "If a later write step is added, this is the safest shape of work SteadyPlan should ask you to confirm" not in body
+    assert "This preview found differences to review. Any write step should stay explicit, account-scoped, and non-destructive." not in body
     assert "Back to account" in body
     assert "Recent sync activity" in body
     assert "Previewed snapshot" in body
@@ -2270,6 +2274,7 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert "Next step: compare this holding with the broker clue first, then use the reviewed match flow if it is genuinely the same position." in body
     assert "Next step: review whether this holding should stay tracked manually, be archived, or be removed after you confirm it is no longer in the broker account." in body
     assert "Cash Reserve Jar" in body
+    assert "Reviewed apply steps" not in body
     assert "Proposed apply plan" not in body
 
     with app.app_context():
