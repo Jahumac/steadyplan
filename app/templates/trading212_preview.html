@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Trading 212 preview · SteadyPlan{% endblock %}
+{% block title %}Trading 212 read-only preview · SteadyPlan{% endblock %}
 {% block content %}
 {% set preview = trading212_preview %}
 {% set summary = preview.summary %}
@@ -9,7 +9,7 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Trading 212 sync (beta)</p>
-      <h2>Preview holdings snapshot</h2>
+      <h2>Preview read-only holdings snapshot</h2>
     </div>
     <div>
       <a class="badge" href="{{ preview_back_href or '/settings/#trading212-access' }}">{{ preview_back_label or 'Back to settings' }}</a>
