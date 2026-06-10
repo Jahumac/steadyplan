@@ -520,7 +520,8 @@ def test_account_edit_can_link_existing_account_to_saved_trading212_connection(a
     )
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
-    assert "Linked read-only Trading 212 connection:" in body
+    assert "Linked read-only broker connection:" in body
+    assert "Linked read-only Trading 212 connection:" not in body
     assert "Linked Trading 212 connection:" not in body
     assert "Trading 212 ISA live" in body
     assert "ISA-111" in body
@@ -673,7 +674,8 @@ def test_account_detail_hides_broker_primary_status_for_unsupported_wrapper(app,
     response = client.get(f"/accounts/{account_id}")
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
-    assert "Linked read-only Trading 212 connection:" in body
+    assert "Linked read-only broker connection:" in body
+    assert "Linked read-only Trading 212 connection:" not in body
     assert "Linked Trading 212 connection:" not in body
     assert "Trading 212 Public API currently supports Invest and Stocks ISA only. Keep this account manual/CSV-tracked for now." in body
     assert "Account source" not in body
