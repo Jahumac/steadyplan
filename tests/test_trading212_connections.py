@@ -537,7 +537,8 @@ def test_account_edit_can_link_existing_account_to_saved_trading212_connection(a
     assert "£8,000.00" in body
     assert "Broker total is above tracked value" in body
     assert "+£4,000.00" in body
-    assert "Trading 212 is currently the live source for this linked account. Manual tracking remains the fallback if the broker snapshot is unavailable." in body
+    assert "Trading 212 is currently the live source for this linked account. Manual/CSV tracking remains the fallback if the broker snapshot is unavailable or incomplete." in body
+    assert "Trading 212 is currently the live source for this linked account. Manual tracking remains the fallback if the broker snapshot is unavailable." not in body
     assert "Use the linked read-only broker preview before changing holdings or manually adjusting this account." in body
     assert "Use the linked broker preview before changing holdings or manually adjusting this account." not in body
 
@@ -621,7 +622,8 @@ def test_account_detail_shows_linked_trading212_error_state(app, client, make_us
     assert "Account source" in body
     assert "Manual fallback" in body
     assert "Needs attention" in body
-    assert "SteadyPlan is currently relying on its stored/manual tracking for this linked account because the broker snapshot is unavailable or incomplete." in body
+    assert "SteadyPlan is currently relying on manual/CSV tracking for this linked account because the broker snapshot is unavailable or incomplete." in body
+    assert "SteadyPlan is currently relying on its stored/manual tracking for this linked account because the broker snapshot is unavailable or incomplete." not in body
     assert "Last broker error: Broker timeout while fetching snapshot" in body
     assert "Broker total (GBP)" in body
     assert "Not fetched yet" not in body
