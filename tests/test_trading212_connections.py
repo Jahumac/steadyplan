@@ -14,6 +14,7 @@ from app.models import (
     fetch_broker_connections,
     fetch_broker_sync_events,
     fetch_holdings_for_account,
+    get_connection,
     log_broker_sync_event,
     update_account,
     upsert_broker_connection,
@@ -79,6 +80,39 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "No Trading 212 connection saved yet." not in body
     assert "Manual/CSV imports remain available even if you never connect the broker API" in body
     assert "CSV import remains available" not in body
+
+
+def test_settings_renders_untested_trading212_connection_last_check_fallback(app, client, make_user):
+    uid, username, password = make_user(username="t212-untested-fallback")
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("live-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("live-secret"),
+            status="connected",
+            external_account_id="ISA-111",
+            external_account_currency="GBP",
+            external_total_value=12000.0,
+        )
+        assert connection is not None
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE broker_connections SET last_tested_at = NULL WHERE id = ?",
+                (connection["id"],),
+            )
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    resp = client.get("/settings/")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Last account summary check" in body
+    assert "No account summary check yet" in body
+    assert "Not yet tested" not in body
 
 
 def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client, make_user, monkeypatch):

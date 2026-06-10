@@ -238,7 +238,7 @@ def _safe_next_settings_url(raw):
 
 
 def broker_connection_last_tested_label(value):
-    return value or "Not yet tested"
+    return value or "No account summary check yet"
 
 
 def trading212_access_mode_label(value):
