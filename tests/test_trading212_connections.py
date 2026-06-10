@@ -122,7 +122,8 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "SteadyPlan's own price service and manual/CSV imports stay in place" in body
     assert "SteadyPlan's own price service and CSV/manual imports stay in place" not in body
     assert "SIPP data is not available through the broker API yet" not in body
-    assert "Preview holdings snapshot" in body
+    assert "Preview read-only holdings snapshot" in body
+    assert "Preview holdings snapshot" not in body
     assert "live…3456" in body
     assert "998877" in body
     assert "GBP" in body
@@ -2251,7 +2252,10 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Preview holdings snapshot" in body
+    assert '<title>Trading 212 read-only preview · SteadyPlan</title>' in body
+    assert '<title>Trading 212 preview · SteadyPlan</title>' not in body
+    assert "Preview read-only holdings snapshot" in body
+    assert "Preview holdings snapshot" not in body
     assert "Nothing in SteadyPlan has been changed." in body
     assert "Matched holdings" in body
     assert "Broker-only positions" in body
