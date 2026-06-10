@@ -260,10 +260,10 @@ def _linked_trading212_health_summary(selected, linked_connection, effective_val
 
     if status == "connected" and broker_total is not None:
         source_mode_label = "Broker primary"
-        source_mode_hint = "Trading 212 is currently the live source for this linked account. Manual tracking remains the fallback if the broker snapshot is unavailable."
+        source_mode_hint = "Trading 212 is currently the live source for this linked account. Manual/CSV tracking remains the fallback if the broker snapshot is unavailable or incomplete."
     else:
         source_mode_label = "Manual fallback"
-        source_mode_hint = "SteadyPlan is currently relying on its stored/manual tracking for this linked account because the broker snapshot is unavailable or incomplete."
+        source_mode_hint = "SteadyPlan is currently relying on manual/CSV tracking for this linked account because the broker snapshot is unavailable or incomplete."
 
     return {
         "status": status,
