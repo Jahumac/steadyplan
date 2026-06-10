@@ -71,6 +71,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "Save and test read-only Trading 212 connection" not in body
     assert "Save and test Trading 212 connection" not in body
     assert "Saved read-only broker connections" in body
+    assert "Each saved read-only broker connection stays read-only." in body
+    assert "Each saved connection is read-only." not in body
     assert "Saved read-only Trading 212 connections" not in body
     assert "Saved Trading 212 connections" not in body
     assert "No saved read-only broker connection yet." in body
@@ -129,6 +131,8 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "SteadyPlan's own price service and manual/CSV imports stay in place" in body
     assert "SteadyPlan's own price service and CSV/manual imports stay in place" not in body
     assert "SIPP data is not available through the broker API yet" not in body
+    assert "Each saved read-only broker connection stays read-only." in body
+    assert "Each saved connection is read-only." not in body
     assert "Preview read-only holdings snapshot" in body
     assert "Retest connection" in body
     assert "Remove connection" in body
