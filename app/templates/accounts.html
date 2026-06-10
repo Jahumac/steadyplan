@@ -271,12 +271,12 @@
           <div class="edit-card">
             <div class="edit-card-header">
               <p class="edit-card-eyebrow">Read-only broker link</p>
-              <h4 class="edit-card-title">Optional read-only Trading 212 link</h4>
+              <h4 class="edit-card-title">Optional read-only broker link</h4>
             </div>
             <div class="form-grid">
               {% if selected_supports_trading212_public_api %}
               <label class="form-full-col">
-                <span>Saved read-only Trading 212 connection</span>
+                <span>Saved read-only broker connection</span>
                 <select name="linked_broker_connection_id">
                   <option value="">Not linked</option>
                   {% for option in trading212_connection_options %}
@@ -284,7 +284,7 @@
                   {% endfor %}
                 </select>
                 {% if trading212_connection_options %}
-                <small class="form-hint">Link this account to a saved read-only Trading 212 connection so broker previews know which account to compare. Manual/CSV tracking stays in place until you apply reviewed updates.</small>
+                <small class="form-hint">Link this account to a saved read-only broker connection so broker previews know which account to compare. Manual/CSV tracking stays in place until you apply reviewed updates.</small>
                 {% else %}
                 <small class="form-hint">No saved Trading 212 connections yet. Manual/CSV tracking stays available until you choose to add a read-only connection in Settings.</small>
                 {% endif %}
@@ -294,7 +294,7 @@
               <input type="hidden" name="linked_broker_connection_id" value="{{ selected.linked_broker_connection_id }}">
               {% endif %}
               <div class="form-full-col">
-                <span>Saved read-only Trading 212 connection</span>
+                <span>Saved read-only broker connection</span>
                 <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ selected_trading212_support_hint }}</p>
               </div>
               {% endif %}
