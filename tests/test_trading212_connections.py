@@ -360,7 +360,8 @@ def test_accounts_edit_form_empty_state_keeps_manual_csv_path(app, client, make_
     response = client.get(f"/accounts/{account_id}?mode=edit")
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
-    assert "No saved Trading 212 connections yet." in body
+    assert "No saved read-only broker connections yet." in body
+    assert "No saved Trading 212 connections yet." not in body
     assert "Manual/CSV tracking stays available until you choose to add a read-only connection in Settings." in body
     assert "Add one in Settings first if you want to link this account for future preview and sync work." not in body
 
