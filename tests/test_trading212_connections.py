@@ -529,7 +529,8 @@ def test_account_edit_can_link_existing_account_to_saved_trading212_connection(a
     assert "Account source" in body
     assert "Broker primary" in body
     assert "Connected" in body
-    assert "Last successful broker fetch" in body
+    assert "Last successful read-only broker snapshot" in body
+    assert "Last successful broker fetch" not in body
     assert "2026-06-08 10:00 UTC" in body
     assert "Broker total (GBP)" in body
     assert "Tracked value in SteadyPlan" in body
@@ -624,7 +625,8 @@ def test_account_detail_shows_linked_trading212_error_state(app, client, make_us
     assert "Needs attention" in body
     assert "SteadyPlan is currently relying on manual/CSV tracking for this linked account because the broker snapshot is unavailable or incomplete." in body
     assert "SteadyPlan is currently relying on its stored/manual tracking for this linked account because the broker snapshot is unavailable or incomplete." not in body
-    assert "Last broker error: Broker timeout while fetching snapshot" in body
+    assert "Last read-only broker error: Broker timeout while fetching snapshot" in body
+    assert "Last broker error: Broker timeout while fetching snapshot" not in body
     assert "Broker total (GBP)" in body
     assert "Not fetched yet" not in body
     assert "Use the linked broker preview before changing holdings or manually adjusting this account." not in body
