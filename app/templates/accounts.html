@@ -178,7 +178,7 @@
             <strong>{{ linked_trading212_summary.status_label }}</strong>
           </div>
           <div>
-            <p class="text-sm text-muted" style="margin:0;">Last successful broker fetch</p>
+            <p class="text-sm text-muted" style="margin:0;">Last successful read-only broker snapshot</p>
             <strong>{{ linked_trading212_summary.last_checked_label or 'Not fetched yet' }}</strong>
           </div>
           <div>
@@ -195,7 +195,7 @@
         {% endif %}
         <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ linked_trading212_summary.source_mode_hint }}</p>
         {% if linked_trading212_summary.last_error %}
-        <p class="text-sm perf-negative mt-05" style="margin-bottom:0;">Last broker error: {{ linked_trading212_summary.last_error }}</p>
+        <p class="text-sm perf-negative mt-05" style="margin-bottom:0;">Last read-only broker error: {{ linked_trading212_summary.last_error }}</p>
         {% else %}
         <p class="text-sm text-muted mt-05" style="margin-bottom:0;">Use the linked read-only broker preview before changing holdings or manually adjusting this account.</p>
         {% endif %}
