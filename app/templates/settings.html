@@ -880,7 +880,7 @@
           <tr>
             <td>
               {{ connection.label }}
-              <div class="helper-text" style="margin-top:0.2rem;">{{ connection.access_mode.replace('_', ' ')|title }}</div>
+              <div class="helper-text" style="margin-top:0.2rem;">{{ trading212_access_mode_label(connection.access_mode) }}</div>
             </td>
             <td>{{ trading212_environment_label(connection.environment) }}</td>
             <td>

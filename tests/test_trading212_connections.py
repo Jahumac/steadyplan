@@ -136,6 +136,8 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "Preview read-only holdings snapshot" in body
     assert "Retest connection" in body
     assert "Remove connection" in body
+    assert "Read-only" in body
+    assert "Read Only" not in body
     assert "Masked API key" in body
     assert "Masked key" not in body
     assert "Broker account" in body
