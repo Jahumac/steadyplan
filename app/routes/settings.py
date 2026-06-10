@@ -241,6 +241,12 @@ def broker_connection_last_tested_label(value):
     return value or "Not yet tested"
 
 
+def trading212_access_mode_label(value):
+    if (value or "").strip().lower() == "read_only":
+        return "Read-only"
+    return (value or "—").replace("_", " ").title()
+
+
 def trading212_sync_support_note():
     return (
         "Trading 212's Public API currently supports Invest and Stocks ISA only. "
@@ -672,6 +678,7 @@ def _settings_template_context(uid, *, assumptions=None, computed_age=None, diag
         "trading212_environment_options": trading212_environment_options(),
         "trading212_environment_label": trading212_environment_label,
         "trading212_status_label": trading212_status_label,
+        "trading212_access_mode_label": trading212_access_mode_label,
         "mask_trading212_key": mask_trading212_key,
         "broker_connection_last_tested_label": broker_connection_last_tested_label,
         "trading212_sync_support_note": trading212_sync_support_note,
