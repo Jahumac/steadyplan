@@ -162,7 +162,7 @@
         <p class="eyebrow">{{ selected.provider }} · {{ selected.wrapper_type }}</p>
         <h2>{{ selected.name }}</h2>
         {% if linked_trading212_connection %}
-        <p class="text-sm text-muted mt-05">Linked read-only Trading 212 connection: <strong>{{ linked_trading212_connection.label }}</strong>{% if linked_trading212_connection.external_account_id %} · {{ linked_trading212_connection.external_account_id }}{% endif %}{% if linked_trading212_connection.external_account_currency %} · {{ linked_trading212_connection.external_account_currency }}{% endif %}</p>
+        <p class="text-sm text-muted mt-05">Linked read-only broker connection: <strong>{{ linked_trading212_connection.label }}</strong>{% if linked_trading212_connection.external_account_id %} · {{ linked_trading212_connection.external_account_id }}{% endif %}{% if linked_trading212_connection.external_account_currency %} · {{ linked_trading212_connection.external_account_currency }}{% endif %}</p>
         {% if not selected_supports_trading212_public_api %}
         <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ selected_trading212_support_hint }}</p>
         {% endif %}
