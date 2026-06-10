@@ -537,7 +537,8 @@ def test_account_edit_can_link_existing_account_to_saved_trading212_connection(a
     assert "Broker total is above tracked value" in body
     assert "+£4,000.00" in body
     assert "Trading 212 is currently the live source for this linked account. Manual tracking remains the fallback if the broker snapshot is unavailable." in body
-    assert "Use the linked broker preview before changing holdings or manually adjusting this account." in body
+    assert "Use the linked read-only broker preview before changing holdings or manually adjusting this account." in body
+    assert "Use the linked broker preview before changing holdings or manually adjusting this account." not in body
 
     with app.app_context():
         account = fetch_account(account_id, uid)
@@ -624,6 +625,7 @@ def test_account_detail_shows_linked_trading212_error_state(app, client, make_us
     assert "Broker total (GBP)" in body
     assert "Not fetched yet" not in body
     assert "Use the linked broker preview before changing holdings or manually adjusting this account." not in body
+    assert "Use the linked read-only broker preview before changing holdings or manually adjusting this account." not in body
 
 
 def test_account_detail_hides_broker_primary_status_for_unsupported_wrapper(app, client, make_user):
@@ -909,7 +911,8 @@ def test_account_detail_shows_preview_button_for_linked_trading212_connection(ap
     response = client.get(f"/accounts/{account_id}")
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
-    assert "Preview linked broker snapshot" in body
+    assert "Preview linked read-only broker snapshot" in body
+    assert "Preview linked broker snapshot" not in body
     assert f'action="/settings/trading212/{connection["id"]}/preview"' in body
     assert 'name="account_id" value="%s"' % account_id in body
 
