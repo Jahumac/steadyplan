@@ -1079,8 +1079,10 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     assert "This preview found differences to review. Any write step should stay explicit, account-scoped, and non-destructive." not in body
     assert "Back to account" in body
     assert "Recent sync activity" in body
+    assert "Keep a visible record of the last preview and last confirmed write step on this linked broker connection." in body
     assert "Previewed snapshot" in body
-    assert "Last reviewed write" in body
+    assert "Last confirmed write step" in body
+    assert "Last reviewed write" not in body
     assert "Preview linked broker snapshot" not in body
     assert "Apple Inc" in body
     assert "Vanguard FTSE All-World" in body
@@ -1357,9 +1359,12 @@ def test_preview_trading212_shows_recent_sync_history(app, client, make_user, mo
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Recent sync activity" in body
+    assert "Keep a visible record of the last preview and last confirmed write step on this linked broker connection." in body
     assert "Applied matched updates" in body
     assert "Added broker-only positions" in body
     assert "Previewed snapshot" in body
+    assert "Last confirmed write step" in body
+    assert "Last reviewed write" not in body
     assert "Matched updates" in body
     assert "Held back" in body
 
