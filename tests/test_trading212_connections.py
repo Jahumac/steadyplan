@@ -121,7 +121,8 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Saved Trading 212 ISA as a read-only Trading 212 live connection." in body
+    assert "Saved Trading 212 ISA as a read-only broker live connection." in body
+    assert "Saved Trading 212 ISA as a read-only Trading 212 live connection." not in body
     assert "Cash ISA and SIPP accounts should stay manual/CSV-tracked for now" in body
     assert "SteadyPlan's own price service and manual/CSV imports stay in place" in body
     assert "SteadyPlan's own price service and CSV/manual imports stay in place" not in body
@@ -182,6 +183,62 @@ def test_disconnect_trading212_keeps_manual_csv_path_message(app, client, make_u
     with app.app_context():
         rows = fetch_broker_connections(uid, provider=PROVIDER_TRADING212)
         assert rows == []
+
+
+def test_retest_trading212_success_uses_broker_connection_language(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="t212-retest-success")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="demo",
+            label="Trading 212 Demo",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("demo-key-1111"),
+            api_secret_ciphertext=encrypt_trading212_credential("demo-secret-2222"),
+            status="connected",
+            last_tested_at="2026-06-07T18:10:00+00:00",
+            external_account_id="123",
+            external_account_currency="GBP",
+            external_total_value=10.0,
+        )
+        assert connection is not None
+
+    def fake_probe_trading212_connection(*, api_key, api_secret, environment):
+        assert api_key == "demo-key-1111"
+        assert api_secret == "demo-secret-2222"
+        assert environment == "demo"
+        return {
+            "ok": True,
+            "message": "ok",
+            "summary": {
+                "environment": "demo",
+                "account_id": "123",
+                "currency": "GBP",
+                "available_to_trade": 50.0,
+                "invested": 70.0,
+                "total_value": 120.0,
+                "fetched_at": "2026-06-10T09:30:00+00:00",
+            },
+        }
+
+    monkeypatch.setattr(
+        "app.routes.settings.probe_trading212_connection",
+        fake_probe_trading212_connection,
+    )
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/retest",
+        data={},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Read-only broker demo connection retested successfully." in body
+    assert "Trading 212 demo connection retested successfully." not in body
+
 
 
 def test_connect_trading212_keeps_multiple_live_accounts_separate(app, client, make_user, monkeypatch):

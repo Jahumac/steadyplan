@@ -1197,7 +1197,7 @@ def connect_trading212():
         return _settings_trading212_redirect()
 
     flash(
-        f"Saved {label} as a read-only Trading 212 {trading212_environment_label(summary['environment']).lower()} connection. "
+        f"Saved {label} as a read-only broker {trading212_environment_label(summary['environment']).lower()} connection. "
         f"{trading212_sync_support_note()}",
         "success",
     )
@@ -1232,7 +1232,7 @@ def retest_trading212(connection_id):
             external_total_value=summary["total_value"],
         )
         flash(
-            f"Trading 212 {trading212_environment_label(summary['environment']).lower()} connection retested successfully.",
+            f"Read-only broker {trading212_environment_label(summary['environment']).lower()} connection retested successfully.",
             "success",
         )
     except (Trading212ConnectionError, Trading212CredentialError) as exc:
