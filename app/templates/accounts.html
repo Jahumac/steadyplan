@@ -197,7 +197,7 @@
         {% if linked_trading212_summary.last_error %}
         <p class="text-sm perf-negative mt-05" style="margin-bottom:0;">Last broker error: {{ linked_trading212_summary.last_error }}</p>
         {% else %}
-        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">Use the linked broker preview before changing holdings or manually adjusting this account.</p>
+        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">Use the linked read-only broker preview before changing holdings or manually adjusting this account.</p>
         {% endif %}
         {% endif %}
       </div>
@@ -207,7 +207,7 @@
         <form method="post" action="/settings/trading212/{{ linked_trading212_connection.id }}/preview" class="form-reset">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="account_id" value="{{ selected.id }}">
-          <button type="submit" class="badge">Preview linked broker snapshot</button>
+          <button type="submit" class="badge">Preview linked read-only broker snapshot</button>
         </form>
         {% endif %}
         {% if detail_mode != 'edit' %}<a class="badge" href="/accounts/{{ selected.id }}?mode=edit">Edit</a>{% endif %}
