@@ -67,8 +67,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "separate Invest and ISA accounts can be saved side by side" not in body
     assert "Save and test read-only Trading 212 connection" in body
     assert "Save and test Trading 212 connection" not in body
-    assert "Saved read-only Trading 212 connections" in body
-    assert "Saved Trading 212 connections" not in body
+    assert "Each saved connection is read-only. Retest connection refreshes the latest account summary check. Remove connection deletes the stored encrypted key pair from SteadyPlan." in body
+    assert "Each saved connection is read-only. Retest refreshes the latest account summary check. Remove deletes the stored encrypted key pair from SteadyPlan." not in body
     assert "Manual/CSV imports remain available even if you never connect the broker API" in body
     assert "CSV import remains available" not in body
 
@@ -123,6 +123,10 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "SteadyPlan's own price service and CSV/manual imports stay in place" not in body
     assert "SIPP data is not available through the broker API yet" not in body
     assert "Preview read-only holdings snapshot" in body
+    assert "Retest connection" in body
+    assert "Remove connection" in body
+    assert ">Retest<" not in body
+    assert ">Remove<" not in body
     assert "Preview holdings snapshot" not in body
     assert "live…3456" in body
     assert "998877" in body
