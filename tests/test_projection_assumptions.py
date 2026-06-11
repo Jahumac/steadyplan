@@ -110,7 +110,11 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "aria-label=\"Projected portfolio growth chart\"" not in body
     assert body.count("Try a different scenario") == 2
     assert body.count("Monthly contributions by account") == 2
+    assert body.count("Scenario estimate total") == 2
+    assert body.count("Difference from your plan") == 2
     assert body.count("Total monthly contributions") == 2
+    assert "Scenario total" not in body
+    assert "vs. your plan" not in body
     assert "Monthly contributions per account" not in body
     assert "Monthly total" not in body
     assert "Try different retirement ages, growth rates, or monthly contributions to see how the scenario estimate changes. Nothing here is saved unless you save changes elsewhere." in body
