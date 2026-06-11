@@ -41,3 +41,6 @@ def test_accounts_first_use_focus_surfaces_calm_start_here_guidance(app, client,
     assert "Just used for grouping. The default is fine if you're not sure." in html
     assert "Start typing or pick from the list. You can leave this blank for now." in html
     assert "Every penny needs a home." not in html
+    assert 'data-first-account-focus="true"' in html
+    assert "Your new account is ready. You'll see it in Accounts straight away, and Monthly Update now has somewhere real to work from." in html
+    assert "Your new account is ready. You'll see it in Accounts and it will be included in scenario estimates straight away." not in html

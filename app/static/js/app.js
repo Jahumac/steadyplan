@@ -1486,6 +1486,11 @@
       }
 
       var createBtn = document.getElementById('cw-create-btn');
+      var errorBox = document.getElementById('cw-create-error');
+      var progressEl = document.getElementById('cw-progress');
+      var cancelBtn = document.getElementById('cw-cancel');
+      var firstAccountFocus = wizardRoot.getAttribute('data-first-account-focus') === 'true';
+
       if (createBtn) {
         createBtn.addEventListener('click', function() {
           createBtn.textContent = 'Setting things up…';
@@ -1529,13 +1534,17 @@
                 var msg   = document.getElementById('cw-success-msg');
 
                 if (pendingHoldings.length > 0) {
-                  title.textContent = accName + ' is live!';
+                  title.textContent = accName + ' is ready!';
                   msg.textContent = accName + ' is set up with ' +
                     pendingHoldings.length + (pendingHoldings.length === 1 ? ' holding' : ' holdings') +
-                    '. He\'s already crunching the numbers — check your dashboard to see how things are shaping up.';
+                    (firstAccountFocus
+                      ? '. You\'ll see it in Accounts straight away, and Monthly Update now has something real to work from.'
+                      : '. You\'ll see it in Accounts straight away, and it can feed scenario estimates whenever you need it to.');
                 } else {
                   title.textContent = 'You\'re all set!';
-                  msg.textContent = accName + ' is ready. You\'ll see it on your dashboard and in projections straight away.';
+                  msg.textContent = firstAccountFocus
+                    ? accName + ' is ready. You\'ll see it in Accounts straight away, and Monthly Update now has somewhere real to work from.'
+                    : accName + ' is ready. You\'ll see it in Accounts straight away, and it can feed scenario estimates whenever you need it to.';
                 }
                 goTo(6, 'forward');
               });
@@ -1547,7 +1556,6 @@
             });
         });
       }
-
       var wrapperEl    = document.getElementById('cw-wrapper');
       var categoryEl   = document.getElementById('cw-category');
       var valModeEl    = document.getElementById('cw-valuation');

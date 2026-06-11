@@ -161,6 +161,13 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "Prize draws are tracked separately; projections use the planning rate." not in js
     assert "Prize draws are tracked separately; projections use a cautious estimate." not in js
     assert "Prize draws are tracked separately; projections use a gentle estimate." not in js
+    assert "Monthly Update now has somewhere real to work from." in js
+    assert "Monthly Update now has something real to work from." in js
+    assert "it can feed scenario estimates whenever you need it to." in js
+    assert "is live!" not in js
+    assert "He's already crunching the numbers" not in js
+    assert "check your dashboard to see how things are shaping up" not in js
+    assert "You'll see it on your dashboard and in projections straight away." not in js
     assert "Premium Bonds do not pay guaranteed interest. Use this as a planning assumption only; NS&I can change the prize fund rate." in js
     assert "Premium Bonds do not pay guaranteed interest. Use this as a planning estimate only; NS&I can change the prize fund rate." not in js
     assert "Premium Bonds do not pay guaranteed interest. This is a calm estimate only; NS&I can change the prize fund rate." not in js
@@ -181,6 +188,10 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "Use default growth rate (from Settings)" not in wizard_html
     assert "Set 0 to use the investment day from your scenario estimate assumptions." in wizard_html
     assert "Set 0 to use salary day from Settings." not in wizard_html
+    assert 'data-first-account-focus="{{ \'true\' if is_first_account_focus else \'false\' }}"' in wizard_html
+    assert "Your new account is ready. You'll see it in Accounts straight away, and Monthly Update now has somewhere real to work from." in wizard_html
+    assert "Your new account is ready. You'll see it in Accounts straight away, and it can feed scenario estimates whenever you need it to." in wizard_html
+    assert "Your new account is ready. You'll see it in Accounts and it will be included in scenario estimates straight away." not in wizard_html
     assert "The contribution in use this month is shown at the top." in html
     assert "The <strong>currently active</strong> contribution is shown at the top." not in html
     assert "Use if workplace pension invests later than your investment day" in html
