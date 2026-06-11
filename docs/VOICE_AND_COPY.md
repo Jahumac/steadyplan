@@ -52,7 +52,7 @@ Notes:
 ### Be explicit about certainty
 Always distinguish:
 - Recorded: entered/saved as a value (may still be provisional)
-- Confirmed: explicitly confirmed by the user during Monthly Review
+- Confirmed: explicitly confirmed by the user during Monthly Update
 - Estimated: inferred from defaults/assumptions (not user-confirmed)
 - Scenario estimate: calculated outcome based on assumptions
 
@@ -83,13 +83,13 @@ Rules:
 - Warnings should be compact: one sentence + one action.
 - Avoid “healthy status” banners on Overview; show only when action is needed.
 
-### Monthly Review
+### Monthly Update
 Goal:
 - Turn the month into “truth” the user can trust.
 
 Rules:
 - Use procedural language: “confirm”, “record”, “skip”, “complete”.
-- State what completion changes: completed reviews become the source of truth.
+- State what completion changes: completed monthly updates become the source of truth.
 - Avoid guilt. Make it feel like maintenance, not judgement.
 
 ### Scenario estimates

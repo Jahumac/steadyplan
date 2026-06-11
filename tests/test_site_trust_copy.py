@@ -46,18 +46,19 @@ def _read_roadmap_execution() -> str:
 def test_homepage_trust_card_mentions_restore_preview_and_safety_backup():
     html = _read("index.html")
 
-    assert "SteadyPlan uses a local SQLite database and keeps backup and restore guidance close to the product so trust is explicit." in html
+    assert "SteadyPlan uses a local SQLite database, keeps backup and restore guidance close to the product, and now surfaces Diagnostics plus trust-posture checks so the trust story is explicit rather than implied." in html
     assert "See how JSON exports, whole-instance backups, and restore checks fit together" not in html
 
 
 def test_tour_trust_copy_matches_restore_safety_story():
     html = _read("tour.html")
 
-    assert "SteadyPlan stores your data locally in a SQLite database on your own server/NAS/desktop. There is no hosted account and no public signup." in html
+    assert "SteadyPlan stores your data locally in a SQLite database on your own server/NAS/desktop. There is no hosted account and no public signup, and the safest hands-on evaluation path is still your own local install." in html
     assert "Optional external price lookups can contact providers for ticker data. Everything else stays local unless you choose otherwise." in html
     assert "<h2 class=\"section-title\">Data ownership</h2>" in html
-    assert "Accessible, restricted, and locked money" in html
+    assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in html
     assert "Long-term planning is easier when you separate cash you could reach now, invested money you could sell, money with conditions, and money reserved for later." in html
+    assert "Diagnostics keep trust visible" in html
     assert "Accessible vs locked money" not in html
     assert "Long-term planning is easier when you keep “available now” separate from money reserved for later." not in html
 
@@ -86,7 +87,7 @@ def test_backup_boundary_copy_distinguishes_json_exports_from_whole_instance_bac
     assert "### JSON Export & Restore" in readme
     assert "Download a user-scoped JSON export from **Settings**, and restore from that file" in readme
     assert "validate a JSON export in Settings" in readme
-    assert "- Monthly Update workflow, Data Health, JSON export/restore, and Diagnostics" in readme
+    assert "- Data Health, JSON export/restore, Diagnostics, and trust-posture checks close to the product" in readme
     assert "### Backup & Restore (JSON)" not in readme
     assert "Export a user-scoped JSON backup from **Settings**" not in readme
     assert "validate a JSON backup in Settings" not in readme
@@ -108,6 +109,8 @@ def test_docs_and_install_pages_explain_safest_evaluation_path():
     assert "Evaluate safely first" in install
     assert "Best order: screenshots/tour first, then your own local install on LAN or VPN if you want hands-on evaluation." in install
     assert "Public demo access can be useful, but only as a deliberate read-only setup by the host" in install
+    assert "docker compose pull" in install
+    assert "A plain restart on its own will keep the old image." in install
     assert "Safest default is LAN/VPN access. Public exposure requires a trusted reverse proxy and HTTPS." in tour
     assert "Documentation" in tour
     assert "Safest order: screenshots/tour first, then your own local install on LAN or VPN for hands-on evaluation." in readme
@@ -161,11 +164,14 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     roadmap_execution = _read_roadmap_execution()
 
     assert "### Monthly Update" in readme
+    assert "### Read-only broker connection beta" in readme
     assert "### Assistant access" in readme
     assert "### Diagnostics & backup health" in readme
     assert "Public site supports a manual light/dark toggle without a build step" in readme
     assert "Monthly Review" not in readme
+    assert "A self-hosted personal finance planning and visibility tool for UK investors" in readme
     assert "Settings includes optional scoped **Assistant access** for a personal Pip setup." in readme
+    assert "Optional read-only Trading 212 connection beta with preview-before-apply review flow" in readme
     assert "Public website with Tour, Roadmap, docs hub, and optional read-only demo path" in readme
     assert "taxable accounts (GIAs)" in readme
     assert "taxable account (GIA)" in readme
@@ -176,8 +182,10 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "│   ├── planning.py        # Accessible vs locked money view and insights" not in readme
     assert "understand cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap
     assert "see cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap
+    assert "## Current standing (June 2026)" in roadmap
+    assert "Overview, Monthly Update, Planning, and the main compact-screen flows have had substantial answer-first cleanup" in roadmap
     assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap_execution
-    assert "what is cash-accessible, invested-accessible, restricted, or locked for later?" in roadmap_execution
+    assert "trust surfaces such as Diagnostics, backup/restore boundaries, assistant access, and safe demo guidance are now shipped" in roadmap_execution
     assert "Accessible vs locked money" not in roadmap_execution
     assert "accessible vs locked money" not in roadmap
     assert "available vs restricted/locked money" not in roadmap
@@ -185,7 +193,7 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "what is accessible vs locked?" not in roadmap_execution
     assert "Public roadmap page and a manual light/dark toggle on the public website." in changelog
     assert "Scoped assistant access in Settings with UI-managed tokens, permission labels, and recent write activity." in changelog
-    assert "README/API/site notes match the current Monthly Update, Diagnostics, assistant access, and public-site experience." in changelog
+    assert "Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional read-only broker beta." in changelog
 
 
 

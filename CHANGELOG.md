@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
 - Scoped assistant access in Settings with UI-managed tokens, permission labels, and recent write activity.
 
 ### Changed
-- Refreshed GitHub-facing docs so README/API/site notes match the current Monthly Update, Diagnostics, assistant access, and public-site experience.
+- Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional read-only broker beta.
 - Refreshed public demo screenshots and the public marketing/docs site presentation.
 
 ### Fixed

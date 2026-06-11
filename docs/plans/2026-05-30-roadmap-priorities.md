@@ -19,56 +19,57 @@
 
 ## 1. What to do next
 
-### Priority 1 — mobile/PWA critical-flow pass
+### Priority 1 — docs/site/roadmap parity
 
 **Why first now:**
-The public front door is already aligned and the first Overview/onboarding pass has landed. The next roadmap value comes from checking whether the app actually feels calm and clear on phone-sized screens across the flows ordinary people will use most.
+The product has moved faster than some of the repo and website wording. Before chasing more surface-level polish, keep the roadmap, README, docs, and public site aligned with what SteadyPlan already is.
 
 **Target outcome:**
-A phone user should be able to open SteadyPlan and quickly understand:
-- where they stand
-- what needs attention this month
-- what they should do next
-- how goals and monthly progress connect to the bigger picture
+A reader should be able to understand:
+- who SteadyPlan is for
+- what has already landed
+- what still needs work
+- how to evaluate it safely
+- why hosted-beta thinking is still gated behind trust and supportability
 
-**Best first screens to inspect:**
-- `app/templates/overview.html`
-- `app/templates/monthly_review*.html`
-- `app/templates/budget*.html`
-- `app/templates/goals.html`
-- related shared layout/styles used by those screens
+**Best first files to inspect:**
+- `README.md`
+- `STEADYPLAN_ROADMAP_2026-05-29.md`
+- `docs/PRODUCT_TRUTH.md`
+- `site/index.html`
+- `site/tour.html`
+- `site/roadmap.html`
+- `site/docs/*.html`
 
 **Definition of done:**
-- Primary answers appear before dense detail on compact screens
-- Important CTAs stay visible without scrolling through admin-heavy blocks
-- Repeated headline numbers are reduced
-- Cards feel intentionally ordered rather than just vertically stacked desktop sections
-- Bottom navigation / safe-area spacing does not obscure meaningful content
+- Public and GitHub-facing docs match the current app truth
+- Roadmap distinguishes landed foundations from remaining work
+- Safe evaluation guidance is consistent across repo and site
+- Trust surfaces are described literally rather than with stale shorthand
 
 **Verification:**
-- browser/manual check of Overview, Monthly Review, Budget, and Goals at phone width
-- regression tests for any hierarchy/CTA/order changes
-- quick visual sanity pass for spacing and repeated metrics
+- static-copy regression tests
+- local preview of the updated site pages
+- diff review across repo docs and site files
 
 ---
 
-## 2. Best next documentation/product slice after the mobile pass
+## 2. Best next product slice after the docs refresh
 
-### Priority 2 — safe demo/evaluation path
+### Priority 2 — densest remaining settings/setup flows
 
 **Why second now:**
-Once the app is calmer on the core phone flows, the next roadmap question is how an outsider can evaluate it safely without real personal data.
+Once parity is restored, the biggest remaining UX risk is not the already-improved core flows. It is the density in the heaviest settings, diagnostics, and admin-adjacent surfaces.
 
 **Questions to settle:**
-- Is the current demo seed flow enough?
-- Does the `/demo` path explain itself clearly enough?
-- Is there a better guided evaluation path using sample data and screenshots?
+- Which settings/admin blocks still feel too dense for ordinary users?
+- What can be made more literal without changing behaviour?
+- Which trust surfaces still require users to mentally translate internal language?
 
 **Definition of done:**
-- Demo story is clearly documented
-- Demo path does not depend on Janusz’s real production data
-- Website/docs explain how to explore safely
-- Demo mode feels like evaluation, not a hidden technical trick
+- The densest remaining surfaces read more calmly and literally
+- Important trust boundaries stay explicit
+- Small follow-up slices are obvious and narrow
 
 ---
 
@@ -90,15 +91,15 @@ Do not frame this as public launch preparation. It is low-blast-radius readiness
 
 ---
 
-## Recommended implementation order
+### Recommended implementation order
 
 ### Now
-1. Review top mobile/PWA flows as one narrow sequence of small fixes
-2. Start with Overview, Monthly Review, Budget, and Goals at phone width
+1. Refresh roadmap, repo docs, and public-site parity
+2. Verify the safe demo/evaluation story across README, site, and docs
 
 ### Next
-3. Define and document the safe demo/evaluation path
-4. Tighten any missing website/docs guidance that the demo decision exposes
+3. Review the densest remaining settings/setup/admin surfaces as one narrow sequence of small fixes
+4. Keep tightening literal trust wording and everyday data-entry clarity
 
 ### Later
 5. Harden backup/auth/supportability for possible tiny private external use
@@ -131,13 +132,12 @@ If the answer is weak, the slice probably belongs later.
 
 If continuing implementation work now, the next handoff should be:
 
-**Bundle A — mobile/PWA critical-flow audit**
-- inspect Overview, Monthly Review, Budget, and Goals at phone width
-- identify repeated or low-signal top-of-page content
-- check CTA visibility and spacing with bottom navigation/safe areas
-- record the smallest user-visible fixes worth shipping first
+**Bundle A — docs / roadmap / website refresh**
+- inspect README, roadmap source, site pages, and docs hub for parity drift
+- update wording so current landed foundations are explicit
+- keep safe evaluation guidance and hosted-later caution consistent
 
-**Bundle B — safe demo/evaluation definition**
-- inspect the current `/demo` path and any sample-data helpers
-- document whether the current evaluation story is good enough
-- note the smallest follow-up slice needed to make demo evaluation obvious and safe
+**Bundle B — settings/setup density review**
+- inspect the heaviest remaining admin/trust surfaces
+- identify the smallest user-visible wording or hierarchy fixes worth shipping next
+- keep follow-up bundles narrow and evidence-led

@@ -1,6 +1,6 @@
 # SteadyPlan (formerly Shelly Finance)
 
-A self-hosted personal finance cockpit for UK investors 🐢. Track your accounts, holdings, budget, goals and retirement scenario estimates — hosted on your own server/home network.
+A self-hosted personal finance planning and visibility tool for UK investors 🐢. See where you stand today, what is available now vs later, and how monthly decisions connect to long-term scenario estimates — on your own server/home network.
 
 Primary domain: **steadyplan.co.uk** (with **steady-plan.co.uk** as an optional redirect/secondary domain).
 
@@ -24,9 +24,9 @@ Legacy image (during transition): `ghcr.io/jahumac/shelly-finance:latest`
 
 ## Why SteadyPlan?
 
-Most finance apps want your login credentials or send your data to the cloud. SteadyPlan runs entirely on your machine (or home server) with a local SQLite database. No bank/broker account linking and no third-party accounts required. You only need an external API key if you choose to enable optional automated price lookups.
+Most finance apps want your login credentials or send your data to the cloud. SteadyPlan runs entirely on your machine (or home server) with a local SQLite database. Core use does not require any bank login sharing, broker linking, or third-party account. You only need an external API key if you choose to enable optional automated price lookups.
 
-It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, and CSV import from major UK brokers.
+It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional read-only Trading 212 connection beta for API-first account review.
 
 ---
 
@@ -67,6 +67,9 @@ Import holdings directly from your broker's CSV export. Supported platforms:
 - **Generic CSV** — flexible column matching for any other format
 
 Don't use any of these? Download the [CSV template](app/static/steadyplan-holdings-template.csv) and fill in your holdings manually. (The legacy `shelly-holdings-template.csv` filename is kept as a compatibility alias.)
+
+### Read-only broker connection beta
+Settings includes an optional **Trading 212 sync (beta)** flow for read-only broker review. You can save and test encrypted API credentials on your own server, preview a broker snapshot against your tracked holdings, and keep manual/CSV tracking as the fallback until you choose to apply reviewed changes. This currently focuses on Invest and Stocks ISA accounts.
 
 ### Monthly Update
 A lightweight monthly check-in to keep your numbers fresh: update account balances, review expected contributions (confirm/skip), add an optional note, and mark the month complete.
@@ -359,15 +362,17 @@ data/
 
 ### Available now
 - Self-hosted private finance planning with local SQLite storage
-- Monthly Update workflow, Data Health, JSON export/restore, and Diagnostics
+- Answer-first Overview, Monthly Update, Planning, and core compact-screen cleanups
+- Data Health, JSON export/restore, Diagnostics, and trust-posture checks close to the product
 - Assistant access with scoped read-only answers and one narrow budget-write permission
 - Public website with Tour, Roadmap, docs hub, and optional read-only demo path
+- Optional read-only Trading 212 connection beta with preview-before-apply review flow
 
 ### Improving next
-- Clearer onboarding and first-use guidance
-- Better compact-screen/PWA usability
-- More polished public tour, docs, and evaluation flow
-- Import and validation polish around everyday data entry
+- Reduce density in the heaviest setup and settings surfaces
+- Keep tightening everyday data-entry, import, and validation flows
+- Sharpen roadmap/docs/site parity so public copy matches the current product truth
+- Strengthen supportability and auth boundaries before any tiny hosted beta discussion
 
 ### Exploring later
 - Hosted SteadyPlan only if safety, supportability, and trust are strong enough

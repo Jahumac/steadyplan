@@ -27,12 +27,23 @@ The likely long-term shape is:
 So the immediate goal is **not** “launch SaaS”.
 The immediate goal is to make SteadyPlan ready, in a careful and methodical way, for eventual **small private external use**.
 
+## Current standing (June 2026)
+
+The foundations are now much stronger than this roadmap originally assumed:
+
+- product truth, calm positioning, and public trust language are now committed in-repo
+- Overview, Monthly Update, Planning, and the main compact-screen flows have had substantial answer-first cleanup
+- Diagnostics, backup/restore boundaries, assistant access, safe demo guidance, and public-site trust copy are now real shipped product surfaces
+- an optional read-only Trading 212 connection beta exists for API-first broker review without forcing users away from manual/CSV tracking
+
+That means the next stretch is no longer “invent the direction from scratch”. The next stretch is to keep the shipped experience coherent, reduce density in the heaviest flows, and strengthen supportability and trust before any tiny hosted beta discussion.
+
 ---
 
-## Phase 1 — clarify product truth
+## Phase 1 — clarify product truth (foundation landed; keep it current)
 
 ### Goal
-Make SteadyPlan’s purpose sharper and stop the product drifting sideways.
+Keep SteadyPlan’s purpose sharp and stop the product drifting sideways as new features and docs continue to land.
 
 ### Questions this phase answers
 - Who is this app really for?
@@ -72,10 +83,10 @@ The app should prioritise helping users:
 
 ---
 
-## Phase 2 — improve usability for normal people
+## Phase 2 — improve usability for normal people (major foundation landed; continue simplification)
 
 ### Goal
-Reduce friction, intimidation, and over-complexity.
+Keep reducing friction, intimidation, and over-complexity, especially in the densest remaining setup and maintenance flows.
 
 ### Why this matters
 At the moment, the people most likely to install a self-hosted finance app may not be the same people who most need SteadyPlan.
@@ -127,10 +138,10 @@ Needs:
 
 ---
 
-## Phase 3 — make mobile/PWA experience genuinely good
+## Phase 3 — make mobile/PWA experience genuinely good (core pass landed; keep refining)
 
 ### Goal
-Make SteadyPlan feel useful and comfortable on a phone, without rushing into native apps.
+Keep making SteadyPlan feel useful and comfortable on a phone, without rushing into native apps or pretending the job is finished.
 
 ### Important principle
 Do **not** jump straight to iOS/Android native development.
@@ -168,10 +179,10 @@ Deeper admin/setup/detail flows can remain desktop-heavier if needed.
 
 ---
 
-## Phase 4 — improve public-facing trust and first impression
+## Phase 4 — improve public-facing trust and first impression (foundation landed; keep parity current)
 
 ### Goal
-Make it easier for someone outside the project to understand what SteadyPlan is and why it exists.
+Keep it easy for someone outside the project to understand what SteadyPlan is, why it exists, and how to evaluate it safely.
 
 ### Why this matters
 Before private external use, people need to trust the app and quickly understand:
@@ -206,10 +217,10 @@ The product should be easier to understand from the outside.
 
 ---
 
-## Phase 5 — create a first-use friendly demo path
+## Phase 5 — create a first-use friendly demo path (safe path exists; keep polishing)
 
 ### Goal
-Make SteadyPlan easier to evaluate without setup friction.
+Keep SteadyPlan easy to evaluate without setup friction while preserving the safest trust path for real use.
 
 ### Why this matters
 The product will be hard to share if every new person needs to install/configure it before even understanding the value.

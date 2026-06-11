@@ -99,19 +99,19 @@ Every public symbol is re-exported from `__init__.py`. **Add a new function?** P
 - **All times in the scheduler** are UK time (`Europe/London`) — match that in any new job.
 - **Config from env vars first** (`app/config.py`). New options should follow `os.environ.get("X", default)`.
 - **Don't bypass the model layer** from routes — even one-off SQL belongs as a named function in `models/`.
-- **Tests live in `tests/`** and run with `.venv/bin/python -m pytest` (~20s, 220 tests as of writing). The fixtures in `tests/conftest.py` give you an ephemeral SQLite DB per test plus an authenticated client.
+- **Tests live in `tests/`** and run with `.venv/bin/python -m pytest` (currently 560+ tests; check live counts rather than trusting this note forever). The fixtures in `tests/conftest.py` give you an ephemeral SQLite DB per test plus an authenticated client.
 - **Demo mode**: the `enforce_read_only_demo` hook in `app/__init__.py` blocks POSTs from a designated `DEMO_READ_ONLY_USERNAME`. Don't disable it; the hook handles both HTML and JSON paths.
 - **CSRF**: enabled by default. The `/api/v1/*` blueprint is exempt because it uses Bearer-token auth instead of cookies.
 - **Migrations**: versioned via the `schema_migrations` table for one-shot data migrations; for additive column adds use the idempotent `try ALTER TABLE / except` pattern. Both already exist in `schema.py` — copy the nearest example.
 
 ## Finance truth boundaries
 
-Monthly Review exists in two modes:
+Monthly Update exists in two modes (the route/model layer still uses the historical `monthly_review` naming internally):
 
-- **Draft (not_started / in_progress):** supports editing and UI workflow only. Draft review rows must not change allowance usage or performance cash-flow truth.
+- **Draft (not_started / in_progress):** supports editing and UI workflow only. Draft monthly-update rows must not change allowance usage or performance cash-flow truth.
 - **Complete:** authoritative truth for that month’s confirmed contributions and snapshot history.
 
-Contribution truth within a completed review is included only when the row is confirmed (`contribution_confirmed = 1`) or the month was explicitly skipped via a contribution override (`override_amount = 0`).
+Contribution truth within a completed monthly update is included only when the row is confirmed (`contribution_confirmed = 1`) or the month was explicitly skipped via a contribution override (`override_amount = 0`).
 
 Monthly snapshot truth on completion:
 
@@ -122,7 +122,7 @@ Performance contribution cash flow uses the effective “into pot” amount (tax
 
 ## Known technical debt (tracked)
 - `fetch_assumptions(user_id)` can create a default assumptions row if missing (a DB write). Read-only reporting (e.g. Data Health) should avoid it and instead query assumptions read-only.
-- Monthly Review stores some state via `monthly_review_items` and notes encoding rather than a dedicated, cleanly typed domain model (intentionally migration-free MVP).
+- Monthly Update still stores some state via `monthly_review_items` and notes encoding rather than a dedicated, cleanly typed domain model (intentionally migration-free MVP).
 - Restore staging cleanup is opportunistic; a background cleanup job may be useful if restore usage grows.
 
 ## What lives where, in one paragraph
