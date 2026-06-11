@@ -40,11 +40,19 @@ def test_debts_page_renders_payoff_guidance_card_with_strategy_controls(app, cli
     assert "Extra overpayment per month (£)" in html
     assert "Update payoff estimate" in html
     assert 'value="75.0"' in html or 'value="75"' in html
-    assert "Estimated outcome" in html
+    assert "Estimated payoff time" in html
+    assert "Estimated total interest" in html
+    assert "Debts ranked" in html
+    assert "Estimated monthly payment while prioritised:" in html
+    assert "/mo." in html
     assert "Based on the balances, rates, and payments entered." in html
     assert "Strategy" not in html
     assert "Extra debt payment per month (£)" not in html
     assert "Update estimate" not in html
+    assert "Estimated outcome" not in html
+    assert "Estimated interest" not in html
+    assert "Debts included" not in html
+    assert "Estimated focus payment" not in html
     assert "Best strategy" not in html
     assert "Optimal" not in html
 
