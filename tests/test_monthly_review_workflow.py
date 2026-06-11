@@ -538,6 +538,10 @@ def test_monthly_review_open_account_links_preserve_selected_month_return(app, c
     assert manual_expected_href in html
     assert holdings_expected_href in html
     assert premium_bonds_expected_href in html
+    assert f'>{"Open balance"}<' in html
+    assert f'>{"Open holdings"}<' in html
+    assert f'>{"Open prize history"}<' in html
+    assert ">Open account<" not in html
     assert f'/accounts/{manual_account_id}?mode=view#balance-update&amp;next=' not in html
     assert f'/accounts/{holdings_account_id}">Open account</a>' not in html
     assert f'/accounts/{premium_bonds_account_id}">Open account</a>' not in html

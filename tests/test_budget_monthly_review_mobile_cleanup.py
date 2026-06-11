@@ -209,7 +209,8 @@ def test_monthly_review_wraps_premium_bonds_and_csv_import_in_secondary_details(
     assert '<span class="badge badge-meta">Premium Bonds</span>' not in html
     assert 'Log prize draw results and update balances' in html
     assert 'Prize draw results and balance updates' not in html
-    assert 'Open account' in html
+    assert 'Open prize history' in html
+    assert 'Open account' not in html
     assert 'Review account' not in html
     assert '<p class="eyebrow">Prize draw results</p>' in html
     assert '<p class="eyebrow">Premium Bonds</p>' not in html
@@ -540,7 +541,8 @@ def test_monthly_review_manual_balance_field_uses_sentence_case_label(app, clien
     assert ">Current balance (£)<" in html
     assert ">Current Balance<" not in html
     assert ">Update balance<" in html
-    assert "Open account" in html
+    assert "Open balance" in html
+    assert "Open account" not in html
     assert "Review account" not in html
     assert ">Current balance<" not in html
     assert ">Update<" not in html
@@ -582,7 +584,8 @@ def test_monthly_review_update_balances_uses_refresh_prices_now_cta(app, client,
     assert ">Current value<" in html
     assert ">Value<" not in html
     assert ">Update holding<" in html
-    assert "Open account" in html
+    assert "Open holdings" in html
+    assert "Open account" not in html
     assert "Review account" not in html
     assert ">Save<" not in html
     assert "↻ Update All Prices" not in html
