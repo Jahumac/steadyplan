@@ -62,8 +62,8 @@
 {% if not has_data %}
 <section class="card">
   {% if snapshot_count == 1 %}
-  {{ empty_state('First baseline saved',
-                 'SteadyPlan has your first snapshot. Complete next month\'s monthly update and the performance chart will appear.',
+  {{ empty_state('Your first baseline is saved',
+                 'Complete next month\'s monthly update and the performance chart will appear.',
                  cta_text='Open monthly update', cta_href=current_monthly_update_href) }}
   {% else %}
   {{ empty_state('Not enough data yet',
