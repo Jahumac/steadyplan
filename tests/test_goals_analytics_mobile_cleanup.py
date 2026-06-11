@@ -52,8 +52,14 @@ def test_projections_marks_global_month_strip_for_mobile_hiding(app, client, mak
     assert '<summary>Scenario estimate assumptions</summary>' in html
     assert '<summary>Assumptions</summary>' not in html
     assert html.count('<p class="eyebrow">Scenario estimate assumptions</p>') == 2
-    assert '<summary>Growth curve</summary>' in html
-    assert '<summary>Scenario planner</summary>' in html
+    assert '<summary>Account scenario estimates</summary>' in html
+    assert '<summary>Growth curve</summary>' not in html
+    assert '<summary>Scenario estimate growth curve</summary>' in html
+    assert '<summary>Scenario planner</summary>' not in html
+    assert '<summary>Try a different scenario</summary>' in html
+    assert html.count('<p class="eyebrow">Account scenario estimates</p>') == 2
+    assert html.count('<p class="eyebrow">Scenario estimate growth curve</p>') == 2
+    assert html.count('<p class="eyebrow">Scenario estimate planner</p>') == 2
     assert 'class="card mb-1 projections-desktop-detail"' in html
     assert 'class="projections-compact-details projections-compact-only mb-1"' in html
     assert 'id="projectionChartMobile"' in html
