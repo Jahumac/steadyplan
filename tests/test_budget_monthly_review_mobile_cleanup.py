@@ -109,20 +109,23 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert 'class="review-hero-flow"' in html
     assert 'class="monthly-review-start-details"' in html
     assert '<details class="monthly-review-start-details" open>' not in html
-    assert "3-step monthly update flow" in html
-    assert "Confirm contributions, update balances, then finish with your note." in html
-    assert ">Show steps<" in html
+    assert "How to finish this month" in html
+    assert "Three short steps: confirm contributions, update balances, then finish with your note." in html
+    assert ">Show flow<" in html
+    assert "3-step monthly update flow" not in html
     assert 'class="badge-row review-hero-badges"' in html
     assert '<section class="card mb-1 monthly-review-start-card">' not in html
     assert "On a phone, keep the flow narrow: confirm, update, then finish." not in html
     assert "1. Confirm contributions" in html
     assert "Confirm anything that happened this month." in html
     assert "Tick off anything that happened this month." not in html
-    assert 'href="#expected-contributions" class="badge">Expected contributions</a>' in html
+    assert 'href="#expected-contributions" class="badge">Contributions</a>' in html
     assert 'href="#expected-contributions" class="badge">Confirm contributions</a>' not in html
+    assert 'href="#expected-contributions" class="badge">Expected contributions</a>' not in html
     assert "2. Update balances" in html
-    assert "3. Save a note and mark monthly update complete" in html
+    assert "3. Finish monthly update" in html
     assert "3. Save a note and mark this month reviewed" not in html
+    assert "3. Save a note and mark monthly update complete" not in html
     assert "3. Save a note and mark reviewed" not in html
     assert "Confirm contributions, update balances, then finish with your note." in html
     assert "Work top to bottom: confirm expected contributions, update holdings or manual balances, log prize draw results if needed, then add a note and mark monthly update complete." not in html
@@ -135,16 +138,17 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert "Still to do: 0 contributions to confirm · 0 accounts to update" not in html
     assert "Still to do: 0 contributions to confirm · 0 accounts not updated" not in html
     assert "To do: 0 contributions to confirm · 0 accounts to update" not in html
-    assert "Leave a quick reminder, then mark your monthly update complete when you are happy." in html
+    assert "Save a quick note, then mark the monthly update complete when you are happy." in html
     assert "Leave a quick reminder, then mark this month reviewed when you are happy." not in html
     assert "Leave a quick reminder, then mark the month reviewed when you are happy." not in html
     assert "Leave a quick reminder, then lock the month when you are happy." not in html
-    assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark monthly update complete</a>' in html
+    assert 'href="#monthly-note" class="badge badge-primary-action">Finish monthly update</a>' in html
     assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark this month reviewed</a>' not in html
     assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark reviewed</a>' not in html
-    assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark monthly update complete</a>' in html
+    assert 'href="#monthly-note" class="badge badge-meta">Finish update</a>' in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark this month reviewed</a>' not in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark reviewed</a>' not in html
+    assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark monthly update complete</a>' not in html
     assert "Confirm anything that happened this month. This is a monthly update flag — update balances below if needed." in html
     assert "Confirm expected contributions that happened this month. This is a monthly update flag (not a transaction record). Update holdings or manual balances below where needed." not in html
     assert "Confirm expected contributions that happened this month. This is a review flag (not a transaction record). Update holdings or manual balances below where needed." not in html
@@ -641,10 +645,11 @@ def test_monthly_review_finish_shortcuts_match_final_step_wording(app, client, m
     html = resp.get_data(as_text=True)
 
     assert html.count('href="#monthly-note"') >= 2
-    assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark monthly update complete</a>' in html
+    assert 'href="#monthly-note" class="badge badge-meta">Finish update</a>' in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark this month reviewed</a>' not in html
-    assert "3. Save a note and mark monthly update complete" in html
+    assert "3. Finish monthly update" in html
     assert "3. Save a note and mark this month reviewed" not in html
+    assert "3. Save a note and mark monthly update complete" not in html
     assert "Save a note and mark reviewed" not in html
     assert "Save note and mark reviewed" not in html
     assert "Save note and finish" not in html

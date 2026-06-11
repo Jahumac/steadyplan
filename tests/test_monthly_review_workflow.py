@@ -187,6 +187,8 @@ def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_u
     assert "Monthly Update" in html
     assert "Monthly review" not in html
     assert "Confirm contributions, update balances, then finish with your note." in html
+    assert 'href="#monthly-note" class="badge badge-primary-action">Finish monthly update</a>' in html
+    assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark monthly update complete</a>' not in html
     assert "Work top to bottom: confirm expected contributions" not in html
     assert "Work down the page: confirm expected contributions" not in html
     assert "Still to do:" not in html
