@@ -77,10 +77,16 @@ from .integrations import (
 # Debts
 from .debts import (
     build_debt_card,
+    compare_debt_payoff_strategies,
     create_debt,
+    debt_guidance_exclusion_reason,
+    debt_is_payoff_guidance_eligible,
     delete_debt,
     fetch_all_debts,
     fetch_debt,
+    rank_debts_avalanche,
+    rank_debts_snowball,
+    simulate_debt_payoff_strategy,
     update_debt,
 )
 
