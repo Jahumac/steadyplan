@@ -119,9 +119,11 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert "1. Confirm contributions" in html
     assert "Confirm anything that happened this month." in html
     assert "Tick off anything that happened this month." not in html
-    assert 'href="#expected-contributions" class="badge">Contributions</a>' in html
-    assert 'href="#expected-contributions" class="badge">Confirm contributions</a>' not in html
+    assert 'href="#expected-contributions" class="badge">Confirm contributions</a>' in html
+    assert 'href="#expected-contributions" class="badge">Contributions</a>' not in html
     assert 'href="#expected-contributions" class="badge">Expected contributions</a>' not in html
+    assert 'href="#update-balances" class="badge badge-meta">Update balances</a>' in html
+    assert 'href="#update-balances" class="badge badge-meta">Balances</a>' not in html
     assert "2. Update balances" in html
     assert "3. Finish monthly update" in html
     assert "3. Save a note and mark this month reviewed" not in html
@@ -145,7 +147,8 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert 'href="#monthly-note" class="badge badge-primary-action">Finish monthly update</a>' in html
     assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark this month reviewed</a>' not in html
     assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark reviewed</a>' not in html
-    assert 'href="#monthly-note" class="badge badge-meta">Finish update</a>' in html
+    assert 'href="#monthly-note" class="badge badge-meta">Finish monthly update</a>' in html
+    assert 'href="#monthly-note" class="badge badge-meta">Finish update</a>' not in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark this month reviewed</a>' not in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark reviewed</a>' not in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark monthly update complete</a>' not in html
@@ -652,7 +655,8 @@ def test_monthly_review_finish_shortcuts_match_final_step_wording(app, client, m
     html = resp.get_data(as_text=True)
 
     assert html.count('href="#monthly-note"') >= 2
-    assert 'href="#monthly-note" class="badge badge-meta">Finish update</a>' in html
+    assert 'href="#monthly-note" class="badge badge-meta">Finish monthly update</a>' in html
+    assert 'href="#monthly-note" class="badge badge-meta">Finish update</a>' not in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark this month reviewed</a>' not in html
     assert "3. Finish monthly update" in html
     assert "3. Save a note and mark this month reviewed" not in html
