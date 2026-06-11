@@ -94,6 +94,9 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Lifetime Cost of Fees" not in body
     assert body.count("<span>Cost of fees over time</span>") == 1
     assert "<span>Cost of fees</span>" not in body
+    assert '<summary>Account scenario estimates</summary>' in body
+    assert body.count('<p class="eyebrow">Account scenario estimates</p>') == 2
+    assert "Account breakdown" not in body
     assert body.count("Account scenario estimates at retirement") == 2
     assert "Each account at retirement (scenario estimate)" not in body
     assert "See how each account could look at age 60" in body
@@ -102,13 +105,18 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Change contributions at certain ages" not in body
     assert "Projected values for each account at age 60" not in body
     assert "Projection estimates for each account at age 60" not in body
+    assert '<summary>Scenario estimate growth curve</summary>' in body
+    assert body.count('<p class="eyebrow">Scenario estimate growth curve</p>') == 2
+    assert "Growth curve" not in body
     assert body.count("Scenario estimate over time") == 2
     assert body.count("How your portfolio scenario estimate could change year by year under your current assumptions and contributions.") == 2
     assert body.count("aria-label=\"Portfolio scenario estimate growth chart\"") == 2
     assert "Portfolio Trajectory" not in body
     assert "How your portfolio could grow year by year under your current assumptions and contributions." not in body
     assert "aria-label=\"Projected portfolio growth chart\"" not in body
-    assert body.count("Try a different scenario") == 2
+    assert body.count("Try a different scenario") == 3
+    assert body.count('<p class="eyebrow">Scenario estimate planner</p>') == 2
+    assert "Scenario planner" not in body
     assert body.count("Monthly contributions by account") == 2
     assert body.count("Scenario estimate total") == 2
     assert body.count("Difference from your plan") == 2
