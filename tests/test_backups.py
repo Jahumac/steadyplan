@@ -166,6 +166,10 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "Latest portfolio snapshot" in body
     assert "Latest catalogue price update" in body
     assert "Latest price update (raw)" not in body
+    assert "Active price catalogue entries" in body
+    assert "Price catalogue entries linked to holdings" in body
+    assert "Catalogue active" not in body
+    assert "Catalogue in use" not in body
     assert "Not yet recorded" in body
     assert "No scheduler run has been recorded yet. That is normal on a fresh instance or when you mainly update prices and balances manually." in body
     assert '<p class="eyebrow">Status</p>' not in body
@@ -317,6 +321,17 @@ def test_diagnostics_instance_overview_template_uses_clearer_price_update_label(
 
     assert "Latest catalogue price update" in body
     assert "Latest price update (raw)" not in body
+
+
+def test_diagnostics_instance_counts_template_uses_clearer_catalogue_count_labels():
+    from pathlib import Path
+
+    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+
+    assert "Active price catalogue entries" in body
+    assert "Price catalogue entries linked to holdings" in body
+    assert "Catalogue active" not in body
+    assert "Catalogue in use" not in body
 
 
 def test_backup_health_is_good_for_recent_backup(app, client, make_user, tmp_path):
