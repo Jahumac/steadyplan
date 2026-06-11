@@ -283,6 +283,19 @@ def test_diagnostics_shows_latest_backup_metadata(app, client, make_user, tmp_pa
     assert str(dest) not in body
 
 
+def test_diagnostics_price_sample_template_uses_clearer_column_labels():
+    from pathlib import Path
+
+    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+
+    assert "<th>Holding name</th>" in body
+    assert "<th>Price updated</th>" in body
+    assert '<th class="num">Linked holdings</th>' in body
+    assert "<th>Holding</th>" not in body
+    assert "<th>Updated</th>" not in body
+    assert '<th class="num">Linked</th>' not in body
+
+
 def test_backup_health_is_good_for_recent_backup(app, client, make_user, tmp_path):
     import os
     import time
