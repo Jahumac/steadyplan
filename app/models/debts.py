@@ -181,6 +181,190 @@ def debt_overpayment_scenario(
     }
 
 
+def debt_guidance_exclusion_reason(debt):
+    """Return a user-facing reason why a debt should be excluded from payoff guidance."""
+    balance = float(debt.get("current_balance") or 0)
+    monthly_payment = float(debt.get("monthly_payment") or 0)
+    apr = debt.get("apr")
+
+    if balance <= 0:
+        return "Balance already cleared"
+    if monthly_payment <= 0:
+        return "No monthly payment set"
+    if apr is None:
+        return "APR is missing"
+
+    apr = float(apr)
+    if apr < 0:
+        return "APR must be zero or higher"
+
+    monthly_interest = balance * (apr / 100.0 / 12.0)
+    if monthly_payment <= monthly_interest and balance > 0:
+        return "Minimum payment does not currently cover interest"
+    return None
+
+
+
+def debt_is_payoff_guidance_eligible(debt):
+    return debt_guidance_exclusion_reason(debt) is None
+
+
+
+def _debt_sort_order(debt):
+    return debt.get("created_order", debt.get("id", 0))
+
+
+
+def rank_debts_avalanche(debts):
+    return sorted(
+        debts,
+        key=lambda debt: (-float(debt.get("apr") or 0), -float(debt.get("current_balance") or 0), _debt_sort_order(debt)),
+    )
+
+
+
+def rank_debts_snowball(debts):
+    return sorted(
+        debts,
+        key=lambda debt: (float(debt.get("current_balance") or 0), -float(debt.get("apr") or 0), _debt_sort_order(debt)),
+    )
+
+
+
+def _split_guidance_debts(debts):
+    eligible = []
+    excluded = []
+    for debt in debts:
+        reason = debt_guidance_exclusion_reason(debt)
+        if reason:
+            excluded.append({"id": debt.get("id"), "name": debt.get("name"), "reason": reason})
+        else:
+            eligible.append(debt)
+    return eligible, excluded
+
+
+
+def _rank_debts_for_strategy(debts, strategy):
+    if strategy == "avalanche":
+        return rank_debts_avalanche(debts)
+    if strategy == "snowball":
+        return rank_debts_snowball(debts)
+    raise ValueError(f"Unknown debt payoff strategy: {strategy}")
+
+
+
+def simulate_debt_payoff_strategy(debts, extra_monthly=0, strategy="avalanche"):
+    extra_monthly = max(float(extra_monthly or 0), 0.0)
+    eligible, excluded = _split_guidance_debts(debts)
+    ranked = _rank_debts_for_strategy(eligible, strategy)
+
+    if not ranked:
+        return {
+            "strategy": strategy,
+            "extra_monthly": round(extra_monthly, 2),
+            "debt_order": [],
+            "payoff_steps": [],
+            "total_months": None,
+            "total_interest": None,
+            "included_debt_count": 0,
+            "excluded_debt_count": len(excluded),
+            "excluded_debts": excluded,
+        }
+
+    working = []
+    rolling_extra = extra_monthly
+    payoff_steps = []
+    for debt in ranked:
+        minimum_payment = round(float(debt.get("monthly_payment") or 0), 2)
+        working.append(
+            {
+                "id": debt.get("id"),
+                "name": debt.get("name"),
+                "balance": round(float(debt.get("current_balance") or 0), 2),
+                "apr": float(debt.get("apr") or 0),
+                "minimum_payment": minimum_payment,
+            }
+        )
+        payoff_steps.append(
+            {
+                "id": debt.get("id"),
+                "name": debt.get("name"),
+                "minimum_payment": minimum_payment,
+                "rolled_monthly_payment": round(minimum_payment + rolling_extra, 2),
+            }
+        )
+        rolling_extra += minimum_payment
+
+    total_interest = 0.0
+    total_months = 0
+    active_ids = {debt["id"] for debt in working}
+    target_ids = [debt["id"] for debt in ranked]
+    rolling_extra = extra_monthly
+    target_index = 0
+
+    while active_ids:
+        total_months += 1
+        for debt in working:
+            if debt["id"] not in active_ids:
+                continue
+            interest = round(debt["balance"] * (debt["apr"] / 100.0 / 12.0), 2)
+            debt["balance"] = round(debt["balance"] + interest, 2)
+            total_interest = round(total_interest + interest, 2)
+
+        while target_index < len(target_ids) and target_ids[target_index] not in active_ids:
+            target_index += 1
+        current_target_id = target_ids[target_index] if target_index < len(target_ids) else None
+
+        for debt in working:
+            if debt["id"] not in active_ids:
+                continue
+            payment = debt["minimum_payment"]
+            if debt["id"] == current_target_id:
+                payment += rolling_extra
+            payment = min(round(payment, 2), debt["balance"])
+            debt["balance"] = round(max(debt["balance"] - payment, 0.0), 2)
+
+        cleared_this_month = []
+        for debt in working:
+            if debt["id"] in active_ids and debt["balance"] <= 0:
+                active_ids.remove(debt["id"])
+                cleared_this_month.append(debt)
+
+        for debt in cleared_this_month:
+            if debt["id"] == current_target_id:
+                rolling_extra += debt["minimum_payment"]
+
+        if total_months > 1200:
+            raise RuntimeError("Debt payoff simulation exceeded 1200 months")
+
+    return {
+        "strategy": strategy,
+        "extra_monthly": round(extra_monthly, 2),
+        "debt_order": [debt["name"] for debt in ranked],
+        "payoff_steps": payoff_steps,
+        "total_months": total_months,
+        "total_interest": round(total_interest, 2),
+        "included_debt_count": len(ranked),
+        "excluded_debt_count": len(excluded),
+        "excluded_debts": excluded,
+    }
+
+
+
+def compare_debt_payoff_strategies(debts, extra_monthly=0):
+    avalanche = simulate_debt_payoff_strategy(debts, extra_monthly=extra_monthly, strategy="avalanche")
+    snowball = simulate_debt_payoff_strategy(debts, extra_monthly=extra_monthly, strategy="snowball")
+    return {
+        "extra_monthly": round(max(float(extra_monthly or 0), 0.0), 2),
+        "included_debt_count": avalanche["included_debt_count"],
+        "excluded_debt_count": avalanche["excluded_debt_count"],
+        "excluded_debts": avalanche["excluded_debts"],
+        "avalanche": avalanche,
+        "snowball": snowball,
+    }
+
+
+
 def _add_months(d, n):
     """Add n months to a date, clamping to the last day of the target month."""
     month = d.month - 1 + n
