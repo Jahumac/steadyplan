@@ -164,9 +164,7 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert "Just a friendly label so you know what this token is for." not in settings_html
     assert "assistant summary endpoints" not in settings_html
     assert "assistant budget write endpoint" not in settings_html
-    assert "No assistant tokens yet. Leave this empty unless you want Pip connected." in settings_html
-    assert "No assistant writes logged yet. Read-only answers do not appear here; this table is for assistant write actions." in settings_html
-    assert "Regenerate replaces the current token and shows the new raw value once. Revoke disables the token immediately." in settings_html
+    assert "Nothing connected yet. Leave this section alone unless you want Pip connected later." in settings_html
     assert "Give Pip scoped access to SteadyPlan" not in settings_html
     assert "This creates a dedicated assistant token for SteadyPlan." not in settings_html
     assert "A local label to help you recognise this token later." not in settings_html
@@ -174,6 +172,11 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert "Lets Pip answer portfolio, monthly budget, and affordability questions without changing your data." not in settings_html
     assert "Create assistant token" not in settings_html
     assert "Create one above when you want to give Pip scoped access." not in settings_html
+    assert "Existing assistant tokens" not in settings_html
+    assert "Recent assistant activity" not in settings_html
+    assert "No assistant tokens yet. Leave this empty unless you want Pip connected." not in settings_html
+    assert "No assistant writes logged yet. Read-only answers do not appear here; this table is for assistant write actions." not in settings_html
+    assert "Regenerate replaces the current token and shows the new raw value once. Revoke disables the token immediately." not in settings_html
 
     create_resp = client.post(
         "/settings/assistant-access/create",
@@ -285,6 +288,8 @@ def test_settings_shows_clear_fallbacks_for_unlabelled_unused_assistant_tokens(a
     settings_html = settings_resp.get_data(as_text=True)
 
     assert settings_resp.status_code == 200
+    assert "Existing assistant tokens" in settings_html
+    assert "Regenerate replaces the current token and shows the new raw value once. Revoke disables the token immediately." in settings_html
     assert "Unlabelled assistant token" in settings_html
     assert "Not used yet" in settings_html
     assert "Token label" in settings_html
@@ -351,6 +356,7 @@ def test_assistant_write_is_logged_and_visible_in_settings(app, client, make_use
     assert "2026-05" in settings_html
     assert "£50.00 → £799.00" in settings_html
     assert "50.0 → 799.0" not in settings_html
+    assert "Nothing connected yet. Leave this section alone unless you want Pip connected later." not in settings_html
 
 
 def test_settings_formats_assistant_activity_target_fallback_label(app, client, make_user):
