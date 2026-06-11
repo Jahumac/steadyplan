@@ -69,3 +69,27 @@ def test_debts_page_payoff_guidance_shows_excluded_debt_reasons(app, client, mak
     assert "Cleared" in html
     assert "Balance already cleared" in html
     assert "All debts are included automatically" not in html
+
+
+def test_debts_page_payoff_guidance_empty_state_explains_how_to_get_a_ranked_estimate(app, client, make_user):
+    uid, username, password = make_user(username="debt-guidance-empty-state", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    _insert_debt(app, uid, name="Missing payment", balance=900, payment=0, apr=19)
+    _insert_debt(app, uid, name="Problem debt", balance=1000, payment=5, apr=30)
+    _insert_debt(app, uid, name="Cleared", balance=0, payment=50, apr=0)
+
+    resp = client.get("/budget/debts/?strategy=avalanche&extra_monthly=40")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "No debts are ready for a ranked estimate yet." in html
+    assert "Add a monthly payment to at least one debt, and make sure its minimum payment covers interest." in html
+    assert "Set up all debts first" not in html
+    assert "Nothing to rank yet" not in html
+    assert "Missing payment" in html
+    assert "No monthly payment set" in html
+    assert "Problem debt" in html
+    assert "Minimum payment does not currently cover interest" in html
+    assert "Cleared" in html
+    assert "Balance already cleared" in html

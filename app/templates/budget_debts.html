@@ -485,7 +485,8 @@
   <p class="helper-text mb-05">Based on the balances, rates, and payments entered.</p>
   <p class="helper-text">{{ payoff_guidance.comparison_note }}</p>
   {% else %}
-  <p class="helper-text">No debts are ready for a ranked estimate yet.</p>
+  <p class="helper-text"><strong>No debts are ready for a ranked estimate yet.</strong></p>
+  <p class="helper-text">Add a monthly payment to at least one debt, and make sure its minimum payment covers interest.</p>
   {% endif %}
 
   {% if payoff_guidance and payoff_guidance.excluded_debts %}
