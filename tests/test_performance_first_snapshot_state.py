@@ -38,6 +38,9 @@ def test_performance_page_acknowledges_first_snapshot(client, make_user):
     assert "Complete next month's monthly update and the performance chart will appear." in body
     assert "Next month's monthly update will start the performance chart." not in body
     assert "Come back after next month's monthly update and the performance chart will appear." not in body
-    assert "Back to overview" in body
+    month_key = date.today().strftime("%Y-%m")
+    assert "Open monthly update" in body
+    assert f'href="/monthly-review/?month={month_key}"' in body
+    assert 'href="/monthly-review/">Open monthly update</a>' not in body
+    assert "Back to overview" not in body
     assert "No data yet" not in body
-    assert "Open monthly update" not in body
