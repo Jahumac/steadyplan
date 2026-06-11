@@ -34,11 +34,17 @@ def test_debts_page_renders_payoff_guidance_card_with_strategy_controls(app, cli
     assert "Suggested payoff order" in html
     assert "Where extra debt money could go first" in html
     assert "All debts keep their minimum payment in this estimate." in html
+    assert "Payoff strategy" in html
     assert "Cheapest overall" in html
     assert "Quick wins first" in html
+    assert "Extra overpayment per month (£)" in html
+    assert "Update payoff estimate" in html
     assert 'value="75.0"' in html or 'value="75"' in html
     assert "Estimated outcome" in html
     assert "Based on the balances, rates, and payments entered." in html
+    assert "Strategy" not in html
+    assert "Extra debt payment per month (£)" not in html
+    assert "Update estimate" not in html
     assert "Best strategy" not in html
     assert "Optimal" not in html
 
