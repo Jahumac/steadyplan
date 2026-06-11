@@ -159,7 +159,9 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert '<p class="eyebrow">Prices in use</p>' in body
     assert "<h3>Linked price sample</h3>" in body
     assert "No holdings are linked to the price catalogue yet." in body
+    assert "Stale or missing prices in sample (&gt;2 days old or none)" in body
     assert "No holdings with catalogue links yet." not in body
+    assert "Stale prices (sample, &gt;2d/none)" not in body
     assert "Scheduler last run" in body
     assert "Not yet recorded" in body
     assert "No scheduler run has been recorded yet. That is normal on a fresh instance or when you mainly update prices and balances manually." in body
@@ -294,6 +296,15 @@ def test_diagnostics_price_sample_template_uses_clearer_column_labels():
     assert "<th>Holding</th>" not in body
     assert "<th>Updated</th>" not in body
     assert '<th class="num">Linked</th>' not in body
+
+
+def test_diagnostics_instance_counts_template_uses_clearer_stale_price_label():
+    from pathlib import Path
+
+    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+
+    assert "Stale or missing prices in sample (&gt;2 days old or none)" in body
+    assert "Stale prices (sample, &gt;2d/none)" not in body
 
 
 def test_backup_health_is_good_for_recent_backup(app, client, make_user, tmp_path):
