@@ -16,7 +16,7 @@
       <a class="badge" href="/accounts/" id="cw-cancel">Cancel</a>
     </div>
 
-    <div class="settings-form" id="create-account-form" data-tax-band="{{ tax_band | default('basic') }}">
+    <div class="settings-form" id="create-account-form" data-tax-band="{{ tax_band | default('basic') }}" data-first-account-focus="{{ 'true' if is_first_account_focus else 'false' }}">
       {% if is_first_account_focus %}
       <div class="wizard-focus-note" aria-label="First account guidance">
         <p class="eyebrow">Start here</p>
@@ -366,7 +366,7 @@
       <div class="cw-panel" data-cw="6">
         <div class="cw-success">
           <h3 class="cw-title" id="cw-success-title">You're all set!</h3>
-        <p class="cw-hint" id="cw-success-msg">Your new account is ready. You'll see it in Accounts and it will be included in scenario estimates straight away.</p>
+        <p class="cw-hint" id="cw-success-msg">{% if is_first_account_focus %}Your new account is ready. You'll see it in Accounts straight away, and Monthly Update now has somewhere real to work from.{% else %}Your new account is ready. You'll see it in Accounts straight away, and it can feed scenario estimates whenever you need it to.{% endif %}</p>
           <div class="cw-success-actions">
             <a class="badge badge-accent" href="/accounts/">View your accounts</a>
             <a class="badge" href="/accounts/?mode=create">Add another account</a>
