@@ -1655,7 +1655,7 @@ def export_performance():
             and not perf.get("table_rows")
         )
         if has_first_baseline_only:
-            ws_d.cell(row=4, column=1, value="Your first baseline is saved.").font = _DATA_FONT
+            ws_d.cell(row=4, column=1, value="Your first baseline is saved").font = _DATA_FONT
             ws_d.cell(
                 row=5,
                 column=1,
