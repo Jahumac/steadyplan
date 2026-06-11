@@ -717,10 +717,10 @@
     </div>
   </form>
 
+  {% if assistant_tokens %}
   <div style="margin-top:1rem;">
     <div class="text-sm" style="font-weight:600;margin-bottom:0.45rem;">Existing assistant tokens</div>
     <p class="helper-text" style="margin:0 0 0.45rem 0;">Regenerate replaces the current token and shows the new raw value once. Revoke disables the token immediately.</p>
-    {% if assistant_tokens %}
     <div class="table-scroll">
       <table class="data-table">
         <thead>
@@ -756,14 +756,12 @@
         </tbody>
       </table>
     </div>
-    {% else %}
-    <p class="helper-text" style="margin:0;">No assistant tokens yet. Leave this empty unless you want Pip connected.</p>
-    {% endif %}
   </div>
+  {% endif %}
 
+  {% if assistant_audit_events %}
   <div style="margin-top:1rem;">
     <div class="text-sm" style="font-weight:600;margin-bottom:0.45rem;">Recent assistant activity</div>
-    {% if assistant_audit_events %}
     <div class="table-scroll">
       <table class="data-table">
         <thead>
@@ -799,10 +797,12 @@
         </tbody>
       </table>
     </div>
-    {% else %}
-    <p class="helper-text" style="margin:0;">No assistant writes logged yet. Read-only answers do not appear here; this table is for assistant write actions.</p>
-    {% endif %}
   </div>
+  {% endif %}
+
+  {% if not assistant_tokens and not assistant_audit_events %}
+  <p class="helper-text" style="margin:1rem 0 0 0;">Nothing connected yet. Leave this section alone unless you want Pip connected later.</p>
+  {% endif %}
 </section>
 
 <section class="panel mt-1" id="trading212-access">
