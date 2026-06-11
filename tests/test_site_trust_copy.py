@@ -167,7 +167,12 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "Monthly Review" not in readme
     assert "Settings includes scoped **Assistant access** for Pip." in readme
     assert "Public website with Tour, Roadmap, docs hub, and optional read-only demo path" in readme
-    assert "│   ├── planning.py        # Accessible, restricted, and locked money view and insights" in readme
+    assert "taxable accounts (GIAs)" in readme
+    assert "taxable account (GIA)" in readme
+    assert "│   ├── planning.py        # Cash-accessible, invested-accessible, restricted, and locked-for-later money view and insights" in readme
+    assert "workplace pensions, GIAs" not in readme
+    assert "Workplace Pension, GIA, and more" not in readme
+    assert "│   ├── planning.py        # Accessible, restricted, and locked money view and insights" not in readme
     assert "│   ├── planning.py        # Accessible vs locked money view and insights" not in readme
     assert "understand cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap
     assert "see cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap
@@ -251,11 +256,12 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "intimidated by financial admin, scenario estimates, and long-term planning." in product_truth
     assert "Assumptions, scenario estimates, and confirmed numbers should not blur together." in product_truth
     assert "understand cash-accessible, invested-accessible, restricted, and locked-for-later money" in product_truth
-    assert "See accessible, restricted, and locked money" in product_truth
+    assert "See cash-accessible, invested-accessible, restricted, and locked-for-later money" in product_truth
     assert "Users should understand what cash they can use now, what invested money is still reachable, what has penalties/restrictions, and what is for later retirement." in product_truth
     assert "intimidated by financial admin, projections, and long-term planning." not in product_truth
     assert "Assumptions, estimates, projections, and confirmed numbers should not blur together." not in product_truth
     assert "understand what is accessible now vs restricted or locked for later" not in product_truth
+    assert "See accessible, restricted, and locked money" not in product_truth
     assert "See accessible vs locked money" not in product_truth
     assert "Users should understand what they can use now, what has penalties/restrictions, and what is for later retirement." not in product_truth
     assert "Scenario estimate copy replaces leftover projections wording." in changelog

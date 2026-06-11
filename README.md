@@ -26,7 +26,7 @@ Legacy image (during transition): `ghcr.io/jahumac/shelly-finance:latest`
 
 Most finance apps want your login credentials or send your data to the cloud. SteadyPlan runs entirely on your machine (or home server) with a local SQLite database. No bank/broker account linking and no third-party accounts required. You only need an external API key if you choose to enable optional automated price lookups.
 
-It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, GIAs — with GBP currency, UK tax year tracking, and CSV import from major UK brokers.
+It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, and CSV import from major UK brokers.
 
 ---
 
@@ -49,7 +49,7 @@ It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, 
 ## Features
 
 ### Accounts & Holdings
-Track any combination of investment accounts: Stocks & Shares ISA, Cash ISA, Lifetime ISA, SIPP, Workplace Pension, GIA, and more. Each account can be valued manually (enter a balance) or built up from individual holdings with live price lookups via Twelve Data and Yahoo Finance (with automatic FX conversion for USD/EUR holdings).
+Track any combination of investment accounts: Stocks & Shares ISA, Cash ISA, Lifetime ISA, SIPP, Workplace Pension, taxable account (GIA), and more. Each account can be valued manually (enter a balance) or built up from individual holdings with live price lookups via Twelve Data and Yahoo Finance (with automatic FX conversion for USD/EUR holdings).
 
 ### JSON Export & Restore
 Download a user-scoped JSON export from **Settings**, and restore from that file via a two-step flow: validate/dry-run preview first, then explicit confirmation to replace your data for the current user only.
@@ -289,7 +289,7 @@ app/
 │   ├── performance.py     # Modified Dietz returns tracking
 │   ├── monthly_review.py  # Monthly Update workflow, notes, checklist, CSV import
 │   ├── allowance.py       # ISA, pension, dividend, and CGT allowance tracking
-│   ├── planning.py        # Accessible, restricted, and locked money view and insights
+│   ├── planning.py        # Cash-accessible, invested-accessible, restricted, and locked-for-later money view and insights
 │   ├── api.py             # General API + scoped assistant endpoints
 │   ├── export.py          # Excel export (scenario estimates, budget, performance)
 │   └── settings.py        # Assumptions, assistant access, backups, diagnostics, reset
