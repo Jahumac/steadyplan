@@ -8,6 +8,7 @@ from app.utils import optional_float, optional_int, valid_month_key
 
 from app.models import (
     build_debt_card,
+    compare_debt_payoff_strategies,
     create_budget_item,
     create_budget_section,
     create_debt,
@@ -1067,6 +1068,48 @@ def budget_debts():
 
     raw_debts = fetch_all_debts(uid)
     debt_cards = [build_debt_card(d) for d in raw_debts]
+    guidance_strategy = (request.args.get("strategy") or "avalanche").strip().lower()
+    if guidance_strategy not in {"avalanche", "snowball"}:
+        guidance_strategy = "avalanche"
+    guidance_extra_monthly = max(optional_float(request.args.get("extra_monthly"), 0.0), 0.0)
+
+    payoff_guidance = None
+    if debt_cards:
+        guidance_comparison = compare_debt_payoff_strategies(debt_cards, guidance_extra_monthly)
+        active_guidance = guidance_comparison[guidance_strategy]
+        debt_card_map = {debt["id"]: debt for debt in debt_cards}
+        ranked_guidance = []
+        for idx, step in enumerate(active_guidance["payoff_steps"]):
+            debt = debt_card_map.get(step["id"], {})
+            if idx == 0:
+                reason = "Highest APR first" if guidance_strategy == "avalanche" else "Smallest balance first"
+            else:
+                reason = "Gets the rolled payment after earlier debts clear"
+            ranked_guidance.append({
+                "id": step["id"],
+                "name": step["name"],
+                "current_balance": float(debt.get("current_balance") or 0),
+                "apr": float(debt.get("apr") or 0),
+                "reason": reason,
+                "rolled_monthly_payment": step["rolled_monthly_payment"],
+            })
+
+        if guidance_strategy == "avalanche":
+            comparison_note = "Cheapest overall usually costs less in interest. Quick wins first can give earlier pay-off milestones."
+        else:
+            comparison_note = "Quick wins first can give earlier pay-off milestones. Cheapest overall usually costs less in interest."
+
+        payoff_guidance = {
+            "strategy": guidance_strategy,
+            "extra_monthly": guidance_extra_monthly,
+            "ranked_debts": ranked_guidance,
+            "total_months": active_guidance["total_months"],
+            "total_interest": active_guidance["total_interest"],
+            "included_debt_count": active_guidance["included_debt_count"],
+            "excluded_debt_count": active_guidance["excluded_debt_count"],
+            "excluded_debts": active_guidance["excluded_debts"],
+            "comparison_note": comparison_note,
+        }
 
     selected_id = request.args.get("debt_id", type=int)
     page_mode = request.args.get("mode", "view")
@@ -1114,6 +1157,7 @@ def budget_debts():
     return render_template(
         "budget_debts.html",
         debt_cards=debt_cards,
+        payoff_guidance=payoff_guidance,
         selected_debt=selected_debt,
         selected_debt_raw=selected_debt_raw,
         schedule=schedule,

@@ -423,6 +423,83 @@
 {% else %}
 
 {% if debt_cards %}
+<section class="card mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Suggested payoff order</p>
+      <h2>Where extra debt money could go first</h2>
+      <p class="helper-text">All debts keep their minimum payment in this estimate.</p>
+    </div>
+  </div>
+
+  <form method="get" class="settings-form" style="margin-bottom:1rem;">
+    <div class="form-grid">
+      <label>
+        <span>Strategy</span>
+        <select name="strategy">
+          <option value="avalanche" {% if payoff_guidance and payoff_guidance.strategy == 'avalanche' %}selected{% endif %}>Cheapest overall</option>
+          <option value="snowball" {% if payoff_guidance and payoff_guidance.strategy == 'snowball' %}selected{% endif %}>Quick wins first</option>
+        </select>
+      </label>
+      <label>
+        <span>Extra debt payment per month (£)</span>
+        <input type="number" step="10" min="0" name="extra_monthly" value="{{ payoff_guidance.extra_monthly if payoff_guidance else 0 }}">
+      </label>
+    </div>
+    <div class="badge-row mt-075">
+      <button type="submit">Update estimate</button>
+    </div>
+  </form>
+
+  {% if payoff_guidance and payoff_guidance.ranked_debts %}
+  <div class="card-grid goal-grid mb-1">
+    {% for debt in payoff_guidance.ranked_debts %}
+    <div class="card">
+      <div class="section-header mb-05 flex-start">
+        <div>
+          <p class="eyebrow">{{ loop.index }}{% if loop.index == 1 %}st{% elif loop.index == 2 %}nd{% elif loop.index == 3 %}rd{% else %}th{% endif %} focus</p>
+          <h3 class="goal-card-title">{{ debt.name }}</h3>
+          <p class="goal-card-meta">£{{ '{:,.0f}'.format(debt.current_balance) }} left · {% if debt.apr > 0 %}{{ '{:.1f}'.format(debt.apr) }}% APR{% else %}0% interest{% endif %}</p>
+        </div>
+      </div>
+      <p class="helper-text"><strong>{{ debt.reason }}</strong></p>
+      <p class="helper-text">Estimated focus payment: £{{ '{:,.0f}'.format(debt.rolled_monthly_payment) }}/mo while this debt is the priority.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="hero-strip" style="margin-bottom:0.75rem;">
+    <div class="hero-stat">
+      <span class="hero-stat-label">Estimated outcome</span>
+      <span class="hero-stat-value"><strong>{{ payoff_guidance.total_months }} month{{ '' if payoff_guidance.total_months == 1 else 's' }}</strong></span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-label">Estimated interest</span>
+      <span class="hero-stat-value"><strong class="stat-negative-text">£{{ '{:,.0f}'.format(payoff_guidance.total_interest) }}</strong></span>
+    </div>
+    <div class="hero-stat">
+      <span class="hero-stat-label">Debts included</span>
+      <span class="hero-stat-value"><strong>{{ payoff_guidance.included_debt_count }}</strong></span>
+    </div>
+  </div>
+  <p class="helper-text mb-05">Based on the balances, rates, and payments entered.</p>
+  <p class="helper-text">{{ payoff_guidance.comparison_note }}</p>
+  {% else %}
+  <p class="helper-text">No debts are ready for a ranked estimate yet.</p>
+  {% endif %}
+
+  {% if payoff_guidance and payoff_guidance.excluded_debts %}
+  <div class="mt-1">
+    <p class="helper-text"><strong>Some debts are not included in this estimate yet.</strong></p>
+    <ul class="helper-text" style="margin:0.5rem 0 0 1rem;">
+      {% for debt in payoff_guidance.excluded_debts %}
+      <li><strong>{{ debt.name }}</strong> — {{ debt.reason }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</section>
+
 <section class="card-grid goal-grid mb-1">
   {% for d in debt_cards %}
   <a class="card goal-link-card" href="/budget/debts/?debt_id={{ d.id }}">
