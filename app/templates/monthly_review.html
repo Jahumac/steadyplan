@@ -220,7 +220,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <p class="helper-text">No contributions to track this month. Set them up in <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Accounts</a> and they’ll appear here for your monthly update.</p>
+    <p class="helper-text">No contributions to track this month. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add your first account</a> and set a monthly contribution, then it’ll appear here for your monthly update.</p>
   {% endif %}
 </section>
 
@@ -304,7 +304,7 @@
               {% endfor %}
             </div>
           {% else %}
-            <p class="helper-text">No holdings here yet. Add holdings in <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Accounts</a> and they’ll appear here for your monthly update.</p>
+            <p class="helper-text">No holdings here yet. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add your first holdings account</a> and it’ll appear here for your monthly update.</p>
           {% endif %}
         </section>
       {% endfor %}
@@ -312,8 +312,8 @@
   {% else %}
     <div class="empty-state">
       <h3>No holdings-based accounts</h3>
-      <p>Add a holdings-based account and it’ll appear here ready for your monthly update.</p>
-      <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="badge badge-primary-action">Add a holdings-based account</a>
+      <p>Add your first holdings account and it’ll appear here ready for your monthly update.</p>
+      <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="badge badge-primary-action">Add your first holdings account</a>
     </div>
   {% endif %}
 </section>
@@ -352,7 +352,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <p class="helper-text">No manual balances to update this month. If you add any manually valued accounts in <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Accounts</a>, they’ll appear here for your monthly update.</p>
+    <p class="helper-text">No manual balances to update this month. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add a manually valued account</a> and it’ll appear here for your monthly update.</p>
   {% endif %}
 </section>
 
