@@ -1,3 +1,5 @@
+from datetime import date
+
 from app.models import create_account, get_connection
 
 
@@ -68,7 +70,11 @@ def test_account_detail_acknowledges_first_daily_snapshot(app, client, make_user
     assert "This account has its first snapshot." in body
     assert "Complete next month&#39;s monthly update and the chart will appear." in body
     assert "Come back after next month&#39;s monthly update and the chart will appear." not in body
-    assert "Back to overview" in body
+    month_key = date.today().strftime("%Y-%m")
+    assert "Open monthly update" in body
+    assert f'href="/monthly-review/?month={month_key}"' in body
+    assert 'href="/monthly-review/">Open monthly update</a>' not in body
+    assert "Back to overview" not in body
     assert "No history yet. Update your account balance or run the price scheduler to start recording daily snapshots." not in body
 
 
@@ -92,4 +98,8 @@ def test_account_detail_acknowledges_first_monthly_snapshot_without_daily_histor
     assert "This account has its first snapshot." in body
     assert "Complete next month&#39;s monthly update and the chart will appear." in body
     assert "Come back after next month&#39;s monthly update and the chart will appear." not in body
+    month_key = date.today().strftime("%Y-%m")
+    assert "Open monthly update" in body
+    assert f'href="/monthly-review/?month={month_key}"' in body
+    assert 'href="/monthly-review/">Open monthly update</a>' not in body
     assert "No history yet. Update your account balance or run the price scheduler to start recording daily snapshots." not in body
