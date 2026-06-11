@@ -107,7 +107,7 @@
         <div class="simple-list-item">
           <div>
             <strong>Update account balances</strong>
-            <p class="helper-text m-0">{% if first_update_checkpoint.account_balance_checks %}{{ first_update_checkpoint.account_balance_checks }} account balance{{ '' if first_update_checkpoint.account_balance_checks == 1 else 's' }} to check across holdings, manual balances, or Premium Bonds.{% else %}No account balances need checking yet. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add an account</a> when you have something real to track.{% endif %}</p>
+            <p class="helper-text m-0">{% if first_update_checkpoint.account_balance_checks %}{{ first_update_checkpoint.account_balance_checks }} account balance{{ '' if first_update_checkpoint.account_balance_checks == 1 else 's' }} to check across holdings, manual balances, or Premium Bonds.{% else %}No account balances need checking yet. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add one real account</a> to give Monthly Update somewhere real to work from.{% endif %}</p>
           </div>
           <div class="badge-row">
             <a href="#update-balances" class="badge badge-primary-action">Update account balances</a>

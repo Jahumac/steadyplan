@@ -91,7 +91,8 @@ def test_monthly_review_first_use_focus_links_empty_balance_setup_to_first_accou
     html = resp.get_data(as_text=True)
 
     assert "No account balances need checking yet." in html
-    assert 'href="/accounts/?mode=create&amp;focus=first_account" class="link-accent">Add an account</a> when you have something real to track.' in html
+    assert 'href="/accounts/?mode=create&amp;focus=first_account" class="link-accent">Add one real account</a> to give Monthly Update somewhere real to work from.' in html
+    assert 'href="/accounts/?mode=create&amp;focus=first_account" class="link-accent">Add an account</a> when you have something real to track.' not in html
     assert "No account balances need checking yet. Add an account when you have something real to track." not in html
 
 
