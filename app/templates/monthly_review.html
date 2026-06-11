@@ -247,7 +247,7 @@
               <p>{% if item.provider %}{{ item.provider }} · {% endif %}{{ item.wrapper_type or 'Account' }}</p>
             </div>
             <div class="badge-row">
-              <a class="badge" href="{{ url_for('accounts.account_detail', account_id=item.account_id, mode='view', next=monthly_review_href) }}#holdings-section">Open account</a>
+              <a class="badge" href="{{ url_for('accounts.account_detail', account_id=item.account_id, mode='view', next=monthly_review_href) }}#holdings-section">Open holdings</a>
             </div>
           </div>
 
@@ -346,7 +346,7 @@
           </label>
           {% if review.status != 'complete' %}
           <button type="submit" class="badge badge-primary-action">Update balance</button>
-          <a href="{{ url_for('accounts.account_detail', account_id=item.account_id, mode='view', next=monthly_review_href) }}#balance-update" class="badge badge-meta">Open account</a>
+          <a href="{{ url_for('accounts.account_detail', account_id=item.account_id, mode='view', next=monthly_review_href) }}#balance-update" class="badge badge-meta">Open balance</a>
           {% endif %}
         </form>
       {% endfor %}
@@ -388,7 +388,7 @@
               {% elif existing_prize %}
                 <span class="pb-prize-nil">No prize won</span>
               {% endif %}
-              <a class="badge" href="{{ url_for('accounts.account_detail', account_id=item.account_id, mode='view', next=monthly_review_href) }}#prize-history">Open account</a>
+              <a class="badge" href="{{ url_for('accounts.account_detail', account_id=item.account_id, mode='view', next=monthly_review_href) }}#prize-history">Open prize history</a>
             </div>
           </div>
 
