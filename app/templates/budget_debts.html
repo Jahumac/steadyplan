@@ -463,22 +463,22 @@
         </div>
       </div>
       <p class="helper-text"><strong>{{ debt.reason }}</strong></p>
-      <p class="helper-text">Estimated focus payment: £{{ '{:,.0f}'.format(debt.rolled_monthly_payment) }}/mo while this debt is the priority.</p>
+      <p class="helper-text">Estimated monthly payment while prioritised: £{{ '{:,.0f}'.format(debt.rolled_monthly_payment) }}/mo.</p>
     </div>
     {% endfor %}
   </div>
 
   <div class="hero-strip" style="margin-bottom:0.75rem;">
     <div class="hero-stat">
-      <span class="hero-stat-label">Estimated outcome</span>
+      <span class="hero-stat-label">Estimated payoff time</span>
       <span class="hero-stat-value"><strong>{{ payoff_guidance.total_months }} month{{ '' if payoff_guidance.total_months == 1 else 's' }}</strong></span>
     </div>
     <div class="hero-stat">
-      <span class="hero-stat-label">Estimated interest</span>
+      <span class="hero-stat-label">Estimated total interest</span>
       <span class="hero-stat-value"><strong class="stat-negative-text">£{{ '{:,.0f}'.format(payoff_guidance.total_interest) }}</strong></span>
     </div>
     <div class="hero-stat">
-      <span class="hero-stat-label">Debts included</span>
+      <span class="hero-stat-label">Debts ranked</span>
       <span class="hero-stat-value"><strong>{{ payoff_guidance.included_debt_count }}</strong></span>
     </div>
   </div>
