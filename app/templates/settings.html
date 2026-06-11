@@ -834,7 +834,7 @@
         <small class="form-hint">A local label so you can recognise this connection later.</small>
       </label>
       <label>
-        <span>Environment</span>
+        <span>Broker environment</span>
         <select name="environment">
           {% for option in trading212_environment_options %}
           <option value="{{ option.key }}">{{ option.label }}</option>
@@ -866,13 +866,13 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>Label</th>
-            <th>Environment</th>
-            <th>Status</th>
+            <th>Saved connection label</th>
+            <th>Broker environment</th>
+            <th>Broker check status</th>
             <th>Masked API key</th>
             <th>Broker account</th>
             <th>Last account summary check</th>
-            <th>Actions</th>
+            <th>Saved connection actions</th>
           </tr>
         </thead>
         <tbody>
