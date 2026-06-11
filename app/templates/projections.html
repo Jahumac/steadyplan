@@ -163,15 +163,15 @@
               {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} Lifetime ISA bonus{% endif %}
               {%- if row.employer %} + £{{ '{:,.2f}'.format(row.employer) }} employer{% endif %}
               {%- if row.contribution_fee > 0 %} − £{{ '{:,.2f}'.format(row.contribution_fee) }} contribution fee{% endif %}
-              = £{{ '{:,.2f}'.format(row.effective_contribution) }}/mo into pot
-            {%- else %} · £{{ '{:,.0f}'.format(row.monthly_contribution) }}/mo
+              = £{{ '{:,.2f}'.format(row.effective_contribution) }} a month into pot
+            {%- else %} · £{{ '{:,.0f}'.format(row.monthly_contribution) }} a month
             {%- endif %}
           </span>
           {% if row.self_assessment > 0 %}
-          <span class="budget-row-note" style="color:var(--accent-3);">Plus £{{ '{:,.2f}'.format(row.self_assessment) }}/mo reclaimable via self-assessment</span>
+          <span class="budget-row-note" style="color:var(--accent-3);">Plus £{{ '{:,.2f}'.format(row.self_assessment) }} a month reclaimable via self-assessment</span>
           {% endif %}
           {% if row.contribution_fee > 0 %}
-          <span class="budget-row-note text-danger">{{ '{:.2f}'.format(row.contribution_fee_pct) }}% contribution fee costs £{{ '{:,.2f}'.format(row.contribution_fee) }}/mo — £{{ '{:,.0f}'.format(row.contribution_fee * 12) }}/yr</span>
+          <span class="budget-row-note text-danger">{{ '{:.2f}'.format(row.contribution_fee_pct) }}% contribution fee costs £{{ '{:,.2f}'.format(row.contribution_fee) }} a month — £{{ '{:,.0f}'.format(row.contribution_fee * 12) }} a year</span>
           {% endif %}
           {% if row.fee_impact > 0 %}
           <span class="budget-row-note text-danger">Annual fees cost £{{ '{:,.0f}'.format(row.fee_impact) }} in lost growth over the period</span>
@@ -199,7 +199,7 @@
               <h3 style="margin:0;font-size:1rem;">Change contributions by age</h3>
             </div>
           </div>
-          <p class="helper-text m-0">Add rows like “from age 50 → £600/mo”. This saves to your plan and updates your scenario estimate.</p>
+          <p class="helper-text m-0">Add rows like “from age 50 → £600 a month”. This saves to your plan and updates your scenario estimate.</p>
           <div class="proj-schedule-rows" data-proj-schedule-rows></div>
           <div class="badge-row mt-075">
             <button type="button" class="badge badge-meta" data-proj-schedule-add>+ Add row</button>
@@ -245,15 +245,15 @@
                 {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} Lifetime ISA bonus{% endif %}
                 {%- if row.employer %} + £{{ '{:,.2f}'.format(row.employer) }} employer{% endif %}
                 {%- if row.contribution_fee > 0 %} − £{{ '{:,.2f}'.format(row.contribution_fee) }} contribution fee{% endif %}
-                = £{{ '{:,.2f}'.format(row.effective_contribution) }}/mo into pot
-              {%- else %} · £{{ '{:,.0f}'.format(row.monthly_contribution) }}/mo
+                = £{{ '{:,.2f}'.format(row.effective_contribution) }} a month into pot
+              {%- else %} · £{{ '{:,.0f}'.format(row.monthly_contribution) }} a month
               {%- endif %}
             </span>
             {% if row.self_assessment > 0 %}
-            <span class="budget-row-note" style="color:var(--accent-3);">Plus £{{ '{:,.2f}'.format(row.self_assessment) }}/mo reclaimable via self-assessment</span>
+            <span class="budget-row-note" style="color:var(--accent-3);">Plus £{{ '{:,.2f}'.format(row.self_assessment) }} a month reclaimable via self-assessment</span>
             {% endif %}
             {% if row.contribution_fee > 0 %}
-            <span class="budget-row-note text-danger">{{ '{:.2f}'.format(row.contribution_fee_pct) }}% contribution fee costs £{{ '{:,.2f}'.format(row.contribution_fee) }}/mo — £{{ '{:,.0f}'.format(row.contribution_fee * 12) }}/yr</span>
+            <span class="budget-row-note text-danger">{{ '{:.2f}'.format(row.contribution_fee_pct) }}% contribution fee costs £{{ '{:,.2f}'.format(row.contribution_fee) }} a month — £{{ '{:,.0f}'.format(row.contribution_fee * 12) }} a year</span>
             {% endif %}
             {% if row.fee_impact > 0 %}
             <span class="budget-row-note text-danger">Annual fees cost £{{ '{:,.0f}'.format(row.fee_impact) }} in lost growth over the period</span>
@@ -281,7 +281,7 @@
                 <h3 style="margin:0;font-size:1rem;">Change contributions by age</h3>
               </div>
             </div>
-            <p class="helper-text m-0">Add rows like “from age 50 → £600/mo”. This saves to your plan and updates your scenario estimate.</p>
+            <p class="helper-text m-0">Add rows like “from age 50 → £600 a month”. This saves to your plan and updates your scenario estimate.</p>
             <div class="proj-schedule-rows" data-proj-schedule-rows></div>
             <div class="badge-row mt-075">
               <button type="button" class="badge badge-meta" data-proj-schedule-add>+ Add row</button>
@@ -371,7 +371,7 @@
   </div>
 
   {# Per-account contributions #}
-  <p class="eyebrow mb-05">Monthly contributions per account</p>
+  <p class="eyebrow mb-05">Monthly contributions by account</p>
   <div class="wi-account-list" id="wi_accounts">
     {% for row in account_rows %}
     <div class="wi-account-row">
@@ -414,7 +414,7 @@
       <strong id="wi_years">—</strong>
     </div>
     <div class="whatif-result-item">
-      <span>Monthly total</span>
+      <span>Total monthly contributions</span>
       <strong id="wi_monthly">—</strong>
     </div>
   </div>
@@ -448,7 +448,7 @@
       </label>
     </div>
 
-    <p class="eyebrow mb-05">Monthly contributions per account</p>
+    <p class="eyebrow mb-05">Monthly contributions by account</p>
     <div class="wi-account-list" id="wi_accounts_mobile">
       {% for row in account_rows %}
       <div class="wi-account-row">
@@ -490,7 +490,7 @@
         <strong id="wi_years_mobile">—</strong>
       </div>
       <div class="whatif-result-item">
-        <span>Monthly total</span>
+        <span>Total monthly contributions</span>
         <strong id="wi_monthly_mobile">—</strong>
       </div>
     </div>

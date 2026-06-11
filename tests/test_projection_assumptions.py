@@ -109,8 +109,18 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "How your portfolio could grow year by year under your current assumptions and contributions." not in body
     assert "aria-label=\"Projected portfolio growth chart\"" not in body
     assert body.count("Try a different scenario") == 2
+    assert body.count("Monthly contributions by account") == 2
+    assert body.count("Total monthly contributions") == 2
+    assert "Monthly contributions per account" not in body
+    assert "Monthly total" not in body
     assert "Try different retirement ages, growth rates, or monthly contributions to see how the scenario estimate changes. Nothing here is saved unless you save changes elsewhere." in body
-    assert "Add rows like “from age 50 → £600/mo”. This saves to your plan and updates your scenario estimate." in body
+    assert body.count("Add rows like “from age 50 → £600 a month”. This saves to your plan and updates your scenario estimate.") == 2
+    assert "£600/mo" not in body
+    assert "· £500 a month" in body
+    assert "/mo into pot" not in body
+    assert "/mo reclaimable via self-assessment" not in body
+    assert "/mo — £" not in body
+    assert "/yr" not in body
     assert "Add rows like “from age 50 → £600/mo”. This saves to your plan and updates projections." not in body
     assert "What If?" not in body
     assert "Adjust inputs to see how the projection changes. Nothing here is saved unless you save changes elsewhere." not in body
