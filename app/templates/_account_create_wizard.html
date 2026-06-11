@@ -21,7 +21,7 @@
       <div class="wizard-focus-note" aria-label="First account guidance">
         <p class="eyebrow">Start here</p>
         <h3>Add one real account</h3>
-        <p>Pick an ISA, pension, savings account, or anything else you already have. One real account is enough to get your picture started.</p>
+        <p>Pick an ISA, pension, savings account, or anything else you already have. One real account is enough to get your picture started and gives Monthly Update somewhere real to work from.</p>
         <p class="helper-text m-0">You can leave the extra admin bits for later and come back once the basics are in place.</p>
       </div>
       {% endif %}
@@ -32,7 +32,7 @@
       {# ── Step 1 · The basics ────────────────────────────────────── #}
       <div class="cw-panel cw-visible" data-cw="1">
         <h3 class="cw-title">{% if is_first_account_focus %}Which account do you want to start with?{% else %}What's this account called?{% endif %}</h3>
-        <p class="cw-hint">{% if is_first_account_focus %}Use one of the quick templates if it fits, or type your own name and wrapper below. You only need enough detail to recognise the account later.{% else %}Name the account, set the provider and wrapper type, and you're ready to go.{% endif %}</p>
+        <p class="cw-hint">{% if is_first_account_focus %}Use one of the quick templates if it fits, or type your own name and wrapper below. You only need enough detail to recognise the account later and get Monthly Update ready for real balances.{% else %}Name the account, set the provider and wrapper type, and you're ready to go.{% endif %}</p>
         <div class="cw-template-grid" aria-label="Account templates">
           <button type="button" class="cw-template" data-cw-template="stocks_isa">
             <strong>Stocks &amp; Shares ISA</strong>
