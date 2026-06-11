@@ -58,6 +58,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "Trading 212 sync (beta)" in body
     assert "Add a read-only broker connection" in body
     assert "Add a read-only Trading 212 connection" not in body
+    assert "<span>Broker environment</span>" in body
+    assert "<span>Environment</span>" not in body
     assert "store the key pair encrypted on this server using this app's secret key" in body
     assert "Public API currently supports Invest and Stocks ISA only" in body
     assert "Cash ISA and SIPP accounts should stay manual/CSV-tracked for now" in body
@@ -137,7 +139,7 @@ def test_settings_renders_unchecked_trading212_connection_status_fallback(app, c
     resp = client.get("/settings/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Status" in body
+    assert "Broker check status" in body
     assert "No successful check yet" in body
     assert "Unverified" not in body
 
@@ -227,12 +229,20 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "Remove connection" in body
     assert "Read-only" in body
     assert "Read Only" not in body
+    assert "Saved connection label" in body
+    assert "<th>Label</th>" not in body
+    assert "Broker environment" in body
+    assert "<th>Environment</th>" not in body
+    assert "Broker check status" in body
+    assert "<th>Status</th>" not in body
     assert "Masked API key" in body
     assert "Masked key" not in body
     assert "Broker account" in body
     assert "<th>Account</th>" not in body
     assert "Last account summary check" in body
     assert "Last tested" not in body
+    assert "Saved connection actions" in body
+    assert "<th>Actions</th>" not in body
     assert ">Retest<" not in body
     assert ">Remove<" not in body
     assert "Preview holdings snapshot" not in body
