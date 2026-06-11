@@ -5,6 +5,7 @@ This folder contains the source for the SteadyPlan static website hub (landing +
 ## Purpose
 
 - Provide a calm, privacy-first landing page for SteadyPlan
+- Keep the public roadmap, tour, and trust/evaluation story aligned with the shipped app
 - Host the main human-readable docs hub (install, backups, privacy, reverse proxy)
 - Act as the source directory for the live Cloudflare Pages deployment and any local preview/testing
 

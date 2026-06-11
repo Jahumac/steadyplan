@@ -138,9 +138,9 @@
         <div class="prose">
           <h2>Update</h2>
           <p class="muted">Before updating, take a backup (see <a href="./backups.html">Backups &amp; restore</a>).</p>
-          <pre>docker pull ghcr.io/jahumac/steadyplan:latest
-docker restart steadyplan</pre>
-          <p class="note small">If you use Unraid’s Docker UI, update the container from the Docker tab and restart if needed.</p>
+          <pre>docker compose pull
+docker compose up -d</pre>
+          <p class="note small">If you run SteadyPlan with a plain <code>docker run</code> command instead of Compose, pull the new image and recreate the container with the same <code>/app/data</code> mount. A plain restart on its own will keep the old image.</p>
         </div>
 
         <div class="hr"></div>

@@ -2,11 +2,24 @@
 
 > **For Hermes:** Use `writing-plans` for follow-on slices and keep each implementation bundle narrow, reviewable, and testable.
 
-**Goal:** Turn the product roadmap into a practical sequence of small implementation slices that move SteadyPlan toward clearer positioning, lower intimidation, stronger mobile usability, safer demoability, and eventual tiny private external use.
+**Goal:** Turn the product roadmap into a practical sequence of small implementation slices that keep SteadyPlan coherent as the product truth, first-use cleanup, mobile improvements, and trust surfaces mature.
 
 **Architecture:** Treat the roadmap as three linked workstreams rather than one giant rewrite: (1) product truth and public positioning, (2) core in-app usability/mobile improvements, and (3) trust/operational hardening. Keep the app self-hosted-first, and prefer improving the existing Flask app, templates, static site, and docs instead of inventing parallel systems.
 
 **Tech Stack:** Flask, Jinja templates, SQLite, static HTML/CSS site in `site/`, pytest
+
+---
+
+## Current standing
+
+A large part of the original roadmap foundation is now live:
+
+- product truth and public positioning docs exist
+- Overview and first-use hierarchy already had substantial answer-first work
+- Monthly Update, Planning, and many mobile-critical flows already reflect the calmer product direction
+- trust surfaces such as Diagnostics, backup/restore boundaries, assistant access, and safe demo guidance are now shipped
+
+So the next execution phase is less about inventing direction and more about keeping the docs, site, and product surfaces in sync while tightening the densest remaining flows.
 
 ---
 
@@ -32,7 +45,7 @@ Make sure future implementation work is judged against a stable definition of wh
 - README/site copy alignment checklist
 
 ### Status
-Start here immediately. This reduces sideways drift before more feature work lands.
+Landed foundation. Keep these files current whenever shipped product truth moves.
 
 ### Task A1: Commit roadmap source and product truth docs
 
@@ -49,7 +62,7 @@ Start here immediately. This reduces sideways drift before more feature work lan
 **Verification:**
 - `git diff -- STEADYPLAN_ROADMAP_2026-05-29.md docs/PRODUCT_TRUTH.md docs/plans/2026-05-29-roadmap-execution.md`
 
-### Task A2: Align core product copy with the roadmap
+### Task A2: Keep core product copy aligned with the roadmap
 
 **Files to inspect/update:**
 - `README.md`
@@ -71,7 +84,7 @@ Ensure the public-facing story consistently says SteadyPlan is for ordinary peop
 ## Workstream B — core usability and compact-screen hierarchy
 
 ### Objective
-Reduce friction and intimidation in the actual product, especially for first use and phone-sized screens.
+Keep reducing friction and intimidation in the actual product, especially in the densest first-use, settings, and phone-sized flows that still feel heavier than the core product truth.
 
 ### Recommended implementation order
 1. Overview hierarchy and next-action clarity
@@ -157,7 +170,7 @@ Review and tighten the top 3–5 phone-critical flows before any native-app disc
 ### Objective
 Make the product easier to understand from outside the app, then make it easier to evaluate safely.
 
-### Task C1: Website trust/copy alignment
+### Task C1: Website trust/copy parity maintenance
 
 **Files:**
 - `site/index.html`
