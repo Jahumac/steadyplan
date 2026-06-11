@@ -152,9 +152,21 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "OK — Public demo login is off. Real accounts still require normal login." in body
     assert "Rate-limit storage" in body
     assert "OK — Process-local memory storage is fine with a single worker." in body
+    assert '<p class="eyebrow">Runtime checks</p>' in body
+    assert "<h3>Instance overview</h3>" in body
+    assert '<p class="eyebrow">Data footprint</p>' in body
+    assert "<h3>Instance counts</h3>" in body
+    assert '<p class="eyebrow">Prices in use</p>' in body
+    assert "<h3>Linked price sample</h3>" in body
     assert "Scheduler last run" in body
     assert "Not yet recorded" in body
     assert "No scheduler run has been recorded yet. That is normal on a fresh instance or when you mainly update prices and balances manually." in body
+    assert '<p class="eyebrow">Status</p>' not in body
+    assert "<h3>Overview</h3>" not in body
+    assert '<p class="eyebrow">Counts</p>' not in body
+    assert "<h3>Data</h3>" not in body
+    assert '<p class="eyebrow">Prices</p>' not in body
+    assert "<h3>Latest Instruments</h3>" not in body
 
 
 def test_diagnostics_warns_when_trust_posture_needs_review(app, client, make_user, tmp_path):
