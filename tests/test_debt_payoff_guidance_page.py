@@ -33,7 +33,7 @@ def test_debts_page_renders_payoff_guidance_card_with_strategy_controls(app, cli
 
     assert "Suggested payoff order" in html
     assert "Where extra debt money could go first" in html
-    assert "All debts keep their minimum payment in this estimate." in html
+    assert "Every debt keeps its minimum payment. This estimate only changes where extra overpayments go first." in html
     assert "Payoff strategy" in html
     assert "Highest APR first (usually cheaper overall)" in html
     assert "Smallest balance first (quick wins)" in html
@@ -48,6 +48,7 @@ def test_debts_page_renders_payoff_guidance_card_with_strategy_controls(app, cli
     assert "Based on the balances, rates, and payments entered." in html
     assert "Smallest balance first can give earlier pay-off milestones." in html
     assert "Highest APR first usually costs less in interest." in html
+    assert "All debts keep their minimum payment in this estimate." not in html
     assert "Strategy" not in html
     assert "Cheapest overall" not in html
     assert "Quick wins first" not in html
@@ -81,11 +82,12 @@ def test_debts_page_payoff_guidance_shows_excluded_debt_reasons(app, client, mak
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Some debts are not included in this estimate yet." in html
+    assert "Some debts are not ready for the payoff order yet." in html
     assert "Problem debt" in html
     assert "Minimum payment does not currently cover interest" in html
     assert "Cleared" in html
     assert "Balance already cleared" in html
+    assert "Some debts are not included in this estimate yet." not in html
     assert "All debts are included automatically" not in html
 
 
@@ -101,8 +103,10 @@ def test_debts_page_payoff_guidance_empty_state_explains_how_to_get_a_ranked_est
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "No debts are ready for a ranked estimate yet." in html
-    assert "Add a monthly payment to at least one debt, and make sure its minimum payment covers interest." in html
+    assert "No debts are ready for a payoff order yet." in html
+    assert "Add a monthly payment to at least one debt, and make sure each minimum payment covers interest before adding extra overpayments." in html
+    assert "No debts are ready for a ranked estimate yet." not in html
+    assert "Add a monthly payment to at least one debt, and make sure its minimum payment covers interest." not in html
     assert "Set up all debts first" not in html
     assert "Nothing to rank yet" not in html
     assert "Missing payment" in html
