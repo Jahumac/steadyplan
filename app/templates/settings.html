@@ -886,7 +886,7 @@
             <td>
               {{ trading212_status_label(connection) }}
               {% if connection.last_error %}
-              <div class="helper-text text-danger" style="margin-top:0.2rem;">{{ connection.last_error }}</div>
+              <div class="helper-text text-danger" style="margin-top:0.2rem;">Last broker check error: {{ connection.last_error }}</div>
               {% endif %}
             </td>
             <td>{{ connection.masked_api_key }}</td>

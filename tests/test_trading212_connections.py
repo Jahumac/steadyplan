@@ -142,6 +142,34 @@ def test_settings_renders_unchecked_trading212_connection_status_fallback(app, c
     assert "Unverified" not in body
 
 
+def test_settings_renders_error_trading212_connection_with_labelled_check_error(app, client, make_user):
+    uid, username, password = make_user(username="t212-error-status")
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("live-key-error"),
+            api_secret_ciphertext=encrypt_trading212_credential("live-secret-error"),
+            status="error",
+            last_error="Broker timeout while fetching snapshot",
+            external_account_id="ISA-111",
+            external_account_currency="GBP",
+            external_total_value=12000.0,
+        )
+        assert connection is not None
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    resp = client.get("/settings/")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Needs attention" in body
+    assert "Last broker check error: Broker timeout while fetching snapshot" in body
+    assert ">Broker timeout while fetching snapshot<" not in body
+
+
 def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client, make_user, monkeypatch):
     uid, username, password = make_user(username="t212-connect")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
