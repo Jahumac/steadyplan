@@ -24,6 +24,8 @@ def test_overview_getting_started_card_prioritises_basics_and_defers_deeper_step
     assert "Date of birth and retirement age are enough to make later dates and scenario estimates meaningful." not in html
     assert "Date of birth and retirement age are enough to make later dates and projections meaningful." not in html
     assert "Add your first account" in html
+    assert "ISA, pension, savings or cash — start with what you already have so Monthly Update has somewhere real to work from." in html
+    assert "ISA, pension, savings or cash — start with what you already have." not in html
     assert "Set your first goal" in html
     assert "Set your first goal once you know what you want to aim for." in html
     assert "Set a first goal" not in html
@@ -74,6 +76,8 @@ def test_overview_getting_started_primary_action_moves_to_first_incomplete_basic
     assert "Add your first account" in html
     assert "Finish the two basics first" in html
     assert "You already added your planning dates. Now add one real account so Overview has something concrete to show." in html
+    assert "ISA, pension, savings or cash — start with what you already have so Monthly Update has somewhere real to work from." in html
+    assert "ISA, pension, savings or cash — start with what you already have." not in html
     assert "1/2 basics complete" in html
     assert "0/4 complete" not in html
     assert "Add your first account" in html
