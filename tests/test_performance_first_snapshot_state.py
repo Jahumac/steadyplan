@@ -33,9 +33,10 @@ def test_performance_page_acknowledges_first_snapshot(client, make_user):
 
     assert "One snapshot down" in body
     assert "Your first baseline is saved. Complete next month's monthly update and the performance chart will appear." in body
-    assert "First baseline saved" in body
-    assert "SteadyPlan has your first snapshot." in body
+    assert "Your first baseline is saved" in body
+    assert "SteadyPlan has your first snapshot." not in body
     assert "Complete next month's monthly update and the performance chart will appear." in body
+    assert "First baseline saved" not in body
     assert "Next month's monthly update will start the performance chart." not in body
     assert "Come back after next month's monthly update and the performance chart will appear." not in body
     month_key = date.today().strftime("%Y-%m")
