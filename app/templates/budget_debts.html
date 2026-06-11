@@ -428,7 +428,7 @@
     <div>
       <p class="eyebrow">Suggested payoff order</p>
       <h2>Where extra debt money could go first</h2>
-      <p class="helper-text">All debts keep their minimum payment in this estimate.</p>
+      <p class="helper-text">Every debt keeps its minimum payment. This estimate only changes where extra overpayments go first.</p>
     </div>
   </div>
 
@@ -485,13 +485,13 @@
   <p class="helper-text mb-05">Based on the balances, rates, and payments entered.</p>
   <p class="helper-text">{{ payoff_guidance.comparison_note }}</p>
   {% else %}
-  <p class="helper-text"><strong>No debts are ready for a ranked estimate yet.</strong></p>
-  <p class="helper-text">Add a monthly payment to at least one debt, and make sure its minimum payment covers interest.</p>
+  <p class="helper-text"><strong>No debts are ready for a payoff order yet.</strong></p>
+  <p class="helper-text">Add a monthly payment to at least one debt, and make sure each minimum payment covers interest before adding extra overpayments.</p>
   {% endif %}
 
   {% if payoff_guidance and payoff_guidance.excluded_debts %}
   <div class="mt-1">
-    <p class="helper-text"><strong>Some debts are not included in this estimate yet.</strong></p>
+    <p class="helper-text"><strong>Some debts are not ready for the payoff order yet.</strong></p>
     <ul class="helper-text" style="margin:0.5rem 0 0 1rem;">
       {% for debt in payoff_guidance.excluded_debts %}
       <li><strong>{{ debt.name }}</strong> — {{ debt.reason }}</li>
