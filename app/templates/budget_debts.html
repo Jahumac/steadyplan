@@ -437,8 +437,8 @@
       <label>
         <span>Payoff strategy</span>
         <select name="strategy">
-          <option value="avalanche" {% if payoff_guidance and payoff_guidance.strategy == 'avalanche' %}selected{% endif %}>Cheapest overall</option>
-          <option value="snowball" {% if payoff_guidance and payoff_guidance.strategy == 'snowball' %}selected{% endif %}>Quick wins first</option>
+          <option value="avalanche" {% if payoff_guidance and payoff_guidance.strategy == 'avalanche' %}selected{% endif %}>Highest APR first (usually cheaper overall)</option>
+          <option value="snowball" {% if payoff_guidance and payoff_guidance.strategy == 'snowball' %}selected{% endif %}>Smallest balance first (quick wins)</option>
         </select>
       </label>
       <label>

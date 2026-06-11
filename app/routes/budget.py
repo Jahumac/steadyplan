@@ -1095,9 +1095,9 @@ def budget_debts():
             })
 
         if guidance_strategy == "avalanche":
-            comparison_note = "Cheapest overall usually costs less in interest. Quick wins first can give earlier pay-off milestones."
+            comparison_note = "Highest APR first usually costs less in interest. Smallest balance first can give earlier pay-off milestones."
         else:
-            comparison_note = "Quick wins first can give earlier pay-off milestones. Cheapest overall usually costs less in interest."
+            comparison_note = "Smallest balance first can give earlier pay-off milestones. Highest APR first usually costs less in interest."
 
         payoff_guidance = {
             "strategy": guidance_strategy,
