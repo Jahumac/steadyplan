@@ -33,7 +33,9 @@ def test_monthly_review_first_use_focus_surfaces_baseline_reassurance(app, clien
     assert "If nothing changed yet, you can come back after your first contribution or balance change has settled." in html
     assert "If nothing changed yet, you can come back after your first contribution or balance move settles." not in html
     assert "<p class=\"eyebrow\">Monthly Update</p>" not in html
-    assert "Confirm contributions, update balances, then finish with your note." in html
+    assert "Three short steps: confirm contributions, update balances, then finish with your note." in html
+    assert "How to finish this month" in html
+    assert "Confirm contributions, update balances, then finish with your note." not in html
     assert "Start here this month" in html
     assert "Use these three checks to create a clean first baseline." in html
     assert "1 expected contribution to confirm for this month." in html
