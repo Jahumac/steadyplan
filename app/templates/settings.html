@@ -720,7 +720,7 @@
   {% if assistant_tokens %}
   <div style="margin-top:1rem;">
     <div class="text-sm" style="font-weight:600;margin-bottom:0.45rem;">Existing assistant tokens</div>
-    <p class="helper-text" style="margin:0 0 0.45rem 0;">Regenerate replaces the current token and shows the new raw value once. Revoke disables the token immediately.</p>
+    <p class="helper-text" style="margin:0 0 0.45rem 0;">Replace token shows the new raw value once. Revoke disables the token immediately.</p>
     <div class="table-scroll">
       <table class="data-table">
         <thead>
@@ -743,7 +743,7 @@
               <div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">
                 <form method="post" action="/settings/assistant-access/{{ token.id }}/regenerate" style="margin:0;">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="badge">Regenerate</button>
+                  <button type="submit" class="badge">Replace token</button>
                 </form>
                 <form method="post" action="/settings/assistant-access/{{ token.id }}/revoke" style="margin:0;">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

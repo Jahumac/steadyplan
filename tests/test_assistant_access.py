@@ -176,7 +176,7 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert "Recent assistant activity" not in settings_html
     assert "No assistant tokens yet. Leave this empty unless you want Pip connected." not in settings_html
     assert "No assistant writes logged yet. Read-only answers do not appear here; this table is for assistant write actions." not in settings_html
-    assert "Regenerate replaces the current token and shows the new raw value once. Revoke disables the token immediately." not in settings_html
+    assert "Replace token shows the new raw value once. Revoke disables the token immediately." not in settings_html
 
     create_resp = client.post(
         "/settings/assistant-access/create",
@@ -223,9 +223,10 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     )
     assert regen_resp.status_code == 200
     regen_html = regen_resp.get_data(as_text=True)
-    assert "Assistant token regenerated" in regen_html
+    assert "Assistant token replaced" in regen_html
     assert "Replacement assistant token" in regen_html
-    assert "Assistant token regenerated. The old token no longer works, and the new raw token is only shown once." in regen_html
+    assert "Assistant token replaced. The old token no longer works, and the new raw token is only shown once." in regen_html
+    assert "Assistant token regenerated" not in regen_html
     second_token = _extract_assistant_token(regen_html)
     assert second_token != first_token
 
@@ -289,16 +290,18 @@ def test_settings_shows_clear_fallbacks_for_unlabelled_unused_assistant_tokens(a
 
     assert settings_resp.status_code == 200
     assert "Existing assistant tokens" in settings_html
-    assert "Regenerate replaces the current token and shows the new raw value once. Revoke disables the token immediately." in settings_html
+    assert "Replace token shows the new raw value once. Revoke disables the token immediately." in settings_html
     assert "Unlabelled assistant token" in settings_html
     assert "Not used yet" in settings_html
     assert "Token label" in settings_html
     assert "Created on" in settings_html
     assert "Actions" in settings_html
+    assert ">Replace token<" in settings_html
     assert ">Never<" not in settings_html
     assert ">Assistant token<" not in settings_html
     assert ">Label<" not in settings_html
     assert ">Created<" not in settings_html
+    assert ">Regenerate<" not in settings_html
 
 
 
