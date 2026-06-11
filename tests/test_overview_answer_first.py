@@ -1249,7 +1249,8 @@ def test_overview_drops_resting_monthly_update_focus_card(app, client, make_user
     html = resp.get_data(as_text=True)
 
     assert 'overview-focus-card' not in html
-    assert f'/monthly-review/?month={month_key}' not in html
+    assert f'href="/monthly-review/?month={month_key}#expected-contributions"' in html
+    assert 'href="/monthly-review/" class="badge badge-primary-action">Open monthly update</a>' not in html
     assert 'Status: In progress' not in html
     assert 'Status: Complete' not in html
     assert 'class="card mb-1 overview-access-card overview-desktop-detail"' in html
@@ -1626,7 +1627,10 @@ def test_overview_first_baseline_helper_uses_calm_trend_line_copy(app, client, m
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
+    month_key = date.today().strftime("%Y-%m")
     assert "Your first baseline is saved. Complete next month's monthly update and the net worth trend line will appear." in html
+    assert f'href="/monthly-review/?month={month_key}#expected-contributions"' in html
+    assert 'href="/monthly-review/" class="badge badge-primary-action">Open monthly update</a>' not in html
     assert "One snapshot down — slow and steady." not in html
     assert "Remember: slow and steady wins the race." not in html
 
