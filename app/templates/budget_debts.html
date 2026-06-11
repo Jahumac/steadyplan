@@ -435,19 +435,19 @@
   <form method="get" class="settings-form" style="margin-bottom:1rem;">
     <div class="form-grid">
       <label>
-        <span>Strategy</span>
+        <span>Payoff strategy</span>
         <select name="strategy">
           <option value="avalanche" {% if payoff_guidance and payoff_guidance.strategy == 'avalanche' %}selected{% endif %}>Cheapest overall</option>
           <option value="snowball" {% if payoff_guidance and payoff_guidance.strategy == 'snowball' %}selected{% endif %}>Quick wins first</option>
         </select>
       </label>
       <label>
-        <span>Extra debt payment per month (£)</span>
+        <span>Extra overpayment per month (£)</span>
         <input type="number" step="10" min="0" name="extra_monthly" value="{{ payoff_guidance.extra_monthly if payoff_guidance else 0 }}">
       </label>
     </div>
     <div class="badge-row mt-075">
-      <button type="submit">Update estimate</button>
+      <button type="submit">Update payoff estimate</button>
     </div>
   </form>
 
