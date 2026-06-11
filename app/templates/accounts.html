@@ -754,7 +754,7 @@
         {% elif has_first_baseline_only %}
         {{ empty_state('First baseline saved',
                        'This account has its first snapshot. Complete next month\'s monthly update and the chart will appear.',
-                       cta_text='Back to overview', cta_href='/') }}
+                       cta_text='Open monthly update', cta_href=monthly_update_return_href) }}
         {% else %}
         <p class="helper-text">No history yet. Update your account balance or run the price scheduler to start recording daily snapshots.</p>
         {% endif %}
