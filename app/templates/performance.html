@@ -64,7 +64,7 @@
   {% if snapshot_count == 1 %}
   {{ empty_state('First baseline saved',
                  'SteadyPlan has your first snapshot. Complete next month\'s monthly update and the performance chart will appear.',
-                 cta_text='Back to overview', cta_href='/') }}
+                 cta_text='Open monthly update', cta_href=current_monthly_update_href) }}
   {% else %}
   {{ empty_state('Not enough data yet',
                  'You need at least two data points to draw a line. Complete two monthly updates and the performance charts will appear.',
