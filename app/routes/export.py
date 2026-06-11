@@ -1655,11 +1655,11 @@ def export_performance():
             and not perf.get("table_rows")
         )
         if has_first_baseline_only:
-            ws_d.cell(row=4, column=1, value="First baseline saved.").font = _DATA_FONT
+            ws_d.cell(row=4, column=1, value="Your first baseline is saved.").font = _DATA_FONT
             ws_d.cell(
                 row=5,
                 column=1,
-                value="SteadyPlan has the first snapshot for this report. Complete next month's monthly update and the month-by-month table will appear.",
+                value="Complete next month's monthly update and the month-by-month table will appear.",
             ).font = _DATA_FONT
             return
 

@@ -73,20 +73,21 @@ def test_performance_export_acknowledges_first_baseline_for_portfolio_and_accoun
     _login(client, username, password)
     workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
 
-    expected_detail_title = "First baseline saved."
-    expected_detail_message = (
-        "SteadyPlan has the first snapshot for this report. Complete next month's monthly update "
-        "and the month-by-month table will appear."
-    )
+    expected_detail_title = "Your first baseline is saved."
+    expected_detail_message = "Complete next month's monthly update and the month-by-month table will appear."
 
     portfolio = workbook["Portfolio (Monthly)"]
     assert portfolio["A4"].value == expected_detail_title
     assert portfolio["A5"].value == expected_detail_message
     assert "Come back after next month's monthly update" not in portfolio["A5"].value
+    assert "SteadyPlan has the first snapshot for this report." not in portfolio["A5"].value
     assert portfolio["A4"].value != "Not enough data yet (need at least two monthly snapshots)."
+    assert portfolio["A4"].value != "First baseline saved."
 
     account = workbook["ISA (Monthly)"]
     assert account["A4"].value == expected_detail_title
     assert account["A5"].value == expected_detail_message
     assert "Come back after next month's monthly update" not in account["A5"].value
+    assert "SteadyPlan has the first snapshot for this report." not in account["A5"].value
     assert account["A4"].value != "Not enough data yet (need at least two monthly snapshots)."
+    assert account["A4"].value != "First baseline saved."
