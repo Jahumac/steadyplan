@@ -664,15 +664,15 @@
 <section class="panel mt-1">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Assistant access</p>
-      <h3>Give Pip scoped access to SteadyPlan</h3>
+      <p class="eyebrow">Optional assistant access</p>
+      <h3>Optional: connect your own Pip token</h3>
     </div>
   </div>
   <p class="helper-text">
-    This creates a dedicated assistant token for SteadyPlan. Unlike a general API token, it only works with assistant endpoints and you can revoke or regenerate it here.
+    Most people can ignore this section. Only use it if you want your own Pip setup to read from SteadyPlan through a separate assistant token that you can revoke or regenerate here.
   </p>
   <p class="helper-text" style="margin-top:0.45rem;">
-    Read-only access lets Pip answer portfolio, budget, and affordability questions without changing your data. Budget write access adds one narrow action today: updating a single month's amount on an existing manual, unlinked budget item.
+    Read-only access answers portfolio, budget, and affordability questions without changing your data. Budget write adds one narrow action today: updating a single month's amount on an existing manual, unlinked budget item.
   </p>
 
   {% if assistant_token_secret %}
@@ -693,7 +693,7 @@
       <label>
         <span>Token label</span>
         <input type="text" name="label" value="Pip" maxlength="64">
-        <small class="form-hint">A local label to help you recognise this token later.</small>
+        <small class="form-hint">Optional local label so you can recognise this token later.</small>
       </label>
       <div class="form-full-col">
         <span style="display:block;font-weight:600;margin-bottom:0.55rem;">Permissions</span>
@@ -713,7 +713,7 @@
       </div>
     </div>
     <div class="badge-row mt-1">
-      <button type="submit">Create assistant token</button>
+      <button type="submit">Create optional Pip token</button>
     </div>
   </form>
 
@@ -757,7 +757,7 @@
       </table>
     </div>
     {% else %}
-    <p class="helper-text" style="margin:0;">No assistant tokens yet. Create one above when you want to give Pip scoped access.</p>
+    <p class="helper-text" style="margin:0;">No assistant tokens yet. Leave this empty unless you want Pip connected.</p>
     {% endif %}
   </div>
 

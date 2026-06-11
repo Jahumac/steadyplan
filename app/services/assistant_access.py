@@ -10,12 +10,12 @@ def assistant_scope_options(include_reserved=False):
         {
             "key": ASSISTANT_SCOPE_READ,
             "label": "Read-only assistant answers",
-            "hint": "Lets Pip answer portfolio, monthly budget, and affordability questions without changing your data.",
+            "hint": "Lets this token answer portfolio, monthly budget, and affordability questions without changing your data.",
         },
         {
             "key": ASSISTANT_SCOPE_BUDGET_WRITE,
             "label": "Budget write",
-            "hint": "Lets Pip update one month's amount on an existing manual, unlinked budget item. It does not allow broader budget, account, or transaction edits.",
+            "hint": "Lets this token update one month's amount on an existing manual, unlinked budget item. It does not allow broader budget, account, or transaction edits.",
         },
     ]
     if include_reserved:
