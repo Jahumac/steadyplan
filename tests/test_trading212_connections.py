@@ -497,9 +497,10 @@ def test_accounts_edit_form_offers_saved_trading212_linking(app, client, make_us
     assert "Optional read-only broker link" in body
     assert "Optional read-only Trading 212 link" not in body
     assert "Optional Trading 212 link" not in body
-    assert "Saved read-only broker connection" in body
-    assert "Saved read-only Trading 212 connection" not in body
-    assert "Saved Trading 212 connection" not in body
+    assert "Linked read-only broker connection" in body
+    assert "Saved read-only broker connection" not in body
+    assert "No read-only broker link" in body
+    assert ">Not linked<" not in body
     assert "Trading 212 ISA live · ISA-111 · GBP" in body
     assert "Link this account to a saved read-only broker connection so broker previews know which account to compare." in body
     assert "Link this account to a saved read-only Trading 212 connection so broker previews know which account to compare." not in body
@@ -538,8 +539,9 @@ def test_accounts_edit_form_empty_state_keeps_manual_csv_path(app, client, make_
     response = client.get(f"/accounts/{account_id}?mode=edit")
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
+    assert "Linked read-only broker connection" in body
+    assert "Saved read-only broker connection" not in body
     assert "No saved read-only broker connections yet." in body
-    assert "No saved Trading 212 connections yet." not in body
     assert "Manual/CSV tracking stays available until you choose to add a read-only connection in Settings." in body
     assert "Add one in Settings first if you want to link this account for future preview and sync work." not in body
 
@@ -594,9 +596,8 @@ def test_accounts_edit_form_hides_trading212_picker_for_unsupported_wrapper(app,
     assert "Optional read-only broker link" in body
     assert "Optional read-only Trading 212 link" not in body
     assert "Optional Trading 212 link" not in body
-    assert "Saved read-only broker connection" in body
-    assert "Saved read-only Trading 212 connection" not in body
-    assert "Saved Trading 212 connection" not in body
+    assert "Linked read-only broker connection" in body
+    assert "Saved read-only broker connection" not in body
     assert "Trading 212 Public API currently supports Invest and Stocks ISA only. Keep this account manual/CSV-tracked for now." in body
     assert "Trading 212 Cash ISA live · CASH-111 · GBP" not in body
     assert 'name="linked_broker_connection_id" value="%s"' % connection["id"] in body
