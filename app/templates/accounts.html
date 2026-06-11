@@ -16,7 +16,7 @@
     <div>
       <p class="eyebrow">Accounts</p>
       <h2 class="hero-value">{{ accounts | length }} account{{ 's' if accounts | length != 1 }}</h2>
-      <p class="hero-subtitle">Everything you're tracking — tap any account for the full picture</p>
+      <p class="hero-subtitle">{% if accounts | length == 0 and page_mode != 'create' and not selected %}Start with one real account to get your picture started and give Monthly Update somewhere real to work from.{% else %}Everything you're tracking — tap any account for the full picture{% endif %}</p>
     </div>
     <div class="hero-actions-col accounts-hero-actions">
       {% if accounts | length > 0 and page_mode != 'create' and not selected %}
