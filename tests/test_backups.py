@@ -158,6 +158,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "<h3>Instance counts</h3>" in body
     assert '<p class="eyebrow">Prices in use</p>' in body
     assert "<h3>Linked price sample</h3>" in body
+    assert "No holdings are linked to the price catalogue yet." in body
+    assert "No holdings with catalogue links yet." not in body
     assert "Scheduler last run" in body
     assert "Not yet recorded" in body
     assert "No scheduler run has been recorded yet. That is normal on a fresh instance or when you mainly update prices and balances manually." in body
