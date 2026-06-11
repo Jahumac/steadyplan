@@ -148,14 +148,14 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     settings_resp = client.get("/settings/")
     settings_html = settings_resp.get_data(as_text=True)
     assert settings_resp.status_code == 200
-    assert "Give Pip scoped access to SteadyPlan" in settings_html
-    assert "This creates a dedicated assistant token for SteadyPlan. Unlike a general API token, it only works with assistant endpoints and you can revoke or regenerate it here." in settings_html
-    assert "A local label to help you recognise this token later." in settings_html
+    assert "Optional: connect your own Pip token" in settings_html
+    assert "Most people can ignore this section. Only use it if you want your own Pip setup to read from SteadyPlan through a separate assistant token that you can revoke or regenerate here." in settings_html
+    assert "Optional local label so you can recognise this token later." in settings_html
     assert "Permissions" in settings_html
     assert "Read-only assistant answers" in settings_html
     assert "Budget write" in settings_html
-    assert "Read-only access lets Pip answer portfolio, budget, and affordability questions without changing your data." in settings_html
-    assert "Lets Pip answer portfolio, monthly budget, and affordability questions without changing your data." in settings_html
+    assert "Read-only access answers portfolio, budget, and affordability questions without changing your data." in settings_html
+    assert "Lets this token answer portfolio, monthly budget, and affordability questions without changing your data." in settings_html
     assert "It does not allow broader budget, account, or transaction edits." in settings_html
     assert "Transaction write (reserved)" not in settings_html
     assert "Reserved for future assistant transaction entry endpoints. Safe to leave off today." not in settings_html
@@ -164,9 +164,16 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert "Just a friendly label so you know what this token is for." not in settings_html
     assert "assistant summary endpoints" not in settings_html
     assert "assistant budget write endpoint" not in settings_html
-    assert "No assistant tokens yet. Create one above when you want to give Pip scoped access." in settings_html
+    assert "No assistant tokens yet. Leave this empty unless you want Pip connected." in settings_html
     assert "No assistant writes logged yet. Read-only answers do not appear here; this table is for assistant write actions." in settings_html
     assert "Regenerate replaces the current token and shows the new raw value once. Revoke disables the token immediately." in settings_html
+    assert "Give Pip scoped access to SteadyPlan" not in settings_html
+    assert "This creates a dedicated assistant token for SteadyPlan." not in settings_html
+    assert "A local label to help you recognise this token later." not in settings_html
+    assert "Read-only access lets Pip answer portfolio, budget, and affordability questions without changing your data." not in settings_html
+    assert "Lets Pip answer portfolio, monthly budget, and affordability questions without changing your data." not in settings_html
+    assert "Create assistant token" not in settings_html
+    assert "Create one above when you want to give Pip scoped access." not in settings_html
 
     create_resp = client.post(
         "/settings/assistant-access/create",
@@ -178,7 +185,7 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     )
     assert create_resp.status_code == 200
     create_html = create_resp.get_data(as_text=True)
-    assert "Assistant access" in create_html
+    assert "Optional assistant access" in create_html
     assert "Assistant token created" in create_html
     assert "New assistant token" in create_html
     assert "Permissions: Read-only assistant answers, Budget write" in create_html

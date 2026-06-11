@@ -165,7 +165,7 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "### Diagnostics & backup health" in readme
     assert "Public site supports a manual light/dark toggle without a build step" in readme
     assert "Monthly Review" not in readme
-    assert "Settings includes scoped **Assistant access** for Pip." in readme
+    assert "Settings includes optional scoped **Assistant access** for a personal Pip setup." in readme
     assert "Public website with Tour, Roadmap, docs hub, and optional read-only demo path" in readme
     assert "taxable accounts (GIAs)" in readme
     assert "taxable account (GIA)" in readme

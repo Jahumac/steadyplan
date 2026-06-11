@@ -100,7 +100,7 @@ ISA and Lifetime ISA allowance progress bars, tax year countdown, and automatic 
 Multiple users can share a single SteadyPlan instance, each with their own accounts, budgets and data. Admin user manages access.
 
 ### Assistant access
-Settings includes scoped **Assistant access** for Pip. Unlike a general API token, an assistant token only works on assistant endpoints, can be regenerated or revoked in the UI, and can be limited to read-only answers or one narrow budget-write permission.
+Settings includes optional scoped **Assistant access** for a personal Pip setup. Unlike a general API token, an assistant token only works on assistant endpoints, can be regenerated or revoked in the UI, and can be limited to read-only answers or one narrow budget-write permission.
 
 ### Contribution Overrides
 Temporarily change a monthly contribution (e.g. parental leave, career break) without losing your long-term plan.
