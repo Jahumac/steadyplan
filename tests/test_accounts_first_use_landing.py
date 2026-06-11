@@ -20,6 +20,8 @@ def test_accounts_empty_state_cta_targets_focused_accounts_wizard(app, client, m
     assert 'href="/accounts/?mode=create&amp;focus=first_account"' in html
     assert 'href="/accounts/?mode=create"' not in html
     assert "+ Add your first account" in html
+    assert "Add your first account — ISA, pension, savings, anything you want to track — and you&#39;ll start seeing your overall picture take shape. Monthly Update will also have somewhere real to work from." in html
+    assert "Add your first account — ISA, pension, savings, anything you want to track — and you&#39;ll start seeing your overall picture take shape.</p>" not in html
 
 
 def test_accounts_first_use_focus_surfaces_calm_start_here_guidance(app, client, make_user):
