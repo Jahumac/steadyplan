@@ -827,7 +827,7 @@
       <label>
         <span>Connection label</span>
         <input type="text" name="label" value="Trading 212" maxlength="64">
-        <small class="form-hint">A local label so you can recognise this connection later.</small>
+        <small class="form-hint">A local label so you can recognise this saved connection later.</small>
       </label>
       <label>
         <span>Broker environment</span>
@@ -836,17 +836,17 @@
           <option value="{{ option.key }}">{{ option.label }}</option>
           {% endfor %}
         </select>
-        <small class="form-hint">Start with Demo if you want a no-risk connection check first.</small>
+        <small class="form-hint">Start with Demo if you want a no-risk broker check first.</small>
       </label>
       <label>
         <span>Public API key</span>
         <input type="password" name="api_key" autocomplete="off" spellcheck="false">
-        <small class="form-hint">Your Trading 212 Public API key.</small>
+        <small class="form-hint">Paste the Trading 212 Public API key for this broker account.</small>
       </label>
       <label>
         <span>Public API secret</span>
         <input type="password" name="api_secret" autocomplete="off" spellcheck="false">
-        <small class="form-hint">Your Trading 212 Public API secret.</small>
+        <small class="form-hint">Paste the Trading 212 Public API secret for this broker account.</small>
       </label>
     </div>
     <div class="badge-row mt-1">
