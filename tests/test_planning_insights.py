@@ -165,6 +165,8 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"perfect retirement salary" not in response.data
     assert b"Weakest link" in response.data
     assert b"Balanced illustration:" in response.data
+    assert b" per month. For planning only, not guaranteed income." in response.data
+    assert b"/mo. For planning only, not guaranteed income." not in response.data
     assert b"For planning only, not guaranteed income." in response.data
     assert b"Illustration only, not guaranteed income." not in response.data
     assert b"Illustrative estimate, not guaranteed income." not in response.data

@@ -179,7 +179,7 @@
     <div class="card stat-card planning-mini-card">
       <h2>{{ row.label }} · {{ '{:.1f}'.format(row.rate * 100) }}%</h2>
       <p>£{{ '{:,.0f}'.format(row.annual_income) }}/yr</p>
-      <small>About £{{ '{:,.0f}'.format(row.monthly_income) }}/mo. For planning only, not guaranteed income. {{ row.note }}</small>
+      <small>About £{{ '{:,.0f}'.format(row.monthly_income) }} per month. For planning only, not guaranteed income. {{ row.note }}</small>
     </div>
     {% endfor %}
   </div>
@@ -219,7 +219,7 @@
       <div class="card stat-card planning-mini-card">
         <h2>{{ row.label }} · {{ '{:.1f}'.format(row.rate * 100) }}%</h2>
         <p>£{{ '{:,.0f}'.format(row.annual_income) }}/yr</p>
-        <small>About £{{ '{:,.0f}'.format(row.monthly_income) }}/mo. For planning only, not guaranteed income.</small>
+        <small>About £{{ '{:,.0f}'.format(row.monthly_income) }} per month. For planning only, not guaranteed income.</small>
       </div>
       {% endfor %}
       <div class="card planning-mini-card">
