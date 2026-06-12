@@ -331,7 +331,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     monthly_update_return_href = (
         next_url
         if next_url and next_url.startswith("/monthly-review")
-        else url_for("monthly_review.monthly_review", month=today.strftime("%Y-%m"))
+        else f'{url_for("monthly_review.monthly_review", month=today.strftime("%Y-%m"))}#expected-contributions'
     )
     ty_start_iso = uk_tax_year_start(today).isoformat()
     ty_end_iso = uk_tax_year_end(today).isoformat()
