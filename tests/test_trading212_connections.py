@@ -313,6 +313,72 @@ def test_disconnect_trading212_keeps_manual_csv_path_message(app, client, make_u
         assert rows == []
 
 
+def test_preview_trading212_missing_connection_uses_broker_connection_language(app, client, make_user):
+    _uid, username, password = make_user(username="t212-preview-missing-connection")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.post("/settings/trading212/999999/preview", follow_redirects=True)
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Read-only broker connection not found." in body
+    assert "Trading 212 connection not found." not in body
+
+
+def test_apply_trading212_reviewed_changes_rejects_unlinked_account_with_broker_connection_language(app, client, make_user):
+    uid, username, password = make_user(username="t212-apply-unlinked-account")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("apply-unlinked-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("apply-unlinked-secret"),
+            status="connected",
+            last_tested_at="2026-06-10T09:30:00+00:00",
+            external_account_id="ACC-UNLINKED-1",
+            external_account_currency="GBP",
+            external_total_value=1200.0,
+        )
+        assert connection is not None
+        account_id = create_account(
+            {
+                "name": "Manual ISA",
+                "provider": "Manual",
+                "wrapper_type": "ISA",
+                "category": "investments",
+                "tags": "",
+                "current_value": 1100.0,
+                "monthly_contribution": 0.0,
+                "goal_value": 0.0,
+                "valuation_mode": "manual",
+                "growth_mode": "rate",
+                "growth_rate_override": 0.0,
+                "owner": "joint",
+                "linked_broker_connection_id": None,
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-09",
+            },
+            uid,
+        )
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/apply-reviewed",
+        data={"account_id": str(account_id)},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith(f"/accounts/{account_id}")
+    with client.session_transaction() as sess:
+        flashes = sess.get("_flashes", [])
+    assert ("error", "That account is not linked to this read-only broker connection.") in flashes
+    assert ("error", "That account is not linked to this Trading 212 connection.") not in flashes
+
+
 def test_retest_trading212_success_uses_broker_connection_language(app, client, make_user, monkeypatch):
     uid, username, password = make_user(username="t212-retest-success")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)

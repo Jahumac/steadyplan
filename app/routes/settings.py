@@ -254,6 +254,14 @@ def trading212_sync_support_note():
     )
 
 
+def trading212_connection_not_found_message():
+    return "Read-only broker connection not found."
+
+
+def trading212_account_not_linked_message():
+    return "That account is not linked to this read-only broker connection."
+
+
 def _prepare_trading212_connections(rows):
     prepared = []
     for row in rows or []:
@@ -1226,7 +1234,7 @@ def connect_trading212():
 def retest_trading212(connection_id):
     connection = fetch_broker_connection(connection_id, current_user.id)
     if connection is None or connection.get("provider") != PROVIDER_TRADING212:
-        flash("Trading 212 connection not found.", "error")
+        flash(trading212_connection_not_found_message(), "error")
         return _settings_trading212_redirect()
 
     try:
@@ -1269,7 +1277,7 @@ def retest_trading212(connection_id):
 def preview_trading212(connection_id):
     connection = fetch_broker_connection(connection_id, current_user.id)
     if connection is None or connection.get("provider") != PROVIDER_TRADING212:
-        flash("Trading 212 connection not found.", "error")
+        flash(trading212_connection_not_found_message(), "error")
         return _settings_trading212_redirect()
 
     try:
@@ -1311,7 +1319,7 @@ def preview_trading212(connection_id):
             flash("Linked account not found.", "error")
             return _settings_trading212_redirect()
         if linked_account.get("linked_broker_connection_id") != connection_id:
-            flash("That account is not linked to this Trading 212 connection.", "error")
+            flash(trading212_account_not_linked_message(), "error")
             return redirect(url_for("accounts.account_detail", account_id=account_id))
     preview = _build_trading212_preview(current_user.id, refreshed_connection, snapshot, linked_account=linked_account)
     _log_trading212_sync_event(
@@ -1334,7 +1342,7 @@ def preview_trading212(connection_id):
 def apply_trading212_reviewed_changes(connection_id):
     connection = fetch_broker_connection(connection_id, current_user.id)
     if connection is None or connection.get("provider") != PROVIDER_TRADING212:
-        flash("Trading 212 connection not found.", "error")
+        flash(trading212_connection_not_found_message(), "error")
         return _settings_trading212_redirect()
 
     account_id = optional_int(request.form.get("account_id"), default=None)
@@ -1347,7 +1355,7 @@ def apply_trading212_reviewed_changes(connection_id):
         flash("Linked account not found.", "error")
         return _settings_trading212_redirect()
     if linked_account.get("linked_broker_connection_id") != connection_id:
-        flash("That account is not linked to this Trading 212 connection.", "error")
+        flash(trading212_account_not_linked_message(), "error")
         return redirect(url_for("accounts.account_detail", account_id=account_id))
 
     try:
@@ -1452,7 +1460,7 @@ def apply_trading212_reviewed_changes(connection_id):
 def apply_trading212_reviewed_broker_additions(connection_id):
     connection = fetch_broker_connection(connection_id, current_user.id)
     if connection is None or connection.get("provider") != PROVIDER_TRADING212:
-        flash("Trading 212 connection not found.", "error")
+        flash(trading212_connection_not_found_message(), "error")
         return _settings_trading212_redirect()
 
     account_id = optional_int(request.form.get("account_id"), default=None)
@@ -1465,7 +1473,7 @@ def apply_trading212_reviewed_broker_additions(connection_id):
         flash("Linked account not found.", "error")
         return _settings_trading212_redirect()
     if linked_account.get("linked_broker_connection_id") != connection_id:
-        flash("That account is not linked to this Trading 212 connection.", "error")
+        flash(trading212_account_not_linked_message(), "error")
         return redirect(url_for("accounts.account_detail", account_id=account_id))
 
     try:
@@ -1548,7 +1556,7 @@ def apply_trading212_reviewed_broker_additions(connection_id):
 def resolve_trading212_possible_match(connection_id):
     connection = fetch_broker_connection(connection_id, current_user.id)
     if connection is None or connection.get("provider") != PROVIDER_TRADING212:
-        flash("Trading 212 connection not found.", "error")
+        flash(trading212_connection_not_found_message(), "error")
         return _settings_trading212_redirect()
 
     account_id = optional_int(request.form.get("account_id"), default=None)
@@ -1561,7 +1569,7 @@ def resolve_trading212_possible_match(connection_id):
         flash("Linked account not found.", "error")
         return _settings_trading212_redirect()
     if linked_account.get("linked_broker_connection_id") != connection_id:
-        flash("That account is not linked to this Trading 212 connection.", "error")
+        flash(trading212_account_not_linked_message(), "error")
         return redirect(url_for("accounts.account_detail", account_id=account_id))
 
     try:
@@ -1657,7 +1665,7 @@ def resolve_trading212_possible_match(connection_id):
 def disconnect_trading212(connection_id):
     connection = fetch_broker_connection(connection_id, current_user.id)
     if connection is None or connection.get("provider") != PROVIDER_TRADING212:
-        flash("Trading 212 connection not found.", "error")
+        flash(trading212_connection_not_found_message(), "error")
         return _settings_trading212_redirect()
     delete_broker_connection(connection_id, current_user.id)
     flash("Read-only broker connection removed. Manual/CSV imports remain available.", "success")
