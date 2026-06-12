@@ -258,6 +258,7 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "### Scenario estimate certainty" in voice_and_copy
     assert "2. Scenario estimate labels and estimate disclaimers" in voice_and_copy
     assert "Overview/Review/Scenario estimates/etc." in voice_and_copy
+    assert "Always use “scenario estimate” / “scenario estimates” and “based on assumptions”; avoid “projection” / “projections” in user-facing copy." in voice_and_copy
     assert "- Projected: calculated scenario outcome based on assumptions" not in voice_and_copy
     assert "### Projections" not in voice_and_copy
     assert "Projection certainty and disclaimers" not in voice_and_copy
@@ -265,6 +266,7 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "### Projections certainty" not in voice_and_copy
     assert "2. Projections labels and estimate disclaimers" not in voice_and_copy
     assert "Overview/Review/Projections/etc." not in voice_and_copy
+    assert "Always use “scenario estimate”, “projection”, “based on assumptions”." not in voice_and_copy
     assert "intimidated by financial admin, scenario estimates, and long-term planning." in product_truth
     assert "Assumptions, scenario estimates, and confirmed numbers should not blur together." in product_truth
     assert "understand cash-accessible, invested-accessible, restricted, and locked-for-later money" in product_truth
