@@ -155,6 +155,8 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"See what you can usually reach now, what comes with conditions, what stays locked for later, and what your current plan might support." in response.data
     assert b"Target retirement income/year" in response.data
     assert b"Accessible security milestones" in response.data
+    assert b"Money normally usable before pension age: ISA, cash, taxable accounts, Premium Bonds and similar accounts." in response.data
+    assert b"Money normally usable before pension age: ISA, cash, GIA, Premium Bonds and similar accounts." not in response.data
     assert b"Cash accessible:" in response.data
     assert b"Invested accessible:" in response.data
     assert b"Timing estimate:" in response.data
