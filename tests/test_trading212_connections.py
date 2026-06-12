@@ -999,6 +999,9 @@ def test_account_list_shows_trading212_account_source_summary(app, client, make_
     assert body.count("Account source:") == 2
     assert "Account source: <strong>Broker primary</strong>" in body
     assert "Account source: <strong>Manual fallback</strong>" in body
+    assert body.count('class="acct-broker-mobile-summary overview-compact-only"') == 2
+    assert "<strong>Broker primary</strong>\n        <span aria-hidden=\"true\">·</span>\n        <span>Connected</span>" in body
+    assert "<strong>Manual fallback</strong>\n        <span aria-hidden=\"true\">·</span>\n        <span>Needs attention</span>" in body
     assert body.count("Broker status:") == 2
     assert "Broker status: <strong>Connected</strong>" in body
     assert "Broker status: <strong>Needs attention</strong>" in body
@@ -1281,22 +1284,27 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Focused on linked account <strong>Trading 212 ISA</strong>" in body
     assert "Only holdings from this SteadyPlan account were compared with the broker snapshot." in body
-    assert "Reviewed apply steps" in body
+    assert "Reviewed write steps" in body
+    assert "Reviewed apply steps" not in body
     assert "Proposed apply plan" not in body
     assert "Matched holdings to update" in body
     assert "Broker-only positions to add" in body
     assert "Tracked-only holdings to review" in body
     assert "Broker vs tracked value gap" in body
     assert "+550.00 GBP" in body
-    assert "Compare <strong>2950.00 GBP</strong> from Trading 212 against <strong>2400.00 GBP</strong> currently tracked in SteadyPlan." in body
-    assert "Apply reviewed matched changes" in body
-    assert "Add reviewed broker-only positions" in body
-    assert "This first write step only updates already matched holdings on <strong>Trading 212 ISA</strong>." in body
-    assert "This step only adds broker-only positions with no possible tracked match clues." in body
-    assert "Still preview only. If you choose a write step later, SteadyPlan should ask you to confirm each step separately for <strong>Trading 212 ISA</strong>." in body
-    assert "This preview found differences to review. Nothing runs automatically from here; any later write should stay explicit, account-scoped, and non-destructive." in body
+    assert "Compare <strong>2950.00 GBP</strong> from Trading 212 against <strong>2400.00 GBP</strong> tracked in SteadyPlan. Review any units or value difference before writing, and keep broker-only and tracked-only items explicit." in body
+    assert "Apply matched holding updates" in body
+    assert "Apply reviewed matched changes" not in body
+    assert "Add broker-only positions" in body
+    assert "Add reviewed broker-only positions" not in body
+    assert "Updates matched holdings only on <strong>Trading 212 ISA</strong>. Broker-only positions and tracked-only holdings stay untouched." in body
+    assert "Adds broker-only positions with no possible tracked match clues. Positions with possible matches stay out for manual review." in body
+    assert "Preview only. Any later write stays separate and needs confirmation for <strong>Trading 212 ISA</strong>." in body
+    assert "Differences found. Nothing runs automatically; any later write stays explicit, account-scoped, and non-destructive." in body
     assert "If a later write step is added, this is the safest shape of work SteadyPlan should ask you to confirm" not in body
     assert "This preview found differences to review. Any write step should stay explicit, account-scoped, and non-destructive." not in body
+    assert "This preview found differences to review. Nothing runs automatically from here; any later write should stay explicit, account-scoped, and non-destructive." not in body
+    assert "Still preview only. If you choose a write step later, SteadyPlan should ask you to confirm each step separately for <strong>Trading 212 ISA</strong>." not in body
     assert "Back to account" in body
     assert "Recent sync activity" in body
     assert "Keep a visible record of the last preview and last confirmed write step on this linked broker connection." in body
@@ -1701,7 +1709,8 @@ def test_apply_trading212_reviewed_changes_requires_confirmation(app, client, ma
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Tick the confirmation box before applying reviewed Trading 212 changes." in body
-    assert "Apply reviewed matched changes" in body
+    assert "Apply matched holding updates" in body
+    assert "Apply reviewed matched changes" not in body
 
     with app.app_context():
         apple = next(row for row in fetch_holdings_for_account(account_id) if row["ticker"] == "AAPL_US_EQ")
@@ -2120,7 +2129,8 @@ def test_apply_trading212_reviewed_broker_additions_requires_confirmation(app, c
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Tick the confirmation box before adding reviewed broker-only positions." in body
-    assert "Add reviewed broker-only positions" in body
+    assert "Add broker-only positions" in body
+    assert "Add reviewed broker-only positions" not in body
 
     with app.app_context():
         holdings = list(fetch_holdings_for_account(account_id))
