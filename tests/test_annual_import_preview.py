@@ -88,6 +88,8 @@ def test_annual_import_preview_does_not_write_db(app, auth_client, make_user):
     assert b"Preview" in resp.data
     assert b"June 2026" in resp.data
     assert b"450" in resp.data
+    assert b"Budget Setup" in resp.data
+    assert b"Edit Budget" not in resp.data
 
     with app.app_context():
         with get_connection() as conn:
