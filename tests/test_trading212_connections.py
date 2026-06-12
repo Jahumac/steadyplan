@@ -60,6 +60,10 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "Add a read-only Trading 212 connection" not in body
     assert "<span>Broker environment</span>" in body
     assert "<span>Environment</span>" not in body
+    assert "<span>Public API key</span>" in body
+    assert "<span>API key</span>" not in body
+    assert "<span>Public API secret</span>" in body
+    assert "<span>API secret</span>" not in body
     assert "store the key pair encrypted on this server using this app's secret key" in body
     assert "Public API currently supports Invest and Stocks ISA only" in body
     assert "Cash ISA and SIPP accounts should stay manual/CSV-tracked for now" in body
