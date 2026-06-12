@@ -27,6 +27,8 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert "Click any number and type to change it for this month." in html
     assert "Just click any number and type to change it for this month." not in html
     assert "Changes save as you edit." in html
+    assert "Budget Setup</em> is where you add or remove recurring budget lines." in html
+    assert "Use <em>Budget Setup</em> only to add or remove budget lines." not in html
     assert "It saves automatically." not in html
     assert "Your take-home pay and any side income. This is the money you can allocate across the rest of the budget." in html
     assert "Your take-home pay and any side income — used to show how much is available to allocate." not in html
