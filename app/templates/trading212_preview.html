@@ -168,10 +168,10 @@
     <form method="post" action="{{ url_for('settings.apply_trading212_reviewed_broker_additions', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-apply-form trading212-apply-additions-form">
       <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
       <h4 style="margin:0;">Add broker-only positions</h4>
-      <p class="helper-text" style="margin:0.45rem 0 0;">Adds broker-only positions with no possible tracked match clues. Positions with possible matches stay out for manual review.</p>
+      <p class="helper-text" style="margin:0.45rem 0 0;">Adds broker-only positions with no likely tracked match clues. Positions with likely matches stay out for manual review.</p>
       <label class="checkbox-row" style="margin-top:0.75rem; align-items:flex-start; gap:0.55rem;">
         <input type="checkbox" name="confirm_apply_broker_additions" value="yes">
-        <span>I reviewed the broker-only positions and want SteadyPlan to add the {{ preview.apply_plan.addable_broker_count }} position{{ '' if preview.apply_plan.addable_broker_count == 1 else 's' }} with no possible tracked matches.</span>
+        <span>I reviewed the broker-only positions and want SteadyPlan to add the {{ preview.apply_plan.addable_broker_count }} position{{ '' if preview.apply_plan.addable_broker_count == 1 else 's' }} with no likely tracked matches.</span>
       </label>
       <div class="button-row mt-1">
         <button type="submit" class="btn btn-secondary">Add broker-only positions</button>
@@ -374,7 +374,7 @@
       </div>
       {% if mobile_overflow_matches %}
       <details class="trading212-mobile-candidate-overflow">
-        <summary>Show {{ mobile_overflow_matches|length }} more possible {{ 'match' if mobile_overflow_matches|length == 1 else 'matches' }}</summary>
+        <summary>Show {{ mobile_overflow_matches|length }} more likely {{ 'match' if mobile_overflow_matches|length == 1 else 'matches' }}</summary>
         <div class="trading212-candidate-list trading212-candidate-list-overflow">
           {% for candidate in mobile_overflow_matches %}
           <div class="trading212-candidate-card">
