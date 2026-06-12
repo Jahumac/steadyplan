@@ -999,6 +999,10 @@ def test_account_list_shows_trading212_account_source_summary(app, client, make_
     assert body.count("Account source:") == 2
     assert "Account source: <strong>Broker primary</strong>" in body
     assert "Account source: <strong>Manual fallback</strong>" in body
+    assert body.count("Broker status:") == 2
+    assert "Broker status: <strong>Connected</strong>" in body
+    assert "Broker status: <strong>Needs attention</strong>" in body
+    assert "Broker status: <strong>Not checked</strong>" not in body
 
 
 def test_delete_trading212_connection_clears_linked_account_reference(app, make_user):

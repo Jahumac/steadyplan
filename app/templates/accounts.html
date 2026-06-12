@@ -126,6 +126,7 @@
       <div class="acct-provider">{{ account.provider }}{% if account.owner %} · {{ account.owner }}{% endif %}</div>
       {% if linked_source %}
       <div class="text-sm text-muted">Account source: <strong>{{ linked_source.source_mode_label }}</strong></div>
+      <div class="text-sm text-muted">Broker status: <strong>{{ linked_source.status_label }}</strong></div>
       {% endif %}
     </div>
     <div class="acct-card-foot">
