@@ -70,6 +70,9 @@ def test_contribution_summary_empty_state_uses_monthly_update_copy(auth_client):
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
+    assert "Contribution history" in html
+    assert "Month-by-month contribution history across all accounts" in html
+    assert "Contribution Summary" not in html
     assert "Complete some monthly updates and the contribution history will appear here." in html
     assert "Complete some monthly reviews and the contribution history will appear here." not in html
     assert ">Open monthly update<" in html
