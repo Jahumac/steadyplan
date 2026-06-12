@@ -1,6 +1,6 @@
 # SteadyPlan (formerly Shelly Finance)
 
-A self-hosted personal finance planning and visibility tool for UK investors 🐢. See where you stand today, what is available now vs later, and how monthly decisions connect to long-term scenario estimates — on your own server/home network.
+A self-hosted personal finance planning and visibility tool for UK investors 🐢. See where you stand today, what is cash-accessible now, what invested money is still reachable, what is restricted, and how monthly decisions connect to long-term scenario estimates — on your own server/home network.
 
 Primary domain: **steadyplan.co.uk** (with **steady-plan.co.uk** as an optional redirect/secondary domain).
 

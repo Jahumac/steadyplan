@@ -46,6 +46,8 @@ def _read_roadmap_execution() -> str:
 def test_homepage_trust_card_mentions_restore_preview_and_safety_backup():
     html = _read("index.html")
 
+    assert 'content="SteadyPlan is a self-hosted UK finance planning and visibility tool. Understand where you are, what is cash-accessible now, what invested money is still reachable, what is restricted, and how today’s choices connect to long-term scenarios."' in html
+    assert 'content="SteadyPlan is a self-hosted UK finance planning and visibility tool. Understand where you are, what’s available now vs locked for later, and how today’s choices connect to long-term scenarios."' not in html
     assert "SteadyPlan uses a local SQLite database, keeps backup and restore guidance close to the product, and now surfaces Diagnostics plus trust-posture checks so the trust story is explicit rather than implied." in html
     assert "See how JSON exports, whole-instance backups, and restore checks fit together" not in html
 
@@ -170,6 +172,8 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "Public site supports a manual light/dark toggle without a build step" in readme
     assert "Monthly Review" not in readme
     assert "A self-hosted personal finance planning and visibility tool for UK investors" in readme
+    assert "See where you stand today, what is cash-accessible now, what invested money is still reachable, what is restricted, and how monthly decisions connect to long-term scenario estimates" in readme
+    assert "See where you stand today, what is available now vs later, and how monthly decisions connect to long-term scenario estimates" not in readme
     assert "Settings includes optional scoped **Assistant access** for a personal Pip setup." in readme
     assert "Optional read-only Trading 212 connection beta with preview-before-apply review flow" in readme
     assert "Public website with Tour, Roadmap, docs hub, and optional read-only demo path" in readme
