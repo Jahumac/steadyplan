@@ -208,7 +208,8 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     product_truth = _read_product_truth()
     changelog = _read_changelog()
 
-    assert "Projections are scenario estimates based on your inputs. No promises." in homepage
+    assert "Scenario estimates are based on your inputs. No promises." in homepage
+    assert "Projections are scenario estimates based on your inputs. No promises." not in homepage
     assert "Projections are illustrative and based on your inputs." not in homepage
     assert "Scenario estimates" in homepage
     assert "retirement projections" not in homepage
@@ -216,11 +217,14 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Projections are illustrative and based on your inputs, assumptions, and scenarios." not in about
     assert "<h2 class=\"section-title\">Scenario estimates</h2>" in tour
     assert 'content="Feature-led tour of SteadyPlan. See what each area does and why it exists, with grounded notes and demo screenshots."' in tour
-    assert "The projections view is built around assumptions you control. The goal is to support long-term thinking while staying clear about what is entered data and what is forecast output." in tour
+    assert "The scenario estimates view is built around assumptions you control. The goal is to support long-term thinking while staying clear about what is entered data and what is forecast output." in tour
+    assert "Scenario estimates are assumptions-based tools to explore trade-offs, not a guarantee of outcomes." in tour
     assert "SteadyPlan scenario estimates summary card (demo data)" in tour
     assert "<h3>Projections</h3>" not in tour
     assert 'content="Product tour of SteadyPlan’s main screens using demo data: Overview, holdings, planning, projections, and trust/data-ownership flows."' not in tour
     assert "Projections let you explore what changes if you adjust contributions, retirement timing, or assumptions." not in tour
+    assert "Projections are assumptions-based scenario estimates to explore trade-offs, not a guarantee of outcomes." not in tour
+    assert "The projections view is built around assumptions you control. The goal is to support long-term thinking while staying clear about what is entered data and what is forecast output." not in tour
     assert "SteadyPlan projections screen with demo data" not in tour
     assert "<strong>Scenario estimates</strong>" in concept_a
     assert "<strong>Projections</strong>" not in concept_a
