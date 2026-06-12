@@ -1192,7 +1192,7 @@ def connect_trading212():
     api_key = request.form.get("api_key", "").strip()
     api_secret = request.form.get("api_secret", "").strip()
     if not api_key or not api_secret:
-        flash("Enter both the Trading 212 API key and API secret.", "error")
+        flash("Enter both the Public API key and Public API secret for this broker account.", "error")
         return _settings_trading212_redirect()
 
     try:

@@ -315,6 +315,26 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
         assert decrypt_trading212_credential(row["api_secret_ciphertext"]) == "live-secret-abcdef"
 
 
+def test_connect_trading212_missing_credentials_uses_public_api_field_labels(app, client, make_user):
+    _uid, username, password = make_user(username="t212-missing-credentials")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.post(
+        "/settings/trading212/connect",
+        data={
+            "label": "Trading 212 ISA",
+            "environment": "live",
+            "api_key": "",
+            "api_secret": "live-secret-abcdef",
+        },
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Enter both the Public API key and Public API secret for this broker account." in body
+    assert "Enter both the Trading 212 API key and API secret." not in body
+
+
 def test_disconnect_trading212_keeps_manual_csv_path_message(app, client, make_user):
     uid, username, password = make_user(username="t212-disconnect")
     with app.app_context():
