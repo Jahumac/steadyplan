@@ -157,6 +157,33 @@ def test_settings_renders_unchecked_trading212_connection_status_fallback(app, c
     assert "Unverified" not in body
 
 
+def test_settings_renders_trading212_connection_without_account_summary_label(app, client, make_user):
+    uid, username, password = make_user(username="t212-no-account-summary")
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("live-key-no-summary"),
+            api_secret_ciphertext=encrypt_trading212_credential("live-secret-no-summary"),
+            status="pending",
+            external_account_id=None,
+            external_account_currency=None,
+            external_total_value=None,
+        )
+        assert connection is not None
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    resp = client.get("/settings/")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Broker account" in body
+    assert "No broker account summary yet" in body
+    assert ">—<" not in body
+
+
 def test_settings_renders_error_trading212_connection_with_labelled_check_error(app, client, make_user):
     uid, username, password = make_user(username="t212-error-status")
     with app.app_context():
