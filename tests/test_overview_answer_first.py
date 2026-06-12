@@ -742,6 +742,8 @@ def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
     assert "£0" in html
     assert "£2,000" in html
     assert "17% of your current total is usually reachable before pension age" in html
+    assert html.count("ISA, cash, taxable accounts, Premium Bonds and similar accounts sit here.") == 2
+    assert "ISA, cash, GIA, Premium Bonds and similar accounts sit here." not in html
     assert "When you have locked money, the top summary keeps the headline amount visible." in html
     assert "Next accessible milestone:" in html
     assert "£20,000" in html
