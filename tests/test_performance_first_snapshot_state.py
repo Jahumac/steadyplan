@@ -15,7 +15,8 @@ def test_performance_page_keeps_zero_snapshot_empty_state(client, make_user):
     assert "No data yet" in body
     assert "Complete two monthly updates to start seeing performance charts" in body
     assert "Open monthly update" in body
-    assert f'href="/monthly-review/?month={month_key}"' in body
+    assert f'href="/monthly-review/?month={month_key}#expected-contributions"' in body
+    assert f'href="/monthly-review/?month={month_key}">Open monthly update</a>' not in body
     assert 'href="/monthly-review/">Open monthly update</a>' not in body
     assert "One snapshot down" not in body
     assert "First baseline saved" not in body
@@ -41,7 +42,8 @@ def test_performance_page_acknowledges_first_snapshot(client, make_user):
     assert "Come back after next month's monthly update and the performance chart will appear." not in body
     month_key = date.today().strftime("%Y-%m")
     assert "Open monthly update" in body
-    assert f'href="/monthly-review/?month={month_key}"' in body
+    assert f'href="/monthly-review/?month={month_key}#expected-contributions"' in body
+    assert f'href="/monthly-review/?month={month_key}">Open monthly update</a>' not in body
     assert 'href="/monthly-review/">Open monthly update</a>' not in body
     assert "Back to overview" not in body
     assert "No data yet" not in body

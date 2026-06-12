@@ -35,7 +35,7 @@ def performance():
     uid = current_user.id
     assumptions   = fetch_assumptions(uid)
     accounts      = fetch_all_accounts(uid)
-    current_monthly_update_href = f"/monthly-review/?month={datetime.now().strftime('%Y-%m')}"
+    current_monthly_update_href = f"/monthly-review/?month={datetime.now().strftime('%Y-%m')}#expected-contributions"
 
     assumed_rate   = to_float(assumptions["annual_growth_rate"]) if assumptions else 0.07
 
@@ -356,7 +356,7 @@ def performance():
 def contribution_summary():
     uid = current_user.id
     today = datetime.now().date()
-    current_monthly_update_href = f"/monthly-review/?month={today.strftime('%Y-%m')}"
+    current_monthly_update_href = f"/monthly-review/?month={today.strftime('%Y-%m')}#expected-contributions"
     ty_start = uk_tax_year_start(today)
     ty_end   = uk_tax_year_end(today)
     from_month = ty_start.strftime("%Y-%m")
