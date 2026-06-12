@@ -150,15 +150,23 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
 
     assert response.status_code == 200
     assert b'budget-year-strip month-strip-global month-strip-mobile-hidden' in response.data
-    assert b"Accessible now, restricted, and locked" in response.data
+    assert b"Cash-accessible, invested-accessible, restricted, and locked-for-later money" in response.data
+    assert b"Accessible now, restricted, and locked" not in response.data
     assert b"Accessible vs locked" not in response.data
-    assert b"See what you can usually reach now, what comes with conditions, what stays locked for later, and what your current plan might support." in response.data
+    assert b"See what is cash-accessible now, what invested money is still reachable, what comes with conditions, what stays locked for later, and what your current plan might support." in response.data
+    assert b"See what you can usually reach now, what comes with conditions, what stays locked for later, and what your current plan might support." not in response.data
     assert b"Target retirement income/year" in response.data
-    assert b"Accessible security milestones" in response.data
+    assert b"Accessible now milestones" in response.data
+    assert b"Accessible security milestones" not in response.data
+    assert b">Accessible now</h2>" in response.data
     assert b"Money normally usable before pension age: ISA, cash, taxable accounts, Premium Bonds and similar accounts." in response.data
     assert b"Money normally usable before pension age: ISA, cash, GIA, Premium Bonds and similar accounts." not in response.data
     assert b"Cash accessible:" in response.data
     assert b"Invested accessible:" in response.data
+    assert b"Cash accessible</span><strong>0 accounts" in response.data
+    assert b"Invested accessible</span><strong>1 accounts" in response.data
+    assert b"Locked for later</span><strong>1 accounts" in response.data
+    assert b"<span>Locked</span><strong>1 accounts" not in response.data
     assert b"Timing estimate:" in response.data
     assert b"Estimated:" not in response.data
     assert b"View account details" in response.data

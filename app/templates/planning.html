@@ -10,8 +10,8 @@
   <div class="hero-top planning-hero-top">
     <div>
       <p class="eyebrow">Planning</p>
-      <h2 class="hero-value">Accessible now, restricted, and locked</h2>
-      <p class="hero-subtitle">See what you can usually reach now, what comes with conditions, what stays locked for later, and what your current plan might support.</p>
+      <h2 class="hero-value">Cash-accessible, invested-accessible, restricted, and locked-for-later money</h2>
+      <p class="hero-subtitle">See what is cash-accessible now, what invested money is still reachable, what comes with conditions, what stays locked for later, and what your current plan might support.</p>
       <p class="helper-text m-0 planning-hero-caveat">Assumptions-based analyser, not advice. Useful signal first; detail when you need it.</p>
     </div>
   </div>
@@ -25,7 +25,7 @@
 
 <section class="card-grid mb-1 planning-stat-grid planning-desktop-only">
   <div class="card stat-card">
-    <h2>Accessible security</h2>
+    <h2>Accessible now</h2>
     <p>£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</p>
     <small>Money normally usable before pension age: ISA, cash, taxable accounts, Premium Bonds and similar accounts.</small>
     <small>Cash accessible: £{{ '{:,.0f}'.format(access_summary.accessible_cash_current) }} · Invested accessible: £{{ '{:,.0f}'.format(access_summary.accessible_invested_current) }}</small>
@@ -56,8 +56,8 @@
 <section class="card mb-1">
   <div class="section-header planning-section-header">
     <div>
-      <p class="eyebrow">Accessible security</p>
-      <h2>Accessible security milestones</h2>
+      <p class="eyebrow">Accessible now</p>
+      <h2>Accessible now milestones</h2>
     </div>
     <a class="badge badge-sm" href="/accounts/">Review accounts</a>
   </div>
@@ -254,9 +254,10 @@
   </div>
 
   <div class="planning-account-summary planning-compact-only">
-    <div><span>Accessible</span><strong>{{ access_summary.groups.accessible.accounts|length }} accounts</strong></div>
+    <div><span>Cash accessible</span><strong>{{ access_summary.accessible_breakdown.cash_accessible.accounts|length }} accounts</strong></div>
+    <div><span>Invested accessible</span><strong>{{ access_summary.accessible_breakdown.invested_accessible.accounts|length }} accounts</strong></div>
     <div><span>Restricted</span><strong>{{ access_summary.groups.restricted.accounts|length }} accounts</strong></div>
-    <div><span>Locked</span><strong>{{ access_summary.groups.locked.accounts|length }} accounts</strong></div>
+    <div><span>Locked for later</span><strong>{{ access_summary.groups.locked.accounts|length }} accounts</strong></div>
   </div>
 
   <div class="budget-rows planning-desktop-detail">
