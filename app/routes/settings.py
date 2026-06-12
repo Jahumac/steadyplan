@@ -417,6 +417,15 @@ def _trading212_broker_row_key(row, index):
     return f"{index}:{(row or {}).get('ticker') or ''}:{(row or {}).get('name') or ''}"
 
 
+def trading212_match_type_label(match_type):
+    labels = {
+        "ticker": "Ticker match",
+        "name": "Name match",
+        "name_normalized": "Normalised name match",
+    }
+    return labels.get(str(match_type or "").strip().lower(), "Other match")
+
+
 def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=None):
     positions = list(snapshot.get("positions") or [])
     preferred_account_id = None
@@ -511,6 +520,7 @@ def _render_trading212_preview(preview):
         trading212_sync_support_note=trading212_sync_support_note,
         preview_back_href=url_for("accounts.account_detail", account_id=account_id) if linked_account else "/settings/#trading212-access",
         preview_back_label="Back to account" if linked_account else "Back to settings",
+        trading212_match_type_label=trading212_match_type_label,
     )
 
 
