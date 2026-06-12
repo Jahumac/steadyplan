@@ -102,6 +102,10 @@ def test_performance_helper_uses_sentence_case_monthly_update_copy(app, client, 
                 (uid,),
             )
             conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2026-01-01', 900)",
+                (uid,),
+            )
+            conn.execute(
                 "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2026-04-01', 1000)",
                 (uid,),
             )
@@ -120,6 +124,8 @@ def test_performance_helper_uses_sentence_case_monthly_update_copy(app, client, 
     assert "monthly update due date" not in html
     assert "salary day shifted for weekends" not in html
     assert "includes tax relief, Lifetime ISA bonus, employer match" in html
+    assert "Over the period shown, that’s an average of £150 per month." in html
+    assert "/mo." not in html
     assert "This compares your recorded portfolio value with an assumptions-based comparison line. It is a planning guide, not a guarantee." in html
     assert "Actual vs. comparison line" in html
     assert ">Comparison line<" in html
