@@ -97,7 +97,7 @@ Goal:
 - Explain scenarios, not promises.
 
 Rules:
-- Always use “scenario estimate”, “projection”, “based on assumptions”.
+- Always use “scenario estimate” / “scenario estimates” and “based on assumptions”; avoid “projection” / “projections” in user-facing copy.
 - Label assumptions drivers clearly (fees, growth rate, contributions, retirement timing).
 - Avoid any language that implies certainty (“you will have”, “guaranteed”).
 
