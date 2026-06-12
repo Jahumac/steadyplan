@@ -68,7 +68,8 @@ def test_account_detail_acknowledges_first_daily_snapshot(app, client, make_user
     body = response.get_data(as_text=True)
     assert "Your first baseline is saved" in body
     assert "This account has its first snapshot." not in body
-    assert "Complete next month&#39;s monthly update and the chart will appear." in body
+    assert "Complete next month&#39;s monthly update and the account history chart will appear." in body
+    assert "Complete next month&#39;s monthly update and the chart will appear." not in body
     assert "First baseline saved" not in body
     assert "Come back after next month&#39;s monthly update and the chart will appear." not in body
     month_key = date.today().strftime("%Y-%m")
@@ -98,7 +99,8 @@ def test_account_detail_acknowledges_first_monthly_snapshot_without_daily_histor
     body = response.get_data(as_text=True)
     assert "Your first baseline is saved" in body
     assert "This account has its first snapshot." not in body
-    assert "Complete next month&#39;s monthly update and the chart will appear." in body
+    assert "Complete next month&#39;s monthly update and the account history chart will appear." in body
+    assert "Complete next month&#39;s monthly update and the chart will appear." not in body
     assert "First baseline saved" not in body
     assert "Come back after next month&#39;s monthly update and the chart will appear." not in body
     month_key = date.today().strftime("%Y-%m")
