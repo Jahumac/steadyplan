@@ -222,7 +222,7 @@
         <tr>
           <th>Broker position</th>
           <th>Tracked holding</th>
-          <th>Match</th>
+          <th>How it matched</th>
           <th class="num">Units</th>
           <th class="num">Value</th>
         </tr>
@@ -238,7 +238,7 @@
             {{ pair.holding.holding_name }}
             <div class="helper-text" style="margin-top:0.2rem;">{{ pair.holding.account_name }}</div>
           </td>
-          <td>{{ pair.match_type|title }}</td>
+          <td>{{ trading212_match_type_label(pair.match_type) }}</td>
           <td class="num">
             {{ '%.4f'|format(pair.csv.units or 0) }} broker
             <div class="helper-text" style="margin-top:0.2rem;">{{ '%.4f'|format(pair.holding.units or 0) }} tracked{% if pair.units_difference is not none %} · diff {{ '%+.4f'|format(pair.units_difference) }}{% endif %}</div>

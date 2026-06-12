@@ -48,6 +48,15 @@ def test_requirements_include_cryptography_for_trading212_runtime():
     assert any(line.lower().startswith("cryptography") for line in lines)
 
 
+def test_trading212_match_type_label_uses_plain_language():
+    from app.routes.settings import trading212_match_type_label
+
+    assert trading212_match_type_label("ticker") == "Ticker match"
+    assert trading212_match_type_label("name") == "Name match"
+    assert trading212_match_type_label("name_normalized") == "Normalised name match"
+    assert trading212_match_type_label("unexpected") == "Other match"
+
+
 def test_settings_renders_trading212_panel_and_support_boundary(app, client, make_user):
     _uid, username, password = make_user(username="t212-settings")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
@@ -2457,10 +2466,14 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert "Preview holdings snapshot" not in body
     assert "Nothing in SteadyPlan has been changed." in body
     assert "Matched holdings" in body
+    assert "<th>How it matched</th>" in body
+    assert "<th>Match</th>" not in body
     assert "Broker-only positions" in body
     assert "Tracked holdings not seen in this snapshot" in body
     assert "Apple Inc" in body
     assert "Vanguard FTSE All-World" in body
+    assert ">Ticker match</td>" in body
+    assert "Name_Normalized" not in body
     assert "diff +50.00" in body
     assert "Possible tracked matches" in body
     assert "Vanguard FTSE Global All Cap" in body
