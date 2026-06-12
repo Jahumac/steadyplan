@@ -1007,6 +1007,9 @@ def test_account_list_shows_trading212_account_source_summary(app, client, make_
     assert "Last broker check: <strong>2026-06-08 10:00 UTC</strong>" in body
     assert "Last broker check: <strong>2026-06-09 07:15 UTC</strong>" in body
     assert "Last broker check: <strong>No broker check yet</strong>" not in body
+    assert "Broker total (GBP): <strong>£12,000.00</strong>" in body
+    assert "Broker total (GBP): <strong>£5,000.00</strong>" not in body
+    assert "Broker total (GBP): <strong>—</strong>" not in body
 
 
 def test_delete_trading212_connection_clears_linked_account_reference(app, make_user):
