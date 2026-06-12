@@ -237,7 +237,7 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "SIPP data is not available through the broker API yet" not in body
     assert "Each saved read-only broker connection stays read-only." in body
     assert "Each saved connection is read-only." not in body
-    assert "Preview read-only holdings snapshot" in body
+    assert "Preview read-only broker snapshot" in body
     assert "Retest connection" in body
     assert "Remove connection" in body
     assert "Read-only" in body
@@ -258,6 +258,7 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "<th>Actions</th>" not in body
     assert ">Retest<" not in body
     assert ">Remove<" not in body
+    assert "Preview read-only holdings snapshot" not in body
     assert "Preview holdings snapshot" not in body
     assert "live…3456" in body
     assert "998877" in body
@@ -2495,9 +2496,11 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert '<title>Trading 212 read-only preview · SteadyPlan</title>' in body
+    assert '<title>Trading 212 read-only broker preview · SteadyPlan</title>' in body
+    assert '<title>Trading 212 read-only preview · SteadyPlan</title>' not in body
     assert '<title>Trading 212 preview · SteadyPlan</title>' not in body
-    assert "Preview read-only holdings snapshot" in body
+    assert "Preview read-only broker snapshot" in body
+    assert "Preview read-only holdings snapshot" not in body
     assert "Preview holdings snapshot" not in body
     assert "Nothing in SteadyPlan has been changed." in body
     assert "Matched holdings" in body
