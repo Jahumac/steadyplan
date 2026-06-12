@@ -94,4 +94,6 @@ def test_contribution_history_marks_global_month_strip_for_mobile_hiding(app, cl
     html = resp.get_data(as_text=True)
 
     assert '<section class="budget-year-strip month-strip-global month-strip-mobile-hidden' in html
-    assert 'Contribution Summary' in html
+    assert 'Contribution history' in html
+    assert 'Month-by-month contribution history across all accounts' in html
+    assert 'Contribution Summary' not in html
