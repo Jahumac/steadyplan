@@ -155,6 +155,62 @@ def test_accounts_list_card_uses_clearer_into_pot_monthly_copy(app, client, make
     assert '£200/mo' not in html
 
 
+def test_account_detail_contribution_adjustments_panel_uses_per_month_wording(app, client, make_user):
+    uid, username, password = make_user(username="accounts-adjustments-monthly-copy", password="password123")
+
+    with app.app_context():
+        payload = _account_payload()
+        payload["monthly_contribution"] = 200
+        account_id = create_account(payload, uid)
+        current_month = date.today().strftime("%Y-%m")
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO contribution_overrides (account_id, from_month, to_month, override_amount, reason, created_at)
+                VALUES (?, ?, ?, ?, ?, datetime('now'))
+                """,
+                (account_id, current_month, current_month, 250, "Bonus month"),
+            )
+            conn.execute(
+                """
+                INSERT INTO contribution_overrides (account_id, from_month, to_month, override_amount, reason, created_at)
+                VALUES (?, ?, ?, ?, ?, datetime('now'))
+                """,
+                (account_id, "2026-01", "2026-02", 150, "Holiday dip"),
+            )
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Contribution Adjustments" in html
+    assert "£250.00 per month" in html
+    assert "£150.00 per month" in html
+    assert "£250.00/mo" not in html
+    assert "£150.00/mo" not in html
+
+
+def test_account_detail_standard_contribution_panel_uses_per_month_wording(app, client, make_user):
+    uid, username, password = make_user(username="accounts-standard-adjustment-copy", password="password123")
+
+    with app.app_context():
+        payload = _account_payload()
+        payload["monthly_contribution"] = 125
+        account_id = create_account(payload, uid)
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "Contribution Adjustments" in html
+    assert "£125.00 per month" in html
+    assert "Standard contribution from Budget" in html
+    assert "£125.00/mo" not in html
+
+
 def test_accounts_create_form_includes_junior_isa_wrapper_option(app, client, make_user):
     uid, username, password = make_user(username="accounts-jisa", password="password123")
 
