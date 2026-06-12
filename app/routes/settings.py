@@ -594,7 +594,7 @@ def _broker_sync_event_action_label(action_type):
         "preview": "Previewed snapshot",
         "apply_matched": "Applied matched updates",
         "apply_broker_additions": "Added broker-only positions",
-        "resolve_possible_match": "Resolved possible match",
+        "resolve_possible_match": "Confirmed likely match",
     }
     return labels.get(action_type, str(action_type or "Sync event").replace("_", " ").title())
 
@@ -1553,7 +1553,7 @@ def resolve_trading212_possible_match(connection_id):
 
     account_id = optional_int(request.form.get("account_id"), default=None)
     if not account_id:
-        flash("Choose the linked account before resolving a possible match.", "error")
+        flash("Choose the linked account before confirming a likely match.", "error")
         return _settings_trading212_redirect()
 
     linked_account = fetch_account(account_id, current_user.id)
@@ -1598,18 +1598,18 @@ def resolve_trading212_possible_match(connection_id):
     preview = _build_trading212_preview(current_user.id, refreshed_connection, snapshot, linked_account=linked_account)
 
     if request.form.get("confirm_resolve_possible_match") != "yes":
-        flash("Tick the confirmation box before resolving a reviewed possible match.", "error")
+        flash("Tick the confirmation box before confirming this reviewed likely match.", "error")
         return _render_trading212_preview(preview)
 
     preview_key = (request.form.get("preview_key") or "").strip()
     selected_holding_id = optional_int(request.form.get("selected_holding_id"), default=None)
     if not preview_key or not selected_holding_id:
-        flash("Choose one tracked holding before resolving this possible match.", "error")
+        flash("Choose one tracked holding before confirming this likely match.", "error")
         return _render_trading212_preview(preview)
 
     broker_row = _trading212_broker_row_by_key(preview, preview_key)
     if not broker_row or not (broker_row.get("possible_matches") or []):
-        flash("That reviewed possible match is no longer available in this snapshot.", "error")
+        flash("That reviewed likely match is no longer available in this snapshot.", "error")
         return _render_trading212_preview(preview)
 
     candidate = next(
@@ -1617,7 +1617,7 @@ def resolve_trading212_possible_match(connection_id):
         None,
     )
     if candidate is None:
-        flash("Choose one of the reviewed possible match options shown for this broker position.", "error")
+        flash("Choose one of the reviewed likely match options shown for this broker position.", "error")
         return _render_trading212_preview(preview)
 
     holding = fetch_holding(selected_holding_id, current_user.id)
@@ -1626,13 +1626,13 @@ def resolve_trading212_possible_match(connection_id):
         return _render_trading212_preview(preview)
 
     if not update_holding(_trading212_update_existing_holding_from_broker_row(holding, broker_row), current_user.id):
-        flash("SteadyPlan could not apply that reviewed possible match.", "error")
+        flash("SteadyPlan could not apply that reviewed likely match.", "error")
         return _render_trading212_preview(preview)
 
     untouched_broker = max(0, len(preview.get("broker_only") or []) - 1)
     tracked_only = max(0, len(preview.get("db_only") or []) - 1)
     flash(
-        f"Resolved 1 reviewed possible match for {holding.get('holding_name') or 'the tracked holding'}. "
+        f"Confirmed 1 reviewed likely match for {holding.get('holding_name') or 'the tracked holding'}. "
         f"{untouched_broker} broker-only position{'s' if untouched_broker != 1 else ''} and "
         f"{tracked_only} tracked-only holding{'s' if tracked_only != 1 else ''} stayed untouched.",
         "success",

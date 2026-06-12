@@ -162,8 +162,8 @@
     {% endif %}
     {% if preview.apply_plan.can_resolve_possible_matches %}
     <div class="panel inset-panel mt-1 trading212-apply-form trading212-possible-match-note">
-      <h4 style="margin:0;">Resolve reviewed possible matches</h4>
-      <p class="helper-text" style="margin:0.45rem 0 0;">Use the broker-only cards below to pick one tracked holding at a time when the name clues look right. SteadyPlan will only update the holding you explicitly choose.</p>
+      <h4 style="margin:0;">Review likely tracked matches</h4>
+      <p class="helper-text" style="margin:0.45rem 0 0;">Use the broker-only cards below to compare one likely tracked match at a time when the name clues look right. SteadyPlan will only update the holding you explicitly choose.</p>
     </div>
     {% endif %}
     {% if preview.apply_plan.can_apply_broker_additions %}
@@ -261,7 +261,7 @@
   <div class="section-header">
     <div>
       <h3>Broker-only positions</h3>
-      <p class="helper-text" style="margin:0;">These came from Trading 212 but do not currently match a tracked holding. When SteadyPlan sees a close name clue, it shows possible tracked candidates without auto-matching them yet.</p>
+      <p class="helper-text" style="margin:0;">These came from Trading 212 but do not currently match a tracked holding. When SteadyPlan sees a close name clue, it shows likely tracked matches without updating anything automatically.</p>
     </div>
   </div>
   {% if preview.broker_only %}
@@ -282,7 +282,7 @@
           <td>
             <div class="trading212-position-name">{{ row.name }}</div>
             {% if row.possible_matches %}
-            <div class="trading212-candidate-heading">Possible tracked matches</div>
+            <div class="trading212-candidate-heading">Likely tracked matches</div>
             <div class="trading212-candidate-list">
               {% for candidate in row.possible_matches %}
               <div class="trading212-candidate-card">
@@ -302,7 +302,7 @@
             <form method="post" action="{{ url_for('settings.resolve_trading212_possible_match', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-possible-match-form">
               <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
               <input type="hidden" name="preview_key" value="{{ row.preview_key }}">
-              <div class="helper-text" style="margin:0 0 0.5rem;">Pick the tracked holding that should take this broker snapshot update.</div>
+              <div class="helper-text" style="margin:0 0 0.5rem;">Choose the tracked holding that should receive this broker snapshot update.</div>
               {% for candidate in row.possible_matches %}
               <label class="checkbox-row" style="align-items:flex-start; gap:0.55rem; margin-top:0.4rem;">
                 <input type="radio" name="selected_holding_id" value="{{ candidate.holding.id }}">
@@ -311,10 +311,10 @@
               {% endfor %}
               <label class="checkbox-row" style="margin-top:0.75rem; align-items:flex-start; gap:0.55rem;">
                 <input type="checkbox" name="confirm_resolve_possible_match" value="yes">
-                <span>I reviewed this possible match and want SteadyPlan to update only the tracked holding I selected.</span>
+                <span>I reviewed this likely match and want SteadyPlan to update only the tracked holding I selected.</span>
               </label>
               <div class="button-row mt-1">
-                <button type="submit" class="btn btn-secondary">Resolve reviewed possible match</button>
+                <button type="submit" class="btn btn-secondary">Confirm reviewed likely match</button>
               </div>
             </form>
             {% endif %}
@@ -354,7 +354,7 @@
       {% if row.possible_matches %}
       {% set mobile_matches = row.possible_matches[:2] %}
       {% set mobile_overflow_matches = row.possible_matches[2:] %}
-      <div class="trading212-candidate-heading">Possible tracked matches</div>
+      <div class="trading212-candidate-heading">Likely tracked matches</div>
       <div class="trading212-candidate-list">
         {% for candidate in mobile_matches %}
         <div class="trading212-candidate-card">
@@ -401,7 +401,7 @@
       <form method="post" action="{{ url_for('settings.resolve_trading212_possible_match', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-possible-match-form">
         <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
         <input type="hidden" name="preview_key" value="{{ row.preview_key }}">
-        <div class="helper-text" style="margin:0 0 0.5rem;">Pick the tracked holding that should take this broker snapshot update.</div>
+        <div class="helper-text" style="margin:0 0 0.5rem;">Choose the tracked holding that should receive this broker snapshot update.</div>
         {% for candidate in row.possible_matches %}
         <label class="checkbox-row" style="align-items:flex-start; gap:0.55rem; margin-top:0.4rem;">
           <input type="radio" name="selected_holding_id" value="{{ candidate.holding.id }}">
@@ -410,10 +410,10 @@
         {% endfor %}
         <label class="checkbox-row" style="margin-top:0.75rem; align-items:flex-start; gap:0.55rem;">
           <input type="checkbox" name="confirm_resolve_possible_match" value="yes">
-          <span>I reviewed this possible match and want SteadyPlan to update only the tracked holding I selected.</span>
+          <span>I reviewed this likely match and want SteadyPlan to update only the tracked holding I selected.</span>
         </label>
         <div class="button-row mt-1">
-          <button type="submit" class="btn btn-secondary">Resolve reviewed possible match</button>
+          <button type="submit" class="btn btn-secondary">Confirm reviewed likely match</button>
         </div>
       </form>
       {% endif %}

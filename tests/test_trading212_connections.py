@@ -1524,6 +1524,17 @@ def test_preview_trading212_shows_recent_sync_history(app, client, make_user, mo
             held_back_broker_count=1,
             tracked_only_count=1,
         )
+        log_broker_sync_event(
+            user_id=uid,
+            connection_id=connection["id"],
+            account_id=account_id,
+            provider=PROVIDER_TRADING212,
+            action_type="resolve_possible_match",
+            snapshot_at="2026-06-09T08:50:00+00:00",
+            matched_updates_count=1,
+            held_back_broker_count=0,
+            tracked_only_count=0,
+        )
 
     def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
         return {
@@ -1571,7 +1582,9 @@ def test_preview_trading212_shows_recent_sync_history(app, client, make_user, mo
     assert "Keep a visible record of the last preview and last confirmed write step on this linked broker connection." in body
     assert "Applied matched updates" in body
     assert "Added broker-only positions" in body
+    assert "Confirmed likely match" in body
     assert "Previewed snapshot" in body
+    assert "Resolved possible match" not in body
     assert "Last confirmed write step" in body
     assert "Last reviewed write" not in body
     assert "Matched updates" in body
@@ -1971,8 +1984,9 @@ def test_resolve_trading212_reviewed_possible_match_updates_selected_holding(app
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Resolved 1 reviewed possible match for Acme Income Growth." in body
+    assert "Confirmed 1 reviewed likely match for Acme Income Growth." in body
     assert "0 broker-only positions and 0 tracked-only holdings stayed untouched." in body
+    assert "Resolved 1 reviewed possible match" not in body
 
     with app.app_context():
         holdings = list(fetch_holdings_for_account(account_id))
@@ -2475,7 +2489,7 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert ">Ticker match</td>" in body
     assert "Name_Normalized" not in body
     assert "diff +50.00" in body
-    assert "Possible tracked matches" in body
+    assert "When SteadyPlan sees a close name clue, it shows likely tracked matches without updating anything automatically." in body
     assert "Vanguard FTSE Global All Cap" in body
     assert "Trading 212 ISA" in body
     assert "Name clues" in body
@@ -2487,6 +2501,14 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert "trading212-mobile-only" in body
     assert "trading212-mobile-candidate-overflow" in body
     assert "Show 1 more possible match" in body
+    assert "Likely tracked matches" in body
+    assert "Choose the tracked holding that should receive this broker snapshot update." in body
+    assert "Confirm reviewed likely match" in body
+    assert "I reviewed this likely match and want SteadyPlan to update only the tracked holding I selected." in body
+    assert "Resolve reviewed possible match" not in body
+    assert "Possible tracked matches" not in body
+    assert "Pick the tracked holding that should take this broker snapshot update." not in body
+    assert "I reviewed this possible match and want SteadyPlan to update only the tracked holding I selected." not in body
     assert "Useful for spotting holdings that are probably stale/manual versus ones that still need a careful rematch on this linked account." in body
     assert "Needs rematch" in body
     assert "Likely stale/manual" in body
