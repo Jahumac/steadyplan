@@ -59,7 +59,8 @@ def test_performance_empty_state_uses_monthly_update_copy(auth_client):
     assert "Complete two monthly updates and the performance charts will appear." in html
     assert "Complete two monthly reviews and the performance charts will appear." not in html
     assert ">Open monthly update<" in html
-    assert f'href="/monthly-review/?month={month_key}"' in html
+    assert f'href="/monthly-review/?month={month_key}#expected-contributions"' in html
+    assert f'href="/monthly-review/?month={month_key}">Open monthly update</a>' not in html
     assert 'href="/monthly-review/">Open monthly update</a>' not in html
     assert ">Go to Monthly Update<" not in html
 
@@ -78,7 +79,8 @@ def test_contribution_summary_empty_state_uses_monthly_update_copy(auth_client):
     assert "Complete some monthly updates and the contribution history will appear here." in html
     assert "Complete some monthly reviews and the contribution history will appear here." not in html
     assert ">Open monthly update<" in html
-    assert f'href="/monthly-review/?month={month_key}"' in html
+    assert f'href="/monthly-review/?month={month_key}#expected-contributions"' in html
+    assert f'href="/monthly-review/?month={month_key}">Open monthly update</a>' not in html
     assert 'href="/monthly-review/">Open monthly update</a>' not in html
     assert ">Go to Monthly Update<" not in html
 
