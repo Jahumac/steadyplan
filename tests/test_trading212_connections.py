@@ -1003,6 +1003,10 @@ def test_account_list_shows_trading212_account_source_summary(app, client, make_
     assert "Broker status: <strong>Connected</strong>" in body
     assert "Broker status: <strong>Needs attention</strong>" in body
     assert "Broker status: <strong>Not checked</strong>" not in body
+    assert body.count("Last broker check:") == 2
+    assert "Last broker check: <strong>2026-06-08 10:00 UTC</strong>" in body
+    assert "Last broker check: <strong>2026-06-09 07:15 UTC</strong>" in body
+    assert "Last broker check: <strong>No broker check yet</strong>" not in body
 
 
 def test_delete_trading212_connection_clears_linked_account_reference(app, make_user):
