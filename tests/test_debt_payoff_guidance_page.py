@@ -44,7 +44,14 @@ def test_debts_page_renders_payoff_guidance_card_with_strategy_controls(app, cli
     assert "Estimated total interest" in html
     assert "Debts ranked" in html
     assert "Estimated monthly payment while prioritised:" in html
-    assert "/mo." in html
+    assert "£125 per month." in html
+    assert "£215 per month." in html
+    assert "£395 per month." in html
+    assert "£50 per month · 0% interest" in html
+    assert "£90 per month · 24.0% APR" in html
+    assert "£90/mo" not in html
+    assert "+£75/mo saves" not in html
+    assert "/mo." not in html
     assert "Based on the balances, rates, and payments entered." in html
     assert "Smallest balance first can give earlier pay-off milestones." in html
     assert "Highest APR first usually costs less in interest." in html

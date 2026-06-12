@@ -67,7 +67,7 @@
       <h2>{{ selected_debt.name }}</h2>
       <p class="helper-text">
         {% if selected_debt.apr > 0 %}{{ '{:.1f}'.format(selected_debt.apr) }}% APR · {% endif %}
-        £{{ '{:,.2f}'.format(selected_debt.monthly_payment) }}/mo
+        £{{ '{:,.2f}'.format(selected_debt.monthly_payment) }} per month
         {% if selected_debt.auto_tracked and selected_debt.payments_made %}· {{ selected_debt.payments_made }} payment{{ '' if selected_debt.payments_made == 1 else 's' }} made{% endif %}
       </p>
     </div>
@@ -135,7 +135,7 @@
   {% if selected_debt.overpayment_examples %}
   <div class="badge-row mb-075" style="gap:0.4rem;flex-wrap:wrap;">
     {% for ex in selected_debt.overpayment_examples %}
-      <span class="badge badge-soft">+£{{ '{:,.0f}'.format(ex.extra_monthly) }}/mo saves {{ ex.months_saved }} month{{ '' if ex.months_saved == 1 else 's' }} · £{{ '{:,.0f}'.format(ex.interest_saved) }}</span>
+      <span class="badge badge-soft">+£{{ '{:,.0f}'.format(ex.extra_monthly) }} per month saves {{ ex.months_saved }} month{{ '' if ex.months_saved == 1 else 's' }} · £{{ '{:,.0f}'.format(ex.interest_saved) }}</span>
     {% endfor %}
   </div>
   {% endif %}
@@ -463,7 +463,7 @@
         </div>
       </div>
       <p class="helper-text"><strong>{{ debt.reason }}</strong></p>
-      <p class="helper-text">Estimated monthly payment while prioritised: £{{ '{:,.0f}'.format(debt.rolled_monthly_payment) }}/mo.</p>
+      <p class="helper-text">Estimated monthly payment while prioritised: £{{ '{:,.0f}'.format(debt.rolled_monthly_payment) }} per month.</p>
     </div>
     {% endfor %}
   </div>
@@ -508,7 +508,7 @@
       <div>
         <h2 class="goal-card-title">{{ d.name }}</h2>
         <p class="goal-card-meta">
-          £{{ '{:,.0f}'.format(d.monthly_payment) }}/mo · {% if d.apr > 0 %}{{ '{:.1f}'.format(d.apr) }}% APR{% else %}0% interest{% endif %}
+          £{{ '{:,.0f}'.format(d.monthly_payment) }} per month · {% if d.apr > 0 %}{{ '{:.1f}'.format(d.apr) }}% APR{% else %}0% interest{% endif %}
           {% if d.auto_tracked %}<span class="budget-pill" style="font-size:0.65rem;">auto</span>{% endif %}
         </p>
       </div>
