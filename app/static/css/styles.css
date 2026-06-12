@@ -3602,6 +3602,24 @@ button.button-danger:focus {
   margin-top: 0.1rem;
 }
 
+.acct-broker-desktop-detail {
+  margin-top: 0.18rem;
+}
+
+.acct-broker-mobile-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.acct-broker-mobile-summary strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .acct-card-foot {
   display: flex;
   justify-content: space-between;
@@ -3896,6 +3914,29 @@ button.button-danger:focus {
 @media (max-width: 768px) {
   .acct-grid {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+
+  .acct-broker-mobile-summary {
+    display: flex !important;
+    flex-wrap: wrap;
+  }
+
+  .trading212-apply-form {
+    padding: 0.9rem;
+  }
+
+  .trading212-apply-form .button-row {
+    width: 100%;
+  }
+
+  .trading212-apply-form .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .trading212-apply-summary,
+  .trading212-apply-footer {
+    line-height: 1.45;
   }
 
   .acct-balance {

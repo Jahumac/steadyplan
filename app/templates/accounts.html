@@ -125,11 +125,16 @@
       <div class="acct-name">{{ account.name }}</div>
       <div class="acct-provider">{{ account.provider }}{% if account.owner %} · {{ account.owner }}{% endif %}</div>
       {% if linked_source %}
-      <div class="text-sm text-muted">Account source: <strong>{{ linked_source.source_mode_label }}</strong></div>
-      <div class="text-sm text-muted">Broker status: <strong>{{ linked_source.status_label }}</strong></div>
-      <div class="text-sm text-muted">Last broker check: <strong>{{ linked_source.last_checked_label or 'No broker check yet' }}</strong></div>
+      <div class="acct-broker-mobile-summary overview-compact-only">
+        <strong>{{ linked_source.source_mode_label }}</strong>
+        <span aria-hidden="true">·</span>
+        <span>{{ linked_source.status_label }}</span>
+      </div>
+      <div class="acct-broker-desktop-detail overview-desktop-detail text-sm text-muted">Account source: <strong>{{ linked_source.source_mode_label }}</strong></div>
+      <div class="acct-broker-desktop-detail overview-desktop-detail text-sm text-muted">Broker status: <strong>{{ linked_source.status_label }}</strong></div>
+      <div class="acct-broker-desktop-detail overview-desktop-detail text-sm text-muted">Last broker check: <strong>{{ linked_source.last_checked_label or 'No broker check yet' }}</strong></div>
       {% if linked_source.broker_total is not none %}
-      <div class="text-sm text-muted">Broker total{% if linked_source.broker_currency %} ({{ linked_source.broker_currency }}){% endif %}: <strong>£{{ '{:,.2f}'.format(linked_source.broker_total) }}</strong></div>
+      <div class="acct-broker-desktop-detail overview-desktop-detail text-sm text-muted">Broker total{% if linked_source.broker_currency %} ({{ linked_source.broker_currency }}){% endif %}: <strong>£{{ '{:,.2f}'.format(linked_source.broker_total) }}</strong></div>
       {% endif %}
       {% endif %}
     </div>
