@@ -1084,7 +1084,7 @@ def budget_debts():
             if idx == 0:
                 reason = "Highest APR first" if guidance_strategy == "avalanche" else "Smallest balance first"
             else:
-                reason = "Gets the rolled payment after earlier debts clear"
+                reason = "Gets earlier debt payments once those clear"
             ranked_guidance.append({
                 "id": step["id"],
                 "name": step["name"],
