@@ -81,7 +81,10 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "<span>API secret</span>" not in body
     assert "Paste the Trading 212 Public API secret for this broker account." in body
     assert "Your Trading 212 Public API secret." not in body
-    assert "store the key pair encrypted on this server using this app's secret key" in body
+    assert "Start by saving a read-only broker connection." in body
+    assert "SteadyPlan only tests broker snapshot access here" in body
+    assert "This is the safest first step for Trading 212 integration" not in body
+    assert "stores the key pair encrypted on this server using this app's secret key" in body
     assert "Public API currently supports Invest and Stocks ISA only" in body
     assert "Cash ISA and SIPP accounts should stay manual/CSV-tracked for now" in body
     assert "SIPP data is not available through the broker API yet" not in body
@@ -264,7 +267,8 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Saved Trading 212 ISA as a read-only broker live connection." in body
+    assert "Saved read-only broker live connection for Trading 212 ISA." in body
+    assert "Saved Trading 212 ISA as a read-only broker live connection." not in body
     assert "Saved Trading 212 ISA as a read-only Trading 212 live connection." not in body
     assert "Cash ISA and SIPP accounts should stay manual/CSV-tracked for now" in body
     assert "SteadyPlan's own price service and manual/CSV imports stay in place" in body
@@ -485,7 +489,8 @@ def test_retest_trading212_success_uses_broker_connection_language(app, client, 
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Read-only broker demo connection retested successfully." in body
+    assert "Retested read-only broker demo connection successfully." in body
+    assert "Read-only broker demo connection retested successfully." not in body
     assert "Trading 212 demo connection retested successfully." not in body
 
 
