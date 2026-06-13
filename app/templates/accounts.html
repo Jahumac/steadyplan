@@ -951,7 +951,7 @@
           <div class="override-item override-active override-active-prominent">
             <div class="override-item-info">
               <strong>£{{ '{:,.2f}'.format(active_override.ov.override_amount) }} per month</strong>
-              <small>Adjustment · {{ active_override.ov.from_month }} → {{ active_override.ov.to_month }}{% if active_override.ov.reason %} · {{ active_override.ov.reason }}{% endif %}</small>
+              <small>Adjustment · {{ active_override.ov.from_month }} → {{ display_schedule_to_month(active_override.ov.to_month) }}{% if active_override.ov.reason %} · {{ active_override.ov.reason }}{% endif %}</small>
             </div>
             <div class="flex flex-center gap-05">
               <span class="override-badge">Active</span>
@@ -978,7 +978,7 @@
             <div class="override-item">
               <div class="override-item-info">
                 <strong>£{{ '{:,.2f}'.format(ov.override_amount) }} per month</strong>
-                <small>Adjustment · {{ ov.from_month }} → {{ ov.to_month }}{% if ov.reason %} · {{ ov.reason }}{% endif %}</small>
+                <small>Adjustment · {{ ov.from_month }} → {{ display_schedule_to_month(ov.to_month) }}{% if ov.reason %} · {{ ov.reason }}{% endif %}</small>
               </div>
               <a class="badge badge-meta" href="/budget/?month={{ ov.from_month }}">Budget</a>
             </div>
