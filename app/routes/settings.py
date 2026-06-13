@@ -191,7 +191,7 @@ def _trust_posture_diagnostics():
         },
         "rate_limits": {
             "label": "Review recommended" if rate_limit_warning else "OK",
-            "value": "Process-local memory" if rate_limit_storage_uri == "memory://" else "Shared storage",
+            "value": "Single-worker memory" if rate_limit_storage_uri == "memory://" else "Shared storage",
             "message": rate_limit_warning or (
                 "Process-local memory storage is fine with a single worker."
                 if rate_limit_storage_uri == "memory://" and worker_count == 1
