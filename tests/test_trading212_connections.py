@@ -64,7 +64,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     resp = client.get("/settings/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Trading 212 sync (beta)" in body
+    assert "Trading 212 read-only access (beta)" in body
+    assert "Trading 212 sync (beta)" not in body
     assert "Add a read-only broker connection" in body
     assert "Add a read-only Trading 212 connection" not in body
     assert "<span>Broker environment</span>" in body
@@ -2733,6 +2734,8 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert '<title>Trading 212 read-only broker preview · SteadyPlan</title>' in body
     assert '<title>Trading 212 read-only preview · SteadyPlan</title>' not in body
     assert '<title>Trading 212 preview · SteadyPlan</title>' not in body
+    assert "Trading 212 read-only broker preview (beta)" in body
+    assert "Trading 212 sync (beta)" not in body
     assert "Preview read-only broker snapshot" in body
     assert "Preview read-only holdings snapshot" not in body
     assert "Preview holdings snapshot" not in body
