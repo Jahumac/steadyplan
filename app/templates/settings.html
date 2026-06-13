@@ -268,7 +268,7 @@
           <td>{{ diagnostics.trust_posture['items']['secure_cookies'].label if diagnostics and diagnostics.trust_posture else '—' }} — {{ diagnostics.trust_posture['items']['secure_cookies'].message if diagnostics and diagnostics.trust_posture else '—' }}</td>
         </tr>
         <tr>
-          <td>Trusted proxy headers</td>
+          <td>Forwarded proxy headers</td>
           <td class="num">{{ diagnostics.trust_posture['items']['proxy_headers'].value if diagnostics and diagnostics.trust_posture else '—' }}</td>
           <td>{{ diagnostics.trust_posture['items']['proxy_headers'].label if diagnostics and diagnostics.trust_posture else '—' }} — {{ diagnostics.trust_posture['items']['proxy_headers'].message if diagnostics and diagnostics.trust_posture else '—' }}</td>
         </tr>
