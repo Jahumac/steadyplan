@@ -149,7 +149,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "<td>App mode</td>" not in body
     assert "Local/development" in body
     assert "Development/local" not in body
-    assert "Local/demo posture — Local/development mode is active." in body
+    assert "Local/demo posture — Local/development mode is on. Fine for LAN/VPN checks, but review production settings before exposing SteadyPlan publicly." in body
+    assert "Local/demo posture — Local/development mode is active. Fine for LAN/VPN evaluation, but review production settings before exposing SteadyPlan publicly." not in body
     assert "Cookie security" in body
     assert "<td>Secure cookies</td>" not in body
     assert "Local/demo posture — Secure cookies are off. That is normal on local HTTP, but turn them on behind HTTPS." in body
