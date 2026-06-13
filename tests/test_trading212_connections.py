@@ -102,9 +102,11 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "Each saved connection is read-only." not in body
     assert "Saved read-only Trading 212 connections" not in body
     assert "Saved Trading 212 connections" not in body
-    assert "No saved read-only broker connection yet." in body
+    assert "No saved read-only broker connections yet." in body
+    assert "No saved read-only broker connection yet." not in body
     assert "No Trading 212 connection saved yet." not in body
-    assert "Manual/CSV imports remain available even if you never connect the broker API" in body
+    assert "Manual/CSV tracking stays available until you choose to add one here." in body
+    assert "Manual/CSV imports remain available even if you never connect the broker API" not in body
     assert "CSV import remains available" not in body
 
 
