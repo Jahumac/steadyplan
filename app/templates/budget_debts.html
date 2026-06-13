@@ -533,7 +533,7 @@
         <p class="helper-text stat-negative-text"><strong>Interest left at this payment:</strong> £{{ '{:,.0f}'.format(d.total_interest) }}</p>
         {% endif %}
       {% else %}
-        <p class="helper-text stat-negative-text">Payment too low to cover interest</p>
+        <p class="helper-text stat-negative-text">Current payment does not cover interest</p>
       {% endif %}
     </div>
 
