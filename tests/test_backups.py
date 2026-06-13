@@ -155,6 +155,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "Local/demo posture — Secure cookies are off. That is normal on local HTTP, but turn them on behind HTTPS." in body
     assert "Forwarded proxy headers" in body
     assert "Trusted proxy headers" not in body
+    assert "<td class=\"num\">Off by default</td>" in body
+    assert "<td class=\"num\">Ignored by default</td>" not in body
     assert "OK — Forwarded proxy headers are ignored unless you explicitly opt in." in body
     assert "Public read-only demo" in body
     assert "<td>Public demo login</td>" not in body
@@ -225,6 +227,8 @@ def test_diagnostics_warns_when_trust_posture_needs_review(app, client, make_use
     assert "One or more settings need review before treating this as a polished public deployment." not in body
     assert "Production" in body
     assert "Review recommended — Secure cookies are off while production mode is on. Turn them on behind HTTPS." in body
+    assert "<td class=\"num\">Enabled</td>" in body
+    assert "<td class=\"num\">Ignored by default</td>" not in body
     assert "Proxy headers enabled — SteadyPlan trusts forwarded proxy headers. Only leave this on behind a trusted reverse proxy or tunnel." in body
     assert "Public demo enabled — Public read-only demo is enabled. Keep it demo-data-only and treat it as an explicit host choice." in body
     assert "Public demo enabled — Public read-only demo login is enabled. Keep it demo-data-only and treat it as an explicit host choice." not in body
