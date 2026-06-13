@@ -365,7 +365,8 @@ def test_disconnect_trading212_keeps_manual_csv_path_message(app, client, make_u
     resp = client.post(f"/settings/trading212/{connection_id}/disconnect", follow_redirects=True)
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Read-only broker connection removed. Manual/CSV imports remain available." in body
+    assert "Read-only broker connection removed. Manual/CSV tracking stays available." in body
+    assert "Read-only broker connection removed. Manual/CSV imports remain available." not in body
     assert "Trading 212 connection removed. Manual/CSV imports remain available." not in body
     assert "Trading 212 connection removed. CSV/manual imports remain available." not in body
 
