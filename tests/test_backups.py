@@ -218,8 +218,10 @@ def test_diagnostics_warns_when_trust_posture_needs_review(app, client, make_use
     assert "One or more settings need review before treating this as a polished public deployment." not in body
     assert "Production" in body
     assert "Review recommended — Secure cookies are off while production mode is on. Turn them on behind HTTPS." in body
-    assert "Deliberate public/proxy — SteadyPlan trusts forwarded proxy headers. Only leave this on behind a trusted reverse proxy or tunnel." in body
-    assert "Deliberate public demo — Public read-only demo login is enabled. Keep it demo-data-only and treat it as an explicit host choice." in body
+    assert "Proxy headers enabled — SteadyPlan trusts forwarded proxy headers. Only leave this on behind a trusted reverse proxy or tunnel." in body
+    assert "Public demo enabled — Public read-only demo login is enabled. Keep it demo-data-only and treat it as an explicit host choice." in body
+    assert "Deliberate public/proxy" not in body
+    assert "Deliberate public demo" not in body
     assert "Review recommended — RATELIMIT_STORAGE_URI=memory:// is process-local." in body
 
 
