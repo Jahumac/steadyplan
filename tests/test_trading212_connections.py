@@ -1567,7 +1567,8 @@ def test_apply_trading212_reviewed_changes_updates_only_matched_holdings(app, cl
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Applied 1 matched Trading 212 holding update." in body
+    assert "Applied 1 matched broker holding update." in body
+    assert "Applied 1 matched Trading 212 holding update." not in body
     assert "1 broker-only position and 1 tracked-only holding were left untouched for review." in body
 
     with app.app_context():
@@ -1831,7 +1832,8 @@ def test_apply_trading212_reviewed_changes_requires_confirmation(app, client, ma
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Tick the confirmation box before applying reviewed Trading 212 changes." in body
+    assert "Tick the confirmation box before applying the reviewed matched updates." in body
+    assert "Tick the confirmation box before applying reviewed Trading 212 changes." not in body
     assert "Apply matched holding updates" in body
     assert "Apply reviewed matched changes" not in body
 
@@ -1974,7 +1976,8 @@ def test_apply_trading212_reviewed_broker_additions_adds_only_clear_broker_only_
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Added 1 reviewed Trading 212 broker-only position." in body
+    assert "Added 1 reviewed broker-only position." in body
+    assert "Added 1 reviewed Trading 212 broker-only position." not in body
     assert "1 broker-only position stayed out for manual review and 1 tracked-only holding stayed untouched." in body
 
     with app.app_context():
