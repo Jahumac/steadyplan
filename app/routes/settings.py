@@ -155,7 +155,7 @@ def _trust_posture_diagnostics():
             "label": "OK" if is_production else "Local/demo posture",
             "value": "Production" if is_production else "Local/development",
             "message": (
-                "Production mode is on. Pair this with HTTPS and secure cookies for real use."
+                "Production mode is on. Keep HTTPS and secure cookies on for real use."
                 if is_production
                 else "Local/development mode is active. Fine for LAN/VPN evaluation, but review production settings before exposing SteadyPlan publicly."
             ),
