@@ -263,6 +263,8 @@ def test_diagnostics_renders_ok_public_trust_posture_message(app, client, make_u
     assert "Trust posture checkpoint" in body
     assert "Basic public-facing settings look in place for this trust checkpoint." in body
     assert "Production-ready basics look in place for this trust checkpoint." not in body
+    assert "OK — Production mode is on. Keep HTTPS and secure cookies on for real use." in body
+    assert "OK — Production mode is on. Pair this with HTTPS and secure cookies for real use." not in body
     assert "OK — Secure cookies are on for sessions and remembered logins." in body
     assert "OK — Secure session and remember cookies are on." not in body
     assert "Review recommended" not in body
