@@ -200,7 +200,7 @@ def debt_guidance_exclusion_reason(debt):
 
     monthly_interest = balance * (apr / 100.0 / 12.0)
     if monthly_payment <= monthly_interest and balance > 0:
-        return "Minimum payment does not currently cover interest"
+        return "Current payment does not cover interest"
     return None
 
 
