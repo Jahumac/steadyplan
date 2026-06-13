@@ -509,7 +509,7 @@
         <h2 class="goal-card-title">{{ d.name }}</h2>
         <p class="goal-card-meta">
           £{{ '{:,.0f}'.format(d.monthly_payment) }} per month · {% if d.apr > 0 %}{{ '{:.1f}'.format(d.apr) }}% APR{% else %}0% interest{% endif %}
-          {% if d.auto_tracked %}<span class="budget-pill" style="font-size:0.65rem;">auto</span>{% endif %}
+          {% if d.auto_tracked %}<span class="budget-pill" style="font-size:0.65rem;">auto-tracked</span>{% endif %}
         </p>
       </div>
     </div>

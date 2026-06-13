@@ -81,8 +81,8 @@ def test_debts_list_cards_use_plain_payoff_status_labels(app, client, make_user)
         with get_connection() as conn:
             conn.execute(
                 """
-                INSERT INTO debts (user_id, name, original_amount, current_balance, monthly_payment, apr, is_active)
-                VALUES (?, 'Card', 1200, 600, 100, 19.9, 1)
+                INSERT INTO debts (user_id, name, original_amount, current_balance, monthly_payment, apr, start_date, is_active)
+                VALUES (?, 'Card', 1200, 600, 100, 19.9, '2025-01-15', 1)
                 """,
                 (uid,),
             )
@@ -94,5 +94,7 @@ def test_debts_list_cards_use_plain_payoff_status_labels(app, client, make_user)
 
     assert "Debt-free by:" in html
     assert "Interest left at this payment:" in html
+    assert "auto-tracked</span>" in html
     assert "Free:" not in html
     assert "Interest left:" not in html
+    assert ">auto</span>" not in html
