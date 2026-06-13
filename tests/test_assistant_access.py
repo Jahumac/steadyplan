@@ -148,8 +148,8 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     settings_resp = client.get("/settings/")
     settings_html = settings_resp.get_data(as_text=True)
     assert settings_resp.status_code == 200
-    assert "Optional: connect your own Pip token" in settings_html
-    assert "Most people can ignore this section. Only use it if you want your own Pip setup to read from SteadyPlan through a separate assistant token that you can revoke or regenerate here." in settings_html
+    assert "Optional: add a token for your own Pip setup" in settings_html
+    assert "Most people can leave this section unused. Only set it up if you run your own Pip and want a separate assistant token you can revoke or replace here." in settings_html
     assert "Optional local label so you can recognise this token later." in settings_html
     assert "Permissions" in settings_html
     assert "Read-only assistant answers" in settings_html
@@ -164,13 +164,16 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     assert "Just a friendly label so you know what this token is for." not in settings_html
     assert "assistant summary endpoints" not in settings_html
     assert "assistant budget write endpoint" not in settings_html
-    assert "Nothing connected yet. Leave this section alone unless you want Pip connected later." in settings_html
+    assert "Optional: connect your own Pip token" not in settings_html
+    assert "Most people can ignore this section. Only use it if you want your own Pip setup to read from SteadyPlan through a separate assistant token that you can revoke or regenerate here." not in settings_html
+    assert "Nothing set up here. SteadyPlan works normally if you leave this section unused." in settings_html
     assert "Give Pip scoped access to SteadyPlan" not in settings_html
     assert "This creates a dedicated assistant token for SteadyPlan." not in settings_html
     assert "A local label to help you recognise this token later." not in settings_html
     assert "Read-only access lets Pip answer portfolio, budget, and affordability questions without changing your data." not in settings_html
     assert "Lets Pip answer portfolio, monthly budget, and affordability questions without changing your data." not in settings_html
-    assert "Create assistant token" not in settings_html
+    assert "Create assistant token" in settings_html
+    assert "Create optional Pip token" not in settings_html
     assert "Create one above when you want to give Pip scoped access." not in settings_html
     assert "Existing assistant tokens" not in settings_html
     assert "Recent assistant activity" not in settings_html
