@@ -142,7 +142,7 @@
       </div>
     </div>
     <p class="helper-text trading212-apply-summary" style="margin:0.9rem 0 0;">
-      Compare <strong>{{ '%.2f'|format(preview.apply_plan.broker_value_total) }} {{ summary.currency or connection.external_account_currency or '' }}</strong> from Trading 212 against <strong>{{ '%.2f'|format(preview.apply_plan.tracked_value_total) }} GBP</strong> tracked in SteadyPlan. Review any units or value difference before writing, and keep broker-only and tracked-only items explicit.
+      Compare <strong>{{ '%.2f'|format(preview.apply_plan.broker_value_total) }} {{ summary.currency or connection.external_account_currency or '' }}</strong> from this broker snapshot against <strong>{{ '%.2f'|format(preview.apply_plan.tracked_value_total) }} GBP</strong> tracked in SteadyPlan. Review any units or value difference before writing, and keep broker-only and tracked-only items explicit.
     </p>
     {% if preview.apply_plan.can_apply_matched_changes %}
     <form method="post" action="{{ url_for('settings.apply_trading212_reviewed_changes', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-apply-form">
@@ -259,7 +259,7 @@
   <div class="section-header">
     <div>
       <h3>Broker-only positions</h3>
-      <p class="helper-text" style="margin:0;">These came from Trading 212 but do not currently match a tracked holding. When SteadyPlan sees a close name clue, it shows likely tracked matches without updating anything automatically.</p>
+      <p class="helper-text" style="margin:0;">These came from this broker snapshot but do not currently match a tracked holding. When SteadyPlan sees a close name clue, it shows likely tracked matches without updating anything automatically.</p>
     </div>
   </div>
   {% if preview.broker_only %}
