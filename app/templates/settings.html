@@ -363,7 +363,7 @@
     On Docker/Unraid, this lives inside your host-mounted appdata path. Include it in your wider server backup routine — a backup sitting on the same disk/share is useful, but it isn’t a full disaster-recovery plan by itself.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
-    For per-user exports, use Settings → Download JSON export.
+    For per-user exports, use Settings → Download this user's JSON export.
   </p>
 </section>
 
@@ -524,7 +524,7 @@
     </div>
   </div>
   <p class="helper-text">
-    Upload a JSON export file to validate it for restore. Validation does not change your data.
+    Upload a JSON export file to check it before restore. Checking does not change your data.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
     Restore replaces this user's data only. It does not change your username or password.
@@ -933,7 +933,7 @@
     This permanently deletes all data for this user: accounts, holdings, goals, budget, monthly updates, and assumptions. Your login stays, but the data does not. Other users are not affected.
   </p>
   <p class="helper-text text-danger" style="margin-top:0.5rem;">
-    This cannot be undone. Download a JSON export for this user before continuing.
+    This cannot be undone. Download this user's JSON export before continuing.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
     For best coverage, download a per-user JSON export above and create a whole-instance SQLite backup from <a class="link-accent" href="/settings/?mode=diagnostics">Diagnostics</a>.
