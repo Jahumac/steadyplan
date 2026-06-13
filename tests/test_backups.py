@@ -160,10 +160,12 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "<h3>Instance counts</h3>" in body
     assert '<p class="eyebrow">Linked prices</p>' in body
     assert "<h3>Sample of linked prices</h3>" in body
-    assert "No holdings are linked to saved prices yet." in body
-    assert "Stale or missing linked prices in sample (&gt;2 days old or none)" in body
+    assert "No linked holdings are using saved prices yet." in body
+    assert "Linked prices needing attention in sample (&gt;2 days old or missing)" in body
     assert "No holdings with catalogue links yet." not in body
     assert "Stale prices (sample, &gt;2d/none)" not in body
+    assert "No holdings are linked to saved prices yet." not in body
+    assert "Stale or missing linked prices in sample (&gt;2 days old or none)" not in body
     assert "Scheduler last run" in body
     assert "Latest portfolio snapshot" in body
     assert "Latest saved price update" in body
@@ -292,7 +294,8 @@ def test_diagnostics_shows_latest_backup_metadata(app, client, make_user, tmp_pa
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert dest.name in body
-    assert "Latest size" in body
+    assert "Latest backup size" in body
+    assert "Latest size" not in body
     assert str(dest) not in body
 
 
@@ -314,8 +317,18 @@ def test_diagnostics_instance_counts_template_uses_clearer_stale_price_label():
 
     body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
 
-    assert "Stale or missing linked prices in sample (&gt;2 days old or none)" in body
+    assert "Linked prices needing attention in sample (&gt;2 days old or missing)" in body
     assert "Stale prices (sample, &gt;2d/none)" not in body
+    assert "Stale or missing linked prices in sample (&gt;2 days old or none)" not in body
+
+
+def test_diagnostics_linked_prices_empty_state_uses_clearer_saved_prices_wording():
+    from pathlib import Path
+
+    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+
+    assert "No linked holdings are using saved prices yet." in body
+    assert "No holdings are linked to saved prices yet." not in body
 
 
 def test_diagnostics_instance_overview_template_uses_clearer_price_update_label():
@@ -339,6 +352,17 @@ def test_diagnostics_instance_counts_template_uses_clearer_catalogue_count_label
     assert "Catalogue in use" not in body
     assert "Active price catalogue entries" not in body
     assert "Price catalogue entries linked to holdings" not in body
+
+
+def test_diagnostics_backup_metadata_template_uses_clearer_backup_labels():
+    from pathlib import Path
+
+    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+
+    assert "Latest backup saved at" in body
+    assert "Latest backup size" in body
+    assert "Latest modified" not in body
+    assert "Latest size" not in body
 
 
 def test_backup_health_is_good_for_recent_backup(app, client, make_user, tmp_path):
