@@ -55,7 +55,7 @@ def trading212_status_label(connection):
         return "Connected"
     if status == "error":
         return "Needs attention"
-    return "No successful check yet"
+    return "No successful broker check yet"
 
 
 def mask_trading212_key(api_key):
