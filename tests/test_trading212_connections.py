@@ -1425,7 +1425,8 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     assert "Tracked-only holdings to review" in body
     assert "Broker vs tracked value gap" in body
     assert "+550.00 GBP" in body
-    assert "Compare <strong>2950.00 GBP</strong> from Trading 212 against <strong>2400.00 GBP</strong> tracked in SteadyPlan. Review any units or value difference before writing, and keep broker-only and tracked-only items explicit." in body
+    assert "Compare <strong>2950.00 GBP</strong> from this broker snapshot against <strong>2400.00 GBP</strong> tracked in SteadyPlan. Review any units or value difference before writing, and keep broker-only and tracked-only items explicit." in body
+    assert "Compare <strong>2950.00 GBP</strong> from Trading 212 against <strong>2400.00 GBP</strong> tracked in SteadyPlan." not in body
     assert "Apply matched holding updates" in body
     assert "Apply reviewed matched changes" not in body
     assert "Add broker-only positions" in body
@@ -1450,6 +1451,8 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     assert "Vanguard FTSE All-World" in body
     assert "Matched holdings" in body
     assert "Broker-only positions" in body
+    assert "These came from this broker snapshot but do not currently match a tracked holding." in body
+    assert "These came from Trading 212 but do not currently match a tracked holding." not in body
     assert "Other broker account" not in body
     assert "Tracked holdings not seen in this snapshot" in body
 
