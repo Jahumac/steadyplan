@@ -661,11 +661,11 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Optional assistant access</p>
-      <h3>Optional: connect your own Pip token</h3>
+      <h3>Optional: add a token for your own Pip setup</h3>
     </div>
   </div>
   <p class="helper-text">
-    Most people can ignore this section. Only use it if you want your own Pip setup to read from SteadyPlan through a separate assistant token that you can revoke or regenerate here.
+    Most people can leave this section unused. Only set it up if you run your own Pip and want a separate assistant token you can revoke or replace here.
   </p>
   <p class="helper-text" style="margin-top:0.45rem;">
     Read-only access answers portfolio, budget, and affordability questions without changing your data. Budget write adds one narrow action today: updating a single month's amount on an existing manual, unlinked budget item.
@@ -709,7 +709,7 @@
       </div>
     </div>
     <div class="badge-row mt-1">
-      <button type="submit">Create optional Pip token</button>
+      <button type="submit">Create assistant token</button>
     </div>
   </form>
 
@@ -797,7 +797,7 @@
   {% endif %}
 
   {% if not assistant_tokens and not assistant_audit_events %}
-  <p class="helper-text" style="margin:1rem 0 0 0;">Nothing connected yet. Leave this section alone unless you want Pip connected later.</p>
+  <p class="helper-text" style="margin:1rem 0 0 0;">Nothing set up here. SteadyPlan works normally if you leave this section unused.</p>
   {% endif %}
 </section>
 
