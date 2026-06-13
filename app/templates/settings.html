@@ -593,12 +593,12 @@
 
       {% if restore_check_result.valid and restore_token %}
         <div style="margin-top:0.75rem;padding:0.9rem;border:1px solid var(--border);border-radius:12px;background:var(--panel);">
-          <div style="font-weight:600;margin-bottom:0.25rem;">Restore from this export (overwrites this user's current data)</div>
+          <div style="font-weight:600;margin-bottom:0.25rem;">Overwrite this user's data from this export</div>
           <p class="helper-text" style="margin:0.25rem 0 0.75rem 0;">
             Restoring replaces all data for this user with the contents of this export file. Any changes made since this export was created will be lost. Other users are not affected.
           </p>
           <div class="settings-section-divider" style="margin:0 0 0.75rem 0;">
-            <strong>Safety check before overwrite</strong>
+            <strong>Safety backup before overwrite</strong>
             <p class="helper-text m-0">SteadyPlan will create a fresh whole-instance SQLite backup first. If that safety backup cannot be created, restore stops and leaves your data unchanged.</p>
           </div>
           <p class="helper-text" style="margin:0 0 0.75rem 0;">
@@ -609,11 +609,11 @@
             <input type="hidden" name="restore_token" value="{{ restore_token }}">
             <label class="text-sm" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
               <input type="checkbox" name="confirm_replace" value="1" required>
-              <span>I understand this will overwrite all data for this user</span>
+              <span>I understand this will overwrite this user's finance data</span>
             </label>
             <div style="margin-top:0.6rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
               <input type="text" name="confirm_phrase" class="input-standard" placeholder="Type RESTORE" autocomplete="off" required style="max-width:12rem;text-transform:uppercase;">
-              <button type="submit" class="badge badge-danger">Restore (overwrites data)</button>
+              <button type="submit" class="badge badge-danger">Overwrite this user's data from this export</button>
             </div>
           </form>
         </div>
