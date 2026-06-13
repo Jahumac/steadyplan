@@ -156,22 +156,24 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "OK — Process-local memory storage is fine with a single worker." in body
     assert '<p class="eyebrow">Runtime checks</p>' in body
     assert "<h3>Instance overview</h3>" in body
-    assert '<p class="eyebrow">Data footprint</p>' in body
+    assert '<p class="eyebrow">Data in this instance</p>' in body
     assert "<h3>Instance counts</h3>" in body
-    assert '<p class="eyebrow">Prices in use</p>' in body
-    assert "<h3>Linked price sample</h3>" in body
-    assert "No holdings are linked to the price catalogue yet." in body
-    assert "Stale or missing prices in sample (&gt;2 days old or none)" in body
+    assert '<p class="eyebrow">Linked prices</p>' in body
+    assert "<h3>Sample of linked prices</h3>" in body
+    assert "No holdings are linked to saved prices yet." in body
+    assert "Stale or missing linked prices in sample (&gt;2 days old or none)" in body
     assert "No holdings with catalogue links yet." not in body
     assert "Stale prices (sample, &gt;2d/none)" not in body
     assert "Scheduler last run" in body
     assert "Latest portfolio snapshot" in body
-    assert "Latest catalogue price update" in body
+    assert "Latest saved price update" in body
     assert "Latest price update (raw)" not in body
-    assert "Active price catalogue entries" in body
-    assert "Price catalogue entries linked to holdings" in body
+    assert "Saved prices" in body
+    assert "Saved prices linked to holdings" in body
     assert "Catalogue active" not in body
     assert "Catalogue in use" not in body
+    assert "Active price catalogue entries" not in body
+    assert "Price catalogue entries linked to holdings" not in body
     assert "Not yet recorded" in body
     assert "No scheduler run has been recorded yet. That is normal on a fresh instance or when you mainly update prices and balances manually." in body
     assert '<p class="eyebrow">Status</p>' not in body
@@ -312,7 +314,7 @@ def test_diagnostics_instance_counts_template_uses_clearer_stale_price_label():
 
     body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
 
-    assert "Stale or missing prices in sample (&gt;2 days old or none)" in body
+    assert "Stale or missing linked prices in sample (&gt;2 days old or none)" in body
     assert "Stale prices (sample, &gt;2d/none)" not in body
 
 
@@ -321,8 +323,9 @@ def test_diagnostics_instance_overview_template_uses_clearer_price_update_label(
 
     body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
 
-    assert "Latest catalogue price update" in body
+    assert "Latest saved price update" in body
     assert "Latest price update (raw)" not in body
+    assert "Latest catalogue price update" not in body
 
 
 def test_diagnostics_instance_counts_template_uses_clearer_catalogue_count_labels():
@@ -330,10 +333,12 @@ def test_diagnostics_instance_counts_template_uses_clearer_catalogue_count_label
 
     body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
 
-    assert "Active price catalogue entries" in body
-    assert "Price catalogue entries linked to holdings" in body
+    assert "Saved prices" in body
+    assert "Saved prices linked to holdings" in body
     assert "Catalogue active" not in body
     assert "Catalogue in use" not in body
+    assert "Active price catalogue entries" not in body
+    assert "Price catalogue entries linked to holdings" not in body
 
 
 def test_backup_health_is_good_for_recent_backup(app, client, make_user, tmp_path):

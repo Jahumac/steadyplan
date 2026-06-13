@@ -227,7 +227,7 @@
           </td>
         </tr>
         <tr>
-          <td>Latest catalogue price update</td>
+          <td>Latest saved price update</td>
           <td class="num">{% if diagnostics and diagnostics.latest_price_update_utc %}{{ diagnostics.latest_price_update_utc }}{% else %}—{% endif %}</td>
         </tr>
       </tbody>
@@ -290,7 +290,7 @@
 <section class="panel mt-1">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Data footprint</p>
+      <p class="eyebrow">Data in this instance</p>
       <h3>Instance counts</h3>
     </div>
   </div>
@@ -299,10 +299,10 @@
       <tbody>
         <tr><td>Accounts</td><td class="num">{{ diagnostics.counts.accounts if diagnostics and diagnostics.counts else 0 }}</td></tr>
         <tr><td>Holdings</td><td class="num">{{ diagnostics.counts.holdings if diagnostics and diagnostics.counts else 0 }}</td></tr>
-        <tr><td>Active price catalogue entries</td><td class="num">{{ diagnostics.counts.catalogue_active if diagnostics and diagnostics.counts else 0 }}</td></tr>
-        <tr><td>Price catalogue entries linked to holdings</td><td class="num">{{ diagnostics.catalogue_in_use_count if diagnostics else 0 }}</td></tr>
+        <tr><td>Saved prices</td><td class="num">{{ diagnostics.counts.catalogue_active if diagnostics and diagnostics.counts else 0 }}</td></tr>
+        <tr><td>Saved prices linked to holdings</td><td class="num">{{ diagnostics.catalogue_in_use_count if diagnostics else 0 }}</td></tr>
         <tr><td>Portfolio daily snapshots</td><td class="num">{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</td></tr>
-        <tr><td>Stale or missing prices in sample (&gt;2 days old or none)</td><td class="num">{{ diagnostics.catalogue_stale_2d_count_in_sample if diagnostics else 0 }}</td></tr>
+        <tr><td>Stale or missing linked prices in sample (&gt;2 days old or none)</td><td class="num">{{ diagnostics.catalogue_stale_2d_count_in_sample if diagnostics else 0 }}</td></tr>
       </tbody>
     </table>
   </div>
@@ -370,8 +370,8 @@
 <section class="panel mt-1">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Prices in use</p>
-      <h3>Linked price sample</h3>
+      <p class="eyebrow">Linked prices</p>
+      <h3>Sample of linked prices</h3>
     </div>
   </div>
   {% if diagnostics and diagnostics.catalogue_in_use_sample %}
@@ -402,7 +402,7 @@
     </table>
   </div>
   {% else %}
-  <p class="helper-text">No holdings are linked to the price catalogue yet.</p>
+  <p class="helper-text">No holdings are linked to saved prices yet.</p>
   {% endif %}
 </section>
 
