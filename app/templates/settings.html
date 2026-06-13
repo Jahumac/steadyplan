@@ -174,7 +174,7 @@
     </div>
   </div>
   <div class="hero-strip">
-    {% call hero_stat('Database') %}<strong>{% if diagnostics and diagnostics.db_ok %}OK{% else %}Error{% endif %}</strong>{% endcall %}
+    {% call hero_stat('Database') %}<strong>{% if diagnostics and diagnostics.db_ok %}Available{% else %}Needs attention{% endif %}</strong>{% endcall %}
     {% call hero_stat('Accounts') %}<strong>{{ diagnostics.counts.accounts if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
     {% call hero_stat('Holdings') %}<strong>{{ diagnostics.counts.holdings if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
     {% call hero_stat('Daily snapshots') %}<strong>{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
@@ -210,11 +210,11 @@
       <tbody>
         <tr>
           <td>Database</td>
-          <td class="num">{% if diagnostics and diagnostics.db_ok %}OK{% else %}Error{% endif %}</td>
+          <td class="num">{% if diagnostics and diagnostics.db_ok %}Available{% else %}Needs attention{% endif %}</td>
         </tr>
         <tr>
           <td>Scheduler last run</td>
-          <td class="num">{{ diagnostics.scheduler_status.full if diagnostics and diagnostics.scheduler_status else 'Not yet recorded' }}</td>
+          <td class="num">{{ diagnostics.scheduler_status.full if diagnostics and diagnostics.scheduler_status else 'No run recorded yet' }}</td>
         </tr>
         <tr>
           <td>Latest portfolio snapshot</td>
@@ -340,7 +340,7 @@
         </tr>
         <tr>
           <td>Latest backup</td>
-          <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_name %}{{ diagnostics.backups.latest_name }}{% else %}None yet{% endif %}</td>
+          <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_name %}{{ diagnostics.backups.latest_name }}{% else %}No backup yet{% endif %}</td>
         </tr>
         <tr>
           <td>Latest backup saved at</td>
