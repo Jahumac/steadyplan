@@ -175,9 +175,9 @@ def _trust_posture_diagnostics():
             "label": "Proxy headers enabled" if trust_proxy_headers else "OK",
             "value": "Enabled" if trust_proxy_headers else "Off by default",
             "message": (
-                "SteadyPlan trusts forwarded proxy headers. Only leave this on behind a trusted reverse proxy or tunnel."
+                "Forwarded proxy headers are trusted. Only leave this on behind a trusted reverse proxy or tunnel."
                 if trust_proxy_headers
-                else "Forwarded proxy headers are ignored unless you explicitly opt in."
+                else "Forwarded proxy headers stay off unless you explicitly opt in."
             ),
         },
         "demo_login": {
