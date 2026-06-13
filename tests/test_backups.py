@@ -158,7 +158,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "<td>Public demo login</td>" not in body
     assert "OK — Public read-only demo is off. Real accounts still require normal login." in body
     assert "OK — Public demo login is off. Real accounts still require normal login." not in body
-    assert "Rate-limit storage" in body
+    assert "Rate limit storage" in body
+    assert "Rate-limit storage" not in body
     assert "OK — Process-local memory storage is fine with a single worker." in body
     assert '<p class="eyebrow">Runtime checks</p>' in body
     assert "<h3>Instance overview</h3>" in body
