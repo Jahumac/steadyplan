@@ -145,7 +145,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "Local/demo posture" in body
     assert "This instance looks set up for local evaluation or read-only demo use." in body
     assert "This instance looks deliberate for local evaluation or read-only demo use." not in body
-    assert "App mode" in body
+    assert "Instance mode" in body
+    assert "<td>App mode</td>" not in body
     assert "Local/development" in body
     assert "Development/local" not in body
     assert "Local/demo posture — Local/development mode is active." in body
