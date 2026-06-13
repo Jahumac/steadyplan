@@ -111,7 +111,7 @@
     {% endif %}
     {% if selected_debt.total_interest is not none %}
     <div class="hero-stat">
-      <span class="hero-stat-label">Interest left</span>
+      <span class="hero-stat-label">Interest left at this payment</span>
       <span class="hero-stat-value"><strong class="stat-negative-text">£{{ '{:,.0f}'.format(selected_debt.total_interest) }}</strong></span>
     </div>
     {% endif %}
