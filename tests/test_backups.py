@@ -151,7 +151,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "Local/demo posture — Local/development mode is active." in body
     assert "Secure cookies" in body
     assert "Local/demo posture — Secure cookies are off. That is normal on local HTTP, but turn them on behind HTTPS." in body
-    assert "Trusted proxy headers" in body
+    assert "Forwarded proxy headers" in body
+    assert "Trusted proxy headers" not in body
     assert "OK — Forwarded proxy headers are ignored unless you explicitly opt in." in body
     assert "Public demo login" in body
     assert "OK — Public demo login is off. Real accounts still require normal login." in body
