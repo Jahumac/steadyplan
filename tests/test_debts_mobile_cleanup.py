@@ -98,3 +98,28 @@ def test_debts_list_cards_use_plain_payoff_status_labels(app, client, make_user)
     assert "Free:" not in html
     assert "Interest left:" not in html
     assert ">auto</span>" not in html
+
+
+def test_debts_list_cards_clarify_when_payment_does_not_cover_interest(app, client, make_user):
+    uid, username, password = make_user(username="debts-interest-warning-copy", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO debts (user_id, name, original_amount, current_balance, monthly_payment, apr, is_active)
+                VALUES (?, 'Problem debt', 1000, 1000, 5, 30, 1)
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/budget/debts/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Current payment does not cover interest" in html
+    assert "Payment too low to cover interest" not in html
