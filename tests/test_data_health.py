@@ -365,13 +365,14 @@ def test_settings_still_mentions_backup_restore(app, client, make_user):
     html = resp.get_data(as_text=True)
     assert "Data &amp; privacy" in html
     assert "SteadyPlan stores your financial data locally in a SQLite database" in html
-    assert "Download JSON export" in html
-    assert "Validate a restore file" in html
+    assert "Download this user's JSON export" in html
+    assert "Check a JSON export before restore" in html
     assert "Downloads a portable JSON export of this user's data only" in html
     assert "whole-instance SQLite backup" in html
     assert "This permanently deletes all data for this user: accounts, holdings, goals, budget, monthly updates, and assumptions." in html
     assert "This permanently deletes all data for this user: accounts, holdings, goals, budget, monthly reviews, and assumptions." not in html
-    assert "Delete all data for this user" in html
+    assert "Delete this user's finance data" in html
+    assert "Delete all data for this user" not in html
 
 
 def test_settings_explains_backup_restore_scope_at_a_glance(app, client, make_user):
@@ -392,12 +393,14 @@ def test_settings_explains_backup_restore_scope_at_a_glance(app, client, make_us
     assert "secret_key.txt" in html
     assert "Restore validation" in html
     assert "checks a JSON file without changing data" in html
-    assert "Restore commit" in html
+    assert "Restore overwrite" in html
     assert "replaces this user’s data only after confirmation" in html
-    assert "Delete user data" in html
+    assert "Delete this user’s finance data" in html
     assert "removes this user’s finance data, not the login account" in html
     assert "JSON export is a per-user safety copy" in html
     assert "This export does not include your login password, and it is not a full disaster-recovery backup for the whole instance." in html
+    assert "Restore commit" not in html
+    assert "Delete user data" not in html
     assert "JSON export is per-user. SQLite backups are whole-instance backups." not in html
 
 

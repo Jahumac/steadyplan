@@ -473,8 +473,8 @@
       <li><strong>Whole-instance SQLite backup:</strong> database copy for all users, stored under <code>data/backups</code>.</li>
       <li><strong>Whole app data directory backup:</strong> the real disaster-recovery copy, including <code>finance.db</code>, <code>secret_key.txt</code>, and <code>backups/</code>.</li>
       <li><strong>Restore validation:</strong> checks a JSON file without changing data.</li>
-      <li><strong>Restore commit:</strong> replaces this user’s data only after confirmation.</li>
-      <li><strong>Delete user data:</strong> removes this user’s finance data, not the login account.</li>
+      <li><strong>Restore overwrite:</strong> replaces this user’s data only after confirmation.</li>
+      <li><strong>Delete this user’s finance data:</strong> removes this user’s finance data, not the login account.</li>
     </ul>
   </div>
 </section>
@@ -501,9 +501,9 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Export</p>
-      <h3>Download JSON export</h3>
+      <h3>Download this user's JSON export</h3>
     </div>
-    <a class="badge badge-primary-action" href="/settings/export.json">Download JSON export</a>
+    <a class="badge badge-primary-action" href="/settings/export.json">Download this user's JSON export</a>
   </div>
   <p class="helper-text">
     Downloads a portable JSON export of this user's data only. Useful before risky actions like restore or delete.
@@ -520,7 +520,7 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Restore</p>
-      <h3>Validate a restore file</h3>
+      <h3>Check a JSON export before restore</h3>
     </div>
   </div>
   <p class="helper-text">
@@ -533,7 +533,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
       <input type="file" name="backup_file" accept=".json,application/json" class="input-standard" style="max-width:22rem;">
-      <button type="submit" class="badge badge-primary-action">Validate restore file</button>
+      <button type="submit" class="badge badge-primary-action">Check restore file</button>
     </div>
   </form>
 
@@ -926,7 +926,7 @@
   <div class="section-header">
     <div>
       <p class="eyebrow danger-eyebrow">Danger Zone</p>
-      <h3>Delete all data for this user</h3>
+      <h3>Delete this user's finance data</h3>
     </div>
   </div>
   <p class="helper-text">
@@ -948,7 +948,7 @@
 
   <div id="reset-confirm" style="margin-top:1rem;">
     <button type="button" class="badge badge-danger" id="reset-reveal-btn">
-      Delete all data for this user
+      Delete this user's finance data
     </button>
   </div>
 
