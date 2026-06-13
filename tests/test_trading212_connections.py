@@ -1411,6 +1411,8 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     assert "Proposed apply plan" not in body
     assert "Matched holdings to update" in body
     assert "Broker-only positions to add" in body
+    assert "Likely matches to review" in body
+    assert "Possible matches to review" not in body
     assert "Tracked-only holdings to review" in body
     assert "Broker vs tracked value gap" in body
     assert "+550.00 GBP" in body
@@ -1731,7 +1733,12 @@ def test_preview_trading212_shows_recent_sync_history(app, client, make_user, mo
     assert "Last confirmed write step" in body
     assert "Last reviewed write" not in body
     assert "Matched updates" in body
-    assert "Held back" in body
+    assert "Broker-only added" in body
+    assert "Added</th>" not in body
+    assert "Held back for review" in body
+    assert "Held back</th>" not in body
+    assert "Tracked-only untouched" in body
+    assert "Tracked-only</th>" not in body
 
 
 def test_apply_trading212_reviewed_changes_requires_confirmation(app, client, make_user, monkeypatch):

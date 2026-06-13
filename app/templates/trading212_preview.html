@@ -86,9 +86,9 @@
           <th>Action</th>
           <th>When</th>
           <th class="num">Matched updates</th>
-          <th class="num">Added</th>
-          <th class="num">Held back</th>
-          <th class="num">Tracked-only</th>
+          <th class="num">Broker-only added</th>
+          <th class="num">Held back for review</th>
+          <th class="num">Tracked-only untouched</th>
         </tr>
       </thead>
       <tbody>
@@ -129,7 +129,7 @@
         <div class="metric-value">{{ preview.apply_plan.broker_add_count }}</div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">Possible matches to review</div>
+        <div class="metric-label">Likely matches to review</div>
         <div class="metric-value">{{ preview.apply_plan.resolvable_possible_match_count }}</div>
       </div>
       <div class="metric-card">
