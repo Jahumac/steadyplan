@@ -213,13 +213,38 @@ def test_diagnostics_warns_when_trust_posture_needs_review(app, client, make_use
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Trust posture checkpoint" in body
     assert "Review recommended" in body
-    assert "One or more settings need review before relying on this as a polished public deployment." in body
+    assert "One or more settings need review before relying on this for public use." in body
+    assert "One or more settings need review before relying on this as a polished public deployment." not in body
     assert "One or more settings need review before treating this as a polished public deployment." not in body
     assert "Production" in body
     assert "Review recommended — Secure cookies are off while production mode is on. Turn them on behind HTTPS." in body
     assert "Deliberate public/proxy — SteadyPlan trusts forwarded proxy headers. Only leave this on behind a trusted reverse proxy or tunnel." in body
     assert "Deliberate public demo — Public read-only demo login is enabled. Keep it demo-data-only and treat it as an explicit host choice." in body
     assert "Review recommended — RATELIMIT_STORAGE_URI=memory:// is process-local." in body
+
+
+def test_diagnostics_renders_ok_public_trust_posture_message(app, client, make_user, tmp_path):
+    app.config.update(
+        DATA_DIR=tmp_path,
+        IS_PRODUCTION=True,
+        SESSION_COOKIE_SECURE=True,
+        REMEMBER_COOKIE_SECURE=True,
+        TRUST_PROXY_HEADERS=False,
+        DEMO_PUBLIC_LOGIN_ENABLED=False,
+        WEB_CONCURRENCY=1,
+        RATELIMIT_STORAGE_URI="memory://",
+        RATELIMIT_STORAGE_WARNING=None,
+    )
+    uid, username, password = make_user(username="trust-admin-ok", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/settings/?mode=diagnostics")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Trust posture checkpoint" in body
+    assert "Basic public-facing settings look in place for this trust checkpoint." in body
+    assert "Production-ready basics look in place for this trust checkpoint." not in body
+    assert "Review recommended" not in body
 
 
 def test_admin_can_run_manual_backup_from_settings(app, client, make_user, tmp_path):
