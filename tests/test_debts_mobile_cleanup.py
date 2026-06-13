@@ -69,3 +69,30 @@ def test_debt_edit_form_uses_plain_auto_tracking_copy(app, client, make_user):
     create_html = create_resp.get_data(as_text=True)
     assert "Shows how much you've paid off." in create_html
     assert "Used to show how much you've paid off." not in create_html
+
+
+def test_debts_list_cards_use_plain_payoff_status_labels(app, client, make_user):
+    uid, username, password = make_user(username="debts-list-status-copy", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO debts (user_id, name, original_amount, current_balance, monthly_payment, apr, is_active)
+                VALUES (?, 'Card', 1200, 600, 100, 19.9, 1)
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/budget/debts/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Debt-free by:" in html
+    assert "Interest left at this payment:" in html
+    assert "Free:" not in html
+    assert "Interest left:" not in html

@@ -525,12 +525,12 @@
 
     <div class="mt-075">
       {% if d.months_remaining is not none %}
-        <p class="helper-text"><strong>Free:</strong>
+        <p class="helper-text"><strong>Debt-free by:</strong>
           {% if d.payoff_date %}{{ d.payoff_date.strftime('%B %Y') }}{% endif %}
           ({{ d.months_remaining }} month{{ '' if d.months_remaining == 1 else 's' }})
         </p>
         {% if d.total_interest is not none %}
-        <p class="helper-text stat-negative-text"><strong>Interest left:</strong> £{{ '{:,.0f}'.format(d.total_interest) }}</p>
+        <p class="helper-text stat-negative-text"><strong>Interest left at this payment:</strong> £{{ '{:,.0f}'.format(d.total_interest) }}</p>
         {% endif %}
       {% else %}
         <p class="helper-text stat-negative-text">Payment too low to cover interest</p>
