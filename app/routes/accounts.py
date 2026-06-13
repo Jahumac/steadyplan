@@ -231,6 +231,18 @@ def _format_iso_datetime_short(value):
         return text[:16]
 
 
+def _display_schedule_to_month(to_month):
+    """Render open-ended contribution schedule sentinels as user-facing text."""
+    if not to_month:
+        return "Ongoing"
+    text = str(to_month).strip()
+    if not text:
+        return "Ongoing"
+    if text >= "9999-12":
+        return "Ongoing"
+    return text
+
+
 def _linked_trading212_health_summary(selected, linked_connection, effective_value):
     if not selected or not linked_connection:
         return None
@@ -687,6 +699,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         overrides=overrides,
         current_month_key=date.today().strftime("%Y-%m"),
         budget_context_month_key=budget_context_month_key,
+        display_schedule_to_month=_display_schedule_to_month,
         next_url=next_url,
         monthly_update_return_href=monthly_update_return_href,
         tax_year_logged=tax_year_logged,

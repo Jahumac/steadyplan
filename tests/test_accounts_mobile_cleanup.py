@@ -211,6 +211,33 @@ def test_account_detail_standard_contribution_panel_uses_per_month_wording(app, 
     assert "£125.00/mo" not in html
 
 
+def test_account_detail_shows_ongoing_for_open_ended_schedule_adjustments(app, client, make_user):
+    uid, username, password = make_user(username="accounts-ongoing-schedule-copy", password="password123")
+
+    with app.app_context():
+        payload = _account_payload()
+        payload["monthly_contribution"] = 500
+        account_id = create_account(payload, uid)
+        current_month = date.today().strftime("%Y-%m")
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO contribution_overrides (account_id, from_month, to_month, override_amount, reason, created_at)
+                VALUES (?, ?, ?, ?, ?, datetime('now'))
+                """,
+                (account_id, current_month, "9999-12", 500, "schedule"),
+            )
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert f"Adjustment · {current_month} → Ongoing · schedule" in html
+    assert "9999-12" not in html
+
+
 def test_accounts_create_form_includes_junior_isa_wrapper_option(app, client, make_user):
     uid, username, password = make_user(username="accounts-jisa", password="password123")
 
