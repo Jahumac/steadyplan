@@ -63,20 +63,20 @@
 <section class="panel mt-1">
   <div class="section-header">
     <div>
-      <h3>Recent sync activity</h3>
-      <p class="helper-text" style="margin:0;">Keep a visible record of the last preview and last confirmed write step on this linked broker connection.</p>
+      <h3>Recent preview and write history</h3>
+      <p class="helper-text" style="margin:0;">Keep a visible record of the last broker snapshot preview and the last reviewed write you confirmed on this linked account.</p>
     </div>
   </div>
   <div class="metrics-grid">
     <div class="metric-card">
-      <div class="metric-label">Last preview</div>
+      <div class="metric-label">Previewed snapshot</div>
       <div class="metric-value" style="font-size:1rem;">{{ preview.sync_history.last_preview.created_label if preview.sync_history.last_preview else '—' }}</div>
       <div class="helper-text">{{ preview.sync_history.last_preview.action_label if preview.sync_history.last_preview else 'No preview saved yet' }}</div>
     </div>
     <div class="metric-card">
-      <div class="metric-label">Last confirmed write step</div>
+      <div class="metric-label">Last reviewed write</div>
       <div class="metric-value" style="font-size:1rem;">{{ preview.sync_history.last_apply.created_label if preview.sync_history.last_apply else '—' }}</div>
-      <div class="helper-text">{{ preview.sync_history.last_apply.action_label if preview.sync_history.last_apply else 'No confirmed write step saved yet' }}</div>
+      <div class="helper-text">{{ preview.sync_history.last_apply.action_label if preview.sync_history.last_apply else 'No reviewed write saved yet' }}</div>
     </div>
   </div>
   <div class="table-scroll mt-1">
