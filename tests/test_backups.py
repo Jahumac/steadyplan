@@ -113,7 +113,8 @@ def test_diagnostics_renders_backup_panel_when_no_backups_exist(app, client, mak
     assert "SQLite backups" in body
     assert "Backup health" in body
     assert "No whole-instance SQLite backup found." in body
-    assert "None yet" in body
+    assert "No backup yet" in body
+    assert "None yet" not in body
     assert "whole-instance SQLite backups" in body
     assert "data/backups" in body
     assert "finance.db" in body
@@ -156,6 +157,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "OK — Process-local memory storage is fine with a single worker." in body
     assert '<p class="eyebrow">Runtime checks</p>' in body
     assert "<h3>Instance overview</h3>" in body
+    assert "Available" in body
+    assert "Needs attention" not in body
     assert '<p class="eyebrow">Data in this instance</p>' in body
     assert "<h3>Instance counts</h3>" in body
     assert '<p class="eyebrow">Linked prices</p>' in body
@@ -176,8 +179,9 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "Catalogue in use" not in body
     assert "Active price catalogue entries" not in body
     assert "Price catalogue entries linked to holdings" not in body
-    assert "Not yet recorded" in body
+    assert "No run recorded yet" in body
     assert "No scheduler run has been recorded yet. That is normal on a fresh instance or when you mainly update prices and balances manually." in body
+    assert "Not yet recorded" not in body
     assert '<p class="eyebrow">Status</p>' not in body
     assert "<h3>Overview</h3>" not in body
     assert '<p class="eyebrow">Counts</p>' not in body
@@ -363,6 +367,21 @@ def test_diagnostics_backup_metadata_template_uses_clearer_backup_labels():
     assert "Latest backup size" in body
     assert "Latest modified" not in body
     assert "Latest size" not in body
+
+
+def test_diagnostics_runtime_status_template_uses_clearer_state_labels():
+    from pathlib import Path
+
+    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+
+    assert "Available" in body
+    assert "Needs attention" in body
+    assert "No run recorded yet" in body
+    assert "No backup yet" in body
+    assert ">OK<" not in body
+    assert ">Error<" not in body
+    assert "Not yet recorded" not in body
+    assert "None yet" not in body
 
 
 def test_backup_health_is_good_for_recent_backup(app, client, make_user, tmp_path):
