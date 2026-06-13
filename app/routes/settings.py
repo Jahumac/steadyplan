@@ -193,7 +193,7 @@ def _trust_posture_diagnostics():
             "label": "Review recommended" if rate_limit_warning else "OK",
             "value": "Single-worker memory" if rate_limit_storage_uri == "memory://" else "Shared storage",
             "message": rate_limit_warning or (
-                "Process-local memory storage is fine with a single worker."
+                "Single-worker memory is fine with one worker."
                 if rate_limit_storage_uri == "memory://" and worker_count == 1
                 else "Shared rate-limit storage is configured for multi-worker use."
             ),
