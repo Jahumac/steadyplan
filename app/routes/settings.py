@@ -1392,12 +1392,12 @@ def apply_trading212_reviewed_changes(connection_id):
     preview = _build_trading212_preview(current_user.id, refreshed_connection, snapshot, linked_account=linked_account)
 
     if request.form.get("confirm_apply_matched") != "yes":
-        flash("Tick the confirmation box before applying reviewed Trading 212 changes.", "error")
+        flash("Tick the confirmation box before applying the reviewed matched updates.", "error")
         return _render_trading212_preview(preview)
 
     matched_updates = list(preview.get("matched_updates") or [])
     if not matched_updates:
-        flash("No matched Trading 212 changes were ready to apply.", "info")
+        flash("No matched broker updates were ready to apply.", "info")
         return _render_trading212_preview(preview)
 
     updated = 0
@@ -1434,7 +1434,7 @@ def apply_trading212_reviewed_changes(connection_id):
     untouched_tracked = len(preview.get("db_only") or [])
     if updated:
         flash(
-            f"Applied {updated} matched Trading 212 holding update{'s' if updated != 1 else ''}. "
+            f"Applied {updated} matched broker holding update{'s' if updated != 1 else ''}. "
             f"{untouched_broker} broker-only position{'s' if untouched_broker != 1 else ''} and "
             f"{untouched_tracked} tracked-only holding{'s' if untouched_tracked != 1 else ''} were left untouched for review.",
             "success",
@@ -1515,7 +1515,7 @@ def apply_trading212_reviewed_broker_additions(connection_id):
 
     addable_broker_rows = _trading212_addable_broker_rows(preview)
     if not addable_broker_rows:
-        flash("No broker-only Trading 212 positions were ready to add safely.", "info")
+        flash("No broker-only positions were ready to add safely.", "info")
         return _render_trading212_preview(preview)
 
     added = 0
@@ -1530,7 +1530,7 @@ def apply_trading212_reviewed_broker_additions(connection_id):
     tracked_only = len(preview.get("db_only") or [])
     if added:
         flash(
-            f"Added {added} reviewed Trading 212 broker-only position{'s' if added != 1 else ''}. "
+            f"Added {added} reviewed broker-only position{'s' if added != 1 else ''}. "
             f"{held_back_broker} broker-only position{'s' if held_back_broker != 1 else ''} stayed out for manual review and "
             f"{tracked_only} tracked-only holding{'s' if tracked_only != 1 else ''} stayed untouched.",
             "success",
