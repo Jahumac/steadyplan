@@ -82,7 +82,8 @@ def test_debts_page_renders_payoff_guidance_card_with_strategy_controls(app, cli
     loan_idx = html.index("Loan", section_idx)
     assert store_idx < card_idx < loan_idx
     assert "Smallest balance first" in html
-    assert "Gets the rolled payment after earlier debts clear" in html
+    assert "Gets earlier debt payments once those clear" in html
+    assert "Gets the rolled payment after earlier debts clear" not in html
 
 
 def test_debts_page_payoff_guidance_shows_excluded_debt_reasons(app, client, make_user):
