@@ -162,7 +162,7 @@ def test_debt_payoff_guidance_excludes_unsustainable_debts():
 
     assert scenario["included_debt_count"] == 0
     assert scenario["excluded_debt_count"] == 1
-    assert scenario["excluded_debts"][0]["reason"] == "Minimum payment does not currently cover interest"
+    assert scenario["excluded_debts"][0]["reason"] == "Current payment does not cover interest"
 
 
 def test_compare_debt_payoff_strategies_skips_zero_balance_debts_and_shows_interest_tradeoff():

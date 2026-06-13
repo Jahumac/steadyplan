@@ -97,7 +97,8 @@ def test_debts_page_payoff_guidance_shows_excluded_debt_reasons(app, client, mak
 
     assert "Some debts are not ready for the payoff order yet." in html
     assert "Problem debt" in html
-    assert "Minimum payment does not currently cover interest" in html
+    assert "Current payment does not cover interest" in html
+    assert "Minimum payment does not currently cover interest" not in html
     assert "Cleared" in html
     assert "Balance already cleared" in html
     assert "Some debts are not included in this estimate yet." not in html
@@ -125,6 +126,7 @@ def test_debts_page_payoff_guidance_empty_state_explains_how_to_get_a_ranked_est
     assert "Missing payment" in html
     assert "No monthly payment set" in html
     assert "Problem debt" in html
-    assert "Minimum payment does not currently cover interest" in html
+    assert "Current payment does not cover interest" in html
+    assert "Minimum payment does not currently cover interest" not in html
     assert "Cleared" in html
     assert "Balance already cleared" in html
