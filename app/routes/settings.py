@@ -157,7 +157,7 @@ def _trust_posture_diagnostics():
             "message": (
                 "Production mode is on. Keep HTTPS and secure cookies on for real use."
                 if is_production
-                else "Local/development mode is active. Fine for LAN/VPN evaluation, but review production settings before exposing SteadyPlan publicly."
+                else "Local/development mode is on. Fine for LAN/VPN checks, but review production settings before exposing SteadyPlan publicly."
             ),
         },
         "secure_cookies": {
