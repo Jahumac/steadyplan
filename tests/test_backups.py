@@ -143,7 +143,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Trust posture checkpoint" in body
     assert "Local/demo posture" in body
-    assert "This instance looks deliberate for local evaluation or read-only demo use." in body
+    assert "This instance looks set up for local evaluation or read-only demo use." in body
+    assert "This instance looks deliberate for local evaluation or read-only demo use." not in body
     assert "App mode" in body
     assert "Development/local" in body
     assert "Local/demo posture — Local/development mode is active." in body
@@ -212,7 +213,8 @@ def test_diagnostics_warns_when_trust_posture_needs_review(app, client, make_use
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Trust posture checkpoint" in body
     assert "Review recommended" in body
-    assert "One or more settings need review before treating this as a polished public deployment." in body
+    assert "One or more settings need review before relying on this as a polished public deployment." in body
+    assert "One or more settings need review before treating this as a polished public deployment." not in body
     assert "Production" in body
     assert "Review recommended — Secure cookies are off while production mode is on. Turn them on behind HTTPS." in body
     assert "Deliberate public/proxy — SteadyPlan trusts forwarded proxy headers. Only leave this on behind a trusted reverse proxy or tunnel." in body
@@ -382,6 +384,17 @@ def test_diagnostics_runtime_status_template_uses_clearer_state_labels():
     assert ">Error<" not in body
     assert "Not yet recorded" not in body
     assert "None yet" not in body
+
+
+def test_diagnostics_trust_checkpoint_copy_uses_clearer_setup_wording():
+    from pathlib import Path
+
+    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+
+    assert "Live runtime checks for the main trust-related settings on this instance." in body
+    assert "This is not a full security audit, but it should make the current setup easier to review." in body
+    assert "Live runtime checks for the main trust settings on this instance." not in body
+    assert "it should make the current posture easier to review." not in body
 
 
 def test_backup_health_is_good_for_recent_backup(app, client, make_user, tmp_path):
