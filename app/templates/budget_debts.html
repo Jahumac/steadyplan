@@ -447,7 +447,7 @@
       </label>
     </div>
     <div class="badge-row mt-075">
-      <button type="submit">Update payoff estimate</button>
+      <button type="submit">Update payoff order</button>
     </div>
   </form>
 
@@ -470,11 +470,11 @@
 
   <div class="hero-strip" style="margin-bottom:0.75rem;">
     <div class="hero-stat">
-      <span class="hero-stat-label">Estimated payoff time</span>
+      <span class="hero-stat-label">Payoff time estimate</span>
       <span class="hero-stat-value"><strong>{{ payoff_guidance.total_months }} month{{ '' if payoff_guidance.total_months == 1 else 's' }}</strong></span>
     </div>
     <div class="hero-stat">
-      <span class="hero-stat-label">Estimated total interest</span>
+      <span class="hero-stat-label">Total interest estimate</span>
       <span class="hero-stat-value"><strong class="stat-negative-text">£{{ '{:,.0f}'.format(payoff_guidance.total_interest) }}</strong></span>
     </div>
     <div class="hero-stat">

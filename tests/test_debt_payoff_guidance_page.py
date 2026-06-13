@@ -38,10 +38,10 @@ def test_debts_page_renders_payoff_guidance_card_with_strategy_controls(app, cli
     assert "Highest APR first (usually cheaper overall)" in html
     assert "Smallest balance first (quick wins)" in html
     assert "Extra overpayment per month (£)" in html
-    assert "Update payoff estimate" in html
+    assert "Update payoff order" in html
     assert 'value="75.0"' in html or 'value="75"' in html
-    assert "Estimated payoff time" in html
-    assert "Estimated total interest" in html
+    assert "Payoff time estimate" in html
+    assert "Total interest estimate" in html
     assert "Debts ranked" in html
     assert "Estimated monthly payment while prioritised:" in html
     assert "£125 per month." in html
@@ -60,7 +60,10 @@ def test_debts_page_renders_payoff_guidance_card_with_strategy_controls(app, cli
     assert "Cheapest overall" not in html
     assert "Quick wins first" not in html
     assert "Extra debt payment per month (£)" not in html
+    assert "Update payoff estimate" not in html
     assert "Update estimate" not in html
+    assert "Estimated payoff time" not in html
+    assert "Estimated total interest" not in html
     assert "Estimated outcome" not in html
     assert "Estimated interest" not in html
     assert "Debts included" not in html
