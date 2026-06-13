@@ -164,7 +164,7 @@ def _trust_posture_diagnostics():
             "label": "OK" if session_cookie_secure and remember_cookie_secure else ("Review recommended" if is_production else "Local/demo posture"),
             "value": "Secure" if session_cookie_secure and remember_cookie_secure else "Not secure",
             "message": (
-                "Secure session and remember cookies are on."
+                "Secure cookies are on for sessions and remembered logins."
                 if session_cookie_secure and remember_cookie_secure
                 else "Secure cookies are off while production mode is on. Turn them on behind HTTPS."
                 if is_production
