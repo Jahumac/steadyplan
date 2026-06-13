@@ -52,6 +52,8 @@ def test_debt_edit_form_uses_plain_auto_tracking_copy(app, client, make_user):
     assert detail_resp.status_code == 200
     detail_html = detail_resp.get_data(as_text=True)
     assert 'title="Balance worked out from your first payment date and monthly payment schedule"' in detail_html
+    assert "Interest left at this payment</span>" in detail_html
+    assert "Interest left</span>" not in detail_html
     assert 'title="Balance estimated from your first payment date and monthly payment schedule"' not in detail_html
     assert 'title="Balance calculated automatically from your first payment date — updates each month"' not in detail_html
 
