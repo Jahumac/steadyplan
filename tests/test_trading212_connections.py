@@ -1420,7 +1420,8 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     assert "Add broker-only positions" in body
     assert "Add reviewed broker-only positions" not in body
     assert "Updates matched holdings only on <strong>Trading 212 ISA</strong>. Broker-only positions and tracked-only holdings stay untouched." in body
-    assert "Adds broker-only positions with no possible tracked match clues. Positions with possible matches stay out for manual review." in body
+    assert "Adds broker-only positions with no likely tracked match clues. Positions with likely matches stay out for manual review." in body
+    assert "Adds broker-only positions with no possible tracked match clues. Positions with possible matches stay out for manual review." not in body
     assert "Preview only. Any later write stays separate and needs confirmation for <strong>Trading 212 ISA</strong>." in body
     assert "Differences found. Nothing runs automatically; any later write stays explicit, account-scoped, and non-destructive." in body
     assert "If a later write step is added, this is the safest shape of work SteadyPlan should ask you to confirm" not in body
@@ -2645,13 +2646,14 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert "trading212-desktop-only" in body
     assert "trading212-mobile-only" in body
     assert "trading212-mobile-candidate-overflow" in body
-    assert "Show 1 more possible match" in body
+    assert "Show 1 more likely match" in body
     assert "Likely tracked matches" in body
     assert "Choose the tracked holding that should receive this broker snapshot update." in body
     assert "Confirm reviewed likely match" in body
     assert "I reviewed this likely match and want SteadyPlan to update only the tracked holding I selected." in body
     assert "Resolve reviewed possible match" not in body
     assert "Possible tracked matches" not in body
+    assert "Show 1 more possible match" not in body
     assert "Pick the tracked holding that should take this broker snapshot update." not in body
     assert "I reviewed this possible match and want SteadyPlan to update only the tracked holding I selected." not in body
     assert "Useful for spotting holdings that are probably stale/manual versus ones that still need a careful rematch on this linked account." in body
