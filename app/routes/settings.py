@@ -1812,7 +1812,7 @@ def commit_restore_backup():
     confirm_checked = request.form.get("confirm_replace") == "1"
     confirm_phrase = request.form.get("confirm_phrase", "").strip()
     if not confirm_checked or confirm_phrase.upper() != "RESTORE":
-        flash("To restore and overwrite data, tick the checkbox and type RESTORE to confirm.", "error")
+        flash("To overwrite this user's data from the export, tick the checkbox and type RESTORE to confirm.", "error")
         uid = current_user.id
         assumptions = fetch_assumptions(uid)
         computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
