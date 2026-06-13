@@ -33,7 +33,7 @@ def test_debts_page_renders_payoff_guidance_card_with_strategy_controls(app, cli
 
     assert "Suggested payoff order" in html
     assert "Where extra debt money could go first" in html
-    assert "Every debt keeps its minimum payment. This estimate only changes where extra overpayments go first." in html
+    assert "Every debt keeps its minimum payment. This payoff order only changes where extra overpayments go first." in html
     assert "Payoff strategy" in html
     assert "Highest APR first (usually cheaper overall)" in html
     assert "Smallest balance first (quick wins)" in html
@@ -43,7 +43,7 @@ def test_debts_page_renders_payoff_guidance_card_with_strategy_controls(app, cli
     assert "Payoff time estimate" in html
     assert "Total interest estimate" in html
     assert "Debts ranked" in html
-    assert "Estimated monthly payment while prioritised:" in html
+    assert "Monthly payment while prioritised:" in html
     assert "£125 per month." in html
     assert "£215 per month." in html
     assert "£395 per month." in html
@@ -52,7 +52,7 @@ def test_debts_page_renders_payoff_guidance_card_with_strategy_controls(app, cli
     assert "£90/mo" not in html
     assert "+£75/mo saves" not in html
     assert "/mo." not in html
-    assert "Based on the balances, rates, and payments entered." in html
+    assert "Based on the balances, rates, and payments you entered." in html
     assert "Smallest balance first can give earlier pay-off milestones." in html
     assert "Highest APR first usually costs less in interest." in html
     assert "All debts keep their minimum payment in this estimate." not in html
@@ -64,6 +64,9 @@ def test_debts_page_renders_payoff_guidance_card_with_strategy_controls(app, cli
     assert "Update estimate" not in html
     assert "Estimated payoff time" not in html
     assert "Estimated total interest" not in html
+    assert "This estimate only changes where extra overpayments go first." not in html
+    assert "Estimated monthly payment while prioritised:" not in html
+    assert "Based on the balances, rates, and payments entered." not in html
     assert "Estimated outcome" not in html
     assert "Estimated interest" not in html
     assert "Debts included" not in html
