@@ -371,6 +371,8 @@ def test_settings_still_mentions_backup_restore(app, client, make_user):
     assert "whole-instance SQLite backup" in html
     assert "This permanently deletes all data for this user: accounts, holdings, goals, budget, monthly updates, and assumptions." in html
     assert "This permanently deletes all data for this user: accounts, holdings, goals, budget, monthly reviews, and assumptions." not in html
+    assert "This cannot be undone. Download this user's JSON export before continuing." in html
+    assert "Download a JSON export for this user before continuing." not in html
     assert "Delete this user's finance data" in html
     assert "Delete all data for this user" not in html
 
