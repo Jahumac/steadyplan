@@ -156,7 +156,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "OK — Forwarded proxy headers are ignored unless you explicitly opt in." in body
     assert "Public read-only demo" in body
     assert "<td>Public demo login</td>" not in body
-    assert "OK — Public demo login is off. Real accounts still require normal login." in body
+    assert "OK — Public read-only demo is off. Real accounts still require normal login." in body
+    assert "OK — Public demo login is off. Real accounts still require normal login." not in body
     assert "Rate-limit storage" in body
     assert "OK — Process-local memory storage is fine with a single worker." in body
     assert '<p class="eyebrow">Runtime checks</p>' in body
@@ -222,7 +223,8 @@ def test_diagnostics_warns_when_trust_posture_needs_review(app, client, make_use
     assert "Production" in body
     assert "Review recommended — Secure cookies are off while production mode is on. Turn them on behind HTTPS." in body
     assert "Proxy headers enabled — SteadyPlan trusts forwarded proxy headers. Only leave this on behind a trusted reverse proxy or tunnel." in body
-    assert "Public demo enabled — Public read-only demo login is enabled. Keep it demo-data-only and treat it as an explicit host choice." in body
+    assert "Public demo enabled — Public read-only demo is enabled. Keep it demo-data-only and treat it as an explicit host choice." in body
+    assert "Public demo enabled — Public read-only demo login is enabled. Keep it demo-data-only and treat it as an explicit host choice." not in body
     assert "Deliberate public/proxy" not in body
     assert "Deliberate public demo" not in body
     assert "Review recommended — RATELIMIT_STORAGE_URI=memory:// is process-local." in body
