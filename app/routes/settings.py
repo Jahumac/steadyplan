@@ -172,7 +172,7 @@ def _trust_posture_diagnostics():
             ),
         },
         "proxy_headers": {
-            "label": "Deliberate public/proxy" if trust_proxy_headers else "OK",
+            "label": "Proxy headers enabled" if trust_proxy_headers else "OK",
             "value": "Trusted" if trust_proxy_headers else "Ignored by default",
             "message": (
                 "SteadyPlan trusts forwarded proxy headers. Only leave this on behind a trusted reverse proxy or tunnel."
@@ -181,7 +181,7 @@ def _trust_posture_diagnostics():
             ),
         },
         "demo_login": {
-            "label": "Deliberate public demo" if demo_public_login_enabled else "OK",
+            "label": "Public demo enabled" if demo_public_login_enabled else "OK",
             "value": "Enabled" if demo_public_login_enabled else "Disabled",
             "message": (
                 "Public read-only demo login is enabled. Keep it demo-data-only and treat it as an explicit host choice."
