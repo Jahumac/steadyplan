@@ -202,13 +202,13 @@ def _trust_posture_diagnostics():
     needs_review = any(item["label"] == "Review recommended" for item in items.values())
     if needs_review:
         overall_label = "Review recommended"
-        overall_message = "One or more settings need review before relying on this as a polished public deployment."
+        overall_message = "One or more settings need review before relying on this for public use."
     elif not is_production or demo_public_login_enabled:
         overall_label = "Local/demo posture"
         overall_message = "This instance looks set up for local evaluation or read-only demo use. Review production settings before exposing it publicly."
     else:
         overall_label = "OK"
-        overall_message = "Production-ready basics look in place for this trust checkpoint."
+        overall_message = "Basic public-facing settings look in place for this trust checkpoint."
     return {"overall_label": overall_label, "overall_message": overall_message, "items": items}
 
 
