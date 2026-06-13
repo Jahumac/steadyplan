@@ -1668,7 +1668,7 @@ def disconnect_trading212(connection_id):
         flash(trading212_connection_not_found_message(), "error")
         return _settings_trading212_redirect()
     delete_broker_connection(connection_id, current_user.id)
-    flash("Read-only broker connection removed. Manual/CSV imports remain available.", "success")
+    flash("Read-only broker connection removed. Manual/CSV tracking stays available.", "success")
     return _settings_trading212_redirect()
 
 
