@@ -1347,7 +1347,7 @@ def apply_trading212_reviewed_changes(connection_id):
 
     account_id = optional_int(request.form.get("account_id"), default=None)
     if not account_id:
-        flash("Choose the linked account before applying the reviewed matched updates.", "error")
+        flash("Choose the linked account before applying matched holding updates.", "error")
         return _settings_trading212_redirect()
 
     linked_account = fetch_account(account_id, current_user.id)
@@ -1465,7 +1465,7 @@ def apply_trading212_reviewed_broker_additions(connection_id):
 
     account_id = optional_int(request.form.get("account_id"), default=None)
     if not account_id:
-        flash("Choose the linked account before adding reviewed broker-only positions.", "error")
+        flash("Choose the linked account before adding broker-only positions.", "error")
         return _settings_trading212_redirect()
 
     linked_account = fetch_account(account_id, current_user.id)
@@ -1561,7 +1561,7 @@ def resolve_trading212_possible_match(connection_id):
 
     account_id = optional_int(request.form.get("account_id"), default=None)
     if not account_id:
-        flash("Choose the linked account before confirming a likely match.", "error")
+        flash("Choose the linked account before confirming the reviewed likely match.", "error")
         return _settings_trading212_redirect()
 
     linked_account = fetch_account(account_id, current_user.id)

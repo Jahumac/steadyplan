@@ -1878,7 +1878,8 @@ def test_apply_trading212_reviewed_changes_requires_linked_account_choice(app, c
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Choose the linked account before applying the reviewed matched updates." in body
+    assert "Choose the linked account before applying matched holding updates." in body
+    assert "Choose the linked account before applying the reviewed matched updates." not in body
     assert "Choose the linked account before applying reviewed changes." not in body
 
 
@@ -2328,7 +2329,39 @@ def test_apply_trading212_reviewed_broker_additions_requires_linked_account_choi
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Choose the linked account before adding reviewed broker-only positions." in body
+    assert "Choose the linked account before adding broker-only positions." in body
+    assert "Choose the linked account before adding reviewed broker-only positions." not in body
+
+
+def test_resolve_trading212_possible_match_requires_linked_account_choice(app, client, make_user):
+    uid, username, password = make_user(username="t212-resolve-no-account")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("no-resolve-account-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("no-resolve-account-secret"),
+            status="connected",
+            last_tested_at="2026-06-09T08:00:00+00:00",
+            external_account_id="ACC-NO-RESOLVE-1",
+            external_account_currency="GBP",
+            external_total_value=3200.0,
+        )
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/resolve-possible-match",
+        data={"preview_key": "0:ACMEG_EQ:Acme Global Growth"},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Choose the linked account before confirming the reviewed likely match." in body
+    assert "Choose the linked account before confirming a likely match." not in body
 
 
 def test_linked_preview_normalises_trading212_alias_tickers_and_etf_names(app, client, make_user, monkeypatch):
