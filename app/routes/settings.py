@@ -184,9 +184,9 @@ def _trust_posture_diagnostics():
             "label": "Public demo enabled" if demo_public_login_enabled else "OK",
             "value": "Enabled" if demo_public_login_enabled else "Disabled",
             "message": (
-                "Public read-only demo login is enabled. Keep it demo-data-only and treat it as an explicit host choice."
+                "Public read-only demo is enabled. Keep it demo-data-only and treat it as an explicit host choice."
                 if demo_public_login_enabled
-                else "Public demo login is off. Real accounts still require normal login."
+                else "Public read-only demo is off. Real accounts still require normal login."
             ),
         },
         "rate_limits": {
