@@ -1347,7 +1347,7 @@ def apply_trading212_reviewed_changes(connection_id):
 
     account_id = optional_int(request.form.get("account_id"), default=None)
     if not account_id:
-        flash("Choose the linked account before applying reviewed changes.", "error")
+        flash("Choose the linked account before applying the reviewed matched updates.", "error")
         return _settings_trading212_redirect()
 
     linked_account = fetch_account(account_id, current_user.id)

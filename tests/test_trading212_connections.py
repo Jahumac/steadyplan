@@ -1844,6 +1844,37 @@ def test_apply_trading212_reviewed_changes_requires_confirmation(app, client, ma
         assert apple["value"] == 2400.0
 
 
+def test_apply_trading212_reviewed_changes_requires_linked_account_choice(app, client, make_user):
+    uid, username, password = make_user(username="t212-apply-reviewed-no-account")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("no-account-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("no-account-secret"),
+            status="connected",
+            last_tested_at="2026-06-09T08:00:00+00:00",
+            external_account_id="ACC-NO-ACCOUNT-1",
+            external_account_currency="GBP",
+            external_total_value=3200.0,
+        )
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/apply-reviewed",
+        data={},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Choose the linked account before applying the reviewed matched updates." in body
+    assert "Choose the linked account before applying reviewed changes." not in body
+
+
 def test_apply_trading212_reviewed_broker_additions_adds_only_clear_broker_only_positions(app, client, make_user, monkeypatch):
     uid, username, password = make_user(username="t212-apply-additions")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
@@ -2261,6 +2292,36 @@ def test_apply_trading212_reviewed_broker_additions_requires_confirmation(app, c
     with app.app_context():
         holdings = list(fetch_holdings_for_account(account_id))
         assert {row['ticker'] for row in holdings} == {"AAPL_US_EQ"}
+
+
+def test_apply_trading212_reviewed_broker_additions_requires_linked_account_choice(app, client, make_user):
+    uid, username, password = make_user(username="t212-additions-no-account")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("no-add-account-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("no-add-account-secret"),
+            status="connected",
+            last_tested_at="2026-06-09T08:00:00+00:00",
+            external_account_id="ACC-NO-ADD-1",
+            external_account_currency="GBP",
+            external_total_value=3200.0,
+        )
+
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/apply-reviewed-additions",
+        data={},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "Choose the linked account before adding reviewed broker-only positions." in body
 
 
 def test_linked_preview_normalises_trading212_alias_tickers_and_etf_names(app, client, make_user, monkeypatch):
