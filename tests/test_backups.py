@@ -154,7 +154,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "Forwarded proxy headers" in body
     assert "Trusted proxy headers" not in body
     assert "OK — Forwarded proxy headers are ignored unless you explicitly opt in." in body
-    assert "Public demo login" in body
+    assert "Public read-only demo" in body
+    assert "<td>Public demo login</td>" not in body
     assert "OK — Public demo login is off. Real accounts still require normal login." in body
     assert "Rate-limit storage" in body
     assert "OK — Process-local memory storage is fine with a single worker." in body
