@@ -463,7 +463,7 @@
         </div>
       </div>
       <p class="helper-text"><strong>{{ debt.reason }}</strong></p>
-      <p class="helper-text">Monthly payment while prioritised: £{{ '{:,.0f}'.format(debt.rolled_monthly_payment) }} per month.</p>
+      <p class="helper-text">Payment when this debt comes first: £{{ '{:,.0f}'.format(debt.rolled_monthly_payment) }} per month.</p>
     </div>
     {% endfor %}
   </div>
@@ -482,7 +482,7 @@
       <span class="hero-stat-value"><strong>{{ payoff_guidance.included_debt_count }}</strong></span>
     </div>
   </div>
-  <p class="helper-text mb-05">Based on the balances, rates, and payments you entered.</p>
+  <p class="helper-text mb-05">Based on the balances, interest rates, and payments you entered.</p>
   <p class="helper-text">{{ payoff_guidance.comparison_note }}</p>
   {% else %}
   <p class="helper-text"><strong>No debts are ready for a payoff order yet.</strong></p>
