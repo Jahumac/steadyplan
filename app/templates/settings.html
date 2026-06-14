@@ -174,7 +174,7 @@
     </div>
   </div>
   <div class="hero-strip">
-    {% call hero_stat('Database') %}<strong>{% if diagnostics and diagnostics.db_ok %}Reachable{% else %}Needs attention{% endif %}</strong>{% endcall %}
+    {% call hero_stat('SQLite database') %}<strong>{% if diagnostics and diagnostics.db_ok %}Reachable{% else %}Needs attention{% endif %}</strong>{% endcall %}
     {% call hero_stat('Accounts') %}<strong>{{ diagnostics.counts.accounts if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
     {% call hero_stat('Holdings') %}<strong>{{ diagnostics.counts.holdings if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
     {% call hero_stat('Saved daily snapshots') %}<strong>{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
@@ -209,7 +209,7 @@
     <table class="data-table">
       <tbody>
         <tr>
-          <td>Database</td>
+          <td>SQLite database</td>
           <td class="num">{% if diagnostics and diagnostics.db_ok %}Reachable{% else %}Needs attention{% endif %}</td>
         </tr>
         <tr>
