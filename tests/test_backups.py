@@ -176,6 +176,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "OK — Process-local memory storage is fine with a single worker." not in body
     assert '<p class="eyebrow">Runtime checks</p>' in body
     assert "<h3>Instance overview</h3>" in body
+    assert "SQLite database" in body
+    assert ">Database<" not in body
     assert "<td class=\"num\">Reachable</td>" in body
     assert "<td class=\"num\">Available</td>" not in body
     assert "Needs attention" not in body
@@ -419,6 +421,9 @@ def test_diagnostics_instance_counts_template_uses_clearer_catalogue_count_label
 
     body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
 
+    assert "SQLite database" in body
+    assert "hero_stat('Database')" not in body
+    assert '<td>Database</td>' not in body
     assert "Saved daily snapshots" in body
     assert "hero_stat('Daily snapshots')" not in body
     assert "Saved prices" in body
