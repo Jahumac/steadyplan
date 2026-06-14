@@ -280,8 +280,11 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "SIPP data is not available through the broker API yet" not in body
     assert "Each saved read-only broker connection stays read-only." in body
     assert "Each saved connection is read-only." not in body
+    assert "Retest broker access refreshes the latest account summary check." in body
+    assert "Retest connection refreshes the latest account summary check." not in body
     assert "Preview read-only broker snapshot" in body
-    assert "Retest connection" in body
+    assert "Retest broker access" in body
+    assert "Retest connection" not in body
     assert "Remove connection" in body
     assert "Read-only" in body
     assert "Read Only" not in body
