@@ -172,7 +172,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "OK — Process-local memory storage is fine with a single worker." not in body
     assert '<p class="eyebrow">Runtime checks</p>' in body
     assert "<h3>Instance overview</h3>" in body
-    assert "Available" in body
+    assert "<td class=\"num\">Reachable</td>" in body
+    assert "<td class=\"num\">Available</td>" not in body
     assert "Needs attention" not in body
     assert '<p class="eyebrow">Data in this instance</p>' in body
     assert "<h3>Instance counts</h3>" in body
@@ -425,7 +426,8 @@ def test_diagnostics_runtime_status_template_uses_clearer_state_labels():
 
     body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
 
-    assert "Available" in body
+    assert "Reachable" in body
+    assert "Available" not in body
     assert "Needs attention" in body
     assert "No run recorded yet" in body
     assert "No backup yet" in body
