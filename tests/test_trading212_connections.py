@@ -282,10 +282,13 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "Each saved connection is read-only." not in body
     assert "Retest broker access refreshes the latest account summary check." in body
     assert "Retest connection refreshes the latest account summary check." not in body
+    assert "Remove broker access deletes the stored encrypted key pair from SteadyPlan." in body
+    assert "Remove connection deletes the stored encrypted key pair from SteadyPlan." not in body
     assert "Preview read-only broker snapshot" in body
     assert "Retest broker access" in body
     assert "Retest connection" not in body
-    assert "Remove connection" in body
+    assert "Remove broker access" in body
+    assert "Remove connection" not in body
     assert "Read-only" in body
     assert "Read Only" not in body
     assert "Saved connection label" in body
