@@ -1018,7 +1018,7 @@ def settings():
             diagnostics["scheduler_last_run"] = dict(last_run) if last_run else None
             diagnostics["scheduler_status"] = {
                 "short": f"{last_run['run_date']} {last_run['slot']}" if last_run else "No run yet",
-                "full": f"{last_run['run_date']} {last_run['slot']}" if last_run else "No run recorded yet",
+                "full": f"{last_run['run_date']} {last_run['slot']}" if last_run else "No scheduler run yet",
                 "message": (
                     "A scheduler run has been recorded for this user."
                     if last_run
