@@ -2746,10 +2746,12 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert '<title>Trading 212 read-only broker preview · SteadyPlan</title>' in body
+    assert '<title>Read-only broker snapshot preview · SteadyPlan</title>' in body
+    assert '<title>Trading 212 read-only broker preview · SteadyPlan</title>' not in body
     assert '<title>Trading 212 read-only preview · SteadyPlan</title>' not in body
     assert '<title>Trading 212 preview · SteadyPlan</title>' not in body
-    assert "Trading 212 read-only broker preview (beta)" in body
+    assert "Read-only broker snapshot preview (beta)" in body
+    assert "Trading 212 read-only broker preview (beta)" not in body
     assert "Trading 212 sync (beta)" not in body
     assert "Preview read-only broker snapshot" in body
     assert "Preview read-only holdings snapshot" not in body
