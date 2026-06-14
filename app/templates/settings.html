@@ -217,7 +217,7 @@
           <td class="num">{{ diagnostics.scheduler_status.full if diagnostics and diagnostics.scheduler_status else 'No scheduler run yet' }}</td>
         </tr>
         <tr>
-          <td>Latest portfolio snapshot</td>
+          <td>Latest saved portfolio snapshot</td>
           <td class="num">
             {% if diagnostics and diagnostics.latest_portfolio_snapshot %}
               {{ diagnostics.latest_portfolio_snapshot.snapshot_date }} · £{{ '{:,.2f}'.format(diagnostics.latest_portfolio_snapshot.total_value or 0) }}
