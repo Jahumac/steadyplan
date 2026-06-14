@@ -190,7 +190,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "No holdings are linked to saved prices yet." not in body
     assert "Stale or missing linked prices in sample (&gt;2 days old or none)" not in body
     assert "Scheduler last run" in body
-    assert "Latest portfolio snapshot" in body
+    assert "Latest saved portfolio snapshot" in body
+    assert "Latest portfolio snapshot" not in body
     assert "Latest saved price update" in body
     assert "Latest price update (raw)" not in body
     assert "Saved prices" in body
@@ -402,6 +403,8 @@ def test_diagnostics_instance_overview_template_uses_clearer_price_update_label(
 
     body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
 
+    assert "Latest saved portfolio snapshot" in body
+    assert "Latest portfolio snapshot" not in body
     assert "Latest saved price update" in body
     assert "Latest price update (raw)" not in body
     assert "Latest catalogue price update" not in body
