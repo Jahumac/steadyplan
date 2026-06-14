@@ -339,15 +339,15 @@
           <td class="num">{{ diagnostics.backups.count if diagnostics and diagnostics.backups and diagnostics.backups.count is not none else 0 }}</td>
         </tr>
         <tr>
-          <td>Latest backup</td>
+          <td>Latest SQLite backup</td>
           <td class="num">{{ diagnostics.backups.latest_name_label if diagnostics and diagnostics.backups and diagnostics.backups.latest_name_label else 'No SQLite backup yet' }}</td>
         </tr>
         <tr>
-          <td>Latest backup saved at</td>
+          <td>Latest SQLite backup saved at</td>
           <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_modified %}{{ (diagnostics.backups.latest_modified or '')[:19] }}{% else %}—{% endif %}</td>
         </tr>
         <tr>
-          <td>Latest backup size</td>
+          <td>Latest SQLite backup size</td>
           <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_size_human %}{{ diagnostics.backups.latest_size_human }}{% else %}—{% endif %}</td>
         </tr>
       </tbody>
