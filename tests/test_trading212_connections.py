@@ -167,7 +167,8 @@ def test_settings_renders_unchecked_trading212_connection_status_fallback(app, c
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Broker check status" in body
-    assert "No successful check yet" in body
+    assert "No successful broker check yet" in body
+    assert "No successful check yet" not in body
     assert "Unverified" not in body
 
 
