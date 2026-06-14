@@ -1257,7 +1257,7 @@ def retest_trading212(connection_id):
             external_total_value=summary["total_value"],
         )
         flash(
-            f"Retested read-only broker {trading212_environment_label(summary['environment']).lower()} connection successfully.",
+            f"Read-only broker {trading212_environment_label(summary['environment']).lower()} access retested successfully.",
             "success",
         )
     except (Trading212ConnectionError, Trading212CredentialError) as exc:
