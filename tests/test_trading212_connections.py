@@ -497,7 +497,8 @@ def test_retest_trading212_success_uses_broker_connection_language(app, client, 
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Retested read-only broker demo connection successfully." in body
+    assert "Read-only broker demo access retested successfully." in body
+    assert "Retested read-only broker demo connection successfully." not in body
     assert "Read-only broker demo connection retested successfully." not in body
     assert "Trading 212 demo connection retested successfully." not in body
 
