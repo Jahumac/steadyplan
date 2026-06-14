@@ -111,6 +111,7 @@ def test_diagnostics_renders_backup_panel_when_no_backups_exist(app, client, mak
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "SQLite backups" in body
+    assert "SQLite backup files" in body
     assert "Backup health" in body
     assert "Backup recommended" in body
     assert "Needs backup" not in body
@@ -354,8 +355,10 @@ def test_diagnostics_shows_latest_backup_metadata(app, client, make_user, tmp_pa
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert dest.name in body
+    assert "SQLite backup files" in body
     assert "Latest SQLite backup" in body
     assert "Latest SQLite backup size" in body
+    assert "Backup files" not in body
     assert "Latest backup</td>" not in body
     assert "Latest backup size" not in body
     assert "Latest size" not in body
@@ -422,9 +425,11 @@ def test_diagnostics_backup_metadata_template_uses_clearer_backup_labels():
 
     body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
 
+    assert "SQLite backup files" in body
     assert "Latest SQLite backup" in body
     assert "Latest SQLite backup saved at" in body
     assert "Latest SQLite backup size" in body
+    assert "Backup files" not in body
     assert "Latest backup</td>" not in body
     assert "Latest backup saved at" not in body
     assert "Latest backup size" not in body
