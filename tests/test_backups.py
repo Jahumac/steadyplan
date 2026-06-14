@@ -195,7 +195,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "Catalogue in use" not in body
     assert "Active price catalogue entries" not in body
     assert "Price catalogue entries linked to holdings" not in body
-    assert "No run recorded yet" in body
+    assert "No scheduler run yet" in body
+    assert "No run recorded yet" not in body
     assert "No scheduler run has been recorded yet. That is normal on a fresh instance or when you mainly update prices and balances manually." in body
     assert "Not yet recorded" not in body
     assert '<p class="eyebrow">Status</p>' not in body
@@ -429,7 +430,8 @@ def test_diagnostics_runtime_status_template_uses_clearer_state_labels():
     assert "Reachable" in body
     assert "Available" not in body
     assert "Needs attention" in body
-    assert "No run recorded yet" in body
+    assert "No scheduler run yet" in body
+    assert "No run recorded yet" not in body
     assert "No backup yet" in body
     assert ">OK<" not in body
     assert ">Error<" not in body
