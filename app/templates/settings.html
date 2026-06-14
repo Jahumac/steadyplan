@@ -177,7 +177,7 @@
     {% call hero_stat('Database') %}<strong>{% if diagnostics and diagnostics.db_ok %}Reachable{% else %}Needs attention{% endif %}</strong>{% endcall %}
     {% call hero_stat('Accounts') %}<strong>{{ diagnostics.counts.accounts if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
     {% call hero_stat('Holdings') %}<strong>{{ diagnostics.counts.holdings if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
-    {% call hero_stat('Daily snapshots') %}<strong>{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
+    {% call hero_stat('Saved daily snapshots') %}<strong>{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
     {% call hero_stat('Last scheduler run') %}<strong>{{ diagnostics.scheduler_status.short if diagnostics and diagnostics.scheduler_status else 'No scheduler run yet' }}</strong>{% endcall %}
     {% call hero_stat('Backups') %}
       {% if diagnostics and diagnostics.backups and diagnostics.backups.health_status == 'good' %}
@@ -301,7 +301,7 @@
         <tr><td>Holdings</td><td class="num">{{ diagnostics.counts.holdings if diagnostics and diagnostics.counts else 0 }}</td></tr>
         <tr><td>Saved prices</td><td class="num">{{ diagnostics.counts.catalogue_active if diagnostics and diagnostics.counts else 0 }}</td></tr>
         <tr><td>Saved prices linked to holdings</td><td class="num">{{ diagnostics.catalogue_in_use_count if diagnostics else 0 }}</td></tr>
-        <tr><td>Portfolio daily snapshots</td><td class="num">{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</td></tr>
+        <tr><td>Saved portfolio daily snapshots</td><td class="num">{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</td></tr>
         <tr><td>Linked prices needing attention in sample (&gt;2 days old or missing)</td><td class="num">{{ diagnostics.catalogue_stale_2d_count_in_sample if diagnostics else 0 }}</td></tr>
       </tbody>
     </table>
