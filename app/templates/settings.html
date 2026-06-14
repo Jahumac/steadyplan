@@ -183,7 +183,7 @@
       {% if diagnostics and diagnostics.backups and diagnostics.backups.health_status == 'good' %}
         <strong class="text-accent-2">{{ diagnostics.backups.health_label }}</strong>
       {% else %}
-        <strong style="color:var(--accent-3);">{{ diagnostics.backups.health_label if diagnostics and diagnostics.backups and diagnostics.backups.health_label else 'Needs backup' }}</strong>
+        <strong style="color:var(--accent-3);">{{ diagnostics.backups.health_label if diagnostics and diagnostics.backups and diagnostics.backups.health_label else 'Backup recommended' }}</strong>
       {% endif %}
     {% endcall %}
     {% call hero_stat('Trust posture') %}

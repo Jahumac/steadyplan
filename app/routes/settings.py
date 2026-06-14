@@ -107,7 +107,7 @@ def _backup_diagnostics():
         latest = max(backups, key=_sort_key)
     latest_age_days = None
     health_status = "warning"
-    health_label = "Needs backup"
+    health_label = "Backup recommended"
     health_message = "No whole-instance SQLite backup found."
     if latest and latest.get("modified"):
         try:
@@ -121,11 +121,11 @@ def _backup_diagnostics():
                 health_message = f"OK — latest whole-instance SQLite backup is {latest_age_days} day{'s' if latest_age_days != 1 else ''} old."
             else:
                 health_status = "warning"
-                health_label = "Needs backup"
+                health_label = "Backup recommended"
                 health_message = f"Latest whole-instance SQLite backup is {latest_age_days} days old."
         except Exception:
             health_status = "warning"
-            health_label = "Needs backup"
+            health_label = "Backup recommended"
             health_message = "Whole-instance SQLite backup exists, but its age could not be determined."
     return {
         "count": len(backups),
@@ -1106,7 +1106,7 @@ def settings():
                 "latest_size_human": None,
                 "latest_age_days": None,
                 "health_status": "warning",
-                "health_label": "Needs backup",
+                "health_label": "Backup recommended",
                 "health_message": "Backup health could not be determined.",
             }
         diagnostics["trust_posture"] = _trust_posture_diagnostics()

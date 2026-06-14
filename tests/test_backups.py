@@ -112,6 +112,8 @@ def test_diagnostics_renders_backup_panel_when_no_backups_exist(app, client, mak
     body = resp.data.decode("utf-8", errors="ignore")
     assert "SQLite backups" in body
     assert "Backup health" in body
+    assert "Backup recommended" in body
+    assert "Needs backup" not in body
     assert "No whole-instance SQLite backup found." in body
     assert "No backup yet" in body
     assert "None yet" not in body
@@ -433,6 +435,8 @@ def test_diagnostics_runtime_status_template_uses_clearer_state_labels():
     assert "No scheduler run yet" in body
     assert "No run yet" not in body
     assert "No backup yet" in body
+    assert "Backup recommended" in body
+    assert "Needs backup" not in body
     assert ">OK<" not in body
     assert ">Error<" not in body
     assert "Not yet recorded" not in body
@@ -489,5 +493,7 @@ def test_backup_health_warns_when_backup_is_old(app, client, make_user, tmp_path
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Backup health" in body
+    assert "Backup recommended" in body
+    assert "Needs backup" not in body
     assert "Latest whole-instance SQLite backup is" in body
     assert "days old." in body
