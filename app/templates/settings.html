@@ -178,7 +178,7 @@
     {% call hero_stat('Accounts') %}<strong>{{ diagnostics.counts.accounts if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
     {% call hero_stat('Holdings') %}<strong>{{ diagnostics.counts.holdings if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
     {% call hero_stat('Daily snapshots') %}<strong>{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
-    {% call hero_stat('Last scheduler run') %}<strong>{{ diagnostics.scheduler_status.short if diagnostics and diagnostics.scheduler_status else 'Not yet' }}</strong>{% endcall %}
+    {% call hero_stat('Last scheduler run') %}<strong>{{ diagnostics.scheduler_status.short if diagnostics and diagnostics.scheduler_status else 'No scheduler run yet' }}</strong>{% endcall %}
     {% call hero_stat('Backups') %}
       {% if diagnostics and diagnostics.backups and diagnostics.backups.health_status == 'good' %}
         <strong class="text-accent-2">{{ diagnostics.backups.health_label }}</strong>
