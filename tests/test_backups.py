@@ -431,7 +431,7 @@ def test_diagnostics_runtime_status_template_uses_clearer_state_labels():
     assert "Available" not in body
     assert "Needs attention" in body
     assert "No scheduler run yet" in body
-    assert "No run recorded yet" not in body
+    assert "No run yet" not in body
     assert "No backup yet" in body
     assert ">OK<" not in body
     assert ">Error<" not in body
