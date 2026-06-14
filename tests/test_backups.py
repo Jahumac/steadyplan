@@ -191,7 +191,8 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "Stale prices (sample, &gt;2d/none)" not in body
     assert "No holdings are linked to saved prices yet." not in body
     assert "Stale or missing linked prices in sample (&gt;2 days old or none)" not in body
-    assert "Scheduler last run" in body
+    assert "Latest scheduler run" in body
+    assert "Scheduler last run" not in body
     assert "Latest saved portfolio snapshot" in body
     assert "Latest portfolio snapshot" not in body
     assert "Latest saved price update" in body
@@ -424,6 +425,9 @@ def test_diagnostics_instance_counts_template_uses_clearer_catalogue_count_label
     assert "SQLite database" in body
     assert "hero_stat('Database')" not in body
     assert '<td>Database</td>' not in body
+    assert "Latest scheduler run" in body
+    assert "hero_stat('Last scheduler run')" not in body
+    assert '<td>Scheduler last run</td>' not in body
     assert "Saved daily snapshots" in body
     assert "hero_stat('Daily snapshots')" not in body
     assert "Saved prices" in body
