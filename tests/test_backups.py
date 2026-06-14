@@ -115,7 +115,8 @@ def test_diagnostics_renders_backup_panel_when_no_backups_exist(app, client, mak
     assert "Backup recommended" in body
     assert "Needs backup" not in body
     assert "No whole-instance SQLite backup found." in body
-    assert "No backup yet" in body
+    assert "No SQLite backup yet" in body
+    assert "No backup yet" not in body
     assert "None yet" not in body
     assert "whole-instance SQLite backups" in body
     assert "data/backups" in body
@@ -434,7 +435,8 @@ def test_diagnostics_runtime_status_template_uses_clearer_state_labels():
     assert "Needs attention" in body
     assert "No scheduler run yet" in body
     assert "No run yet" not in body
-    assert "No backup yet" in body
+    assert "No SQLite backup yet" in body
+    assert "No backup yet" not in body
     assert "Backup recommended" in body
     assert "Needs backup" not in body
     assert ">OK<" not in body
