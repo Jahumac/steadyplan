@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import app.routes.holdings as holdings_routes
+from tests.path_helpers import STATIC_ROOT, TEMPLATES_ROOT
 
 
 TABBED_PAGE_PATHS = [
@@ -26,7 +27,7 @@ MAIN_HERO_PATHS = [
 
 
 def test_tab_css_uses_one_consistent_mobile_safe_component():
-    css = Path("/opt/data/steadyplan/app/static/css/styles.css").read_text()
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
 
     assert ".subnav-page {" in css
     assert ".subnav-history," in css
@@ -117,7 +118,7 @@ def test_shared_shell_does_not_render_confirm_modal_mascot_icon(auth_client):
 
 
 def test_confirm_helper_js_no_longer_carries_dead_mascot_icon_wiring():
-    js = Path("/opt/data/steadyplan/app/static/js/app.js").read_text()
+    js = STATIC_ROOT.joinpath("js/app.js").read_text()
 
     assert "window.shellyConfirm({" in js
     assert "opts.icon" not in js
@@ -126,7 +127,7 @@ def test_confirm_helper_js_no_longer_carries_dead_mascot_icon_wiring():
 
 
 def test_allowance_hash_links_open_targeted_log_panels():
-    js = Path("/opt/data/steadyplan/app/static/js/app.js").read_text()
+    js = STATIC_ROOT.joinpath("js/app.js").read_text()
 
     assert "window.location.hash ? window.location.hash.slice(1) : ''" in js
     assert "panel.classList.contains('allowance-log-panel')" in js
@@ -135,7 +136,7 @@ def test_allowance_hash_links_open_targeted_log_panels():
 
 
 def test_lifetime_isa_preview_js_uses_specific_bonus_copy():
-    js = Path("/opt/data/steadyplan/app/static/js/app.js").read_text()
+    js = STATIC_ROOT.joinpath("js/app.js").read_text()
 
     assert "+ Lifetime ISA bonus (25%)" in js
     assert "+ government bonus (25%)" not in js
@@ -149,9 +150,9 @@ def test_lifetime_isa_preview_js_uses_specific_bonus_copy():
 
 
 def test_account_wizard_hints_use_plain_neutral_tone():
-    js = Path("/opt/data/steadyplan/app/static/js/app.js").read_text()
-    html = Path("/opt/data/steadyplan/app/templates/accounts.html").read_text()
-    wizard_html = Path("/opt/data/steadyplan/app/templates/_account_create_wizard.html").read_text()
+    js = STATIC_ROOT.joinpath("js/app.js").read_text()
+    html = TEMPLATES_ROOT.joinpath("accounts.html").read_text()
+    wizard_html = TEMPLATES_ROOT.joinpath("_account_create_wizard.html").read_text()
 
     assert "NS&amp;I, tax-free prize planning" in wizard_html
     assert "NS&amp;I, tax-free prize estimate" not in wizard_html
@@ -201,7 +202,7 @@ def test_account_wizard_hints_use_plain_neutral_tone():
 
 
 def test_daily_portfolio_period_buttons_are_scoped_to_the_chart_not_overview_headline_toggle():
-    js = Path("/opt/data/steadyplan/app/static/js/charts.js").read_text()
+    js = STATIC_ROOT.joinpath("js/charts.js").read_text()
 
     assert "var dailyPortfolioBtns = Array.prototype.filter.call(" in js
     assert "card && card.querySelector('#dailyPortfolioChart') && btn.dataset.period" in js

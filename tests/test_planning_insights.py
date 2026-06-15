@@ -1,5 +1,7 @@
 from datetime import date
 
+from tests.path_helpers import STATIC_ROOT
+
 from app.models import create_account, fetch_assumptions, update_assumptions
 from app.services.planning_insights import (
     ACCESSIBLE,
@@ -205,7 +207,7 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"Estimate at 55:" not in response.data
     assert b"Projected at 55:" not in response.data
 
-    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
     assert ".planning-hero-strip {" in css
     assert css.count("grid-template-columns: repeat(2, minmax(0, 1fr));") >= 3
     assert "@media (max-width: 520px) {" in css

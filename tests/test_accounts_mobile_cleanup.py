@@ -3,6 +3,8 @@ from datetime import date
 from app.models import create_account, get_connection
 
 
+from tests.path_helpers import STATIC_ROOT
+
 def _account_payload():
     return {
         "name": "Stocks & Shares ISA",
@@ -59,7 +61,7 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     assert '£1,300/mo' not in html
     assert '<div class="row-end">' not in html
 
-    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
     assert ".accounts-hero-actions {" in css
     assert "flex: 1 0 100%;" in css
     assert "display: grid;" in css

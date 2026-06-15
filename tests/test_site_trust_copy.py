@@ -1,14 +1,15 @@
 from pathlib import Path
+from tests.path_helpers import DOCS_ROOT, REPO_ROOT, SITE_ROOT
 
 
-SITE_ROOT = Path("/opt/data/steadyplan/site")
-README_PATH = Path("/opt/data/steadyplan/README.md")
-VOICE_AND_COPY_PATH = Path("/opt/data/steadyplan/docs/VOICE_AND_COPY.md")
-PRODUCT_TRUTH_PATH = Path("/opt/data/steadyplan/docs/PRODUCT_TRUTH.md")
-CHANGELOG_PATH = Path("/opt/data/steadyplan/CHANGELOG.md")
-SITE_README_PATH = Path("/opt/data/steadyplan/site/README.md")
-ROADMAP_PATH = Path("/opt/data/steadyplan/STEADYPLAN_ROADMAP_2026-05-29.md")
-ROADMAP_EXECUTION_PATH = Path("/opt/data/steadyplan/docs/plans/2026-05-29-roadmap-execution.md")
+SITE_ROOT = SITE_ROOT
+README_PATH = REPO_ROOT / "README.md"
+VOICE_AND_COPY_PATH = DOCS_ROOT / "VOICE_AND_COPY.md"
+PRODUCT_TRUTH_PATH = DOCS_ROOT / "PRODUCT_TRUTH.md"
+CHANGELOG_PATH = REPO_ROOT / "CHANGELOG.md"
+SITE_README_PATH = SITE_ROOT / "README.md"
+ROADMAP_PATH = REPO_ROOT / "STEADYPLAN_ROADMAP_2026-05-29.md"
+ROADMAP_EXECUTION_PATH = DOCS_ROOT / "plans/2026-05-29-roadmap-execution.md"
 
 
 def _read(relative_path: str) -> str:
