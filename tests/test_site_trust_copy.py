@@ -221,7 +221,8 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     product_truth = _read_product_truth()
     changelog = _read_changelog()
 
-    assert "Scenario estimates are based on your inputs. No promises." in homepage
+    assert "Scenario estimates use your inputs and assumptions. They are not guarantees." in homepage
+    assert "Scenario estimates are based on your inputs. No promises." not in homepage
     assert "Projections are scenario estimates based on your inputs. No promises." not in homepage
     assert "Projections are illustrative and based on your inputs." not in homepage
     assert "Scenario estimates" in homepage
