@@ -66,7 +66,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Trading 212 read-only access (beta)" in body
     assert "Trading 212 sync (beta)" not in body
-    assert "Add a read-only broker connection" in body
+    assert "Save a read-only broker connection" in body
+    assert "Add a read-only broker connection" not in body
     assert "Add a read-only Trading 212 connection" not in body
     assert "<span>Broker environment</span>" in body
     assert "<span>Environment</span>" not in body
@@ -95,11 +96,18 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "SteadyPlan can keep more than one read-only Trading 212 connection" not in body
     assert "separate Invest and Stocks ISA accounts can be saved side by side" in body
     assert "separate Invest and ISA accounts can be saved side by side" not in body
-    assert "Save and test read-only broker connection" in body
+    assert "Save and test broker snapshot access" in body
+    assert "Save and test read-only broker connection" not in body
     assert "Save and test read-only Trading 212 connection" not in body
     assert "Save and test Trading 212 connection" not in body
-    assert "Saved read-only broker connections" in body
-    assert "Each saved read-only broker connection stays read-only." in body
+    assert "Saved broker snapshot connections" in body
+    assert "Saved read-only broker connections" not in body
+    assert "Each saved broker connection stays read-only." in body
+    assert "Each saved read-only broker connection stays read-only." not in body
+    assert "Preview broker snapshot checks the latest broker summary without changing SteadyPlan data." in body
+    assert "Preview read-only broker snapshot checks the latest broker summary without changing SteadyPlan data." not in body
+    assert "Remove saved broker access deletes the stored encrypted key pair from SteadyPlan." in body
+    assert "Remove broker access deletes the stored encrypted key pair from SteadyPlan." not in body
     assert "Each saved connection is read-only." not in body
     assert "Saved read-only Trading 212 connections" not in body
     assert "Saved Trading 212 connections" not in body
@@ -278,20 +286,28 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "SteadyPlan's own price service and manual/CSV imports stay in place" in body
     assert "SteadyPlan's own price service and CSV/manual imports stay in place" not in body
     assert "SIPP data is not available through the broker API yet" not in body
-    assert "Each saved read-only broker connection stays read-only." in body
+    assert "Each saved broker connection stays read-only." in body
+    assert "Each saved read-only broker connection stays read-only." not in body
     assert "Each saved connection is read-only." not in body
+    assert "Preview broker snapshot checks the latest broker summary without changing SteadyPlan data." in body
+    assert "Preview read-only broker snapshot checks the latest broker summary without changing SteadyPlan data." not in body
     assert "Retest broker access refreshes the latest account summary check." in body
     assert "Retest connection refreshes the latest account summary check." not in body
-    assert "Remove broker access deletes the stored encrypted key pair from SteadyPlan." in body
+    assert "Remove saved broker access deletes the stored encrypted key pair from SteadyPlan." in body
+    assert "Remove broker access deletes the stored encrypted key pair from SteadyPlan." not in body
     assert "Remove connection deletes the stored encrypted key pair from SteadyPlan." not in body
-    assert "Preview read-only broker snapshot" in body
-    assert "Retest broker access" in body
+    assert "Preview broker snapshot" in body
+    assert "Preview read-only broker snapshot" not in body
+    assert "Retest broker access now" in body
     assert "Retest connection" not in body
-    assert "Remove broker access" in body
+    assert "Retest broker access" in body
+    assert "Remove saved broker access" in body
+    assert "Remove broker access" not in body
     assert "Remove connection" not in body
     assert "Read-only" in body
     assert "Read Only" not in body
-    assert "Saved connection label" in body
+    assert "Local connection label" in body
+    assert "Saved connection label" not in body
     assert "<th>Label</th>" not in body
     assert "Broker environment" in body
     assert "<th>Environment</th>" not in body

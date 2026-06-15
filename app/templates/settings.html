@@ -805,7 +805,7 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Trading 212 read-only access (beta)</p>
-      <h3>Add a read-only broker connection</h3>
+      <h3>Save a read-only broker connection</h3>
     </div>
   </div>
   <p class="helper-text">
@@ -825,7 +825,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-grid">
       <label>
-        <span>Connection label</span>
+        <span>Local connection label</span>
         <input type="text" name="label" value="Trading 212" maxlength="64">
         <small class="form-hint">A local label so you can recognise this saved connection later.</small>
       </label>
@@ -850,19 +850,19 @@
       </label>
     </div>
     <div class="badge-row mt-1">
-      <button type="submit">Save and test read-only broker connection</button>
+      <button type="submit">Save and test broker snapshot access</button>
     </div>
   </form>
 
   <div style="margin-top:1rem;">
-    <div class="text-sm" style="font-weight:600;margin-bottom:0.45rem;">Saved read-only broker connections</div>
-    <p class="helper-text" style="margin:0 0 0.45rem 0;">Each saved read-only broker connection stays read-only. Retest broker access refreshes the latest account summary check. Remove broker access deletes the stored encrypted key pair from SteadyPlan.</p>
+    <div class="text-sm" style="font-weight:600;margin-bottom:0.45rem;">Saved broker snapshot connections</div>
+    <p class="helper-text" style="margin:0 0 0.45rem 0;">Each saved broker connection stays read-only. Preview broker snapshot checks the latest broker summary without changing SteadyPlan data. Retest broker access refreshes the latest account summary check. Remove saved broker access deletes the stored encrypted key pair from SteadyPlan.</p>
     {% if trading212_connections %}
     <div class="table-scroll">
       <table class="data-table">
         <thead>
           <tr>
-            <th>Saved connection label</th>
+            <th>Local connection label</th>
             <th>Broker environment</th>
             <th>Broker check status</th>
             <th>Masked API key</th>
@@ -898,15 +898,15 @@
               <div style="display:flex;justify-content:flex-end;gap:0.5rem;flex-wrap:wrap;">
                 <form method="post" action="/settings/trading212/{{ connection.id }}/preview" style="margin:0;">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="badge">Preview read-only broker snapshot</button>
+                  <button type="submit" class="badge">Preview broker snapshot</button>
                 </form>
                 <form method="post" action="/settings/trading212/{{ connection.id }}/retest" style="margin:0;">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="badge">Retest broker access</button>
+                  <button type="submit" class="badge">Retest broker access now</button>
                 </form>
                 <form method="post" action="/settings/trading212/{{ connection.id }}/disconnect" style="margin:0;">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="badge badge-danger">Remove broker access</button>
+                  <button type="submit" class="badge badge-danger">Remove saved broker access</button>
                 </form>
               </div>
             </td>
