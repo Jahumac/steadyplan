@@ -126,7 +126,8 @@ def test_performance_helper_uses_sentence_case_monthly_update_copy(app, client, 
     assert "includes tax relief, Lifetime ISA bonus, employer match" in html
     assert "Over the period shown, that’s an average of £150 per month." in html
     assert "/mo." not in html
-    assert "This compares your recorded portfolio value with an assumptions-based comparison line. It is a planning guide, not a guarantee." in html
+    assert "Recorded portfolio values use Monthly Update history. The comparison line uses your assumptions and contribution settings; it is not a guarantee." in html
+    assert "This compares your recorded portfolio value with an assumptions-based comparison line. It is a planning guide, not a guarantee." not in html
     assert "Actual vs. comparison line" in html
     assert ">Comparison line<" in html
     assert "this comparison line" in html
