@@ -166,7 +166,8 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     roadmap_execution = _read_roadmap_execution()
 
     assert "### Monthly Update" in readme
-    assert "### Read-only broker connection beta" in readme
+    assert "### Broker snapshot review beta" in readme
+    assert "### Read-only broker connection beta" not in readme
     assert "### Assistant access" in readme
     assert "### Diagnostics & backup health" in readme
     assert "Public site supports a manual light/dark toggle without a build step" in readme
@@ -175,7 +176,8 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "See where you stand today, what is cash-accessible now, what invested money is still reachable, what is restricted, and how monthly decisions connect to long-term scenario estimates" in readme
     assert "See where you stand today, what is available now vs later, and how monthly decisions connect to long-term scenario estimates" not in readme
     assert "Settings includes optional scoped **Assistant access** for a personal Pip setup." in readme
-    assert "Optional read-only Trading 212 connection beta with preview-before-apply review flow" in readme
+    assert "Optional Trading 212 broker snapshot review beta with preview-before-apply review flow" in readme
+    assert "Optional read-only Trading 212 connection beta with preview-before-apply review flow" not in readme
     assert "Public website with Tour, Roadmap, docs hub, and optional read-only demo path" in readme
     assert "taxable accounts (GIAs)" in readme
     assert "taxable account (GIA)" in readme
@@ -197,7 +199,8 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "what is accessible vs locked?" not in roadmap_execution
     assert "Public roadmap page and a manual light/dark toggle on the public website." in changelog
     assert "Scoped assistant access in Settings with UI-managed tokens, permission labels, and recent write activity." in changelog
-    assert "Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional read-only broker beta." in changelog
+    assert "Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional broker snapshot review beta." in changelog
+    assert "Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional read-only broker beta." not in changelog
 
 
 
