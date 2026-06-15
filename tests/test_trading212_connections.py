@@ -1518,10 +1518,14 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     assert "This preview found differences to review. Nothing runs automatically from here; any later write should stay explicit, account-scoped, and non-destructive." not in body
     assert "Still preview only. If you choose a write step later, SteadyPlan should ask you to confirm each step separately for <strong>Trading 212 ISA</strong>." not in body
     assert "Back to account" in body
-    assert "Recent preview and write history" in body
-    assert "Keep a visible record of the last broker snapshot preview and the last reviewed write you confirmed on this linked account." in body
-    assert "Previewed snapshot" in body
-    assert "Last reviewed write" in body
+    assert "Recent broker snapshot preview and write history" in body
+    assert "Recent preview and write history" not in body
+    assert "Keep a visible record of the latest broker snapshot preview and the latest reviewed write you confirmed on this linked account." in body
+    assert "Keep a visible record of the last broker snapshot preview and the last reviewed write you confirmed on this linked account." not in body
+    assert "Broker snapshot preview saved" in body
+    assert "Previewed snapshot" not in body
+    assert "Latest reviewed write" in body
+    assert "Last reviewed write" not in body
     assert "Recent sync activity" not in body
     assert "Keep a visible record of the last preview and last confirmed write step on this linked broker connection." not in body
     assert "Last confirmed write step" not in body
@@ -1814,14 +1818,18 @@ def test_preview_trading212_shows_recent_sync_history(app, client, make_user, mo
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Recent preview and write history" in body
-    assert "Keep a visible record of the last broker snapshot preview and the last reviewed write you confirmed on this linked account." in body
+    assert "Recent broker snapshot preview and write history" in body
+    assert "Recent preview and write history" not in body
+    assert "Keep a visible record of the latest broker snapshot preview and the latest reviewed write you confirmed on this linked account." in body
+    assert "Keep a visible record of the last broker snapshot preview and the last reviewed write you confirmed on this linked account." not in body
     assert "Applied matched updates" in body
     assert "Added broker-only positions" in body
     assert "Confirmed likely match" in body
-    assert "Previewed snapshot" in body
+    assert "Broker snapshot preview saved" in body
+    assert "Previewed snapshot" not in body
     assert "Resolved possible match" not in body
-    assert "Last reviewed write" in body
+    assert "Latest reviewed write" in body
+    assert "Last reviewed write" not in body
     assert "Recent sync activity" not in body
     assert "Keep a visible record of the last preview and last confirmed write step on this linked broker connection." not in body
     assert "Last confirmed write step" not in body
