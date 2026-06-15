@@ -235,6 +235,8 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Scenario estimates use your inputs and assumptions. They are not guarantees." in tour
     assert "Estimates are based on your inputs and assumptions." not in tour
     assert "what is entered data and what is forecast output" not in tour
+    assert "<h3>Scenarios, not guarantees</h3>" in tour
+    assert "<h3>Scenarios, not promises</h3>" not in tour
     assert "Scenario estimates are assumptions-based tools to explore trade-offs, not a guarantee of outcomes." in tour
     assert "SteadyPlan scenario estimates summary card (demo data)" in tour
     assert "<h3>Projections</h3>" not in tour
