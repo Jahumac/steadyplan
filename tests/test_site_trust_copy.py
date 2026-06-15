@@ -244,8 +244,11 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "The projections view is built around assumptions you control. The goal is to support long-term thinking while staying clear about what is entered data and what is forecast output." not in tour
     assert "SteadyPlan projections screen with demo data" not in tour
     assert "<strong>Scenario estimates</strong>" in concept_a
+    assert "No bank linking. Scenario estimates use inputs and assumptions; they are not guarantees. Just visibility and planning." in concept_a
+    assert "No bank linking. No promises. Just visibility and planning." not in concept_a
     assert "<strong>Projections</strong>" not in concept_a
-    assert "Scenario estimates are assumptions-based estimates." in concept_b
+    assert "No bank linking. No cloud sync. Scenario estimates use inputs and assumptions; they are not guarantees." in concept_b
+    assert "Scenario estimates are assumptions-based estimates." not in concept_b
     assert "<strong>Scenario estimates</strong>" in concept_b
     assert "Projections are assumptions-based estimates." not in concept_b
     assert "<strong>Projections</strong>" not in concept_b
