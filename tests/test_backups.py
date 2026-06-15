@@ -371,7 +371,8 @@ def test_diagnostics_shows_latest_backup_metadata(app, client, make_user, tmp_pa
     assert "Latest SQLite backup</td>" not in body
     assert "Latest SQLite backup created at" in body
     assert "Latest SQLite backup saved at" not in body
-    assert "Latest SQLite backup size" in body
+    assert "Latest SQLite backup file size" in body
+    assert "Latest SQLite backup size" not in body
     assert "Backup files" not in body
     assert "Latest backup</td>" not in body
     assert "Latest backup size" not in body
@@ -458,7 +459,8 @@ def test_diagnostics_backup_metadata_template_uses_clearer_backup_labels():
     assert "Latest SQLite backup</td>" not in body
     assert "Latest SQLite backup created at" in body
     assert "Latest SQLite backup saved at" not in body
-    assert "Latest SQLite backup size" in body
+    assert "Latest SQLite backup file size" in body
+    assert "Latest SQLite backup size" not in body
     assert "Backup files" not in body
     assert "Latest backup</td>" not in body
     assert "Latest backup saved at" not in body
