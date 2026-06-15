@@ -56,6 +56,7 @@ from app.models import (
     fetch_daily_snapshots,
     fetch_completed_tax_year_contributions,
 )
+from app.demo import is_read_only_demo_user
 from app.services.data_health import build_data_health_summary
 from app.services.goal_projection import project_goal
 from app.services.goal_ui import goal_projection_copy, goal_track_status
@@ -724,6 +725,7 @@ def overview():
         has_debts=has_debts,
         budget_item_count=budget_item_count,
         position_view=position_view,
+        is_read_only_demo=is_read_only_demo_user(),
     ))
     resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     resp.headers["Pragma"] = "no-cache"
