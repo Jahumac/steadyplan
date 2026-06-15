@@ -239,7 +239,7 @@ def _safe_next_settings_url(raw):
 
 
 def broker_connection_last_tested_label(value):
-    return value or "No account summary check yet"
+    return value or "No broker snapshot check yet"
 
 
 def trading212_access_mode_label(value):

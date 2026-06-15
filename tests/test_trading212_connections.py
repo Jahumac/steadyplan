@@ -73,7 +73,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "<span>Environment</span>" not in body
     assert "A local label so you can recognise this saved connection later." in body
     assert "A local label so you can recognise this connection later." not in body
-    assert "Start with Demo if you want a no-risk broker check first." in body
+    assert "Start with Demo if you want a no-risk broker snapshot check first." in body
+    assert "Start with Demo if you want a no-risk broker check first." not in body
     assert "Start with Demo if you want a no-risk connection check first." not in body
     assert "<span>Public API key</span>" in body
     assert "<span>API key</span>" not in body
@@ -149,8 +150,10 @@ def test_settings_renders_untested_trading212_connection_last_check_fallback(app
     resp = client.get("/settings/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Last account summary check" in body
-    assert "No account summary check yet" in body
+    assert "Last broker snapshot check" in body
+    assert "Last account summary check" not in body
+    assert "No broker snapshot check yet" in body
+    assert "No account summary check yet" not in body
     assert "Not yet tested" not in body
 
 
@@ -176,8 +179,10 @@ def test_settings_renders_unchecked_trading212_connection_status_fallback(app, c
     resp = client.get("/settings/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Broker check status" in body
-    assert "No successful broker check yet" in body
+    assert "Broker snapshot check status" in body
+    assert "Broker check status" not in body
+    assert "No successful broker snapshot check yet" in body
+    assert "No successful broker check yet" not in body
     assert "No successful check yet" not in body
     assert "Unverified" not in body
 
@@ -205,7 +210,8 @@ def test_settings_renders_trading212_connection_without_account_summary_label(ap
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Broker account" in body
-    assert "No broker account summary yet" in body
+    assert "No broker snapshot summary yet" in body
+    assert "No broker account summary yet" not in body
     assert ">—<" not in body
 
 
@@ -233,7 +239,8 @@ def test_settings_renders_error_trading212_connection_with_labelled_check_error(
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Needs attention" in body
-    assert "Last broker check error: Broker timeout while fetching snapshot" in body
+    assert "Last broker snapshot check error: Broker timeout while fetching snapshot" in body
+    assert "Last broker check error: Broker timeout while fetching snapshot" not in body
     assert ">Broker timeout while fetching snapshot<" not in body
 
 
@@ -294,7 +301,8 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "Each saved connection is read-only." not in body
     assert "Preview broker snapshot checks the latest broker summary without changing SteadyPlan data." in body
     assert "Preview read-only broker snapshot checks the latest broker summary without changing SteadyPlan data." not in body
-    assert "Retest broker access refreshes the latest account summary check." in body
+    assert "Retest broker access refreshes the latest broker snapshot check." in body
+    assert "Retest broker access refreshes the latest account summary check." not in body
     assert "Retest connection refreshes the latest account summary check." not in body
     assert "Remove saved broker access deletes the stored encrypted key pair from SteadyPlan." in body
     assert "Remove broker access deletes the stored encrypted key pair from SteadyPlan." not in body
@@ -314,13 +322,15 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "<th>Label</th>" not in body
     assert "Broker environment" in body
     assert "<th>Environment</th>" not in body
-    assert "Broker check status" in body
+    assert "Broker snapshot check status" in body
+    assert "Broker check status" not in body
     assert "<th>Status</th>" not in body
     assert "Masked API key" in body
     assert "Masked key" not in body
     assert "Broker account" in body
     assert "<th>Account</th>" not in body
-    assert "Last account summary check" in body
+    assert "Last broker snapshot check" in body
+    assert "Last account summary check" not in body
     assert "Last tested" not in body
     assert "Saved connection actions" in body
     assert "<th>Actions</th>" not in body
