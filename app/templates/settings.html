@@ -354,16 +354,16 @@
     </table>
   </div>
   <p class="helper-text">
-    These are whole-instance SQLite backups (a copy of the database for all users) stored under <code>data/backups</code> inside the app data directory (in Docker: <code>/app/data/backups</code>).
+    These are whole-instance SQLite backups of <code>finance.db</code> for all users, stored under <code>data/backups</code> inside the app data directory (in Docker: <code>/app/data/backups</code>).
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
-    This tool backs up <code>finance.db</code> only. For full instance recovery, back up the whole app data directory (including <code>secret_key.txt</code> and <code>backups/</code>) with your normal server backups.
+    For full disaster recovery, back up the whole app data directory too — including <code>finance.db</code>, <code>secret_key.txt</code>, and <code>backups/</code> — with your normal server backups.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
-    On Docker/Unraid, this lives inside your host-mounted appdata path. Include it in your wider server backup routine — a backup sitting on the same disk/share is useful, but it isn’t a full disaster-recovery plan by itself.
+    On Docker/Unraid, that usually means your host-mounted appdata path. A backup on the same disk/share is still useful, but it is not a full disaster-recovery plan by itself.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
-    For per-user exports, use Settings → Download this user's JSON export.
+    For one user's safety copy, use Settings → Download a per-user JSON export.
   </p>
 </section>
 
@@ -457,24 +457,24 @@
     SteadyPlan stores your financial data locally in a SQLite database. There is no cloud sync.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
-    In Docker, the database lives under the mounted <code>/app/data</code> volume (inside the container: <code>/app/data/finance.db</code>). On Unraid, this typically maps to a host folder such as <code>/mnt/user/appdata/steadyplan</code> (or whatever path you mounted).
+    In Docker, the live database is <code>/app/data/finance.db</code> inside the mounted <code>/app/data</code> volume. On Unraid, that usually maps to a host path such as <code>/mnt/user/appdata/steadyplan</code>.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
-    SteadyPlan does not send account balances, budgets, goals, or history to a cloud service. Optional live price lookup may send ticker symbols/identifiers to external price sources.
+    SteadyPlan keeps balances, budgets, goals, and history local. Optional live price lookup may still send ticker symbols/identifiers to external price sources.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
-    JSON export is a per-user safety copy. Whole-instance recovery still depends on backing up the full app data directory.
+    When you only need a safety copy for one user, start with a JSON export. Whole-instance recovery still depends on backing up the full app data directory.
   </p>
   <div class="callout-box" style="margin-top:0.85rem;">
-    <div style="font-weight:600;margin-bottom:0.35rem;">JSON export, backup, and restore at a glance</div>
+    <div style="font-weight:600;margin-bottom:0.35rem;">What each safety copy is for</div>
     <ul class="helper-text" style="margin:0.35rem 0 0 1.15rem;">
       <li><strong>Local SQLite database:</strong> the live SteadyPlan data store for this instance.</li>
-      <li><strong>JSON export:</strong> portable, per-user, and useful before risky actions.</li>
-      <li><strong>Whole-instance SQLite backup:</strong> database copy for all users, stored under <code>data/backups</code>.</li>
+      <li><strong>Per-user JSON export:</strong> portable safety copy for one user before restore, delete, or larger edits.</li>
+      <li><strong>Whole-instance SQLite backup:</strong> copy of <code>finance.db</code> for all users, stored under <code>data/backups</code>.</li>
       <li><strong>Whole app data directory backup:</strong> the real disaster-recovery copy, including <code>finance.db</code>, <code>secret_key.txt</code>, and <code>backups/</code>.</li>
-      <li><strong>Restore validation:</strong> checks a JSON file without changing data.</li>
+      <li><strong>Restore check:</strong> validates a JSON file without changing data.</li>
       <li><strong>Restore overwrite:</strong> replaces this user’s data only after confirmation.</li>
-      <li><strong>Delete this user’s finance data:</strong> removes this user’s finance data, not the login account.</li>
+      <li><strong>Delete this user’s finance data:</strong> removes finance data for this user only, not the login account.</li>
     </ul>
   </div>
 </section>
@@ -501,18 +501,18 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Export</p>
-      <h3>Download this user's JSON export</h3>
+      <h3>Download a per-user JSON export</h3>
     </div>
     <a class="badge badge-primary-action" href="/settings/export.json">Download this user's JSON export</a>
   </div>
   <p class="helper-text">
-    Downloads a portable JSON export of this user's data only. Useful before risky actions like restore or delete.
+    Downloads a portable JSON export for this user only. Useful before restore, delete, or larger edits.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
-    It does not include other users, server-level secrets, or whole-instance app data. Keep the downloaded file private — it contains financial data.
+    It does not include other users, server-level secrets, or whole-instance app data. Keep the file private — it contains financial data.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
-    This export does not include your login password, and it is not a full disaster-recovery backup for the whole instance.
+    This export does not include your login password, and it is not a full disaster-recovery backup.
   </p>
 </section>
 
@@ -520,14 +520,14 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Restore</p>
-      <h3>Check a JSON export before restore</h3>
+      <h3>Check a JSON export before overwrite</h3>
     </div>
   </div>
   <p class="helper-text">
-    Upload a JSON export file to check it before restore. Checking does not change your data.
+    Upload a JSON export file to validate it before overwrite. Checking does not change your data.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
-    Restore replaces this user's data only. It does not change your username or password.
+    If you later confirm restore, SteadyPlan replaces this user's data only. It does not change your username or password.
   </p>
   <form method="post" action="/settings/restore/validate" enctype="multipart/form-data" style="margin:0.75rem 0 0 0;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

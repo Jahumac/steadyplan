@@ -424,8 +424,9 @@ def test_restore_validate_route_valid_upload_shows_valid_result_and_no_db_writes
     after = _count_rows(app)
     assert resp.status_code == 200
     body = resp.data.decode("utf-8")
-    assert "Check a JSON export before restore" in body
-    assert "Upload a JSON export file to check it before restore. Checking does not change your data." in body
+    assert "Check a JSON export before overwrite" in body
+    assert "Upload a JSON export file to validate it before overwrite. Checking does not change your data." in body
+    assert "Upload a JSON export file to check it before restore. Checking does not change your data." not in body
     assert "Upload a JSON export file to validate it for restore. Validation does not change your data." not in body
     assert "Validate a restore file" not in body
     assert "Restore file looks valid. Checking did not change your data." in body

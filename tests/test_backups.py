@@ -125,8 +125,9 @@ def test_diagnostics_renders_backup_panel_when_no_backups_exist(app, client, mak
     assert "data/backups" in body
     assert "finance.db" in body
     assert "secret_key.txt" in body
-    assert "For per-user exports, use Settings → Download this user's JSON export." in body
-    assert "For per-user exports, use Settings → Download JSON export." not in body
+    assert "For one user's safety copy, use Settings → Download a per-user JSON export." in body
+    assert "For per-user exports, use Settings → Download this user's JSON export." not in body
+    assert "This tool backs up <code>finance.db</code> only." not in body
 
 
 def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_user, tmp_path):
