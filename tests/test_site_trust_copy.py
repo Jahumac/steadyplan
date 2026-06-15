@@ -194,6 +194,8 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "│   ├── planning.py        # Accessible vs locked money view and insights" not in readme
     assert "understand cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap
     assert "see cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap
+    assert "clear scenario-estimate caveats" in roadmap
+    assert "clear projection caveats" not in roadmap
     assert "## Current standing (June 2026)" in roadmap
     assert "Overview, Monthly Update, Planning, and the main compact-screen flows have had substantial answer-first cleanup" in roadmap
     assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap_execution
