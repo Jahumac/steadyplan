@@ -26,7 +26,7 @@ Legacy image (during transition): `ghcr.io/jahumac/shelly-finance:latest`
 
 Most finance apps want your login credentials or send your data to the cloud. SteadyPlan runs entirely on your machine (or home server) with a local SQLite database. Core use does not require any bank login sharing, broker linking, or third-party account. You only need an external API key if you choose to enable optional automated price lookups.
 
-It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for API-first account review.
+It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for preview-first broker account review.
 
 ---
 
@@ -69,7 +69,7 @@ Import holdings directly from your broker's CSV export. Supported platforms:
 Don't use any of these? Download the [CSV template](app/static/steadyplan-holdings-template.csv) and fill in your holdings manually. (The legacy `shelly-holdings-template.csv` filename is kept as a compatibility alias.)
 
 ### Broker snapshot review beta
-Settings includes an optional **Trading 212 broker snapshot review (beta)** flow with read-only broker access. You can save and test encrypted API credentials on your own server, preview a broker snapshot against your tracked holdings, and keep manual/CSV tracking as the fallback until you choose to apply reviewed changes. This currently focuses on Invest and Stocks ISA accounts.
+Settings includes an optional **Trading 212 broker snapshot review (beta)** flow with saved broker snapshot connections. You can save and test encrypted API credentials on your own server, preview a broker snapshot against your tracked holdings, and keep manual/CSV tracking as the fallback until you choose to apply reviewed changes. These saved broker snapshot connections stay read-only and currently focus on Invest and Stocks ISA accounts.
 
 ### Monthly Update
 A lightweight monthly check-in to keep your numbers fresh: update account balances, review expected contributions (confirm/skip), add an optional note, and mark the month complete.
@@ -366,7 +366,7 @@ data/
 - Data Health, JSON export/restore, Diagnostics, and trust-posture checks close to the product
 - Assistant access with scoped read-only answers and one narrow budget-write permission
 - Public website with Tour, Roadmap, docs hub, and optional read-only demo path
-- Optional Trading 212 broker snapshot review beta with preview-before-apply review flow
+- Optional Trading 212 broker snapshot review beta with saved broker snapshot connections and a preview-before-apply review flow
 
 ### Improving next
 - Reduce density in the heaviest setup and settings surfaces
