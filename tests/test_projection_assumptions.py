@@ -344,8 +344,10 @@ def test_overview_projected_retirement_stat_has_estimate_qualifier(app, client, 
     assert "Scenario estimate at retirement" in body
     assert "Projected at retirement" not in body
     assert "<small>estimate</small>" not in body
-    assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." in body
+    assert "Current totals use your saved balances." in body
+    assert "Scenario estimates use your assumptions and are not guarantees." in body
     assert "Scenario estimate based on your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." in body
+    assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in body
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in body
     assert "Scenario estimate based on your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in body
     assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in body
