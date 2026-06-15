@@ -347,7 +347,7 @@
           <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_modified %}{{ (diagnostics.backups.latest_modified or '')[:19] }}{% else %}—{% endif %}</td>
         </tr>
         <tr>
-          <td>Latest SQLite backup size</td>
+          <td>Latest SQLite backup file size</td>
           <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_size_human %}{{ diagnostics.backups.latest_size_human }}{% else %}—{% endif %}</td>
         </tr>
       </tbody>
