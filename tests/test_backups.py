@@ -367,7 +367,8 @@ def test_diagnostics_shows_latest_backup_metadata(app, client, make_user, tmp_pa
     body = resp.data.decode("utf-8", errors="ignore")
     assert dest.name in body
     assert "SQLite backup files" in body
-    assert "Latest SQLite backup" in body
+    assert "Latest SQLite backup file" in body
+    assert "Latest SQLite backup</td>" not in body
     assert "Latest SQLite backup created at" in body
     assert "Latest SQLite backup saved at" not in body
     assert "Latest SQLite backup size" in body
@@ -453,7 +454,8 @@ def test_diagnostics_backup_metadata_template_uses_clearer_backup_labels():
     body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
 
     assert "SQLite backup files" in body
-    assert "Latest SQLite backup" in body
+    assert "Latest SQLite backup file" in body
+    assert "Latest SQLite backup</td>" not in body
     assert "Latest SQLite backup created at" in body
     assert "Latest SQLite backup saved at" not in body
     assert "Latest SQLite backup size" in body
