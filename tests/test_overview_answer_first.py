@@ -132,6 +132,9 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     assert "Start your first budget when you want a simple monthly plan. Goals and monthly updates can wait until later." in html
     assert html.count("<h2>Where you stand now</h2>") == 2
     assert html.count("Use this as the quick summary") == 2
+    assert "Current totals use your saved balances." in html
+    assert "Scenario estimates use your assumptions and are not guarantees." in html
+    assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in html
     assert "Use this as the quick truth" not in html
     assert "Accessible vs locked" not in html
     assert "Portfolio Value" not in html
@@ -828,7 +831,9 @@ def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, clien
     assert "Locked later" not in html
     assert "Monthly contributions" in html
     assert "Scenario estimate at retirement" in html
-    assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." in html
+    assert "Current totals use your saved balances." in html
+    assert "Scenario estimates use your assumptions and are not guarantees." in html
+    assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in html
     assert "Projected at retirement" not in html
@@ -1041,7 +1046,9 @@ def test_overview_hides_zero_locked_hero_stat(app, client, make_user):
     assert "Cash accessible — money you can usually reach without selling investments first." in html
     assert "Invested accessible — still reachable, but usually by selling invested holdings." in html
     assert "Scenario estimate at retirement" in html
-    assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." in html
+    assert "Current totals use your saved balances." in html
+    assert "Scenario estimates use your assumptions and are not guarantees." in html
+    assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in html
     assert "Projected at retirement" not in html
