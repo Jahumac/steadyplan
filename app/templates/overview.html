@@ -7,6 +7,24 @@
 {% set month_strip_class = 'month-strip-mobile-hidden' %}
 {% include '_month_strip.html' %}
 
+{% if is_read_only_demo %}
+<section class="card panel-soft mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Read-only demo</p>
+      <h2>You are viewing demo data</h2>
+    </div>
+  </div>
+  <p class="helper-text mb-075">This is sample data only. Writes are blocked, so you can explore without changing anything.</p>
+  <p class="helper-text mb-075">Start with Overview, then Planning, Monthly Update, and Settings → Data ownership.</p>
+  <div class="badge-row">
+    <a class="badge" href="/planning/">Planning</a>
+    <a class="badge" href="/monthly-review/">Monthly Update</a>
+    <a class="badge" href="/settings/">Settings</a>
+  </div>
+</section>
+{% endif %}
+
 {# ── Onboarding state ────────────────────────────────────────────────────── #}
 {% set has_profile = assumptions and assumptions.date_of_birth %}
 {% set has_accounts = accounts | length > 0 %}
