@@ -167,16 +167,21 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
 
     assert "### Monthly Update" in readme
     assert "### Broker snapshot review beta" in readme
+    assert "Settings includes an optional **Trading 212 broker snapshot review (beta)** flow with saved broker snapshot connections." in readme
+    assert "These saved broker snapshot connections stay read-only and currently focus on Invest and Stocks ISA accounts." in readme
+    assert "Settings includes an optional **Trading 212 broker snapshot review (beta)** flow with read-only broker access." not in readme
+    assert "This currently focuses on Invest and Stocks ISA accounts." not in readme
     assert "### Read-only broker connection beta" not in readme
     assert "### Assistant access" in readme
     assert "### Diagnostics & backup health" in readme
     assert "Public site supports a manual light/dark toggle without a build step" in readme
     assert "Monthly Review" not in readme
-    assert "A self-hosted personal finance planning and visibility tool for UK investors" in readme
-    assert "See where you stand today, what is cash-accessible now, what invested money is still reachable, what is restricted, and how monthly decisions connect to long-term scenario estimates" in readme
+    assert "It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for preview-first broker account review." in readme
+    assert "It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for API-first account review." not in readme
     assert "See where you stand today, what is available now vs later, and how monthly decisions connect to long-term scenario estimates" not in readme
     assert "Settings includes optional scoped **Assistant access** for a personal Pip setup." in readme
-    assert "Optional Trading 212 broker snapshot review beta with preview-before-apply review flow" in readme
+    assert "Optional Trading 212 broker snapshot review beta with saved broker snapshot connections and a preview-before-apply review flow" in readme
+    assert "Optional Trading 212 broker snapshot review beta with preview-before-apply review flow" not in readme
     assert "Optional read-only Trading 212 connection beta with preview-before-apply review flow" not in readme
     assert "Public website with Tour, Roadmap, docs hub, and optional read-only demo path" in readme
     assert "taxable accounts (GIAs)" in readme
