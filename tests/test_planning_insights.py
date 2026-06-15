@@ -197,7 +197,8 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"Private pot scenario estimate at retirement" in response.data
     assert b"Private pot estimate at retirement" not in response.data
     assert b"Projected private pot" not in response.data
-    assert b"Scenario estimate at age 55 under current balances, contributions and growth assumptions. For planning only, not a guarantee." in response.data
+    assert b"Current totals use saved balances. Scenario estimates use your assumptions and are not guarantees." in response.data
+    assert b"Scenario estimate at age 55 under current balances, contributions and growth assumptions. For planning only, not a guarantee." not in response.data
     assert b"Estimate at age 55 under current balances, contributions and growth assumptions." not in response.data
     assert b"Projected at age 55 under current balances, contributions and growth assumptions." not in response.data
     assert b"Private pot scenario estimate at age 55:" in response.data
@@ -236,7 +237,8 @@ def test_planning_page_no_goal_mode_uses_plan_wording(app, client, make_user):
     assert "Private pot scenario estimate at retirement" in html
     assert "Private pot estimate at retirement" not in html
     assert "Projected private pot" not in html
-    assert "Scenario estimate at age 55 under current balances, contributions and growth assumptions. For planning only, not a guarantee." in html
+    assert "Current totals use saved balances. Scenario estimates use your assumptions and are not guarantees." in html
+    assert "Scenario estimate at age 55 under current balances, contributions and growth assumptions. For planning only, not a guarantee." not in html
     assert "Estimate at age 55 under current balances, contributions and growth assumptions." not in html
     assert "Projected at age 55 under current balances, contributions and growth assumptions." not in html
     assert "Private pot scenario estimate at age 55:" in html
