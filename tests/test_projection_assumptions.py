@@ -386,7 +386,8 @@ def test_planning_page_uses_scenario_estimate_copy_for_retirement_outputs(app, c
     assert "Private pot estimate at retirement" not in body
     assert "Locked for later" in body
     assert "Locked later" not in body
-    assert "Scenario estimate at age 60 under current balances, contributions and growth assumptions. For planning only, not a guarantee." in body
+    assert "Current totals use saved balances. Scenario estimates use your assumptions and are not guarantees." in body
+    assert "Scenario estimate at age 60 under current balances, contributions and growth assumptions. For planning only, not a guarantee." not in body
     assert "Estimate at age 60 under current balances, contributions and growth assumptions." not in body
     assert "Private pot scenario estimate at age 60:" in body
     assert "Private pot estimate at age 60:" not in body
