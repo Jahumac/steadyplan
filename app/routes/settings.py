@@ -260,7 +260,7 @@ def trading212_connection_not_found_message():
 
 
 def trading212_account_not_linked_message():
-    return "That account is not linked to this read-only broker connection."
+    return "That account is not linked to this saved broker snapshot connection."
 
 
 def _prepare_trading212_connections(rows):
