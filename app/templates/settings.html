@@ -343,7 +343,7 @@
           <td class="num">{{ diagnostics.backups.latest_name_label if diagnostics and diagnostics.backups and diagnostics.backups.latest_name_label else 'No SQLite backup yet' }}</td>
         </tr>
         <tr>
-          <td>Latest SQLite backup saved at</td>
+          <td>Latest SQLite backup created at</td>
           <td class="num">{% if diagnostics and diagnostics.backups and diagnostics.backups.latest_modified %}{{ (diagnostics.backups.latest_modified or '')[:19] }}{% else %}—{% endif %}</td>
         </tr>
         <tr>
