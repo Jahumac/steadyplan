@@ -277,8 +277,12 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "![Projections](Screenshots/demo/projections_desktop.png)" not in readme
     assert "- Scenario estimate: calculated outcome based on assumptions" in voice_and_copy
     assert "### Scenario estimates" in voice_and_copy
+    assert "Explain scenarios as assumption-based estimates, not guarantees." in voice_and_copy
+    assert "Track progress, not guarantees." in voice_and_copy
     assert "Scenario estimate certainty and disclaimers" in voice_and_copy
     assert "you will / you’ll have (for scenario estimates)" in voice_and_copy
+    assert "Explain scenarios, not promises." not in voice_and_copy
+    assert "Track progress, not promises." not in voice_and_copy
     assert "### Scenario estimate certainty" in voice_and_copy
     assert "2. Scenario estimate labels and estimate disclaimers" in voice_and_copy
     assert "Overview/Review/Scenario estimates/etc." in voice_and_copy

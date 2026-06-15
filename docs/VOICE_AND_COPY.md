@@ -30,7 +30,7 @@ Primary domain:
 
 Tagline candidates:
 - Your plan. Your data. Your pace.
-- Track progress, not promises.
+- Track progress, not guarantees.
 - Self-hosted clarity for ISAs and pensions.
 - Slow and steady, on your own server.
 
@@ -94,7 +94,7 @@ Rules:
 
 ### Scenario estimates
 Goal:
-- Explain scenarios, not promises.
+- Explain scenarios as assumption-based estimates, not guarantees.
 
 Rules:
 - Always use “scenario estimate” / “scenario estimates” and “based on assumptions”; avoid “projection” / “projections” in user-facing copy.
