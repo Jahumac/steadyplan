@@ -203,6 +203,7 @@ def test_diagnostics_renders_default_trust_posture_checkpoint(app, client, make_
     assert "Saved prices linked to holdings" in body
     assert "Saved portfolio daily snapshots" in body
     assert '<tr><td>Portfolio daily snapshots</td><td class="num">{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</td></tr>' not in body
+    assert "SQLite backups" in body
     assert "Catalogue active" not in body
     assert "Catalogue in use" not in body
     assert "Active price catalogue entries" not in body
@@ -428,6 +429,8 @@ def test_diagnostics_instance_counts_template_uses_clearer_catalogue_count_label
     assert "Latest scheduler run" in body
     assert "hero_stat('Last scheduler run')" not in body
     assert '<td>Scheduler last run</td>' not in body
+    assert "hero_stat('SQLite backups')" in body
+    assert "hero_stat('Backups')" not in body
     assert "Saved daily snapshots" in body
     assert "hero_stat('Daily snapshots')" not in body
     assert "Saved prices" in body
