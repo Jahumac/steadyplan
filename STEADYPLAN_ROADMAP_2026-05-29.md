@@ -126,7 +126,7 @@ SteadyPlan must feel safe and honest.
 
 Needs:
 - visible assumptions
-- clear projection caveats
+- clear scenario-estimate caveats
 - no exaggerated certainty
 - no pressure language
 
