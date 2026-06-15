@@ -179,7 +179,7 @@
     {% call hero_stat('Holdings') %}<strong>{{ diagnostics.counts.holdings if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
     {% call hero_stat('Saved daily snapshots') %}<strong>{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</strong>{% endcall %}
     {% call hero_stat('Latest scheduler run') %}<strong>{{ diagnostics.scheduler_status.short if diagnostics and diagnostics.scheduler_status else 'No scheduler run yet' }}</strong>{% endcall %}
-    {% call hero_stat('Backups') %}
+    {% call hero_stat('SQLite backups') %}
       {% if diagnostics and diagnostics.backups and diagnostics.backups.health_status == 'good' %}
         <strong class="text-accent-2">{{ diagnostics.backups.health_label }}</strong>
       {% else %}
