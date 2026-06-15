@@ -52,6 +52,8 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert '<p class="eyebrow">Scenario estimates</p>' in body
     assert '<p class="eyebrow">Projections</p>' not in body
     assert "Retirement scenario estimate · age 60" in body
+    assert "Current totals use saved balances and contribution settings. Scenario estimates use your assumptions and are not guarantees; this is not financial advice." in body
+    assert "Based on your current balances, contributions, and assumptions. Not a guarantee, and not financial advice." not in body
     assert "Retirement projection · age 60" not in body
     assert "Retirement projection estimate" not in body
     assert "Scenario estimate at retirement" in body
