@@ -73,6 +73,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "Add a read-only Trading 212 connection" not in body
     assert "<span>Broker environment</span>" in body
     assert "<span>Environment</span>" not in body
+    assert "<span>Saved broker snapshot label</span>" in body
+    assert "<span>Local connection label</span>" not in body
     assert "A local label so you can recognise this saved connection later." in body
     assert "A local label so you can recognise this connection later." not in body
     assert "Start with Demo if you want a no-risk broker snapshot check first." in body
@@ -102,7 +104,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "SteadyPlan can keep more than one read-only Trading 212 connection" not in body
     assert "separate Invest and Stocks ISA accounts can be saved side by side" in body
     assert "separate Invest and ISA accounts can be saved side by side" not in body
-    assert "Save and test broker snapshot access" in body
+    assert "Save and test broker snapshot connection" in body
+    assert "Save and test broker snapshot access" not in body
     assert "Save and test read-only broker connection" not in body
     assert "Save and test read-only Trading 212 connection" not in body
     assert "Save and test Trading 212 connection" not in body
@@ -112,7 +115,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "Each saved read-only broker connection stays read-only." not in body
     assert "Preview broker snapshot checks the latest broker summary without changing SteadyPlan data." in body
     assert "Preview read-only broker snapshot checks the latest broker summary without changing SteadyPlan data." not in body
-    assert "Remove saved broker access deletes the stored encrypted key pair from SteadyPlan." in body
+    assert "Remove saved broker snapshot connection deletes the stored encrypted key pair from SteadyPlan." in body
+    assert "Remove saved broker access deletes the stored encrypted key pair from SteadyPlan." not in body
     assert "Remove broker access deletes the stored encrypted key pair from SteadyPlan." not in body
     assert "Each saved connection is read-only." not in body
     assert "Saved read-only Trading 212 connections" not in body
@@ -306,23 +310,28 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "Each saved connection is read-only." not in body
     assert "Preview broker snapshot checks the latest broker summary without changing SteadyPlan data." in body
     assert "Preview read-only broker snapshot checks the latest broker summary without changing SteadyPlan data." not in body
-    assert "Retest broker access refreshes the latest broker snapshot check." in body
+    assert "Retest broker snapshot connection refreshes the latest broker snapshot check." in body
+    assert "Retest broker access refreshes the latest broker snapshot check." not in body
     assert "Retest broker access refreshes the latest account summary check." not in body
     assert "Retest connection refreshes the latest account summary check." not in body
-    assert "Remove saved broker access deletes the stored encrypted key pair from SteadyPlan." in body
+    assert "Remove saved broker snapshot connection deletes the stored encrypted key pair from SteadyPlan." in body
+    assert "Remove saved broker access deletes the stored encrypted key pair from SteadyPlan." not in body
     assert "Remove broker access deletes the stored encrypted key pair from SteadyPlan." not in body
     assert "Remove connection deletes the stored encrypted key pair from SteadyPlan." not in body
     assert "Preview broker snapshot" in body
     assert "Preview read-only broker snapshot" not in body
-    assert "Retest broker access now" in body
+    assert "Retest broker snapshot connection" in body
+    assert "Retest broker access now" not in body
     assert "Retest connection" not in body
-    assert "Retest broker access" in body
-    assert "Remove saved broker access" in body
+    assert "Retest broker access" not in body
+    assert "Remove saved broker snapshot connection" in body
+    assert "Remove saved broker access" not in body
     assert "Remove broker access" not in body
     assert "Remove connection" not in body
     assert "Read-only" in body
     assert "Read Only" not in body
-    assert "Local connection label" in body
+    assert "Saved broker snapshot label" in body
+    assert "Local connection label" not in body
     assert "Saved connection label" not in body
     assert "<th>Label</th>" not in body
     assert "Broker environment" in body
@@ -337,7 +346,8 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "Last broker snapshot check" in body
     assert "Last account summary check" not in body
     assert "Last tested" not in body
-    assert "Saved connection actions" in body
+    assert "Saved broker snapshot actions" in body
+    assert "Saved connection actions" not in body
     assert "<th>Actions</th>" not in body
     assert ">Retest<" not in body
     assert ">Remove<" not in body
@@ -537,7 +547,8 @@ def test_retest_trading212_success_uses_broker_connection_language(app, client, 
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Broker snapshot demo access retested successfully." in body
+    assert "Broker snapshot demo connection retested successfully." in body
+    assert "Broker snapshot demo access retested successfully." not in body
     assert "Read-only broker demo access retested successfully." not in body
     assert "Retested read-only broker demo connection successfully." not in body
     assert "Read-only broker demo connection retested successfully." not in body

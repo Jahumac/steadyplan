@@ -1259,7 +1259,7 @@ def retest_trading212(connection_id):
             external_total_value=summary["total_value"],
         )
         flash(
-            f"Broker snapshot {trading212_environment_label(summary['environment']).lower()} access retested successfully.",
+            f"Broker snapshot {trading212_environment_label(summary['environment']).lower()} connection retested successfully.",
             "success",
         )
     except (Trading212ConnectionError, Trading212CredentialError) as exc:

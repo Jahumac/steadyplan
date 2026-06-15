@@ -825,7 +825,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-grid">
       <label>
-        <span>Local connection label</span>
+        <span>Saved broker snapshot label</span>
         <input type="text" name="label" value="Trading 212" maxlength="64">
         <small class="form-hint">A local label so you can recognise this saved connection later.</small>
       </label>
@@ -850,25 +850,25 @@
       </label>
     </div>
     <div class="badge-row mt-1">
-      <button type="submit">Save and test broker snapshot access</button>
+      <button type="submit">Save and test broker snapshot connection</button>
     </div>
   </form>
 
   <div style="margin-top:1rem;">
     <div class="text-sm" style="font-weight:600;margin-bottom:0.45rem;">Saved broker snapshot connections</div>
-    <p class="helper-text" style="margin:0 0 0.45rem 0;">Each saved broker connection stays read-only. Preview broker snapshot checks the latest broker summary without changing SteadyPlan data. Retest broker access refreshes the latest broker snapshot check. Remove saved broker access deletes the stored encrypted key pair from SteadyPlan.</p>
+    <p class="helper-text" style="margin:0 0 0.45rem 0;">Each saved broker connection stays read-only. Preview broker snapshot checks the latest broker summary without changing SteadyPlan data. Retest broker snapshot connection refreshes the latest broker snapshot check. Remove saved broker snapshot connection deletes the stored encrypted key pair from SteadyPlan.</p>
     {% if trading212_connections %}
     <div class="table-scroll">
       <table class="data-table">
         <thead>
           <tr>
-            <th>Local connection label</th>
+            <th>Saved broker snapshot label</th>
             <th>Broker environment</th>
             <th>Broker snapshot check status</th>
             <th>Masked API key</th>
             <th>Broker account</th>
             <th>Last broker snapshot check</th>
-            <th>Saved connection actions</th>
+            <th>Saved broker snapshot actions</th>
           </tr>
         </thead>
         <tbody>
@@ -902,11 +902,11 @@
                 </form>
                 <form method="post" action="/settings/trading212/{{ connection.id }}/retest" style="margin:0;">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="badge">Retest broker access now</button>
+                  <button type="submit" class="badge">Retest broker snapshot connection</button>
                 </form>
                 <form method="post" action="/settings/trading212/{{ connection.id }}/disconnect" style="margin:0;">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="badge badge-danger">Remove saved broker access</button>
+                  <button type="submit" class="badge badge-danger">Remove saved broker snapshot connection</button>
                 </form>
               </div>
             </td>
