@@ -24,7 +24,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Continued mobile polish across the private app experience.
-- Updated runtime dependencies to current releases, including Flask 3.1.3, Flask-WTF 1.3.0, yfinance 1.4.0, Gunicorn 26.0.0, APScheduler 3.11.2, pytz 2026.2, Flask-Limiter 4.1.1, and openpyxl 3.1.5.
+- Updated runtime dependencies to current installable releases, including Flask 3.1.3, Flask-WTF 1.2.2, yfinance 1.4.1, Gunicorn 23.0.0, APScheduler 3.11.2, pytz 2026.2, Flask-Limiter 4.1.1, cryptography 48.0.0, and openpyxl 3.1.5.
 - Updated the Docker base image to Python 3.14 slim.
 - Updated GitHub Actions workflow dependencies for checkout, GHCR login, metadata, and Docker build/push.
 

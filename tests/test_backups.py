@@ -1,6 +1,7 @@
 """Backup service tests."""
 from datetime import datetime
 from pathlib import Path
+from tests.path_helpers import TEMPLATES_ROOT
 
 
 def test_backup_creates_file(app, tmp_path):
@@ -385,7 +386,7 @@ def test_diagnostics_shows_latest_backup_metadata(app, client, make_user, tmp_pa
 def test_diagnostics_price_sample_template_uses_clearer_column_labels():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "<th>Holding name</th>" in body
     assert "<th>Price updated</th>" in body
@@ -398,7 +399,7 @@ def test_diagnostics_price_sample_template_uses_clearer_column_labels():
 def test_diagnostics_instance_counts_template_uses_clearer_stale_price_label():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "Linked prices needing attention in sample (&gt;2 days old or missing)" in body
     assert "Stale prices (sample, &gt;2d/none)" not in body
@@ -408,7 +409,7 @@ def test_diagnostics_instance_counts_template_uses_clearer_stale_price_label():
 def test_diagnostics_linked_prices_empty_state_uses_clearer_saved_prices_wording():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "No linked holdings are using saved prices yet." in body
     assert "No holdings are linked to saved prices yet." not in body
@@ -417,7 +418,7 @@ def test_diagnostics_linked_prices_empty_state_uses_clearer_saved_prices_wording
 def test_diagnostics_instance_overview_template_uses_clearer_price_update_label():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "Latest saved portfolio snapshot" in body
     assert "Latest portfolio snapshot" not in body
@@ -429,7 +430,7 @@ def test_diagnostics_instance_overview_template_uses_clearer_price_update_label(
 def test_diagnostics_instance_counts_template_uses_clearer_catalogue_count_labels():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "SQLite database" in body
     assert "hero_stat('Database')" not in body
@@ -454,7 +455,7 @@ def test_diagnostics_instance_counts_template_uses_clearer_catalogue_count_label
 def test_diagnostics_backup_metadata_template_uses_clearer_backup_labels():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "SQLite backup files" in body
     assert "Latest SQLite backup file" in body
@@ -475,7 +476,7 @@ def test_diagnostics_backup_metadata_template_uses_clearer_backup_labels():
 def test_diagnostics_runtime_status_template_uses_clearer_state_labels():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "Reachable" in body
     assert "Available" not in body
@@ -496,7 +497,7 @@ def test_diagnostics_runtime_status_template_uses_clearer_state_labels():
 def test_diagnostics_trust_checkpoint_copy_uses_clearer_setup_wording():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "Live runtime checks for the main trust-related settings on this instance." in body
     assert "This is not a full security audit, but it should make the current setup easier to review." in body

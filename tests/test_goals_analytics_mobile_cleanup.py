@@ -1,3 +1,5 @@
+from tests.path_helpers import STATIC_ROOT
+
 def _login_for_mobile_cleanup(client, make_user, username):
     _, username, password = make_user(username=username, password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
@@ -68,7 +70,7 @@ def test_projections_marks_global_month_strip_for_mobile_hiding(app, client, mak
     assert html.count('Lifetime ISA contributions stop at age 50') == 2
     assert 'LISA contributions stop at age 50' not in html
 
-    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
     assert ".projections-compact-only {" in css
     assert ".projections-desktop-detail {" in css
     assert ".projections-compact-details summary::after {" in css

@@ -1,6 +1,7 @@
 from datetime import date
 
 
+from tests.path_helpers import STATIC_ROOT
 def test_overview_marks_global_month_strip_for_mobile_hiding(app, client, make_user):
     _, username, password = make_user(username="overview-mobile", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
@@ -31,7 +32,7 @@ def test_goals_page_moves_primary_action_into_hero_for_mobile_cleanup(app, clien
     assert 'href="/goals/?mode=create">+ Create goal</a>' not in html
     assert '<div class="row-end">' not in html
 
-    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
     assert ".goals-hero-actions {" in css
     assert "flex-direction: column;" in css
     assert ".goals-hero-badges .badge {" in css
@@ -75,7 +76,7 @@ def test_goals_page_uses_two_column_goal_grid_on_larger_mobile_widths(app, clien
     assert 'Retirement Goal' in html
     assert 'Emergency Fund' in html
 
-    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
     assert ".goal-grid {" in css
     assert "grid-template-columns: repeat(auto-fit, minmax(260px, 320px));" in css
     assert "@media (min-width: 600px) and (max-width: 900px) {" in css
@@ -162,7 +163,7 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     assert 'class="card mb-1 overview-access-card overview-desktop-detail"' in html
     assert 'class="card-grid allowance-grid mb-1 overview-desktop-detail"' in html
 
-    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
     assert ".goal-track-status {" in css
     assert "flex-wrap: wrap;" in css
     assert ".goal-track-label {" in css
@@ -178,7 +179,7 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     assert hero_idx < access_idx < accounts_idx < portfolio_idx
     assert 'overview-focus-card' not in html
 
-    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
     assert ".overview-compact-only {" in css
     assert ".overview-desktop-detail {" in css
     assert ".overview-compact-details," in css

@@ -1,6 +1,7 @@
 from datetime import date
 
 
+from tests.path_helpers import STATIC_ROOT
 def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup(app, client, make_user):
     _, username, password = make_user(username="budget-mobile", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
@@ -44,7 +45,7 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert '<p class="eyebrow">This month</p>' not in html
     assert "Keep budget editing simple" not in html
 
-    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
     assert ".budget-hero-actions {" in css
     assert "flex-direction: column;" in css
     assert ".subnav-mobile-family {" in css
