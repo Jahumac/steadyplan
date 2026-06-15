@@ -64,9 +64,11 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     resp = client.get("/settings/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Trading 212 read-only access (beta)" in body
+    assert "Trading 212 broker snapshot access (beta)" in body
+    assert "Trading 212 read-only access (beta)" not in body
     assert "Trading 212 sync (beta)" not in body
-    assert "Save a read-only broker connection" in body
+    assert "Save a broker snapshot connection" in body
+    assert "Save a read-only broker connection" not in body
     assert "Add a read-only broker connection" not in body
     assert "Add a read-only Trading 212 connection" not in body
     assert "<span>Broker environment</span>" in body
@@ -84,8 +86,10 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "<span>API secret</span>" not in body
     assert "Paste the Trading 212 Public API secret for this broker account." in body
     assert "Your Trading 212 Public API secret." not in body
-    assert "Start by saving a read-only broker connection." in body
-    assert "SteadyPlan only tests broker snapshot access here" in body
+    assert "Start by saving a broker snapshot connection." in body
+    assert "Start by saving a read-only broker connection." not in body
+    assert "SteadyPlan only tests read-only broker snapshot access here" in body
+    assert "SteadyPlan only tests broker snapshot access here" not in body
     assert "This is the safest first step for Trading 212 integration" not in body
     assert "stores the key pair encrypted on this server using this app's secret key" in body
     assert "Public API currently supports Invest and Stocks ISA only" in body
@@ -93,7 +97,8 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "SIPP data is not available through the broker API yet" not in body
     assert "SteadyPlan's own price service and manual/CSV imports stay in place" in body
     assert "SteadyPlan's own price service and CSV/manual imports stay in place" not in body
-    assert "SteadyPlan can keep more than one read-only broker connection" in body
+    assert "SteadyPlan can keep more than one broker snapshot connection" in body
+    assert "SteadyPlan can keep more than one read-only broker connection" not in body
     assert "SteadyPlan can keep more than one read-only Trading 212 connection" not in body
     assert "separate Invest and Stocks ISA accounts can be saved side by side" in body
     assert "separate Invest and ISA accounts can be saved side by side" not in body
