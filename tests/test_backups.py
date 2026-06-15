@@ -299,7 +299,8 @@ def test_admin_can_run_manual_backup_from_settings(app, client, make_user, tmp_p
     backups = [p for p in backups if not p.is_symlink()]
     assert backups
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "SQLite backup created:" in body
+    assert "SQLite backup file created:" in body
+    assert "SQLite backup created:" not in body
     # Do not leak full server paths in UI
     assert str(tmp_path) not in body
 
