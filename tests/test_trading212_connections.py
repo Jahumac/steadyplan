@@ -461,7 +461,8 @@ def test_apply_trading212_reviewed_changes_rejects_unlinked_account_with_broker_
     assert resp.headers["Location"].endswith(f"/accounts/{account_id}")
     with client.session_transaction() as sess:
         flashes = sess.get("_flashes", [])
-    assert ("error", "That account is not linked to this read-only broker connection.") in flashes
+    assert ("error", "That account is not linked to this saved broker snapshot connection.") in flashes
+    assert ("error", "That account is not linked to this read-only broker connection.") not in flashes
     assert ("error", "That account is not linked to this Trading 212 connection.") not in flashes
 
 
@@ -661,17 +662,22 @@ def test_accounts_edit_form_offers_saved_trading212_linking(app, client, make_us
     response = client.get(f"/accounts/{account_id}?mode=edit")
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
-    assert "Read-only broker link" in body
+    assert "Broker snapshot link" in body
+    assert "Read-only broker link" not in body
     assert "Broker link" not in body
-    assert "Optional read-only broker link" in body
+    assert "Optional broker snapshot link" in body
+    assert "Optional read-only broker link" not in body
     assert "Optional read-only Trading 212 link" not in body
     assert "Optional Trading 212 link" not in body
-    assert "Linked read-only broker connection" in body
+    assert "Linked broker snapshot connection" in body
+    assert "Linked read-only broker connection" not in body
     assert "Saved read-only broker connection" not in body
-    assert "No read-only broker link" in body
+    assert "No broker snapshot link" in body
+    assert "No read-only broker link" not in body
     assert ">Not linked<" not in body
     assert "Trading 212 ISA live · ISA-111 · GBP" in body
-    assert "Link this account to a saved read-only broker connection so broker previews know which account to compare." in body
+    assert "Link this account to a saved broker snapshot connection so broker previews know which account to compare." in body
+    assert "Link this account to a saved read-only broker connection so broker previews know which account to compare." not in body
     assert "Link this account to a saved read-only Trading 212 connection so broker previews know which account to compare." not in body
     assert "Manual/CSV tracking stays in place until you apply reviewed updates." in body
     assert "future preview and sync tools know which broker account it belongs to" not in body
@@ -708,10 +714,13 @@ def test_accounts_edit_form_empty_state_keeps_manual_csv_path(app, client, make_
     response = client.get(f"/accounts/{account_id}?mode=edit")
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
-    assert "Linked read-only broker connection" in body
+    assert "Linked broker snapshot connection" in body
+    assert "Linked read-only broker connection" not in body
     assert "Saved read-only broker connection" not in body
-    assert "No saved read-only broker connections yet." in body
-    assert "Manual/CSV tracking stays available until you choose to add a read-only connection in Settings." in body
+    assert "No saved broker snapshot connections yet." in body
+    assert "No saved read-only broker connections yet." not in body
+    assert "Manual/CSV tracking stays available until you add one in Settings." in body
+    assert "Manual/CSV tracking stays available until you choose to add a read-only connection in Settings." not in body
     assert "Add one in Settings first if you want to link this account for future preview and sync work." not in body
 
 
@@ -760,12 +769,15 @@ def test_accounts_edit_form_hides_trading212_picker_for_unsupported_wrapper(app,
     response = client.get(f"/accounts/{account_id}?mode=edit")
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
-    assert "Read-only broker link" in body
+    assert "Broker snapshot link" in body
+    assert "Read-only broker link" not in body
     assert "Broker link" not in body
-    assert "Optional read-only broker link" in body
+    assert "Optional broker snapshot link" in body
+    assert "Optional read-only broker link" not in body
     assert "Optional read-only Trading 212 link" not in body
     assert "Optional Trading 212 link" not in body
-    assert "Linked read-only broker connection" in body
+    assert "Linked broker snapshot connection" in body
+    assert "Linked read-only broker connection" not in body
     assert "Saved read-only broker connection" not in body
     assert "Trading 212 Public API currently supports Invest and Stocks ISA only. Keep this account manual/CSV-tracked for now." in body
     assert "Trading 212 Cash ISA live · CASH-111 · GBP" not in body
@@ -874,7 +886,8 @@ def test_account_edit_can_link_existing_account_to_saved_trading212_connection(a
     )
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
-    assert "Linked read-only broker connection:" in body
+    assert "Linked broker snapshot connection:" in body
+    assert "Linked read-only broker connection:" not in body
     assert "Linked read-only Trading 212 connection:" not in body
     assert "Linked Trading 212 connection:" not in body
     assert "Trading 212 ISA live" in body
@@ -883,7 +896,8 @@ def test_account_edit_can_link_existing_account_to_saved_trading212_connection(a
     assert "Account source" in body
     assert "Broker primary" in body
     assert "Connected" in body
-    assert "Last successful read-only broker snapshot" in body
+    assert "Last successful broker snapshot check" in body
+    assert "Last successful read-only broker snapshot" not in body
     assert "Last successful broker fetch" not in body
     assert "2026-06-08 10:00 UTC" in body
     assert "Broker total (GBP)" in body
@@ -894,8 +908,8 @@ def test_account_edit_can_link_existing_account_to_saved_trading212_connection(a
     assert "+£4,000.00" in body
     assert "Trading 212 is currently the live source for this linked account. Manual/CSV tracking remains the fallback if the broker snapshot is unavailable or incomplete." in body
     assert "Trading 212 is currently the live source for this linked account. Manual tracking remains the fallback if the broker snapshot is unavailable." not in body
-    assert "Use the linked read-only broker preview before changing holdings or manually adjusting this account." in body
-    assert "Use the linked broker preview before changing holdings or manually adjusting this account." not in body
+    assert "Use the linked broker snapshot preview before changing holdings or manually adjusting this account." in body
+    assert "Use the linked read-only broker preview before changing holdings or manually adjusting this account." not in body
 
     with app.app_context():
         account = fetch_account(account_id, uid)
@@ -1032,7 +1046,8 @@ def test_account_detail_hides_broker_primary_status_for_unsupported_wrapper(app,
     response = client.get(f"/accounts/{account_id}")
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
-    assert "Linked read-only broker connection:" in body
+    assert "Linked broker snapshot connection:" in body
+    assert "Linked read-only broker connection:" not in body
     assert "Linked read-only Trading 212 connection:" not in body
     assert "Linked Trading 212 connection:" not in body
     assert "Trading 212 Public API currently supports Invest and Stocks ISA only. Keep this account manual/CSV-tracked for now." in body
@@ -1285,8 +1300,8 @@ def test_account_detail_shows_preview_button_for_linked_trading212_connection(ap
     response = client.get(f"/accounts/{account_id}")
     assert response.status_code == 200
     body = response.data.decode("utf-8", errors="ignore")
-    assert "Preview linked read-only broker snapshot" in body
-    assert "Preview linked broker snapshot" not in body
+    assert "Preview linked broker snapshot" in body
+    assert "Preview linked read-only broker snapshot" not in body
     assert f'action="/settings/trading212/{connection["id"]}/preview"' in body
     assert 'name="account_id" value="%s"' % account_id in body
 

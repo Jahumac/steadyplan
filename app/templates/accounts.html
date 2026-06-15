@@ -172,7 +172,7 @@
         <p class="eyebrow">{{ selected.provider }} · {{ selected.wrapper_type }}</p>
         <h2>{{ selected.name }}</h2>
         {% if linked_trading212_connection %}
-        <p class="text-sm text-muted mt-05">Linked read-only broker connection: <strong>{{ linked_trading212_connection.label }}</strong>{% if linked_trading212_connection.external_account_id %} · {{ linked_trading212_connection.external_account_id }}{% endif %}{% if linked_trading212_connection.external_account_currency %} · {{ linked_trading212_connection.external_account_currency }}{% endif %}</p>
+        <p class="text-sm text-muted mt-05">Linked broker snapshot connection: <strong>{{ linked_trading212_connection.label }}</strong>{% if linked_trading212_connection.external_account_id %} · {{ linked_trading212_connection.external_account_id }}{% endif %}{% if linked_trading212_connection.external_account_currency %} · {{ linked_trading212_connection.external_account_currency }}{% endif %}</p>
         {% if not selected_supports_trading212_public_api %}
         <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ selected_trading212_support_hint }}</p>
         {% endif %}
@@ -188,7 +188,7 @@
             <strong>{{ linked_trading212_summary.status_label }}</strong>
           </div>
           <div>
-            <p class="text-sm text-muted" style="margin:0;">Last successful read-only broker snapshot</p>
+            <p class="text-sm text-muted" style="margin:0;">Last successful broker snapshot check</p>
             <strong>{{ linked_trading212_summary.last_checked_label or 'Not fetched yet' }}</strong>
           </div>
           <div>
@@ -207,7 +207,7 @@
         {% if linked_trading212_summary.last_error %}
         <p class="text-sm perf-negative mt-05" style="margin-bottom:0;">Last read-only broker error: {{ linked_trading212_summary.last_error }}</p>
         {% else %}
-        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">Use the linked read-only broker preview before changing holdings or manually adjusting this account.</p>
+        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">Use the linked broker snapshot preview before changing holdings or manually adjusting this account.</p>
         {% endif %}
         {% endif %}
       </div>
@@ -217,7 +217,7 @@
         <form method="post" action="/settings/trading212/{{ linked_trading212_connection.id }}/preview" class="form-reset">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="account_id" value="{{ selected.id }}">
-          <button type="submit" class="badge">Preview linked read-only broker snapshot</button>
+          <button type="submit" class="badge">Preview linked broker snapshot</button>
         </form>
         {% endif %}
         {% if detail_mode != 'edit' %}<a class="badge" href="/accounts/{{ selected.id }}?mode=edit">Edit</a>{% endif %}
@@ -280,23 +280,23 @@
 
           <div class="edit-card">
             <div class="edit-card-header">
-              <p class="edit-card-eyebrow">Read-only broker link</p>
-              <h4 class="edit-card-title">Optional read-only broker link</h4>
+              <p class="edit-card-eyebrow">Broker snapshot link</p>
+              <h4 class="edit-card-title">Optional broker snapshot link</h4>
             </div>
             <div class="form-grid">
               {% if selected_supports_trading212_public_api %}
               <label class="form-full-col">
-                <span>Linked read-only broker connection</span>
+                <span>Linked broker snapshot connection</span>
                 <select name="linked_broker_connection_id">
-                  <option value="">No read-only broker link</option>
+                  <option value="">No broker snapshot link</option>
                   {% for option in trading212_connection_options %}
                   <option value="{{ option.id }}" {% if selected.linked_broker_connection_id == option.id %}selected{% endif %}>{{ option.label }}</option>
                   {% endfor %}
                 </select>
                 {% if trading212_connection_options %}
-                <small class="form-hint">Link this account to a saved read-only broker connection so broker previews know which account to compare. Manual/CSV tracking stays in place until you apply reviewed updates.</small>
+                <small class="form-hint">Link this account to a saved broker snapshot connection so broker previews know which account to compare. Manual/CSV tracking stays in place until you apply reviewed updates.</small>
                 {% else %}
-                <small class="form-hint">No saved read-only broker connections yet. Manual/CSV tracking stays available until you choose to add a read-only connection in Settings.</small>
+                <small class="form-hint">No saved broker snapshot connections yet. Manual/CSV tracking stays available until you add one in Settings.</small>
                 {% endif %}
               </label>
               {% else %}
@@ -304,7 +304,7 @@
               <input type="hidden" name="linked_broker_connection_id" value="{{ selected.linked_broker_connection_id }}">
               {% endif %}
               <div class="form-full-col">
-                <span>Linked read-only broker connection</span>
+                <span>Linked broker snapshot connection</span>
                 <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ selected_trading212_support_hint }}</p>
               </div>
               {% endif %}
