@@ -2716,25 +2716,4 @@
       .catch(() => { });
   }
 
-  /* ── Offline: cache warming ───────────────────────────────────────── */
-  if ('serviceWorker' in navigator) {
-    /* Warm the cache so every top-level page works offline next time.
-       Runs once per load, only when online, 2s after load to stay out of
-       the critical path. */
-    var PAGES_TO_WARM = [
-      '/', '/accounts/', '/budget/', '/goals/',
-      '/projections/', '/performance/', '/holdings/',
-      '/allowance/', '/settings/'
-    ];
-    window.addEventListener('load', function() {
-      if (!navigator.onLine) return;
-      setTimeout(function() {
-        PAGES_TO_WARM.forEach(function(path) {
-          if (path === window.location.pathname) return;
-          fetch(path, { credentials: 'same-origin' }).catch(function() {});
-        });
-      }, 2000);
-    });
-  }
-
 })();

@@ -126,6 +126,19 @@ def test_confirm_helper_js_no_longer_carries_dead_mascot_icon_wiring():
     assert "/static/icons/shelly/Accounts.png" not in js
 
 
+def test_pwa_offline_comments_match_privacy_first_caching_behavior():
+    js = STATIC_ROOT.joinpath("js/app.js").read_text()
+    sw = STATIC_ROOT.joinpath("sw.js").read_text()
+
+    assert "API-style JSON calls: network-only, never cached" in sw
+    assert "Authenticated financial pages: network-only with offline fallback" in sw
+    assert "networkOnlyAPI(request)" in sw
+    assert "function networkFirstAPI" not in sw
+    assert "cache response for offline reads" not in sw
+    assert "Warm the cache so every top-level page works offline next time" not in js
+    assert "PAGES_TO_WARM" not in js
+
+
 def test_allowance_hash_links_open_targeted_log_panels():
     js = STATIC_ROOT.joinpath("js/app.js").read_text()
 
