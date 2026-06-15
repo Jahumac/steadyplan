@@ -230,7 +230,8 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Projections are illustrative and based on your inputs, assumptions, and scenarios." not in about
     assert "<h2 class=\"section-title\">Scenario estimates</h2>" in tour
     assert 'content="Feature-led tour of SteadyPlan. See what each area does and why it exists, with grounded notes and demo screenshots."' in tour
-    assert "The scenario estimates view is built around assumptions you control. The goal is to support long-term thinking while staying clear about what is entered data and what is forecast output." in tour
+    assert "The scenario estimates view is built around assumptions you control. The goal is to support long-term thinking while staying clear about what is entered data and what is scenario-estimate output." in tour
+    assert "what is entered data and what is forecast output" not in tour
     assert "Scenario estimates are assumptions-based tools to explore trade-offs, not a guarantee of outcomes." in tour
     assert "SteadyPlan scenario estimates summary card (demo data)" in tour
     assert "<h3>Projections</h3>" not in tour
