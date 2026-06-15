@@ -385,7 +385,8 @@ def test_settings_explains_backup_restore_scope_at_a_glance(app, client, make_us
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Backup and restore at a glance" in html
+    assert "JSON export, backup, and restore at a glance" in html
+    assert "Backup and restore at a glance" not in html
     assert "Local SQLite database" in html
     assert "the live SteadyPlan data store" in html
     assert "JSON export" in html
