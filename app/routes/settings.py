@@ -1814,7 +1814,7 @@ def commit_restore_backup():
     confirm_checked = request.form.get("confirm_replace") == "1"
     confirm_phrase = request.form.get("confirm_phrase", "").strip()
     if not confirm_checked or confirm_phrase.upper() != "RESTORE":
-        flash("To overwrite this user's data from the export, tick the checkbox and type RESTORE to confirm.", "error")
+        flash("To overwrite this user's finance data from the export, tick the checkbox and type RESTORE to confirm.", "error")
         uid = current_user.id
         assumptions = fetch_assumptions(uid)
         computed_age = int(current_age_from_assumptions(assumptions)) if assumptions else 0
@@ -1897,7 +1897,7 @@ def commit_restore_backup():
     _clear_restore_staging_session()
     cleanup_restore_staging(current_app.config)
     flash(
-        f"Restore complete. Data for this user has been overwritten. Safety backup created first: {backup_dest.name}",
+        f"Restore complete. This user's finance data has been overwritten. Safety backup created first: {backup_dest.name}",
         "success",
     )
 

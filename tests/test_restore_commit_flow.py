@@ -107,12 +107,15 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
     )
     body_validate = resp_validate.data.decode("utf-8")
     assert "Restore file looks valid. Checking did not change your data." in body_validate
-    assert "Overwrite this user's data from this export" in body_validate
+    assert "Overwrite this user's finance data from this export" in body_validate
+    assert "Overwrite this user's data from this export" not in body_validate
     assert "Restore from this export (overwrites this user's current data)" not in body_validate
     assert "Safety backup before overwrite" in body_validate
     assert "Safety check before overwrite" not in body_validate
     assert "I understand this will overwrite this user's finance data" in body_validate
     assert "I understand this will overwrite all data for this user" not in body_validate
+    assert "You can still download a fresh per-user JSON export as an extra safety copy." in body_validate
+    assert "You can still download a fresh JSON export as an extra safety copy." not in body_validate
     assert "Type RESTORE" in body_validate
     token = _extract_restore_token(body_validate)
 
@@ -123,7 +126,8 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
         follow_redirects=True,
     )
     body_missing = resp_missing_confirm.data.decode("utf-8")
-    assert "To overwrite this user&#39;s data from the export, tick the checkbox and type RESTORE to confirm." in body_missing
+    assert "To overwrite this user&#39;s finance data from the export, tick the checkbox and type RESTORE to confirm." in body_missing
+    assert "To overwrite this user&#39;s data from the export, tick the checkbox and type RESTORE to confirm." not in body_missing
     after = _count_user_accounts(app, uid1)
     assert after == before
 
@@ -133,7 +137,8 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
         follow_redirects=True,
     )
     body_wrong = resp_wrong_phrase.data.decode("utf-8")
-    assert "To overwrite this user&#39;s data from the export, tick the checkbox and type RESTORE to confirm." in body_wrong
+    assert "To overwrite this user&#39;s finance data from the export, tick the checkbox and type RESTORE to confirm." in body_wrong
+    assert "To overwrite this user&#39;s data from the export, tick the checkbox and type RESTORE to confirm." not in body_wrong
     assert _count_user_accounts(app, uid1) == before
 
     resp_ok = client.post(
@@ -142,7 +147,8 @@ def test_valid_backup_requires_explicit_confirmation_and_then_restores(app, clie
         follow_redirects=True,
     )
     body_ok = resp_ok.data.decode("utf-8")
-    assert "Restore complete. Data for this user has been overwritten. Safety backup created first:" in body_ok
+    assert "Restore complete. This user&#39;s finance data has been overwritten. Safety backup created first:" in body_ok
+    assert "Restore complete. Data for this user has been overwritten. Safety backup created first:" not in body_ok
 
     with app.app_context():
         backup_files = sorted(backup_dir.glob("finance*.db"))
@@ -429,7 +435,8 @@ def test_restore_commit_stops_if_fresh_backup_cannot_be_created(app, client, mak
     )
     body = resp_commit.data.decode("utf-8")
     assert "Restore stopped before any data was changed because SteadyPlan could not create a fresh whole-instance SQLite backup." in body
-    assert "Overwrite this user's data from this export" in body
+    assert "Overwrite this user's finance data from this export" in body
+    assert "Overwrite this user's data from this export" not in body
     assert "Restore from this export (overwrites this user's current data)" not in body
     assert "Safety backup before overwrite" in body
     assert "Safety check before overwrite" not in body

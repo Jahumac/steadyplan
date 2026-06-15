@@ -533,7 +533,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
       <input type="file" name="backup_file" accept=".json,application/json" class="input-standard" style="max-width:22rem;">
-      <button type="submit" class="badge badge-primary-action">Check restore file</button>
+      <button type="submit" class="badge badge-primary-action">Check JSON export</button>
     </div>
   </form>
 
@@ -593,7 +593,7 @@
 
       {% if restore_check_result.valid and restore_token %}
         <div style="margin-top:0.75rem;padding:0.9rem;border:1px solid var(--border);border-radius:12px;background:var(--panel);">
-          <div style="font-weight:600;margin-bottom:0.25rem;">Overwrite this user's data from this export</div>
+          <div style="font-weight:600;margin-bottom:0.25rem;">Overwrite this user's finance data from this export</div>
           <p class="helper-text" style="margin:0.25rem 0 0.75rem 0;">
             Restoring replaces all data for this user with the contents of this export file. Any changes made since this export was created will be lost. Other users are not affected.
           </p>
@@ -602,7 +602,7 @@
             <p class="helper-text m-0">SteadyPlan will create a fresh whole-instance SQLite backup first. If that safety backup cannot be created, restore stops and leaves your data unchanged.</p>
           </div>
           <p class="helper-text" style="margin:0 0 0.75rem 0;">
-            You can still download a fresh JSON export as an extra safety copy. Restore does not change your username or password.
+            You can still download a fresh per-user JSON export as an extra safety copy. Restore does not change your username or password.
           </p>
           <form method="post" action="/settings/restore/commit" style="margin:0;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -613,7 +613,7 @@
             </label>
             <div style="margin-top:0.6rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
               <input type="text" name="confirm_phrase" class="input-standard" placeholder="Type RESTORE" autocomplete="off" required style="max-width:12rem;text-transform:uppercase;">
-              <button type="submit" class="badge badge-danger">Overwrite this user's data from this export</button>
+              <button type="submit" class="badge badge-danger">Overwrite this user's finance data from this export</button>
             </div>
           </form>
         </div>
@@ -933,7 +933,7 @@
     This permanently deletes all data for this user: accounts, holdings, goals, budget, monthly updates, and assumptions. Your login stays, but the data does not. Other users are not affected.
   </p>
   <p class="helper-text text-danger" style="margin-top:0.5rem;">
-    This cannot be undone. Download this user's JSON export before continuing.
+    This cannot be undone. Download a per-user JSON export before continuing.
   </p>
   <p class="helper-text" style="margin-top:0.5rem;">
     For best coverage, download a per-user JSON export above and create a whole-instance SQLite backup from <a class="link-accent" href="/settings/?mode=diagnostics">Diagnostics</a>.
@@ -956,7 +956,7 @@
     <form method="post" action="/settings/reset" id="reset-form-el">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <p class="text-sm" style="margin-bottom:0.75rem;">
-        Type <strong>RESET</strong> below to confirm. This permanently deletes all data for this user.
+        Type <strong>RESET</strong> below to confirm. This permanently deletes this user's finance data.
       </p>
       <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
         <input type="text" name="confirm_reset" id="reset-input"
