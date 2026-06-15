@@ -1685,7 +1685,7 @@ def run_backup_now():
     data_dir = Path(current_app.config.get("DATA_DIR", db_path.parent))
     try:
         dest = run_backup(db_path, data_dir)
-        flash(f"SQLite backup created: {dest.name}", "success")
+        flash(f"SQLite backup file created: {dest.name}", "success")
     except Exception:
         current_app.logger.exception("Manual backup failed")
         flash("SQLite backup failed. Check server logs for details.", "error")
