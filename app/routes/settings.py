@@ -256,7 +256,7 @@ def trading212_sync_support_note():
 
 
 def trading212_connection_not_found_message():
-    return "Read-only broker connection not found."
+    return "Saved broker snapshot connection not found."
 
 
 def trading212_account_not_linked_message():
@@ -1670,7 +1670,7 @@ def disconnect_trading212(connection_id):
         flash(trading212_connection_not_found_message(), "error")
         return _settings_trading212_redirect()
     delete_broker_connection(connection_id, current_user.id)
-    flash("Read-only broker connection removed. Manual/CSV tracking stays available.", "success")
+    flash("Saved broker snapshot connection removed. Manual/CSV tracking stays available.", "success")
     return _settings_trading212_redirect()
 
 
