@@ -111,9 +111,11 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "Save and test Trading 212 connection" not in body
     assert "Saved broker snapshot connections" in body
     assert "Saved read-only broker connections" not in body
-    assert "Each saved broker connection stays read-only." in body
+    assert "Each saved broker snapshot connection stays read-only." in body
+    assert "Each saved broker connection stays read-only." not in body
     assert "Each saved read-only broker connection stays read-only." not in body
-    assert "Preview broker snapshot checks the latest broker summary without changing SteadyPlan data." in body
+    assert "Preview broker snapshot checks the latest broker snapshot summary without changing SteadyPlan data." in body
+    assert "Preview broker snapshot checks the latest broker summary without changing SteadyPlan data." not in body
     assert "Preview read-only broker snapshot checks the latest broker summary without changing SteadyPlan data." not in body
     assert "Remove saved broker snapshot connection deletes the stored encrypted key pair from SteadyPlan." in body
     assert "Remove saved broker access deletes the stored encrypted key pair from SteadyPlan." not in body
@@ -305,10 +307,12 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     assert "SteadyPlan's own price service and manual/CSV imports stay in place" in body
     assert "SteadyPlan's own price service and CSV/manual imports stay in place" not in body
     assert "SIPP data is not available through the broker API yet" not in body
-    assert "Each saved broker connection stays read-only." in body
+    assert "Each saved broker snapshot connection stays read-only." in body
+    assert "Each saved broker connection stays read-only." not in body
     assert "Each saved read-only broker connection stays read-only." not in body
     assert "Each saved connection is read-only." not in body
-    assert "Preview broker snapshot checks the latest broker summary without changing SteadyPlan data." in body
+    assert "Preview broker snapshot checks the latest broker snapshot summary without changing SteadyPlan data." in body
+    assert "Preview broker snapshot checks the latest broker summary without changing SteadyPlan data." not in body
     assert "Preview read-only broker snapshot checks the latest broker summary without changing SteadyPlan data." not in body
     assert "Retest broker snapshot connection refreshes the latest broker snapshot check." in body
     assert "Retest broker access refreshes the latest broker snapshot check." not in body
@@ -708,7 +712,8 @@ def test_accounts_edit_form_offers_saved_trading212_linking(app, client, make_us
     assert "No read-only broker link" not in body
     assert ">Not linked<" not in body
     assert "Trading 212 ISA live · ISA-111 · GBP" in body
-    assert "Link this account to a saved broker snapshot connection so broker previews know which account to compare." in body
+    assert "Link this account to a saved broker snapshot connection so broker snapshot previews know which account to compare." in body
+    assert "Link this account to a saved broker snapshot connection so broker previews know which account to compare." not in body
     assert "Link this account to a saved read-only broker connection so broker previews know which account to compare." not in body
     assert "Link this account to a saved read-only Trading 212 connection so broker previews know which account to compare." not in body
     assert "Manual/CSV tracking stays in place until you apply reviewed updates." in body
