@@ -111,10 +111,12 @@ def test_settings_renders_trading212_panel_and_support_boundary(app, client, mak
     assert "Each saved connection is read-only." not in body
     assert "Saved read-only Trading 212 connections" not in body
     assert "Saved Trading 212 connections" not in body
-    assert "No saved read-only broker connections yet." in body
+    assert "No saved broker snapshot connections yet." in body
+    assert "No saved read-only broker connections yet." not in body
     assert "No saved read-only broker connection yet." not in body
     assert "No Trading 212 connection saved yet." not in body
-    assert "Manual/CSV tracking stays available until you choose to add one here." in body
+    assert "Manual/CSV tracking stays available until you add one here." in body
+    assert "Manual/CSV tracking stays available until you choose to add one here." not in body
     assert "Manual/CSV imports remain available even if you never connect the broker API" not in body
     assert "CSV import remains available" not in body
 
@@ -389,7 +391,8 @@ def test_disconnect_trading212_keeps_manual_csv_path_message(app, client, make_u
     resp = client.post(f"/settings/trading212/{connection_id}/disconnect", follow_redirects=True)
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Read-only broker connection removed. Manual/CSV tracking stays available." in body
+    assert "Saved broker snapshot connection removed. Manual/CSV tracking stays available." in body
+    assert "Read-only broker connection removed. Manual/CSV tracking stays available." not in body
     assert "Read-only broker connection removed. Manual/CSV imports remain available." not in body
     assert "Trading 212 connection removed. Manual/CSV imports remain available." not in body
     assert "Trading 212 connection removed. CSV/manual imports remain available." not in body
@@ -406,7 +409,8 @@ def test_preview_trading212_missing_connection_uses_broker_connection_language(a
     resp = client.post("/settings/trading212/999999/preview", follow_redirects=True)
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Read-only broker connection not found." in body
+    assert "Saved broker snapshot connection not found." in body
+    assert "Read-only broker connection not found." not in body
     assert "Trading 212 connection not found." not in body
 
 
