@@ -324,11 +324,11 @@
   {% if diagnostics and diagnostics.backups %}
     {% if diagnostics.backups.health_status == 'warning' %}
       <section class="panel panel-compact alert-banner alert-warning mt-075" style="margin:0.85rem 0 0;">
-        <strong>Backup health</strong>
+        <strong>SQLite backup health</strong>
         <p class="helper-text m-0">{{ diagnostics.backups.health_message }} Create a SQLite backup now, and include your app data directory in your normal server backups.</p>
       </section>
     {% else %}
-      <p class="helper-text m-0" style="margin:0.85rem 0 0;"><strong>Backup health:</strong> {{ diagnostics.backups.health_message }}</p>
+      <p class="helper-text m-0" style="margin:0.85rem 0 0;"><strong>SQLite backup health:</strong> {{ diagnostics.backups.health_message }}</p>
     {% endif %}
   {% endif %}
   <div class="table-scroll">

@@ -1109,7 +1109,7 @@ def settings():
                 "latest_age_days": None,
                 "health_status": "warning",
                 "health_label": "Backup recommended",
-                "health_message": "Backup health could not be determined.",
+                "health_message": "SQLite backup health could not be determined.",
             }
         diagnostics["trust_posture"] = _trust_posture_diagnostics()
 

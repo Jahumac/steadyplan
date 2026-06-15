@@ -112,7 +112,8 @@ def test_diagnostics_renders_backup_panel_when_no_backups_exist(app, client, mak
     body = resp.data.decode("utf-8", errors="ignore")
     assert "SQLite backups" in body
     assert "SQLite backup files" in body
-    assert "Backup health" in body
+    assert "SQLite backup health" in body
+    assert "Backup health" not in body
     assert "Backup recommended" in body
     assert "Needs backup" not in body
     assert "No whole-instance SQLite backup found." in body
@@ -512,7 +513,8 @@ def test_backup_health_is_good_for_recent_backup(app, client, make_user, tmp_pat
     resp = client.get("/settings/?mode=diagnostics")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Backup health:" in body
+    assert "SQLite backup health:" in body
+    assert "Backup health:" not in body
     assert "OK — latest whole-instance SQLite backup is" in body
 
 
@@ -533,7 +535,8 @@ def test_backup_health_warns_when_backup_is_old(app, client, make_user, tmp_path
     resp = client.get("/settings/?mode=diagnostics")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Backup health" in body
+    assert "SQLite backup health" in body
+    assert "Backup health" not in body
     assert "Backup recommended" in body
     assert "Needs backup" not in body
     assert "Latest whole-instance SQLite backup is" in body
