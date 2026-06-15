@@ -804,12 +804,12 @@
 <section class="panel mt-1" id="trading212-access">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Trading 212 read-only access (beta)</p>
-      <h3>Save a read-only broker connection</h3>
+      <p class="eyebrow">Trading 212 broker snapshot access (beta)</p>
+      <h3>Save a broker snapshot connection</h3>
     </div>
   </div>
   <p class="helper-text">
-    Start by saving a read-only broker connection. SteadyPlan only tests broker snapshot access here and stores the key pair encrypted on this server using this app's secret key.
+    Start by saving a broker snapshot connection. SteadyPlan only tests read-only broker snapshot access here and stores the key pair encrypted on this server using this app's secret key.
   </p>
   <p class="helper-text" style="margin-top:0.45rem;">
     {{ trading212_sync_support_note() }}
@@ -818,7 +818,7 @@
     SteadyPlan's own price service and manual/CSV imports stay in place. This connection is for broker snapshot sync groundwork, not order placement or money-moving.
   </p>
   <p class="helper-text" style="margin-top:0.45rem;">
-    SteadyPlan can keep more than one read-only broker connection, so separate Invest and Stocks ISA accounts can be saved side by side.
+    SteadyPlan can keep more than one broker snapshot connection, so separate Invest and Stocks ISA accounts can be saved side by side.
   </p>
 
   <form method="post" action="/settings/trading212/connect" class="settings-form" style="margin-top:1rem;">
