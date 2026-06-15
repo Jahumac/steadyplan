@@ -205,7 +205,7 @@
         {% endif %}
         <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ linked_trading212_summary.source_mode_hint }}</p>
         {% if linked_trading212_summary.last_error %}
-        <p class="text-sm perf-negative mt-05" style="margin-bottom:0;">Last read-only broker error: {{ linked_trading212_summary.last_error }}</p>
+        <p class="text-sm perf-negative mt-05" style="margin-bottom:0;">Last broker snapshot error: {{ linked_trading212_summary.last_error }}</p>
         {% else %}
         <p class="text-sm text-muted mt-05" style="margin-bottom:0;">Use the linked broker snapshot preview before changing holdings or manually adjusting this account.</p>
         {% endif %}

@@ -281,7 +281,8 @@ def test_connect_trading212_saves_encrypted_connection_and_masks_key(app, client
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Saved read-only broker live connection for Trading 212 ISA." in body
+    assert "Saved broker snapshot live connection for Trading 212 ISA." in body
+    assert "Saved read-only broker live connection for Trading 212 ISA." not in body
     assert "Saved Trading 212 ISA as a read-only broker live connection." not in body
     assert "Saved Trading 212 ISA as a read-only Trading 212 live connection." not in body
     assert "Cash ISA and SIPP accounts should stay manual/CSV-tracked for now" in body
@@ -521,7 +522,8 @@ def test_retest_trading212_success_uses_broker_connection_language(app, client, 
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Read-only broker demo access retested successfully." in body
+    assert "Broker snapshot demo access retested successfully." in body
+    assert "Read-only broker demo access retested successfully." not in body
     assert "Retested read-only broker demo connection successfully." not in body
     assert "Read-only broker demo connection retested successfully." not in body
     assert "Trading 212 demo connection retested successfully." not in body
@@ -997,7 +999,8 @@ def test_account_detail_shows_linked_trading212_error_state(app, client, make_us
     assert "Needs attention" in body
     assert "SteadyPlan is currently relying on manual/CSV tracking for this linked account because the broker snapshot is unavailable or incomplete." in body
     assert "SteadyPlan is currently relying on its stored/manual tracking for this linked account because the broker snapshot is unavailable or incomplete." not in body
-    assert "Last read-only broker error: Broker timeout while fetching snapshot" in body
+    assert "Last broker snapshot error: Broker timeout while fetching snapshot" in body
+    assert "Last read-only broker error: Broker timeout while fetching snapshot" not in body
     assert "Last broker error: Broker timeout while fetching snapshot" not in body
     assert "Broker total (GBP)" in body
     assert "Not fetched yet" not in body
@@ -2781,14 +2784,17 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert '<title>Read-only broker snapshot preview · SteadyPlan</title>' in body
+    assert '<title>Broker snapshot preview · SteadyPlan</title>' in body
+    assert '<title>Read-only broker snapshot preview · SteadyPlan</title>' not in body
     assert '<title>Trading 212 read-only broker preview · SteadyPlan</title>' not in body
     assert '<title>Trading 212 read-only preview · SteadyPlan</title>' not in body
     assert '<title>Trading 212 preview · SteadyPlan</title>' not in body
-    assert "Read-only broker snapshot preview (beta)" in body
+    assert "Broker snapshot preview (beta)" in body
+    assert "Read-only broker snapshot preview (beta)" not in body
     assert "Trading 212 read-only broker preview (beta)" not in body
     assert "Trading 212 sync (beta)" not in body
-    assert "Preview read-only broker snapshot" in body
+    assert "Preview broker snapshot" in body
+    assert "Preview read-only broker snapshot" not in body
     assert "Preview read-only holdings snapshot" not in body
     assert "Preview holdings snapshot" not in body
     assert "Nothing in SteadyPlan has been changed." in body

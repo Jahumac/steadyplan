@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Read-only broker snapshot preview · SteadyPlan{% endblock %}
+{% block title %}Broker snapshot preview · SteadyPlan{% endblock %}
 {% block content %}
 {% set preview = trading212_preview %}
 {% set summary = preview.summary %}
@@ -8,15 +8,15 @@
 <section class="panel">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Read-only broker snapshot preview (beta)</p>
-      <h2>Preview read-only broker snapshot</h2>
+      <p class="eyebrow">Broker snapshot preview (beta)</p>
+      <h2>Preview broker snapshot</h2>
     </div>
     <div>
       <a class="badge" href="{{ preview_back_href or '/settings/#trading212-access' }}">{{ preview_back_label or 'Back to settings' }}</a>
     </div>
   </div>
   <p class="helper-text" style="margin-top:0;">
-    This is a preview only. SteadyPlan fetched a read-only broker snapshot and compared it with your current tracked holdings. Nothing in SteadyPlan has been changed.
+    This is a preview only. SteadyPlan fetched a broker snapshot using read-only broker access and compared it with your current tracked holdings. Nothing in SteadyPlan has been changed.
   </p>
   <p class="helper-text" style="margin-top:0.45rem;">
     {{ trading212_sync_support_note() }}
