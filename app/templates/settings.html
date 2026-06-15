@@ -433,6 +433,69 @@
   <a class="badge badge-primary-action" href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit scenario estimate assumptions</a>
 </div>
 
+<section class="panel mt-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Settings overview</p>
+      <h3>Settings at a glance</h3>
+    </div>
+  </div>
+  <p class="helper-text">Use this as the map for the heavier trust and admin areas below.</p>
+  <div class="simple-list" style="margin-top:0.85rem;">
+    <div class="simple-list-item">
+      <div>
+        <strong>Planning assumptions</strong>
+        <p>Growth, ages, allowances, income, and monthly update timing.</p>
+      </div>
+      <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit</a>
+    </div>
+    {% if current_user.is_authenticated and current_user.is_admin %}
+    <div class="simple-list-item">
+      <div>
+        <strong>User access</strong>
+        <p>Who can sign in to this SteadyPlan instance.</p>
+      </div>
+      <a href="/users">Manage</a>
+    </div>
+    {% endif %}
+    <div class="simple-list-item">
+      <div>
+        <strong>Data ownership</strong>
+        <p>Where the live database is, what leaves the machine, and which safety copy to use.</p>
+      </div>
+      <span class="text-muted">Below</span>
+    </div>
+    <div class="simple-list-item">
+      <div>
+        <strong>Backups &amp; restore</strong>
+        <p>Per-user JSON exports, restore checks, and whole-instance SQLite backups.</p>
+      </div>
+      <a href="/settings/?mode=diagnostics">Diagnostics</a>
+    </div>
+    <div class="simple-list-item">
+      <div>
+        <strong>Connections &amp; tokens</strong>
+        <p>Optional assistant access and read-only broker snapshot connections.</p>
+      </div>
+      <span class="text-muted">Optional</span>
+    </div>
+    <div class="simple-list-item">
+      <div>
+        <strong>Diagnostics and system posture</strong>
+        <p>Runtime checks for backups, proxy settings, cookies, rate limits, and scheduler status.</p>
+      </div>
+      <a href="/settings/?mode=diagnostics">Review</a>
+    </div>
+    <div class="simple-list-item">
+      <div>
+        <strong>Danger zone</strong>
+        <p>Destructive actions stay at the bottom and require explicit confirmation.</p>
+      </div>
+      <a href="#danger-zone">Jump</a>
+    </div>
+  </div>
+</section>
+
 {% if current_user.is_authenticated and current_user.is_admin %}
 <section class="panel mt-1">
   <div class="section-header">

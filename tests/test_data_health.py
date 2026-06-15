@@ -380,6 +380,38 @@ def test_settings_still_mentions_backup_restore(app, client, make_user):
     assert "Type <strong>RESET</strong> below to confirm. This permanently deletes all data for this user." not in html
 
 
+def test_settings_groups_trust_surfaces_at_a_glance(app, client, make_user):
+    _, username, password = make_user(username="dh-settings-map", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/settings/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Settings at a glance" in html
+    assert "Use this as the map for the heavier trust and admin areas below." in html
+    assert "Planning assumptions" in html
+    assert "User access" in html
+    assert "Data ownership" in html
+    assert "Backups &amp; restore" in html
+    assert "Connections &amp; tokens" in html
+    assert "Diagnostics and system posture" in html
+    assert "Danger zone" in html
+    assert "Settings map" not in html
+    assert "Admin tools" not in html
+
+    glance_idx = html.index("Settings at a glance")
+    after_glance = html[glance_idx:]
+    planning_idx = after_glance.index("Planning assumptions")
+    admin_idx = after_glance.index("User Management")
+    data_idx = after_glance.index("<h3>Data ownership</h3>")
+    export_idx = after_glance.index("<h3>Download a per-user JSON export</h3>")
+    assistant_idx = after_glance.index("<h3>Optional: create a scoped token")
+    danger_idx = after_glance.index("<h3>Delete this user's finance data</h3>")
+
+    assert planning_idx < admin_idx < data_idx < export_idx < assistant_idx < danger_idx
+
+
 def test_settings_explains_backup_restore_scope_at_a_glance(app, client, make_user):
     _, username, password = make_user(username="dh-scope-guide", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
