@@ -1557,6 +1557,8 @@
         });
       }
       var wrapperEl    = document.getElementById('cw-wrapper');
+      var nameEl       = document.getElementById('cw-name');
+      var providerEl   = form.querySelector('input[name="provider"]');
       var categoryEl   = document.getElementById('cw-category');
       var valModeEl    = document.getElementById('cw-valuation');
       var employerEl   = document.getElementById('cw-employer-field');
@@ -1582,7 +1584,7 @@
       var CFG = {
         'Stocks & Shares ISA':       { cat: 'ISA',     bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly contribution', hint: 'How much do you put into this ISA each month? This feeds into scenario estimates. You can update it later.' },
         'Cash ISA':                   { cat: 'ISA',     bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Monthly deposit', hint: 'How much do you add to this Cash ISA each month?' },
-        'Lifetime ISA':               { cat: 'ISA',     bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in each month? Your Lifetime ISA bonus adds 25% on top (up to £1,000/year).' },
+        'Lifetime ISA':               { cat: 'ISA',     bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in each month? Your Lifetime ISA bonus adds 25% on top (up to £1,000/year).' },
         'Premium Bonds':              { cat: 'Savings', bal: 'premium_bonds', showEmployer: false, method: null, personalLabel: 'Monthly purchase', hint: 'How much do you usually add to Premium Bonds each month? Prize draws are tracked separately; scenario estimates use the planning rate.' },
         'SIPP':                       { cat: 'Pension', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in? Your provider adds 25% basic-rate tax relief on top.' },
         'Workplace Pension':          { cat: 'Pension', bal: 'manual',   showEmployer: true,  method: ['salary_sacrifice','relief_at_source'], methodDefault: 'salary_sacrifice', personalLabel: 'Your employee contribution', hint: 'How is your workplace pension set up? Pick the method first, then fill in the amounts.', methodHints: { salary_sacrifice: 'Contributions come out of your pay before tax — no further relief needed.', relief_at_source: 'You pay from net pay; your provider adds 20% basic-rate tax relief (e.g. NEST).' } },
@@ -1664,6 +1666,7 @@
         }
       };
       var currentWrapper = '';
+      var applyingTemplate = false;
       var templateStatus = document.getElementById('cw-template-status');
       var basicsNextBtn = document.getElementById('cw-step1-next');
 
@@ -1682,6 +1685,22 @@
           templateStatus.textContent = 'Selected: ' + selectedLabel + '. Name, wrapper type and balance method have been filled in.';
         }
         if (basicsNextBtn) basicsNextBtn.textContent = 'Continue with ' + selectedLabel;
+      }
+
+      function clearTemplateSelection(reason) {
+        form.querySelectorAll('[data-cw-template]').forEach(function(other) {
+          other.classList.remove('cw-template-selected');
+          other.setAttribute('aria-pressed', 'false');
+        });
+        if (templateStatus) {
+          templateStatus.textContent = reason || 'Choose a template above or fill in the details manually.';
+        }
+        if (basicsNextBtn) basicsNextBtn.textContent = 'Continue';
+      }
+
+      function resetTemplateSelectionOnManualEdit() {
+        if (applyingTemplate) return;
+        clearTemplateSelection('Manual details in use. Choose a template again if you want to refill these fields.');
       }
 
       function applyConfig() {
@@ -1813,6 +1832,16 @@
         }
       }
 
+      if (nameEl) nameEl.addEventListener('input', resetTemplateSelectionOnManualEdit);
+      if (providerEl) providerEl.addEventListener('input', resetTemplateSelectionOnManualEdit);
+      if (categoryEl) categoryEl.addEventListener('change', resetTemplateSelectionOnManualEdit);
+      if (wrapperEl) wrapperEl.addEventListener('change', resetTemplateSelectionOnManualEdit);
+      if (valModeEl) valModeEl.addEventListener('change', resetTemplateSelectionOnManualEdit);
+      if (growthModeEl) growthModeEl.addEventListener('change', resetTemplateSelectionOnManualEdit);
+      form.querySelectorAll('input[name="growth_rate_override"]').forEach(function(el) {
+        el.addEventListener('input', resetTemplateSelectionOnManualEdit);
+      });
+
       if (valModeEl) { valModeEl.addEventListener('change', function() { refreshStepCount(); toggleManualFields(); toggleCustomRate(); }); }
       if (wrapperEl) { wrapperEl.addEventListener('change', applyConfig); applyConfig(); }
       if (growthModeEl) growthModeEl.addEventListener('change', toggleCustomRate);
@@ -1829,6 +1858,7 @@
         btn.addEventListener('click', function() {
           var tpl = ACCOUNT_TEMPLATES[btn.getAttribute('data-cw-template')];
           if (!tpl) return;
+          applyingTemplate = true;
           setField('input[name="name"]', tpl.name);
           setField('input[name="provider"]', tpl.provider);
           if (wrapperEl) wrapperEl.value = tpl.wrapper;
@@ -1836,10 +1866,11 @@
           if (valModeEl) valModeEl.value = tpl.valuation;
           if (growthModeEl) growthModeEl.value = tpl.growthMode;
           setField('input[name="growth_rate_override"]', tpl.rate);
-          updateTemplateSelection(btn, tpl);
           applyConfig();
           toggleManualFields();
           toggleCustomRate();
+          applyingTemplate = false;
+          updateTemplateSelection(btn, tpl);
         });
       });
     })();
