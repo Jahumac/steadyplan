@@ -1223,6 +1223,81 @@ def test_account_list_shows_trading212_account_source_summary(app, client, make_
     assert "Broker total (GBP): <strong>—</strong>" not in body
 
 
+def test_account_list_refreshes_linked_trading212_summary_before_render(app, client, make_user, monkeypatch):
+    app.config["REFRESH_LINKED_BROKER_SUMMARIES_ON_ACCOUNTS"] = True
+    uid, username, password = make_user(username="t212-account-list-refresh")
+    calls = []
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("isa-refresh-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("isa-refresh-secret"),
+            status="connected",
+            last_tested_at="2026-06-08T10:00:00+00:00",
+            external_account_id="ISA-111",
+            external_account_currency="GBP",
+            external_total_value=7900.0,
+        )
+        assert connection is not None
+        create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "Stocks & Shares ISA",
+                "category": "Investments",
+                "tags": "",
+                "current_value": 8000.0,
+                "monthly_contribution": 150.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-09T07:20:00+00:00",
+            },
+            uid,
+        )
+
+    def fake_fetch_trading212_account_summary(*, api_key, api_secret, environment):
+        calls.append((api_key, api_secret, environment))
+        return {
+            "environment": environment,
+            "account_id": "ISA-111",
+            "currency": "GBP",
+            "total_value": 8123.45,
+            "fetched_at": "2026-06-09T08:05:00+00:00",
+        }
+
+    monkeypatch.setattr(
+        "app.routes.accounts.fetch_trading212_account_summary",
+        fake_fetch_trading212_account_summary,
+        raising=False,
+    )
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/accounts/")
+    assert response.status_code == 200
+    body = response.data.decode("utf-8", errors="ignore")
+
+    assert calls == [("isa-refresh-key", "isa-refresh-secret", "live")]
+    assert "Broker total (GBP): <strong>£8,123.45</strong>" in body
+    assert "Broker total (GBP): <strong>£7,900.00</strong>" not in body
+    assert "Last broker check: <strong>2026-06-09 08:05 UTC</strong>" in body
+
+    with app.app_context():
+        [refreshed] = fetch_broker_connections(uid, provider=PROVIDER_TRADING212)
+        assert refreshed["external_total_value"] == 8123.45
+        assert refreshed["last_tested_at"] == "2026-06-09T08:05:00+00:00"
+
+
 def test_delete_trading212_connection_clears_linked_account_reference(app, make_user):
     uid, _, _ = make_user(username="t212-account-link-delete", password="password123")
     with app.app_context():

@@ -34,6 +34,7 @@ from app.models import (
     fetch_all_accounts,
     fetch_broker_connection,
     fetch_broker_connections,
+    update_broker_connection_status,
     fetch_catalogue_with_prices,
     fetch_contribution_overrides,
     fetch_cash_flow_events_for_account,
@@ -69,6 +70,12 @@ from app.models import (
     update_holding,
 )
 from app.services.prices import fetch_price, lookup_instrument, to_gbp
+from app.services.trading212 import (
+    Trading212ConnectionError,
+    Trading212CredentialError,
+    decrypt_trading212_credential,
+    fetch_trading212_account_summary,
+)
 from app.services.financial_truth import apply_account_balance_update, recompute_user_daily_snapshots
 from app.utils import optional_float, optional_int, split_tags, valid_month_key
 
@@ -231,6 +238,86 @@ def _format_iso_datetime_short(value):
         return text[:16]
 
 
+def _parse_iso_datetime_utc(value):
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace(" UTC", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _linked_broker_summary_refresh_enabled():
+    if current_app.config.get("TESTING"):
+        return bool(current_app.config.get("REFRESH_LINKED_BROKER_SUMMARIES_ON_ACCOUNTS", False))
+    return current_app.config.get("REFRESH_LINKED_BROKER_SUMMARIES_ON_ACCOUNTS", True)
+
+
+def _broker_summary_refresh_due(connection, *, now=None):
+    if not connection:
+        return False
+    now = now or datetime.now(timezone.utc)
+    last_checked = _parse_iso_datetime_utc(connection.get("last_tested_at"))
+    if last_checked is None:
+        return True
+    return (now - last_checked).total_seconds() >= 15 * 60
+
+
+def _refresh_linked_trading212_summaries(user_id, rows, trading212_connections):
+    """Refresh stale linked Trading 212 account totals before account cards render."""
+    if not _linked_broker_summary_refresh_enabled():
+        return trading212_connections
+
+    linked_connection_ids = []
+    for row in rows or []:
+        connection_id = row.get("linked_broker_connection_id")
+        if not connection_id or not _supports_trading212_public_api(row.get("wrapper_type")):
+            continue
+        connection_id = int(connection_id)
+        if connection_id not in linked_connection_ids:
+            linked_connection_ids.append(connection_id)
+
+    refreshed = dict(trading212_connections or {})
+    for connection_id in linked_connection_ids:
+        connection = refreshed.get(connection_id) or fetch_broker_connection(connection_id, user_id)
+        if not connection or connection.get("provider") != PROVIDER_TRADING212:
+            continue
+        if not _broker_summary_refresh_due(connection):
+            continue
+        try:
+            api_key = decrypt_trading212_credential(connection.get("api_key_ciphertext"))
+            api_secret = decrypt_trading212_credential(connection.get("api_secret_ciphertext"))
+            summary = fetch_trading212_account_summary(
+                api_key=api_key,
+                api_secret=api_secret,
+                environment=connection.get("environment") or "live",
+            )
+            updated = update_broker_connection_status(
+                connection_id,
+                user_id,
+                status="connected",
+                last_error=None,
+                last_tested_at=summary.get("fetched_at"),
+                external_account_id=summary.get("account_id"),
+                external_account_currency=summary.get("currency"),
+                external_total_value=summary.get("total_value"),
+            )
+        except (Trading212ConnectionError, Trading212CredentialError) as exc:
+            updated = update_broker_connection_status(
+                connection_id,
+                user_id,
+                status="error",
+                last_error=str(exc),
+                last_tested_at=datetime.now(timezone.utc).isoformat(),
+            )
+        if updated:
+            refreshed[connection_id] = updated
+    return refreshed
+
+
 def _display_schedule_to_month(to_month):
     """Render open-ended contribution schedule sentinels as user-facing text."""
     if not to_month:
@@ -301,6 +388,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         for connection in fetch_broker_connections(user_id, provider=PROVIDER_TRADING212)
         if connection and connection.get("id") is not None
     }
+    trading212_connections = _refresh_linked_trading212_summaries(user_id, rows, trading212_connections)
     linked_trading212_connection = None
     if selected and selected.get("linked_broker_connection_id"):
         linked_trading212_connection = trading212_connections.get(int(selected["linked_broker_connection_id"])) or fetch_broker_connection(selected["linked_broker_connection_id"], user_id)
