@@ -1489,7 +1489,7 @@
       var errorBox = document.getElementById('cw-create-error');
       var progressEl = document.getElementById('cw-progress');
       var cancelBtn = document.getElementById('cw-cancel');
-      var firstAccountFocus = wizardRoot.getAttribute('data-first-account-focus') === 'true';
+      var firstAccountFocus = form.getAttribute('data-first-account-focus') === 'true';
 
       if (createBtn) {
         createBtn.addEventListener('click', function() {

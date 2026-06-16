@@ -148,6 +148,13 @@ def test_allowance_hash_links_open_targeted_log_panels():
     assert "panel.classList.remove('hidden')" in js
 
 
+def test_account_wizard_first_account_focus_reads_from_existing_form_root():
+    js = STATIC_ROOT.joinpath("js/app.js").read_text()
+
+    assert "var firstAccountFocus = form.getAttribute('data-first-account-focus') === 'true';" in js
+    assert "wizardRoot.getAttribute('data-first-account-focus')" not in js
+
+
 def test_lifetime_isa_preview_js_uses_specific_bonus_copy():
     js = STATIC_ROOT.joinpath("js/app.js").read_text()
 
