@@ -241,6 +241,10 @@ def test_account_wizard_template_selection_updates_visible_state_and_continue_co
     assert "updateTemplateSelection(btn, tpl);" in js
     assert ".cw-template-selected strong" in css
     assert "border-color: rgba(56,189,248,0.72);" in css
+    assert ".cw-template::after" in css
+    assert "content: \"Choose\";" in css
+    assert ".cw-template-selected::after" in css
+    assert "content: \"Selected\";" in css
     assert "form.querySelectorAll('[data-cw-template]').forEach(function(other) {\n            other.classList.toggle('cw-template-selected', other === btn);" not in js
 
 
