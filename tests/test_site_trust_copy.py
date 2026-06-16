@@ -197,7 +197,13 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "clear scenario-estimate caveats" in roadmap
     assert "clear projection caveats" not in roadmap
     assert "## Current standing (June 2026)" in roadmap
+    assert "preview-first broker review without forcing users away from manual/CSV tracking" in roadmap
+    assert "API-first broker review" not in roadmap
     assert "Overview, Monthly Update, Planning, and the main compact-screen flows have had substantial answer-first cleanup" in roadmap
+    assert "## Phase 5 — keep the safe evaluation path clear" in roadmap
+    assert "The read-only demo path and sample data now exist, so the remaining work is to keep the evaluation story honest and easy to follow." in roadmap
+    assert "### Options to explore\n- demo mode" not in roadmap
+    assert "- decision on demo approach" not in roadmap
     assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap_execution
     assert "trust surfaces such as Diagnostics, backup/restore boundaries, assistant access, and safe demo guidance are now shipped" in roadmap_execution
     assert "Accessible vs locked money" not in roadmap_execution
