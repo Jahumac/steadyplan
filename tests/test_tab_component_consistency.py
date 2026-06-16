@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import app.routes.holdings as holdings_routes
@@ -233,6 +234,38 @@ def test_account_wizard_template_selection_updates_visible_state_and_continue_co
     assert ".cw-template-selected strong" in css
     assert "border-color: rgba(56,189,248,0.72);" in css
     assert "form.querySelectorAll('[data-cw-template]').forEach(function(other) {\n            other.classList.toggle('cw-template-selected', other === btn);" not in js
+
+
+def test_account_wizard_template_bundle_keeps_templates_and_manual_edits_in_sync():
+    js = STATIC_ROOT.joinpath("js/app.js").read_text()
+    wizard_html = TEMPLATES_ROOT.joinpath("_account_create_wizard.html").read_text()
+
+    expected_templates = {
+        "stocks_isa",
+        "cash_isa",
+        "lifetime_isa",
+        "cash_savings",
+        "workplace_pension",
+        "sipp",
+        "premium_bonds",
+        "gia",
+    }
+    html_templates = set(re.findall(r'data-cw-template="([^"]+)"', wizard_html))
+    js_templates = set(re.findall(r"^\s{8}([a-z_]+): \{", js, flags=re.MULTILINE)) & expected_templates
+
+    assert html_templates == expected_templates
+    assert js_templates == expected_templates
+    assert wizard_html.count('aria-pressed="false"') == len(expected_templates)
+    assert wizard_html.count('title="Use the ') == len(expected_templates)
+    assert "'Lifetime ISA':               { cat: 'ISA',     bal: 'manual'" in js
+    assert "lifetime_isa: {" in js
+    assert "valuation: 'manual'" in js
+    assert "function clearTemplateSelection(reason)" in js
+    assert "resetTemplateSelectionOnManualEdit" in js
+    assert "nameEl.addEventListener('input', resetTemplateSelectionOnManualEdit);" in js
+    assert "wrapperEl.addEventListener('change', resetTemplateSelectionOnManualEdit);" in js
+    assert "basicsNextBtn.textContent = 'Continue';" in js
+    assert "Choose a template above or fill in the details manually." in js
 
 
 def test_daily_portfolio_period_buttons_are_scoped_to_the_chart_not_overview_headline_toggle():
