@@ -222,6 +222,14 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "Set 0 to use salary day from Settings." not in html
 
 
+def test_account_wizard_scripts_are_deferred_until_the_wizard_markup_exists():
+    base_html = TEMPLATES_ROOT.joinpath("base.html").read_text()
+
+    assert '<script defer src="{{ static_v(\'js/charts.js\') }}"></script>' in base_html
+    assert '<script defer src="{{ static_v(\'js/app.js\') }}"></script>' in base_html
+    assert '<script src="{{ static_v(\'js/app.js\') }}"></script>' not in base_html
+
+
 def test_account_wizard_template_selection_updates_visible_state_and_continue_copy():
     js = STATIC_ROOT.joinpath("js/app.js").read_text()
     css = STATIC_ROOT.joinpath("css/styles.css").read_text()
