@@ -5983,10 +5983,21 @@ a.link-accent:hover {
 }
 
 .cw-template:hover,
-.cw-template-selected {
+.cw-template:focus-visible {
   background: rgba(56,189,248,0.08);
   border-color: rgba(56,189,248,0.32);
   transform: translateY(-1px);
+}
+
+.cw-template-selected {
+  background: rgba(56,189,248,0.16);
+  border-color: rgba(56,189,248,0.72);
+  box-shadow: 0 0 0 2px rgba(56,189,248,0.14), inset 0 0 0 1px rgba(56,189,248,0.18);
+  transform: translateY(-1px);
+}
+
+.cw-template-selected strong {
+  color: var(--accent);
 }
 
 .cw-template strong {
@@ -6000,6 +6011,12 @@ a.link-accent:hover {
   color: var(--muted);
   font-size: 0.78rem;
   line-height: 1.35;
+}
+
+.cw-template-status {
+  margin: -0.35rem 0 1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 /* Provider combobox — dark-theme replacement for native <datalist> */

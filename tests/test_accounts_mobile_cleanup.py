@@ -331,6 +331,9 @@ def test_accounts_create_wizard_uses_general_investment_account_label(app, clien
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert '<strong>General Investment Account</strong>' in html
+    assert '<button type="button" class="cw-template" data-cw-template="lifetime_isa" aria-pressed="false" title="Use the Lifetime ISA template">' in html
+    assert '<p class="cw-template-status" id="cw-template-status" aria-live="polite">Choose a template above or fill in the details manually.</p>' in html
+    assert '<button type="button" class="badge badge-accent" data-cw-next id="cw-step1-next">Continue</button>' in html
     assert '<strong>General Investment</strong>' not in html
     assert '25% Lifetime ISA bonus, age limits' in html
     assert '25% government top-up, age limits' not in html

@@ -221,6 +221,20 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "Set 0 to use salary day from Settings." not in html
 
 
+def test_account_wizard_template_selection_updates_visible_state_and_continue_copy():
+    js = STATIC_ROOT.joinpath("js/app.js").read_text()
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+
+    assert "function updateTemplateSelection(selectedBtn, tpl)" in js
+    assert "other.setAttribute('aria-pressed', isSelected ? 'true' : 'false');" in js
+    assert "templateStatus.textContent = 'Selected: ' + selectedLabel + '. Name, wrapper type and balance method have been filled in.';" in js
+    assert "basicsNextBtn.textContent = 'Continue with ' + selectedLabel;" in js
+    assert "updateTemplateSelection(btn, tpl);" in js
+    assert ".cw-template-selected strong" in css
+    assert "border-color: rgba(56,189,248,0.72);" in css
+    assert "form.querySelectorAll('[data-cw-template]').forEach(function(other) {\n            other.classList.toggle('cw-template-selected', other === btn);" not in js
+
+
 def test_daily_portfolio_period_buttons_are_scoped_to_the_chart_not_overview_headline_toggle():
     js = STATIC_ROOT.joinpath("js/charts.js").read_text()
 
