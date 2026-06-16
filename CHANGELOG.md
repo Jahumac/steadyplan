@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional broker snapshot review beta.
 - Refreshed public demo screenshots and the public marketing/docs site presentation.
+- Settings at a glance now groups everyday setup, safety and recovery, and optional access.
 
 ### Fixed
 - Test-account reset now clears dependent user-owned rows safely instead of failing on SQLite foreign-key constraints.
