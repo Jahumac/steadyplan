@@ -79,7 +79,8 @@ def test_demo_overview_orients_sample_data_without_hiding_read_only_boundary(app
 
     assert "You are viewing demo data" in html
     assert "This is sample data only. Writes are blocked, so you can explore without changing anything." in html
-    assert "Start with Overview, then Planning, Monthly Update, and Settings → Data ownership." in html
+    assert "Start with Overview, then Planning, Monthly Update, and Settings → Safety and recovery." in html
+    assert "Start with Overview, then Planning, Monthly Update, and Settings → Data ownership." not in html
     assert 'href="/planning/"' in html
     assert 'href="/monthly-review/"' in html
     assert 'href="/settings/"' in html
