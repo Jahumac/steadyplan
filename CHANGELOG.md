@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Settings at a glance now groups everyday setup, safety and recovery, and optional access.
 
 ### Fixed
+- Account creation templates now visibly select and fill in the account name, wrapper type, and balance method.
 - Test-account reset now clears dependent user-owned rows safely instead of failing on SQLite foreign-key constraints.
 - Public dark-mode logo rendering no longer uses the semi-transparent showcase mark that caused pale edge haloing.
 
