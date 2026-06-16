@@ -239,12 +239,17 @@ def test_account_wizard_template_selection_updates_visible_state_and_continue_co
     assert "templateStatus.textContent = 'Selected: ' + selectedLabel + '. Name, wrapper type and balance method have been filled in.';" in js
     assert "basicsNextBtn.textContent = 'Continue with ' + selectedLabel;" in js
     assert "updateTemplateSelection(btn, tpl);" in js
+    wizard_html = TEMPLATES_ROOT.joinpath("_account_create_wizard.html").read_text()
+
     assert ".cw-template-selected strong" in css
     assert "border-color: rgba(56,189,248,0.72);" in css
-    assert ".cw-template::after" in css
-    assert "content: \"Choose\";" in css
-    assert ".cw-template-selected::after" in css
-    assert "content: \"Selected\";" in css
+    assert ".cw-template-action" in css
+    assert 'data-cw-template-action>Choose template</span>' in wizard_html
+    assert "var action = other.querySelector('[data-cw-template-action]');" in js
+    assert "if (action) action.textContent = isSelected ? 'Selected' : 'Choose template';" in js
+    assert ".cw-template::after" not in css
+    assert "content: \"Choose\";" not in css
+    assert "content: \"Selected\";" not in css
     assert "form.querySelectorAll('[data-cw-template]').forEach(function(other) {\n            other.classList.toggle('cw-template-selected', other === btn);" not in js
 
 
