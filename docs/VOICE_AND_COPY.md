@@ -219,7 +219,7 @@ General rule:
 
 ### Scenario estimate certainty
 - Before: “Projected at retirement”
-- After: “Projected at retirement (estimate)” / “Scenario estimate at retirement”
+- After: “Scenario estimate at retirement”
 
 ### Warnings
 - Before: “Looks good!” (on a dashboard surface)
