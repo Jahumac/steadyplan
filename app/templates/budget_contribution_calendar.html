@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% block title %}Contribution calendar · SteadyPlan{% endblock %}
+{% block content %}
+
+{% set active_key = 'contribution_calendar' %}
+{% include '_budget_subnav.html' %}
+
+<section class="card highlight mb-1">
+  <div class="hero-top">
+    <div>
+      <p class="eyebrow">Budget</p>
+      <h2 class="hero-value">Contribution calendar</h2>
+      <p class="hero-subtitle">Set temporary monthly contribution plans without changing the account's normal monthly contribution.</p>
+    </div>
+    <div class="badge-row">
+      <span class="badge badge-meta">{{ month_columns|length }} months shown</span>
+      <span class="badge badge-meta">{{ calendar.accounts|length }} accounts</span>
+    </div>
+  </div>
+  <div class="hero-strip">
+    <div>
+      <strong>{{ from_month }}</strong>
+      <div class="helper-text">From month</div>
+    </div>
+    <div>
+      <strong>{{ to_month }}</strong>
+      <div class="helper-text">To month</div>
+    </div>
+    <div>
+      <strong>{{ plans|length }}</strong>
+      <div class="helper-text">Temporary plans</div>
+    </div>
+    <div>
+      <strong>{{ calendar.overlap_count }}</strong>
+      <div class="helper-text">Cells with overlaps</div>
+    </div>
+  </div>
+</section>
+
+{% if calendar.overlap_count %}
+<div class="flash-msg flash-warning">
+  <span>Some months have overlapping overrides. SteadyPlan still uses the narrowest, newest override for calculations, but the calendar flags those cells so you can clean them up.</span>
+</div>
+{% endif %}
+
+<section class="panel mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Create plan</p>
+      <h3>Temporary contribution plan</h3>
+    </div>
+  </div>
+  <p class="helper-text">Enter only the accounts you want to override. Blank fields keep using the account default. Enter <strong>0</strong> to pause an account temporarily.</p>
+
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="form_name" value="create_temporary_plan">
+    <input type="hidden" name="from_month" value="{{ from_month }}">
+    <input type="hidden" name="to_month" value="{{ to_month }}">
+
+    <div class="form-grid mb-1">
+      <label>
+        Plan name / reason
+        <input type="text" name="plan_name" placeholder="Cash buffer build-up" required>
+      </label>
+      <label>
+        Start month
+        <input type="month" name="start_month" value="{{ from_month }}" required>
+      </label>
+      <label>
+        End month
+        <input type="month" name="end_month" value="{{ to_month }}" required>
+      </label>
+    </div>
+
+    {% if calendar.accounts %}
+    <div class="table-scroll">
+      <table class="mini-table">
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Wrapper</th>
+            <th class="text-right">Default</th>
+            <th class="text-right">Temporary amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for account in calendar.accounts %}
+          <tr>
+            <td>{{ account.name }}</td>
+            <td>{{ account.wrapper_type or 'Other' }}</td>
+            <td class="text-right">£{{ '{:,.2f}'.format(account.monthly_contribution) }}</td>
+            <td class="text-right">
+              <input type="number" step="0.01" min="0" name="amount_{{ account.id }}" placeholder="Leave blank">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="badge-row" style="margin-top:0.75rem;">
+      <button type="submit" class="badge">Save temporary plan</button>
+    </div>
+    {% else %}
+    <p class="helper-text">No eligible active contribution accounts are available yet.</p>
+    {% endif %}
+  </form>
+</section>
+
+<section class="panel mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Active plans</p>
+      <h3>Temporary plans</h3>
+    </div>
+  </div>
+  {% if plans %}
+    {% for plan in plans %}
+    <div class="card mb-1">
+      <div class="section-header">
+        <div>
+          <strong>{{ plan.plan_name }}</strong>
+          <div class="helper-text">{{ plan.from_month }} to {{ plan.to_month }} · {{ plan.rows|length }} override row{% if plan.rows|length != 1 %}s{% endif %}</div>
+        </div>
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="form_name" value="delete_temporary_plan">
+          <input type="hidden" name="reason" value="{{ plan.reason }}">
+          <input type="hidden" name="from_month" value="{{ from_month }}">
+          <input type="hidden" name="to_month" value="{{ to_month }}">
+          <button type="submit" class="badge badge-danger">Remove plan</button>
+        </form>
+      </div>
+      <div class="table-scroll">
+        <table class="mini-table">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Wrapper</th>
+              <th>Range</th>
+              <th class="text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in plan.rows %}
+            <tr>
+              <td>{{ row.account_name }}</td>
+              <td>{{ row.wrapper_type or 'Other' }}</td>
+              <td>{{ row.from_month }} to {{ row.to_month }}</td>
+              <td class="text-right">£{{ '{:,.2f}'.format(row.override_amount) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <p class="helper-text">No temporary plans saved yet.</p>
+  {% endif %}
+</section>
+
+<section class="panel mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Calendar</p>
+      <h3>Default vs temporary override</h3>
+    </div>
+  </div>
+  {% if calendar.accounts %}
+  <div class="table-scroll">
+    <table class="mini-table contrib-table">
+      <thead>
+        <tr>
+          <th>Account</th>
+          {% for month in month_columns %}
+          <th>{{ month.label }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for account in calendar.accounts %}
+        <tr>
+          <td>
+            <strong>{{ account.name }}</strong>
+            <div class="helper-text">{{ account.wrapper_type or 'Other' }}</div>
+            <div class="helper-text">Default £{{ '{:,.2f}'.format(account.monthly_contribution) }}</div>
+          </td>
+          {% for cell in account.months %}
+          <td>
+            <div><strong>Default</strong> £{{ '{:,.2f}'.format(cell.default_amount) }}</div>
+            {% if cell.has_override %}
+            <div><strong>Override</strong> £{{ '{:,.2f}'.format(cell.override_amount) }}</div>
+            <div class="helper-text">
+              {{ cell.source_label }}
+              {% if cell.plan_name %}
+                · {{ cell.plan_name }}
+              {% elif cell.reason %}
+                · {{ cell.reason }}
+              {% endif %}
+            </div>
+            {% else %}
+            <div class="helper-text">Using default</div>
+            {% endif %}
+            {% if cell.overlap %}
+            <div class="helper-text" style="color:#b45309;">Overlap: {{ cell.active_override_count }} active rules</div>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="helper-text">No eligible contribution accounts are active yet.</p>
+  {% endif %}
+</section>
+
+{% endblock %}

@@ -4,6 +4,7 @@ from io import BytesIO
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, send_file, session, url_for
 from flask_login import current_user, login_required
 
+from app.calculations import add_months_to_key
 from app.utils import optional_float, optional_int, valid_month_key
 
 from app.models import (
@@ -11,12 +12,13 @@ from app.models import (
     compare_debt_payoff_strategies,
     create_budget_item,
     create_budget_section,
+    create_temporary_contribution_plan,
     create_debt,
     delete_budget_item,
     delete_budget_items_by_section,
     delete_budget_section,
+    delete_temporary_contribution_plan,
     delete_debt,
-    fetch_account,
     fetch_all_accounts,
     fetch_all_debts,
     fetch_budget_entries,
@@ -24,11 +26,12 @@ from app.models import (
     fetch_budget_items,
     fetch_budget_sections,
     fetch_budget_trend,
+    fetch_contribution_calendar,
+    fetch_temporary_contribution_plans,
     fetch_all_active_overrides,
     fetch_debt,
     fetch_months_with_budget_entries,
     fetch_prior_month_budget_entries,
-    update_account,
     update_budget_item,
     update_budget_section,
     update_debt,
@@ -69,7 +72,9 @@ def _sync_linked_override(item_id, month_key, amount, user_id):
     so projections and account views pick up the per-month edit automatically.
 
     Does nothing for unlinked items. Silently no-ops if the account isn't owned by
-    user_id (handled by upsert_single_month_contribution_override).
+    user_id (handled by upsert_single_month_contribution_override). This keeps the
+    account's normal monthly_contribution unchanged, so future months naturally
+    fall back to the default unless they have their own override.
     """
     item = fetch_budget_item(item_id, user_id)
     if not item:
@@ -81,26 +86,14 @@ def _sync_linked_override(item_id, month_key, amount, user_id):
         int(linked), month_key, float(amount or 0), user_id, reason="from budget"
     )
 
-    today_key = _default_month_key()
-    if month_key < today_key:
-        return
-
-    account = fetch_account(int(linked), user_id)
-    if not account:
-        return
-    try:
-        current = float(account.get("monthly_contribution") or 0)
-    except (TypeError, ValueError):
-        current = 0.0
-    desired = float(amount or 0)
-    if abs(current - desired) < 0.005:
-        return
-
-    update_account({**dict(account), "monthly_contribution": desired}, user_id)
-
 
 def _month_label(month_key):
     return datetime.strptime(month_key, "%Y-%m").strftime("%B %Y")
+
+
+def _default_contribution_calendar_range():
+    start_month = _default_month_key()
+    return start_month, add_months_to_key(start_month, 11)
 
 
 def _build_monthly_data(month_key, user_id):
@@ -290,6 +283,106 @@ def budget():
         budget_setup_href=budget_setup_href,
         has_budget_basics=has_budget_basics,
         active_page="budget",
+    )
+
+
+@budget_bp.route("/contribution-calendar", methods=["GET", "POST"])
+@login_required
+def contribution_calendar():
+    uid = current_user.id
+    default_from_month, default_to_month = _default_contribution_calendar_range()
+    selected_from_month = valid_month_key(request.values.get("from_month")) or default_from_month
+    selected_to_month = valid_month_key(request.values.get("to_month")) or add_months_to_key(selected_from_month, 11)
+    if selected_to_month < selected_from_month:
+        selected_to_month = add_months_to_key(selected_from_month, 11)
+
+    redirect_args = {
+        "from_month": selected_from_month,
+        "to_month": selected_to_month,
+    }
+
+    if request.method == "POST":
+        form_name = (request.form.get("form_name") or "").strip()
+
+        if form_name == "create_temporary_plan":
+            plan_name = (request.form.get("plan_name") or "").strip()
+            start_month = valid_month_key(request.form.get("start_month"))
+            end_month = valid_month_key(request.form.get("end_month"))
+            invalid_amount_fields = []
+            rows = []
+
+            for key, raw_value in request.form.items():
+                if not key.startswith("amount_"):
+                    continue
+                account_suffix = key[len("amount_"):]
+                try:
+                    account_id = int(account_suffix)
+                except (TypeError, ValueError):
+                    continue
+                amount_text = (raw_value or "").strip()
+                if not amount_text:
+                    continue
+                amount = optional_float(amount_text, default=None, min_val=0.0)
+                if amount is None:
+                    invalid_amount_fields.append(account_suffix)
+                    continue
+                rows.append({
+                    "account_id": account_id,
+                    "from_month": start_month,
+                    "to_month": end_month,
+                    "override_amount": amount,
+                })
+
+            if not plan_name:
+                flash("Name the temporary plan so it can be grouped and removed later.", "error")
+            elif not start_month or not end_month:
+                flash("Choose a valid start and end month for the temporary plan.", "error")
+            elif end_month < start_month:
+                flash("The end month must be the same as or after the start month.", "error")
+            elif invalid_amount_fields:
+                flash("One or more plan amounts were not valid numbers.", "error")
+            elif not rows:
+                flash("Add at least one account amount to create a temporary plan.", "error")
+            else:
+                created = create_temporary_contribution_plan(uid, plan_name, rows)
+                if created.get("created_count"):
+                    flash(
+                        f"Saved temporary plan '{created['plan_name']}' for {created['created_count']} account override"
+                        f"{'s' if created['created_count'] != 1 else ''}.",
+                        "success",
+                    )
+                else:
+                    flash("No eligible account rows were saved for that temporary plan.", "error")
+
+            return redirect(url_for("budget.contribution_calendar", **redirect_args))
+
+        if form_name == "delete_temporary_plan":
+            reason = (request.form.get("reason") or request.form.get("plan_name") or "").strip()
+            deleted = delete_temporary_contribution_plan(uid, reason)
+            if deleted:
+                flash(f"Removed {deleted} temporary override row{'s' if deleted != 1 else ''}.", "success")
+            else:
+                flash("That temporary plan was not found.", "error")
+            return redirect(url_for("budget.contribution_calendar", **redirect_args))
+
+        return redirect(url_for("budget.contribution_calendar", **redirect_args))
+
+    calendar = fetch_contribution_calendar(uid, selected_from_month, selected_to_month)
+    plans = fetch_temporary_contribution_plans(uid)
+    month_columns = [
+        {"key": month_key, "label": datetime.strptime(month_key, "%Y-%m").strftime("%b %Y")}
+        for month_key in calendar["months"]
+    ]
+
+    return render_template(
+        "budget_contribution_calendar.html",
+        from_month=selected_from_month,
+        to_month=selected_to_month,
+        month_columns=month_columns,
+        calendar=calendar,
+        plans=plans,
+        active_page="budget",
+        monthly_update_href=url_for("monthly_review.monthly_review", month=selected_from_month),
     )
 
 

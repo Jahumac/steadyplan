@@ -215,6 +215,7 @@ BLUEPRINT_PAGES = [
     "/settings/",
     "/monthly-review/",
     "/budget/",
+    "/budget/contribution-calendar",
     "/performance/",
     "/allowance/",
 ]
