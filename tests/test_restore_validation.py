@@ -430,7 +430,8 @@ def test_restore_validate_route_valid_upload_shows_valid_result_and_no_db_writes
     assert "Upload a JSON export file to validate it for restore. Validation does not change your data." not in body
     assert "Validate a restore file" not in body
     assert "Check JSON export" in body
-    assert "Check restore file" not in body
+    assert 'href="#restore-check"' in body
+    assert "Check restore file" in body
     assert "Restore file looks valid. Checking did not change your data." in body
     assert "Export schema version" in body
     assert "Monthly updates" in body

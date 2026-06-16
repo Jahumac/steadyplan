@@ -389,15 +389,20 @@ def test_settings_groups_trust_surfaces_at_a_glance(app, client, make_user):
     html = resp.get_data(as_text=True)
 
     assert "Settings at a glance" in html
-    assert "Use this as the map for the heavier trust and admin areas below." in html
+    assert "Start with day-to-day setup, then use the safety links when you need exports, restore checks, diagnostics, or account access." in html
+    assert "Everyday setup" in html
     assert "Planning assumptions" in html
     assert "User access" in html
+    assert "Safety and recovery" in html
     assert "Data ownership" in html
-    assert "Backups &amp; restore" in html
+    assert "JSON export" in html
+    assert "Restore check" in html
+    assert "SQLite backup health" in html
+    assert "Optional access" in html
     assert "Connections &amp; tokens" in html
     assert "Diagnostics and system posture" in html
     assert "Danger zone" in html
-    assert "Settings map" not in html
+    assert "Settings overview" not in html
     assert "Admin tools" not in html
 
     glance_idx = html.index("Settings at a glance")

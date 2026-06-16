@@ -505,6 +505,47 @@ def test_diagnostics_trust_checkpoint_copy_uses_clearer_setup_wording():
     assert "it should make the current posture easier to review." not in body
 
 
+def test_settings_glance_groups_recovery_links_and_anchors():
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
+
+    assert "Start with day-to-day setup, then use the safety links when you need exports, restore checks, diagnostics, or account access." in body
+    assert "Everyday setup" in body
+    assert "Safety and recovery" in body
+    assert "Optional access" in body
+    assert 'href="#data-ownership"' in body
+    assert 'href="#json-export"' in body
+    assert 'href="#restore-check"' in body
+    assert 'href="/settings/?mode=diagnostics#sqlite-backups"' in body
+    assert 'href="#connections-tokens"' in body
+    assert '<section class="panel mt-1" id="data-ownership">' in body
+    assert '<section class="panel mt-1" id="json-export">' in body
+    assert '<section class="panel mt-1" id="restore-check">' in body
+    assert '<section class="panel mt-1" id="connections-tokens">' in body
+    assert '<span class="text-muted">Below</span>' not in body
+    assert '<span class="text-muted">Optional</span>' not in body
+
+
+def test_settings_page_renders_safety_map_before_recovery_sections(app, client, make_user, tmp_path):
+    app.config["DATA_DIR"] = tmp_path
+    uid, username, password = make_user(username="settings-map-user", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/settings/")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+
+    glance_idx = body.index("Settings at a glance")
+    data_idx = body.index('<h3>Data ownership</h3>')
+    export_idx = body.index('<h3>Download a per-user JSON export</h3>')
+    restore_idx = body.index('<h3>Check a JSON export before overwrite</h3>')
+    assert glance_idx < data_idx < export_idx < restore_idx
+    assert "Safety and recovery" in body[glance_idx:data_idx]
+    assert "Review backup health" in body[glance_idx:data_idx]
+    assert "Check restore file" in body[glance_idx:data_idx]
+    assert "Settings overview" not in body
+    assert "Use this as the map for the heavier trust and admin areas below." not in body
+
+
 def test_backup_health_is_good_for_recent_backup(app, client, make_user, tmp_path):
     import os
     import time

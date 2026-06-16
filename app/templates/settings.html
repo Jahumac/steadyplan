@@ -308,7 +308,7 @@
   </div>
 </section>
 
-<section class="panel mt-1">
+<section class="panel mt-1" id="sqlite-backups">
   <div class="section-header">
     <div>
       <p class="eyebrow">Backups</p>
@@ -436,18 +436,22 @@
 <section class="panel mt-1">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Settings overview</p>
+      <p class="eyebrow">Settings map</p>
       <h3>Settings at a glance</h3>
     </div>
   </div>
-  <p class="helper-text">Use this as the map for the heavier trust and admin areas below.</p>
+  <p class="helper-text">Start with day-to-day setup, then use the safety links when you need exports, restore checks, diagnostics, or account access.</p>
   <div class="simple-list" style="margin-top:0.85rem;">
+    <div class="settings-section-divider">
+      <p class="eyebrow m-0">Everyday setup</p>
+      <p class="helper-text m-0">The basics you are most likely to adjust while using SteadyPlan.</p>
+    </div>
     <div class="simple-list-item">
       <div>
         <strong>Planning assumptions</strong>
         <p>Growth, ages, allowances, income, and monthly update timing.</p>
       </div>
-      <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit</a>
+      <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit assumptions</a>
     </div>
     {% if current_user.is_authenticated and current_user.is_admin %}
     <div class="simple-list-item">
@@ -455,43 +459,65 @@
         <strong>User access</strong>
         <p>Who can sign in to this SteadyPlan instance.</p>
       </div>
-      <a href="/users">Manage</a>
+      <a href="/users">Manage users</a>
     </div>
     {% endif %}
+    <div class="settings-section-divider">
+      <p class="eyebrow m-0">Safety and recovery</p>
+      <p class="helper-text m-0">Use these when you need to understand where data lives, take a safety copy, or check restore/backup posture.</p>
+    </div>
     <div class="simple-list-item">
       <div>
         <strong>Data ownership</strong>
         <p>Where the live database is, what leaves the machine, and which safety copy to use.</p>
       </div>
-      <span class="text-muted">Below</span>
+      <a href="#data-ownership">Review data ownership</a>
     </div>
     <div class="simple-list-item">
       <div>
-        <strong>Backups &amp; restore</strong>
-        <p>Per-user JSON exports, restore checks, and whole-instance SQLite backups.</p>
+        <strong>JSON export</strong>
+        <p>Download a portable safety copy for this user before restore, delete, or larger edits.</p>
       </div>
-      <a href="/settings/?mode=diagnostics">Diagnostics</a>
+      <a href="#json-export">Download export</a>
+    </div>
+    <div class="simple-list-item">
+      <div>
+        <strong>Restore check</strong>
+        <p>Validate a JSON export first. Checking does not change your data.</p>
+      </div>
+      <a href="#restore-check">Check restore file</a>
+    </div>
+    <div class="simple-list-item">
+      <div>
+        <strong>SQLite backup health</strong>
+        <p>Review whole-instance backup status and create a SQLite backup if needed.</p>
+      </div>
+      <a href="/settings/?mode=diagnostics#sqlite-backups">Review backup health</a>
+    </div>
+    <div class="settings-section-divider">
+      <p class="eyebrow m-0">Optional access</p>
+      <p class="helper-text m-0">Assistant tokens and broker snapshot connections stay separate from the core setup.</p>
     </div>
     <div class="simple-list-item">
       <div>
         <strong>Connections &amp; tokens</strong>
         <p>Optional assistant access and read-only broker snapshot connections.</p>
       </div>
-      <span class="text-muted">Optional</span>
+      <a href="#connections-tokens">Review optional access</a>
     </div>
     <div class="simple-list-item">
       <div>
         <strong>Diagnostics and system posture</strong>
         <p>Runtime checks for backups, proxy settings, cookies, rate limits, and scheduler status.</p>
       </div>
-      <a href="/settings/?mode=diagnostics">Review</a>
+      <a href="/settings/?mode=diagnostics">Review diagnostics</a>
     </div>
     <div class="simple-list-item">
       <div>
         <strong>Danger zone</strong>
         <p>Destructive actions stay at the bottom and require explicit confirmation.</p>
       </div>
-      <a href="#danger-zone">Jump</a>
+      <a href="#danger-zone">Jump to danger zone</a>
     </div>
   </div>
 </section>
@@ -509,7 +535,7 @@
 </section>
 {% endif %}
 
-<section class="panel mt-1">
+<section class="panel mt-1" id="data-ownership">
   <div class="section-header">
     <div>
       <p class="eyebrow">Data &amp; privacy</p>
@@ -560,7 +586,7 @@
   </p>
 </section>
 
-<section class="panel mt-1">
+<section class="panel mt-1" id="json-export">
   <div class="section-header">
     <div>
       <p class="eyebrow">Export</p>
@@ -579,7 +605,7 @@
   </p>
 </section>
 
-<section class="panel mt-1">
+<section class="panel mt-1" id="restore-check">
   <div class="section-header">
     <div>
       <p class="eyebrow">Restore</p>
@@ -720,7 +746,7 @@
   {% endif %}
 </section>
 
-<section class="panel mt-1">
+<section class="panel mt-1" id="connections-tokens">
   <div class="section-header">
     <div>
       <p class="eyebrow">Optional assistant access</p>
