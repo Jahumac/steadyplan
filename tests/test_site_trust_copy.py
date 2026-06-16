@@ -181,7 +181,9 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "### Diagnostics & backup health" in readme
     assert "Public site supports a manual light/dark toggle without a build step" in readme
     assert "Settings at a glance now groups everyday setup, safety and recovery, and optional access." in changelog
+    assert "Account creation templates now visibly select and fill in the account name, wrapper type, and balance method." in changelog
     assert "Settings density pass groups everyday setup, safety and recovery, and optional access." not in changelog
+    assert "Account creation template cards were polished." not in changelog
     assert "Monthly Review" not in readme
     assert "It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for preview-first broker account review." in readme
     assert "It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for API-first account review." not in readme
