@@ -49,7 +49,8 @@ def test_homepage_trust_card_mentions_restore_preview_and_safety_backup():
 
     assert 'content="SteadyPlan is a self-hosted UK finance planning and visibility tool. Understand where you are, what is cash-accessible now, what invested money is still reachable, what is restricted, and how today’s choices connect to long-term scenarios."' in html
     assert 'content="SteadyPlan is a self-hosted UK finance planning and visibility tool. Understand where you are, what’s available now vs locked for later, and how today’s choices connect to long-term scenarios."' not in html
-    assert "SteadyPlan uses a local SQLite database, keeps backup and restore guidance close to the product, and now surfaces Diagnostics plus trust-posture checks so the trust story is explicit rather than implied." in html
+    assert "SteadyPlan uses a local SQLite database, keeps backup and restore guidance close to the product, and now groups Settings into everyday setup, safety and recovery, and optional access so the trust story is explicit rather than implied." in html
+    assert "SteadyPlan uses a local SQLite database, keeps backup and restore guidance close to the product, and now surfaces Diagnostics plus trust-posture checks so the trust story is explicit rather than implied." not in html
     assert "See how JSON exports, whole-instance backups, and restore checks fit together" not in html
 
 
@@ -61,7 +62,10 @@ def test_tour_trust_copy_matches_restore_safety_story():
     assert "<h2 class=\"section-title\">Data ownership</h2>" in html
     assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in html
     assert "Long-term planning is easier when you separate cash you could reach now, invested money you could sell, money with conditions, and money reserved for later." in html
-    assert "Diagnostics keep trust visible" in html
+    assert "Settings keeps safety and recovery links visible" in html
+    assert "Settings groups data ownership, JSON export, restore checks, backup health, assistant scope, and read-only broker review so trust is inspectable without digging through one long admin page." in html
+    assert "Diagnostics keep trust visible" not in html
+    assert "Settings keeps backup health, restore boundaries, assistant scope, and read-only broker review close to the product so trust is inspectable." not in html
     assert "Accessible vs locked money" not in html
     assert "Long-term planning is easier when you keep “available now” separate from money reserved for later." not in html
 
@@ -176,6 +180,8 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "### Assistant access" in readme
     assert "### Diagnostics & backup health" in readme
     assert "Public site supports a manual light/dark toggle without a build step" in readme
+    assert "Settings at a glance now groups everyday setup, safety and recovery, and optional access." in changelog
+    assert "Settings density pass groups everyday setup, safety and recovery, and optional access." not in changelog
     assert "Monthly Review" not in readme
     assert "It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for preview-first broker account review." in readme
     assert "It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for API-first account review." not in readme
