@@ -1664,6 +1664,25 @@
         }
       };
       var currentWrapper = '';
+      var templateStatus = document.getElementById('cw-template-status');
+      var basicsNextBtn = document.getElementById('cw-step1-next');
+
+      function templateLabel(tpl) {
+        return tpl && tpl.wrapper ? tpl.wrapper : 'template';
+      }
+
+      function updateTemplateSelection(selectedBtn, tpl) {
+        var selectedLabel = templateLabel(tpl);
+        form.querySelectorAll('[data-cw-template]').forEach(function(other) {
+          var isSelected = other === selectedBtn;
+          other.classList.toggle('cw-template-selected', isSelected);
+          other.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+        });
+        if (templateStatus) {
+          templateStatus.textContent = 'Selected: ' + selectedLabel + '. Name, wrapper type and balance method have been filled in.';
+        }
+        if (basicsNextBtn) basicsNextBtn.textContent = 'Continue with ' + selectedLabel;
+      }
 
       function applyConfig() {
         if (!wrapperEl) return;
@@ -1817,9 +1836,7 @@
           if (valModeEl) valModeEl.value = tpl.valuation;
           if (growthModeEl) growthModeEl.value = tpl.growthMode;
           setField('input[name="growth_rate_override"]', tpl.rate);
-          form.querySelectorAll('[data-cw-template]').forEach(function(other) {
-            other.classList.toggle('cw-template-selected', other === btn);
-          });
+          updateTemplateSelection(btn, tpl);
           applyConfig();
           toggleManualFields();
           toggleCustomRate();

@@ -34,39 +34,40 @@
         <h3 class="cw-title">{% if is_first_account_focus %}Which account do you want to start with?{% else %}What's this account called?{% endif %}</h3>
         <p class="cw-hint">{% if is_first_account_focus %}Use one of the quick templates if it fits, or type your own name and wrapper below. You only need enough detail to recognise the account later and get Monthly Update ready for real balances.{% else %}Name the account, set the provider and wrapper type, and you're ready to go.{% endif %}</p>
         <div class="cw-template-grid" aria-label="Account templates">
-          <button type="button" class="cw-template" data-cw-template="stocks_isa">
+          <button type="button" class="cw-template" data-cw-template="stocks_isa" aria-pressed="false" title="Use the Stocks &amp; Shares ISA template">
             <strong>Stocks &amp; Shares ISA</strong>
             <span>Holdings, prices, long-term growth</span>
           </button>
-          <button type="button" class="cw-template" data-cw-template="cash_isa">
+          <button type="button" class="cw-template" data-cw-template="cash_isa" aria-pressed="false" title="Use the Cash ISA template">
             <strong>Cash ISA</strong>
             <span>Tax-free interest, manual balance</span>
           </button>
-          <button type="button" class="cw-template" data-cw-template="lifetime_isa">
+          <button type="button" class="cw-template" data-cw-template="lifetime_isa" aria-pressed="false" title="Use the Lifetime ISA template">
             <strong>Lifetime ISA</strong>
             <span>25% Lifetime ISA bonus, age limits</span>
           </button>
-          <button type="button" class="cw-template" data-cw-template="cash_savings">
+          <button type="button" class="cw-template" data-cw-template="cash_savings" aria-pressed="false" title="Use the Cash Savings template">
             <strong>Cash Savings</strong>
             <span>Easy access, fixed bonds, regular savers</span>
           </button>
-          <button type="button" class="cw-template" data-cw-template="workplace_pension">
+          <button type="button" class="cw-template" data-cw-template="workplace_pension" aria-pressed="false" title="Use the Workplace Pension template">
             <strong>Workplace Pension</strong>
             <span>Employee and employer contributions</span>
           </button>
-          <button type="button" class="cw-template" data-cw-template="sipp">
+          <button type="button" class="cw-template" data-cw-template="sipp" aria-pressed="false" title="Use the SIPP template">
             <strong>SIPP</strong>
             <span>Self-invested personal pension</span>
           </button>
-          <button type="button" class="cw-template" data-cw-template="premium_bonds">
+          <button type="button" class="cw-template" data-cw-template="premium_bonds" aria-pressed="false" title="Use the Premium Bonds template">
             <strong>Premium Bonds</strong>
             <span>NS&amp;I, tax-free prize planning</span>
           </button>
-          <button type="button" class="cw-template" data-cw-template="gia">
+          <button type="button" class="cw-template" data-cw-template="gia" aria-pressed="false" title="Use the General Investment Account template">
             <strong>General Investment Account</strong>
             <span>Taxable investments outside ISA</span>
           </button>
         </div>
+        <p class="cw-template-status" id="cw-template-status" aria-live="polite">Choose a template above or fill in the details manually.</p>
         <div class="form-grid">
           <label><span>Name</span><input type="text" name="name" id="cw-name" placeholder="e.g. My Stocks ISA" required></label>
           <label>
@@ -104,7 +105,7 @@
         </details>
         <div class="cw-actions">
           <span></span>
-          <button type="button" class="badge badge-accent" data-cw-next>Continue</button>
+          <button type="button" class="badge badge-accent" data-cw-next id="cw-step1-next">Continue</button>
         </div>
       </div>
 
