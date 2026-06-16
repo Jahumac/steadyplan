@@ -414,7 +414,7 @@ def test_settings_groups_trust_surfaces_at_a_glance(app, client, make_user):
     admin_idx = after_glance.index("User Management")
     data_idx = after_glance.index("<h3>Data ownership</h3>")
     export_idx = after_glance.index("<h3>Download a per-user JSON export</h3>")
-    assistant_idx = after_glance.index("<h3>Optional: create a scoped token")
+    assistant_idx = after_glance.index("<h3>Create a scoped token only if you run your own Pip setup</h3>")
     danger_idx = after_glance.index("<h3>Delete this user's finance data</h3>")
 
     assert planning_idx < admin_idx < data_idx < export_idx < assistant_idx < danger_idx
