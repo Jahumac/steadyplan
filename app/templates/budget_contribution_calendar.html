@@ -5,35 +5,34 @@
 {% set active_key = 'contribution_calendar' %}
 {% include '_budget_subnav.html' %}
 
-{% set _mk_month = from_month.split('-')[1] | int %}
-<section class="card highlight mb-1 month-accent-{{ _mk_month }}">
+<section class="card highlight mb-1 contribution-calendar-hero">
   <div class="hero-top">
     <div>
       <p class="eyebrow">Budget</p>
       <h2 class="hero-value">Contribution calendar</h2>
       <p class="hero-subtitle">Set temporary monthly contribution plans without changing the account's normal monthly contribution.</p>
     </div>
-    <div class="badge-row">
+    <div class="badge-row contribution-calendar-hero-badges">
       <span class="badge badge-meta">{{ month_columns|length }} months shown</span>
       <span class="badge badge-meta">{{ calendar.accounts|length }} accounts</span>
     </div>
   </div>
   <div class="hero-strip">
-    <div>
+    <div class="hero-strip-stat">
       <strong>{{ from_month }}</strong>
-      <div class="helper-text">From month</div>
+      <span>From month</span>
     </div>
-    <div>
+    <div class="hero-strip-stat">
       <strong>{{ to_month }}</strong>
-      <div class="helper-text">To month</div>
+      <span>To month</span>
     </div>
-    <div>
+    <div class="hero-strip-stat">
       <strong>{{ plans|length }}</strong>
-      <div class="helper-text">Temporary plans</div>
+      <span>Temporary plans</span>
     </div>
-    <div>
+    <div class="hero-strip-stat">
       <strong>{{ calendar.overlap_count }}</strong>
-      <div class="helper-text">Cells with overlaps</div>
+      <span>Cells with overlaps</span>
     </div>
   </div>
 </section>
@@ -53,7 +52,7 @@
   </div>
   <p class="helper-text">Enter only the accounts you want to override. Blank fields keep using the account default. Enter <strong>0</strong> to pause an account temporarily.</p>
 
-  <form method="post">
+  <form method="post" class="settings-form contribution-calendar-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="form_name" value="create_temporary_plan">
     <input type="hidden" name="from_month" value="{{ from_month }}">
@@ -75,8 +74,8 @@
     </div>
 
     {% if calendar.accounts %}
-    <div class="table-scroll">
-      <table class="mini-table">
+    <div class="table-scroll contribution-plan-scroll">
+      <table class="mini-table contribution-plan-table">
         <thead>
           <tr>
             <th>Account</th>
@@ -88,10 +87,10 @@
         <tbody>
           {% for account in calendar.accounts %}
           <tr>
-            <td>{{ account.name }}</td>
-            <td>{{ account.wrapper_type or 'Other' }}</td>
-            <td class="text-right">£{{ '{:,.2f}'.format(account.monthly_contribution) }}</td>
-            <td class="text-right">
+            <td data-label="Account">{{ account.name }}</td>
+            <td data-label="Wrapper">{{ account.wrapper_type or 'Other' }}</td>
+            <td data-label="Default" class="text-right">£{{ '{:,.2f}'.format(account.monthly_contribution) }}</td>
+            <td data-label="Temporary amount" class="text-right">
               <input type="number" step="0.01" min="0" name="amount_{{ account.id }}" placeholder="Leave blank">
             </td>
           </tr>

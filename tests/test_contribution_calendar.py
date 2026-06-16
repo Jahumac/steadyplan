@@ -1,3 +1,6 @@
+from pathlib import Path
+
+
 def _login(client, username, password):
     resp = client.post(
         "/login",
@@ -294,3 +297,16 @@ def test_contribution_calendar_page_loads(app, client, make_user):
     html = resp.get_data(as_text=True)
     assert "Contribution calendar" in html
     assert "Temporary contribution plan" in html
+    assert "month-accent-" not in html
+    assert "contribution-calendar-hero" in html
+    assert "settings-form contribution-calendar-form" in html
+    assert 'data-label="Temporary amount"' in html
+
+
+def test_contribution_calendar_has_mobile_style_safeguards():
+    css = (Path(__file__).resolve().parents[1] / "app" / "static" / "css" / "styles.css").read_text()
+
+    assert ".contribution-calendar-form input[type=\"month\"]" in css
+    assert "color-scheme: dark;" in css
+    assert "@media (max-width: 640px)" in css
+    assert ".contribution-plan-table td::before" in css

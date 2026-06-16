@@ -1920,6 +1920,7 @@ button.button-danger:focus {
   input[type="search"],
   input[type="tel"],
   input[type="url"],
+  input[type="month"],
   textarea,
   select {
     font-size: 16px;
@@ -3404,6 +3405,129 @@ button.button-danger:focus {
 }
 .budget-import-label {
   cursor: pointer;
+}
+
+/* Contribution calendar — keep the new feature in the normal SteadyPlan
+   visual system instead of month-coloured accents/native form controls. */
+.contribution-calendar-hero .hero-top {
+  align-items: flex-start;
+}
+
+.contribution-calendar-hero-badges {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+
+.contribution-calendar-form input[type="text"],
+.contribution-calendar-form input[type="number"],
+.contribution-calendar-form input[type="month"] {
+  width: 100%;
+  background: #0b1220;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 0.95rem;
+  min-height: 48px;
+  font: inherit;
+  color-scheme: dark;
+}
+
+.contribution-calendar-form input::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+.contribution-plan-table input[type="number"] {
+  min-width: 8.5rem;
+}
+
+@media (max-width: 768px) {
+  .contribution-calendar-hero .hero-top {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .contribution-calendar-hero-badges {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+    justify-content: stretch;
+  }
+
+  .contribution-calendar-hero-badges .badge {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .contribution-calendar-hero .hero-value {
+    font-size: clamp(1.85rem, 10vw, 2.4rem);
+    line-height: 1.05;
+  }
+
+  .contribution-calendar-hero .hero-subtitle {
+    max-width: 32rem;
+    line-height: 1.55;
+  }
+
+  .contribution-calendar-form .form-grid {
+    gap: 0.8rem;
+  }
+
+  .contribution-plan-scroll {
+    overflow-x: visible;
+  }
+
+  .contribution-plan-table,
+  .contribution-plan-table thead,
+  .contribution-plan-table tbody,
+  .contribution-plan-table tr,
+  .contribution-plan-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .contribution-plan-table thead {
+    display: none;
+  }
+
+  .contribution-plan-table tr {
+    padding: 0.85rem 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  }
+
+  .contribution-plan-table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .contribution-plan-table td {
+    display: grid;
+    grid-template-columns: minmax(7rem, 0.42fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.3rem 0;
+    text-align: left;
+  }
+
+  .contribution-plan-table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .contribution-plan-table td.text-right {
+    text-align: left;
+  }
+
+  .contribution-plan-table input[type="number"] {
+    min-width: 0;
+  }
 }
 
 /* ── Month colour accents ──────────────────────────────────────────── */
