@@ -5,7 +5,8 @@
 {% set active_key = 'contribution_calendar' %}
 {% include '_budget_subnav.html' %}
 
-<section class="card highlight mb-1">
+{% set _mk_month = from_month.split('-')[1] | int %}
+<section class="card highlight mb-1 month-accent-{{ _mk_month }}">
   <div class="hero-top">
     <div>
       <p class="eyebrow">Budget</p>
@@ -98,8 +99,8 @@
         </tbody>
       </table>
     </div>
-    <div class="badge-row" style="margin-top:0.75rem;">
-      <button type="submit" class="badge">Save temporary plan</button>
+    <div class="badge-row">
+      <button type="submit" class="badge badge-primary-action">Save temporary plan</button>
     </div>
     {% else %}
     <p class="helper-text">No eligible active contribution accounts are available yet.</p>
@@ -115,14 +116,35 @@
     </div>
   </div>
   {% if plans %}
-    {% for plan in plans %}
-    <div class="card mb-1">
-      <div class="section-header">
-        <div>
-          <strong>{{ plan.plan_name }}</strong>
-          <div class="helper-text">{{ plan.from_month }} to {{ plan.to_month }} · {{ plan.rows|length }} override row{% if plan.rows|length != 1 %}s{% endif %}</div>
+    <div class="badge-row mt-0">
+      {% for plan in plans %}
+      <details class="budget-tools-details">
+        <summary class="badge badge-meta">
+          {{ plan.plan_name }} · {{ plan.from_month }} to {{ plan.to_month }} · {{ plan.rows|length }} row{% if plan.rows|length != 1 %}s{% endif %}
+        </summary>
+        <div class="table-scroll mt-075">
+          <table class="mini-table">
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Wrapper</th>
+                <th>Range</th>
+                <th class="text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in plan.rows %}
+              <tr>
+                <td>{{ row.account_name }}</td>
+                <td>{{ row.wrapper_type or 'Other' }}</td>
+                <td>{{ row.from_month }} to {{ row.to_month }}</td>
+                <td class="text-right">£{{ '{:,.2f}'.format(row.override_amount) }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
-        <form method="post">
+        <form method="post" class="badge-row">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="form_name" value="delete_temporary_plan">
           <input type="hidden" name="reason" value="{{ plan.reason }}">
@@ -130,31 +152,9 @@
           <input type="hidden" name="to_month" value="{{ to_month }}">
           <button type="submit" class="badge badge-danger">Remove plan</button>
         </form>
-      </div>
-      <div class="table-scroll">
-        <table class="mini-table">
-          <thead>
-            <tr>
-              <th>Account</th>
-              <th>Wrapper</th>
-              <th>Range</th>
-              <th class="text-right">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in plan.rows %}
-            <tr>
-              <td>{{ row.account_name }}</td>
-              <td>{{ row.wrapper_type or 'Other' }}</td>
-              <td>{{ row.from_month }} to {{ row.to_month }}</td>
-              <td class="text-right">£{{ '{:,.2f}'.format(row.override_amount) }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+      </details>
+      {% endfor %}
     </div>
-    {% endfor %}
   {% else %}
   <p class="helper-text">No temporary plans saved yet.</p>
   {% endif %}
@@ -169,7 +169,7 @@
   </div>
   {% if calendar.accounts %}
   <div class="table-scroll">
-    <table class="mini-table contrib-table">
+    <table class="data-table contrib-table">
       <thead>
         <tr>
           <th>Account</th>
@@ -188,9 +188,9 @@
           </td>
           {% for cell in account.months %}
           <td>
-            <div><strong>Default</strong> £{{ '{:,.2f}'.format(cell.default_amount) }}</div>
+            <div><span class="badge badge-meta badge-sm">Default</span> £{{ '{:,.2f}'.format(cell.default_amount) }}</div>
             {% if cell.has_override %}
-            <div><strong>Override</strong> £{{ '{:,.2f}'.format(cell.override_amount) }}</div>
+            <div><span class="badge badge-sm {% if cell.is_temporary %}badge-primary-action{% else %}badge-meta{% endif %}">Override</span> £{{ '{:,.2f}'.format(cell.override_amount) }}</div>
             <div class="helper-text">
               {{ cell.source_label }}
               {% if cell.plan_name %}
@@ -203,7 +203,10 @@
             <div class="helper-text">Using default</div>
             {% endif %}
             {% if cell.overlap %}
-            <div class="helper-text" style="color:#b45309;">Overlap: {{ cell.active_override_count }} active rules</div>
+            <div class="mt-05">
+              <span class="badge badge-warning badge-sm">Overlap</span>
+              <span class="helper-text">{{ cell.active_override_count }} active rules</span>
+            </div>
             {% endif %}
           </td>
           {% endfor %}

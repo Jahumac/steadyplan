@@ -610,6 +610,19 @@ body.is-back-online .site-header {
   color: #fee2e2;
 }
 
+.badge.badge-warning {
+  border-color: rgba(245,158,11,0.35);
+  background: rgba(245,158,11,0.08);
+  color: #fbbf24;
+}
+
+.badge.badge-warning:hover,
+.badge.badge-warning:focus {
+  border-color: rgba(245,158,11,0.55);
+  background: rgba(245,158,11,0.14);
+  color: #fde68a;
+}
+
 .badge.badge-outline {
   background: transparent;
   border-color: var(--border);
@@ -6890,4 +6903,3 @@ a.link-accent:hover {
     grid-template-columns: 1fr;
   }
 }
-
