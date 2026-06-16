@@ -1678,8 +1678,10 @@
         var selectedLabel = templateLabel(tpl);
         form.querySelectorAll('[data-cw-template]').forEach(function(other) {
           var isSelected = other === selectedBtn;
+          var action = other.querySelector('[data-cw-template-action]');
           other.classList.toggle('cw-template-selected', isSelected);
           other.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+          if (action) action.textContent = isSelected ? 'Selected' : 'Choose template';
         });
         if (templateStatus) {
           templateStatus.textContent = 'Selected: ' + selectedLabel + '. Name, wrapper type and balance method have been filled in.';
@@ -1689,8 +1691,10 @@
 
       function clearTemplateSelection(reason) {
         form.querySelectorAll('[data-cw-template]').forEach(function(other) {
+          var action = other.querySelector('[data-cw-template-action]');
           other.classList.remove('cw-template-selected');
           other.setAttribute('aria-pressed', 'false');
+          if (action) action.textContent = 'Choose template';
         });
         if (templateStatus) {
           templateStatus.textContent = reason || 'Choose a template above or fill in the details manually.';

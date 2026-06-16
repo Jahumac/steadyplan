@@ -5967,9 +5967,8 @@ a.link-accent:hover {
 }
 
 .cw-template {
-  position: relative;
   text-align: left;
-  padding: 0.75rem 0.85rem 2rem;
+  padding: 0.75rem 0.85rem;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: rgba(255,255,255,0.03);
@@ -5981,17 +5980,6 @@ a.link-accent:hover {
   flex-direction: column;
   justify-content: center;
   min-height: 5rem;
-}
-
-.cw-template::after {
-  content: "Choose";
-  position: absolute;
-  left: 0.85rem;
-  bottom: 0.55rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--accent);
 }
 
 .cw-template:hover,
@@ -6006,10 +5994,6 @@ a.link-accent:hover {
   border-color: rgba(56,189,248,0.72);
   box-shadow: 0 0 0 2px rgba(56,189,248,0.14), inset 0 0 0 1px rgba(56,189,248,0.18);
   transform: translateY(-1px);
-}
-
-.cw-template-selected::after {
-  content: "Selected";
 }
 
 .cw-template-selected strong {
@@ -6027,6 +6011,18 @@ a.link-accent:hover {
   color: var(--muted);
   font-size: 0.78rem;
   line-height: 1.35;
+}
+
+.cw-template .cw-template-action {
+  margin-top: 0.45rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.cw-template-selected .cw-template-action {
+  color: var(--accent);
 }
 
 .cw-template-status {
