@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional broker snapshot review beta.
+- Settings now frames assistant tokens as Personal Pip access for users who run their own Pip setup.
 - Refreshed public demo screenshots and the public marketing/docs site presentation.
 - Settings at a glance now groups everyday setup, safety and recovery, and optional access.
 
