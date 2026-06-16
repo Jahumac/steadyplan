@@ -399,7 +399,10 @@ def test_settings_groups_trust_surfaces_at_a_glance(app, client, make_user):
     assert "Restore check" in html
     assert "SQLite backup health" in html
     assert "Optional access" in html
-    assert "Connections &amp; tokens" in html
+    assert "Assistant and broker review" in html
+    assert "Optional assistant access and read-only Trading 212 broker snapshot review." in html
+    assert "Connections &amp; tokens" not in html
+    assert "Optional assistant access and read-only broker snapshot connections." not in html
     assert "Diagnostics and system posture" in html
     assert "Danger zone" in html
     assert "Settings overview" not in html
