@@ -221,6 +221,8 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "what is accessible vs locked?" not in roadmap_execution
     assert "Public roadmap page and a manual light/dark toggle on the public website." in changelog
     assert "Scoped assistant access in Settings with UI-managed tokens, permission labels, and recent write activity." in changelog
+    assert "Settings now frames assistant tokens as Personal Pip access for users who run their own Pip setup." in changelog
+    assert "Settings now frames assistant tokens as a default Pip setup." not in changelog
     assert "Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional broker snapshot review beta." in changelog
     assert "Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional read-only broker beta." not in changelog
 
