@@ -4,7 +4,13 @@ from io import BytesIO
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, send_file, session, url_for
 from flask_login import current_user, login_required
 
-from app.calculations import add_months_to_key, is_pension_account
+from app.calculations import (
+    add_months_to_key,
+    apply_pension_carry_forward,
+    contribution_breakdown,
+    is_pension_account,
+    pension_allowance_limits,
+)
 from app.utils import optional_float, optional_int, valid_month_key
 
 from app.models import (
@@ -32,6 +38,7 @@ from app.models import (
     fetch_assumptions,
     fetch_debt,
     fetch_months_with_budget_entries,
+    fetch_pension_carry_forward,
     fetch_prior_month_budget_entries,
     update_budget_item,
     update_budget_section,
@@ -123,14 +130,14 @@ def _is_premium_bonds_account(account):
     return "premium bond" in text
 
 
-def _build_contribution_allowance_frame(calendar, assumptions):
+def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_forward_entries=None):
     isa_allowance = float(assumptions["isa_allowance"]) if assumptions else 20000.0
     lisa_allowance = float(assumptions["lisa_allowance"]) if assumptions else 4000.0
-    pension_allowance = (
-        float(assumptions["pension_annual_allowance"])
-        if assumptions and "pension_annual_allowance" in assumptions and assumptions["pension_annual_allowance"] is not None
-        else 60000.0
+    pension_limits = apply_pension_carry_forward(
+        pension_allowance_limits(dict(assumptions) if assumptions else {}),
+        pension_carry_forward_entries or [],
     )
+    pension_allowance = float(pension_limits.get("effective_allowance") or 0.0)
     by_tax_year = {}
     for month_key in calendar.get("months", []):
         tax_year = _tax_year_label_for_month(month_key)
@@ -154,7 +161,11 @@ def _build_contribution_allowance_frame(calendar, assumptions):
             elif _is_isa_account(account):
                 row["isa_planned"] += amount
             elif is_pension_account(account):
-                row["pension_planned"] += amount
+                adjusted = dict(account)
+                adjusted["monthly_contribution"] = amount
+                row["pension_planned"] += float(
+                    contribution_breakdown(adjusted, assumptions).get("total_into_pot") or 0.0
+                )
             elif _is_premium_bonds_account(account):
                 row["premium_bonds_planned"] += amount
 
@@ -163,6 +174,9 @@ def _build_contribution_allowance_frame(calendar, assumptions):
         row["isa_allowance"] = isa_allowance
         row["lisa_allowance"] = lisa_allowance
         row["pension_allowance"] = pension_allowance
+        row["pension_personal_relief_limit"] = float(pension_limits.get("personal_relief_limit") or 0.0)
+        row["pension_carry_forward_total"] = float(pension_limits.get("carry_forward_total") or 0.0)
+        row["pension_mpaa_enabled"] = bool(pension_limits.get("mpaa_enabled"))
         row["isa_remaining"] = isa_allowance - row["isa_planned"]
         row["lisa_remaining"] = lisa_allowance - row["lisa_planned"]
         row["pension_remaining"] = pension_allowance - row["pension_planned"]
@@ -518,7 +532,8 @@ def contribution_calendar():
     calendar = fetch_contribution_calendar(uid, selected_from_month, selected_to_month)
     plans = fetch_temporary_contribution_plans(uid)
     assumptions = fetch_assumptions(uid)
-    allowance_frame = _build_contribution_allowance_frame(calendar, assumptions)
+    pension_carry_forward_entries = fetch_pension_carry_forward(uid)
+    allowance_frame = _build_contribution_allowance_frame(calendar, assumptions, pension_carry_forward_entries)
     month_columns = [
         {"key": month_key, "label": datetime.strptime(month_key, "%Y-%m").strftime("%b %Y")}
         for month_key in calendar["months"]
