@@ -54,8 +54,8 @@
     </span>
   </div>
   <details class="mt-075">
-    <summary class="link-accent">Where does £{{ '{:,.0f}'.format(total_personal_monthly) }} “from you” come from?</summary>
-    <p class="helper-text mt-05">“From you” is the sum of each active account’s “Your Monthly Contribution” setting, excluding accounts marked <em>Outside take-home pay</em> (like cashback). Salary sacrifice pensions are also outside take-home.</p>
+    <summary class="link-accent">This month’s account plan — where does £{{ '{:,.0f}'.format(total_personal_monthly) }} “from you” come from?</summary>
+    <p class="helper-text mt-05">Contribution calendar overrides are included here for {{ budget_context_month_key }}. Months without a calendar plan fall back to each active account’s regular “Your Monthly Contribution” setting. Accounts marked <em>Outside take-home pay</em> are shown separately.</p>
     <div class="table-scroll mt-05">
       <table class="data-table">
         <thead>
@@ -71,12 +71,14 @@
             {% set cb = contrib_breakdowns.get(account.id, {}) %}
             {% set personal = (cb.personal or 0) %}
             {% set into_pot = (cb.total_into_pot or 0) %}
+            {% set source = contribution_sources.get(account.id, {}) %}
             {% set uplift = into_pot - personal %}
             {% if personal > 0 or into_pot > 0 %}
             <tr>
               <td>
                 <span>{{ account.name }}</span>
                 {% if account.pre_salary %}<span class="badge badge-meta" style="font-size:0.7rem;margin-left:6px">outside take-home</span>{% endif %}
+                {% if source.label %}<span class="badge badge-meta" style="font-size:0.7rem;margin-left:6px" title="{{ source.title }}">{{ source.label }}</span>{% endif %}
               </td>
               <td class="num">£{{ '{:,.0f}'.format(personal) }}</td>
               <td class="num">{% if uplift > 0 %}+£{{ '{:,.0f}'.format(uplift) }}{% else %}—{% endif %}</td>
@@ -140,10 +142,12 @@
     </div>
     <div class="acct-card-foot">
       {% set cb = contrib_breakdowns.get(account.id, {}) %}
-      {% if cb.get('total_into_pot', 0) != (account.monthly_contribution or 0) and cb.get('total_into_pot', 0) > 0 %}
-      <span title="You pay £{{ '{:,.0f}'.format(account.monthly_contribution or 0) }} → £{{ '{:,.0f}'.format(cb.total_into_pot) }} goes into pot">Into pots monthly £{{ '{:,.0f}'.format(cb.total_into_pot) }}</span>
+      {% set source = contribution_sources.get(account.id, {}) %}
+      {% set personal = cb.get('personal', account.monthly_contribution or 0) %}
+      {% if cb.get('total_into_pot', 0) != personal and cb.get('total_into_pot', 0) > 0 %}
+      <span title="You pay £{{ '{:,.0f}'.format(personal) }} → £{{ '{:,.0f}'.format(cb.total_into_pot) }} goes into pot{% if source.reason and source.label == 'contribution calendar' %} · {{ source.reason }}{% endif %}">Into pots monthly £{{ '{:,.0f}'.format(cb.total_into_pot) }}{% if source.label == 'contribution calendar' %} · this month{% endif %}</span>
       {% else %}
-      <span>You pay monthly £{{ '{:,.0f}'.format(account.monthly_contribution or 0) }}</span>
+      <span>{% if source.label == 'contribution calendar' %}This month{% else %}You pay monthly{% endif %} £{{ '{:,.0f}'.format(personal) }}</span>
       {% endif %}
       <span class="acct-mode-dot {% if account.valuation_mode == 'holdings' %}dot-positions{% else %}dot-manual{% endif %}"
             title="{{ 'Built from holdings' if account.valuation_mode == 'holdings' else ('Premium Bonds' if account.valuation_mode == 'premium_bonds' else 'Manual') }}"></span>

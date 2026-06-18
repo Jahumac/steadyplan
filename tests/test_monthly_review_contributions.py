@@ -46,6 +46,45 @@ def _set_review_status_and_item(conn, user_id, month_key, account_id, status, ex
     return review_id
 
 
+def test_monthly_review_budget_match_uses_contribution_calendar_month(app, client, make_user):
+    uid, username, password = make_user(username="mr-calendar-budget-match", password="password123")
+    _login(client, username, password)
+    month_key = "2026-06"
+
+    with app.app_context():
+        from app.models import create_temporary_contribution_plan, get_connection
+
+        with get_connection() as conn:
+            aid = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
+                VALUES (?, 'Lifetime ISA', 'Lifetime ISA', 100, 0, 1, 'manual')
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+        create_temporary_contribution_plan(
+            uid,
+            "LISA lump sum",
+            [{
+                "account_id": aid,
+                "from_month": month_key,
+                "to_month": month_key,
+                "override_amount": 4000,
+            }],
+        )
+
+    resp = client.get(f"/monthly-review/?month={month_key}")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Lifetime ISA" in html
+    assert "£4,000.00" in html
+    assert "+£1,000 into pot" in html
+    assert "matches budget" in html
+    assert "over budget" not in html
+
+
 def test_monthly_review_confirm_contribution_persists_flag(app, client, make_user):
     uid, username, password = make_user(username="mr-confirm", password="password123")
     _login(client, username, password)

@@ -135,12 +135,14 @@ def _build_monthly_data(month_key, user_id):
             linked_account = account_map.get(item["linked_account_id"]) if item["linked_account_id"] else None
             is_linked_account = linked_account is not None
             is_linked_debt = linked_debt is not None
+            override_reason = ""
 
             if item["id"] in entry_map:
                 amount = float(entry_map[item["id"]]["amount"] or 0)
                 source = "manual_override"
             elif is_linked_account and linked_account["id"] in active_overrides:
                 amount = float(active_overrides[linked_account["id"]]["override_amount"] or 0)
+                override_reason = (active_overrides[linked_account["id"]]["reason"] or "").strip()
                 source = "manual_override"
             elif is_linked_account:
                 amount = float(linked_account["monthly_contribution"] or 0)
@@ -166,7 +168,11 @@ def _build_monthly_data(month_key, user_id):
                 source_title = "Saved for this month"
                 if is_linked_account:
                     ln = (linked_account.get("name") or "linked account").strip()
-                    source_title = f"Saved for this month (linked account · {ln})"
+                    if override_reason and override_reason != "from budget":
+                        source_label = "contribution calendar"
+                        source_title = f"Pulled from your Contribution calendar for this month ({override_reason})"
+                    else:
+                        source_title = f"Saved for this month (linked account · {ln})"
                 elif is_linked_debt:
                     source_title = "Saved for this month (linked debt)"
             elif source == "linked_account":

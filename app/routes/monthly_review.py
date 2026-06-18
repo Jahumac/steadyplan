@@ -5,7 +5,7 @@ from flask import Blueprint, current_app, flash, jsonify, redirect, render_templ
 from flask_login import current_user, login_required
 
 from app.calculations import (
-    contribution_breakdown,
+    projected_contribution_breakdown,
     effective_account_value,
     goal_current_value,
     progress_to_goal,
@@ -24,6 +24,7 @@ from app.models import (
     fetch_all_holdings,
     fetch_all_holdings_grouped,
     fetch_assumptions,
+    fetch_budget_entries,
     fetch_budget_items,
     fetch_holding,
     fetch_holding_totals_by_account,
@@ -303,11 +304,19 @@ def monthly_review():
     if contribution_items:
         budget_items_all = fetch_budget_items(uid)
         linked = {b["linked_account_id"]: b for b in budget_items_all if b.get("linked_account_id")}
+        budget_entry_map = {entry["budget_item_id"]: entry for entry in fetch_budget_entries(month_key, uid)}
+        active_overrides = fetch_all_active_overrides(month_key, uid)
         for item in contribution_items:
             budget_item = linked.get(item["account_id"])
             if budget_item is not None:
                 expected = float(item["expected_contribution"] or 0)
-                budgeted = float(budget_item["default_amount"] or 0)
+                entry = budget_entry_map.get(budget_item["id"])
+                if entry is not None:
+                    budgeted = float(entry["amount"] or 0)
+                elif item["account_id"] in active_overrides:
+                    budgeted = float(active_overrides[item["account_id"]]["override_amount"] or 0)
+                else:
+                    budgeted = float(budget_item["default_amount"] or 0)
                 budget_comparison_map[item["account_id"]] = {
                     "budgeted": budgeted,
                     "expected": expected,
@@ -329,7 +338,9 @@ def monthly_review():
             personal = float(item["expected_contribution"] or 0)
             adjusted = dict(acc)
             adjusted["monthly_contribution"] = personal
-            br = contribution_breakdown(adjusted, assumptions)
+            adjusted["_projection_start_month"] = month_key
+            adjusted["_contribution_overrides"] = []
+            br = projected_contribution_breakdown(adjusted, assumptions, 0)
             contribution_breakdowns[item["account_id"]] = br
             total_personal += personal
             total_into_pot += br["total_into_pot"]
