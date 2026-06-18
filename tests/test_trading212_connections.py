@@ -929,6 +929,9 @@ def test_account_edit_can_link_existing_account_to_saved_trading212_connection(a
     assert "Linked Trading 212 connection:" not in body
     assert "Trading 212 ISA live" in body
     assert "ISA-111" in body
+    assert "linked-broker-summary-panel" in body
+    assert body.index('data-detail-stats') < body.index('linked-broker-summary-panel')
+    assert body.index('account-detail-actions') < body.index('linked-broker-summary-panel')
     assert "Broker status" in body
     assert "Account source" in body
     assert "Broker primary" in body

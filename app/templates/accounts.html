@@ -171,45 +171,6 @@
       <div>
         <p class="eyebrow">{{ selected.provider }} · {{ selected.wrapper_type }}</p>
         <h2>{{ selected.name }}</h2>
-        {% if linked_trading212_connection %}
-        <p class="text-sm text-muted mt-05">Linked broker snapshot connection: <strong>{{ linked_trading212_connection.label }}</strong>{% if linked_trading212_connection.external_account_id %} · {{ linked_trading212_connection.external_account_id }}{% endif %}{% if linked_trading212_connection.external_account_currency %} · {{ linked_trading212_connection.external_account_currency }}{% endif %}</p>
-        {% if not selected_supports_trading212_public_api %}
-        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ selected_trading212_support_hint }}</p>
-        {% endif %}
-        {% endif %}
-        {% if linked_trading212_summary %}
-        <div class="form-grid mt-1" style="max-width:52rem; gap:0.9rem 1.2rem;">
-          <div>
-            <p class="text-sm text-muted" style="margin:0;">Account source</p>
-            <strong>{{ linked_trading212_summary.source_mode_label }}</strong>
-          </div>
-          <div>
-            <p class="text-sm text-muted" style="margin:0;">Broker status</p>
-            <strong>{{ linked_trading212_summary.status_label }}</strong>
-          </div>
-          <div>
-            <p class="text-sm text-muted" style="margin:0;">Last successful broker snapshot check</p>
-            <strong>{{ linked_trading212_summary.last_checked_label or 'Not fetched yet' }}</strong>
-          </div>
-          <div>
-            <p class="text-sm text-muted" style="margin:0;">Broker total{% if linked_trading212_summary.broker_currency %} ({{ linked_trading212_summary.broker_currency }}){% endif %}</p>
-            <strong>{% if linked_trading212_summary.broker_total is not none %}£{{ '{:,.2f}'.format(linked_trading212_summary.broker_total) }}{% else %}—{% endif %}</strong>
-          </div>
-          <div>
-            <p class="text-sm text-muted" style="margin:0;">Tracked value in SteadyPlan</p>
-            <strong>£{{ '{:,.2f}'.format(linked_trading212_summary.tracked_value or 0) }}</strong>
-          </div>
-        </div>
-        {% if linked_trading212_summary.difference_value is not none %}
-        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ linked_trading212_summary.difference_direction }}: <strong>{% if linked_trading212_summary.difference_value > 0 %}+{% endif %}£{{ '{:,.2f}'.format(linked_trading212_summary.difference_value) }}</strong></p>
-        {% endif %}
-        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ linked_trading212_summary.source_mode_hint }}</p>
-        {% if linked_trading212_summary.last_error %}
-        <p class="text-sm perf-negative mt-05" style="margin-bottom:0;">Last broker snapshot error: {{ linked_trading212_summary.last_error }}</p>
-        {% else %}
-        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">Use the linked broker snapshot preview before changing holdings or manually adjusting this account.</p>
-        {% endif %}
-        {% endif %}
       </div>
       <div class="badge-row account-detail-actions">
         <a class="badge" href="/accounts/">← Back</a>
@@ -636,6 +597,59 @@
           <strong>{% if selected.valuation_mode == 'holdings' %}From holdings{% elif selected.valuation_mode == 'premium_bonds' %}Premium Bonds{% else %}Manual{% endif %}</strong>
         </div>
       </div>
+
+      {% if linked_trading212_connection %}
+      <section class="linked-broker-summary-panel" aria-label="Linked broker snapshot summary">
+        <div class="linked-broker-summary-header">
+          <div>
+            <p class="eyebrow">Broker snapshot</p>
+            <h3>Trading 212 link</h3>
+            <p class="text-sm text-muted mt-025">
+              Linked broker snapshot connection: <strong>{{ linked_trading212_connection.label }}</strong>{% if linked_trading212_connection.external_account_id %} · {{ linked_trading212_connection.external_account_id }}{% endif %}{% if linked_trading212_connection.external_account_currency %} · {{ linked_trading212_connection.external_account_currency }}{% endif %}
+            </p>
+          </div>
+          {% if linked_trading212_summary and linked_trading212_summary.difference_value is not none %}
+          <div class="linked-broker-difference">
+            <span>{{ linked_trading212_summary.difference_direction }}</span>
+            <strong>{% if linked_trading212_summary.difference_value > 0 %}+{% endif %}£{{ '{:,.2f}'.format(linked_trading212_summary.difference_value) }}</strong>
+          </div>
+          {% endif %}
+        </div>
+        {% if not selected_supports_trading212_public_api %}
+        <p class="text-sm text-muted mt-075" style="margin-bottom:0;">{{ selected_trading212_support_hint }}</p>
+        {% endif %}
+        {% if linked_trading212_summary %}
+        <div class="linked-broker-grid mt-075">
+          <div>
+            <p>Account source</p>
+            <strong>{{ linked_trading212_summary.source_mode_label }}</strong>
+          </div>
+          <div>
+            <p>Broker status</p>
+            <strong>{{ linked_trading212_summary.status_label }}</strong>
+          </div>
+          <div>
+            <p>Last successful broker snapshot check</p>
+            <strong>{{ linked_trading212_summary.last_checked_label or 'Not fetched yet' }}</strong>
+          </div>
+          <div>
+            <p>Broker total{% if linked_trading212_summary.broker_currency %} ({{ linked_trading212_summary.broker_currency }}){% endif %}</p>
+            <strong>{% if linked_trading212_summary.broker_total is not none %}£{{ '{:,.2f}'.format(linked_trading212_summary.broker_total) }}{% else %}—{% endif %}</strong>
+          </div>
+          <div>
+            <p>Tracked value in SteadyPlan</p>
+            <strong>£{{ '{:,.2f}'.format(linked_trading212_summary.tracked_value or 0) }}</strong>
+          </div>
+        </div>
+        <p class="text-sm text-muted mt-075" style="margin-bottom:0;">{{ linked_trading212_summary.source_mode_hint }}</p>
+        {% if linked_trading212_summary.last_error %}
+        <p class="text-sm perf-negative mt-05" style="margin-bottom:0;">Last broker snapshot error: {{ linked_trading212_summary.last_error }}</p>
+        {% else %}
+        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">Use the linked broker snapshot preview before changing holdings or manually adjusting this account.</p>
+        {% endif %}
+        {% endif %}
+      </section>
+      {% endif %}
       <button type="button" class="btn-link text-sm text-muted acct-detail-toggle" data-detail-toggle aria-expanded="false">
         Show details
       </button>
