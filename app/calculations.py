@@ -265,6 +265,98 @@ def contribution_override_for_month(account, month_key):
     return to_float(override["override_amount"]) if override is not None else None
 
 
+def projected_personal_contribution(account, month_key):
+    """Personal contribution planned for a projected month before wrappers add uplifts."""
+    override = contribution_override_for_month(account, month_key) if month_key else None
+    if override is not None:
+        return override
+    return to_float(_safe_get(account, "monthly_contribution", 0))
+
+
+def _tax_year_start_for_month_key(month_key, assumptions=None):
+    """Return the UK tax-year start year for a projected contribution month."""
+    try:
+        year_text, month_text = str(month_key).split("-")
+        year = int(year_text)
+        month = int(month_text)
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+    salary_day = 0
+    try:
+        salary_day = int(_safe_get(assumptions, "salary_day", 0) or 0)
+    except (TypeError, ValueError):
+        salary_day = 0
+
+    if month > 4:
+        return year
+    if month < 4:
+        return year - 1
+    return year if salary_day >= 6 else year - 1
+
+
+def _lisa_projected_prior_personal_in_tax_year(account, assumptions, month_index):
+    start_month = _safe_get(account, "_projection_start_month")
+    if not start_month or month_index <= 0:
+        return 0.0
+
+    month_key = add_months_to_key(start_month, month_index)
+    tax_year_start = _tax_year_start_for_month_key(month_key, assumptions)
+    if tax_year_start is None:
+        return 0.0
+
+    total = 0.0
+    for idx in range(month_index):
+        prior_key = add_months_to_key(start_month, idx)
+        if _tax_year_start_for_month_key(prior_key, assumptions) == tax_year_start:
+            total += projected_personal_contribution(account, prior_key)
+    return total
+
+
+def projected_contribution_breakdown(account, assumptions=None, month_index=0):
+    """Projected contribution breakdown for one month, including overrides.
+
+    This keeps one-off Lifetime ISA temporary plans as real one-off payments:
+    a £4,000 projected month earns a £1,000 Lifetime ISA bonus in that month,
+    rather than being treated as a £4,000/month annualised contribution.
+    """
+    start_month = _safe_get(account, "_projection_start_month")
+    month_key = add_months_to_key(start_month, month_index) if start_month else None
+    override = contribution_override_for_month(account, month_key) if month_key else None
+    adjusted = dict(account)
+    if override is not None:
+        adjusted["monthly_contribution"] = override
+
+    breakdown = contribution_breakdown(adjusted, assumptions)
+    wrapper = (_safe_get(account, "wrapper_type") or "")
+    is_lisa = "Lifetime" in wrapper or "LISA" in wrapper
+    if not is_lisa:
+        return breakdown
+
+    if current_age_from_assumptions(assumptions) + month_index / 12.0 >= 50:
+        breakdown["personal"] = 0.0
+        breakdown["government_bonus"] = 0.0
+        breakdown["total_into_pot"] = 0.0
+        breakdown["method_label"] = "Lifetime ISA contributions stop at age 50"
+        return breakdown
+
+    personal = projected_personal_contribution(account, month_key) if month_key else to_float(adjusted.get("monthly_contribution", 0))
+    prior_personal = _lisa_projected_prior_personal_in_tax_year(account, assumptions, month_index)
+    eligible = max(min(personal, LISA_ANNUAL_CAP - prior_personal), 0.0)
+    government_bonus = eligible * LISA_BONUS_RATE
+    contribution_fee_pct = to_float(_safe_get(account, "contribution_fee_pct", 0))
+    gross_into_pot = personal + government_bonus + to_float(_safe_get(account, "employer_contribution", 0))
+    contribution_fee = gross_into_pot * (contribution_fee_pct / 100.0)
+
+    breakdown["personal"] = personal
+    breakdown["tax_relief"] = 0.0
+    breakdown["government_bonus"] = government_bonus
+    breakdown["contribution_fee"] = contribution_fee
+    breakdown["total_into_pot"] = gross_into_pot - contribution_fee
+    breakdown["method_label"] = "Lifetime ISA bonus (25%)"
+    return breakdown
+
+
 def projection_monthly_contribution(account, assumptions=None, month_index=0):
     """Effective contribution for a projected month, including overrides.
 
@@ -272,15 +364,7 @@ def projection_monthly_contribution(account, assumptions=None, month_index=0):
     months, then the normal account rules add tax relief, LISA bonus, employer
     contribution, and contribution fees.
     """
-    start_month = _safe_get(account, "_projection_start_month")
-    month_key = add_months_to_key(start_month, month_index) if start_month else None
-    override = contribution_override_for_month(account, month_key) if month_key else None
-    if override is None:
-        return effective_monthly_contribution(account, assumptions)
-
-    adjusted = dict(account)
-    adjusted["monthly_contribution"] = override
-    return effective_monthly_contribution(adjusted, assumptions)
+    return projected_contribution_breakdown(account, assumptions, month_index)["total_into_pot"]
 
 
 def effective_monthly_contribution(account, assumptions=None):

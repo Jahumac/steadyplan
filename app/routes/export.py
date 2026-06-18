@@ -26,6 +26,7 @@ from app.calculations import (
     effective_fee_pct,
     future_value,
     is_pension_account,
+    projected_contribution_breakdown,
     projected_account_value,
     projected_account_value_at_year,
     projected_account_value_at_month,
@@ -34,6 +35,7 @@ from app.calculations import (
     projected_account_value_no_fees,
     projection_monthly_contribution,
     projection_start_month_key,
+    month_key_to_index,
     projected_total_retirement_value,
     to_float,
     uk_tax_year_end,
@@ -304,7 +306,16 @@ def export_projections():
         for override in acc.get("_contribution_overrides", []) or []:
             adjusted = dict(acc)
             adjusted["monthly_contribution"] = override["override_amount"]
-            b = contribution_breakdown(adjusted, assumptions)
+            override_month_index = None
+            if start_month:
+                start_idx = month_key_to_index(start_month)
+                override_idx = month_key_to_index(override["from_month"])
+                if start_idx is not None and override_idx is not None:
+                    override_month_index = override_idx - start_idx
+            if override_month_index is not None and override_month_index >= 0:
+                b = projected_contribution_breakdown(acc, assumptions, override_month_index)
+            else:
+                b = contribution_breakdown(adjusted, assumptions)
             _data_row(ws_sched, sched_row, [
                 acc["name"], acc.get("wrapper_type") or "", override["from_month"], _display_schedule_to_month(override["to_month"]),
                 b["personal"], b["total_into_pot"], _safe_get(override, "reason") or "Override",
@@ -389,7 +400,7 @@ def export_projections():
         acc_projected = projected_account_value(acc, assumptions)
         acc_projected_no_fees = projected_account_value_no_fees(acc, assumptions)
         acc_fee_impact = acc_projected_no_fees - acc_projected
-        acc_breakdown = contribution_breakdown(contribution_account, assumptions)
+        acc_breakdown = projected_contribution_breakdown(acc, assumptions, 0)
         acc_total_months_for_fees = int(exact_years * 12)
         has_annual_fees = acc_fee_pct > 0
         has_contrib_fee = acc_contribution_fee_pct > 0
@@ -399,12 +410,7 @@ def export_projections():
         is_pb = is_premium_bonds_account(acc)
 
         def _month_breakdown(month_index):
-            mk = add_months_to_key(start_month, month_index) if start_month else None
-            override = contribution_override_for_month(acc, mk) if mk else None
-            ca = dict(acc)
-            if override is not None:
-                ca["monthly_contribution"] = override
-            return contribution_breakdown(ca, assumptions)
+            return projected_contribution_breakdown(acc, assumptions, month_index)
 
         first_contrib_fee_monthly = 0.0
         acc_total_contrib_fees = 0.0
