@@ -45,9 +45,9 @@
       <h3>Planned allowances in this calendar range</h3>
     </div>
   </div>
-  <p class="helper-text">This uses the current From/To calendar range: calendar overrides first, then each account’s normal monthly contribution. If a temporary plan continues beyond the current From/To range, later months are not counted here until you extend the calendar. ISA total planned includes Cash ISA, Stocks &amp; Shares ISA, and Lifetime ISA together against the shared £20,000 ISA frame. Pension/SIPP uses the same gross-into-pot allowance logic as the Allowance page, including Workplace Pension employer contributions, tax relief, MPAA, and carry-forward.</p>
+  <p class="helper-text">This uses the current From/To calendar range: calendar overrides first, then each account’s normal monthly contribution. If a temporary plan continues beyond the current From/To range, later months are not counted here until you extend the calendar. ISA total planned includes Cash ISA, Stocks &amp; Shares ISA, and Lifetime ISA together against the shared £20,000 ISA frame. Pension/SIPP uses the same gross-into-pot allowance logic as the Allowance page, including Workplace Pension employer contributions and tax relief. Premium Bonds shows your current holding against the NS&amp;I £50,000 cap.</p>
   <div class="table-scroll mt-05">
-    <table class="mini-table">
+    <table class="mini-table allowance-frame-table">
       <thead>
         <tr>
           <th>Tax year</th>
@@ -55,30 +55,29 @@
           <th class="text-right">Cash ISA</th>
           <th class="text-right">Stocks &amp; Shares ISA</th>
           <th class="text-right">Lifetime ISA</th>
+          <th class="text-right">Premium Bonds</th>
           <th class="text-right">Pension/SIPP gross</th>
-          <th>Status</th>
         </tr>
       </thead>
       <tbody>
         {% for row in allowance_frame %}
         <tr>
           <td>{{ row.tax_year }}</td>
-          <td class="text-right">£{{ '{:,.0f}'.format(row.isa_planned) }} / £{{ '{:,.0f}'.format(row.isa_allowance) }}</td>
+          <td class="text-right">
+            <div>£{{ '{:,.0f}'.format(row.isa_planned) }} / £{{ '{:,.0f}'.format(row.isa_allowance) }}</div>
+            {% if row.isa_over %}<div class="helper-text allowance-frame-overage">ISA over by £{{ '{:,.0f}'.format(row.isa_over) }}</div>{% endif %}
+          </td>
           <td class="text-right">£{{ '{:,.0f}'.format(row.cash_isa_planned) }}</td>
           <td class="text-right">£{{ '{:,.0f}'.format(row.stocks_and_shares_isa_planned) }}</td>
-          <td class="text-right">£{{ '{:,.0f}'.format(row.lisa_planned) }} / £{{ '{:,.0f}'.format(row.lisa_allowance) }}</td>
           <td class="text-right">
-            £{{ '{:,.0f}'.format(row.pension_planned) }} / £{{ '{:,.0f}'.format(row.pension_allowance) }}
-            <div class="helper-text">Personal relief limit £{{ '{:,.0f}'.format(row.pension_personal_relief_limit) }}{% if row.pension_carry_forward_total %} · carry-forward £{{ '{:,.0f}'.format(row.pension_carry_forward_total) }}{% endif %}{% if row.pension_mpaa_enabled %} · MPAA active{% endif %}</div>
+            <div>£{{ '{:,.0f}'.format(row.lisa_planned) }} / £{{ '{:,.0f}'.format(row.lisa_allowance) }}</div>
+            {% if row.lisa_over %}<div class="helper-text allowance-frame-overage">Lifetime ISA over by £{{ '{:,.0f}'.format(row.lisa_over) }}</div>{% endif %}
           </td>
-          <td>
-            {% if row.has_warning %}
-              {% if row.isa_over %}<span class="badge badge-warning">ISA over by £{{ '{:,.0f}'.format(row.isa_over) }}</span>{% endif %}
-              {% if row.lisa_over %}<span class="badge badge-warning">Lifetime ISA over by £{{ '{:,.0f}'.format(row.lisa_over) }}</span>{% endif %}
-              {% if row.pension_over %}<span class="badge badge-warning">Pension over by £{{ '{:,.0f}'.format(row.pension_over) }}</span>{% endif %}
-            {% else %}
-              <span class="badge badge-meta">Within tracked allowances</span>
-            {% endif %}
+          <td class="text-right">£{{ '{:,.0f}'.format(row.premium_bonds_holding) }} / £{{ '{:,.0f}'.format(row.premium_bonds_cap) }}</td>
+          <td class="text-right allowance-frame-cell-pension">
+            <div>£{{ '{:,.0f}'.format(row.pension_planned) }} / £{{ '{:,.0f}'.format(row.pension_allowance) }}</div>
+            <div class="helper-text allowance-frame-pension-note">Personal tax-relief cap £{{ '{:,.0f}'.format(row.pension_personal_tax_relief_cap) }} based on salary · Annual allowance £{{ '{:,.0f}'.format(row.pension_allowance) }}{% if row.pension_carry_forward_total %} · includes £{{ '{:,.0f}'.format(row.pension_carry_forward_total) }} carry-forward{% endif %}{% if row.pension_mpaa_enabled %} · MPAA active{% endif %}</div>
+            {% if row.pension_over %}<div class="helper-text allowance-frame-overage">Pension over by £{{ '{:,.0f}'.format(row.pension_over) }}</div>{% endif %}
           </td>
         </tr>
         {% endfor %}
