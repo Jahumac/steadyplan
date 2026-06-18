@@ -124,6 +124,16 @@ def _is_isa_account(account):
     return "isa" in wrapper or "lisa" in wrapper
 
 
+def _is_cash_isa_account(account):
+    wrapper = (account.get("wrapper_type") or "").lower()
+    return "cash isa" in wrapper
+
+
+def _is_stocks_and_shares_isa_account(account):
+    wrapper = (account.get("wrapper_type") or "").lower()
+    return "stocks" in wrapper and "isa" in wrapper
+
+
 def _is_premium_bonds_account(account):
     text = " ".join([
         str(account.get("name") or ""),
@@ -147,12 +157,11 @@ def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_for
         row = by_tax_year.setdefault(tax_year, {
             "tax_year": tax_year,
             "isa_planned": 0.0,
+            "cash_isa_planned": 0.0,
+            "stocks_and_shares_isa_planned": 0.0,
             "lisa_planned": 0.0,
             "pension_planned": 0.0,
-            "premium_bonds_planned": 0.0,
-            "visible_month_keys": [],
         })
-        row["visible_month_keys"].append(month_key)
         for account in calendar.get("accounts", []):
             cell = next((c for c in account.get("months", []) if c.get("month_key") == month_key), None)
             if not cell:
@@ -163,6 +172,12 @@ def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_for
             if _is_lifetime_isa_account(account):
                 row["isa_planned"] += amount
                 row["lisa_planned"] += amount
+            elif _is_cash_isa_account(account):
+                row["isa_planned"] += amount
+                row["cash_isa_planned"] += amount
+            elif _is_stocks_and_shares_isa_account(account):
+                row["isa_planned"] += amount
+                row["stocks_and_shares_isa_planned"] += amount
             elif _is_isa_account(account):
                 row["isa_planned"] += amount
             elif is_pension_account(account):
@@ -171,19 +186,9 @@ def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_for
                 row["pension_planned"] += float(
                     contribution_breakdown(adjusted, assumptions).get("total_into_pot") or 0.0
                 )
-            elif _is_premium_bonds_account(account):
-                row["premium_bonds_planned"] += amount
 
     rows = []
     for row in by_tax_year.values():
-        visible_month_keys = row.get("visible_month_keys") or []
-        row["visible_month_count"] = len(visible_month_keys)
-        if visible_month_keys:
-            start_label = datetime.strptime(visible_month_keys[0], "%Y-%m").strftime("%b %Y")
-            end_label = datetime.strptime(visible_month_keys[-1], "%Y-%m").strftime("%b %Y")
-            row["visible_month_label"] = f"{start_label} → {end_label}"
-        else:
-            row["visible_month_label"] = ""
         row["isa_allowance"] = isa_allowance
         row["lisa_allowance"] = lisa_allowance
         row["pension_allowance"] = pension_allowance
