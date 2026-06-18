@@ -269,52 +269,53 @@
     </div>
   </div>
   {% if calendar.accounts %}
-  <div class="table-scroll">
-    <table class="data-table contrib-table">
-      <thead>
-        <tr>
-          <th>Account</th>
-          {% for month in month_columns %}
-          <th>{{ month.label }}</th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for account in calendar.accounts %}
-        <tr>
-          <td>
-            <strong>{{ account.name }}</strong>
-            <div class="helper-text">{{ account.wrapper_type or 'Other' }}</div>
-            <div class="helper-text">Default £{{ '{:,.2f}'.format(account.monthly_contribution) }}</div>
-          </td>
-          {% for cell in account.months %}
-          <td>
-            <div><span class="badge badge-meta badge-sm">Default</span> £{{ '{:,.2f}'.format(cell.default_amount) }}</div>
-            {% if cell.has_override %}
-            <div><span class="badge badge-sm {% if cell.is_temporary %}badge-primary-action{% else %}badge-meta{% endif %}">Override</span> £{{ '{:,.2f}'.format(cell.override_amount) }}</div>
-            <div class="helper-text">
-              {{ cell.source_label }}
-              {% if cell.plan_name %}
-                · {{ cell.plan_name }}
-              {% elif cell.reason %}
-                · {{ cell.reason }}
+  <p class="helper-text">Month-by-month view. Move your mouse over this calendar, or touch it on mobile, then scroll down through the months.</p>
+  <div class="contribution-calendar-scroll" tabindex="0" aria-label="Default vs temporary override calendar, vertically scrollable">
+    <div class="contribution-calendar-stack">
+      {% for month in month_columns %}
+      {% set month_loop = loop.index0 %}
+      <article class="contribution-month-card">
+        <div class="contribution-month-card-head">
+          <h4>{{ month.label }}</h4>
+          <span class="badge badge-meta">{{ month.key }}</span>
+        </div>
+        <div class="contribution-month-account-list">
+          {% for account in calendar.accounts %}
+          {% set cell = account.months[month_loop] %}
+          <div class="contribution-month-account-row{% if cell.has_override %} has-override{% endif %}{% if cell.overlap %} has-overlap{% endif %}">
+            <div class="contribution-month-account-main">
+              <strong>{{ account.name }}</strong>
+              <span>{{ account.wrapper_type or 'Other' }}</span>
+            </div>
+            <div class="contribution-month-amounts">
+              <span><span class="badge badge-meta badge-sm">Default</span> £{{ '{:,.2f}'.format(cell.default_amount) }}</span>
+              {% if cell.has_override %}
+              <span><span class="badge badge-sm {% if cell.is_temporary %}badge-primary-action{% else %}badge-meta{% endif %}">Override</span> £{{ '{:,.2f}'.format(cell.override_amount) }}</span>
+              {% else %}
+              <span class="helper-text">Using default</span>
               {% endif %}
             </div>
-            {% else %}
-            <div class="helper-text">Using default</div>
-            {% endif %}
-            {% if cell.overlap %}
-            <div class="mt-05">
-              <span class="badge badge-warning badge-sm">Overlap</span>
-              <span class="helper-text">{{ cell.active_override_count }} active rules</span>
+            <div class="contribution-month-source">
+              {% if cell.has_override %}
+              <span class="helper-text">
+                {{ cell.source_label }}
+                {% if cell.plan_name %}
+                  · {{ cell.plan_name }}
+                {% elif cell.reason %}
+                  · {{ cell.reason }}
+                {% endif %}
+              </span>
+              {% endif %}
+              {% if cell.overlap %}
+              <span class="badge badge-warning badge-sm">Overlap · {{ cell.active_override_count }} active rules</span>
+              {% endif %}
             </div>
-            {% endif %}
-          </td>
+          </div>
           {% endfor %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
   </div>
   {% else %}
   <p class="helper-text">No eligible contribution accounts are active yet.</p>
