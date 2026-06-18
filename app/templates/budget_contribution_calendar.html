@@ -46,6 +46,61 @@
 <section class="panel mb-1">
   <div class="section-header">
     <div>
+      <p class="eyebrow">Fast setup</p>
+      <h3>Yearly pot-fill pattern</h3>
+    </div>
+  </div>
+  <p class="helper-text">Use this for things like Lifetime ISA: “put £1,000 in for 4 months every year”. It creates one yearly block per year, instead of making you type every month by hand.</p>
+  <form method="post" class="settings-form contribution-calendar-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="form_name" value="create_annual_pot_fill_plan">
+    <input type="hidden" name="from_month" value="{{ from_month }}">
+    <input type="hidden" name="to_month" value="{{ to_month }}">
+    <div class="form-grid mb-1">
+      <label>
+        Plan name / reason
+        <input type="text" name="plan_name" value="Yearly LISA fill" required>
+      </label>
+      <label>
+        Account
+        <select name="pattern_account_id" required>
+          <option value="">Choose account…</option>
+          {% for account in calendar.accounts %}
+          <option value="{{ account.id }}">{{ account.name }}{% if account.wrapper_type %} · {{ account.wrapper_type }}{% endif %}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        First start month
+        <input type="month" name="pattern_start_month" value="{{ from_month }}" required>
+      </label>
+      <label>
+        Monthly amount
+        <input type="number" step="0.01" min="0" name="pattern_monthly_amount" value="1000" required>
+      </label>
+      <label>
+        Optional month-by-month amounts
+        <input type="text" name="pattern_monthly_amounts" placeholder="e.g. 1500, 1500, 1000">
+      </label>
+      <label>
+        Months each year
+        <input type="number" step="1" min="1" max="12" name="pattern_months_per_year" value="4" required>
+      </label>
+      <label>
+        Number of years
+        <input type="number" step="1" min="1" max="10" name="pattern_years" value="2" required>
+      </label>
+    </div>
+    <div class="badge-row">
+      <button type="submit" class="badge badge-primary-action">Create yearly pattern</button>
+      <span class="helper-text">Example: £1,000 × 4 months each year fills a £4,000 LISA allowance. For an uneven run, enter comma amounts like 1500, 1500, 1000.</span>
+    </div>
+  </form>
+</section>
+
+<section class="panel mb-1">
+  <div class="section-header">
+    <div>
       <p class="eyebrow">Create plan</p>
       <h3>Temporary contribution plan</h3>
     </div>
