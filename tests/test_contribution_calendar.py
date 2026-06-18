@@ -393,8 +393,6 @@ def test_contribution_calendar_allowance_frame_uses_same_pension_gross_logic_as_
     assert frame[0]["pension_allowance"] == 65000.0
     assert frame[0]["pension_personal_relief_limit"] == 40000.0
     assert frame[0]["pension_carry_forward_total"] == 5000.0
-    assert frame[0]["visible_month_count"] == 2
-    assert frame[0]["visible_month_label"] == "Apr 2026 → May 2026"
 
 
 def test_contribution_calendar_shows_isa_allowance_frame_for_planned_months(app, client, make_user):
@@ -409,6 +407,13 @@ def test_contribution_calendar_shows_isa_allowance_frame_for_planned_months(app,
                 "UPDATE assumptions SET isa_allowance = 20000, lisa_allowance = 4000, pension_annual_allowance = 60000 WHERE user_id = ?",
                 (uid,),
             )
+            cash_isa_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, category, monthly_contribution, current_value, valuation_mode, is_active)
+                VALUES (?, 'Cash ISA', 'Cash ISA', 'Cash', 300, 0, 'manual', 1)
+                """,
+                (uid,),
+            ).lastrowid
             s_and_s_id = conn.execute(
                 """
                 INSERT INTO accounts (user_id, name, wrapper_type, category, monthly_contribution, current_value, valuation_mode, is_active)
@@ -454,17 +459,23 @@ def test_contribution_calendar_shows_isa_allowance_frame_for_planned_months(app,
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "Allowance frame" in html
-    assert "ISA over by £2,000" in html
-    assert "£22,000 / £20,000" in html
+    assert "ISA total planned" in html
+    assert "Cash ISA" in html
+    assert "Stocks &amp; Shares ISA" in html
+    assert "Lifetime ISA" in html
+    assert "Pension/SIPP gross" in html
+    assert "Visible months" not in html
+    assert "<th class=\"text-right\">Premium Bonds</th>" not in html
+    assert "Premium Bonds are shown for planning visibility only" not in html
+    assert "ISA over by £5,600" in html
+    assert "£25,600 / £20,000" in html
+    assert "£3,600" in html
+    assert "£18,000" in html
     assert "£4,000 / £4,000" in html
     assert "£3,000 / £60,000" in html
-    assert "Pension/SIPP gross" in html
     assert "Personal relief limit" in html
     assert "Workplace Pension employer contributions" in html
-    assert "Visible months" in html
-    assert "Apr 2027 → Mar 2028 (12 months shown)" in html
-    assert "Premium Bonds are shown for planning visibility only" in html
-    assert "Premium Bonds" in html
+    assert cash_isa_id
     assert s_and_s_id
 
 
@@ -505,8 +516,9 @@ def test_contribution_calendar_allowance_frame_explains_partial_next_tax_year_ra
     html = resp.get_data(as_text=True)
     assert "£4,000 / £4,000" in html
     assert "£2,000 / £4,000" in html
-    assert "Jun 2026 → Mar 2027 (10 months shown)" in html
-    assert "Apr 2027 → May 2027 (2 months shown)" in html
+    assert "Visible months" not in html
+    assert "Jun 2026 → Mar 2027 (10 months shown)" not in html
+    assert "Apr 2027 → May 2027 (2 months shown)" not in html
     assert "If a temporary plan continues beyond the current From/To range" in html
 
 
@@ -629,8 +641,10 @@ def test_contribution_calendar_page_loads(app, client, make_user, monkeypatch):
     assert "2026-04" in html
     assert "2028-03" in html
     assert "24 months" in html
-    assert "Apr 2026 → Mar 2027 (12 months shown)" in html
-    assert "Apr 2027 → Mar 2028 (12 months shown)" in html
+    assert "ISA total planned" in html
+    assert "Cash ISA" in html
+    assert "Stocks &amp; Shares ISA" in html
+    assert "Lifetime ISA" in html
     assert 'data-label="Temporary amount"' in html
     assert "contribution-calendar-details" in html
     assert "Show month-by-month calendar" in html
