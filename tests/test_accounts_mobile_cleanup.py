@@ -1,6 +1,6 @@
 from datetime import date
 
-from app.models import create_account, get_connection
+from app.models import create_account, create_temporary_contribution_plan, get_connection
 
 
 from tests.path_helpers import STATIC_ROOT
@@ -73,6 +73,42 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     grid_idx = html.index('class="acct-grid"')
 
     assert hero_idx < add_idx < grid_idx
+
+
+def test_accounts_page_uses_current_month_contribution_calendar_plan(app, client, make_user):
+    uid, username, password = make_user(username="accounts-calendar-plan", password="password123")
+
+    with app.app_context():
+        lisa_payload = _account_payload()
+        lisa_payload["name"] = "Lifetime ISA"
+        lisa_payload["wrapper_type"] = "Lifetime ISA"
+        lisa_payload["monthly_contribution"] = 0
+        lisa_id = create_account(lisa_payload, uid)
+        current_month = date.today().strftime("%Y-%m")
+        create_temporary_contribution_plan(
+            uid,
+            "LISA lump sum",
+            [{
+                "account_id": lisa_id,
+                "from_month": current_month,
+                "to_month": current_month,
+                "override_amount": 4000,
+            }],
+        )
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/accounts/")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "This month’s account plan" in html
+    assert "Contribution calendar overrides are included here" in html
+    assert "Lifetime ISA" in html
+    assert "£4,000" in html
+    assert "£5,000" in html
+    assert "contribution calendar" in html
+    assert "You pay monthly £0" not in html
+
 
 
 def test_accounts_page_uses_plan_line_copy_for_account_comparison(app, client, make_user):

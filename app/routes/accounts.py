@@ -7,6 +7,7 @@ from flask_login import current_user, login_required
 from app.calculations import (
     ISA_WRAPPER_TYPES,
     contribution_breakdown,
+    projected_contribution_breakdown,
     effective_account_value,
     effective_monthly_contribution,
     is_pension_account,
@@ -37,6 +38,7 @@ from app.models import (
     update_broker_connection_status,
     fetch_catalogue_with_prices,
     fetch_contribution_overrides,
+    fetch_all_active_overrides,
     fetch_cash_flow_events_for_account,
     add_cash_flow_event,
     delete_cash_flow_event,
@@ -421,13 +423,34 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
             linked_trading212_connection,
             effective_values.get(int(selected["id"]), 0),
         )
-    contrib_breakdowns = {row["id"]: contribution_breakdown(row, assumptions) for row in rows}
-
-    # Tax-year logged contributions per account: sum of isa/pension contributions
-    # logged against each account this UK tax year. Empty for taxable (GIA) accounts.
     today = date.today()
     next_url = _safe_next_accounts(request.args.get("next"))
     budget_context_month_key = _monthly_review_month_from_next(next_url) or today.strftime("%Y-%m")
+    active_account_overrides = fetch_all_active_overrides(budget_context_month_key, user_id)
+    contrib_breakdowns = {}
+    contribution_sources = {}
+    for row in rows:
+        account_id = int(row["id"])
+        plan_account = dict(row)
+        plan_account["_projection_start_month"] = budget_context_month_key
+        plan_account["_contribution_overrides"] = fetch_contribution_overrides(account_id)
+        contrib_breakdowns[account_id] = projected_contribution_breakdown(plan_account, assumptions, 0)
+        override = active_account_overrides.get(account_id)
+        if override is not None:
+            contribution_sources[account_id] = {
+                "label": "contribution calendar",
+                "title": f"Using Contribution calendar plan for {budget_context_month_key}: {override['reason'] or 'override'}",
+                "reason": override["reason"] or "Override",
+            }
+        else:
+            contribution_sources[account_id] = {
+                "label": "account setting",
+                "title": "Using this account's regular monthly contribution setting",
+                "reason": "Account setting",
+            }
+
+    # Tax-year logged contributions per account: sum of isa/pension contributions
+    # logged against each account this UK tax year. Empty for taxable (GIA) accounts.
     monthly_update_return_href = (
         next_url
         if next_url and next_url.startswith("/monthly-review")
@@ -761,6 +784,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         ),
         total_into_pot_monthly=sum(float(b.get("total_into_pot", 0) or 0) for b in contrib_breakdowns.values()),
         contrib_breakdowns=contrib_breakdowns,
+        contribution_sources=contribution_sources,
         account_create_href=account_create_href,
         active_page="accounts",
         wrapper_type_options=_wrapper_type_options_for(selected),

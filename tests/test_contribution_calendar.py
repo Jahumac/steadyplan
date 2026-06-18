@@ -315,6 +315,7 @@ def test_budget_route_uses_active_override_for_linked_account_month(app, client,
     html = resp.get_data(as_text=True)
     assert "Calendar ISA" in html
     assert 'value="812.34"' in html
+    assert "contribution calendar" in html
 
 
 def test_contribution_calendar_page_loads(app, client, make_user):
