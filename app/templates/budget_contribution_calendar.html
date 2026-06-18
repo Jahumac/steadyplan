@@ -274,54 +274,63 @@
     </div>
   </div>
   {% if calendar.accounts %}
-  <p class="helper-text">Month-by-month view. Move your mouse over this calendar, or touch it on mobile, then scroll down through the months.</p>
-  <div class="contribution-calendar-scroll" tabindex="0" aria-label="Default vs temporary override calendar, vertically scrollable">
-    <div class="contribution-calendar-stack">
-      {% for month in month_columns %}
-      {% set month_loop = loop.index0 %}
-      <article class="contribution-month-card">
-        <div class="contribution-month-card-head">
-          <h4>{{ month.label }}</h4>
-          <span class="badge badge-meta">{{ month.key }}</span>
-        </div>
-        <div class="contribution-month-account-list">
-          {% for account in calendar.accounts %}
-          {% set cell = account.months[month_loop] %}
-          <div class="contribution-month-account-row{% if cell.has_override %} has-override{% endif %}{% if cell.overlap %} has-overlap{% endif %}">
-            <div class="contribution-month-account-main">
-              <strong>{{ account.name }}</strong>
-              <span>{{ account.wrapper_type or 'Other' }}</span>
-            </div>
-            <div class="contribution-month-amounts">
-              <span><span class="badge badge-meta badge-sm">Default</span> £{{ '{:,.2f}'.format(cell.default_amount) }}</span>
-              {% if cell.has_override %}
-              <span><span class="badge badge-sm {% if cell.is_temporary %}badge-primary-action{% else %}badge-meta{% endif %}">Override</span> £{{ '{:,.2f}'.format(cell.override_amount) }}</span>
-              {% else %}
-              <span class="helper-text">Using default</span>
-              {% endif %}
-            </div>
-            <div class="contribution-month-source">
-              {% if cell.has_override %}
-              <span class="helper-text">
-                {{ cell.source_label }}
-                {% if cell.plan_name %}
-                  · {{ cell.plan_name }}
-                {% elif cell.reason %}
-                  · {{ cell.reason }}
-                {% endif %}
-              </span>
-              {% endif %}
-              {% if cell.overlap %}
-              <span class="badge badge-warning badge-sm">Overlap · {{ cell.active_override_count }} active rules</span>
-              {% endif %}
-            </div>
+  <details class="contribution-calendar-details">
+    <summary class="contribution-calendar-summary">
+      <span>
+        <strong>Show month-by-month calendar</strong>
+        <span class="helper-text">Open only when you want to inspect month-by-month defaults and overrides.</span>
+      </span>
+      <span class="badge badge-meta">{{ month_columns|length }} months</span>
+    </summary>
+    <p class="helper-text">Month-by-month view. Move your mouse over this calendar, or touch it on mobile, then scroll down through the months.</p>
+    <div class="contribution-calendar-scroll" tabindex="0" aria-label="Default vs temporary override calendar, vertically scrollable">
+      <div class="contribution-calendar-stack">
+        {% for month in month_columns %}
+        {% set month_loop = loop.index0 %}
+        <article class="contribution-month-card">
+          <div class="contribution-month-card-head">
+            <h4>{{ month.label }}</h4>
+            <span class="badge badge-meta">{{ month.key }}</span>
           </div>
-          {% endfor %}
-        </div>
-      </article>
-      {% endfor %}
+          <div class="contribution-month-account-list">
+            {% for account in calendar.accounts %}
+            {% set cell = account.months[month_loop] %}
+            <div class="contribution-month-account-row{% if cell.has_override %} has-override{% endif %}{% if cell.overlap %} has-overlap{% endif %}">
+              <div class="contribution-month-account-main">
+                <strong>{{ account.name }}</strong>
+                <span>{{ account.wrapper_type or 'Other' }}</span>
+              </div>
+              <div class="contribution-month-amounts">
+                <span><span class="badge badge-meta badge-sm">Default</span> £{{ '{:,.2f}'.format(cell.default_amount) }}</span>
+                {% if cell.has_override %}
+                <span><span class="badge badge-sm {% if cell.is_temporary %}badge-primary-action{% else %}badge-meta{% endif %}">Override</span> £{{ '{:,.2f}'.format(cell.override_amount) }}</span>
+                {% else %}
+                <span class="helper-text">Using default</span>
+                {% endif %}
+              </div>
+              <div class="contribution-month-source">
+                {% if cell.has_override %}
+                <span class="helper-text">
+                  {{ cell.source_label }}
+                  {% if cell.plan_name %}
+                    · {{ cell.plan_name }}
+                  {% elif cell.reason %}
+                    · {{ cell.reason }}
+                  {% endif %}
+                </span>
+                {% endif %}
+                {% if cell.overlap %}
+                <span class="badge badge-warning badge-sm">Overlap · {{ cell.active_override_count }} active rules</span>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
     </div>
-  </div>
+  </details>
   {% else %}
   <p class="helper-text">No eligible contribution accounts are active yet.</p>
   {% endif %}
