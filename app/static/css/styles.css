@@ -3441,6 +3441,40 @@ button.button-danger:focus {
   min-width: 8.5rem;
 }
 
+.contribution-calendar-details {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.28);
+  padding: 0.35rem 0.75rem 0.75rem;
+}
+
+.contribution-calendar-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  cursor: pointer;
+  list-style: none;
+  padding: 0.45rem 0;
+}
+
+.contribution-calendar-summary::-webkit-details-marker {
+  display: none;
+}
+
+.contribution-calendar-summary > span:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.contribution-calendar-summary strong {
+  color: var(--text-white);
+}
+
+.contribution-calendar-details[open] .contribution-calendar-summary {
+  margin-bottom: 0.55rem;
+}
+
 .contribution-calendar-scroll {
   max-height: min(72vh, 46rem);
   overflow-y: auto;
@@ -3565,6 +3599,15 @@ button.button-danger:focus {
 }
 
 @media (max-width: 640px) {
+  .contribution-calendar-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .contribution-calendar-summary .badge {
+    width: fit-content;
+  }
+
   .contribution-calendar-hero .hero-value {
     font-size: clamp(1.85rem, 10vw, 2.4rem);
     line-height: 1.05;

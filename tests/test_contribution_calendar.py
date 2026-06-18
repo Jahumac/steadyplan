@@ -597,9 +597,14 @@ def test_contribution_calendar_page_loads(app, client, make_user):
     assert "contribution-calendar-hero" in html
     assert "settings-form contribution-calendar-form" in html
     assert 'data-label="Temporary amount"' in html
+    assert "contribution-calendar-details" in html
+    assert "Show month-by-month calendar" in html
+    assert "Open only when you want to inspect month-by-month defaults and overrides." in html
     assert "contribution-calendar-scroll" in html
     assert "contribution-month-card" in html
     assert "Default vs temporary override calendar, vertically scrollable" in html
+    assert "<details class=\"contribution-calendar-details\">" in html
+    assert "<details class=\"contribution-calendar-details\" open>" not in html
     assert "contrib-table" not in html
 
 
@@ -611,6 +616,8 @@ def test_contribution_calendar_has_mobile_style_safeguards():
     assert "@media (max-width: 640px)" in css
     assert ".contribution-plan-table td::before" in css
     assert ".contribution-calendar-scroll" in css
+    assert ".contribution-calendar-details" in css
+    assert ".contribution-calendar-summary" in css
     assert "overflow-y: auto;" in css
     assert ".contribution-calendar-scroll:hover::-webkit-scrollbar" in css
     assert ".contribution-month-account-row" in css
