@@ -3441,6 +3441,34 @@ button.button-danger:focus {
   min-width: 8.5rem;
 }
 
+.allowance-frame-table th,
+.allowance-frame-table td {
+  vertical-align: top;
+}
+
+.allowance-frame-table th.text-right,
+.allowance-frame-table td.text-right {
+  text-align: right;
+}
+
+.allowance-frame-pension-note,
+.allowance-frame-overage {
+  margin-top: 0.35rem;
+}
+
+.allowance-frame-pension-note {
+  max-width: 19rem;
+  margin-left: auto;
+}
+
+.allowance-frame-overage {
+  color: #fbbf24;
+}
+
+.allowance-frame-cell-pension {
+  min-width: 15rem;
+}
+
 .contribution-calendar-details {
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 18px;

@@ -47,6 +47,7 @@ from app.models import (
     upsert_single_month_contribution_override,
 )
 from app.models.debts import amortisation_schedule, schedule_anchor
+from app.models.accounts import PREMIUM_BONDS_MAX_BALANCE
 from app.services.import_staging import (
     delete_staged,
     read_staged,
@@ -151,6 +152,11 @@ def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_for
         pension_carry_forward_entries or [],
     )
     pension_allowance = float(pension_limits.get("effective_allowance") or 0.0)
+    premium_bonds_current_holding = sum(
+        float(account.get("current_value") or 0.0)
+        for account in calendar.get("accounts", [])
+        if _is_premium_bonds_account(account)
+    )
     by_tax_year = {}
     for month_key in calendar.get("months", []):
         tax_year = _tax_year_label_for_month(month_key)
@@ -192,7 +198,10 @@ def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_for
         row["isa_allowance"] = isa_allowance
         row["lisa_allowance"] = lisa_allowance
         row["pension_allowance"] = pension_allowance
+        row["premium_bonds_holding"] = premium_bonds_current_holding
+        row["premium_bonds_cap"] = PREMIUM_BONDS_MAX_BALANCE
         row["pension_personal_relief_limit"] = float(pension_limits.get("personal_relief_limit") or 0.0)
+        row["pension_personal_tax_relief_cap"] = min(row["pension_personal_relief_limit"], row["pension_allowance"])
         row["pension_carry_forward_total"] = float(pension_limits.get("carry_forward_total") or 0.0)
         row["pension_mpaa_enabled"] = bool(pension_limits.get("mpaa_enabled"))
         row["isa_remaining"] = isa_allowance - row["isa_planned"]
