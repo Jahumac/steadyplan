@@ -627,6 +627,7 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
             "id": account_id,
             "name": account["name"],
             "wrapper_type": account["wrapper_type"],
+            "category": account["category"],
             "monthly_contribution": default_amount,
             "months": month_cells,
         })
