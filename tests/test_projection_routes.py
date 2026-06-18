@@ -1,3 +1,5 @@
+from datetime import date as real_date
+
 from app.models import (
     create_account,
     create_contribution_override,
@@ -86,6 +88,48 @@ def test_schedule_api_rejects_invalid_rules_without_deleting_existing_schedule(a
         assert remaining[0]["from_month"] == "2028-11"
         assert remaining[0]["to_month"] == "9999-12"
         assert float(remaining[0]["override_amount"]) == 750.0
+
+
+def test_yearly_account_series_uses_the_point_month_not_the_previous_year_for_overrides(app, client, make_user, monkeypatch):
+    from app import calculations
+
+    class FakeDate(real_date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 6, 18)
+
+    monkeypatch.setattr(calculations, "date", FakeDate)
+
+    uid, username, password = make_user(username="proj-series-yearly-lisa", password="password123")
+    with app.app_context():
+        assumptions = dict(fetch_assumptions(uid))
+        assumptions.update({
+            "annual_growth_rate": 0.05,
+            "retirement_age": 60,
+            "date_of_birth": "1982-12-18",
+            "salary_day": 28,
+        })
+        update_assumptions(assumptions, uid)
+        account_id = create_account(_account("Lifetime ISA", "Lifetime ISA", 277, 0), uid)
+        create_contribution_override({
+            "account_id": account_id,
+            "from_month": "2029-04",
+            "to_month": "2029-07",
+            "override_amount": 1000,
+            "reason": "temporary_plan",
+        }, uid)
+
+    _login(client, username, password)
+    resp = client.get(f"/projections/api/account-series?account_id={account_id}&mode=yearly")
+
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["ok"] is True
+
+    age_47 = next(point for point in data["points"] if point["label"] == "Age 47")
+    assert age_47["month_key"] == "2030-06"
+    assert age_47["personal_monthly"] == 0.0
+    assert age_47["into_pot_monthly"] == 0.0
 
 
 def test_schedule_api_replaces_existing_schedule_rules_instead_of_appending(app, client, make_user):

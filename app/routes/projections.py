@@ -230,7 +230,7 @@ def api_account_series():
         for yr in range(0, whole_years + 1):
             val = projected_account_value_at_year(a, assumptions, yr)
             label = "Today" if yr == 0 else f"Age {int(current_age + yr)}"
-            contrib_idx = 0 if yr == 0 else (yr - 1) * 12
+            contrib_idx = yr * 12
             mk = add_months_to_key(start_month, contrib_idx)
             override = contribution_override_for_month(a, mk)
             personal = override if override is not None else to_float(a.get("monthly_contribution", 0))
@@ -246,18 +246,16 @@ def api_account_series():
         if exact_years > whole_years:
             val = projected_account_value(a, assumptions)
             mk = add_months_to_key(start_month, months_total)
-            last_idx = max(months_total - 1, 0)
-            last_mk = add_months_to_key(start_month, last_idx)
-            override = contribution_override_for_month(a, last_mk)
+            override = contribution_override_for_month(a, mk)
             personal = override if override is not None else to_float(a.get("monthly_contribution", 0))
-            applied_personal = 0.0 if (is_lisa and (current_age + last_idx / 12.0) >= 50) else personal
+            applied_personal = 0.0 if (is_lisa and (current_age + months_total / 12.0) >= 50) else personal
             points.append({
                 "label": f"Age {int(retirement_age)}",
                 "value": round(val, 0),
                 "age": round(retirement_age, 2),
                 "month_key": mk,
                 "personal_monthly": round(applied_personal, 2),
-                "into_pot_monthly": round(projection_monthly_contribution(a, assumptions, last_idx), 2) if not (is_lisa and (current_age + last_idx / 12.0) >= 50) else 0.0,
+                "into_pot_monthly": round(projection_monthly_contribution(a, assumptions, months_total), 2) if not (is_lisa and (current_age + months_total / 12.0) >= 50) else 0.0,
             })
     else:
         for idx in range(0, months_total + 1):
