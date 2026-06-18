@@ -3444,11 +3444,11 @@ button.button-danger:focus {
 .allowance-frame-table th,
 .allowance-frame-table td {
   vertical-align: top;
+  text-align: center;
 }
 
-.allowance-frame-table th.text-right,
-.allowance-frame-table td.text-right {
-  text-align: right;
+.allowance-frame-table .text-center {
+  text-align: center;
 }
 
 .allowance-frame-pension-note,
@@ -3457,8 +3457,8 @@ button.button-danger:focus {
 }
 
 .allowance-frame-pension-note {
-  max-width: 19rem;
-  margin-left: auto;
+  max-width: 11rem;
+  margin-inline: auto;
 }
 
 .allowance-frame-overage {
@@ -3466,7 +3466,7 @@ button.button-danger:focus {
 }
 
 .allowance-frame-cell-pension {
-  min-width: 15rem;
+  min-width: 11rem;
 }
 
 .contribution-calendar-details {
