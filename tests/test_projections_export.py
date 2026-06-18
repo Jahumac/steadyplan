@@ -3,6 +3,7 @@ from io import BytesIO
 from openpyxl import load_workbook
 
 from app.models import create_account, create_contribution_override, fetch_assumptions, update_assumptions
+from app.calculations import projection_start_month_key
 
 
 def _account(name, wrapper_type, value=0, monthly=0, **overrides):
@@ -125,6 +126,49 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
     schedule_rows = [tuple(cell.value for cell in row) for row in schedule.iter_rows()]
     assert ("ISA", "Stocks & Shares ISA", "2028-11", "Ongoing", 750, 750, "Future increase") in schedule_rows
     assert ("ISA", "Stocks & Shares ISA", "2028-11", "9999-12", 750, 750, "Future increase") not in schedule_rows
+
+
+def test_lifetime_isa_one_off_override_export_includes_full_bonus(app, client, make_user):
+    uid, username, password = make_user(username="projection-export-lisa-one-off", password="password123")
+    with app.app_context():
+        assumptions = dict(fetch_assumptions(uid))
+        assumptions.update({
+            "annual_growth_rate": 0.0,
+            "retirement_age": 45,
+            "date_of_birth": "1983-05-25",
+            "salary_day": 25,
+        })
+        update_assumptions(assumptions, uid)
+        start_month = projection_start_month_key(assumptions)
+        lisa_id = create_account(_account("Lifetime ISA", "Lifetime ISA", 1000, 0, growth_mode="custom", growth_rate_override=0), uid)
+        create_contribution_override({
+            "account_id": lisa_id,
+            "from_month": start_month,
+            "to_month": start_month,
+            "override_amount": 4000,
+            "reason": "LISA lump sum",
+        }, uid)
+
+    _login(client, username, password)
+    wb = _workbook_from_response(client.get("/projections/export.xlsx"))
+
+    schedule_rows = [tuple(cell.value for cell in row) for row in wb["Contribution Schedule"].iter_rows()]
+    assert ("Lifetime ISA", "Lifetime ISA", start_month, start_month, 4000, 5000, "LISA lump sum") in schedule_rows
+
+    ws = wb["Lifetime ISA"]
+    headers = None
+    header_row = None
+    for idx, row in enumerate(ws.iter_rows(values_only=True), 1):
+        if row[:3] == ("Age", "Year", "Scenario estimate value"):
+            headers = row
+            header_row = idx
+            break
+    assert headers is not None
+    assert header_row is not None
+    you_pay_col = headers.index("You pay (yr)")
+    into_pot_col = headers.index("Into pot (yr)")
+    first_year = next(row for row in ws.iter_rows(min_row=header_row + 1, values_only=True) if row[you_pay_col] == 4000)
+    assert first_year[into_pot_col] == 5000
 
 
 def test_premium_bonds_cap_is_not_reported_as_negative_growth(app, client, make_user):

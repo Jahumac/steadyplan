@@ -240,6 +240,48 @@ def test_projection_override_applies_inside_range_then_default_resumes(app, make
         assert projected_account_value_at_month(account, None, 4) == 1700.0
 
 
+def test_lifetime_isa_one_off_projection_override_gets_full_bonus(app, make_user):
+    uid, _, _ = make_user(username="temp-lisa-one-off", password="password123")
+
+    with app.app_context():
+        from app.calculations import projected_account_value_at_month, projection_monthly_contribution
+        from app.models import create_temporary_contribution_plan, fetch_contribution_overrides, get_connection
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, category, monthly_contribution,
+                    current_value, valuation_mode, growth_mode, growth_rate_override, is_active
+                )
+                VALUES (?, 'Lifetime ISA', 'Lifetime ISA', 'ISA', 0, 1000, 'manual', 'custom', 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+        create_temporary_contribution_plan(
+            uid,
+            "LISA lump sum",
+            [{
+                "account_id": account_id,
+                "from_month": "2027-03",
+                "to_month": "2027-03",
+                "override_amount": 4000,
+            }],
+        )
+
+        with get_connection() as conn:
+            account = dict(
+                conn.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()
+            )
+        account["_projection_start_month"] = "2027-03"
+        account["_contribution_overrides"] = fetch_contribution_overrides(account_id)
+
+        assert projection_monthly_contribution(account, None, 0) == 5000.0
+        assert projected_account_value_at_month(account, None, 1) == 6000.0
+
+
 def test_budget_route_uses_active_override_for_linked_account_month(app, client, make_user):
     uid, username, password = make_user(username="temp-budget-route", password="password123")
     _login(client, username, password)
