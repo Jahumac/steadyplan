@@ -147,11 +147,16 @@ def _is_premium_bonds_account(account):
 def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_forward_entries=None):
     isa_allowance = float(assumptions["isa_allowance"]) if assumptions else 20000.0
     lisa_allowance = float(assumptions["lisa_allowance"]) if assumptions else 4000.0
+    assumptions_map = dict(assumptions) if assumptions else {}
     pension_limits = apply_pension_carry_forward(
-        pension_allowance_limits(dict(assumptions) if assumptions else {}),
+        pension_allowance_limits(assumptions_map),
         pension_carry_forward_entries or [],
     )
     pension_allowance = float(pension_limits.get("effective_allowance") or 0.0)
+    pension_salary_cap = min(
+        float(assumptions_map.get("annual_income") or 0.0),
+        pension_allowance,
+    ) if assumptions_map else 0.0
     premium_bonds_current_holding = sum(
         float(account.get("current_value") or 0.0)
         for account in calendar.get("accounts", [])
@@ -202,6 +207,7 @@ def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_for
         row["premium_bonds_cap"] = PREMIUM_BONDS_MAX_BALANCE
         row["pension_personal_relief_limit"] = float(pension_limits.get("personal_relief_limit") or 0.0)
         row["pension_personal_tax_relief_cap"] = min(row["pension_personal_relief_limit"], row["pension_allowance"])
+        row["pension_display_cap"] = pension_salary_cap or row["pension_personal_tax_relief_cap"] or row["pension_allowance"]
         row["pension_carry_forward_total"] = float(pension_limits.get("carry_forward_total") or 0.0)
         row["pension_mpaa_enabled"] = bool(pension_limits.get("mpaa_enabled"))
         row["isa_remaining"] = isa_allowance - row["isa_planned"]

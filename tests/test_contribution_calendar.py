@@ -400,8 +400,9 @@ def test_contribution_calendar_shows_isa_allowance_frame_for_planned_months(app,
     _login(client, username, password)
 
     with app.app_context():
-        from app.models import create_temporary_contribution_plan, get_connection
+        from app.models import create_temporary_contribution_plan, fetch_assumptions, get_connection
 
+        fetch_assumptions(uid)
         with get_connection() as conn:
             conn.execute(
                 "UPDATE assumptions SET isa_allowance = 20000, lisa_allowance = 4000, pension_annual_allowance = 60000, annual_income = 40000 WHERE user_id = ?",
@@ -468,19 +469,20 @@ def test_contribution_calendar_shows_isa_allowance_frame_for_planned_months(app,
     assert "Status" not in html
     assert "Visible months" not in html
     assert "Within tracked allowances" not in html
-    assert "<th class=\"text-right\">Premium Bonds</th>" in html
+    assert "<th class=\"text-center\">Premium Bonds</th>" in html
+    assert "<th class=\"text-center\">Stocks &amp; Shares ISA</th>" in html
     assert "ISA over by £5,600" in html
     assert "£25,600 / £20,000" in html
     assert "£3,600" in html
     assert "£18,000" in html
     assert "£4,000 / £4,000" in html
     assert "£800 / £50,000" in html
-    assert "£3,000 / £60,000" in html
-    assert "Personal tax-relief cap £" in html
-    assert "based on salary" in html
-    assert "Annual allowance £60,000" in html
+    assert "£3,000 / £40,000" in html
+    assert "Based on salary" in html
+    assert "Annual allowance £60,000" not in html
+    assert "Personal tax-relief cap" not in html
     assert "Personal relief limit" not in html
-    assert "Workplace Pension employer contributions" in html
+    assert "Workplace Pension employer contributions" not in html
     assert cash_isa_id
     assert s_and_s_id
 
@@ -654,6 +656,10 @@ def test_contribution_calendar_page_loads(app, client, make_user, monkeypatch):
     assert "Premium Bonds" in html
     assert "Status" not in html
     assert "allowance-frame-table" in html
+    assert "<th class=\"text-center\">Tax year</th>" in html
+    assert "<th class=\"text-center\">ISA total planned</th>" in html
+    assert 'class="text-center">2026/27<' in html
+    assert "Based on salary" in html
     assert 'data-label="Temporary amount"' in html
     assert "contribution-calendar-details" in html
     assert "Show month-by-month calendar" in html
@@ -674,8 +680,10 @@ def test_contribution_calendar_has_mobile_style_safeguards():
     assert "@media (max-width: 640px)" in css
     assert ".contribution-plan-table td::before" in css
     assert ".allowance-frame-table" in css
-    assert ".allowance-frame-table th.text-right" in css
+    assert "text-align: center;" in css
     assert ".allowance-frame-pension-note" in css
+    assert "max-width: 11rem;" in css
+    assert "min-width: 11rem;" in css
     assert ".allowance-frame-overage" in css
     assert ".contribution-calendar-scroll" in css
     assert ".contribution-calendar-details" in css
