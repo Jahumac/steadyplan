@@ -100,8 +100,11 @@ def _month_label(month_key):
 
 
 def _default_contribution_calendar_range():
-    start_month = _default_month_key()
-    return start_month, add_months_to_key(start_month, 11)
+    today = date.today()
+    start_year = today.year if today.month >= 4 else today.year - 1
+    start_month = f"{start_year}-04"
+    end_month = f"{start_year + 2}-03"
+    return start_month, end_month
 
 
 def _tax_year_label_for_month(month_key):
@@ -400,9 +403,15 @@ def contribution_calendar():
     uid = current_user.id
     default_from_month, default_to_month = _default_contribution_calendar_range()
     selected_from_month = valid_month_key(request.values.get("from_month")) or default_from_month
-    selected_to_month = valid_month_key(request.values.get("to_month")) or add_months_to_key(selected_from_month, 11)
+    raw_to_month = valid_month_key(request.values.get("to_month"))
+    if raw_to_month:
+        selected_to_month = raw_to_month
+    elif selected_from_month == default_from_month:
+        selected_to_month = default_to_month
+    else:
+        selected_to_month = add_months_to_key(selected_from_month, 23)
     if selected_to_month < selected_from_month:
-        selected_to_month = add_months_to_key(selected_from_month, 11)
+        selected_to_month = add_months_to_key(selected_from_month, 23)
 
     redirect_args = {
         "from_month": selected_from_month,
