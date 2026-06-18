@@ -1,3 +1,4 @@
+from datetime import date as real_date
 from pathlib import Path
 
 
@@ -8,6 +9,26 @@ def _login(client, username, password):
         follow_redirects=False,
     )
     assert resp.status_code in (200, 302)
+
+
+def test_default_contribution_calendar_range_covers_current_and_next_full_tax_year(monkeypatch):
+    from app.routes import budget as budget_routes
+
+    class FakeJuneDate(real_date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 6, 18)
+
+    class FakeMarchDate(real_date):
+        @classmethod
+        def today(cls):
+            return cls(2027, 3, 18)
+
+    monkeypatch.setattr(budget_routes, "date", FakeJuneDate)
+    assert budget_routes._default_contribution_calendar_range() == ("2026-04", "2028-03")
+
+    monkeypatch.setattr(budget_routes, "date", FakeMarchDate)
+    assert budget_routes._default_contribution_calendar_range() == ("2026-04", "2028-03")
 
 
 def test_temporary_plan_create_is_scoped_to_owned_accounts(app, make_user):
@@ -571,7 +592,16 @@ def test_contribution_calendar_can_create_variable_annual_pattern(app, client, m
     assert "£1,000.00" in html
 
 
-def test_contribution_calendar_page_loads(app, client, make_user):
+def test_contribution_calendar_page_loads(app, client, make_user, monkeypatch):
+    from app.routes import budget as budget_routes
+
+    class FakeDate(real_date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 6, 18)
+
+    monkeypatch.setattr(budget_routes, "date", FakeDate)
+
     uid, username, password = make_user(username="temp-calendar-page", password="password123")
     _login(client, username, password)
 
@@ -596,6 +626,11 @@ def test_contribution_calendar_page_loads(app, client, make_user):
     assert "month-accent-" not in html
     assert "contribution-calendar-hero" in html
     assert "settings-form contribution-calendar-form" in html
+    assert "2026-04" in html
+    assert "2028-03" in html
+    assert "24 months" in html
+    assert "Apr 2026 → Mar 2027 (12 months shown)" in html
+    assert "Apr 2027 → Mar 2028 (12 months shown)" in html
     assert 'data-label="Temporary amount"' in html
     assert "contribution-calendar-details" in html
     assert "Show month-by-month calendar" in html
