@@ -318,6 +318,62 @@ def test_budget_route_uses_active_override_for_linked_account_month(app, client,
     assert "contribution calendar" in html
 
 
+def test_contribution_calendar_allowance_frame_uses_same_pension_gross_logic_as_allowance_page():
+    from app.routes.budget import _build_contribution_allowance_frame
+
+    calendar = {
+        "months": ["2026-04", "2026-05"],
+        "accounts": [
+            {
+                "id": 1,
+                "name": "Workplace Pension",
+                "wrapper_type": "Workplace Pension",
+                "category": "Pension",
+                "monthly_contribution": 100,
+                "employer_contribution": 50,
+                "contribution_method": "standard",
+                "months": [
+                    {"month_key": "2026-04", "default_amount": 100, "has_override": False},
+                    {"month_key": "2026-05", "default_amount": 100, "has_override": False},
+                ],
+            },
+            {
+                "id": 2,
+                "name": "My SIPP",
+                "wrapper_type": "SIPP",
+                "category": "Pension",
+                "monthly_contribution": 200,
+                "employer_contribution": 0,
+                "contribution_method": "standard",
+                "months": [
+                    {"month_key": "2026-04", "default_amount": 200, "has_override": False},
+                    {"month_key": "2026-05", "default_amount": 300, "override_amount": 300, "has_override": True},
+                ],
+            },
+        ],
+    }
+
+    frame = _build_contribution_allowance_frame(
+        calendar,
+        {
+            "tax_band": "basic",
+            "isa_allowance": 20000,
+            "lisa_allowance": 4000,
+            "pension_annual_allowance": 60000,
+            "annual_income": 40000,
+        },
+        [{"tax_year": "2023/24", "unused_allowance": 5000}],
+    )
+
+    assert len(frame) == 1
+    # Workplace: (100 personal + 25 relief + 50 employer) * 2 = 350.
+    # SIPP: (200 + 50 relief) + (300 + 75 relief) = 625.
+    assert frame[0]["pension_planned"] == 975.0
+    assert frame[0]["pension_allowance"] == 65000.0
+    assert frame[0]["pension_personal_relief_limit"] == 40000.0
+    assert frame[0]["pension_carry_forward_total"] == 5000.0
+
+
 def test_contribution_calendar_shows_isa_allowance_frame_for_planned_months(app, client, make_user):
     uid, username, password = make_user(username="temp-calendar-allowance-frame", password="password123")
     _login(client, username, password)
@@ -378,7 +434,10 @@ def test_contribution_calendar_shows_isa_allowance_frame_for_planned_months(app,
     assert "ISA over by £2,000" in html
     assert "£22,000 / £20,000" in html
     assert "£4,000 / £4,000" in html
-    assert "£2,400 / £60,000" in html
+    assert "£3,000 / £60,000" in html
+    assert "Pension/SIPP gross" in html
+    assert "Personal relief limit" in html
+    assert "Workplace Pension employer contributions" in html
     assert "Premium Bonds are shown for planning visibility only" in html
     assert "Premium Bonds" in html
     assert s_and_s_id
