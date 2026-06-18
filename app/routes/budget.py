@@ -4,7 +4,7 @@ from io import BytesIO
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, send_file, session, url_for
 from flask_login import current_user, login_required
 
-from app.calculations import add_months_to_key
+from app.calculations import add_months_to_key, is_pension_account
 from app.utils import optional_float, optional_int, valid_month_key
 
 from app.models import (
@@ -29,6 +29,7 @@ from app.models import (
     fetch_contribution_calendar,
     fetch_temporary_contribution_plans,
     fetch_all_active_overrides,
+    fetch_assumptions,
     fetch_debt,
     fetch_months_with_budget_entries,
     fetch_prior_month_budget_entries,
@@ -94,6 +95,83 @@ def _month_label(month_key):
 def _default_contribution_calendar_range():
     start_month = _default_month_key()
     return start_month, add_months_to_key(start_month, 11)
+
+
+def _tax_year_label_for_month(month_key):
+    year = int(month_key[:4])
+    month = int(month_key[5:7])
+    start_year = year if month >= 4 else year - 1
+    return f"{start_year}/{str(start_year + 1)[-2:]}"
+
+
+def _is_lifetime_isa_account(account):
+    wrapper = (account.get("wrapper_type") or "").lower()
+    return "lifetime isa" in wrapper or "lisa" in wrapper
+
+
+def _is_isa_account(account):
+    wrapper = (account.get("wrapper_type") or "").lower()
+    return "isa" in wrapper or "lisa" in wrapper
+
+
+def _is_premium_bonds_account(account):
+    text = " ".join([
+        str(account.get("name") or ""),
+        str(account.get("wrapper_type") or ""),
+        str(account.get("category") or ""),
+    ]).lower()
+    return "premium bond" in text
+
+
+def _build_contribution_allowance_frame(calendar, assumptions):
+    isa_allowance = float(assumptions["isa_allowance"]) if assumptions else 20000.0
+    lisa_allowance = float(assumptions["lisa_allowance"]) if assumptions else 4000.0
+    pension_allowance = (
+        float(assumptions["pension_annual_allowance"])
+        if assumptions and "pension_annual_allowance" in assumptions and assumptions["pension_annual_allowance"] is not None
+        else 60000.0
+    )
+    by_tax_year = {}
+    for month_key in calendar.get("months", []):
+        tax_year = _tax_year_label_for_month(month_key)
+        row = by_tax_year.setdefault(tax_year, {
+            "tax_year": tax_year,
+            "isa_planned": 0.0,
+            "lisa_planned": 0.0,
+            "pension_planned": 0.0,
+            "premium_bonds_planned": 0.0,
+        })
+        for account in calendar.get("accounts", []):
+            cell = next((c for c in account.get("months", []) if c.get("month_key") == month_key), None)
+            if not cell:
+                continue
+            amount = float(cell["override_amount"] if cell.get("has_override") else cell.get("default_amount") or 0.0)
+            if amount <= 0:
+                continue
+            if _is_lifetime_isa_account(account):
+                row["isa_planned"] += amount
+                row["lisa_planned"] += amount
+            elif _is_isa_account(account):
+                row["isa_planned"] += amount
+            elif is_pension_account(account):
+                row["pension_planned"] += amount
+            elif _is_premium_bonds_account(account):
+                row["premium_bonds_planned"] += amount
+
+    rows = []
+    for row in by_tax_year.values():
+        row["isa_allowance"] = isa_allowance
+        row["lisa_allowance"] = lisa_allowance
+        row["pension_allowance"] = pension_allowance
+        row["isa_remaining"] = isa_allowance - row["isa_planned"]
+        row["lisa_remaining"] = lisa_allowance - row["lisa_planned"]
+        row["pension_remaining"] = pension_allowance - row["pension_planned"]
+        row["isa_over"] = max(row["isa_planned"] - isa_allowance, 0.0)
+        row["lisa_over"] = max(row["lisa_planned"] - lisa_allowance, 0.0)
+        row["pension_over"] = max(row["pension_planned"] - pension_allowance, 0.0)
+        row["has_warning"] = bool(row["isa_over"] or row["lisa_over"] or row["pension_over"])
+        rows.append(row)
+    return sorted(rows, key=lambda row: row["tax_year"])
 
 
 def _build_monthly_data(month_key, user_id):
@@ -439,6 +517,8 @@ def contribution_calendar():
 
     calendar = fetch_contribution_calendar(uid, selected_from_month, selected_to_month)
     plans = fetch_temporary_contribution_plans(uid)
+    assumptions = fetch_assumptions(uid)
+    allowance_frame = _build_contribution_allowance_frame(calendar, assumptions)
     month_columns = [
         {"key": month_key, "label": datetime.strptime(month_key, "%Y-%m").strftime("%b %Y")}
         for month_key in calendar["months"]
@@ -450,6 +530,7 @@ def contribution_calendar():
         to_month=selected_to_month,
         month_columns=month_columns,
         calendar=calendar,
+        allowance_frame=allowance_frame,
         plans=plans,
         active_page="budget",
         monthly_update_href=url_for("monthly_review.monthly_review", month=selected_from_month),

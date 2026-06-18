@@ -37,6 +37,53 @@
   </div>
 </section>
 
+{% if allowance_frame %}
+<section class="panel mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Allowance frame</p>
+      <h3>Planned allowances in this calendar range</h3>
+    </div>
+  </div>
+  <p class="helper-text">This uses the visible Contribution calendar months: calendar overrides first, then each account’s normal monthly contribution. ISA and Lifetime ISA share the £20,000 ISA frame; SIPP/pension and Premium Bonds sit outside ISA.</p>
+  <div class="table-scroll mt-05">
+    <table class="mini-table">
+      <thead>
+        <tr>
+          <th>Tax year</th>
+          <th class="text-right">ISA planned</th>
+          <th class="text-right">Lifetime ISA</th>
+          <th class="text-right">Pension/SIPP</th>
+          <th class="text-right">Premium Bonds</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in allowance_frame %}
+        <tr>
+          <td>{{ row.tax_year }}</td>
+          <td class="text-right">£{{ '{:,.0f}'.format(row.isa_planned) }} / £{{ '{:,.0f}'.format(row.isa_allowance) }}</td>
+          <td class="text-right">£{{ '{:,.0f}'.format(row.lisa_planned) }} / £{{ '{:,.0f}'.format(row.lisa_allowance) }}</td>
+          <td class="text-right">£{{ '{:,.0f}'.format(row.pension_planned) }} / £{{ '{:,.0f}'.format(row.pension_allowance) }}</td>
+          <td class="text-right">£{{ '{:,.0f}'.format(row.premium_bonds_planned) }}</td>
+          <td>
+            {% if row.has_warning %}
+              {% if row.isa_over %}<span class="badge badge-warning">ISA over by £{{ '{:,.0f}'.format(row.isa_over) }}</span>{% endif %}
+              {% if row.lisa_over %}<span class="badge badge-warning">Lifetime ISA over by £{{ '{:,.0f}'.format(row.lisa_over) }}</span>{% endif %}
+              {% if row.pension_over %}<span class="badge badge-warning">Pension over by £{{ '{:,.0f}'.format(row.pension_over) }}</span>{% endif %}
+            {% else %}
+              <span class="badge badge-meta">Within tracked allowances</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="helper-text mt-05">Premium Bonds are shown for planning visibility only — they are not counted against ISA or pension allowance.</p>
+</section>
+{% endif %}
+
 {% if calendar.overlap_count %}
 <div class="flash-msg flash-warning">
   <span>Some months have overlapping overrides. SteadyPlan still uses the narrowest, newest override for calculations, but the calendar flags those cells so you can clean them up.</span>
