@@ -318,6 +318,87 @@ def test_budget_route_uses_active_override_for_linked_account_month(app, client,
     assert "contribution calendar" in html
 
 
+def test_contribution_calendar_can_create_annual_pot_fill_pattern(app, client, make_user):
+    uid, username, password = make_user(username="temp-calendar-annual-pattern", password="password123")
+    _login(client, username, password)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, monthly_contribution, current_value, valuation_mode, is_active)
+                VALUES (?, 'Lifetime ISA', 'Lifetime ISA', 0, 0, 'manual', 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+    resp = client.post(
+        "/budget/contribution-calendar?from_month=2027-04&to_month=2028-07",
+        data={
+            "form_name": "create_annual_pot_fill_plan",
+            "plan_name": "Yearly LISA fill",
+            "pattern_account_id": str(account_id),
+            "pattern_start_month": "2027-04",
+            "pattern_months_per_year": "4",
+            "pattern_years": "2",
+            "pattern_monthly_amount": "1000",
+        },
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Saved yearly pot-fill plan" in html
+    assert "Yearly LISA fill" in html
+    assert "2027-04 to 2027-07" in html
+    assert "2028-04 to 2028-07" in html
+    assert "£1,000.00" in html
+
+
+def test_contribution_calendar_can_create_variable_annual_pattern(app, client, make_user):
+    uid, username, password = make_user(username="temp-calendar-variable-pattern", password="password123")
+    _login(client, username, password)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, monthly_contribution, current_value, valuation_mode, is_active)
+                VALUES (?, 'Lifetime ISA', 'Lifetime ISA', 0, 0, 'manual', 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+    resp = client.post(
+        "/budget/contribution-calendar?from_month=2027-04&to_month=2027-06",
+        data={
+            "form_name": "create_annual_pot_fill_plan",
+            "plan_name": "Three-month LISA fill",
+            "pattern_account_id": str(account_id),
+            "pattern_start_month": "2027-04",
+            "pattern_months_per_year": "3",
+            "pattern_years": "1",
+            "pattern_monthly_amount": "1000",
+            "pattern_monthly_amounts": "1500, 1500, 1000",
+        },
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "Saved yearly pot-fill plan" in html
+    assert "Three-month LISA fill" in html
+    assert "2027-04 to 2027-04" in html
+    assert "2027-05 to 2027-05" in html
+    assert "2027-06 to 2027-06" in html
+    assert "£1,500.00" in html
+    assert "£1,000.00" in html
+
+
 def test_contribution_calendar_page_loads(app, client, make_user):
     uid, username, password = make_user(username="temp-calendar-page", password="password123")
     _login(client, username, password)

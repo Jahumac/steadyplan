@@ -362,6 +362,70 @@ def contribution_calendar():
 
             return redirect(url_for("budget.contribution_calendar", **redirect_args))
 
+        if form_name == "create_annual_pot_fill_plan":
+            plan_name = (request.form.get("plan_name") or "").strip()
+            account_id = request.form.get("pattern_account_id", type=int)
+            start_month = valid_month_key(request.form.get("pattern_start_month"))
+            months_per_year = optional_int(request.form.get("pattern_months_per_year"), 0) or 0
+            years = optional_int(request.form.get("pattern_years"), 0) or 0
+            monthly_amount = optional_float(request.form.get("pattern_monthly_amount"), default=None, min_val=0.0)
+            amount_sequence = []
+            invalid_sequence = False
+            sequence_text = (request.form.get("pattern_monthly_amounts") or "").strip()
+            if sequence_text:
+                for part in sequence_text.split(","):
+                    amount = optional_float(part.strip(), default=None, min_val=0.0)
+                    if amount is None:
+                        invalid_sequence = True
+                        break
+                    amount_sequence.append(amount)
+                months_per_year = len(amount_sequence)
+            rows = []
+            if account_id and start_month and months_per_year > 0 and years > 0 and not invalid_sequence:
+                months_per_year = min(months_per_year, 12)
+                years = min(years, 10)
+                for year_idx in range(years):
+                    year_start_month = add_months_to_key(start_month, year_idx * 12)
+                    if amount_sequence:
+                        for month_idx, amount in enumerate(amount_sequence[:months_per_year]):
+                            month_key = add_months_to_key(year_start_month, month_idx)
+                            rows.append({
+                                "account_id": account_id,
+                                "from_month": month_key,
+                                "to_month": month_key,
+                                "override_amount": amount,
+                            })
+                    elif monthly_amount is not None:
+                        rows.append({
+                            "account_id": account_id,
+                            "from_month": year_start_month,
+                            "to_month": add_months_to_key(year_start_month, months_per_year - 1),
+                            "override_amount": monthly_amount,
+                        })
+
+            if not plan_name:
+                flash("Name the yearly pot-fill plan so it can be grouped and removed later.", "error")
+            elif not account_id:
+                flash("Choose which account the yearly pot-fill plan belongs to.", "error")
+            elif not start_month:
+                flash("Choose a valid first start month for the yearly pot-fill plan.", "error")
+            elif invalid_sequence:
+                flash("Use only valid comma-separated amounts for the optional month-by-month pattern.", "error")
+            elif months_per_year <= 0 or years <= 0 or (monthly_amount is None and not amount_sequence):
+                flash("Enter a valid monthly amount, months per year and number of years.", "error")
+            else:
+                created = create_temporary_contribution_plan(uid, plan_name, rows)
+                if created.get("created_count"):
+                    flash(
+                        f"Saved yearly pot-fill plan '{created['plan_name']}' for {created['created_count']} yearly block"
+                        f"{'s' if created['created_count'] != 1 else ''}.",
+                        "success",
+                    )
+                else:
+                    flash("No eligible yearly pot-fill rows were saved.", "error")
+
+            return redirect(url_for("budget.contribution_calendar", **redirect_args))
+
         if form_name == "delete_temporary_plan":
             reason = (request.form.get("reason") or request.form.get("plan_name") or "").strip()
             deleted = delete_temporary_contribution_plan(uid, reason)
