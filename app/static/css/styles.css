@@ -3816,6 +3816,67 @@ button.button-danger:focus {
   font-weight: 600;
 }
 
+.linked-broker-summary-panel {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.34);
+}
+
+.linked-broker-summary-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.linked-broker-summary-header h3 {
+  margin: 0.1rem 0 0;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+}
+
+.linked-broker-difference {
+  flex: 0 0 auto;
+  text-align: right;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.linked-broker-difference span,
+.linked-broker-grid p {
+  display: block;
+  margin: 0 0 0.22rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.linked-broker-difference strong,
+.linked-broker-grid strong {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.linked-broker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.8rem 1rem;
+}
+
+@media (max-width: 640px) {
+  .linked-broker-summary-header {
+    flex-direction: column;
+  }
+  .linked-broker-difference {
+    width: 100%;
+    text-align: left;
+  }
+}
+
 /* "Show details" toggle is mobile-only — hidden on desktop. */
 .acct-detail-toggle {
   display: none;
