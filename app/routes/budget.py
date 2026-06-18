@@ -147,7 +147,9 @@ def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_for
             "lisa_planned": 0.0,
             "pension_planned": 0.0,
             "premium_bonds_planned": 0.0,
+            "visible_month_keys": [],
         })
+        row["visible_month_keys"].append(month_key)
         for account in calendar.get("accounts", []):
             cell = next((c for c in account.get("months", []) if c.get("month_key") == month_key), None)
             if not cell:
@@ -171,6 +173,14 @@ def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_for
 
     rows = []
     for row in by_tax_year.values():
+        visible_month_keys = row.get("visible_month_keys") or []
+        row["visible_month_count"] = len(visible_month_keys)
+        if visible_month_keys:
+            start_label = datetime.strptime(visible_month_keys[0], "%Y-%m").strftime("%b %Y")
+            end_label = datetime.strptime(visible_month_keys[-1], "%Y-%m").strftime("%b %Y")
+            row["visible_month_label"] = f"{start_label} → {end_label}"
+        else:
+            row["visible_month_label"] = ""
         row["isa_allowance"] = isa_allowance
         row["lisa_allowance"] = lisa_allowance
         row["pension_allowance"] = pension_allowance

@@ -45,12 +45,13 @@
       <h3>Planned allowances in this calendar range</h3>
     </div>
   </div>
-  <p class="helper-text">This uses the visible Contribution calendar months: calendar overrides first, then each account’s normal monthly contribution. ISA and Lifetime ISA share the £20,000 ISA frame. Pension/SIPP uses the same gross-into-pot allowance logic as the Allowance page, including Workplace Pension employer contributions, tax relief, MPAA, and carry-forward.</p>
+  <p class="helper-text">This uses only the visible Contribution calendar months shown above: calendar overrides first, then each account’s normal monthly contribution. If a temporary plan continues beyond the current From/To range, later months are not counted here until you extend the calendar. ISA and Lifetime ISA share the £20,000 ISA frame. Pension/SIPP uses the same gross-into-pot allowance logic as the Allowance page, including Workplace Pension employer contributions, tax relief, MPAA, and carry-forward.</p>
   <div class="table-scroll mt-05">
     <table class="mini-table">
       <thead>
         <tr>
           <th>Tax year</th>
+          <th class="text-right">Visible months</th>
           <th class="text-right">ISA planned</th>
           <th class="text-right">Lifetime ISA</th>
           <th class="text-right">Pension/SIPP gross</th>
@@ -62,6 +63,7 @@
         {% for row in allowance_frame %}
         <tr>
           <td>{{ row.tax_year }}</td>
+          <td class="text-right">{{ row.visible_month_label }} ({{ row.visible_month_count }} months shown)</td>
           <td class="text-right">£{{ '{:,.0f}'.format(row.isa_planned) }} / £{{ '{:,.0f}'.format(row.isa_allowance) }}</td>
           <td class="text-right">£{{ '{:,.0f}'.format(row.lisa_planned) }} / £{{ '{:,.0f}'.format(row.lisa_allowance) }}</td>
           <td class="text-right">
