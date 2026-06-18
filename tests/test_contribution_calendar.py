@@ -372,6 +372,8 @@ def test_contribution_calendar_allowance_frame_uses_same_pension_gross_logic_as_
     assert frame[0]["pension_allowance"] == 65000.0
     assert frame[0]["pension_personal_relief_limit"] == 40000.0
     assert frame[0]["pension_carry_forward_total"] == 5000.0
+    assert frame[0]["visible_month_count"] == 2
+    assert frame[0]["visible_month_label"] == "Apr 2026 → May 2026"
 
 
 def test_contribution_calendar_shows_isa_allowance_frame_for_planned_months(app, client, make_user):
@@ -438,9 +440,54 @@ def test_contribution_calendar_shows_isa_allowance_frame_for_planned_months(app,
     assert "Pension/SIPP gross" in html
     assert "Personal relief limit" in html
     assert "Workplace Pension employer contributions" in html
+    assert "Visible months" in html
+    assert "Apr 2027 → Mar 2028 (12 months shown)" in html
     assert "Premium Bonds are shown for planning visibility only" in html
     assert "Premium Bonds" in html
     assert s_and_s_id
+
+
+def test_contribution_calendar_allowance_frame_explains_partial_next_tax_year_range(app, client, make_user):
+    uid, username, password = make_user(username="temp-calendar-visible-months", password="password123")
+    _login(client, username, password)
+
+    with app.app_context():
+        from app.models import create_temporary_contribution_plan, get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                "UPDATE assumptions SET isa_allowance = 20000, lisa_allowance = 4000, pension_annual_allowance = 60000 WHERE user_id = ?",
+                (uid,),
+            )
+            lisa_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, category, monthly_contribution, current_value, valuation_mode, is_active)
+                VALUES (?, 'Lifetime ISA', 'Lifetime ISA', 'ISA', 0, 0, 'manual', 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+        create_temporary_contribution_plan(
+            uid,
+            "Yearly LISA fill",
+            [{
+                "account_id": lisa_id,
+                "from_month": "2026-12",
+                "to_month": "2027-07",
+                "override_amount": 1000,
+            }],
+        )
+
+    resp = client.get("/budget/contribution-calendar?from_month=2026-06&to_month=2027-05")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+    assert "£4,000 / £4,000" in html
+    assert "£2,000 / £4,000" in html
+    assert "Jun 2026 → Mar 2027 (10 months shown)" in html
+    assert "Apr 2027 → May 2027 (2 months shown)" in html
+    assert "If a temporary plan continues beyond the current From/To range" in html
+
 
 
 def test_contribution_calendar_can_create_annual_pot_fill_pattern(app, client, make_user):
