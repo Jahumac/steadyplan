@@ -543,7 +543,7 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
     with get_connection() as conn:
         accounts = conn.execute(
             """
-            SELECT id, name, wrapper_type, category, monthly_contribution, current_value
+            SELECT id, name, wrapper_type, category, monthly_contribution, employer_contribution, contribution_method, current_value
             FROM accounts
             WHERE user_id = ?
               AND is_active = 1
@@ -630,6 +630,8 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
             "category": account["category"],
             "current_value": float(account["current_value"] or 0),
             "monthly_contribution": default_amount,
+            "employer_contribution": float(account["employer_contribution"] or 0),
+            "contribution_method": account["contribution_method"] or "standard",
             "months": month_cells,
         })
 
