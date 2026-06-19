@@ -3323,17 +3323,57 @@ button.button-danger:focus {
 
 @media (max-width: 640px) {
   .budget-section-metrics {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.38rem;
+    margin: 0.7rem 0 0.65rem;
   }
 
   .budget-section-metric {
-    justify-items: start;
+    min-height: 3.15rem;
+    padding: 0.5rem 0.35rem;
+    border-radius: 11px;
+  }
+
+  .budget-section-metric-label {
+    margin-bottom: 0.18rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.055em;
+  }
+
+  .budget-section-panel .budget-section-total,
+  .budget-section-income-share,
+  .budget-section-annual {
+    font-size: 0.92rem;
+  }
+
+  .budget-section-panel .budget-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.42rem 0.65rem;
+    padding: 0.62rem 0.72rem;
+  }
+
+  .budget-section-panel .budget-row-left {
+    grid-column: 1 / -1;
+  }
+
+  .budget-section-panel .budget-row-annual {
+    grid-column: 1;
+    width: auto;
+    align-self: center;
+    color: color-mix(in srgb, var(--muted) 88%, var(--text));
+    font-size: 0.78rem;
     text-align: left;
   }
 
-  .budget-row-annual {
-    width: 100%;
-    text-align: left;
+  .budget-section-panel .budget-row-right {
+    grid-column: 2;
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .budget-section-panel .budget-row .budget-amount-input {
+    width: 6.2rem;
   }
 }
 

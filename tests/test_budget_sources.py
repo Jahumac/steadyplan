@@ -1,5 +1,7 @@
 import pytest
 
+from tests.path_helpers import STATIC_ROOT
+
 
 def _seed_default_budget_sections(app, user_id):
     from app.models import fetch_budget_items
@@ -309,3 +311,18 @@ def test_budget_sections_show_share_of_income(app, client, make_user):
     assert "£12,000 / year" in html
     assert "£6,000 / year" in html
     assert "£9,600 / year" in html
+
+
+def test_budget_mobile_layout_keeps_summary_and_rows_compact():
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+
+    assert "@media (max-width: 640px)" in css
+    assert ".budget-section-metrics {\n    grid-template-columns: repeat(3, minmax(0, 1fr));" in css
+    assert ".budget-section-metric {\n    min-height: 3.15rem;" in css
+    assert "padding: 0.5rem 0.35rem;" in css
+    assert ".budget-section-panel .budget-row {\n    display: grid;" in css
+    assert "grid-template-columns: minmax(0, 1fr) auto;" in css
+    assert ".budget-section-panel .budget-row-left {\n    grid-column: 1 / -1;" in css
+    assert ".budget-section-panel .budget-row-annual {\n    grid-column: 1;" in css
+    assert ".budget-section-panel .budget-row-right {\n    grid-column: 2;" in css
+    assert ".budget-section-panel .budget-row .budget-amount-input {\n    width: 6.2rem;" in css
