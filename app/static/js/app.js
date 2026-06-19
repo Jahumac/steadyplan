@@ -397,6 +397,11 @@
       var MONTH      = container.dataset.monthKey;
       var INCOME_KEY = container.dataset.incomeKey;
       var SAVE_KEYS  = ['invest', 'saving'];
+      var whatIfMode = false;
+      var whatIfToggle = document.getElementById('budget-what-if-toggle');
+      var whatIfReset = document.getElementById('budget-what-if-reset');
+      var whatIfStatus = document.getElementById('budget-what-if-status');
+      var realSummary = null;
 
       function fmtGBP(v, showSign) {
         var s = Math.abs(v).toLocaleString('en-GB', {minimumFractionDigits:0, maximumFractionDigits:0});
@@ -417,7 +422,7 @@
         return fmtAnnualAmount(value) + ' / year';
       }
 
-      function recalcSummary() {
+      function computeBudgetTotals() {
         var sectionTotals = {};
         var preSalaryTotal = 0;
         document.querySelectorAll('.budget-amount-input').forEach(function(inp) {
@@ -439,6 +444,22 @@
         // section totals but never reduce take-home, so add them back.
         var surplus      = income - (expenses - preSalaryTotal);
         var savingsRate  = income > 0 ? (savings / income * 100) : 0;
+        return {
+          sectionTotals: sectionTotals,
+          preSalaryTotal: preSalaryTotal,
+          income: income,
+          expenses: expenses,
+          surplus: surplus,
+          savingsRate: savingsRate
+        };
+      }
+
+      function recalcSummary() {
+        var totals = computeBudgetTotals();
+        var income = totals.income;
+        var expenses = totals.expenses;
+        var surplus = totals.surplus;
+        var savingsRate = totals.savingsRate;
 
         var si = document.getElementById('stat-income');
         var se = document.getElementById('stat-expenses');
@@ -454,18 +475,73 @@
 
         var psNote = document.getElementById('pre-salary-note');
         var psAmt  = document.getElementById('pre-salary-total');
-        if (psNote) psNote.style.display = preSalaryTotal > 0 ? '' : 'none';
-        if (psAmt) psAmt.textContent = fmtGBP(preSalaryTotal);
+        if (psNote) psNote.style.display = totals.preSalaryTotal > 0 ? '' : 'none';
+        if (psAmt) psAmt.textContent = fmtGBP(totals.preSalaryTotal);
 
         // Update section totals and their share of income
-        Object.keys(sectionTotals).forEach(function(k) {
+        Object.keys(totals.sectionTotals).forEach(function(k) {
           var el = document.getElementById('total-' + k);
-          if (el) el.textContent = '£' + sectionTotals[k].toLocaleString('en-GB', {minimumFractionDigits:2, maximumFractionDigits:2});
+          if (el) el.textContent = '£' + totals.sectionTotals[k].toLocaleString('en-GB', {minimumFractionDigits:2, maximumFractionDigits:2});
           var share = document.getElementById('share-' + k);
-          if (share) share.textContent = fmtIncomeShare(sectionTotals[k], income);
+          if (share) share.textContent = fmtIncomeShare(totals.sectionTotals[k], income);
           var annual = document.getElementById('annual-' + k);
-          if (annual) annual.textContent = fmtAnnualAmount(sectionTotals[k]);
+          if (annual) annual.textContent = fmtAnnualAmount(totals.sectionTotals[k]);
         });
+        updateWhatIfSummary();
+      }
+
+      function updateWhatIfSummary() {
+        if (!whatIfToggle) return;
+        var totals = computeBudgetTotals();
+        if (!realSummary) realSummary = {
+          income: totals.income,
+          expenses: totals.expenses,
+          surplus: totals.surplus,
+          savingsRate: totals.savingsRate
+        };
+        var incomeEl = document.getElementById('what-if-income');
+        var expensesEl = document.getElementById('what-if-expenses');
+        var surplusEl = document.getElementById('what-if-surplus');
+        var deltaEl = document.getElementById('what-if-surplus-delta');
+        var savingsEl = document.getElementById('what-if-savings');
+        var delta = totals.surplus - realSummary.surplus;
+        if (incomeEl) incomeEl.textContent = fmtGBP(totals.income);
+        if (expensesEl) expensesEl.textContent = fmtGBP(totals.expenses);
+        if (surplusEl) {
+          surplusEl.textContent = (totals.surplus >= 0 ? '+' : '-') + fmtGBP(Math.abs(totals.surplus));
+          surplusEl.className = totals.surplus >= 0 ? 'stat-positive-text' : 'stat-negative-text';
+        }
+        if (deltaEl) {
+          deltaEl.textContent = (delta >= 0 ? '+' : '-') + fmtGBP(Math.abs(delta));
+          deltaEl.className = delta >= 0 ? 'stat-positive-text' : 'stat-negative-text';
+        }
+        if (savingsEl) savingsEl.textContent = totals.savingsRate.toFixed(1) + '%';
+      }
+
+      function resetWhatIfValues() {
+        document.querySelectorAll('.budget-amount-input').forEach(function(input) {
+          var real = input.dataset.realValue;
+          if (typeof real !== 'undefined') input.value = real;
+          var rowAnnual = document.getElementById('annual-item-' + input.dataset.itemId);
+          if (rowAnnual) rowAnnual.textContent = fmtAnnualRow(parseFloat(input.value) || 0);
+          var ind = document.getElementById('ind-' + input.dataset.itemId);
+          if (ind) { ind.textContent = ''; ind.style.opacity = '1'; ind.style.color = ''; }
+        });
+        recalcSummary();
+      }
+
+      function setWhatIfMode(enabled) {
+        whatIfMode = enabled;
+        container.classList.toggle('budget-what-if-active', whatIfMode);
+        if (whatIfToggle) whatIfToggle.textContent = whatIfMode ? 'Exit simulation' : 'Start simulation';
+        if (whatIfReset) whatIfReset.hidden = !whatIfMode;
+        if (whatIfStatus) {
+          whatIfStatus.textContent = whatIfMode
+            ? 'Simulation mode is on. Edits update the page only and are not saved.'
+            : 'Nothing is written to the database unless you leave simulation mode and edit normally.';
+        }
+        if (!whatIfMode) resetWhatIfValues();
+        updateWhatIfSummary();
       }
 
       function saveEntry(itemId, amount, ind) {
@@ -478,6 +554,10 @@
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (d.ok && ind) {
+            var savedInput = document.querySelector('.budget-amount-input[data-item-id="' + itemId + '"]');
+            if (savedInput) savedInput.dataset.realValue = String(amount);
+            realSummary = null;
+            updateWhatIfSummary();
             ind.textContent = '✓';
             ind.style.opacity = '1';
             setTimeout(function() {
@@ -513,6 +593,18 @@
         });
       }
 
+      if (whatIfToggle) {
+        whatIfToggle.addEventListener('click', function() {
+          setWhatIfMode(!whatIfMode);
+        });
+      }
+      if (whatIfReset) {
+        whatIfReset.addEventListener('click', function() {
+          resetWhatIfValues();
+          updateWhatIfSummary();
+        });
+      }
+
       document.querySelectorAll('.budget-amount-input').forEach(function(input) {
         var debounceTimer = null;
         var ind = document.getElementById('ind-' + input.dataset.itemId);
@@ -522,6 +614,18 @@
         var sourceBadge = row.querySelector('.budget-row-source');
 
         input.addEventListener('input', function() {
+          var rowAnnual = document.getElementById('annual-item-' + input.dataset.itemId);
+          if (rowAnnual) rowAnnual.textContent = fmtAnnualRow(parseFloat(input.value) || 0);
+          clearTimeout(debounceTimer);
+          if (whatIfMode) {
+            if (ind) {
+              ind.textContent = 'simulation';
+              ind.style.opacity = '1';
+            }
+            recalcSummary();
+            updateWhatIfSummary();
+            return;
+          }
           if (sourceBadge) { sourceBadge.style.display = 'none'; sourceBadge = null; }
           if (isLinked && !linkedNotified) {
             linkedNotified = true;
@@ -531,9 +635,6 @@
               setTimeout(function() { ind.style.opacity = '0'; }, 3000);
             }
           }
-          var rowAnnual = document.getElementById('annual-item-' + input.dataset.itemId);
-          if (rowAnnual) rowAnnual.textContent = fmtAnnualRow(parseFloat(input.value) || 0);
-          clearTimeout(debounceTimer);
           debounceTimer = setTimeout(function() {
             saveEntry(input.dataset.itemId, input.value, ind);
             recalcSummary();
