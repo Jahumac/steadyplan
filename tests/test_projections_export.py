@@ -112,7 +112,8 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
     workbook_values = [cell.value for sheet in wb.worksheets for row in sheet.iter_rows() for cell in row if cell.value is not None]
     assert "SteadyPlan — Retirement Scenario Estimates" in workbook_values
     assert "SteadyPlan — Scenario Estimate Assumptions" in workbook_values
-    assert "SteadyPlan — Year-by-Year Scenario Estimate" in workbook_values
+    assert "SteadyPlan — Tax-Year Scenario Estimate" in workbook_values
+    assert "SteadyPlan — Year-by-Year Scenario Estimate" not in workbook_values
     assert "SteadyPlan — Monthly Scenario Estimate" in workbook_values
     assert "Scenario estimate total" in workbook_values
     assert "Scenario estimate value" in workbook_values
@@ -160,7 +161,7 @@ def test_lifetime_isa_one_off_override_export_includes_full_bonus(app, client, m
     headers = None
     header_row = None
     for idx, row in enumerate(ws.iter_rows(values_only=True), 1):
-        if row[:3] == ("Age", "Year", "Scenario estimate value"):
+        if row[:3] == ("Age", "Tax year", "Scenario estimate value"):
             headers = row
             header_row = idx
             break
@@ -172,7 +173,7 @@ def test_lifetime_isa_one_off_override_export_includes_full_bonus(app, client, m
     assert first_year[into_pot_col] == 5000
 
 
-def test_lifetime_isa_yearly_export_uses_calendar_year_distribution(app, client, make_user, monkeypatch):
+def test_lifetime_isa_yearly_export_uses_tax_year_distribution(app, client, make_user, monkeypatch):
     from app import calculations
     from app.routes import export as export_routes
 
@@ -210,7 +211,7 @@ def test_lifetime_isa_yearly_export_uses_calendar_year_distribution(app, client,
     headers = None
     header_row = None
     for idx, row in enumerate(ws.iter_rows(values_only=True), 1):
-        if row[:6] == ("Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)"):
+        if row[:6] == ("Age", "Tax year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)"):
             headers = row
             header_row = idx
             break
@@ -218,21 +219,21 @@ def test_lifetime_isa_yearly_export_uses_calendar_year_distribution(app, client,
     assert header_row is not None
 
     data_rows = [row for row in ws.iter_rows(min_row=header_row + 1, values_only=True) if isinstance(row[1], (int, str))]
-    row_today = next(row for row in data_rows if row[1] == "2026 (today)")
-    row_2026 = next(row for row in data_rows if row[1] == 2026)
-    row_2027 = next(row for row in data_rows if row[1] == 2027)
+    row_today = next(row for row in data_rows if row[1] == "2026/27 (today)")
+    row_2026_27 = next(row for row in data_rows if row[1] == "2026/27")
+    row_2027_28 = next(row for row in data_rows if row[1] == "2027/28")
 
     assert row_today[4] == 0
     assert row_today[5] == 0
-    assert row_2026[4] == 1000
-    assert row_2026[5] == 1250
-    assert row_2027[4] == 7000
-    assert row_2027[5] == 8750
+    assert row_2026_27[4] == 4000
+    assert row_2026_27[5] == 5000
+    assert row_2027_28[4] == 4000
+    assert row_2027_28[5] == 5000
 
     total_sheet_rows = [tuple(cell.value for cell in row) for row in wb["Year by Year"].iter_rows()]
-    assert (43, "2026 (today)", 277) in total_sheet_rows
-    assert (44, 2026, 1527) in total_sheet_rows
-    assert (45, 2027, 10277) in total_sheet_rows
+    assert (43, "2026/27 (today)", 277) in total_sheet_rows
+    assert (44, "2026/27", 5277) in total_sheet_rows
+    assert (45, "2027/28", 10277) in total_sheet_rows
 
 
 def test_lifetime_isa_export_shows_next_planned_month_when_current_month_is_zero(app, client, make_user, monkeypatch):
@@ -302,7 +303,7 @@ def test_premium_bonds_cap_is_not_reported_as_negative_growth(app, client, make_
     headers = None
     header_row = None
     for idx, row in enumerate(ws.iter_rows(values_only=True), 1):
-        if row[:3] == ("Age", "Year", "Scenario estimate value"):
+        if row[:3] == ("Age", "Tax year", "Scenario estimate value"):
             headers = row
             header_row = idx
             break
