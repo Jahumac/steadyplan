@@ -3,7 +3,7 @@ from io import BytesIO
 
 from openpyxl import load_workbook
 
-from app.models import create_account, create_contribution_override, fetch_assumptions, update_assumptions
+from app.models import create_account, create_contribution_override, create_temporary_contribution_plan, fetch_assumptions, update_assumptions
 from app.calculations import projection_start_month_key
 
 
@@ -233,6 +233,54 @@ def test_lifetime_isa_yearly_export_uses_calendar_year_distribution(app, client,
     assert (43, "2026 (today)", 277) in total_sheet_rows
     assert (44, 2026, 1527) in total_sheet_rows
     assert (45, 2027, 10277) in total_sheet_rows
+
+
+def test_lifetime_isa_export_shows_next_planned_month_when_current_month_is_zero(app, client, make_user, monkeypatch):
+    from app import calculations
+    from app.routes import export as export_routes
+
+    class FakeDate(real_date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 6, 18)
+
+    monkeypatch.setattr(calculations, "date", FakeDate)
+    monkeypatch.setattr(export_routes, "date", FakeDate)
+
+    uid, username, password = make_user(username="projection-export-lisa-next-planned", password="password123")
+    with app.app_context():
+        assumptions = dict(fetch_assumptions(uid))
+        assumptions.update({
+            "annual_growth_rate": 0.07,
+            "retirement_age": 60,
+            "date_of_birth": "1982-12-18",
+            "salary_day": 28,
+        })
+        update_assumptions(assumptions, uid)
+        lisa_id = create_account(_account(
+            "Lifetime ISA",
+            "Lifetime ISA",
+            277,
+            0,
+            platform_fee_pct=0.15,
+            fund_fee_pct=0.13,
+        ), uid)
+        create_temporary_contribution_plan(uid, "Yearly LISA fill", [{
+            "account_id": lisa_id,
+            "from_month": "2026-12",
+            "to_month": "2027-07",
+            "override_amount": 1000,
+        }])
+
+    _login(client, username, password)
+    wb = _workbook_from_response(client.get("/projections/export.xlsx"))
+
+    ws = wb["Lifetime ISA"]
+    summary_rows = [tuple(cell.value for cell in row[:2]) for row in ws.iter_rows(min_row=5, max_row=16)]
+    assert ("You pay (monthly)", 0) in summary_rows
+    assert ("Next planned month", "2026-12") in summary_rows
+    assert ("You pay (next planned month)", 1000) in summary_rows
+    assert ("Total into pot (next planned month)", 1250) in summary_rows
 
 
 def test_premium_bonds_cap_is_not_reported_as_negative_growth(app, client, make_user):
