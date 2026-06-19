@@ -39,6 +39,7 @@ from app.calculations import (
     projected_total_retirement_value,
     to_float,
     uk_tax_year_end,
+    uk_tax_year_label,
     uk_tax_year_start,
     years_to_retirement,
     ISA_WRAPPER_TYPES,
@@ -127,20 +128,51 @@ def _title_cell(ws, row_num, text, col_span=1):
         ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=col_span)
 
 
-def _build_calendar_year_projection_buckets(
+def _tax_year_label_for_month_key(month_key, assumptions=None):
+    """Return the UK tax-year label for a projected contribution month.
+
+    SteadyPlan treats April contributions according to the configured salary day:
+    if the salary/review day is before 6 April, that April contribution still
+    belongs to the previous tax year; otherwise April belongs to the new tax year.
+    """
+    try:
+        year_text, month_text = str(month_key).split("-")
+        year = int(year_text)
+        month = int(month_text)
+    except (AttributeError, TypeError, ValueError):
+        return ""
+
+    salary_day = 0
+    try:
+        salary_day = int(_safe_get(assumptions, "salary_day", 0) or 0)
+    except (TypeError, ValueError):
+        salary_day = 0
+
+    if month > 4:
+        start_year = year
+    elif month < 4:
+        start_year = year - 1
+    else:
+        start_year = year if salary_day >= 6 else year - 1
+    return f"{start_year}/{str(start_year + 1)[-2:]}"
+
+
+def _build_tax_year_projection_buckets(
     start_month,
     total_months,
     current_value,
     value_at_month_fn,
     *,
+    assumptions=None,
     month_breakdown_fn=None,
     value_no_fees_at_month_fn=None,
 ):
-    """Aggregate projection months into real calendar-year buckets.
+    """Aggregate projection months into UK tax-year buckets.
 
-    The month-by-month sheet is the source of truth. This helper groups those
-    future months by the displayed calendar year so the yearly tables line up
-    with the monthly rows instead of using rolling 12-month windows from today.
+    ISA, Lifetime ISA and pension allowances are tax-year based, so the export's
+    yearly contribution rows must not make a Jan-Jul LISA fill look like one
+    £7k allowance-year payment. The month-by-month sheet remains the source of
+    truth; this helper groups those months into 6 Apr–5 Apr allowance years.
     """
     if not start_month or total_months <= 0:
         return []
@@ -150,12 +182,12 @@ def _build_calendar_year_projection_buckets(
 
     for month_count in range(1, total_months + 1):
         month_key = add_months_to_key(start_month, month_count - 1)
-        year = int(str(month_key).split("-")[0])
-        if bucket is None or bucket["year"] != year:
+        tax_year = _tax_year_label_for_month_key(month_key, assumptions)
+        if bucket is None or bucket["tax_year"] != tax_year:
             if bucket is not None:
                 buckets.append(bucket)
             bucket = {
-                "year": year,
+                "tax_year": tax_year,
                 "end_month_count": month_count,
                 "end_value": current_value,
                 "end_value_no_fees": current_value,
@@ -384,26 +416,27 @@ def export_projections():
 
     # ── Sheet 4: Year by year ─────────────────────────────────────────────────
     ws2 = wb.create_sheet("Year by Year")
-    _title_cell(ws2, 1, "SteadyPlan — Year-by-Year Scenario Estimate", 3)
-    _header_row(ws2, 3, ["Age", "Year", "Scenario estimate total"])
+    _title_cell(ws2, 1, "SteadyPlan — Tax-Year Scenario Estimate", 3)
+    _header_row(ws2, 3, ["Age", "Tax year", "Scenario estimate total"])
     _set_col_width(ws2, 1, 10)
     _set_col_width(ws2, 2, 10)
     _set_col_width(ws2, 3, 22)
 
-    curr_year = date.today().year
+    curr_tax_year = uk_tax_year_label(date.today())
     total_months = int(exact_years * 12)
     current_total = sum(to_float(a["current_value"]) for a in accounts)
-    _data_row(ws2, 4, [int(current_age), f"{curr_year} (today)", current_total], num_formats={3: GBP0})
+    _data_row(ws2, 4, [int(current_age), f"{curr_tax_year} (today)", current_total], num_formats={3: GBP0})
 
-    portfolio_buckets = _build_calendar_year_projection_buckets(
+    portfolio_buckets = _build_tax_year_projection_buckets(
         start_month,
         total_months,
         current_total,
         lambda month_count: sum(projected_account_value_at_month(a, assumptions, month_count) for a in accounts),
+        assumptions=assumptions,
     )
     for idx, bucket in enumerate(portfolio_buckets, start=5):
         age = int(current_age + bucket["end_month_count"] / 12.0)
-        _data_row(ws2, idx, [age, bucket["year"], bucket["end_value"]], num_formats={3: GBP0})
+        _data_row(ws2, idx, [age, bucket["tax_year"], bucket["end_value"]], num_formats={3: GBP0})
 
     # Final fractional-year point (matches summary card exactly)
     if exact_years > whole_years and (
@@ -555,15 +588,15 @@ def export_projections():
         # Year-by-year table — columns vary by which fees apply
         yby_start = 5 + len(summary_rows) + 1
         if has_annual_fees and has_contrib_fee:
-            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)", "Value (no ann. fees)", "Ann. Fee Impact"]
+            yby_headers = ["Age", "Tax year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)", "Value (no ann. fees)", "Ann. Fee Impact"]
         elif has_annual_fees:
-            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Value (no fees)", "Fee Impact"]
+            yby_headers = ["Age", "Tax year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Value (no fees)", "Fee Impact"]
         elif has_contrib_fee:
-            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)"]
+            yby_headers = ["Age", "Tax year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)"]
         elif is_pb:
-            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "Cap adjustment", "You pay (yr)", "Into pot (yr)"]
+            yby_headers = ["Age", "Tax year", "Scenario estimate value", "Growth", "Cap adjustment", "You pay (yr)", "Into pot (yr)"]
         else:
-            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)"]
+            yby_headers = ["Age", "Tax year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)"]
         _header_row(ws_acc, yby_start, yby_headers)
         _set_col_width(ws_acc, 3, 22)
         _set_col_width(ws_acc, 4, 18)
@@ -579,11 +612,12 @@ def export_projections():
 
         prev_val = acc_current
         acc_total_months = int(exact_years * 12)
-        yearly_buckets = _build_calendar_year_projection_buckets(
+        yearly_buckets = _build_tax_year_projection_buckets(
             start_month,
             acc_total_months,
             acc_current,
             lambda month_count: projected_account_value_at_month(acc, assumptions, month_count),
+            assumptions=assumptions,
             month_breakdown_fn=_month_breakdown,
             value_no_fees_at_month_fn=(
                 (lambda month_count: projected_account_value_at_month_no_fees(acc, assumptions, month_count))
@@ -593,25 +627,25 @@ def export_projections():
 
         if has_annual_fees and has_contrib_fee:
             _data_row(ws_acc, yby_start + 1, [
-                int(current_age), f"{curr_year} (today)", acc_current, 0, 0, 0,
+                int(current_age), f"{curr_tax_year} (today)", acc_current, 0, 0, 0,
                 0, acc_current, 0,
             ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0, 8: GBP0, 9: GBP0})
         elif has_annual_fees:
             _data_row(ws_acc, yby_start + 1, [
-                int(current_age), f"{curr_year} (today)", acc_current, 0, 0, 0,
+                int(current_age), f"{curr_tax_year} (today)", acc_current, 0, 0, 0,
                 acc_current, 0,
             ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0, 8: GBP0})
         elif has_contrib_fee:
             _data_row(ws_acc, yby_start + 1, [
-                int(current_age), f"{curr_year} (today)", acc_current, 0, 0, 0, 0,
+                int(current_age), f"{curr_tax_year} (today)", acc_current, 0, 0, 0, 0,
             ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0})
         elif is_pb:
             _data_row(ws_acc, yby_start + 1, [
-                int(current_age), f"{curr_year} (today)", acc_current, 0, 0, 0, 0,
+                int(current_age), f"{curr_tax_year} (today)", acc_current, 0, 0, 0, 0,
             ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0})
         else:
             _data_row(ws_acc, yby_start + 1, [
-                int(current_age), f"{curr_year} (today)", acc_current, 0, 0, 0,
+                int(current_age), f"{curr_tax_year} (today)", acc_current, 0, 0, 0,
             ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0})
 
         prev_val = acc_current
@@ -626,7 +660,7 @@ def export_projections():
             if is_pb and growth_this_year < 0 and val >= PREMIUM_BONDS_MAX_BALANCE - 0.005:
                 cap_adjustment_this_year = growth_this_year
                 growth_this_year = 0.0
-            year_label = bucket["year"]
+            year_label = bucket["tax_year"]
             row_num = yby_start + 1 + bucket_index
 
             if has_annual_fees and has_contrib_fee:
