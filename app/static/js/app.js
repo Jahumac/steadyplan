@@ -405,12 +405,16 @@
       }
 
       function fmtIncomeShare(value, income) {
-        if (income <= 0) return '— of income';
-        return (value / income * 100).toFixed(1) + '% of income';
+        if (income <= 0) return '—';
+        return (value / income * 100).toFixed(1) + '%';
       }
 
-      function fmtAnnual(value) {
-        return '£' + (value * 12).toLocaleString('en-GB', {minimumFractionDigits:0, maximumFractionDigits:0}) + ' / year';
+      function fmtAnnualAmount(value) {
+        return '£' + (value * 12).toLocaleString('en-GB', {minimumFractionDigits:0, maximumFractionDigits:0});
+      }
+
+      function fmtAnnualRow(value) {
+        return fmtAnnualAmount(value) + ' / year';
       }
 
       function recalcSummary() {
@@ -460,7 +464,7 @@
           var share = document.getElementById('share-' + k);
           if (share) share.textContent = fmtIncomeShare(sectionTotals[k], income);
           var annual = document.getElementById('annual-' + k);
-          if (annual) annual.textContent = fmtAnnual(sectionTotals[k]);
+          if (annual) annual.textContent = fmtAnnualAmount(sectionTotals[k]);
         });
       }
 
@@ -527,6 +531,8 @@
               setTimeout(function() { ind.style.opacity = '0'; }, 3000);
             }
           }
+          var rowAnnual = document.getElementById('annual-item-' + input.dataset.itemId);
+          if (rowAnnual) rowAnnual.textContent = fmtAnnualRow(parseFloat(input.value) || 0);
           clearTimeout(debounceTimer);
           debounceTimer = setTimeout(function() {
             saveEntry(input.dataset.itemId, input.value, ind);

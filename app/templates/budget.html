@@ -104,21 +104,10 @@
 <div class="budget-container" data-month-key="{{ month_key }}" data-income-key="{{ income_key }}">
 {% for section in sections %}
 <section class="panel mb-1 budget-section-panel" id="{{ section.key | replace('_', '-') }}" data-sec="{{ section.key }}">
-  <div class="section-header">
+  <div class="section-header budget-section-title-row">
     <div>
       <p class="eyebrow budget-section-eyebrow">{{ section.key | replace('_', ' ') | upper }}</p>
       <h3>{{ section.label }}</h3>
-    </div>
-    <div class="budget-section-summary budget-section-summary-stack">
-      <strong class="budget-section-total" id="total-{{ section.key }}">
-        £{{ '{:,.2f}'.format(section.total) }}
-      </strong>
-      <span class="budget-section-income-share" id="share-{{ section.key }}" title="This section as a percentage of budgeted income">
-        {% if section.income_percent is not none %}{{ '{:.1f}'.format(section.income_percent) }}% of income{% else %}— of income{% endif %}
-      </span>
-      <span class="budget-section-annual" id="annual-{{ section.key }}" title="Monthly amount multiplied by 12">
-        £{{ '{:,.0f}'.format(section.annual_total) }} / year
-      </span>
     </div>
   </div>
   {# Section-level helper hints #}
@@ -134,6 +123,23 @@
   <p class="helper-text helper-text-section">The flexible stuff — eating out, hobbies, shopping.</p>
   {% endif %}
 
+  <div class="budget-section-metrics" aria-label="{{ section.label }} summary">
+    <div class="budget-section-metric">
+      <span class="budget-section-metric-label">Monthly</span>
+      <strong class="budget-section-total" id="total-{{ section.key }}">£{{ '{:,.2f}'.format(section.total) }}</strong>
+    </div>
+    <div class="budget-section-metric">
+      <span class="budget-section-metric-label">Income share</span>
+      <strong class="budget-section-income-share" id="share-{{ section.key }}" title="This section as a percentage of budgeted income">
+        {% if section.income_percent is not none %}{{ '{:.1f}'.format(section.income_percent) }}%{% else %}—{% endif %}
+      </strong>
+    </div>
+    <div class="budget-section-metric">
+      <span class="budget-section-metric-label">Yearly</span>
+      <strong class="budget-section-annual" id="annual-{{ section.key }}" title="Monthly amount multiplied by 12">£{{ '{:,.0f}'.format(section.annual_total) }}</strong>
+    </div>
+  </div>
+
   {% if section.rows %}
   <div class="budget-rows">
     {% for item in section.rows %}
@@ -147,6 +153,9 @@
           <span class="budget-row-source" data-source="{{ item.source }}" title="{{ item.source_title }}">{{ item.source_label }}</span>
         {% endif %}
         {% if item.notes %}<span class="budget-row-note">{{ item.notes }}</span>{% endif %}
+      </div>
+      <div class="budget-row-annual" id="annual-item-{{ item.id }}" title="Monthly amount multiplied by 12">
+        £{{ '{:,.0f}'.format(item.annual_amount) }} / year
       </div>
       <div class="budget-row-right">
         <span class="budget-row-currency">£</span>
