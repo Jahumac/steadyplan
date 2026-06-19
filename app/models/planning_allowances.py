@@ -543,7 +543,7 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
     with get_connection() as conn:
         accounts = conn.execute(
             """
-            SELECT id, name, wrapper_type, category, monthly_contribution, employer_contribution, contribution_method, current_value
+            SELECT id, name, wrapper_type, category, monthly_contribution, employer_contribution, contribution_method, current_value, valuation_mode
             FROM accounts
             WHERE user_id = ?
               AND is_active = 1
@@ -554,6 +554,8 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
                  OR LOWER(COALESCE(wrapper_type, '')) LIKE '%sipp%'
                  OR LOWER(COALESCE(wrapper_type, '')) LIKE '%pension%'
                  OR LOWER(COALESCE(wrapper_type, '')) LIKE '%cash%'
+                 OR LOWER(COALESCE(wrapper_type, '')) LIKE '%premium bond%'
+                 OR COALESCE(valuation_mode, '') = 'premium_bonds'
                  OR LOWER(COALESCE(category, '')) = 'cash'
               )
             ORDER BY
@@ -632,6 +634,7 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
             "monthly_contribution": default_amount,
             "employer_contribution": float(account["employer_contribution"] or 0),
             "contribution_method": account["contribution_method"] or "standard",
+            "valuation_mode": account["valuation_mode"] or "manual",
             "months": month_cells,
         })
 
