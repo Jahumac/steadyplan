@@ -47,7 +47,7 @@ from app.models import (
     upsert_single_month_contribution_override,
 )
 from app.models.debts import amortisation_schedule, schedule_anchor
-from app.models.accounts import PREMIUM_BONDS_MAX_BALANCE
+from app.models.accounts import PREMIUM_BONDS_MAX_BALANCE, is_premium_bonds_account
 from app.services.import_staging import (
     delete_staged,
     read_staged,
@@ -136,12 +136,7 @@ def _is_stocks_and_shares_isa_account(account):
 
 
 def _is_premium_bonds_account(account):
-    text = " ".join([
-        str(account.get("name") or ""),
-        str(account.get("wrapper_type") or ""),
-        str(account.get("category") or ""),
-    ]).lower()
-    return "premium bond" in text
+    return is_premium_bonds_account(account)
 
 
 def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_forward_entries=None):
