@@ -109,9 +109,14 @@
       <p class="eyebrow budget-section-eyebrow">{{ section.key | replace('_', ' ') | upper }}</p>
       <h3>{{ section.label }}</h3>
     </div>
-    <strong class="budget-section-total" id="total-{{ section.key }}">
-      £{{ '{:,.2f}'.format(section.total) }}
-    </strong>
+    <div class="budget-section-summary">
+      <strong class="budget-section-total" id="total-{{ section.key }}">
+        £{{ '{:,.2f}'.format(section.total) }}
+      </strong>
+      <span class="budget-section-income-share" id="share-{{ section.key }}" title="This section as a percentage of budgeted income">
+        {% if section.income_percent is not none %}{{ '{:.1f}'.format(section.income_percent) }}% of income{% else %}— of income{% endif %}
+      </span>
+    </div>
   </div>
   {# Section-level helper hints #}
   {% if loop.first %}
