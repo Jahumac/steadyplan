@@ -404,6 +404,11 @@
         return '£' + s;
       }
 
+      function fmtIncomeShare(value, income) {
+        if (income <= 0) return '— of income';
+        return (value / income * 100).toFixed(1) + '% of income';
+      }
+
       function recalcSummary() {
         var sectionTotals = {};
         var preSalaryTotal = 0;
@@ -444,10 +449,12 @@
         if (psNote) psNote.style.display = preSalaryTotal > 0 ? '' : 'none';
         if (psAmt) psAmt.textContent = fmtGBP(preSalaryTotal);
 
-        // Update section totals
+        // Update section totals and their share of income
         Object.keys(sectionTotals).forEach(function(k) {
           var el = document.getElementById('total-' + k);
           if (el) el.textContent = '£' + sectionTotals[k].toLocaleString('en-GB', {minimumFractionDigits:2, maximumFractionDigits:2});
+          var share = document.getElementById('share-' + k);
+          if (share) share.textContent = fmtIncomeShare(sectionTotals[k], income);
         });
       }
 

@@ -254,3 +254,43 @@ def test_pre_salary_surplus_adds_back_outside_take_home(app, make_user):
         assert summary["pre_salary_total"] == 500.0
         assert summary["surplus"] == 2000.0
 
+
+
+def test_budget_sections_show_share_of_income(app, client, make_user):
+    uid, username, password = make_user(username="budget-section-income-share", password="password123")
+    _seed_default_budget_sections(app, uid)
+
+    from app.models import get_connection
+
+    with app.app_context():
+        with get_connection() as conn:
+            conn.executemany(
+                """
+                INSERT INTO budget_items (user_id, name, section, default_amount, notes, sort_order, is_active)
+                VALUES (?, ?, ?, ?, '', ?, 1)
+                """,
+                [
+                    (uid, "Salary", "income", 4000.0, 0),
+                    (uid, "Rent", "fixed", 1000.0, 0),
+                    (uid, "Car loan", "debt", 500.0, 0),
+                    (uid, "Stocks ISA", "investment", 800.0, 0),
+                    (uid, "Food and fun", "discretionary", 400.0, 0),
+                ],
+            )
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    resp = client.get("/budget/?month=2026-06")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'id="share-income"' in html
+    assert 'id="share-fixed"' in html
+    assert 'id="share-debt"' in html
+    assert 'id="share-investment"' in html
+    assert 'id="share-discretionary"' in html
+    assert "100.0% of income" in html
+    assert "25.0% of income" in html
+    assert "12.5% of income" in html
+    assert "20.0% of income" in html
+    assert "10.0% of income" in html
