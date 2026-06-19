@@ -409,6 +409,10 @@
         return (value / income * 100).toFixed(1) + '% of income';
       }
 
+      function fmtAnnual(value) {
+        return '£' + (value * 12).toLocaleString('en-GB', {minimumFractionDigits:0, maximumFractionDigits:0}) + ' / year';
+      }
+
       function recalcSummary() {
         var sectionTotals = {};
         var preSalaryTotal = 0;
@@ -455,6 +459,8 @@
           if (el) el.textContent = '£' + sectionTotals[k].toLocaleString('en-GB', {minimumFractionDigits:2, maximumFractionDigits:2});
           var share = document.getElementById('share-' + k);
           if (share) share.textContent = fmtIncomeShare(sectionTotals[k], income);
+          var annual = document.getElementById('annual-' + k);
+          if (annual) annual.textContent = fmtAnnual(sectionTotals[k]);
         });
       }
 

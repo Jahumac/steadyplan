@@ -109,12 +109,15 @@
       <p class="eyebrow budget-section-eyebrow">{{ section.key | replace('_', ' ') | upper }}</p>
       <h3>{{ section.label }}</h3>
     </div>
-    <div class="budget-section-summary">
+    <div class="budget-section-summary budget-section-summary-stack">
       <strong class="budget-section-total" id="total-{{ section.key }}">
         £{{ '{:,.2f}'.format(section.total) }}
       </strong>
       <span class="budget-section-income-share" id="share-{{ section.key }}" title="This section as a percentage of budgeted income">
         {% if section.income_percent is not none %}{{ '{:.1f}'.format(section.income_percent) }}% of income{% else %}— of income{% endif %}
+      </span>
+      <span class="budget-section-annual" id="annual-{{ section.key }}" title="Monthly amount multiplied by 12">
+        £{{ '{:,.0f}'.format(section.annual_total) }} / year
       </span>
     </div>
   </div>
