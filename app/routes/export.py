@@ -127,6 +127,60 @@ def _title_cell(ws, row_num, text, col_span=1):
         ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=col_span)
 
 
+def _build_calendar_year_projection_buckets(
+    start_month,
+    total_months,
+    current_value,
+    value_at_month_fn,
+    *,
+    month_breakdown_fn=None,
+    value_no_fees_at_month_fn=None,
+):
+    """Aggregate projection months into real calendar-year buckets.
+
+    The month-by-month sheet is the source of truth. This helper groups those
+    future months by the displayed calendar year so the yearly tables line up
+    with the monthly rows instead of using rolling 12-month windows from today.
+    """
+    if not start_month or total_months <= 0:
+        return []
+
+    buckets = []
+    bucket = None
+
+    for month_count in range(1, total_months + 1):
+        month_key = add_months_to_key(start_month, month_count - 1)
+        year = int(str(month_key).split("-")[0])
+        if bucket is None or bucket["year"] != year:
+            if bucket is not None:
+                buckets.append(bucket)
+            bucket = {
+                "year": year,
+                "end_month_count": month_count,
+                "end_value": current_value,
+                "end_value_no_fees": current_value,
+                "personal": 0.0,
+                "into_pot": 0.0,
+                "contrib_fee": 0.0,
+            }
+
+        bucket["end_month_count"] = month_count
+        bucket["end_value"] = float(value_at_month_fn(month_count) or 0)
+        if value_no_fees_at_month_fn is not None:
+            bucket["end_value_no_fees"] = float(value_no_fees_at_month_fn(month_count) or 0)
+
+        if month_breakdown_fn is not None:
+            breakdown = month_breakdown_fn(month_count - 1) or {}
+            bucket["personal"] += float(breakdown.get("personal") or 0)
+            bucket["into_pot"] += float(breakdown.get("total_into_pot") or 0)
+            bucket["contrib_fee"] += float(breakdown.get("contribution_fee") or 0)
+
+    if bucket is not None:
+        buckets.append(bucket)
+
+    return buckets
+
+
 # ── Projections export ────────────────────────────────────────────────────────
 
 @export_bp.route("/projections/export.xlsx")
@@ -337,21 +391,28 @@ def export_projections():
     _set_col_width(ws2, 3, 22)
 
     curr_year = date.today().year
-    for yr in range(0, whole_years + 1):
-        age = int(current_age + yr)
-        total = sum(
-            projected_account_value_at_year(a, assumptions, yr)
-            for a in accounts
-        )
-        yby_year_label = f"{curr_year + yr} (today)" if yr == 0 else curr_year + yr
-        _data_row(ws2, yr + 4, [age, yby_year_label, total], num_formats={3: GBP0})
+    total_months = int(exact_years * 12)
+    current_total = sum(to_float(a["current_value"]) for a in accounts)
+    _data_row(ws2, 4, [int(current_age), f"{curr_year} (today)", current_total], num_formats={3: GBP0})
+
+    portfolio_buckets = _build_calendar_year_projection_buckets(
+        start_month,
+        total_months,
+        current_total,
+        lambda month_count: sum(projected_account_value_at_month(a, assumptions, month_count) for a in accounts),
+    )
+    for idx, bucket in enumerate(portfolio_buckets, start=5):
+        age = int(current_age + bucket["end_month_count"] / 12.0)
+        _data_row(ws2, idx, [age, bucket["year"], bucket["end_value"]], num_formats={3: GBP0})
 
     # Final fractional-year point (matches summary card exactly)
-    if exact_years > whole_years:
-        final_row = whole_years + 4 + 1
+    if exact_years > whole_years and (
+        not portfolio_buckets or abs(float(portfolio_buckets[-1]["end_value"]) - float(total_projected)) > 0.005
+    ):
+        final_row = 4 + len(portfolio_buckets) + 1
         _data_row(ws2, final_row, [
             int(retirement_age),
-            curr_year + whole_years + 1,
+            "Retirement",
             total_projected,
         ], bold=True, num_formats={3: GBP0})
 
@@ -362,7 +423,6 @@ def export_projections():
     _set_col_width(ws3, 1, 16)
     _set_col_width(ws3, 2, 22)
 
-    total_months = int(exact_years * 12)
     for m in range(0, total_months + 1):
         month_label = "Today" if m == 0 else add_months_to_key(start_month, m - 1)
         total = sum(
@@ -492,88 +552,112 @@ def export_projections():
             _set_col_width(ws_acc, 9, 18)
 
         prev_val = acc_current
+        acc_total_months = int(exact_years * 12)
+        yearly_buckets = _build_calendar_year_projection_buckets(
+            start_month,
+            acc_total_months,
+            acc_current,
+            lambda month_count: projected_account_value_at_month(acc, assumptions, month_count),
+            month_breakdown_fn=_month_breakdown,
+            value_no_fees_at_month_fn=(
+                (lambda month_count: projected_account_value_at_month_no_fees(acc, assumptions, month_count))
+                if has_annual_fees else None
+            ),
+        )
 
-        for yr in range(0, whole_years + 1):
-            age = int(current_age + yr)
-            val = projected_account_value_at_year(acc, assumptions, yr)
-            if yr == 0:
-                contrib_this_year = 0
-                contrib_fee_this_year = 0
-                personal_this_year = 0
-            else:
-                start_idx = (yr - 1) * 12
-                end_idx = yr * 12
-                contrib_this_year = 0.0
-                contrib_fee_this_year = 0.0
-                personal_this_year = 0.0
-                for mi in range(start_idx, end_idx):
-                    if is_lisa and (current_age + mi / 12.0) >= 50:
-                        continue
-                    b = _month_breakdown(mi)
-                    contrib_this_year += float(b.get("total_into_pot") or 0)
-                    personal_this_year += float(b.get("personal") or 0)
-                    contrib_fee_this_year += float(b.get("contribution_fee") or 0)
-            growth_this_year = (val - prev_val - contrib_this_year) if yr > 0 else 0
+        if has_annual_fees and has_contrib_fee:
+            _data_row(ws_acc, yby_start + 1, [
+                int(current_age), f"{curr_year} (today)", acc_current, 0, 0, 0,
+                0, acc_current, 0,
+            ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0, 8: GBP0, 9: GBP0})
+        elif has_annual_fees:
+            _data_row(ws_acc, yby_start + 1, [
+                int(current_age), f"{curr_year} (today)", acc_current, 0, 0, 0,
+                acc_current, 0,
+            ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0, 8: GBP0})
+        elif has_contrib_fee:
+            _data_row(ws_acc, yby_start + 1, [
+                int(current_age), f"{curr_year} (today)", acc_current, 0, 0, 0, 0,
+            ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0})
+        elif is_pb:
+            _data_row(ws_acc, yby_start + 1, [
+                int(current_age), f"{curr_year} (today)", acc_current, 0, 0, 0, 0,
+            ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0})
+        else:
+            _data_row(ws_acc, yby_start + 1, [
+                int(current_age), f"{curr_year} (today)", acc_current, 0, 0, 0,
+            ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0})
+
+        prev_val = acc_current
+        for bucket_index, bucket in enumerate(yearly_buckets, start=1):
+            age = int(current_age + bucket["end_month_count"] / 12.0)
+            val = bucket["end_value"]
+            personal_this_year = bucket["personal"]
+            contrib_this_year = bucket["into_pot"]
+            contrib_fee_this_year = bucket["contrib_fee"]
+            growth_this_year = val - prev_val - contrib_this_year
             cap_adjustment_this_year = 0.0
             if is_pb and growth_this_year < 0 and val >= PREMIUM_BONDS_MAX_BALANCE - 0.005:
                 cap_adjustment_this_year = growth_this_year
                 growth_this_year = 0.0
-            year_label = f"{curr_year + yr} (today)" if yr == 0 else curr_year + yr
+            year_label = bucket["year"]
+            row_num = yby_start + 1 + bucket_index
 
             if has_annual_fees and has_contrib_fee:
-                val_no_fees = projected_account_value_at_year_no_fees(acc, assumptions, yr)
-                _data_row(ws_acc, yby_start + 1 + yr, [
+                val_no_fees = bucket["end_value_no_fees"]
+                _data_row(ws_acc, row_num, [
                     age, year_label, val, growth_this_year, personal_this_year, contrib_this_year,
                     contrib_fee_this_year, val_no_fees, val_no_fees - val,
                 ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0, 8: GBP0, 9: GBP0})
             elif has_annual_fees:
-                val_no_fees = projected_account_value_at_year_no_fees(acc, assumptions, yr)
-                _data_row(ws_acc, yby_start + 1 + yr, [
+                val_no_fees = bucket["end_value_no_fees"]
+                _data_row(ws_acc, row_num, [
                     age, year_label, val, growth_this_year, personal_this_year, contrib_this_year,
                     val_no_fees, val_no_fees - val,
                 ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0, 8: GBP0})
             elif has_contrib_fee:
-                _data_row(ws_acc, yby_start + 1 + yr, [
+                _data_row(ws_acc, row_num, [
                     age, year_label, val, growth_this_year, personal_this_year, contrib_this_year, contrib_fee_this_year,
                 ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0})
             elif is_pb:
-                _data_row(ws_acc, yby_start + 1 + yr, [
+                _data_row(ws_acc, row_num, [
                     age, year_label, val, growth_this_year, cap_adjustment_this_year, personal_this_year, contrib_this_year,
                 ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0})
             else:
-                _data_row(ws_acc, yby_start + 1 + yr, [
+                _data_row(ws_acc, row_num, [
                     age, year_label, val, growth_this_year, personal_this_year, contrib_this_year,
                 ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0})
             prev_val = val
 
         # Final fractional-year row
-        if exact_years > whole_years:
-            final_r = yby_start + 1 + whole_years + 1
+        final_year_value = float(yearly_buckets[-1]["end_value"]) if yearly_buckets else float(acc_current)
+        if exact_years > whole_years and abs(final_year_value - float(acc_projected)) > 0.005:
+            final_r = yby_start + 1 + len(yearly_buckets) + 1
             if has_annual_fees and has_contrib_fee:
                 _data_row(ws_acc, final_r, [
-                    int(retirement_age), curr_year + whole_years + 1, acc_projected, "", "", "", "",
+                    int(retirement_age), "Retirement", acc_projected, "", "", "", "",
                     acc_projected_no_fees, acc_fee_impact,
                 ], bold=True, num_formats={3: GBP0, 8: GBP0, 9: GBP0})
             elif has_annual_fees:
                 _data_row(ws_acc, final_r, [
-                    int(retirement_age), curr_year + whole_years + 1, acc_projected, "", "", "",
+                    int(retirement_age), "Retirement", acc_projected, "", "", "",
                     acc_projected_no_fees, acc_fee_impact,
                 ], bold=True, num_formats={3: GBP0, 7: GBP0, 8: GBP0})
             elif has_contrib_fee:
                 _data_row(ws_acc, final_r, [
-                    int(retirement_age), curr_year + whole_years + 1, acc_projected, "", "", "", "",
+                    int(retirement_age), "Retirement", acc_projected, "", "", "", "",
                 ], bold=True, num_formats={3: GBP0})
             elif is_pb:
                 _data_row(ws_acc, final_r, [
-                    int(retirement_age), curr_year + whole_years + 1, acc_projected, "", "", "", "",
+                    int(retirement_age), "Retirement", acc_projected, "", "", "", "",
                 ], bold=True, num_formats={3: GBP0})
             else:
                 _data_row(ws_acc, final_r, [
-                    int(retirement_age), curr_year + whole_years + 1, acc_projected, "", "", "",
+                    int(retirement_age), "Retirement", acc_projected, "", "", "",
                 ], bold=True, num_formats={3: GBP0})
 
         # ── Monthly breakdown table ──────────────────────────────────
-        yearly_end = yby_start + 1 + whole_years + (2 if exact_years > whole_years else 1)
+        yearly_end = yby_start + 2 + len(yearly_buckets) + (1 if exact_years > whole_years and abs(final_year_value - float(acc_projected)) > 0.005 else 0)
         mby_start = yearly_end + 2  # gap of 1 empty row
 
         if has_annual_fees and has_contrib_fee:

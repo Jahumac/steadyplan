@@ -1,3 +1,4 @@
+from datetime import date as real_date
 from io import BytesIO
 
 from openpyxl import load_workbook
@@ -169,6 +170,69 @@ def test_lifetime_isa_one_off_override_export_includes_full_bonus(app, client, m
     into_pot_col = headers.index("Into pot (yr)")
     first_year = next(row for row in ws.iter_rows(min_row=header_row + 1, values_only=True) if row[you_pay_col] == 4000)
     assert first_year[into_pot_col] == 5000
+
+
+def test_lifetime_isa_yearly_export_uses_calendar_year_distribution(app, client, make_user, monkeypatch):
+    from app import calculations
+    from app.routes import export as export_routes
+
+    class FakeDate(real_date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 6, 18)
+
+    monkeypatch.setattr(calculations, "date", FakeDate)
+    monkeypatch.setattr(export_routes, "date", FakeDate)
+
+    uid, username, password = make_user(username="projection-export-lisa-calendar-year", password="password123")
+    with app.app_context():
+        assumptions = dict(fetch_assumptions(uid))
+        assumptions.update({
+            "annual_growth_rate": 0.0,
+            "retirement_age": 46,
+            "date_of_birth": "1982-12-18",
+            "salary_day": 28,
+        })
+        update_assumptions(assumptions, uid)
+        lisa_id = create_account(_account("Lifetime ISA", "Lifetime ISA", 277, 0, growth_mode="custom", growth_rate_override=0), uid)
+        create_contribution_override({
+            "account_id": lisa_id,
+            "from_month": "2026-12",
+            "to_month": "2027-07",
+            "override_amount": 1000,
+            "reason": "Tax-year LISA fill",
+        }, uid)
+
+    _login(client, username, password)
+    wb = _workbook_from_response(client.get("/projections/export.xlsx"))
+
+    ws = wb["Lifetime ISA"]
+    headers = None
+    header_row = None
+    for idx, row in enumerate(ws.iter_rows(values_only=True), 1):
+        if row[:6] == ("Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)"):
+            headers = row
+            header_row = idx
+            break
+    assert headers is not None
+    assert header_row is not None
+
+    data_rows = [row for row in ws.iter_rows(min_row=header_row + 1, values_only=True) if isinstance(row[1], (int, str))]
+    row_today = next(row for row in data_rows if row[1] == "2026 (today)")
+    row_2026 = next(row for row in data_rows if row[1] == 2026)
+    row_2027 = next(row for row in data_rows if row[1] == 2027)
+
+    assert row_today[4] == 0
+    assert row_today[5] == 0
+    assert row_2026[4] == 1000
+    assert row_2026[5] == 1250
+    assert row_2027[4] == 7000
+    assert row_2027[5] == 8750
+
+    total_sheet_rows = [tuple(cell.value for cell in row) for row in wb["Year by Year"].iter_rows()]
+    assert (43, "2026 (today)", 277) in total_sheet_rows
+    assert (44, 2026, 1527) in total_sheet_rows
+    assert (45, 2027, 10277) in total_sheet_rows
 
 
 def test_premium_bonds_cap_is_not_reported_as_negative_growth(app, client, make_user):
