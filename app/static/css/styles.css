@@ -3252,42 +3252,58 @@ button.button-danger:focus {
 
 .budget-section-panel .budget-section-total {
   color: var(--sec-color, var(--accent));
-  font-size: 1.28rem;
-  line-height: 1;
+  font-size: 1.34rem;
+  line-height: 1.05;
   white-space: nowrap;
 }
 
 .budget-section-summary {
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  justify-items: center;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.65rem;
-  flex-wrap: wrap;
-  text-align: right;
+  min-width: 9.75rem;
+  text-align: center;
+}
+
+.budget-section-summary-stack {
+  gap: 0.32rem;
 }
 
 .budget-section-income-share {
   display: inline-flex;
   align-items: center;
-  min-height: 1.8rem;
-  border: 1px solid color-mix(in srgb, var(--sec-color, var(--accent)) 42%, transparent);
+  justify-content: center;
+  min-width: 7.7rem;
+  min-height: 1.7rem;
+  border: 1px solid color-mix(in srgb, var(--sec-color, var(--accent)) 38%, transparent);
   border-radius: 999px;
-  padding: 0.22rem 0.68rem;
-  color: color-mix(in srgb, var(--sec-color, var(--accent)) 78%, var(--text));
-  background: color-mix(in srgb, var(--sec-color, var(--accent)) 10%, rgba(15, 23, 42, 0.55));
+  padding: 0.18rem 0.58rem;
+  color: color-mix(in srgb, var(--sec-color, var(--accent)) 72%, var(--text));
+  background: color-mix(in srgb, var(--sec-color, var(--accent)) 9%, rgba(15, 23, 42, 0.55));
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 750;
   line-height: 1;
   white-space: nowrap;
 }
 
+.budget-section-annual {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
 @media (max-width: 640px) {
   .budget-section-summary {
-    align-items: flex-start;
-    justify-content: flex-start;
+    justify-items: start;
+    min-width: 0;
     text-align: left;
+  }
+
+  .budget-section-income-share {
+    min-width: 0;
   }
 }
 

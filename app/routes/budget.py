@@ -347,6 +347,7 @@ def _build_monthly_data(month_key, user_id):
     total_income = section_totals.get(income_key, 0)
     for section in sections:
         section["income_percent"] = (section["total"] / total_income * 100) if total_income > 0 else None
+        section["annual_total"] = section["total"] * 12
     total_expenses = sum(v for k, v in section_totals.items() if k != income_key)
     surplus = total_income - (total_expenses - pre_salary_total)
     savings_total = 0.0

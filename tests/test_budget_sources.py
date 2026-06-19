@@ -284,6 +284,7 @@ def test_budget_sections_show_share_of_income(app, client, make_user):
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
+    assert 'class="budget-section-summary budget-section-summary-stack"' in html
     assert 'id="share-income"' in html
     assert 'id="share-fixed"' in html
     assert 'id="share-debt"' in html
@@ -294,3 +295,13 @@ def test_budget_sections_show_share_of_income(app, client, make_user):
     assert "12.5% of income" in html
     assert "20.0% of income" in html
     assert "10.0% of income" in html
+    assert 'id="annual-income"' in html
+    assert 'id="annual-fixed"' in html
+    assert 'id="annual-debt"' in html
+    assert 'id="annual-investment"' in html
+    assert 'id="annual-discretionary"' in html
+    assert "£48,000 / year" in html
+    assert "£12,000 / year" in html
+    assert "£6,000 / year" in html
+    assert "£9,600 / year" in html
+    assert "£4,800 / year" in html
