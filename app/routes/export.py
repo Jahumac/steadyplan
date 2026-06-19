@@ -462,6 +462,8 @@ def export_projections():
         acc_fee_impact = acc_projected_no_fees - acc_projected
         acc_breakdown = projected_contribution_breakdown(acc, assumptions, 0)
         acc_total_months_for_fees = int(exact_years * 12)
+        next_planned_month = None
+        next_planned_breakdown = None
         has_annual_fees = acc_fee_pct > 0
         has_contrib_fee = acc_contribution_fee_pct > 0
         has_fees = has_annual_fees or has_contrib_fee
@@ -474,6 +476,16 @@ def export_projections():
 
         first_contrib_fee_monthly = 0.0
         acc_total_contrib_fees = 0.0
+        if acc_total_months_for_fees > 0:
+            for mi in range(0, acc_total_months_for_fees):
+                if is_lisa and (current_age + mi / 12.0) >= 50:
+                    continue
+                b = _month_breakdown(mi)
+                if next_planned_month is None and (
+                    abs(float(b.get("personal") or 0)) > 0.005 or abs(float(b.get("total_into_pot") or 0)) > 0.005
+                ):
+                    next_planned_month = add_months_to_key(start_month, mi) if start_month else None
+                    next_planned_breakdown = b
         if has_contrib_fee:
             if not (is_lisa and current_age >= 50):
                 first_contrib_fee_monthly = float(_month_breakdown(0).get("contribution_fee") or 0)
@@ -496,6 +508,20 @@ def export_projections():
             ("Current value", acc_current, GBP),
             ("You pay (monthly)", acc_breakdown["personal"], GBP),
         ]
+        if (
+            next_planned_month
+            and next_planned_breakdown is not None
+            and next_planned_month != start_month
+            and (
+                abs(float(next_planned_breakdown.get("personal") or 0) - float(acc_breakdown["personal"] or 0)) > 0.005
+                or abs(float(next_planned_breakdown.get("total_into_pot") or 0) - float(acc_monthly or 0)) > 0.005
+            )
+        ):
+            summary_rows.extend([
+                ("Next planned month", next_planned_month, None),
+                ("You pay (next planned month)", float(next_planned_breakdown.get("personal") or 0), GBP),
+                ("Total into pot (next planned month)", float(next_planned_breakdown.get("total_into_pot") or 0), GBP),
+            ])
         if first_month_override is not None and abs(to_float(acc.get("monthly_contribution", 0)) - to_float(first_month_override)) > 0.005:
             summary_rows.append(("Account setting (monthly)", to_float(acc.get("monthly_contribution", 0)), GBP))
         if has_contrib_fee:
