@@ -314,6 +314,7 @@ def _build_monthly_data(month_key, user_id):
                 "name": item["name"],
                 "notes": item["notes"],
                 "amount": amount,
+                "annual_amount": amount * 12,
                 "default_amount": float(item["default_amount"] or 0),
                 "section": section_key,
                 "linked_account": item["linked_account_id"] is not None,
