@@ -3252,26 +3252,43 @@ button.button-danger:focus {
 
 .budget-section-panel .budget-section-total {
   color: var(--sec-color, var(--accent));
+  font-size: 1.28rem;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .budget-section-summary {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.25rem;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  text-align: right;
 }
 
 .budget-section-income-share {
   display: inline-flex;
   align-items: center;
-  border: 1px solid rgba(148, 163, 184, 0.28);
+  min-height: 1.8rem;
+  border: 1px solid color-mix(in srgb, var(--sec-color, var(--accent)) 42%, transparent);
   border-radius: 999px;
-  padding: 0.16rem 0.5rem;
-  color: var(--muted);
-  background: rgba(15, 23, 42, 0.22);
-  font-size: 0.78rem;
-  font-weight: 650;
+  padding: 0.22rem 0.68rem;
+  color: color-mix(in srgb, var(--sec-color, var(--accent)) 78%, var(--text));
+  background: color-mix(in srgb, var(--sec-color, var(--accent)) 10%, rgba(15, 23, 42, 0.55));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  font-size: 0.88rem;
+  font-weight: 750;
+  line-height: 1;
   white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .budget-section-summary {
+    align-items: flex-start;
+    justify-content: flex-start;
+    text-align: left;
+  }
 }
 
 /* ── Edit Budget page — row actions + default amount ─────────────── */
