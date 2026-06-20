@@ -24,7 +24,7 @@ from app.models import (
     update_goal,
 )
 from app.services.goal_projection import project_goal
-from app.services.goal_ui import goal_projection_copy
+from app.services.goal_ui import goal_projection_copy, goal_track_status
 
 goals_bp = Blueprint("goals", __name__)
 
@@ -102,11 +102,16 @@ def _build_goal_card(goal, accounts, holdings_totals, assumptions=None):
     )
     projection = _project_goal(included_accounts, target, assumptions)
 
+    visible_tags = selected_tags[:2]
+    hidden_tag_count = max(len(selected_tags) - len(visible_tags), 0)
+
     return {
         "id": goal["id"],
         "name": goal["name"],
         "goal_type": goal["goal_type"] or "Tagged Goal",
         "selected_tags": selected_tags,
+        "visible_tags": visible_tags,
+        "hidden_tag_count": hidden_tag_count,
         "current": current_total,
         "target": target,
         "progress": progress_to_goal(current_total, target),
@@ -115,6 +120,13 @@ def _build_goal_card(goal, accounts, holdings_totals, assumptions=None):
         "notes": goal["notes"] or "",
         "monthly_contribution": monthly_contribution,
         "projection": projection,
+        "track_status": goal_track_status(
+            projection,
+            monthly_contribution,
+            remaining,
+            len(included_accounts),
+            selected_tags,
+        ),
         "projection_copy": goal_projection_copy(
             projection,
             monthly_contribution,
