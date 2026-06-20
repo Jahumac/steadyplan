@@ -53,66 +53,79 @@
 </section>
 
 {% if goal_cards %}
-<p class="helper-text">Goal timing estimates use tagged accounts, contribution calendar overrides, and growth assumptions. Inflation and retirement withdrawals aren’t modelled.</p>
+<p class="helper-text goals-page-helper">Goal timing estimates use tagged accounts, planned contributions, and growth assumptions. Not a guarantee.</p>
 {% endif %}
 
 {% if goal_cards %}
 <section class="card-grid goal-grid">
   {% for goal in goal_cards %}
     <a class="card goal-link-card" href="{{ url_for('goals.goals', mode='edit', goal_id=goal.id) }}">
-      <div class="section-header mb-075 flex-start">
+      <div class="section-header flex-start goal-card-heading">
         <div>
           <h2 class="goal-card-title">{{ goal.name }}</h2>
           <p class="goal-card-meta">{{ goal.account_count }} account{{ '' if goal.account_count == 1 else 's' }} included</p>
         </div>
       </div>
 
-      <p>£{{ '{:,.2f}'.format(goal.current) }} / £{{ '{:,.2f}'.format(goal.target) }}</p>
+      <p class="goal-value-line">£{{ '{:,.2f}'.format(goal.current) }} / £{{ '{:,.2f}'.format(goal.target) }}</p>
       <div class="progress" role="progressbar" aria-valuenow="{{ (goal.progress * 100)|round(1) }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ goal.name }} progress"><div class="progress-bar" data-pct="{{ (goal.progress * 100)|round(1) }}"></div></div>
-      <small>{{ '{:.1f}'.format(goal.progress * 100) }}% complete · £{{ '{:,.2f}'.format(goal.remaining) }} remaining</small>
-
-      {% if goal.projection_copy %}
-        <p class="goal-projection{% if goal.projection and goal.projection.reached %} goal-projection-reached{% elif goal.projection and not goal.projection.total_months %} goal-projection-long{% elif not goal.projection or goal.monthly_contribution == 0 %} goal-projection-none{% endif %}">{% if goal.projection and goal.projection.reached %}✓ {% endif %}{{ goal.projection_copy }}</p>
-      {% endif %}
-
-      {% if goal.source_summary %}
-      <div class="goal-source-panel" aria-label="{{ goal.name }} projection basis">
-        <div class="goal-source-header">
-          <span>Projection basis</span>
-        </div>
-        <div class="goal-source-grid">
-          <div class="goal-source-item">
-            <span>Tagged accounts</span>
-            <strong>{{ goal.source_summary.account_count }} account{{ '' if goal.source_summary.account_count == 1 else 's' }}</strong>
-          </div>
-          <div class="goal-source-item">
-            <span>Contribution calendar</span>
-            <strong>{{ goal.source_summary.calendar_label }}</strong>
-          </div>
-          <div class="goal-source-item">
-            <span>Growth assumptions</span>
-            <strong>Included</strong>
-          </div>
-          {% if goal.source_summary.retirement_projection is not none %}
-          <div class="goal-source-item goal-source-item-wide">
-            <span>Scenario estimate at retirement</span>
-            <strong>£{{ '{:,.0f}'.format(goal.source_summary.retirement_projection) }}</strong>
-          </div>
-          {% endif %}
-        </div>
-        <p class="goal-source-caveat">{{ goal.source_summary.method_note }} {{ goal.source_summary.caveat }}</p>
+      <div class="goal-progress-summary">
+        <small>{{ '{:.1f}'.format(goal.progress * 100) }}% complete</small>
+        <small>£{{ '{:,.2f}'.format(goal.remaining) }} remaining</small>
       </div>
-      {% endif %}
 
-      {% if goal.selected_tags %}
-      <div class="badge-row mt-075">
-        {% for tag in goal.selected_tags %}
+      <p class="goal-status-line">
+        {% if goal.track_status.tone == 'ahead' %}
+          <span class="goal-status-label perf-positive">{{ goal.track_status.label }}</span>
+        {% elif goal.track_status.tone == 'behind' %}
+          <span class="goal-status-label perf-negative">{{ goal.track_status.label }}</span>
+        {% else %}
+          <span class="goal-status-label">{{ goal.track_status.label }}</span>
+        {% endif %}
+        <span class="goal-status-detail">{{ goal.track_status.detail }}</span>
+      </p>
+
+      {% if goal.visible_tags %}
+      <div class="goal-chip-row">
+        {% for tag in goal.visible_tags %}
           <span class="badge badge-tag">{{ tag }}</span>
         {% endfor %}
+        {% if goal.hidden_tag_count %}
+          <span class="goal-chip-overflow badge badge-tag">+{{ goal.hidden_tag_count }} more</span>
+        {% endif %}
       </div>
       {% endif %}
 
-      {% if goal.notes %}<p class="helper-text mt-075">{{ goal.notes }}</p>{% endif %}
+      {% if goal.notes %}<p class="goal-card-note helper-text">{{ goal.notes }}</p>{% endif %}
+
+      {% if goal.source_summary %}
+      <details class="goal-source-details" aria-label="{{ goal.name }} projection basis">
+        <summary>How this estimate is calculated</summary>
+        <div class="goal-source-panel">
+          <div class="goal-source-grid">
+            <div class="goal-source-item">
+              <span>Tagged accounts</span>
+              <strong>{{ goal.source_summary.account_count }} account{{ '' if goal.source_summary.account_count == 1 else 's' }}</strong>
+            </div>
+            <div class="goal-source-item">
+              <span>Contribution calendar</span>
+              <strong>{{ goal.source_summary.calendar_label }}</strong>
+            </div>
+            <div class="goal-source-item">
+              <span>Growth assumptions</span>
+              <strong>Included</strong>
+            </div>
+            {% if goal.source_summary.retirement_projection is not none %}
+            <div class="goal-source-item goal-source-item-wide">
+              <span>Scenario estimate at retirement</span>
+              <strong>£{{ '{:,.0f}'.format(goal.source_summary.retirement_projection) }}</strong>
+            </div>
+            {% endif %}
+          </div>
+          <p class="goal-source-caveat">{{ goal.source_summary.method_note }} {{ goal.source_summary.caveat }}</p>
+        </div>
+      </details>
+      {% endif %}
     </a>
   {% endfor %}
 </section>
