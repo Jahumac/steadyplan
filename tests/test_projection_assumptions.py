@@ -424,12 +424,15 @@ def test_goals_eta_helper_copy_present(app, client, make_user):
     resp = client.get("/goals/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Goal timing estimates use tagged accounts, contribution calendar overrides, and growth assumptions." in body
+    assert "Goal timing estimates use tagged accounts, planned contributions, and growth assumptions. Not a guarantee." in body
+    assert "Goal timing estimates use tagged accounts, contribution calendar overrides, and growth assumptions." not in body
     assert "Goal timing estimates use your current contributions and growth assumptions." not in body
     assert "Goal ETAs use your current contributions and growth assumptions." not in body
     assert "Goal ETAs are estimates based on your current contributions and growth assumptions." not in body
     assert "Goal ETAs are approximate scenario estimates based on your current contributions and growth assumptions." not in body
-    assert "~" in body
+    assert "On course" in body
+    assert "est. " in body
+    assert "~" not in body
 
 
 def test_goals_page_uses_action_copy_for_unlinked_and_out_of_range_goals(app, client, make_user):
@@ -469,8 +472,9 @@ def test_goals_page_uses_action_copy_for_unlinked_and_out_of_range_goals(app, cl
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
 
-    assert "Increase contributions to bring this within range" in body
-    assert "Link an account to this goal" in body
+    assert "increase contributions to bring this within range" in body
+    assert "link an account to this goal" in body
+    assert "Needs attention" in body
     assert "More than 50 years at current rate" not in body
     assert "No contributions set" not in body
 
@@ -529,8 +533,10 @@ def test_goals_cards_show_tasteful_projection_source_details(app, client, make_u
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
 
+    assert 'class="goal-source-details"' in body
+    assert '<summary>How this estimate is calculated</summary>' in body
     assert 'class="goal-source-panel"' in body
-    assert "Projection basis" in body
+    assert "Projection basis" not in body
     assert "Tagged accounts" in body
     assert "2 accounts" in body
     assert "Contribution calendar" in body
@@ -539,8 +545,72 @@ def test_goals_cards_show_tasteful_projection_source_details(app, client, make_u
     assert "Scenario estimate at retirement" in body
     assert "Same month-by-month projection as Planning." in body
     assert "Not a guarantee." in body
-    assert "Goal timing estimates use tagged accounts, contribution calendar overrides, and growth assumptions." in body
+    assert "Goal timing estimates use tagged accounts, planned contributions, and growth assumptions. Not a guarantee." in body
+    assert "Goal timing estimates use tagged accounts, contribution calendar overrides, and growth assumptions." not in body
     assert "Goal timing estimates use your current contributions and growth assumptions." not in body
+
+
+def test_goals_cards_collapse_projection_basis_behind_summary_first_disclosure(app, client, make_user):
+    uid, username, password = make_user(username="goals-source-collapse", password="password123")
+
+    with app.app_context():
+        from app.models import create_contribution_override, get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                """
+                UPDATE assumptions
+                SET date_of_birth = '1990-01-01', retirement_age = 60, annual_growth_rate = 0.05, salary_day = 28
+                WHERE user_id = ?
+                """,
+                (uid,),
+            )
+            first_account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, tags, current_value, monthly_contribution, is_active)
+                VALUES (?, 'Stocks ISA', 'Stocks & Shares ISA', 'retirement,long-term', 10000, 300, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, tags, current_value, monthly_contribution, is_active)
+                VALUES (?, 'SIPP', 'SIPP', 'retirement,long-term', 5000, 200, 1)
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
+                VALUES (?, 'Retirement goal', 100000, 'Retirement', 'retirement,long-term', 'Optional note')
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+        create_contribution_override(
+            {
+                "account_id": first_account_id,
+                "from_month": "2026-04",
+                "to_month": "9999-12",
+                "override_amount": 450,
+                "reason": "schedule",
+            },
+            uid,
+        )
+
+    _login(client, username, password)
+    resp = client.get("/goals/")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+
+    assert 'class="goal-source-details"' in body
+    assert '<summary>How this estimate is calculated</summary>' in body
+    assert '<details class="goal-source-details"' in body
+    assert '<details class="goal-source-details" open' not in body
+    assert 'class="goal-source-panel"' in body
+    assert "Projection basis" not in body
+    assert "Optional note" in body
 
 
 def test_goals_route_fetches_contribution_overrides_in_one_batch(app, client, make_user, monkeypatch):

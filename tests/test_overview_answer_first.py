@@ -454,6 +454,7 @@ def test_overview_goal_progress_uses_same_projection_copy_as_goals_page(app, cli
         from app.calculations import effective_account_value, projection_start_month_key
         from app.models import fetch_all_accounts, fetch_assumptions, fetch_contribution_overrides, get_connection
         from app.services.goal_projection import project_goal
+        from app.services.goal_ui import goal_track_status
 
         with get_connection() as conn:
             conn.execute(
@@ -493,6 +494,13 @@ def test_overview_goal_progress_uses_same_projection_copy_as_goals_page(app, cli
         account["_contribution_overrides"] = fetch_contribution_overrides(account["id"])
         account["_projection_start_month"] = start_month
         projection = project_goal([account], 5000, assumptions)
+        goals_track_status = goal_track_status(
+            projection,
+            account["monthly_contribution"],
+            5000 - account["current_value"],
+            1,
+            ["deposit"],
+        )
 
     overview = client.get("/")
     goals = client.get("/goals/")
@@ -503,10 +511,12 @@ def test_overview_goal_progress_uses_same_projection_copy_as_goals_page(app, cli
 
     assert projection is not None
     assert projection["total_months"]
-    expected = f"~ {projection['duration']} to go · {projection['eta_label']}"
+    expected_overview = f"~ {projection['duration']} to go · {projection['eta_label']}"
 
-    assert expected in goals_html
-    assert expected in overview_html
+    assert expected_overview in overview_html
+    assert goals_track_status["label"] in goals_html
+    assert goals_track_status["detail"] in goals_html
+    assert expected_overview not in goals_html
     assert f"~{date.today().year}" not in overview_html
 
 

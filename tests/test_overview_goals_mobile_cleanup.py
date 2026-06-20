@@ -84,6 +84,49 @@ def test_goals_page_uses_two_column_goal_grid_on_larger_mobile_widths(app, clien
     assert "justify-content: stretch;" in css
 
 
+def test_goals_page_uses_compact_summary_first_cards(app, client, make_user):
+    uid, username, password = make_user(username="goals-summary-first", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO accounts (user_id, name, wrapper_type, tags, current_value, monthly_contribution, is_active) VALUES (?, 'ISA', 'Stocks & Shares ISA', 'goal-tag,second-tag,third-tag', 1200, 100, 1)",
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes) VALUES (?, 'Emergency Fund', 5000, 'Tagged Goal', 'goal-tag,second-tag,third-tag', 'This note should stay visible.')",
+                (uid,),
+            )
+            conn.commit()
+
+    resp = client.get("/goals/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'class="goal-progress-summary"' in html
+    assert 'class="goal-status-line"' in html
+    assert 'class="goal-status-label"' in html
+    assert 'class="goal-status-detail"' in html
+    assert 'class="goal-chip-row"' in html
+    assert 'class="goal-card-note helper-text"' in html
+    assert 'class="goal-chip-overflow badge badge-tag"' in html
+    assert '>+1 more<' in html
+
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+    assert ".goal-link-card {" in css
+    assert "display: grid;" in css
+    assert ".goal-progress-summary {" in css
+    assert ".goal-status-line {" in css
+    assert ".goal-status-label {" in css
+    assert ".goal-status-detail {" in css
+    assert ".goal-chip-row {" in css
+    assert ".goal-chip-overflow {" in css
+    assert ".goal-card-note {" in css
+
+
 def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app, client, make_user):
     uid, username, password = make_user(username="overview-mobile-details", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
