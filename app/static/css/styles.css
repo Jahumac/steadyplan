@@ -3253,6 +3253,103 @@ button.button-danger:focus {
 .budget-edit-callout strong { color: var(--accent); }
 .budget-edit-callout span { color: var(--muted); }
 
+.budget-what-if-card {
+  border-color: rgba(56, 189, 248, 0.22);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.68));
+}
+
+.budget-what-if-header {
+  align-items: flex-start;
+  margin-bottom: 0.85rem;
+}
+
+.budget-what-if-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.budget-what-if-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.budget-what-if-stat {
+  display: grid;
+  gap: 0.2rem;
+  align-content: center;
+  min-height: 4.1rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 13px;
+  background: rgba(2, 6, 23, 0.18);
+}
+
+.budget-what-if-stat span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.budget-what-if-stat strong {
+  color: var(--text);
+  font-size: 1.05rem;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.card .budget-what-if-status {
+  margin: 0.7rem 0 0;
+  font-size: 0.82rem;
+}
+
+.budget-container.budget-what-if-active .budget-amount-input {
+  border-color: rgba(56, 189, 248, 0.48);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.14);
+}
+
+.budget-container.budget-what-if-active .budget-save-indicator {
+  color: var(--accent);
+}
+
+@media (max-width: 760px) {
+  .budget-what-if-header {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .budget-what-if-actions {
+    justify-content: flex-start;
+  }
+
+  .budget-what-if-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .budget-what-if-strip {
+    gap: 0.42rem;
+  }
+
+  .budget-what-if-stat {
+    min-height: 3.55rem;
+    padding: 0.48rem 0.55rem;
+  }
+
+  .budget-what-if-stat span {
+    font-size: 0.58rem;
+  }
+
+  .budget-what-if-stat strong {
+    font-size: 0.9rem;
+  }
+}
+
 /* Budget linked hint */
 
 /* Section-level helper hints */
