@@ -59,7 +59,7 @@ def _recent_performance_event_rows(accounts, user_id, limit=8):
     rows = []
     for account_id, account_name in account_names.items():
         for event in fetch_cash_flow_events_for_account(account_id, user_id, limit=50):
-            if (event.get("allowance_effect") or "none") != "none":
+            if (event.get("allowance_effect") or "none") != "performance_only":
                 continue
             amount = float(event.get("amount") or 0)
             rows.append(
@@ -127,7 +127,7 @@ def record_cash_flow_event():
             "amount": signed_amount,
             "kind": kind,
             "note": note,
-            "allowance_effect": "none",
+            "allowance_effect": "performance_only",
         },
         uid,
     )
@@ -149,8 +149,11 @@ def record_cash_flow_event():
 @performance_bp.route("/cash-flow-events/<int:event_id>/delete", methods=["POST"])
 @login_required
 def delete_performance_cash_flow_event(event_id):
-    delete_cash_flow_event(event_id, current_user.id)
-    flash("Removed that Performance movement. Account balances and snapshots were not changed.", "success")
+    deleted = delete_cash_flow_event(event_id, current_user.id, allowance_effect="performance_only")
+    if deleted:
+        flash("Removed that Performance movement. Account balances and snapshots were not changed.", "success")
+    else:
+        flash("That Performance movement was not found or has already been removed.", "error")
     return redirect(url_for("performance.performance"))
 
 
