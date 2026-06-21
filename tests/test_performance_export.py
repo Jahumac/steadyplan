@@ -59,7 +59,7 @@ def test_performance_export_keeps_zero_snapshot_message_for_selected_account(app
     assert detail["A5"].value is None
 
 
-def test_performance_export_acknowledges_first_baseline_for_portfolio_and_account(app, client, make_user):
+def test_performance_export_shows_first_snapshot_as_initial_funding_for_portfolio_and_account(app, client, make_user):
     uid, username, password = make_user(username="perf-export-first-baseline", password="password123")
     with app.app_context():
         account_id = create_account(_account_payload(value=6000, monthly=150), uid)
@@ -73,27 +73,67 @@ def test_performance_export_acknowledges_first_baseline_for_portfolio_and_accoun
     _login(client, username, password)
     workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
 
-    expected_detail_title = "Your first baseline is saved"
-    expected_detail_message = "Complete next month's monthly update and the month-by-month table will appear."
-
     portfolio = workbook["Portfolio (Monthly)"]
-    assert portfolio["A4"].value == expected_detail_title
-    assert portfolio["A5"].value == expected_detail_message
-    assert "Come back after next month's monthly update" not in portfolio["A5"].value
-    assert "SteadyPlan has the first snapshot for this report." not in portfolio["A5"].value
-    assert portfolio["A4"].value != "Not enough data yet (need at least two monthly snapshots)."
-    assert portfolio["A4"].value != "First baseline saved."
-    assert portfolio["A4"].value != "Your first baseline is saved."
+    assert portfolio["A4"].value == "Month"
+    assert portfolio["A5"].value == "May 2026"
+    assert portfolio["B5"].value == 0
+    assert portfolio["C5"].value == 6000
+    assert portfolio["D5"].value == 0
+    assert portfolio["E5"].value == 0
+    assert portfolio["F5"].value == 6000
+    assert "Your first baseline is saved" not in str(portfolio["A4"].value)
 
     account = workbook["ISA (Monthly)"]
-    assert account["A4"].value == expected_detail_title
-    assert account["A5"].value == expected_detail_message
-    assert "Come back after next month's monthly update" not in account["A5"].value
-    assert "SteadyPlan has the first snapshot for this report." not in account["A5"].value
-    assert account["A4"].value != "Not enough data yet (need at least two monthly snapshots)."
-    assert account["A4"].value != "First baseline saved."
-    assert account["A4"].value != "Your first baseline is saved."
+    assert account["A4"].value == "Month"
+    assert account["A5"].value == "May 2026"
+    assert account["B5"].value == 0
+    assert account["C5"].value == 6000
+    assert account["D5"].value == 0
+    assert account["E5"].value == 0
+    assert account["F5"].value == 6000
+    assert "Your first baseline is saved" not in str(account["A4"].value)
 
+
+
+def test_performance_export_shows_initial_funding_rows_for_one_snapshot_accounts(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-initial-funding", password="password123")
+    with app.app_context():
+        premium_id = create_account(_account_payload(name="Premium Bonds", wrapper_type="Premium Bonds", value=800, monthly=0), uid)
+        my_sipp_id = create_account(_account_payload(name="My SIPP", wrapper_type="SIPP", value=206.36, monthly=0), uid)
+        with get_connection() as conn:
+            for account_id, balance in [(premium_id, 800), (my_sipp_id, 206.36)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-06-01', ?, ?, '2026-06')",
+                    (account_id, balance),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    summary = workbook["Summary"]
+    imported = {summary.cell(row=r, column=1).value: summary.cell(row=r, column=8).value for r in range(5, summary.max_row + 1)}
+    assert imported["Portfolio"] == 1006.36
+    assert imported["Premium Bonds"] == 800
+    assert imported["My SIPP"] == 206.36
+
+    premium = workbook["Premium Bonds (Monthly)"]
+    assert premium["A4"].value == "Month"
+    assert premium["A5"].value == "Jun 2026"
+    assert premium["B5"].value == 0
+    assert premium["C5"].value == 800
+    assert premium["D5"].value == 0
+    assert premium["E5"].value == 0
+    assert premium["F5"].value == 800
+
+    my_sipp = workbook["My SIPP (Monthly)"]
+    assert my_sipp["A4"].value == "Month"
+    assert my_sipp["A5"].value == "Jun 2026"
+    assert my_sipp["B5"].value == 0
+    assert my_sipp["C5"].value == 206.36
+    assert my_sipp["D5"].value == 0
+    assert my_sipp["E5"].value == 0
+    assert my_sipp["F5"].value == 206.36
 
 
 def test_performance_export_uses_live_current_month_values_for_end_balances(app, client, make_user):
@@ -116,7 +156,7 @@ def test_performance_export_uses_live_current_month_values_for_end_balances(app,
     workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
 
     summary = workbook["Summary"]
-    rows = {summary.cell(row=r, column=1).value: summary.cell(row=r, column=10).value for r in range(5, summary.max_row + 1)}
+    rows = {summary.cell(row=r, column=1).value: summary.cell(row=r, column=11).value for r in range(5, summary.max_row + 1)}
 
     assert rows["Portfolio"] == 2706
     assert rows["Stale ISA"] == 2500
@@ -169,8 +209,9 @@ def test_performance_export_uses_cash_flow_events_for_monthly_attribution(app, c
     assert portfolio["D5"].value == 0
 
     cash = workbook["Cash ISA (Monthly)"]
-    assert cash["C5"].value == -1400
-    assert cash["D5"].value == 0
+    assert cash["C5"].value == 0
+    assert cash["D5"].value == -1400
+    assert cash["E5"].value == 0
 
 
 def test_performance_export_shows_actual_first_month_contribution(app, client, make_user):
@@ -198,9 +239,10 @@ def test_performance_export_shows_actual_first_month_contribution(app, client, m
     assert account["A4"].value == "Month"
     assert account["A5"].value == "Jun 2026"
     assert account["B5"].value == 6
-    assert account["C5"].value == 200
-    assert account["D5"].value == 0
-    assert account["E5"].value == 206
+    assert account["C5"].value == 0
+    assert account["D5"].value == 200
+    assert account["E5"].value == 0
+    assert account["F5"].value == 206
 
 
 def test_performance_export_does_not_count_unconfirmed_current_month_plan_as_actual_contribution(app, client, make_user):
@@ -222,8 +264,9 @@ def test_performance_export_does_not_count_unconfirmed_current_month_plan_as_act
     assert account["A5"].value == "Jun 2026"
     assert account["B5"].value == 7609.35
     assert account["C5"].value == 0
-    assert account["D5"].value == 164.72
-    assert account["E5"].value == 7774.07
+    assert account["D5"].value == 0
+    assert account["E5"].value == 164.72
+    assert account["F5"].value == 7774.07
 
 
 def test_performance_export_treats_cash_isa_untracked_balance_drops_as_cash_movements(app, client, make_user):
@@ -244,10 +287,11 @@ def test_performance_export_treats_cash_isa_untracked_balance_drops_as_cash_move
     account = workbook["Cash ISA (Monthly)"]
     assert account["A5"].value == "Jun 2026"
     assert account["B5"].value == 1947.86
-    assert account["C5"].value == -350.35
-    assert account["D5"].value == 0
-    assert account["E5"].value == 1597.51
-    assert account["F5"].value == 0
+    assert account["C5"].value == 0
+    assert account["D5"].value == -350.35
+    assert account["E5"].value == 0
+    assert account["F5"].value == 1597.51
+    assert account["G5"].value == 0
 
 
 def test_performance_export_counts_regular_contribution_after_account_specific_pension_day(monkeypatch, app, client, make_user):
@@ -296,8 +340,9 @@ def test_performance_export_counts_regular_contribution_after_account_specific_p
 
     account = workbook["Workplace Pension (Monthly)"]
     assert account["A5"].value == "Jun 2026"
-    assert account["C5"].value == 333.33
-    assert account["D5"].value == 80.92
+    assert account["C5"].value == 0
+    assert account["D5"].value == 333.33
+    assert account["E5"].value == 80.92
 
 
 def test_performance_export_labels_cash_isa_with_cash_interest_and_not_global_growth(app, client, make_user):
@@ -324,15 +369,15 @@ def test_performance_export_labels_cash_isa_with_cash_interest_and_not_global_gr
     summary = workbook["Summary"]
     cash_row = next(r for r in range(5, summary.max_row + 1) if summary.cell(row=r, column=1).value == "Cash ISA")
     total_return = float(summary.cell(row=cash_row, column=5).value or 0)
-    total_gain = float(summary.cell(row=cash_row, column=8).value or 0)
+    total_gain = float(summary.cell(row=cash_row, column=9).value or 0)
     assert 0 < total_return < 1
     assert 0 < total_gain < 20
 
     account = workbook["Cash ISA (Monthly)"]
     assert account["A2"].value == "Cash interest rate: 3.6%"
-    assert account["D4"].value == "Interest / Cash gain"
-    assert 0 < float(account["D5"].value or 0) < 10
-    assert 0 < float(account["D6"].value or 0) < 10
+    assert account["E4"].value == "Interest / Cash gain"
+    assert 0 < float(account["E5"].value or 0) < 10
+    assert 0 < float(account["E6"].value or 0) < 10
 
 
 def test_performance_export_labels_premium_bonds_with_expected_prize_rate(app, client, make_user):
@@ -359,7 +404,7 @@ def test_performance_export_labels_premium_bonds_with_expected_prize_rate(app, c
 
     account = workbook["Premium Bonds (Monthly)"]
     assert account["A2"].value == "Expected prize rate: 3.3%"
-    assert account["D4"].value == "Prize gain"
+    assert account["E4"].value == "Prize gain"
 
 
 def test_performance_export_counts_regular_contribution_after_salary_day(monkeypatch, app, client, make_user):
@@ -399,8 +444,9 @@ def test_performance_export_counts_regular_contribution_after_salary_day(monkeyp
 
     account = workbook["Stocks & Shares ISA (Monthly)"]
     assert account["A5"].value == "Jun 2026"
-    assert account["C5"].value == 500
-    assert account["D5"].value == 0
+    assert account["C5"].value == 0
+    assert account["D5"].value == 500
+    assert account["E5"].value == 0
 
 
 def test_performance_export_filters_to_requested_historical_window(app, client, make_user):

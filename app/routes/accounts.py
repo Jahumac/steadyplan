@@ -526,9 +526,9 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
 
         monthly_rows = (fetch_monthly_performance_data_by_account(user_id).get(int(selected["id"])) or {}).get("rows", [])
         if monthly_rows:
-            account_monthly_labels = [m for (m, _b, _c) in monthly_rows][-36:]
-            balances = [float(b or 0) for (_m, b, _c) in monthly_rows][-36:]
-            into_pot_contribs = [float(c or 0) for (_m, _b, c) in monthly_rows][-36:]
+            account_monthly_labels = [row[0] for row in monthly_rows][-36:]
+            balances = [float(row[1] or 0) for row in monthly_rows][-36:]
+            into_pot_contribs = [float(row[2] or 0) for row in monthly_rows][-36:]
             account_monthly_values = [round(v, 2) for v in balances]
 
             if wrapper == "cash isa" and cash_flow_events:

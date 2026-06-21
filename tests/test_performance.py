@@ -38,7 +38,7 @@ def test_monthly_performance_carries_forward_missing_account_snapshots(app, make
 
         monthly_data = fetch_monthly_performance_data(uid)
         assert monthly_data == [
-            ("2026-03", 62011.0, 0.0, 0),
+            ("2026-03", 62011.0, 0.0, 0, None, 62011.0),
             ("2026-04", 62011.0, 0.0, 1),
         ]
 
@@ -312,7 +312,7 @@ def test_performance_cash_flow_uses_into_pot_for_sipp(app, make_user):
 
         monthly_data = fetch_monthly_performance_data(uid)
         assert monthly_data == [
-            ("2026-04", 1000.0, 1000.0, 0),
+            ("2026-04", 1000.0, 0.0, 0, None, 1000.0),
             ("2026-05", 2000.0, 1000.0, 0),
         ]
 
@@ -362,11 +362,11 @@ def test_performance_uses_narrowest_override_for_monthly_cash_flow(app, make_use
         by_account = fetch_monthly_performance_data_by_account(uid)
 
     assert monthly_data == [
-        ('2026-05', 1000.0, 100.0, 0),
+        ('2026-05', 1000.0, 0.0, 0, None, 1000.0),
         ('2026-06', 1250.0, 250.0, 0),
     ]
     assert by_account[isa]["rows"] == [
-        ('2026-05', 1000.0, 100.0),
+        ('2026-05', 1000.0, 0.0, 0, None, 1000.0),
         ('2026-06', 1250.0, 250.0),
     ]
 

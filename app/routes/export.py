@@ -1726,11 +1726,12 @@ def export_performance():
     _set_col_width(ws, 5, 16)
     _set_col_width(ws, 6, 16)
     _set_col_width(ws, 7, 16)
-    _set_col_width(ws, 8, 16)
+    _set_col_width(ws, 8, 18)
     _set_col_width(ws, 9, 16)
-    _set_col_width(ws, 10, 18)
+    _set_col_width(ws, 10, 16)
+    _set_col_width(ws, 11, 18)
 
-    _title_cell(ws, 1, "SteadyPlan — Performance Report", 10)
+    _title_cell(ws, 1, "SteadyPlan — Performance Report", 11)
     cell = ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}")
     cell.font = _SUBTITLE_FONT
 
@@ -1742,6 +1743,7 @@ def export_performance():
         "Total Return",
         "Annualised",
         "Contributed",
+        "Opening / Imported",
         "Gain / Interest",
         "Vs Plan",
         "Current Value",
@@ -1776,7 +1778,7 @@ def export_performance():
     def _append_summary(entity_name, perf):
         nonlocal row
         if not perf:
-            _data_row(ws, row, [entity_name, "", "", 0, "", "", "", "", "", ""], bold=True)
+            _data_row(ws, row, [entity_name, "", "", 0, "", "", "", "", "", "", ""], bold=True)
             row += 1
             return
         labels = perf.get("labels") or []
@@ -1790,10 +1792,11 @@ def export_performance():
             float(perf.get("total_return") or 0),
             float(perf.get("annualised_return") or 0) if perf.get("annualised_return") is not None else None,
             float(perf.get("total_contributed") or 0),
+            float(perf.get("total_imported_baseline") or 0),
             float(perf.get("total_market_gain") or 0),
             float(perf.get("vs_plan") or 0),
             float(perf.get("current_value") or 0),
-        ], bold=True, num_formats={5: PCT, 6: PCT, 7: GBP, 8: GBP, 9: GBP, 10: GBP})
+        ], bold=True, num_formats={5: PCT, 6: PCT, 7: GBP, 8: GBP, 9: GBP, 10: GBP, 11: GBP})
         row += 1
 
     if selected_account_id is None:
@@ -1843,10 +1846,11 @@ def export_performance():
         _set_col_width(ws_d, 2, 16)
         _set_col_width(ws_d, 3, 16)
         _set_col_width(ws_d, 4, 18)
-        _set_col_width(ws_d, 5, 16)
-        _set_col_width(ws_d, 6, 12)
+        _set_col_width(ws_d, 5, 18)
+        _set_col_width(ws_d, 6, 16)
+        _set_col_width(ws_d, 7, 12)
 
-        _title_cell(ws_d, 1, f"SteadyPlan — {title}", 6)
+        _title_cell(ws_d, 1, f"SteadyPlan — {title}", 7)
         sub = ws_d.cell(row=2, column=1, value=subtitle or f"Assumed growth: {assumed_rate*100:.1f}%")
         sub.font = _SUBTITLE_FONT
 
@@ -1857,9 +1861,21 @@ def export_performance():
             and not perf.get("table_rows")
         )
         if has_first_baseline_only:
-            ws_d.cell(row=4, column=1, value="Your first baseline is saved").font = _DATA_FONT
+            ws_d.cell(row=4, column=1, value="First value saved").font = _DATA_FONT
+            first_value = float((perf.get("actual_values") or [0])[-1] or 0)
+            first_label = (perf.get("labels") or [""])[-1]
             ws_d.cell(
                 row=5,
+                column=1,
+                value=f"First tracked value: £{first_value:,.2f} in {first_label}.",
+            ).font = _DATA_FONT
+            ws_d.cell(
+                row=6,
+                column=1,
+                value="It is treated as an opening/imported baseline, not performance gain.",
+            ).font = _DATA_FONT
+            ws_d.cell(
+                row=7,
                 column=1,
                 value="Complete next month's monthly update and the month-by-month table will appear.",
             ).font = _DATA_FONT
@@ -1869,17 +1885,18 @@ def export_performance():
             ws_d.cell(row=4, column=1, value="Not enough data yet (need at least two monthly snapshots).").font = _DATA_FONT
             return
 
-        _header_row(ws_d, 4, ["Month", "Opening", "Contributions", gain_label, "Closing", "Return"])
+        _header_row(ws_d, 4, ["Month", "Opening", "Opening / Imported", "Contributions", gain_label, "Closing", "Return"])
         rows_chrono = list(reversed(perf["table_rows"]))
         for i, r in enumerate(rows_chrono, 5):
             _data_row(ws_d, i, [
                 r["month_key"],
                 float(r["opening"]),
+                float(r.get("imported_baseline") or 0),
                 float(r["contribution"]),
                 float(r["market_gain"]),
                 float(r["closing"]),
                 float(r["return_pct"]),
-            ], num_formats={2: GBP, 3: GBP, 4: GBP, 5: GBP, 6: PCT})
+            ], num_formats={2: GBP, 3: GBP, 4: GBP, 5: GBP, 6: GBP, 7: PCT})
 
     if selected_account_id is None:
         _add_detail_sheet("Portfolio (Monthly)", perf_portfolio, subtitle=f"Assumed growth: {assumed_rate*100:.1f}%", gain_label="Gain / Interest")
