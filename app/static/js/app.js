@@ -1362,12 +1362,25 @@
 
       var growthModeEl    = document.getElementById('cw-growth-mode');
       var customRateField = form.querySelector('[data-custom-rate-field]');
+      var cashRateFields  = form.querySelectorAll('[data-cash-rate-field]');
       var customRateLabel = document.getElementById('cw-custom-rate-label');
       var customRateHint  = document.getElementById('cw-custom-rate-hint');
+      function isCashTemplate() {
+        var wrapper = wrapperEl ? (wrapperEl.value || '').toLowerCase() : '';
+        var category = categoryEl ? (categoryEl.value || '').toLowerCase() : '';
+        return wrapper.indexOf('cash isa') !== -1 || category.indexOf('savings') !== -1;
+      }
+      function toggleCashRateFields() {
+        var show = isCashTemplate();
+        cashRateFields.forEach(function(field) {
+          field.style.display = show ? '' : 'none';
+        });
+      }
       function toggleCustomRate() {
         if (customRateField) {
           customRateField.style.display = growthModeEl && growthModeEl.value === 'custom' ? '' : 'none';
         }
+        toggleCashRateFields();
       }
       if (growthModeEl) {
         growthModeEl.addEventListener('change', toggleCustomRate);
@@ -1866,6 +1879,7 @@
         }
         if (employerEl) employerEl.style.display = cfg.showEmployer ? '' : 'none';
         if (postingEl) postingEl.style.display = (w === 'Workplace Pension') ? '' : 'none';
+        toggleCustomRate();
         refreshStepCount();
         updatePreview();
       }

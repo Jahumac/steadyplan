@@ -1757,9 +1757,10 @@ def export_performance():
         wrapper = (acc.get("wrapper_type") or "").strip().lower()
         if wrapper == "cash isa":
             rate = to_float(acc.get("cash_interest_rate") or 0)
+            subtitle = f"Cash interest rate: {rate*100:.1f}%" if rate > 0 else "Cash interest rate not set"
             return {
                 "rate": rate,
-                "subtitle": f"Cash interest rate: {rate*100:.1f}%",
+                "subtitle": subtitle,
                 "gain_label": "Interest / Cash gain",
             }
         if wrapper == "premium bonds":
