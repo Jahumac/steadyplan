@@ -301,6 +301,7 @@ def fetch_monthly_performance_data(user_id):
                 continue
 
             total_contribution = 0.0
+            total_imported_baseline = 0.0
             total_fixed_gain = 0.0
             for account in accounts:
                 aid = int(account["id"])
@@ -309,12 +310,11 @@ def fetch_monthly_performance_data(user_id):
 
                 cash_flow_key = (aid, month_key)
                 has_cash_flow = cash_flow_key in cash_flow_map
-                if first_value_by_account.get(aid) and month_key != months[0]["month_key"]:
-                    total_contribution += (
-                        float(cash_flow_map.get(cash_flow_key, 0.0) or 0.0)
-                        if has_cash_flow
-                        else float(first_balance_by_account.get(aid, 0.0) or 0.0)
-                    )
+                if first_value_by_account.get(aid):
+                    if has_cash_flow:
+                        total_contribution += float(cash_flow_map.get(cash_flow_key, 0.0) or 0.0)
+                    else:
+                        total_imported_baseline += float(first_balance_by_account.get(aid, 0.0) or 0.0)
                     continue
 
                 rkey = (aid, month_key)
@@ -367,14 +367,15 @@ def fetch_monthly_performance_data(user_id):
                 "month_key": month_key,
                 "total_balance": total_balance,
                 "total_contribution": total_contribution,
+                "imported_baseline": total_imported_baseline,
                 "carried_forward_count": carried_forward,
                 "fixed_gain": total_fixed_gain if abs(total_fixed_gain) > 0.005 else None,
             })
     out = []
     for r in rows:
         row = (r["month_key"], r["total_balance"], r["total_contribution"], r["carried_forward_count"])
-        if r.get("fixed_gain") is not None:
-            row = row + (r.get("fixed_gain"),)
+        if r.get("fixed_gain") is not None or abs(float(r.get("imported_baseline") or 0)) > 0.005:
+            row = row + (r.get("fixed_gain"), float(r.get("imported_baseline") or 0))
         out.append(row)
     return out
 
@@ -511,15 +512,19 @@ def fetch_monthly_performance_data_by_account(user_id):
             contrib = planned_contrib
 
         fixed_gain = None
-        if prior_balance is not None:
+        imported_baseline = 0.0
+        if is_first_account_snapshot and not has_cash_flow:
+            imported_baseline = current_balance
+            contrib = 0.0
+        elif prior_balance is not None:
             fixed_gain = _performance_fixed_gain(r, month_key, float(prior_balance or 0.0), current_balance, prize_map)
             if fixed_gain is not None:
                 contrib = current_balance - float(prior_balance or 0.0) - fixed_gain
 
         previous_balance_by_account[aid] = current_balance
         row = (month_key, current_balance, float(contrib or 0))
-        if fixed_gain is not None:
-            row = row + (0, fixed_gain)
+        if fixed_gain is not None or abs(imported_baseline) > 0.005:
+            row = row + (0, fixed_gain, imported_baseline)
         out[aid]["rows"].append(row)
     return out
 

@@ -1077,4 +1077,4 @@ def test_monthly_review_holding_update_refreshes_snapshots_and_export_current_va
     export_resp = client.get("/performance/export.xlsx")
     workbook = load_workbook(BytesIO(export_resp.data), data_only=True)
     summary = workbook["Summary"]
-    assert summary["J5"].value == 3500
+    assert summary["K5"].value == 3500

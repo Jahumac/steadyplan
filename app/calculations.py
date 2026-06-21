@@ -704,6 +704,7 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
     contribs     = [m[2] for m in monthly_data]
     carried_counts = [m[3] if len(m) > 3 else 0 for m in monthly_data]
     fixed_gains = [m[4] if len(m) > 4 else None for m in monthly_data]
+    imported_baselines = [float(m[5] or 0) if len(m) > 5 else 0.0 for m in monthly_data]
 
     def _fmt(mk):
         try:
@@ -720,9 +721,11 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
         start = balances[i - 1]
         end   = balances[i]
         cf    = contribs[i]
+        imported = imported_baselines[i] if i < len(imported_baselines) else 0.0
+        total_flow = cf + imported
         fixed_gain = fixed_gains[i] if i < len(fixed_gains) else None
-        gain = float(fixed_gain) if fixed_gain is not None else (end - start - cf)
-        denom = start + 0.5 * cf
+        gain = float(fixed_gain) if fixed_gain is not None else (end - start - total_flow)
+        denom = start + 0.5 * total_flow
         monthly_returns.append(gain / denom if denom > 0 else 0.0)
 
     # ── Chain-linked cumulative & annualised return ────────────────────────
@@ -753,22 +756,29 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
 
     # ── Month-by-month breakdown table ────────────────────────────────────
     rows = []
-    first_month_is_actual_contribution = (
+    first_month_has_initial_flow = (
         len(monthly_data) == 1
-        and abs(float(contribs[0] or 0)) > 0.005
-        and abs(float(contribs[0] or 0) - float(assumed_monthly or 0)) > 0.005
+        and (
+            abs(float(imported_baselines[0] if imported_baselines else 0.0)) > 0.005
+            or (
+                abs(float(contribs[0] or 0)) > 0.005
+                and abs(float(contribs[0] or 0) - float(assumed_monthly or 0)) > 0.005
+            )
+        )
     )
-    if first_month_is_actual_contribution:
+    if first_month_has_initial_flow:
         closing = balances[0]
         cf = contribs[0]
-        opening = max(closing - cf, 0.0)
+        imported = imported_baselines[0] if imported_baselines else 0.0
+        opening = max(closing - cf - imported, 0.0)
         fixed_gain = fixed_gains[0] if fixed_gains else None
-        gain = float(fixed_gain) if fixed_gain is not None else (closing - opening - cf)
-        denom = opening + 0.5 * cf
+        gain = float(fixed_gain) if fixed_gain is not None else (closing - opening - cf - imported)
+        denom = opening + 0.5 * (cf + imported)
         r = gain / denom if denom > 0 else 0.0
         rows.append({
             "month_key": display_labels[0],
             "opening": round(opening, 2),
+            "imported_baseline": round(imported, 2),
             "contribution": round(cf, 2),
             "market_gain": round(gain, 2),
             "closing": round(closing, 2),
@@ -779,12 +789,14 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
         opening = balances[i - 1]
         closing = balances[i]
         cf      = contribs[i]
+        imported = imported_baselines[i] if i < len(imported_baselines) else 0.0
         fixed_gain = fixed_gains[i] if i < len(fixed_gains) else None
-        gain = float(fixed_gain) if fixed_gain is not None else (closing - opening - cf)
+        gain = float(fixed_gain) if fixed_gain is not None else (closing - opening - cf - imported)
         r       = monthly_returns[i - 1]
         rows.append({
             "month_key":    display_labels[i],
             "opening":      round(opening, 2),
+            "imported_baseline": round(imported, 2),
             "contribution": round(cf, 2),
             "market_gain":  round(gain, 2),
             "closing":      round(closing, 2),
@@ -794,15 +806,16 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
     rows.reverse()   # most recent first
 
     # ── Totals for summary cards ──────────────────────────────────────────
-    if first_month_is_actual_contribution:
+    total_imported_baseline = sum(imported_baselines)
+    if first_month_has_initial_flow:
         total_contributed = round(float(contribs[0] or 0), 2)
-        total_market_gain = round(float(fixed_gains[0]) if fixed_gains and fixed_gains[0] is not None else float(balances[0] or 0) - total_contributed, 2)
+        total_market_gain = round(float(fixed_gains[0]) if fixed_gains and fixed_gains[0] is not None else float(balances[0] or 0) - total_contributed - total_imported_baseline, 2)
     else:
         total_contributed = sum(contribs[1:])   # exclude opening balance month
         total_market_gain = 0.0
         for i in range(1, len(balances)):
             fixed_gain = fixed_gains[i] if i < len(fixed_gains) else None
-            total_market_gain += float(fixed_gain) if fixed_gain is not None else (balances[i] - balances[i - 1] - contribs[i])
+            total_market_gain += float(fixed_gain) if fixed_gain is not None else (balances[i] - balances[i - 1] - contribs[i] - imported_baselines[i])
     vs_plan = balances[-1] - projected_values[-1] if projected_values else 0
 
     return {
@@ -816,6 +829,7 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
         "total_return":      round(total_return * 100, 2),
         "annualised_return": round(annualised_return * 100, 2) if annualised_return is not None else None,
         "total_contributed": round(total_contributed, 2),
+        "total_imported_baseline": round(total_imported_baseline, 2),
         "total_market_gain": round(total_market_gain, 2),
         "vs_plan":           round(vs_plan, 2),
         "current_value":     round(balances[-1], 2) if balances else 0,
