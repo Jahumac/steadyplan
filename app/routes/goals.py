@@ -66,8 +66,8 @@ def _build_projection_source_summary(goal, included_accounts, assumptions, month
         "monthly_contribution": monthly_contribution,
         "uses_overrides": has_overrides,
         "calendar_label": "Overrides active" if has_overrides else "Account defaults",
-        "growth_label": "Growth assumptions",
-        "method_note": "Same month-by-month projection as Planning.",
+        "growth_label": "Planning numbers",
+        "method_note": "Same month-by-month future estimate as Planning.",
         "caveat": "Not a guarantee.",
         "retirement_projection": None,
     }

@@ -309,7 +309,7 @@ def test_budget_setup_page_does_not_render_turtle_icon(auth_client):
     assert "Budget Setup" in html
     assert "Your take-home pay and any side income. This is the money you can allocate across the rest of the budget." in html
     assert "Your take-home pay and any side income — used to show how much is available to allocate." not in html
-    assert "Set aside money for future goals. Items marked <em>linked</em> use the monthly contribution from that account." in html
+    assert "Set aside money for future goals. Items marked <em>linked</em> use the monthly payment from that account." in html
     assert "Pay yourself first! Items marked <em>linked</em> pull their amount from your account's monthly contribution automatically." not in html
     assert "Minimum payments and extra debt overpayments — use this section to track what you plan to repay this month." in html
     assert "Minimum payments and extra chunks you're throwing at debt — every pound here gets you closer to freedom." not in html

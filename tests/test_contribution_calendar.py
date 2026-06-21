@@ -336,7 +336,7 @@ def test_budget_route_uses_active_override_for_linked_account_month(app, client,
     html = resp.get_data(as_text=True)
     assert "Calendar ISA" in html
     assert 'value="812.34"' in html
-    assert "contribution calendar" in html
+    assert "Payment calendar" in html
 
 
 def test_contribution_calendar_allowance_frame_uses_same_pension_gross_logic_as_allowance_page():
@@ -717,8 +717,8 @@ def test_contribution_calendar_page_loads(app, client, make_user, monkeypatch):
     resp = client.get("/budget/contribution-calendar")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-    assert "Contribution calendar" in html
-    assert "Temporary contribution plan" in html
+    assert "Payment calendar" in html
+    assert "Temporary payment plan" in html
     assert "month-accent-" not in html
     assert "contribution-calendar-hero" in html
     assert "settings-form contribution-calendar-form" in html

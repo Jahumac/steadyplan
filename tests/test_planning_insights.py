@@ -204,7 +204,7 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"Private pension/investment estimate at age 55:" in response.data
     assert b"Private pot estimate at age 55:" not in response.data
     assert b"Projected private pot at age 55:" not in response.data
-    assert response.data.count(b"Scenario estimate at 55:") >= 2
+    assert response.data.count(b"Future estimate at 55:") >= 2
     assert b"Estimate at 55:" not in response.data
     assert b"Projected at 55:" not in response.data
 
@@ -244,7 +244,7 @@ def test_planning_page_no_goal_mode_uses_plan_wording(app, client, make_user):
     assert "Private pension/investment estimate at age 55:" in html
     assert "Private pot estimate at age 55:" not in html
     assert "Projected private pot at age 55:" not in html
-    assert html.count("Scenario estimate at 55:") >= 2
+    assert html.count("Future estimate at 55:") >= 2
     assert "Estimate at 55:" not in html
     assert "Projected at 55:" not in html
     assert html.count("Accessible money estimate at retirement") == 2

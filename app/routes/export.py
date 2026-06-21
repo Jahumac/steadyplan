@@ -272,7 +272,7 @@ def export_projections():
     _set_col_width(ws, 4, 20)
     _set_col_width(ws, 5, 24)
 
-    _title_cell(ws, 1, "SteadyPlan — Retirement Scenario Estimates", 5)
+    _title_cell(ws, 1, "SteadyPlan — Retirement Future Estimates", 5)
     cell = ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}")
     cell.font = _SUBTITLE_FONT
 
@@ -370,16 +370,16 @@ def export_projections():
     r += 3
     ws.cell(row=r, column=1, value="Notes").font = _ACCENT_FONT
     for note in [
-        "Values are nominal scenario estimates before inflation unless stated otherwise.",
-        "You pay monthly is your personal contribution; into pots includes tax relief, employer contributions and bonuses where applicable.",
+        "Values are future estimates before inflation unless stated otherwise.",
+        "You pay monthly is your own payment; into account includes pension tax top-ups, employer payments and bonuses where applicable.",
         "This is a planning estimate, not financial advice.",
     ]:
         r += 1
         ws.cell(row=r, column=1, value=note).font = _SUBTITLE_FONT
 
     # ── Sheet 2: Assumptions ─────────────────────────────────────────────────
-    ws_ass = wb.create_sheet("Scenario Estimate Assumptions")
-    _title_cell(ws_ass, 1, "SteadyPlan — Scenario Estimate Assumptions", 3)
+    ws_ass = wb.create_sheet("Planning Numbers")
+    _title_cell(ws_ass, 1, "SteadyPlan — Planning Numbers", 3)
     _set_col_width(ws_ass, 1, 32)
     _set_col_width(ws_ass, 2, 24)
     _set_col_width(ws_ass, 3, 52)
@@ -387,22 +387,22 @@ def export_projections():
     assumption_rows = [
         ("Generated", datetime.now().strftime("%d %b %Y at %H:%M"), "Snapshot date for this export."),
         ("Current age", int(current_age), "Derived from date of birth when available."),
-        ("Retirement age", int(retirement_age), "Target age used for this scenario estimate."),
+        ("Retirement age", int(retirement_age), "Target age used for this future estimate."),
         ("Years to retirement", round(exact_years, 1), "Exact years when a retirement date is available."),
-        ("Scenario estimate start month", start_month, "First future contribution month considered by scenario estimates."),
-        ("Annual growth rate", f"{growth_rate*100:.1f}%", "Default gross annual growth before account fees."),
+        ("Future estimate start month", start_month, "First future payment month used by future estimates."),
+        ("Annual growth rate", f"{growth_rate*100:.1f}%", "Default yearly growth before account fees."),
         ("Inflation treatment", "Nominal", "Future values are not inflation-adjusted in this export."),
-        ("Salary/review day", _safe_get(assumptions, "salary_day", "") if assumptions else "", "Used to decide whether the current month has already settled."),
+        ("Monthly update day", _safe_get(assumptions, "salary_day", "") if assumptions else "", "Used to decide whether this month should already count."),
     ]
     for idx, row_vals in enumerate(assumption_rows, 4):
         _data_row(ws_ass, idx, row_vals)
 
     # ── Sheet 3: Contribution schedule ───────────────────────────────────────
-    ws_sched = wb.create_sheet("Contribution Schedule")
-    _title_cell(ws_sched, 1, "SteadyPlan — Contribution Schedule", 7)
+    ws_sched = wb.create_sheet("Payment Schedule")
+    _title_cell(ws_sched, 1, "SteadyPlan — Payment Schedule", 7)
     for col, width in enumerate([28, 18, 16, 16, 16, 16, 36], 1):
         _set_col_width(ws_sched, col, width)
-    _header_row(ws_sched, 3, ["Account", "Wrapper", "From", "To", "You pay monthly", "Into pot monthly", "Reason"])
+    _header_row(ws_sched, 3, ["Account", "Wrapper", "From", "To", "You pay monthly", "Into account monthly", "Reason"])
     sched_row = 4
     for acc in accounts:
         baseline_breakdown = contribution_breakdown(acc, assumptions)
@@ -438,7 +438,7 @@ def export_projections():
 
     # ── Sheet 4: Year by year ─────────────────────────────────────────────────
     ws2 = wb.create_sheet("Year by Year")
-    _title_cell(ws2, 1, "SteadyPlan — Tax-Year Scenario Estimate", 3)
+    _title_cell(ws2, 1, "SteadyPlan — Tax-Year Future Estimate", 3)
     _header_row(ws2, 3, ["Age", "Tax year", "Future estimate total"])
     _set_col_width(ws2, 1, 10)
     _set_col_width(ws2, 2, 10)
@@ -473,7 +473,7 @@ def export_projections():
 
     # ── Sheet 3: Month by month (total portfolio) ────────────────────────────
     ws3 = wb.create_sheet("Month by Month")
-    _title_cell(ws3, 1, "SteadyPlan — Monthly Scenario Estimate", 3)
+    _title_cell(ws3, 1, "SteadyPlan — Monthly Future Estimate", 3)
     _header_row(ws3, 3, ["Month", "Future estimate total"])
     _set_col_width(ws3, 1, 16)
     _set_col_width(ws3, 2, 22)

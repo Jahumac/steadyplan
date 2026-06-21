@@ -438,8 +438,8 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         override = active_account_overrides.get(account_id)
         if override is not None:
             contribution_sources[account_id] = {
-                "label": "contribution calendar",
-                "title": f"Using Contribution calendar plan for {budget_context_month_key}: {override['reason'] or 'override'}",
+                "label": "Payment calendar",
+                "title": f"Using Payment calendar plan for {budget_context_month_key}: {override['reason'] or 'override'}",
                 "reason": override["reason"] or "Override",
             }
         else:

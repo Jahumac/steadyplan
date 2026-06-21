@@ -175,11 +175,11 @@ def test_empty_user_gets_warnings(app, new_user_id):
         titles = [item["title"] for item in summary["health_items"]]
         assert "No accounts set up" in titles
         assert "No financial goals set" in titles
-        assert "No assumptions set up" in titles
+        assert "No plan settings set up" in titles
         assert "No budget entries for the current month" in titles
 
         accounts_warning = next(item for item in summary["health_items"] if item["title"] == "No accounts set up")
-        assert accounts_warning["explanation"] == "You haven't added any financial accounts yet. Add one so totals, progress, and scenario estimates can start from real balances."
+        assert accounts_warning["explanation"] == "You haven't added any financial accounts yet. Add one so totals, progress, and future estimates can start from real balances."
         assert "Add accounts to track your finances" not in accounts_warning["explanation"]
 
         goals_warning = next(item for item in summary["health_items"] if item["title"] == "No financial goals set")
@@ -231,7 +231,7 @@ def test_missing_history_warning_still_shows_when_some_accounts_have_history(app
         assert "Some accounts have stale or missing history" in titles
         stale_warning = next(item for item in summary["health_items"] if item["title"] == "Some accounts have stale or missing history")
         assert "Needs History" in stale_warning["explanation"]
-        assert "keep your scenario estimates grounded in recent balances" in stale_warning["explanation"]
+        assert "future estimates use recent balances" in stale_warning["explanation"]
         assert "ensure accurate projections" not in stale_warning["explanation"]
 
 
@@ -268,8 +268,8 @@ def test_stale_account_warning_uses_review_history_cta(app, setup_stale_account_
 def test_missing_assumptions_warning_uses_scenario_estimate_wording(app, new_user_id):
     with app.app_context():
         summary = build_data_health_summary(new_user_id)
-        assumptions_warning = next(item for item in summary["health_items"] if item["title"] == "No assumptions set up")
-        assert assumptions_warning["explanation"] == "You haven't set up your financial assumptions yet. These help scenario estimates and goal timing estimates reflect your plans."
+        assumptions_warning = next(item for item in summary["health_items"] if item["title"] == "No plan settings set up")
+        assert assumptions_warning["explanation"] == "You haven't set up your plan settings yet. These help future estimates and goal timing estimates reflect your plans."
         assert "build scenario estimates that match your plans" not in assumptions_warning["explanation"]
         assert "crucial for projections" not in assumptions_warning["explanation"]
 
@@ -712,7 +712,7 @@ def test_overview_data_health_stale_history_warning_uses_review_history_cta(app,
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "Some accounts have stale or missing history" in html
-    assert "keep your scenario estimates grounded in recent balances" in html
+    assert "future estimates use recent balances" in html
     assert "ensure accurate projections" not in html
     assert 'href="/history"' in html
     assert "Review history" in html

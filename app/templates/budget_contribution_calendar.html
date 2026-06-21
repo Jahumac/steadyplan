@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Contribution calendar · SteadyPlan{% endblock %}
+{% block title %}Payment calendar · SteadyPlan{% endblock %}
 {% block content %}
 
 {% set active_key = 'contribution_calendar' %}
@@ -9,8 +9,8 @@
   <div class="hero-top">
     <div>
       <p class="eyebrow">Budget</p>
-      <h2 class="hero-value">Contribution calendar</h2>
-      <p class="hero-subtitle">Set temporary monthly contribution plans without changing the account's normal monthly contribution.</p>
+      <h2 class="hero-value">Payment calendar</h2>
+      <p class="hero-subtitle">Set short-term monthly payment plans without changing the account’s normal monthly payment.</p>
     </div>
     <div class="badge-row contribution-calendar-hero-badges">
       <span class="badge badge-meta">{{ month_columns|length }} months shown</span>
@@ -45,7 +45,7 @@
       <h3>Planned allowances in this calendar range</h3>
     </div>
   </div>
-  <p class="helper-text">This uses the current From/To calendar range: calendar overrides first, then each account’s normal monthly contribution. If a temporary plan continues beyond the current From/To range, later months are not counted here until you extend the calendar. ISA total planned includes Cash ISA, Stocks &amp; Shares ISA, and Lifetime ISA together against the shared £20,000 ISA frame. Premium Bonds shows your current holding against the NS&amp;I £50,000 cap.</p>
+  <p class="helper-text">This uses the current From/To calendar range: payment calendar overrides first, then each account’s normal monthly payment. If a temporary plan continues beyond the current From/To range, later months are not counted here until you extend the calendar. ISA total planned includes Cash ISA, Stocks &amp; Shares ISA, and Lifetime ISA together against the shared £20,000 ISA frame. Premium Bonds shows your current holding against the NS&amp;I £50,000 cap.</p>
   <div class="table-scroll mt-05">
     <table class="mini-table allowance-frame-table">
       <thead>
@@ -152,7 +152,7 @@
   <div class="section-header">
     <div>
       <p class="eyebrow">Create plan</p>
-      <h3>Temporary contribution plan</h3>
+      <h3>Temporary payment plan</h3>
     </div>
   </div>
   <p class="helper-text">Enter only the accounts you want to override. Blank fields keep using the account default. Enter <strong>0</strong> to pause an account temporarily.</p>

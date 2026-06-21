@@ -78,8 +78,8 @@
     <div class="simple-list">
       <div class="simple-list-item">
         <div>
-          <strong>Scheduled monthly contributions</strong>
-          <p class="helper-text m-0">Regular ISA contributions from account settings.</p>
+          <strong>Scheduled monthly payments</strong>
+          <p class="helper-text m-0">Regular ISA payments from account settings.</p>
         </div>
         <strong>£{{ '{:,.0f}'.format(allowance_truth_checkpoint.monthly_total) }}</strong>
       </div>
@@ -152,7 +152,7 @@
       </tfoot>
     </table>
   </div>
-  <p class="helper-text" style="font-size:0.78rem;">Monthly uses each account's regular contribution setting. Regular to date is that monthly amount multiplied by the months elapsed. Cash-flow adjustments only count when you label a movement as using ISA allowance. If an amount looks wrong, check the account's <a href="/accounts/" class="link-accent">monthly contribution setting</a>.</p>
+  <p class="helper-text" style="font-size:0.78rem;">Monthly uses each account’s regular payment setting. Regular to date is that monthly amount multiplied by the months elapsed. Cash-flow adjustments only count when you label a movement as using ISA allowance. If an amount looks wrong, check the account’s <a href="/accounts/" class="link-accent">monthly payment setting</a>.</p>
   {% else %}
   <p class="helper-text">No ISA accounts yet. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add a Stocks &amp; Shares ISA, Cash ISA, or Lifetime ISA</a> to start tracking.</p>
   {% endif %}

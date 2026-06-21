@@ -1715,14 +1715,14 @@
       var prevTotal       = document.getElementById('cw-prev-total');
 
       var CFG = {
-        'Stocks & Shares ISA':       { cat: 'ISA',     bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly contribution', hint: 'How much do you put into this ISA each month? This helps SteadyPlan estimate the future. You can update it later.' },
+        'Stocks & Shares ISA':       { cat: 'ISA',     bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly payment', hint: 'How much do you put into this ISA each month? This helps SteadyPlan estimate the future. You can update it later.' },
         'Cash ISA':                   { cat: 'ISA',     bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Monthly deposit', hint: 'How much do you add to this Cash ISA each month?' },
-        'Lifetime ISA':               { cat: 'ISA',     bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in each month? Your Lifetime ISA bonus adds 25% on top (up to £1,000/year).' },
+        'Lifetime ISA':               { cat: 'ISA',     bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Your monthly payment', hint: 'How much do you pay in each month? Your Lifetime ISA bonus adds 25% on top (up to £1,000/year).' },
         'Premium Bonds':              { cat: 'Savings', bal: 'premium_bonds', showEmployer: false, method: null, personalLabel: 'Monthly purchase', hint: 'How much do you usually add to Premium Bonds each month? Prize draws are tracked separately; future estimates use the planning rate.' },
-        'SIPP':                       { cat: 'Pension', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in? Your provider adds a 25% basic-rate pension tax top-up.' },
-        'Workplace Pension':          { cat: 'Pension', bal: 'manual',   showEmployer: true,  method: ['salary_sacrifice','relief_at_source'], methodDefault: 'salary_sacrifice', personalLabel: 'Your employee contribution', hint: 'How is your workplace pension set up? Pick the method first, then fill in the amounts.', methodHints: { salary_sacrifice: 'Payments come out before tax, so there is no extra top-up to claim.', relief_at_source: 'You pay from take-home pay; your provider adds a 20% basic-rate pension tax top-up.' } },
+        'SIPP':                       { cat: 'Pension', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Your monthly payment', hint: 'How much do you pay in? Your provider adds a 25% basic-rate pension tax top-up.' },
+        'Workplace Pension':          { cat: 'Pension', bal: 'manual',   showEmployer: true,  method: ['salary_sacrifice','relief_at_source'], methodDefault: 'salary_sacrifice', personalLabel: 'Your employee payment', hint: 'How is your workplace pension set up? Pick the method first, then fill in the amounts.', methodHints: { salary_sacrifice: 'Payments come out before tax, so there is no extra top-up to claim.', relief_at_source: 'You pay from take-home pay; your provider adds a 20% basic-rate pension tax top-up.' } },
         'General Investment Account': { cat: 'Taxable', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly investment', hint: 'How much do you invest into this account each month?' },
-        'Other':                      { cat: null,      bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Monthly contribution', hint: 'How much goes in each month, if anything? You can always update this later.' }
+        'Other':                      { cat: null,      bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Monthly payment', hint: 'How much goes in each month, if anything? You can always update this later.' }
       };
       var ACCOUNT_TEMPLATES = {
         stocks_isa: {
@@ -2115,7 +2115,7 @@
       });
     })();
 
-    // 19. Projections What-If Logic
+    // 19. Future estimates What-If Logic
     (function initWhatIf() {
       function initScenario(config) {
         var ageInput = document.getElementById(config.ageId);
@@ -2252,7 +2252,7 @@
       function renderSeries(container, points, mode) {
         if (!container) return;
         if (!points || !points.length) {
-          container.innerHTML = '<p class="helper-text m-0">No projection data yet.</p>';
+          container.innerHTML = '<p class="helper-text m-0">No future estimate data yet.</p>';
           return;
         }
         function fmtAge(age) {
@@ -2264,8 +2264,8 @@
           return m === 0 ? (y + 'y') : (y + 'y ' + m + 'm');
         }
         var head = mode === 'monthly'
-          ? '<tr><th>Month</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Projected</th></tr>'
-          : '<tr><th>Point</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Projected</th></tr>';
+          ? '<tr><th>Month</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Future estimate</th></tr>'
+          : '<tr><th>Point</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Future estimate</th></tr>';
         var rows = points.map(function(p) {
           var label = (p && p.label) ? String(p.label) : '';
           var age = fmtAge(p && p.age);
@@ -2306,7 +2306,7 @@
           details._seriesCache[key] = data.points || [];
           renderSeries(container, details._seriesCache[key], mode);
         } catch (e) {
-          container.innerHTML = '<p class="helper-text m-0" style="color:var(--danger);">Could not load projection.</p>';
+          container.innerHTML = '<p class="helper-text m-0" style="color:var(--danger);">Could not load future estimate.</p>';
         }
       }
 

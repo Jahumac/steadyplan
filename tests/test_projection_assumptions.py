@@ -282,9 +282,9 @@ def test_settings_monthly_update_timing_helper_uses_monthly_update_wording(app, 
     assert "The usual day money leaves your bank for savings or investments." in body
     assert "SteadyPlan uses this for monthly update reminders and moves weekends automatically." in body
     assert "Monthly Update Timing" not in body
-    assert "Helps decide when your investments have settled and it's time for your monthly update" not in body
-    assert "Used to work out when your investments have settled and it's time for your monthly update" not in body
-    assert "Used to estimate when your investments have settled and it's time for your monthly update" not in body
+    assert "Helps decide when your investments have settled and it's time for your Monthly Update" not in body
+    assert "Used to work out when your investments have settled and it's time for your Monthly Update" not in body
+    assert "Used to estimate when your investments have settled and it's time for your Monthly Update" not in body
     assert "Weekend shifts are handled in the settlement timing." not in body
     assert "The day your ISA contributions and standing orders go out — usually when your salary arrives or a day after." not in body
     assert "Settlement timing accounts for weekends automatically." not in body
@@ -393,8 +393,8 @@ def test_planning_page_uses_scenario_estimate_copy_for_retirement_outputs(app, c
     assert "Estimate at age 60 under current balances, contributions and growth assumptions." not in body
     assert "Private pension/investment estimate at age 60:" in body
     assert "Private pot estimate at age 60:" not in body
-    assert body.count("Scenario estimate at 60:") == 2
-    assert "Estimate at 60:" not in body
+    assert body.count("Future estimate at 60:") == 2
+    assert "Scenario estimate at 60:" not in body
 
 
 def test_goals_eta_helper_copy_present(app, client, make_user):
@@ -425,7 +425,7 @@ def test_goals_eta_helper_copy_present(app, client, make_user):
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Goal timing estimates use tagged accounts, planned payments, and your planning numbers. Not a guarantee." in body
-    assert "Goal timing estimates use tagged accounts, contribution calendar overrides, and growth assumptions." not in body
+    assert "Goal timing estimates use tagged accounts, Payment calendar overrides, and growth assumptions." not in body
     assert "Goal timing estimates use your current contributions and growth assumptions." not in body
     assert "Goal ETAs use your current contributions and growth assumptions." not in body
     assert "Goal ETAs are estimates based on your current contributions and growth assumptions." not in body
@@ -543,10 +543,10 @@ def test_goals_cards_show_tasteful_projection_source_details(app, client, make_u
     assert "Overrides active" in body
     assert "Planning numbers" in body
     assert "Estimated total at retirement" in body
-    assert "Same month-by-month projection as Planning." in body
+    assert "Same month-by-month future estimate as Planning." in body
     assert "Not a guarantee." in body
     assert "Goal timing estimates use tagged accounts, planned payments, and your planning numbers. Not a guarantee." in body
-    assert "Goal timing estimates use tagged accounts, contribution calendar overrides, and growth assumptions." not in body
+    assert "Goal timing estimates use tagged accounts, Payment calendar overrides, and growth assumptions." not in body
     assert "Goal timing estimates use your current contributions and growth assumptions." not in body
 
 

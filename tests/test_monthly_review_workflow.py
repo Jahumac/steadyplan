@@ -120,15 +120,16 @@ def test_overview_completed_monthly_review_does_not_show_stale_checklist(app, cl
     review_html = review_page.get_data(as_text=True)
     assert "✓ Complete" in review_html
     assert "✓ Completed" not in review_html
-    assert ">Reopen monthly update<" in review_html
+    assert ">Reopen Monthly Update<" in review_html
     assert ">Reopen review<" not in review_html
-    assert 'data-confirm-title="Reopen monthly update?"' in review_html
+    assert 'data-confirm-title="Reopen Monthly Update?"' in review_html
     assert 'data-confirm-title="Reopen review?"' not in review_html
     assert 'data-confirm-ok="Yes, reopen monthly update"' in review_html
     assert 'data-confirm-ok="Yes, reopen review"' not in review_html
-    assert 'data-confirm-cancel="Keep monthly update complete">Reopen monthly update<' in review_html
+    assert 'data-confirm-cancel="Keep Monthly Update complete">Reopen Monthly Update<' in review_html
     assert 'data-confirm-cancel="Keep review complete">Reopen review<' not in review_html
-    assert "· ✓ Monthly update complete" in review_html
+    assert "· ✓ Monthly Update complete" in review_html
+    assert "· ✓ Monthly Update complete" not in review_html
     assert "· ✓ Review done" not in review_html
 
 
@@ -163,7 +164,8 @@ def test_monthly_review_month_strip_uses_monthly_update_tooltips(app, client, ma
     open_resp = client.get(f"/monthly-review/?month={month_key}")
     assert open_resp.status_code == 200
     open_html = open_resp.get_data(as_text=True)
-    assert "· Monthly update not finished" in open_html
+    assert "· Monthly Update not finished" in open_html
+    assert "· Monthly update not finished" not in open_html
     assert "· Review not finished" not in open_html
 
     complete_resp = client.post(
@@ -176,7 +178,8 @@ def test_monthly_review_month_strip_uses_monthly_update_tooltips(app, client, ma
     )
     assert complete_resp.status_code == 200
     complete_html = complete_resp.get_data(as_text=True)
-    assert "· ✓ Monthly update complete" in complete_html
+    assert "· ✓ Monthly Update complete" in complete_html
+    assert "· ✓ Monthly update complete" not in complete_html
     assert "· ✓ Review done" not in complete_html
 
 
