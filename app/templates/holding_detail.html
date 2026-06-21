@@ -78,11 +78,11 @@
       </strong>
     </div>
     <div class="holding-perf-stat">
-      <span class="text-muted">Benchmark ({{ perf_stats.benchmark_rate | int }}% p.a.)</span>
+      <span class="text-muted">Comparison line ({{ perf_stats.benchmark_rate | int }}% yearly)</span>
       <strong>{{ '{:+.2f}'.format(perf_stats.benchmark_pct) }}%</strong>
     </div>
     <div class="holding-perf-stat">
-      <span class="text-muted">vs benchmark</span>
+      <span class="text-muted">vs comparison</span>
       <strong class="{% if perf_stats.vs_pct >= 0 %}perf-positive{% else %}perf-negative{% endif %}">
         {{ '{:+.2f}'.format(perf_stats.vs_pct) }}%
         {% if perf_stats.vs_pct >= 0 %}▲{% else %}▼{% endif %}
@@ -98,8 +98,8 @@
   </div>
   {% if benchmark_data %}
   <p class="helper-text mt-05">
-    Dashed line shows {{ perf_stats.benchmark_rate | int }}% p.a. benchmark growth from the same starting price.
-    {% if perf_stats.vs_pct >= 0 %}This fund is <strong class="perf-positive">ahead</strong> of the benchmark over this period.{% else %}This fund is <strong class="perf-negative">behind</strong> the benchmark over this period.{% endif %}
+    Dashed line shows {{ perf_stats.benchmark_rate | int }}% p.a. comparison growth from the same starting price.
+    {% if perf_stats.vs_pct >= 0 %}This fund is <strong class="perf-positive">ahead</strong> of the comparison line over this period.{% else %}This fund is <strong class="perf-negative">behind</strong> the benchmark over this period.{% endif %}
   </p>
   {% endif %}
   <p id="history-chart-error" class="helper-text mt-05" style="display:none;"></p>

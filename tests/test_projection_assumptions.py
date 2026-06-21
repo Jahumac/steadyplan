@@ -131,7 +131,7 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert body.count("Add rows like “from age 50 → £600 a month”. This saves to your plan and updates the future estimate.") == 2
     assert "£600/mo" not in body
     assert "· £500 a month" in body
-    assert "/mo into pot" not in body
+    assert "/mo into account" not in body
     assert "/mo reclaimable via self-assessment" not in body
     assert "/mo — £" not in body
     assert "/yr" not in body
@@ -384,14 +384,14 @@ def test_planning_page_uses_scenario_estimate_copy_for_retirement_outputs(app, c
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
 
-    assert "Private pot scenario estimate at retirement" in body
+    assert "Private pension/investment estimate at retirement" in body
     assert "Private pot estimate at retirement" not in body
     assert "Locked for later" in body
     assert "Locked later" not in body
     assert "Current totals use saved balances. Future estimates use the planning numbers in Settings. They are not guarantees." in body
     assert "Scenario estimate at age 60 under current balances, contributions and growth assumptions. For planning only, not a guarantee." not in body
     assert "Estimate at age 60 under current balances, contributions and growth assumptions." not in body
-    assert "Private pot scenario estimate at age 60:" in body
+    assert "Private pension/investment estimate at age 60:" in body
     assert "Private pot estimate at age 60:" not in body
     assert body.count("Scenario estimate at 60:") == 2
     assert "Estimate at 60:" not in body

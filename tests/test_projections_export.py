@@ -168,7 +168,7 @@ def test_lifetime_isa_one_off_override_export_includes_full_bonus(app, client, m
     assert headers is not None
     assert header_row is not None
     you_pay_col = headers.index("You pay (yr)")
-    into_pot_col = headers.index("Into pot (yr)")
+    into_pot_col = headers.index("Into account (yr)")
     first_year = next(row for row in ws.iter_rows(min_row=header_row + 1, values_only=True) if row[you_pay_col] == 4000)
     assert first_year[into_pot_col] == 5000
 
@@ -211,7 +211,7 @@ def test_lifetime_isa_yearly_export_uses_tax_year_distribution(app, client, make
     headers = None
     header_row = None
     for idx, row in enumerate(ws.iter_rows(values_only=True), 1):
-        if row[:6] == ("Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into pot (yr)"):
+        if row[:6] == ("Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into account (yr)"):
             headers = row
             header_row = idx
             break

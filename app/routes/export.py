@@ -610,15 +610,15 @@ def export_projections():
         # Year-by-year table — columns vary by which fees apply
         yby_start = 5 + len(summary_rows) + 1
         if has_annual_fees and has_contrib_fee:
-            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)", "Value (no ann. fees)", "Ann. Fee Impact"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into account (yr)", "Contrib. Fee (yr)", "Value (no ann. fees)", "Ann. Fee Impact"]
         elif has_annual_fees:
-            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Value (no fees)", "Fee Impact"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into account (yr)", "Value (no fees)", "Fee Impact"]
         elif has_contrib_fee:
-            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into account (yr)", "Contrib. Fee (yr)"]
         elif is_pb:
-            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "Cap adjustment", "You pay (yr)", "Into pot (yr)"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "Cap adjustment", "You pay (yr)", "Into account (yr)"]
         else:
-            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into pot (yr)"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into account (yr)"]
         _header_row(ws_acc, yby_start, yby_headers)
         _set_col_width(ws_acc, 3, 22)
         _set_col_width(ws_acc, 4, 18)
