@@ -1742,7 +1742,7 @@ def export_performance():
         "Total Return",
         "Annualised",
         "Contributed",
-        "Market Gain",
+        "Gain / Interest",
         "Vs Plan",
         "Current Value",
     ])
@@ -1750,6 +1750,28 @@ def export_performance():
     GBP = '£#,##0.00'
     PCT = '0.00"%"'
     row = 5
+
+    def _performance_export_account_context(acc):
+        wrapper = (acc.get("wrapper_type") or "").strip().lower()
+        if wrapper == "cash isa":
+            rate = to_float(acc.get("cash_interest_rate") or 0)
+            return {
+                "rate": rate,
+                "subtitle": f"Cash interest rate: {rate*100:.1f}%",
+                "gain_label": "Interest / Cash gain",
+            }
+        if wrapper == "premium bonds":
+            rate = to_float(acc.get("growth_rate_override") if acc.get("growth_rate_override") is not None else 0.033)
+            return {
+                "rate": rate,
+                "subtitle": f"Expected prize rate: {rate*100:.1f}%",
+                "gain_label": "Prize gain",
+            }
+        return {
+            "rate": account_growth_rate(acc, assumptions),
+            "subtitle": f"Assumed growth: {account_growth_rate(acc, assumptions)*100:.1f}%",
+            "gain_label": "Market Gain / Loss",
+        }
 
     def _append_summary(entity_name, perf):
         nonlocal row
@@ -1782,15 +1804,17 @@ def export_performance():
             if not acc:
                 continue
             _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
+            ctx = _performance_export_account_context(acc)
             assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-            perf_acc = compute_performance_series(rows, assumed_rate, assumed_monthly)
+            perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
             _append_summary(payload["account_name"], perf_acc)
     else:
         payload = per_account_data.get(selected_account_id, {"account_name": account_map[selected_account_id]["name"], "rows": []})
         acc = account_map[selected_account_id]
         _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
+        ctx = _performance_export_account_context(acc)
         assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-        perf_acc = compute_performance_series(rows, assumed_rate, assumed_monthly)
+        perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
         _append_summary(payload["account_name"], perf_acc)
 
     def _safe_sheet_title(base, used):
@@ -1813,7 +1837,7 @@ def export_performance():
 
     used_titles = {ws.title}
 
-    def _add_detail_sheet(title, perf):
+    def _add_detail_sheet(title, perf, subtitle=None, gain_label="Market Gain / Loss"):
         ws_d = wb.create_sheet(_safe_sheet_title(title, used_titles))
         _set_col_width(ws_d, 1, 10)
         _set_col_width(ws_d, 2, 16)
@@ -1823,7 +1847,7 @@ def export_performance():
         _set_col_width(ws_d, 6, 12)
 
         _title_cell(ws_d, 1, f"SteadyPlan — {title}", 6)
-        sub = ws_d.cell(row=2, column=1, value=f"Assumed growth: {assumed_rate*100:.1f}%")
+        sub = ws_d.cell(row=2, column=1, value=subtitle or f"Assumed growth: {assumed_rate*100:.1f}%")
         sub.font = _SUBTITLE_FONT
 
         has_first_baseline_only = bool(
@@ -1845,7 +1869,7 @@ def export_performance():
             ws_d.cell(row=4, column=1, value="Not enough data yet (need at least two monthly snapshots).").font = _DATA_FONT
             return
 
-        _header_row(ws_d, 4, ["Month", "Opening", "Contributions", "Market Gain / Loss", "Closing", "Return"])
+        _header_row(ws_d, 4, ["Month", "Opening", "Contributions", gain_label, "Closing", "Return"])
         rows_chrono = list(reversed(perf["table_rows"]))
         for i, r in enumerate(rows_chrono, 5):
             _data_row(ws_d, i, [
@@ -1858,23 +1882,25 @@ def export_performance():
             ], num_formats={2: GBP, 3: GBP, 4: GBP, 5: GBP, 6: PCT})
 
     if selected_account_id is None:
-        _add_detail_sheet("Portfolio (Monthly)", perf_portfolio)
+        _add_detail_sheet("Portfolio (Monthly)", perf_portfolio, subtitle=f"Assumed growth: {assumed_rate*100:.1f}%", gain_label="Gain / Interest")
 
         for aid, payload in per_account_data.items():
             acc = account_map.get(aid)
             if not acc:
                 continue
             _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
+            ctx = _performance_export_account_context(acc)
             assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-            perf_acc = compute_performance_series(rows, assumed_rate, assumed_monthly)
-            _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc)
+            perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
+            _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc, subtitle=ctx["subtitle"], gain_label=ctx["gain_label"])
     else:
         payload = per_account_data.get(selected_account_id, {"account_name": account_map[selected_account_id]["name"], "rows": []})
         acc = account_map[selected_account_id]
         _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
+        ctx = _performance_export_account_context(acc)
         assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-        perf_acc = compute_performance_series(rows, assumed_rate, assumed_monthly)
-        _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc)
+        perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
+        _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc, ctx["subtitle"], ctx["gain_label"])
 
     buf = BytesIO()
     wb.save(buf)
