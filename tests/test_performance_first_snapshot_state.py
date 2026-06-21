@@ -170,13 +170,17 @@ def test_performance_page_records_historical_movement_with_opening_baseline(clie
             "amount": "775",
             "opening_month": "2026-05",
             "opening_value": "25",
-            "note": "Premium Bonds top-up",
+            "note": "One-off PB audit top-up",
         },
         follow_redirects=True,
     )
     assert response.status_code == 200
     body = response.get_data(as_text=True)
     assert "Recorded Premium Bonds opening baseline £25.00 and deposit £775.00." in body
+    assert "Performance history" in body
+    assert "One-off PB audit top-up" in body
+    assert "+£775.00" in body
+    assert "Remove this Performance movement?" in body
 
     with client.application.app_context():
         with get_connection() as conn:
@@ -185,14 +189,36 @@ def test_performance_page_records_historical_movement_with_opening_baseline(clie
                 (account_id,),
             ).fetchone()
             event = conn.execute(
-                "SELECT amount, kind, note, allowance_effect FROM cash_flow_events WHERE account_id = ?",
+                "SELECT id, amount, kind, note, allowance_effect FROM cash_flow_events WHERE account_id = ?",
                 (account_id,),
             ).fetchone()
     assert snapshot["balance"] == 25
     assert event["amount"] == 775
     assert event["kind"] == "deposit"
-    assert event["note"] == "Premium Bonds top-up"
+    assert event["note"] == "One-off PB audit top-up"
     assert event["allowance_effect"] == "none"
+
+    delete_response = client.post(
+        f"/performance/cash-flow-events/{event['id']}/delete",
+        follow_redirects=True,
+    )
+    assert delete_response.status_code == 200
+    delete_body = delete_response.get_data(as_text=True)
+    assert "Removed that Performance movement. Account balances and snapshots were not changed." in delete_body
+    assert "One-off PB audit top-up" not in delete_body
+
+    with client.application.app_context():
+        with get_connection() as conn:
+            remaining = conn.execute(
+                "SELECT COUNT(*) AS count FROM cash_flow_events WHERE account_id = ?",
+                (account_id,),
+            ).fetchone()["count"]
+            snapshot_after_delete = conn.execute(
+                "SELECT balance FROM monthly_snapshots WHERE account_id = ? AND month_key = '2026-05'",
+                (account_id,),
+            ).fetchone()
+    assert remaining == 0
+    assert snapshot_after_delete["balance"] == 25
 
 
 def test_performance_page_shows_account_reconciliation_breakdown(client, make_user):

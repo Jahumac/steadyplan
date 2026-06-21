@@ -16,6 +16,7 @@ from app.calculations import (
 )
 from app.models import (
     add_cash_flow_event,
+    delete_cash_flow_event,
     fetch_all_accounts,
     fetch_all_active_overrides,
     fetch_account_daily_snapshot_points_on_or_after_date,
@@ -51,6 +52,29 @@ def _valid_month_key(value):
         return True
     except ValueError:
         return False
+
+
+def _recent_performance_event_rows(accounts, user_id, limit=8):
+    account_names = {int(a["id"]): a["name"] for a in accounts}
+    rows = []
+    for account_id, account_name in account_names.items():
+        for event in fetch_cash_flow_events_for_account(account_id, user_id, limit=50):
+            if (event.get("allowance_effect") or "none") != "none":
+                continue
+            amount = float(event.get("amount") or 0)
+            rows.append(
+                {
+                    "id": event["id"],
+                    "account_name": account_name,
+                    "event_date": event.get("event_date") or "",
+                    "amount": amount,
+                    "kind": event.get("kind") or "movement",
+                    "note": event.get("note") or "",
+                    "signed_label": f"{'+' if amount >= 0 else '−'}£{abs(amount):,.2f}",
+                }
+            )
+    rows.sort(key=lambda r: (r["event_date"], r["id"]), reverse=True)
+    return rows[:limit]
 
 
 @performance_bp.route("/cash-flow-events", methods=["POST"])
@@ -119,6 +143,14 @@ def record_cash_flow_event():
         )
     else:
         flash(f"Recorded {account_name} {kind} £{abs(signed_amount):,.2f} for Performance.", "success")
+    return redirect(url_for("performance.performance"))
+
+
+@performance_bp.route("/cash-flow-events/<int:event_id>/delete", methods=["POST"])
+@login_required
+def delete_performance_cash_flow_event(event_id):
+    delete_cash_flow_event(event_id, current_user.id)
+    flash("Removed that Performance movement. Account balances and snapshots were not changed.", "success")
     return redirect(url_for("performance.performance"))
 
 
@@ -501,6 +533,7 @@ def performance():
         current_monthly_update_href=current_monthly_update_href,
         export_period_links=export_period_links,
         performance_event_accounts=accounts,
+        recent_performance_events=_recent_performance_event_rows(accounts, uid),
         active_page="performance",
     )
 

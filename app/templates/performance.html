@@ -159,6 +159,40 @@
       <button type="submit">Record movement</button>
     </div>
   </form>
+  {% if recent_performance_events %}
+  <div class="table-scroll mt-1">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Account</th>
+          <th>Type</th>
+          <th class="num">Amount</th>
+          <th>Note</th>
+          <th class="num">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in recent_performance_events %}
+        <tr>
+          <td>{{ event.event_date }}</td>
+          <td>{{ event.account_name }}</td>
+          <td>{{ event.kind | replace('_', ' ') | title }}</td>
+          <td class="num {% if event.amount >= 0 %}perf-positive{% else %}perf-negative{% endif %}">{{ event.signed_label }}</td>
+          <td>{{ event.note or '—' }}</td>
+          <td class="num">
+            <form method="post" action="{{ url_for('performance.delete_performance_cash_flow_event', event_id=event.id) }}" class="form-reset">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="badge badge-meta" data-confirm="This removes the Performance movement only. Account balances and snapshots are not changed." data-confirm-title="Remove this Performance movement?" data-confirm-ok="Remove movement" data-confirm-cancel="Keep it">Remove</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="helper-text mt-05">Only Performance-only movements are listed here. Removing one does not change account balances, snapshots, or real-world money.</p>
+  {% endif %}
 </section>
 {% endif %}
 
