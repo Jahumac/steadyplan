@@ -703,6 +703,7 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
     balances     = [m[1] for m in monthly_data]
     contribs     = [m[2] for m in monthly_data]
     carried_counts = [m[3] if len(m) > 3 else 0 for m in monthly_data]
+    fixed_gains = [m[4] if len(m) > 4 else None for m in monthly_data]
 
     def _fmt(mk):
         try:
@@ -719,8 +720,10 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
         start = balances[i - 1]
         end   = balances[i]
         cf    = contribs[i]
+        fixed_gain = fixed_gains[i] if i < len(fixed_gains) else None
+        gain = float(fixed_gain) if fixed_gain is not None else (end - start - cf)
         denom = start + 0.5 * cf
-        monthly_returns.append((end - start - cf) / denom if denom > 0 else 0.0)
+        monthly_returns.append(gain / denom if denom > 0 else 0.0)
 
     # ── Chain-linked cumulative & annualised return ────────────────────────
     cum = 1.0
@@ -759,7 +762,8 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
         closing = balances[0]
         cf = contribs[0]
         opening = max(closing - cf, 0.0)
-        gain = closing - opening - cf
+        fixed_gain = fixed_gains[0] if fixed_gains else None
+        gain = float(fixed_gain) if fixed_gain is not None else (closing - opening - cf)
         denom = opening + 0.5 * cf
         r = gain / denom if denom > 0 else 0.0
         rows.append({
@@ -775,7 +779,8 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
         opening = balances[i - 1]
         closing = balances[i]
         cf      = contribs[i]
-        gain    = closing - opening - cf
+        fixed_gain = fixed_gains[i] if i < len(fixed_gains) else None
+        gain = float(fixed_gain) if fixed_gain is not None else (closing - opening - cf)
         r       = monthly_returns[i - 1]
         rows.append({
             "month_key":    display_labels[i],
@@ -791,10 +796,13 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
     # ── Totals for summary cards ──────────────────────────────────────────
     if first_month_is_actual_contribution:
         total_contributed = round(float(contribs[0] or 0), 2)
-        total_market_gain = round(float(balances[0] or 0) - total_contributed, 2)
+        total_market_gain = round(float(fixed_gains[0]) if fixed_gains and fixed_gains[0] is not None else float(balances[0] or 0) - total_contributed, 2)
     else:
         total_contributed = sum(contribs[1:])   # exclude opening balance month
-        total_market_gain = balances[-1] - balances[0] - total_contributed
+        total_market_gain = 0.0
+        for i in range(1, len(balances)):
+            fixed_gain = fixed_gains[i] if i < len(fixed_gains) else None
+            total_market_gain += float(fixed_gain) if fixed_gain is not None else (balances[i] - balances[i - 1] - contribs[i])
     vs_plan = balances[-1] - projected_values[-1] if projected_values else 0
 
     return {
