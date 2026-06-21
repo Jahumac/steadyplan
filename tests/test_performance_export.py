@@ -46,6 +46,42 @@ def _workbook_from_response(response):
     return load_workbook(BytesIO(response.data), data_only=True)
 
 
+def _summary_row_values(workbook, entity_name):
+    summary = workbook["Summary"]
+    for row in range(5, summary.max_row + 1):
+        if summary.cell(row=row, column=1).value == entity_name:
+            return {
+                "contributed": summary.cell(row=row, column=7).value or 0,
+                "imported": summary.cell(row=row, column=8).value or 0,
+                "gain": summary.cell(row=row, column=9).value or 0,
+                "current": summary.cell(row=row, column=11).value or 0,
+            }
+    raise AssertionError(f"Summary row {entity_name!r} not found")
+
+
+def _monthly_detail_totals(sheet):
+    rows = []
+    for row in range(5, sheet.max_row + 1):
+        if not sheet.cell(row=row, column=1).value:
+            continue
+        rows.append({
+            "opening": sheet.cell(row=row, column=2).value or 0,
+            "imported": sheet.cell(row=row, column=3).value or 0,
+            "contributed": sheet.cell(row=row, column=4).value or 0,
+            "gain": sheet.cell(row=row, column=5).value or 0,
+            "closing": sheet.cell(row=row, column=6).value or 0,
+        })
+    if not rows:
+        raise AssertionError(f"No monthly detail rows found in {sheet.title}")
+    return {
+        "opening": rows[0]["opening"],
+        "imported": round(sum(row["imported"] for row in rows), 2),
+        "contributed": round(sum(row["contributed"] for row in rows), 2),
+        "gain": round(sum(row["gain"] for row in rows), 2),
+        "current": rows[-1]["closing"],
+    }
+
+
 
 def test_performance_export_keeps_zero_snapshot_message_for_selected_account(app, client, make_user):
     uid, username, password = make_user(username="perf-export-zero", password="password123")
@@ -219,6 +255,45 @@ def test_performance_export_uses_cash_flow_events_for_monthly_attribution(app, c
     assert cash["C6"].value == 0
     assert cash["D6"].value == -1400
     assert cash["E6"].value == 0
+
+
+def test_performance_export_summary_reconciles_to_monthly_detail_rows(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-reconciles", password="password123")
+    with app.app_context():
+        account_id = create_account(
+            _account_payload(name="Reconciled ISA", wrapper_type="Stocks & Shares ISA", value=1250, monthly=0),
+            uid,
+        )
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 1000), ("2026-06", 1250)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, created_at)
+                VALUES (?, ?, '2026-06-01', 200, 'deposit', 'Monthly deposit', '2026-06-01T00:00:00+00:00')
+                """,
+                (uid, account_id),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    for entity_name, detail_sheet_name in [
+        ("Portfolio", "Portfolio (Monthly)"),
+        ("Reconciled ISA", "Reconciled ISA (Monthly)"),
+    ]:
+        summary = _summary_row_values(workbook, entity_name)
+        detail = _monthly_detail_totals(workbook[detail_sheet_name])
+
+        assert summary["imported"] == detail["imported"] == 1000
+        assert summary["contributed"] == detail["contributed"] == 200
+        assert summary["gain"] == detail["gain"] == 50
+        assert summary["current"] == detail["current"] == 1250
+        assert detail["opening"] + detail["imported"] + detail["contributed"] + detail["gain"] == summary["current"]
 
 
 def test_performance_export_includes_first_imported_baseline_row_in_monthly_detail(app, client, make_user):
