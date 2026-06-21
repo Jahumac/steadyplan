@@ -734,9 +734,12 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
         cum *= (1 + r)
     total_return = cum - 1.0
     n = len(monthly_returns)
-    # Require at least 3 months before annualising — with fewer data points
-    # the figure is statistically meaningless and often alarming.
-    annualised_return = ((cum ** (12.0 / n)) - 1) if n >= 3 else None
+    # Do not annualise short early histories. A few good/bad months can explode
+    # into a scary-looking annual figure, especially just after importing an
+    # opening baseline. Show total return immediately, then annualise once there
+    # is roughly a full year of return periods.
+    annualised_return = ((cum ** (12.0 / n)) - 1) if n >= 12 else None
+    annualised_return_note = None if annualised_return is not None else "Not enough history yet"
 
     # ── Projected "on plan" series from first recorded balance ────────────
     # Uses the contribution recorded for each month instead of today's normal
@@ -833,6 +836,7 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
         "n_months":          n,
         "total_return":      round(total_return * 100, 2),
         "annualised_return": round(annualised_return * 100, 2) if annualised_return is not None else None,
+        "annualised_return_note": annualised_return_note,
         "total_contributed": round(total_contributed, 2),
         "total_imported_baseline": round(total_imported_baseline, 2),
         "total_market_gain": round(total_market_gain, 2),

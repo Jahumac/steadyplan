@@ -401,6 +401,30 @@ def test_performance_export_counts_regular_contribution_after_account_specific_p
     assert account["E6"].value == 80.92
 
 
+def test_performance_export_hides_annualised_return_until_history_is_mature(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-early-annualised", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(name="SIPP", wrapper_type="SIPP", value=1331, monthly=0), uid)
+        with get_connection() as conn:
+            for month_key, balance in [("2026-03", 1000), ("2026-04", 1100), ("2026-05", 1210), ("2026-06", 1331)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    summary = workbook["Summary"]
+    portfolio_row = next(r for r in range(5, summary.max_row + 1) if summary.cell(row=r, column=1).value == "Portfolio")
+    sipp_row = next(r for r in range(5, summary.max_row + 1) if summary.cell(row=r, column=1).value == "SIPP")
+    assert summary.cell(row=portfolio_row, column=5).value == 33.1
+    assert summary.cell(row=portfolio_row, column=6).value == "Not enough history yet"
+    assert summary.cell(row=sipp_row, column=6).value == "Not enough history yet"
+
+
+
 def test_performance_export_labels_unset_cash_isa_interest_rate_plainly(app, client, make_user):
     uid, username, password = make_user(username="perf-export-cash-rate-unset", password="password123")
     with app.app_context():
