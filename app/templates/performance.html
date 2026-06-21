@@ -76,8 +76,23 @@
         {% if performance_gain >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(performance_gain) }}
       </strong>
     {% endcall %}
+    {% set total_return = performance_summary.total_return or 0 %}
+    {% call hero_stat('Total return') %}
+      <strong class="{% if total_return >= 0 %}perf-positive{% else %}perf-negative{% endif %}">{% if total_return >= 0 %}+{% endif %}{{ '{:,.2f}'.format(total_return) }}%</strong>
+    {% endcall %}
+    {% call hero_stat('Annualised return') %}
+      {% if performance_summary.annualised_return is not none %}
+        {% set annualised_return = performance_summary.annualised_return or 0 %}
+        <strong class="{% if annualised_return >= 0 %}perf-positive{% else %}perf-negative{% endif %}">{% if annualised_return >= 0 %}+{% endif %}{{ '{:,.2f}'.format(annualised_return) }}%</strong>
+      {% else %}
+        <strong>Not enough history yet</strong>
+      {% endif %}
+    {% endcall %}
   </div>
-  <p class="helper-text mt-05">Opening/imported is money already present when tracking started. Contributions are later money into pots; gain/interest is what changed after those flows.</p>
+  <p class="helper-text mt-05">
+    Opening/imported is money already present when tracking started. Contributions are later money into pots; gain/interest is what changed after those flows.
+    {% if performance_summary.annualised_return is none %} Annualised return appears after 12 monthly return periods, so early results do not look falsely dramatic.{% endif %}
+  </p>
   <details class="mt-075">
     <summary class="link-accent">How to read Performance</summary>
     <div class="helper-text mt-05">

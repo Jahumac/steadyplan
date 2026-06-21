@@ -96,6 +96,10 @@ def test_performance_page_shows_imported_baseline_reconciliation(client, make_us
     assert "£200" in body
     assert "Gain / Interest" in body
     assert "+£50" in body
+    assert "Total return" in body
+    assert "Annualised return" in body
+    assert "Not enough history yet" in body
+    assert "Annualised return appears after 12 monthly return periods, so early results do not look falsely dramatic." in body
     assert "Opening/imported is money already present when tracking started." in body
     assert "How to read Performance" in body
     assert "Annualised</strong> appears only after enough history" in body
