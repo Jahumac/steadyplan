@@ -43,6 +43,13 @@ def performance():
     daily_snapshots = fetch_daily_snapshots(uid, limit=730)
     snapshot_count = len(daily_snapshots)
     has_data = snapshot_count >= 2
+    has_snapshot_history = snapshot_count >= 1
+    export_period_links = [
+        {"label": "1M", "href": "/performance/export.xlsx?period=1M"},
+        {"label": "6M", "href": "/performance/export.xlsx?period=6M"},
+        {"label": "1Y", "href": "/performance/export.xlsx?period=1Y"},
+        {"label": "ALL", "href": "/performance/export.xlsx?period=ALL"},
+    ]
 
     daily_labels   = []  # raw YYYY-MM-DD for client-side period filtering
     daily_actual   = []
@@ -334,6 +341,7 @@ def performance():
     return render_template(
         "performance.html",
         has_data=has_data,
+        has_snapshot_history=has_snapshot_history,
         snapshot_count=snapshot_count,
         daily_labels=daily_labels,
         daily_actual=daily_actual,
@@ -347,6 +355,7 @@ def performance():
         plan_value=plan_value,
         current_value=current_value,
         current_monthly_update_href=current_monthly_update_href,
+        export_period_links=export_period_links,
         active_page="performance",
     )
 

@@ -43,6 +43,15 @@
       {% endif %}
     </div>
   </div>
+  {% if has_snapshot_history %}
+  <div class="badge-row" style="margin-top:0.75rem; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+    <span class="text-muted text-sm-2">Download report</span>
+    {% for option in export_period_links %}
+      <a class="badge badge-meta" href="{{ option.href }}">{{ option.label }}</a>
+    {% endfor %}
+  </div>
+  <p class="helper-text mt-05">From the latest month back over the selected window.</p>
+  {% endif %}
   {% if has_data and current_value is not none %}
   <div class="hero-strip">
     {% call hero_stat('Portfolio now') %}<strong>£{{ '{:,.0f}'.format(current_value) }}</strong>{% endcall %}

@@ -93,3 +93,39 @@ def test_performance_export_acknowledges_first_baseline_for_portfolio_and_accoun
     assert account["A4"].value != "Not enough data yet (need at least two monthly snapshots)."
     assert account["A4"].value != "First baseline saved."
     assert account["A4"].value != "Your first baseline is saved."
+
+
+
+def test_performance_export_filters_to_requested_historical_window(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-window", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(value=1500, monthly=100), uid)
+        with get_connection() as conn:
+            for month_key, balance in [
+                ("2026-01", 1000),
+                ("2026-02", 1100),
+                ("2026-03", 1200),
+                ("2026-04", 1350),
+                ("2026-05", 1500),
+            ]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx?period=1M"))
+
+    summary = workbook["Summary"]
+    assert summary["B5"].value == "Apr 2026"
+    assert summary["C5"].value == "May 2026"
+    assert summary["D5"].value == 1
+
+    portfolio = workbook["Portfolio (Monthly)"]
+    assert portfolio["A5"].value == "May 2026"
+    assert portfolio["A6"].value is None
+
+    account = workbook["ISA (Monthly)"]
+    assert account["A5"].value == "May 2026"
+    assert account["A6"].value is None
