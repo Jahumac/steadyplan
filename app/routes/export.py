@@ -65,6 +65,27 @@ from app.services.planning_insights import classify_account
 
 export_bp = Blueprint("export", __name__)
 
+_PERFORMANCE_EXPORT_PERIODS = {
+    "1M": 1,
+    "6M": 6,
+    "1Y": 12,
+    "ALL": None,
+}
+
+
+def _normalise_performance_export_period(period):
+    key = str(period or "ALL").upper()
+    return key if key in _PERFORMANCE_EXPORT_PERIODS else "ALL"
+
+
+def _filter_monthly_data_for_period(monthly_data, period):
+    filtered = list(monthly_data or [])
+    period_key = _normalise_performance_export_period(period)
+    months = _PERFORMANCE_EXPORT_PERIODS[period_key]
+    if months is None or len(filtered) <= months + 1:
+        return period_key, filtered
+    return period_key, filtered[-(months + 1):]
+
 # ── Clean Shelly colour palette ──────────────────────────────────────────────
 _SHELLY_TEAL   = "0F766E"   # Shelly's signature teal (header bg)
 _SHELLY_LIGHT  = "CCFBF1"   # Pale teal tint for alternating rows
@@ -1669,6 +1690,7 @@ def export_performance():
     assumptions = fetch_assumptions(uid)
     accounts = fetch_all_accounts(uid)
     account_id = request.args.get("account_id")
+    selected_period = _normalise_performance_export_period(request.args.get("period"))
 
     assumed_rate = to_float(assumptions["annual_growth_rate"]) if assumptions else 0.07
     assumed_monthly_total = sum(to_float(a["monthly_contribution"]) for a in accounts)
@@ -1688,6 +1710,7 @@ def export_performance():
     perf_portfolio = None
     if selected_account_id is None:
         monthly_data = fetch_monthly_performance_data(uid)
+        _, monthly_data = _filter_monthly_data_for_period(monthly_data, selected_period)
         perf_portfolio = compute_performance_series(monthly_data, assumed_rate, assumed_monthly_total)
 
     wb = Workbook()
@@ -1755,14 +1778,16 @@ def export_performance():
             acc = account_map.get(aid)
             if not acc:
                 continue
+            _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
             assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-            perf_acc = compute_performance_series(payload["rows"], assumed_rate, assumed_monthly)
+            perf_acc = compute_performance_series(rows, assumed_rate, assumed_monthly)
             _append_summary(payload["account_name"], perf_acc)
     else:
         payload = per_account_data.get(selected_account_id, {"account_name": account_map[selected_account_id]["name"], "rows": []})
         acc = account_map[selected_account_id]
+        _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
         assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-        perf_acc = compute_performance_series(payload["rows"], assumed_rate, assumed_monthly)
+        perf_acc = compute_performance_series(rows, assumed_rate, assumed_monthly)
         _append_summary(payload["account_name"], perf_acc)
 
     def _safe_sheet_title(base, used):
@@ -1836,14 +1861,16 @@ def export_performance():
             acc = account_map.get(aid)
             if not acc:
                 continue
+            _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
             assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-            perf_acc = compute_performance_series(payload["rows"], assumed_rate, assumed_monthly)
+            perf_acc = compute_performance_series(rows, assumed_rate, assumed_monthly)
             _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc)
     else:
         payload = per_account_data.get(selected_account_id, {"account_name": account_map[selected_account_id]["name"], "rows": []})
         acc = account_map[selected_account_id]
+        _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
         assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-        perf_acc = compute_performance_series(payload["rows"], assumed_rate, assumed_monthly)
+        perf_acc = compute_performance_series(rows, assumed_rate, assumed_monthly)
         _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc)
 
     buf = BytesIO()

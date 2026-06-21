@@ -255,6 +255,36 @@ def test_performance_by_account_cash_isa_cash_events_adjust_plan(auth_client, ap
     assert "+£0" in html
 
 
+def test_performance_page_offers_historical_export_links(auth_client, app, make_user):
+    uid, _, _ = make_user()
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2026-04-01', 1000)",
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2026-05-01', 1100)",
+                (uid,),
+            )
+            conn.commit()
+
+    resp = auth_client.get("/performance/", follow_redirects=True)
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert '>Download report<' in html
+    assert 'href="/performance/export.xlsx?period=1M"' in html
+    assert 'href="/performance/export.xlsx?period=6M"' in html
+    assert 'href="/performance/export.xlsx?period=1Y"' in html
+    assert 'href="/performance/export.xlsx?period=ALL"' in html
+    assert 'From the latest month back over the selected window.' in html
+
+
+
 def test_performance_cash_flow_uses_into_pot_for_sipp(app, make_user):
     uid, _, _ = make_user()
 
