@@ -330,6 +330,54 @@ def test_performance_export_summary_reconciles_to_monthly_detail_rows(app, clien
         assert detail["opening"] + detail["imported"] + detail["contributed"] + detail["gain"] == summary["current"]
 
 
+def test_performance_export_applies_penny_remainder_to_displayed_detail_rows(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-penny-remainder", password="password123")
+    with app.app_context():
+        account_id = create_account(
+            _account_payload(name="Penny Pension", wrapper_type="SIPP", value=2000, monthly=0),
+            uid,
+        )
+        with get_connection() as conn:
+            for month_key, balance in [
+                ("2026-03", 1000),
+                ("2026-04", 1333.333333),
+                ("2026-05", 1666.666666),
+                ("2026-06", 2000),
+            ]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            for event_date in ["2026-04-01", "2026-05-01", "2026-06-01"]:
+                conn.execute(
+                    """
+                    INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, created_at)
+                    VALUES (?, ?, ?, 333.333333, 'deposit', 'Penny split', ?)
+                    """,
+                    (uid, account_id, event_date, f"{event_date}T00:00:00+00:00"),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    for entity_name, detail_sheet_name in [
+        ("Portfolio", "Portfolio (Monthly)"),
+        ("Penny Pension", "Penny Pension (Monthly)"),
+    ]:
+        summary = _summary_row_values(workbook, entity_name)
+        detail = _monthly_detail_totals(workbook[detail_sheet_name])
+        assert summary["contributed"] == 1000
+        assert detail["contributed"] == 1000
+        assert summary["imported"] == detail["imported"] == 1000
+        assert summary["gain"] == detail["gain"] == 0
+        assert summary["current"] == detail["current"] == 2000
+        assert detail["opening"] + detail["imported"] + detail["contributed"] + detail["gain"] == summary["current"]
+
+    penny = workbook["Penny Pension (Monthly)"]
+    assert [penny[f"D{row}"].value for row in range(6, 9)] == [333.33, 333.33, 333.34]
+
+
 def test_performance_export_includes_first_imported_baseline_row_in_monthly_detail(app, client, make_user):
     uid, username, password = make_user(username="perf-export-baseline-detail", password="password123")
     with app.app_context():
