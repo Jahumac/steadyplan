@@ -105,6 +105,63 @@
   {% endif %}
 </section>
 
+{% if performance_event_accounts %}
+<section class="card mb-1" id="performance-cash-flow-event">
+  <div class="section-header mb-075">
+    <div>
+      <p class="eyebrow">Performance history</p>
+      <h3>Record a historical movement</h3>
+      <p class="helper-text m-0">Use this when an account was added late or a top-up/withdrawal was missed. It affects Performance reporting only; it does not move money.</p>
+    </div>
+  </div>
+  <form method="post" action="{{ url_for('performance.record_cash_flow_event') }}" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-grid">
+      <label>
+        <span>Account</span>
+        <select name="account_id" required>
+          {% for account in performance_event_accounts %}
+          <option value="{{ account.id }}">{{ account.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        <span>Movement date</span>
+        <input type="date" name="event_date" required>
+      </label>
+      <label>
+        <span>Movement type</span>
+        <select name="kind">
+          <option value="deposit">Deposit / top-up</option>
+          <option value="withdrawal">Withdrawal / money out</option>
+        </select>
+      </label>
+      <label>
+        <span>Amount</span>
+        <input type="number" name="amount" min="0.01" step="0.01" inputmode="decimal" placeholder="775.00" required>
+      </label>
+      <label>
+        <span>Opening baseline month</span>
+        <input type="month" name="opening_month" placeholder="2026-04">
+        <small class="form-hint">Optional: set this if the account existed before the missed movement.</small>
+      </label>
+      <label>
+        <span>Opening value</span>
+        <input type="number" name="opening_value" min="0" step="0.01" inputmode="decimal" placeholder="25.00">
+        <small class="form-hint">Optional: e.g. Premium Bonds had £25 before a £775 top-up.</small>
+      </label>
+      <label class="form-full-col">
+        <span>Note</span>
+        <input type="text" name="note" placeholder="Premium Bonds top-up">
+      </label>
+    </div>
+    <div class="badge-row mt-075">
+      <button type="submit">Record movement</button>
+    </div>
+  </form>
+</section>
+{% endif %}
+
 {% if not has_data %}
 <section class="card">
   {% if snapshot_count == 1 %}
