@@ -98,3 +98,53 @@ def test_performance_page_shows_imported_baseline_reconciliation(client, make_us
     assert "+£50" in body
     assert "Opening/imported is money already present when tracking started." in body
     assert "Contributed / Initial funding" not in body
+
+
+def test_performance_page_shows_account_reconciliation_breakdown(client, make_user):
+    uid, username, password = make_user(username="perf-account-reconciliation", password="password123")
+    today = date.today()
+    prior_day = today - timedelta(days=35)
+    current_month = today.strftime("%Y-%m")
+    prior_month_day = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+    prior_month = prior_month_day.strftime("%Y-%m")
+
+    with client.application.app_context():
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
+                VALUES (?, 'Stocks ISA', 'Stocks & Shares ISA', 1250, 200, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, 1000, ?)",
+                (prior_month_day.isoformat(), account_id, prior_month),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, 1250, ?)",
+                (today.replace(day=1).isoformat(), account_id, current_month),
+            )
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, created_at)
+                VALUES (?, ?, ?, 200, 'deposit', 'Monthly deposit', ?)
+                """,
+                (uid, account_id, today.isoformat(), f"{today.isoformat()}T00:00:00+00:00"),
+            )
+            conn.commit()
+        save_daily_snapshot(uid, 1000, prior_day.isoformat())
+        save_daily_snapshot(uid, 1250, today.isoformat())
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/performance/")
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+
+    assert "Account reconciliation" in body
+    assert "Shows how each account's current value is explained by opening/imported money, later contributions, and gain/interest." in body
+    assert "Stocks ISA" in body
+    assert '<td class="num">£1,000</td>' in body
+    assert '<td class="num">£200</td>' in body
+    assert '<td class="num perf-positive">+£50</td>' in body
+    assert '<td class="num text-bold">£1,250</td>' in body
