@@ -1708,6 +1708,10 @@ def _add_performance_export_readme_sheet(wb):
             "What changed after flows. Cash ISA uses cash interest, Premium Bonds use prize gain, and investment accounts use market gain or loss.",
         ),
         (
+            "First tracked month",
+            "If the first recorded balance includes both old money and a new top-up, record the top-up as a cash-flow event. The report can then leave only the old balance as opening money.",
+        ),
+        (
             "Total return",
             "Gain divided by the money at work over the tracked period. Deposits and withdrawals are separated first so they do not look like performance.",
         ),

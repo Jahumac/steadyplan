@@ -114,6 +114,7 @@ def test_performance_export_includes_how_to_read_sheet(app, client, make_user):
     assert "Cash ISA uses cash interest" in rendered_values
     assert "Premium Bonds use prize gain" in rendered_values
     assert "Annualised return appears after 12 monthly return periods" in rendered_values
+    assert "If the first recorded balance includes both old money and a new top-up" in rendered_values
     assert "Market Gain / Loss explains every account" not in rendered_values
 
 
@@ -328,6 +329,58 @@ def test_performance_export_summary_reconciles_to_monthly_detail_rows(app, clien
         assert summary["gain"] == detail["gain"] == 50
         assert summary["current"] == detail["current"] == 1250
         assert detail["opening"] + detail["imported"] + detail["contributed"] + detail["gain"] == summary["current"]
+
+
+def test_performance_manual_movement_backfills_opening_and_contribution(app, client, make_user):
+    uid, username, password = make_user(username="perf-manual-movement", password="password123")
+    with app.app_context():
+        account_id = create_account(
+            _account_payload(name="Premium Bonds", wrapper_type="Premium Bonds", value=800, monthly=0),
+            uid,
+        )
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-04-01', ?, 800, '2026-04')",
+                (account_id,),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-06-01', ?, 800, '2026-06')",
+                (account_id,),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    response = client.post(
+        "/performance/cash-flow-events",
+        data={
+            "account_id": str(account_id),
+            "event_date": "2026-05-15",
+            "kind": "deposit",
+            "amount": "775",
+            "opening_month": "2026-04",
+            "opening_value": "25",
+            "note": "Premium Bonds top-up",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 302
+
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+    summary = _summary_row_values(workbook, "Premium Bonds")
+    detail = _monthly_detail_totals(workbook["Premium Bonds (Monthly)"])
+
+    assert summary["imported"] == detail["imported"] == 25
+    assert summary["contributed"] == detail["contributed"] == 775
+    assert summary["gain"] == detail["gain"] == 0
+    assert summary["current"] == detail["current"] == 800
+
+    premium = workbook["Premium Bonds (Monthly)"]
+    assert premium["A5"].value == "Apr 2026"
+    assert premium["C5"].value == 25
+    assert premium["A6"].value == "Jun 2026"
+    assert premium["D6"].value == 775
+    assert premium["E6"].value == 0
+    assert premium["F6"].value == 800
 
 
 def test_performance_export_applies_penny_remainder_to_displayed_detail_rows(app, client, make_user):
@@ -640,6 +693,42 @@ def test_performance_export_labels_cash_isa_with_cash_interest_and_not_global_gr
     assert account["E5"].value == 0
     assert 0 < float(account["E6"].value or 0) < 10
     assert 0 < float(account["E7"].value or 0) < 10
+
+
+def test_performance_export_splits_late_added_premium_bonds_topup_from_opening_balance(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-premium-bonds-topup", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(name="Premium Bonds", wrapper_type="Premium Bonds", value=800, monthly=0), uid)
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-06-01', ?, 800, '2026-06')",
+                (account_id,),
+            )
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, created_at)
+                VALUES (?, ?, '2026-06-01', 775, 'deposit', 'Premium Bonds top-up', '2026-06-01T00:00:00+00:00')
+                """,
+                (uid, account_id),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    summary = _summary_row_values(workbook, "Premium Bonds")
+    assert summary["imported"] == 0
+    assert summary["contributed"] == 775
+    assert summary["gain"] == 0
+    assert summary["current"] == 800
+
+    premium = workbook["Premium Bonds (Monthly)"]
+    assert premium["A5"].value == "Jun 2026"
+    assert premium["B5"].value == 25
+    assert premium["C5"].value == 0
+    assert premium["D5"].value == 775
+    assert premium["E5"].value == 0
+    assert premium["F5"].value == 800
 
 
 def test_performance_export_labels_premium_bonds_with_expected_prize_rate(app, client, make_user):

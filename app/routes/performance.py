@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.calculations import (
@@ -15,6 +15,7 @@ from app.calculations import (
     uk_tax_year_label,
 )
 from app.models import (
+    add_cash_flow_event,
     fetch_all_accounts,
     fetch_all_active_overrides,
     fetch_account_daily_snapshot_points_on_or_after_date,
@@ -28,10 +29,97 @@ from app.models import (
     fetch_monthly_review,
     fetch_monthly_review_items,
     fetch_tax_year_contributions,
+    upsert_monthly_snapshot,
 )
 from app.services.financial_truth import refresh_account_snapshots_for_month
 
 performance_bp = Blueprint("performance", __name__)
+
+
+def _parse_money(value, default=None):
+    try:
+        if value is None or str(value).strip() == "":
+            return default
+        return float(str(value).replace(",", "").strip())
+    except (TypeError, ValueError):
+        return default
+
+
+def _valid_month_key(value):
+    try:
+        datetime.strptime(str(value or ""), "%Y-%m")
+        return True
+    except ValueError:
+        return False
+
+
+@performance_bp.route("/cash-flow-events", methods=["POST"])
+@login_required
+def record_cash_flow_event():
+    uid = current_user.id
+    accounts = fetch_all_accounts(uid)
+    account_map = {int(a["id"]): a for a in accounts}
+    try:
+        account_id = int(request.form.get("account_id") or 0)
+    except (TypeError, ValueError):
+        account_id = 0
+    if account_id not in account_map:
+        flash("Choose one of your accounts before recording a performance movement.", "error")
+        return redirect(url_for("performance.performance"))
+
+    raw_date = (request.form.get("event_date") or "").strip()
+    try:
+        event_date = datetime.strptime(raw_date, "%Y-%m-%d").date().isoformat()
+    except ValueError:
+        flash("Enter the movement date as YYYY-MM-DD.", "error")
+        return redirect(url_for("performance.performance"))
+
+    amount = _parse_money(request.form.get("amount"), 0.0) or 0.0
+    if abs(amount) < 0.005:
+        flash("Enter an amount for the performance movement.", "error")
+        return redirect(url_for("performance.performance"))
+
+    kind = (request.form.get("kind") or "deposit").strip().lower()
+    if kind in {"withdrawal", "transfer_out"}:
+        signed_amount = -abs(amount)
+        kind = "withdrawal"
+    else:
+        signed_amount = abs(amount)
+        kind = "deposit"
+
+    opening_month = (request.form.get("opening_month") or "").strip()
+    opening_value = _parse_money(request.form.get("opening_value"), None)
+    if opening_month or opening_value is not None:
+        if not _valid_month_key(opening_month) or opening_value is None or opening_value < 0:
+            flash("Opening baseline needs a YYYY-MM month and a non-negative value.", "error")
+            return redirect(url_for("performance.performance"))
+        upsert_monthly_snapshot(account_id, opening_month, opening_value)
+
+    note = (request.form.get("note") or "Manual performance movement").strip()
+    event_id = add_cash_flow_event(
+        {
+            "account_id": account_id,
+            "event_date": event_date,
+            "amount": signed_amount,
+            "kind": kind,
+            "note": note,
+            "allowance_effect": "none",
+        },
+        uid,
+    )
+    if not event_id:
+        flash("Could not record that performance movement.", "error")
+        return redirect(url_for("performance.performance"))
+
+    account_name = account_map[account_id]["name"]
+    if opening_month and opening_value is not None:
+        flash(
+            f"Recorded {account_name} opening baseline £{opening_value:,.2f} and {kind} £{abs(signed_amount):,.2f}.",
+            "success",
+        )
+    else:
+        flash(f"Recorded {account_name} {kind} £{abs(signed_amount):,.2f} for Performance.", "success")
+    return redirect(url_for("performance.performance"))
 
 
 @performance_bp.route("/")
@@ -412,6 +500,7 @@ def performance():
         current_value=current_value,
         current_monthly_update_href=current_monthly_update_href,
         export_period_links=export_period_links,
+        performance_event_accounts=accounts,
         active_page="performance",
     )
 

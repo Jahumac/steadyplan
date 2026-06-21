@@ -107,6 +107,94 @@ def test_performance_page_shows_imported_baseline_reconciliation(client, make_us
     assert "Contributed / Initial funding" not in body
 
 
+def test_performance_page_renders_historical_movement_form(client, make_user):
+    uid, username, password = make_user(username="perf-manual-event-form", password="password123")
+    today = date.today()
+    current_month = today.strftime("%Y-%m")
+    prior_month_day = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+    prior_month = prior_month_day.strftime("%Y-%m")
+
+    with client.application.app_context():
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
+                VALUES (?, 'Premium Bonds', 'Premium Bonds', 800, 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, 25, ?)",
+                (prior_month_day.isoformat(), account_id, prior_month),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, 800, ?)",
+                (today.replace(day=1).isoformat(), account_id, current_month),
+            )
+            conn.commit()
+        save_daily_snapshot(uid, 25, prior_month_day.isoformat())
+        save_daily_snapshot(uid, 800, today.isoformat())
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/performance/")
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+
+    assert "Record a historical movement" in body
+    assert "Use this when an account was added late or a top-up/withdrawal was missed." in body
+    assert "Opening baseline month" in body
+    assert "Premium Bonds had £25 before a £775 top-up" in body
+    assert "Record movement" in body
+
+
+def test_performance_page_records_historical_movement_with_opening_baseline(client, make_user):
+    uid, username, password = make_user(username="perf-manual-event-submit", password="password123")
+    with client.application.app_context():
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
+                VALUES (?, 'Premium Bonds', 'Premium Bonds', 800, 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.post(
+        "/performance/cash-flow-events",
+        data={
+            "account_id": str(account_id),
+            "event_date": "2026-06-01",
+            "kind": "deposit",
+            "amount": "775",
+            "opening_month": "2026-05",
+            "opening_value": "25",
+            "note": "Premium Bonds top-up",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Recorded Premium Bonds opening baseline £25.00 and deposit £775.00." in body
+
+    with client.application.app_context():
+        with get_connection() as conn:
+            snapshot = conn.execute(
+                "SELECT balance FROM monthly_snapshots WHERE account_id = ? AND month_key = '2026-05'",
+                (account_id,),
+            ).fetchone()
+            event = conn.execute(
+                "SELECT amount, kind, note, allowance_effect FROM cash_flow_events WHERE account_id = ?",
+                (account_id,),
+            ).fetchone()
+    assert snapshot["balance"] == 25
+    assert event["amount"] == 775
+    assert event["kind"] == "deposit"
+    assert event["note"] == "Premium Bonds top-up"
+    assert event["allowance_effect"] == "none"
+
+
 def test_performance_page_shows_account_reconciliation_breakdown(client, make_user):
     uid, username, password = make_user(username="perf-account-reconciliation", password="password123")
     today = date.today()
