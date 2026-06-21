@@ -22,6 +22,26 @@ def recompute_user_daily_snapshots(user_id):
 
 
 
+def refresh_holdings_accounts_for_month(user_id, account_ids, month_key, recompute_daily=True):
+    holdings_totals = fetch_holding_totals_by_account(user_id)
+    accounts = {int(a["id"]): a for a in fetch_all_accounts(user_id)}
+    for raw_aid in account_ids:
+        try:
+            aid = int(raw_aid)
+        except (TypeError, ValueError):
+            continue
+        account = accounts.get(aid)
+        if not account:
+            continue
+        balance = effective_account_value(account, holdings_totals)
+        upsert_monthly_snapshot(aid, month_key, balance)
+    if recompute_daily:
+        account_values = [(a["id"], effective_account_value(a, holdings_totals)) for a in accounts.values()]
+        save_daily_snapshot(user_id, sum(value for _, value in account_values))
+        save_account_daily_snapshots(user_id, account_values)
+
+
+
 def apply_account_balance_update(account, user_id, new_balance, month_key, review_id=None, recompute_daily=True):
     if (account.get("wrapper_type") or "").lower() == "premium bonds":
         new_balance = min(float(new_balance), 50000.0)

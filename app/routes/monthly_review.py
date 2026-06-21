@@ -50,7 +50,7 @@ from app.models import (
 from app.demo import is_read_only_demo_user
 from app.utils import optional_float, optional_int, valid_month_key
 from app.services.monthly_review_checklist import parse_monthly_review_notes
-from app.services.financial_truth import apply_account_balance_update
+from app.services.financial_truth import apply_account_balance_update, refresh_holdings_accounts_for_month
 from app.services.csv_parsers import (
     count_csv_rows,
     detect_csv_headers,
@@ -133,6 +133,7 @@ def monthly_review():
                 },
                 uid,
             )
+            refresh_holdings_accounts_for_month(uid, [account_id], month_key)
             review = fetch_or_create_monthly_review(month_key, uid)
             mark_review_item_updated(review["id"], account_id, "holdings_updated")
         elif form_name == "update_account_balance":
@@ -666,6 +667,7 @@ def confirm_import():
 
     if updated and touched_account_ids:
         month_key = effective_month_key or default_month_key()
+        refresh_holdings_accounts_for_month(current_user.id, touched_account_ids, month_key)
         review = fetch_or_create_monthly_review(month_key, current_user.id)
         ensure_monthly_review_items(review["id"], current_user.id)
         for aid in touched_account_ids:
