@@ -46,6 +46,7 @@ def _workbook_from_response(response):
     return load_workbook(BytesIO(response.data), data_only=True)
 
 
+
 def test_performance_export_keeps_zero_snapshot_message_for_selected_account(app, client, make_user):
     uid, username, password = make_user(username="perf-export-zero", password="password123")
     with app.app_context():
@@ -205,13 +206,51 @@ def test_performance_export_uses_cash_flow_events_for_monthly_attribution(app, c
     assert rows["SIPP"] == 1400
 
     portfolio = workbook["Portfolio (Monthly)"]
-    assert portfolio["C5"].value == 0
-    assert portfolio["D5"].value == 0
+    assert portfolio["A5"].value == "May 2026"
+    assert portfolio["C5"].value == 3000
+    assert portfolio["A6"].value == "Jun 2026"
+    assert portfolio["C6"].value == 0
+    assert portfolio["D6"].value == 0
 
     cash = workbook["Cash ISA (Monthly)"]
-    assert cash["C5"].value == 0
-    assert cash["D5"].value == -1400
-    assert cash["E5"].value == 0
+    assert cash["A5"].value == "May 2026"
+    assert cash["C5"].value == 3000
+    assert cash["A6"].value == "Jun 2026"
+    assert cash["C6"].value == 0
+    assert cash["D6"].value == -1400
+    assert cash["E6"].value == 0
+
+
+def test_performance_export_includes_first_imported_baseline_row_in_monthly_detail(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-baseline-detail", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(value=6200, monthly=0), uid)
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 6000), ("2026-06", 6200)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    account = workbook["ISA (Monthly)"]
+    assert account["A4"].value == "Month"
+    assert account["A5"].value == "May 2026"
+    assert account["B5"].value == 0
+    assert account["C5"].value == 6000
+    assert account["D5"].value == 0
+    assert account["E5"].value == 0
+    assert account["F5"].value == 6000
+    assert account["A6"].value == "Jun 2026"
+    assert account["B6"].value == 6000
+    assert account["C6"].value == 0
+    assert account["D6"].value == 0
+    assert account["E6"].value == 200
+    assert account["F6"].value == 6200
+
 
 
 def test_performance_export_shows_actual_first_month_contribution(app, client, make_user):
@@ -261,12 +300,18 @@ def test_performance_export_does_not_count_unconfirmed_current_month_plan_as_act
     workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
 
     account = workbook["Stocks & Shares ISA (Monthly)"]
-    assert account["A5"].value == "Jun 2026"
-    assert account["B5"].value == 7609.35
-    assert account["C5"].value == 0
+    assert account["A5"].value == "May 2026"
+    assert account["B5"].value == 0
+    assert account["C5"].value == 7609.35
     assert account["D5"].value == 0
-    assert account["E5"].value == 164.72
-    assert account["F5"].value == 7774.07
+    assert account["E5"].value == 0
+    assert account["F5"].value == 7609.35
+    assert account["A6"].value == "Jun 2026"
+    assert account["B6"].value == 7609.35
+    assert account["C6"].value == 0
+    assert account["D6"].value == 0
+    assert account["E6"].value == 164.72
+    assert account["F6"].value == 7774.07
 
 
 def test_performance_export_treats_cash_isa_untracked_balance_drops_as_cash_movements(app, client, make_user):
@@ -285,13 +330,20 @@ def test_performance_export_treats_cash_isa_untracked_balance_drops_as_cash_move
     workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
 
     account = workbook["Cash ISA (Monthly)"]
-    assert account["A5"].value == "Jun 2026"
-    assert account["B5"].value == 1947.86
-    assert account["C5"].value == 0
-    assert account["D5"].value == -350.35
+    assert account["A5"].value == "May 2026"
+    assert account["B5"].value == 0
+    assert account["C5"].value == 1947.86
+    assert account["D5"].value == 0
     assert account["E5"].value == 0
-    assert account["F5"].value == 1597.51
+    assert account["F5"].value == 1947.86
     assert account["G5"].value == 0
+    assert account["A6"].value == "Jun 2026"
+    assert account["B6"].value == 1947.86
+    assert account["C6"].value == 0
+    assert account["D6"].value == -350.35
+    assert account["E6"].value == 0
+    assert account["F6"].value == 1597.51
+    assert account["G6"].value == 0
 
 
 def test_performance_export_counts_regular_contribution_after_account_specific_pension_day(monkeypatch, app, client, make_user):
@@ -339,10 +391,14 @@ def test_performance_export_counts_regular_contribution_after_account_specific_p
     workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
 
     account = workbook["Workplace Pension (Monthly)"]
-    assert account["A5"].value == "Jun 2026"
-    assert account["C5"].value == 0
-    assert account["D5"].value == 333.33
-    assert account["E5"].value == 80.92
+    assert account["A5"].value == "May 2026"
+    assert account["C5"].value == 3031.02
+    assert account["D5"].value == 0
+    assert account["E5"].value == 0
+    assert account["A6"].value == "Jun 2026"
+    assert account["C6"].value == 0
+    assert account["D6"].value == 333.33
+    assert account["E6"].value == 80.92
 
 
 def test_performance_export_labels_cash_isa_with_cash_interest_and_not_global_growth(app, client, make_user):
@@ -376,8 +432,11 @@ def test_performance_export_labels_cash_isa_with_cash_interest_and_not_global_gr
     account = workbook["Cash ISA (Monthly)"]
     assert account["A2"].value == "Cash interest rate: 3.6%"
     assert account["E4"].value == "Interest / Cash gain"
-    assert 0 < float(account["E5"].value or 0) < 10
+    assert account["A5"].value == "Apr 2026"
+    assert account["C5"].value == 2600
+    assert account["E5"].value == 0
     assert 0 < float(account["E6"].value or 0) < 10
+    assert 0 < float(account["E7"].value or 0) < 10
 
 
 def test_performance_export_labels_premium_bonds_with_expected_prize_rate(app, client, make_user):
@@ -443,10 +502,14 @@ def test_performance_export_counts_regular_contribution_after_salary_day(monkeyp
     workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
 
     account = workbook["Stocks & Shares ISA (Monthly)"]
-    assert account["A5"].value == "Jun 2026"
-    assert account["C5"].value == 0
-    assert account["D5"].value == 500
+    assert account["A5"].value == "May 2026"
+    assert account["C5"].value == 7609.35
+    assert account["D5"].value == 0
     assert account["E5"].value == 0
+    assert account["A6"].value == "Jun 2026"
+    assert account["C6"].value == 0
+    assert account["D6"].value == 500
+    assert account["E6"].value == 0
 
 
 def test_performance_export_filters_to_requested_historical_window(app, client, make_user):

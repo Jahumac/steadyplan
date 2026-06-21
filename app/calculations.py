@@ -757,13 +757,11 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
     # ── Month-by-month breakdown table ────────────────────────────────────
     rows = []
     first_month_has_initial_flow = (
-        len(monthly_data) == 1
-        and (
-            abs(float(imported_baselines[0] if imported_baselines else 0.0)) > 0.005
-            or (
-                abs(float(contribs[0] or 0)) > 0.005
-                and abs(float(contribs[0] or 0) - float(assumed_monthly or 0)) > 0.005
-            )
+        abs(float(imported_baselines[0] if imported_baselines else 0.0)) > 0.005
+        or (
+            len(monthly_data) == 1
+            and abs(float(contribs[0] or 0)) > 0.005
+            and abs(float(contribs[0] or 0) - float(assumed_monthly or 0)) > 0.005
         )
     )
     if first_month_has_initial_flow:
@@ -807,15 +805,22 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
 
     # ── Totals for summary cards ──────────────────────────────────────────
     total_imported_baseline = sum(imported_baselines)
+    total_contributed = sum(contribs[1:])   # exclude opening balance month unless it is an explicit first-month flow
+    total_market_gain = 0.0
     if first_month_has_initial_flow:
-        total_contributed = round(float(contribs[0] or 0), 2)
-        total_market_gain = round(float(fixed_gains[0]) if fixed_gains and fixed_gains[0] is not None else float(balances[0] or 0) - total_contributed - total_imported_baseline, 2)
-    else:
-        total_contributed = sum(contribs[1:])   # exclude opening balance month
-        total_market_gain = 0.0
-        for i in range(1, len(balances)):
-            fixed_gain = fixed_gains[i] if i < len(fixed_gains) else None
-            total_market_gain += float(fixed_gain) if fixed_gain is not None else (balances[i] - balances[i - 1] - contribs[i] - imported_baselines[i])
+        first_cf = float(contribs[0] or 0)
+        first_imported = float(imported_baselines[0] if imported_baselines else 0.0)
+        first_fixed_gain = fixed_gains[0] if fixed_gains else None
+        first_opening = max(float(balances[0] or 0) - first_cf - first_imported, 0.0)
+        total_contributed += first_cf
+        total_market_gain += (
+            float(first_fixed_gain)
+            if first_fixed_gain is not None
+            else float(balances[0] or 0) - first_opening - first_cf - first_imported
+        )
+    for i in range(1, len(balances)):
+        fixed_gain = fixed_gains[i] if i < len(fixed_gains) else None
+        total_market_gain += float(fixed_gain) if fixed_gain is not None else (balances[i] - balances[i - 1] - contribs[i] - imported_baselines[i])
     vs_plan = balances[-1] - projected_values[-1] if projected_values else 0
 
     return {
