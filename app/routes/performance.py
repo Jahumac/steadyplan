@@ -25,6 +25,7 @@ from app.models import (
     fetch_monthly_review_items,
     fetch_tax_year_contributions,
 )
+from app.services.financial_truth import refresh_account_snapshots_for_month
 
 performance_bp = Blueprint("performance", __name__)
 
@@ -33,9 +34,11 @@ performance_bp = Blueprint("performance", __name__)
 @login_required
 def performance():
     uid = current_user.id
+    current_month_key = datetime.now().strftime('%Y-%m')
+    refresh_account_snapshots_for_month(uid, current_month_key, require_existing_month=True)
     assumptions   = fetch_assumptions(uid)
     accounts      = fetch_all_accounts(uid)
-    current_monthly_update_href = f"/monthly-review/?month={datetime.now().strftime('%Y-%m')}#expected-contributions"
+    current_monthly_update_href = f"/monthly-review/?month={current_month_key}#expected-contributions"
 
     assumed_rate   = to_float(assumptions["annual_growth_rate"]) if assumptions else 0.07
 

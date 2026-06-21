@@ -61,6 +61,7 @@ from app.models import (
     fetch_prior_month_budget_entries,
 )
 from app.models.accounts import PREMIUM_BONDS_MAX_BALANCE, is_premium_bonds_account
+from app.services.financial_truth import refresh_account_snapshots_for_month
 from app.services.planning_insights import classify_account
 
 export_bp = Blueprint("export", __name__)
@@ -1687,6 +1688,8 @@ def export_budget_annual():
 @login_required
 def export_performance():
     uid = current_user.id
+    current_month_key = date.today().strftime("%Y-%m")
+    refresh_account_snapshots_for_month(uid, current_month_key, require_existing_month=True)
     assumptions = fetch_assumptions(uid)
     accounts = fetch_all_accounts(uid)
     account_id = request.args.get("account_id")

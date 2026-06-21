@@ -96,6 +96,34 @@ def test_performance_export_acknowledges_first_baseline_for_portfolio_and_accoun
 
 
 
+def test_performance_export_uses_live_current_month_values_for_end_balances(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-live-current", password="password123")
+    with app.app_context():
+        stale_id = create_account(_account_payload(name="Stale ISA", value=2500, monthly=100), uid)
+        new_id = create_account(_account_payload(name="New SIPP", wrapper_type="SIPP", value=206, monthly=250), uid)
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-05-01', ?, 2000, '2026-05')",
+                (stale_id,),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-06-01', ?, 2000, '2026-06')",
+                (stale_id,),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    summary = workbook["Summary"]
+    rows = {summary.cell(row=r, column=1).value: summary.cell(row=r, column=10).value for r in range(5, summary.max_row + 1)}
+
+    assert rows["Portfolio"] == 2706
+    assert rows["Stale ISA"] == 2500
+    assert rows["New SIPP"] == 206
+    assert "New SIPP (Monthly)" in workbook.sheetnames
+
+
 def test_performance_export_filters_to_requested_historical_window(app, client, make_user):
     uid, username, password = make_user(username="perf-export-window", password="password123")
     with app.app_context():

@@ -212,6 +212,7 @@ def fetch_monthly_performance_data_by_account(user_id):
             JOIN accounts a ON a.id = ms.account_id
             WHERE ms.month_key IS NOT NULL
               AND a.user_id = ?
+              AND a.is_active = 1
             ORDER BY a.name ASC, ms.month_key ASC
             """,
             (user_id,),
