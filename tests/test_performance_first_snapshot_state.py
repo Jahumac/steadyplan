@@ -144,6 +144,8 @@ def test_performance_page_renders_historical_movement_form(client, make_user):
     assert "Use this when an account was added late or a top-up/withdrawal was missed." in body
     assert "Opening baseline month" in body
     assert "Premium Bonds had £25 before a £775 top-up" in body
+    assert "Replace existing baseline" in body
+    assert "Leave unticked unless you are correcting an imported opening value." in body
     assert "Record movement" in body
 
 
@@ -247,6 +249,56 @@ def test_performance_page_records_historical_movement_with_opening_baseline(clie
             ).fetchone()
     assert remaining == 1
     assert snapshot_after_delete["balance"] == 25
+
+
+def test_performance_page_refuses_to_overwrite_existing_opening_baseline(client, make_user):
+    uid, username, password = make_user(username="perf-baseline-overwrite-guard", password="password123")
+    with client.application.app_context():
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
+                VALUES (?, 'Premium Bonds', 'Premium Bonds', 800, 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-05-01', ?, 25, '2026-05')",
+                (account_id,),
+            )
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.post(
+        "/performance/cash-flow-events",
+        data={
+            "account_id": str(account_id),
+            "event_date": "2026-06-01",
+            "kind": "deposit",
+            "amount": "775",
+            "opening_month": "2026-05",
+            "opening_value": "50",
+            "note": "Wrong baseline attempt",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Opening baseline for 2026-05 is already £25.00. Tick replace existing baseline to overwrite it." in body
+    assert "Wrong baseline attempt" not in body
+
+    with client.application.app_context():
+        with get_connection() as conn:
+            snapshot = conn.execute(
+                "SELECT balance FROM monthly_snapshots WHERE account_id = ? AND month_key = '2026-05'",
+                (account_id,),
+            ).fetchone()
+            event_count = conn.execute(
+                "SELECT COUNT(*) AS count FROM cash_flow_events WHERE account_id = ?",
+                (account_id,),
+            ).fetchone()["count"]
+    assert snapshot["balance"] == 25
+    assert event_count == 0
 
 
 def test_performance_page_shows_account_reconciliation_breakdown(client, make_user):

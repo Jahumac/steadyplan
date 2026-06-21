@@ -818,7 +818,9 @@ def fetch_isa_allowance_cash_flow_events(user_id, ty_start, ty_end):
                   'Stocks & Shares ISA', 'Cash ISA', 'Lifetime ISA',
                   'Stocks and Shares ISA'
               )
-              AND COALESCE(c.allowance_effect, 'none') != 'none'
+              AND c.allowance_effect IN (
+                  'subscription', 'flexible_withdrawal', 'flexible_replacement'
+              )
             ORDER BY c.event_date DESC, c.id DESC
             """,
             (user_id, ty_start, ty_end),

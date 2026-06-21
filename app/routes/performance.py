@@ -30,6 +30,7 @@ from app.models import (
     fetch_monthly_review,
     fetch_monthly_review_items,
     fetch_tax_year_contributions,
+    get_connection,
     upsert_monthly_snapshot,
 )
 from app.services.financial_truth import refresh_account_snapshots_for_month
@@ -52,6 +53,15 @@ def _valid_month_key(value):
         return True
     except ValueError:
         return False
+
+
+def _existing_monthly_snapshot_balance(account_id, month_key):
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT balance FROM monthly_snapshots WHERE account_id = ? AND month_key = ?",
+            (account_id, month_key),
+        ).fetchone()
+    return None if row is None else float(row["balance"] or 0)
 
 
 def _recent_performance_event_rows(accounts, user_id, limit=8):
@@ -116,6 +126,14 @@ def record_cash_flow_event():
     if opening_month or opening_value is not None:
         if not _valid_month_key(opening_month) or opening_value is None or opening_value < 0:
             flash("Opening baseline needs a YYYY-MM month and a non-negative value.", "error")
+            return redirect(url_for("performance.performance"))
+        existing_opening_value = _existing_monthly_snapshot_balance(account_id, opening_month)
+        replace_existing_opening = request.form.get("replace_existing_opening") == "1"
+        if existing_opening_value is not None and abs(existing_opening_value - opening_value) >= 0.005 and not replace_existing_opening:
+            flash(
+                f"Opening baseline for {opening_month} is already £{existing_opening_value:,.2f}. Tick replace existing baseline to overwrite it.",
+                "error",
+            )
             return redirect(url_for("performance.performance"))
         upsert_monthly_snapshot(account_id, opening_month, opening_value)
 
