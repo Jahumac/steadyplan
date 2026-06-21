@@ -192,11 +192,39 @@ def test_performance_page_records_historical_movement_with_opening_baseline(clie
                 "SELECT id, amount, kind, note, allowance_effect FROM cash_flow_events WHERE account_id = ?",
                 (account_id,),
             ).fetchone()
+            real_event_id = conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, allowance_effect, created_at)
+                VALUES (?, ?, '2026-06-03', 50, 'deposit', 'Account detail cash event', 'none', datetime('now'))
+                """,
+                (uid, account_id),
+            ).lastrowid
+            conn.commit()
     assert snapshot["balance"] == 25
     assert event["amount"] == 775
     assert event["kind"] == "deposit"
     assert event["note"] == "One-off PB audit top-up"
-    assert event["allowance_effect"] == "none"
+    assert event["allowance_effect"] == "performance_only"
+
+    page_after_real_event = client.get("/performance/")
+    page_body = page_after_real_event.get_data(as_text=True)
+    assert "One-off PB audit top-up" in page_body
+    assert "Account detail cash event" not in page_body
+
+    rejected_delete = client.post(
+        f"/performance/cash-flow-events/{real_event_id}/delete",
+        follow_redirects=True,
+    )
+    rejected_body = rejected_delete.get_data(as_text=True)
+    assert "That Performance movement was not found or has already been removed." in rejected_body
+
+    with client.application.app_context():
+        with get_connection() as conn:
+            real_event_after_rejected_delete = conn.execute(
+                "SELECT COUNT(*) AS count FROM cash_flow_events WHERE id = ?",
+                (real_event_id,),
+            ).fetchone()["count"]
+    assert real_event_after_rejected_delete == 1
 
     delete_response = client.post(
         f"/performance/cash-flow-events/{event['id']}/delete",
@@ -217,7 +245,7 @@ def test_performance_page_records_historical_movement_with_opening_baseline(clie
                 "SELECT balance FROM monthly_snapshots WHERE account_id = ? AND month_key = '2026-05'",
                 (account_id,),
             ).fetchone()
-    assert remaining == 0
+    assert remaining == 1
     assert snapshot_after_delete["balance"] == 25
 
 

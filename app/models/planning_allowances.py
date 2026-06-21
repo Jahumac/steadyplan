@@ -1039,10 +1039,16 @@ def fetch_cash_flow_events_for_account(account_id, user_id, from_date=None, to_d
         ).fetchall()
 
 
-def delete_cash_flow_event(event_id, user_id):
+def delete_cash_flow_event(event_id, user_id, allowance_effect=None):
     with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM cash_flow_events WHERE id = ? AND user_id = ?",
-            (event_id, user_id),
+        params = [event_id, user_id]
+        where = "id = ? AND user_id = ?"
+        if allowance_effect is not None:
+            where += " AND allowance_effect = ?"
+            params.append(allowance_effect)
+        cursor = conn.execute(
+            f"DELETE FROM cash_flow_events WHERE {where}",
+            tuple(params),
         )
         conn.commit()
+        return cursor.rowcount
