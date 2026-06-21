@@ -1,3 +1,7 @@
+from io import BytesIO
+
+from openpyxl import load_workbook
+
 from app.services.monthly_review_checklist import (
     encode_monthly_review_notes,
     parse_monthly_review_notes,
@@ -914,3 +918,93 @@ def test_corrupted_internal_json_like_notes_do_not_leak_marker(app, client, make
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "__shelly_monthly_review_notes_v" not in html
+
+
+
+def test_monthly_review_holding_update_refreshes_snapshots_and_export_current_value(app, client, make_user):
+    uid, username, password = make_user(username="mr-holding-refresh", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = "2026-06"
+    today = "2026-06-21"
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, category, valuation_mode,
+                    current_value, is_active, uninvested_cash
+                ) VALUES (?, 'Workplace Pension', 'Workplace Pension', 'Pension', 'holdings', 0, 1, 0)
+                """,
+                (uid,),
+            ).lastrowid
+            holding_id = conn.execute(
+                """
+                INSERT INTO holdings (
+                    account_id, holding_name, ticker, asset_type, bucket,
+                    value, units, price, notes
+                ) VALUES (?, 'Pension Fund', 'PEN', 'Fund', 'Core', 3000, 30, 100, '')
+                """,
+                (account_id,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                (f"{month_key}-01", account_id, 3000, month_key),
+            )
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, ?, ?)",
+                (uid, today, 3000),
+            )
+            conn.execute(
+                "INSERT INTO account_daily_snapshots (user_id, account_id, snapshot_date, value) VALUES (?, ?, ?, ?)",
+                (uid, account_id, today, 3000),
+            )
+            conn.commit()
+
+    resp = client.post(
+        "/monthly-review/",
+        data={
+            "form_name": "update_holding",
+            "month": month_key,
+            "account_id": str(account_id),
+            "holding_id": str(holding_id),
+            "holding_name": "Pension Fund",
+            "ticker": "PEN",
+            "asset_type": "Fund",
+            "bucket": "Core",
+            "units": "35",
+            "price": "100",
+            "notes": "",
+        },
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            monthly = conn.execute(
+                "SELECT balance FROM monthly_snapshots WHERE account_id = ? AND month_key = ?",
+                (account_id, month_key),
+            ).fetchone()
+            portfolio_daily = conn.execute(
+                "SELECT total_value FROM portfolio_daily_snapshots WHERE user_id = ? AND snapshot_date = ?",
+                (uid, today),
+            ).fetchone()
+            account_daily = conn.execute(
+                "SELECT value FROM account_daily_snapshots WHERE user_id = ? AND account_id = ? AND snapshot_date = ?",
+                (uid, account_id, today),
+            ).fetchone()
+
+    assert float(monthly["balance"]) == 3500.0
+    assert float(portfolio_daily["total_value"]) == 3500.0
+    assert float(account_daily["value"]) == 3500.0
+
+    export_resp = client.get("/performance/export.xlsx")
+    workbook = load_workbook(BytesIO(export_resp.data), data_only=True)
+    summary = workbook["Summary"]
+    assert summary["J5"].value == 3500
