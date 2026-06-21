@@ -366,7 +366,7 @@ def fetch_monthly_performance_data_by_account(user_id):
         personal = float(override["override_amount"] or 0) if override is not None else None
         planned_contrib = 0.0
         rk = (aid, month_key)
-        if not (month_key == current_month_key and rk not in review_map and override is None):
+        if not has_cash_flow and not (month_key == current_month_key and rk not in review_map and override is None):
             if personal != 0.0:
                 if rk in review_map:
                     personal = float(review_map[rk] or 0)
