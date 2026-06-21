@@ -77,9 +77,9 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
     _login(client, username, password)
     wb = _workbook_from_response(client.get("/projections/export.xlsx"))
 
-    assert "Scenario Estimate Assumptions" in wb.sheetnames
+    assert "Planning Numbers" in wb.sheetnames
     assert "Assumptions" not in wb.sheetnames
-    assert "Contribution Schedule" in wb.sheetnames
+    assert "Payment Schedule" in wb.sheetnames
 
     summary = wb["Summary"]
     assert [summary.cell(4, c).value for c in range(1, 6)] == [
@@ -93,28 +93,28 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
     assert "Invested accessible" in summary_values
     assert "Accessible" not in summary_values
     assert "Locked for later" in summary_values
-    assert "Values are nominal scenario estimates before inflation unless stated otherwise." in summary_values
+    assert "Values are future estimates before inflation unless stated otherwise." in summary_values
     assert "Values are nominal projections before inflation unless stated otherwise." not in summary_values
     assert "Projected at Retirement" not in summary_values
     assert "Projected at retirement" not in summary_values
 
-    assumptions_sheet = wb["Scenario Estimate Assumptions"]
+    assumptions_sheet = wb["Planning Numbers"]
     assumption_values = [cell.value for row in assumptions_sheet.iter_rows() for cell in row]
-    assert "Scenario estimate start month" in assumption_values
+    assert "Future estimate start month" in assumption_values
     assert "Inflation treatment" in assumption_values
     assert "Nominal" in assumption_values
-    assert "Target age used for this scenario estimate." in assumption_values
+    assert "Target age used for this future estimate." in assumption_values
     assert "Target age used for this projection." not in assumption_values
     assert "Projection start month" not in assumption_values
-    assert "First future contribution month considered by scenario estimates." in assumption_values
+    assert "First future payment month used by future estimates." in assumption_values
     assert "First future contribution month considered by projections." not in assumption_values
 
     workbook_values = [cell.value for sheet in wb.worksheets for row in sheet.iter_rows() for cell in row if cell.value is not None]
-    assert "SteadyPlan — Retirement Scenario Estimates" in workbook_values
-    assert "SteadyPlan — Scenario Estimate Assumptions" in workbook_values
-    assert "SteadyPlan — Tax-Year Scenario Estimate" in workbook_values
+    assert "SteadyPlan — Retirement Future Estimates" in workbook_values
+    assert "SteadyPlan — Planning Numbers" in workbook_values
+    assert "SteadyPlan — Tax-Year Future Estimate" in workbook_values
     assert "SteadyPlan — Year-by-Year Scenario Estimate" not in workbook_values
-    assert "SteadyPlan — Monthly Scenario Estimate" in workbook_values
+    assert "SteadyPlan — Monthly Future Estimate" in workbook_values
     assert "Future estimate total" in workbook_values
     assert "Future estimate value" in workbook_values
     assert "SteadyPlan — Retirement Projections" not in workbook_values
@@ -124,7 +124,7 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
     assert "Projected Total" not in workbook_values
     assert "Projected Value" not in workbook_values
 
-    schedule = wb["Contribution Schedule"]
+    schedule = wb["Payment Schedule"]
     schedule_rows = [tuple(cell.value for cell in row) for row in schedule.iter_rows()]
     assert ("ISA", "Stocks & Shares ISA", "2028-11", "Ongoing", 750, 750, "Future increase") in schedule_rows
     assert ("ISA", "Stocks & Shares ISA", "2028-11", "9999-12", 750, 750, "Future increase") not in schedule_rows
@@ -154,7 +154,7 @@ def test_lifetime_isa_one_off_override_export_includes_full_bonus(app, client, m
     _login(client, username, password)
     wb = _workbook_from_response(client.get("/projections/export.xlsx"))
 
-    schedule_rows = [tuple(cell.value for cell in row) for row in wb["Contribution Schedule"].iter_rows()]
+    schedule_rows = [tuple(cell.value for cell in row) for row in wb["Payment Schedule"].iter_rows()]
     assert ("Lifetime ISA", "Lifetime ISA", start_month, start_month, 4000, 5000, "LISA lump sum") in schedule_rows
 
     ws = wb["Lifetime ISA"]
@@ -318,5 +318,5 @@ def test_premium_bonds_cap_is_not_reported_as_negative_growth(app, client, make_
     assert all(value >= 0 for value in numeric_growth)
     assert any(value < 0 for value in numeric_caps)
 
-    schedule_values = [cell.value for row in wb["Contribution Schedule"].iter_rows() for cell in row]
+    schedule_values = [cell.value for row in wb["Payment Schedule"].iter_rows() for cell in row]
     assert "NS&I Premium Bonds balance is capped; overflow is not shown as account growth." in schedule_values

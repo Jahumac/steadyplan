@@ -55,7 +55,7 @@
   </div>
   <details class="mt-075">
     <summary class="link-accent">This month’s account plan — where does £{{ '{:,.0f}'.format(total_personal_monthly) }} “from you” come from?</summary>
-    <p class="helper-text mt-05">Contribution calendar overrides are included here for {{ budget_context_month_key }}. Months without a calendar plan fall back to each active account’s regular “Your Monthly Contribution” setting. Accounts marked <em>Outside take-home pay</em> are shown separately.</p>
+    <p class="helper-text mt-05">Payment calendar overrides are included here for {{ budget_context_month_key }}. Months without a calendar plan fall back to each active account’s regular monthly payment setting. Accounts marked <em>Outside take-home pay</em> are shown separately.</p>
     <div class="table-scroll mt-05">
       <table class="data-table">
         <thead>
@@ -145,9 +145,9 @@
       {% set source = contribution_sources.get(account.id, {}) %}
       {% set personal = cb.get('personal', account.monthly_contribution or 0) %}
       {% if cb.get('total_into_pot', 0) != personal and cb.get('total_into_pot', 0) > 0 %}
-      <span title="You pay £{{ '{:,.0f}'.format(personal) }} → £{{ '{:,.0f}'.format(cb.total_into_pot) }} goes into account{% if source.reason and source.label == 'contribution calendar' %} · {{ source.reason }}{% endif %}">Into accounts monthly £{{ '{:,.0f}'.format(cb.total_into_pot) }}{% if source.label == 'contribution calendar' %} · this month{% endif %}</span>
+      <span title="You pay £{{ '{:,.0f}'.format(personal) }} → £{{ '{:,.0f}'.format(cb.total_into_pot) }} goes into account{% if source.reason and source.label == 'Payment calendar' %} · {{ source.reason }}{% endif %}">Into accounts monthly £{{ '{:,.0f}'.format(cb.total_into_pot) }}{% if source.label == 'Payment calendar' %} · this month{% endif %}</span>
       {% else %}
-      <span>{% if source.label == 'contribution calendar' %}This month{% else %}You pay monthly{% endif %} £{{ '{:,.0f}'.format(personal) }}</span>
+      <span>{% if source.label == 'Payment calendar' %}This month{% else %}You pay monthly{% endif %} £{{ '{:,.0f}'.format(personal) }}</span>
       {% endif %}
       <span class="acct-mode-dot {% if account.valuation_mode == 'holdings' %}dot-positions{% else %}dot-manual{% endif %}"
             title="{{ 'Built from holdings' if account.valuation_mode == 'holdings' else ('Premium Bonds' if account.valuation_mode == 'premium_bonds' else 'Manual') }}"></span>
@@ -403,7 +403,7 @@
                 <small class="form-hint">Before tax = nothing extra to claim. Take-home pay = your provider adds a 20% basic-rate pension tax top-up.</small>
               </label>
               <label>
-                <span>Pension contribution posting day</span>
+                <span>Pension payment landing day</span>
                 <input type="number" name="pension_contribution_day" min="0" max="31" value="{{ selected.pension_contribution_day or 0 }}">
                 <small class="form-hint">Optional. Use the day the pension money actually lands or gets invested (for example 19 for a workplace pension paid from the previous month's salary). Set 0 to use the investment day from Settings.</small>
               </label>

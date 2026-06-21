@@ -341,7 +341,7 @@ def test_overview_multi_goal_state_restores_goal_progress_panel(app, client, mak
     assert "goal-track-status" in html
     assert "goal-track-label" in html
     assert "goal-track-detail" in html
-    assert "set a monthly contribution" in html
+    assert "set a monthly payment" in html
     assert "est." in html
 
 
@@ -392,7 +392,7 @@ def test_overview_goal_progress_glance_statuses_cover_on_track_behind_and_ahead(
     assert ">On course<" in html
     assert "est. " in html
     assert ">Needs attention<" in html
-    assert "set a monthly contribution" in html
+    assert "set a monthly payment" in html
     assert ">Reached<" in html
     assert "target already reached" in html
     assert ">On track<" not in html
@@ -1152,8 +1152,10 @@ def test_overview_payday_banner_uses_specific_budget_cta(app, client, make_user,
     html = resp.get_data(as_text=True)
 
     assert "investment day" in html
-    assert "check the budget now, then expect your monthly update nudge once this month's money has settled." in html
-    assert "check the budget, then do your monthly update" not in html
+    assert "check the budget now, then expect your Monthly Update nudge once this month's money has settled." in html
+    assert "Time to move your payments" in html
+    assert "Time to move your contributions" not in html
+    assert "check the budget, then do your Monthly Update" not in html
     assert "check the budget, then do your Monthly Update" not in html
     assert "in a day or two once everything settles" not in html
     assert '>Review budget</a>' in html
@@ -1422,7 +1424,7 @@ def test_overview_missing_salary_day_uses_single_settings_nudge(app, client, mak
     assert "Set your investment day — it helps SteadyPlan send monthly update nudges after your money has settled." in html
     assert "Set your investment day in Settings" not in html
     assert "monthly update nudges after your money has settled" in html
-    assert "remind you to do your monthly update" not in html
+    assert "remind you to do your Monthly Update" not in html
     assert "do your Monthly Update" not in html
     assert "Set your investment day" in html
     assert 'href="/settings/?mode=edit&amp;focus=planning_dates"' in html

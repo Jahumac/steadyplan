@@ -182,11 +182,11 @@ def test_accounts_page_uses_current_month_contribution_calendar_plan(app, client
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert "This month’s account plan" in html
-    assert "Contribution calendar overrides are included here" in html
+    assert "Payment calendar overrides are included here" in html
     assert "Lifetime ISA" in html
     assert "£4,000" in html
     assert "£5,000" in html
-    assert "contribution calendar" in html
+    assert "Payment calendar" in html
     assert "You pay monthly £0" not in html
 
 

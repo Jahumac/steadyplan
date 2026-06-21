@@ -289,8 +289,8 @@ def _build_monthly_data(month_key, user_id):
                 if is_linked_account:
                     ln = (linked_account.get("name") or "linked account").strip()
                     if override_reason and override_reason != "from budget":
-                        source_label = "contribution calendar"
-                        source_title = f"Pulled from your Contribution calendar for this month ({override_reason})"
+                        source_label = "Payment calendar"
+                        source_title = f"Pulled from your Payment calendar for this month ({override_reason})"
                     else:
                         source_title = f"Saved for this month (linked account · {ln})"
                 elif is_linked_debt:
@@ -298,7 +298,7 @@ def _build_monthly_data(month_key, user_id):
             elif source == "linked_account":
                 ln = (linked_account.get("name") or "—").strip()
                 source_label = f"linked account · {ln}"
-                source_title = "Pulled from your linked account's monthly contribution"
+                source_title = "Pulled from your linked account’s monthly payment"
             else:  # linked_debt
                 source_label = "linked debt"
                 source_title = "Pulled from your Debts page — update the monthly payment there to change this amount"

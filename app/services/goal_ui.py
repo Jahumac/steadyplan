@@ -5,7 +5,7 @@ def goal_track_status(projection, monthly_contribution, remaining, included_acco
         detail = "link an account to this goal" if selected_tags else "add an account to start tracking"
         return {"label": "Needs attention", "detail": detail, "tone": "behind"}
     if monthly_contribution <= 0:
-        return {"label": "Needs attention", "detail": "set a monthly contribution", "tone": "behind"}
+        return {"label": "Needs attention", "detail": "set a monthly payment", "tone": "behind"}
     if projection and projection.get("total_months") is None:
         return {"label": "Needs attention", "detail": "increase contributions to bring this within range", "tone": "behind"}
     if projection and projection.get("eta_label"):

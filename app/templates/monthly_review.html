@@ -42,9 +42,9 @@
           <input type="hidden" name="month" value="{{ month_key }}">
           <button type="submit" class="badge badge-meta"
                   data-confirm="Reopen {{ month_label }}?"
-                  data-confirm-title="Reopen monthly update?"
+                  data-confirm-title="Reopen Monthly Update?"
                   data-confirm-ok="Yes, reopen monthly update"
-                  data-confirm-cancel="Keep monthly update complete">Reopen monthly update</button>
+                  data-confirm-cancel="Keep Monthly Update complete">Reopen Monthly Update</button>
         </form>
       {% else %}
         <a href="#monthly-note" class="badge badge-primary-action">Finish monthly update</a>
@@ -137,7 +137,7 @@
       <ol class="compact-flow-list">
         <li><strong>1. Confirm contributions</strong><span>Confirm anything that happened this month.</span></li>
         <li><strong>2. Update balances</strong><span>Update holdings or jump to manual balances when needed.</span></li>
-        <li><strong>3. Finish monthly update</strong><span>Save a quick note, then mark the monthly update complete when you are happy.</span></li>
+        <li><strong>3. Finish monthly update</strong><span>Save a quick note, then mark the Monthly Update complete when you are happy.</span></li>
       </ol>
     </details>
     <div class="badge-row review-hero-badges">
@@ -220,7 +220,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <p class="helper-text">No contributions to track this month. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add your first account</a> and set a monthly contribution, then it’ll appear here for your monthly update.</p>
+    <p class="helper-text">No account payments to track this month. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add your first account</a> and set a monthly payment, then it’ll appear here for your Monthly Update.</p>
   {% endif %}
 </section>
 
@@ -304,7 +304,7 @@
               {% endfor %}
             </div>
           {% else %}
-            <p class="helper-text">No holdings here yet. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add your first holdings account</a> and it’ll appear here for your monthly update.</p>
+            <p class="helper-text">No holdings here yet. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add your first holdings account</a> and it’ll appear here for your Monthly Update.</p>
           {% endif %}
         </section>
       {% endfor %}
@@ -312,7 +312,7 @@
   {% else %}
     <div class="empty-state">
       <h3>No holdings-based accounts</h3>
-      <p>Add your first holdings account and it’ll appear here ready for your monthly update.</p>
+      <p>Add your first holdings account and it’ll appear here ready for your Monthly Update.</p>
       <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="badge badge-primary-action">Add your first holdings account</a>
     </div>
   {% endif %}
@@ -352,7 +352,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <p class="helper-text">No manual balances to update this month. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add a manually valued account</a> and it’ll appear here for your monthly update.</p>
+    <p class="helper-text">No manual balances to update this month. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add a manually valued account</a> and it’ll appear here for your Monthly Update.</p>
   {% endif %}
 </section>
 
@@ -523,20 +523,20 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="form_name" value="mark_complete">
       <input type="hidden" name="month" value="{{ month_key }}">
-      <button type="button" class="badge badge-primary-action" id="mark-complete-btn">Mark monthly update complete</button>
+      <button type="button" class="badge badge-primary-action" id="mark-complete-btn">Mark Monthly Update complete</button>
     </form>
   </div>
 
   <dialog id="confirm-complete-dialog" class="confirm-dialog">
     <div class="confirm-dialog-content">
-      <h3>Mark {{ month_label }} monthly update complete?</h3>
+      <h3>Mark {{ month_label }} Monthly Update complete?</h3>
       <p>This will snapshot updated account values for this month. Holdings snapshot from holdings; manual and Premium Bonds snapshot only if you updated their balance.</p>
       {% if unupdated_manual_names %}
       <p class="helper-text" style="color: var(--accent-3);">⚠ {{ unupdated_manual_names | length }} manual account{{ 's' if unupdated_manual_names | length != 1 else '' }} haven't had their balance updated this month ({{ unupdated_manual_names | join(', ') }}).</p>
       {% endif %}
       <div class="confirm-dialog-actions">
-        <button type="button" class="badge badge-primary-action" id="confirm-complete-yes">Yes, mark monthly update complete</button>
-        <button type="button" class="badge" id="confirm-complete-no">Keep monthly update open</button>
+        <button type="button" class="badge badge-primary-action" id="confirm-complete-yes">Yes, mark Monthly Update complete</button>
+        <button type="button" class="badge" id="confirm-complete-no">Keep Monthly Update open</button>
       </div>
     </div>
   </dialog>
