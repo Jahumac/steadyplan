@@ -116,7 +116,7 @@ def test_allowance_page_uses_plain_basic_rate_relief_copy(app, client, make_user
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Your provider adds 20% basic-rate tax relief." in html
+    assert "Your provider adds a 20% basic-rate pension tax top-up." in html
     assert "Your provider adds 20% basic-rate tax relief automatically." not in html
     assert "Applied automatically by your provider at 20%." not in html
     assert "Regular contributions are already included." in html

@@ -43,14 +43,14 @@
   <div class="card stat-card">
     <h2>Private pot scenario estimate at retirement</h2>
     <p>£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</p>
-    <small>Current totals use saved balances. Scenario estimates use your assumptions and are not guarantees.</small>
+    <small>Current totals use saved balances. Future estimates use the planning numbers in Settings. They are not guarantees.</small>
   </div>
 </section>
 
 <section class="card mb-1 planning-compact-only planning-signal-card">
   <p class="eyebrow">Current signal</p>
   <h2>{{ income_summary.limiting_factor }}</h2>
-  <p class="helper-text m-0">Private pot scenario estimate at age {{ '{:.0f}'.format(income_summary.retirement_age) }}: <strong>£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</strong>. Uses your assumptions and is not a guarantee.</p>
+  <p class="helper-text m-0">Private pot scenario estimate at age {{ '{:.0f}'.format(income_summary.retirement_age) }}: <strong>£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</strong>. Uses the planning numbers in Settings and is not a guarantee.</p>
 </section>
 
 <section class="card mb-1">
@@ -144,12 +144,12 @@
     </label>
     <div class="planning-form-actions">
       <button type="submit" class="badge badge-primary-action">Update analyser</button>
-      <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit scenario estimate assumptions</a>
+      <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit planning numbers</a>
     </div>
   </form>
 
   <details class="planning-compact-details planning-compact-only">
-    <summary>Adjust scenario estimate assumptions</summary>
+    <summary>Adjust planning numbers</summary>
     <form method="get" class="planning-assumptions-form mt-075">
       <label>
         <span>Target retirement income/year (optional)</span>
@@ -169,7 +169,7 @@
       </label>
       <div class="planning-form-actions">
         <button type="submit" class="badge badge-primary-action">Update analyser</button>
-        <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit scenario estimate assumptions</a>
+        <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit planning numbers</a>
       </div>
     </form>
   </details>

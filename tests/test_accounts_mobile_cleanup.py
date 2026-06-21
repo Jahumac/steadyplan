@@ -113,7 +113,7 @@ def test_cash_isa_create_wizard_exposes_cash_interest_fields(client, make_user):
     assert 'data-cash-rate-field' in html
     assert 'name="cash_interest_rate"' in html
     assert 'name="interest_payment_day"' in html
-    assert "Used by Performance and exports for Cash ISA or savings accounts." in html
+    assert "Used for Cash ISA or savings reports. Leave blank if you do not want SteadyPlan to estimate interest." in html
 
 
 
@@ -221,7 +221,7 @@ def test_accounts_page_uses_plan_line_copy_for_account_comparison(app, client, m
     assert "Should be @7%" not in html
     assert "Goal timing estimate" in html
     assert "Goal ETA" not in html
-    assert "Recorded balance uses saved account history. The comparison line uses your assumptions, contribution settings and recorded cash-flow adjustments; it is not a guarantee." in html
+    assert "Recorded balance uses saved account history. The comparison line uses your planning numbers, regular payments, and recorded money movements; it is not a guarantee." in html
     assert "This compares your recorded balance with an assumptions-based comparison line for this account." not in html
     assert "investment day (shifted for weekends, plus settlement)" in html
     assert "monthly update due date" not in html
@@ -366,9 +366,9 @@ def test_accounts_create_form_includes_junior_isa_wrapper_option(app, client, ma
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert '<option value="Junior ISA">Junior ISA</option>' in html
-    assert 'Use default growth rate from your scenario estimate assumptions' in html
+    assert 'Use the usual growth estimate from Settings' in html
     assert 'Use default growth rate (from Settings)' not in html
-    assert 'Set 0 to use the global investment day from assumptions.' in html
+    assert 'Set 0 to use the investment day from Settings.' in html
     assert 'Set 0 to use salary day from Settings.' not in html
 
 
@@ -404,8 +404,8 @@ def test_accounts_edit_form_uses_assumptions_wording_for_pension_posting_day(app
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'Use the day the pension contribution actually lands/invests' in html
-    assert 'Set 0 to use the global investment day from assumptions.' in html
+    assert 'Use the day the pension money actually lands or gets invested' in html
+    assert 'Set 0 to use the investment day from Settings.' in html
     assert 'Use if workplace pension invests later than salary day' not in html
     assert 'Set 0 to use salary day from Settings.' not in html
 
@@ -454,13 +454,13 @@ def test_accounts_create_wizard_uses_general_investment_account_label(app, clien
     assert '25% Lifetime ISA bonus, age limits' in html
     assert '25% government top-up, age limits' not in html
     assert "25% gov't top-up, age limits" not in html
-    assert 'How much goes into this account each month? This feeds into scenario estimates. You can update it later.' in html
+    assert 'How much normally goes into this account each month? This helps SteadyPlan estimate the future. You can change it later.' in html
     assert 'How much goes into this account each month? This feeds into projections. You can update it later.' not in html
     assert 'How much goes into this account each month? This feeds into projections — an estimate is fine.' not in html
     assert 'How much goes into this account each month? This is used for projections — even an estimate helps.' not in html
     assert 'How much goes into this account each month? This is used for projections — even a rough number helps.' not in html
     assert 'name="cash_interest_rate"' in html
-    assert 'Used by Performance and exports for Cash ISA or savings accounts.' in html
+    assert 'Used for Cash ISA or savings reports. Leave blank if you do not want SteadyPlan to estimate interest.' in html
     assert 'name="interest_payment_day" min="0" max="31" value="0"' in html
 
 
@@ -534,7 +534,7 @@ def test_accounts_page_uses_lifetime_isa_bonus_wording(app, client, make_user):
     sipp_edit_response = client.get(f"/accounts/{sipp_id}?mode=edit")
     assert sipp_edit_response.status_code == 200
     sipp_html = sipp_edit_response.get_data(as_text=True)
-    assert 'Your provider adds 25% basic-rate tax relief on top.' in sipp_html
+    assert 'Your provider adds a 25% basic-rate pension tax top-up.' in sipp_html
     assert 'Your provider adds 25% basic-rate tax relief on top automatically.' not in sipp_html
     assert 'your provider claims it from HMRC automatically.' not in sipp_html
 
@@ -580,8 +580,8 @@ def test_accounts_edit_form_uses_plain_pension_method_wording(app, client, make_
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'Salary sacrifice = pre-tax, nothing extra to claim.' in html
-    assert 'Relief at source = your provider adds 20% basic-rate tax relief for you.' in html
+    assert 'Before tax = nothing extra to claim.' in html
+    assert 'Take-home pay = your provider adds a 20% basic-rate pension tax top-up.' in html
     assert 'Salary sacrifice = pre-tax, no relief to claim.' not in html
     assert 'your provider claims 20% back from HMRC for you.' not in html
 

@@ -276,7 +276,7 @@ def export_projections():
     cell = ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}")
     cell.font = _SUBTITLE_FONT
 
-    _header_row(ws, 4, ["Account", "Current Value", "You pay monthly", "Into pots monthly", "Scenario estimate at retirement"])
+    _header_row(ws, 4, ["Account", "Current Value", "You pay monthly", "Into account monthly", "Estimated total at retirement"])
 
     # UK pound formats
     GBP  = '£#,##0.00'
@@ -345,7 +345,7 @@ def export_projections():
 
     r += 2
     ws.cell(row=r, column=1, value="Cash-accessible, invested-accessible, restricted, and locked-for-later money").font = _ACCENT_FONT
-    _header_row(ws, r + 1, ["Type", "Current value", "Scenario estimate at retirement", "Account count"])
+    _header_row(ws, r + 1, ["Type", "Current value", "Estimated total at retirement", "Account count"])
     access_rows = {
         "Cash accessible": [0.0, 0.0, 0],
         "Invested accessible": [0.0, 0.0, 0],
@@ -439,7 +439,7 @@ def export_projections():
     # ── Sheet 4: Year by year ─────────────────────────────────────────────────
     ws2 = wb.create_sheet("Year by Year")
     _title_cell(ws2, 1, "SteadyPlan — Tax-Year Scenario Estimate", 3)
-    _header_row(ws2, 3, ["Age", "Tax year", "Scenario estimate total"])
+    _header_row(ws2, 3, ["Age", "Tax year", "Future estimate total"])
     _set_col_width(ws2, 1, 10)
     _set_col_width(ws2, 2, 10)
     _set_col_width(ws2, 3, 22)
@@ -474,7 +474,7 @@ def export_projections():
     # ── Sheet 3: Month by month (total portfolio) ────────────────────────────
     ws3 = wb.create_sheet("Month by Month")
     _title_cell(ws3, 1, "SteadyPlan — Monthly Scenario Estimate", 3)
-    _header_row(ws3, 3, ["Month", "Scenario estimate total"])
+    _header_row(ws3, 3, ["Month", "Future estimate total"])
     _set_col_width(ws3, 1, 16)
     _set_col_width(ws3, 2, 22)
 
@@ -575,14 +575,14 @@ def export_projections():
             summary_rows.extend([
                 ("Next planned month", next_planned_month, None),
                 ("You pay (next planned month)", float(next_planned_breakdown.get("personal") or 0), GBP),
-                ("Total into pot (next planned month)", float(next_planned_breakdown.get("total_into_pot") or 0), GBP),
+                ("Total added to account (next planned month)", float(next_planned_breakdown.get("total_into_pot") or 0), GBP),
             ])
         if first_month_override is not None and abs(to_float(acc.get("monthly_contribution", 0)) - to_float(first_month_override)) > 0.005:
             summary_rows.append(("Account setting (monthly)", to_float(acc.get("monthly_contribution", 0)), GBP))
         if has_contrib_fee:
             summary_rows.append(("Contribution fee deducted (monthly)", -first_contrib_fee_monthly, GBP))
         summary_rows += [
-            ("Total into pot (monthly)", acc_monthly, GBP),
+            ("Total added to account (monthly)", acc_monthly, GBP),
             ("Growth rate (net of fees)", f"{acc_growth*100:.1f}%", None),
         ]
         if has_annual_fees:
@@ -599,7 +599,7 @@ def export_projections():
         if has_contrib_fee:
             summary_rows.append(("Contribution fee", f"{acc_contribution_fee_pct:.2f}% per contribution", None))
             summary_rows.append(("Total contribution fees paid", acc_total_contrib_fees, GBP0))
-        summary_rows.append(("Scenario estimate at retirement", acc_projected, GBP0))
+        summary_rows.append(("Estimated total at retirement", acc_projected, GBP0))
         if has_annual_fees:
             summary_rows.append(("Value without annual fees", acc_projected_no_fees, GBP0))
             summary_rows.append(("Lifetime cost of annual fees", acc_fee_impact, GBP0))
@@ -610,15 +610,15 @@ def export_projections():
         # Year-by-year table — columns vary by which fees apply
         yby_start = 5 + len(summary_rows) + 1
         if has_annual_fees and has_contrib_fee:
-            yby_headers = ["Age", "Tax year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)", "Value (no ann. fees)", "Ann. Fee Impact"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)", "Value (no ann. fees)", "Ann. Fee Impact"]
         elif has_annual_fees:
-            yby_headers = ["Age", "Tax year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Value (no fees)", "Fee Impact"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Value (no fees)", "Fee Impact"]
         elif has_contrib_fee:
-            yby_headers = ["Age", "Tax year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)"]
         elif is_pb:
-            yby_headers = ["Age", "Tax year", "Scenario estimate value", "Growth", "Cap adjustment", "You pay (yr)", "Into pot (yr)"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "Cap adjustment", "You pay (yr)", "Into pot (yr)"]
         else:
-            yby_headers = ["Age", "Tax year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into pot (yr)"]
         _header_row(ws_acc, yby_start, yby_headers)
         _set_col_width(ws_acc, 3, 22)
         _set_col_width(ws_acc, 4, 18)
@@ -743,13 +743,13 @@ def export_projections():
         mby_start = yearly_end + 2  # gap of 1 empty row
 
         if has_annual_fees and has_contrib_fee:
-            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Scenario estimate value", "Contrib. Fee (mo)", "Value (no ann. fees)", "Ann. Fee Impact"])
+            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Future estimate value", "Contrib. Fee (mo)", "Value (no ann. fees)", "Ann. Fee Impact"])
         elif has_annual_fees:
-            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Scenario estimate value", "Value (no fees)", "Fee Impact"])
+            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Future estimate value", "Value (no fees)", "Fee Impact"])
         elif has_contrib_fee:
-            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Scenario estimate value", "Contrib. Fee (mo)"])
+            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Future estimate value", "Contrib. Fee (mo)"])
         else:
-            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Scenario estimate value"])
+            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Future estimate value"])
 
         acc_total_months = int(exact_years * 12)
         for m in range(0, acc_total_months + 1):
@@ -1398,7 +1398,7 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=7)
     row += 2
 
-    _header_row(ws, row, ["Account", "Wrapper", "Budget source (example)", "Personal", "Tax relief", "Lifetime ISA bonus", "Employer/mo"])
+    _header_row(ws, row, ["Account", "Wrapper", "Budget source (example)", "Personal", "Pension tax top-up", "Lifetime ISA bonus", "Employer/mo"])
     row += 1
     item_name_map = {int(it["id"]): (it.get("name") or "") for it in items}
     first_month_sheet = month_sheet_names[0] if month_sheet_names else ""
@@ -1445,7 +1445,7 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
         row += 1
 
     row += 1
-    _header_row(ws, row, ["Month", "Personal", "Tax relief", "Lifetime ISA bonus", "Employer", "Total into pot", "Running total"])
+    _header_row(ws, row, ["Month", "Personal", "Pension tax top-up", "Lifetime ISA bonus", "Employer", "Total added to account", "Running total"])
     row += 1
 
     ws.column_dimensions["P"].hidden = True
@@ -1526,7 +1526,7 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
         lisa_running_personal_cell = lisa_running_cell
 
     row = row + len(month_keys) + 2
-    _header_row(ws, row, ["Month (logged)", "Personal", "Tax relief", "Lifetime ISA bonus", "Employer", "Total into pot", "Running total"])
+    _header_row(ws, row, ["Month (logged)", "Personal", "Pension tax top-up", "Lifetime ISA bonus", "Employer", "Total added to account", "Running total"])
     row += 1
 
     isa_personal_by_month = {mk: 0.0 for mk in month_keys}

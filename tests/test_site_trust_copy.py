@@ -316,12 +316,12 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Explain scenarios as assumption-based estimates, not guarantees." in voice_and_copy
     assert "Track progress, not guarantees." in voice_and_copy
     assert "Scenario estimate certainty and disclaimers" in voice_and_copy
-    assert "- After: “Scenario estimate at retirement”" in voice_and_copy
-    assert "- After: “Projected at retirement (estimate)” / “Scenario estimate at retirement”" not in voice_and_copy
+    assert "- After: “Estimated total at retirement”" in voice_and_copy
+    assert "- After: “Projected at retirement (estimate)” / “Estimated total at retirement”" not in voice_and_copy
     assert "you will / you’ll have (for scenario estimates)" in voice_and_copy
     assert "Explain scenarios, not promises." not in voice_and_copy
     assert "Track progress, not promises." not in voice_and_copy
-    assert "### Scenario estimate certainty" in voice_and_copy
+    assert "### Future estimate certainty" in voice_and_copy
     assert "2. Scenario estimate labels and estimate disclaimers" in voice_and_copy
     assert "Overview/Review/Scenario estimates/etc." in voice_and_copy
     assert "Always use “scenario estimate” / “scenario estimates” and “based on assumptions”; avoid “projection” / “projections” in user-facing copy." in voice_and_copy

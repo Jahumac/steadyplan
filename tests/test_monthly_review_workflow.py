@@ -220,7 +220,7 @@ def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_u
     assert 'href="/budget/debts/' in html
     assert 'href="/settings/?mode=edit&amp;focus=scenario_estimate_assumptions"' in html
     assert 'href="/settings/?mode=edit"' not in html
-    assert "Edit scenario estimate assumptions" in html
+    assert "Edit planning numbers" in html
     assert "Review scenario estimate assumptions" not in html
 
 def test_monthly_review_notes_persist(app, client, make_user):

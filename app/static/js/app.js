@@ -1672,12 +1672,12 @@
                     pendingHoldings.length + (pendingHoldings.length === 1 ? ' holding' : ' holdings') +
                     (firstAccountFocus
                       ? '. You\'ll see it in Accounts straight away, and Monthly Update now has something real to work from.'
-                      : '. You\'ll see it in Accounts straight away, and it can feed scenario estimates whenever you need it to.');
+                      : '. You\'ll see it in Accounts straight away, and it can help with future estimates whenever you need it to.');
                 } else {
                   title.textContent = 'You\'re all set!';
                   msg.textContent = firstAccountFocus
                     ? accName + ' is ready. You\'ll see it in Accounts straight away, and Monthly Update now has somewhere real to work from.'
-                    : accName + ' is ready. You\'ll see it in Accounts straight away, and it can feed scenario estimates whenever you need it to.';
+                    : accName + ' is ready. You\'ll see it in Accounts straight away, and it can help with future estimates whenever you need it to.';
                 }
                 goTo(6, 'forward');
               });
@@ -1715,12 +1715,12 @@
       var prevTotal       = document.getElementById('cw-prev-total');
 
       var CFG = {
-        'Stocks & Shares ISA':       { cat: 'ISA',     bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly contribution', hint: 'How much do you put into this ISA each month? This feeds into scenario estimates. You can update it later.' },
+        'Stocks & Shares ISA':       { cat: 'ISA',     bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly contribution', hint: 'How much do you put into this ISA each month? This helps SteadyPlan estimate the future. You can update it later.' },
         'Cash ISA':                   { cat: 'ISA',     bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Monthly deposit', hint: 'How much do you add to this Cash ISA each month?' },
         'Lifetime ISA':               { cat: 'ISA',     bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in each month? Your Lifetime ISA bonus adds 25% on top (up to £1,000/year).' },
-        'Premium Bonds':              { cat: 'Savings', bal: 'premium_bonds', showEmployer: false, method: null, personalLabel: 'Monthly purchase', hint: 'How much do you usually add to Premium Bonds each month? Prize draws are tracked separately; scenario estimates use the planning rate.' },
-        'SIPP':                       { cat: 'Pension', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in? Your provider adds 25% basic-rate tax relief on top.' },
-        'Workplace Pension':          { cat: 'Pension', bal: 'manual',   showEmployer: true,  method: ['salary_sacrifice','relief_at_source'], methodDefault: 'salary_sacrifice', personalLabel: 'Your employee contribution', hint: 'How is your workplace pension set up? Pick the method first, then fill in the amounts.', methodHints: { salary_sacrifice: 'Contributions come out of your pay before tax — no further relief needed.', relief_at_source: 'You pay from net pay; your provider adds 20% basic-rate tax relief (e.g. NEST).' } },
+        'Premium Bonds':              { cat: 'Savings', bal: 'premium_bonds', showEmployer: false, method: null, personalLabel: 'Monthly purchase', hint: 'How much do you usually add to Premium Bonds each month? Prize draws are tracked separately; future estimates use the planning rate.' },
+        'SIPP':                       { cat: 'Pension', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in? Your provider adds a 25% basic-rate pension tax top-up.' },
+        'Workplace Pension':          { cat: 'Pension', bal: 'manual',   showEmployer: true,  method: ['salary_sacrifice','relief_at_source'], methodDefault: 'salary_sacrifice', personalLabel: 'Your employee contribution', hint: 'How is your workplace pension set up? Pick the method first, then fill in the amounts.', methodHints: { salary_sacrifice: 'Payments come out before tax, so there is no extra top-up to claim.', relief_at_source: 'You pay from take-home pay; your provider adds a 20% basic-rate pension tax top-up.' } },
         'General Investment Account': { cat: 'Taxable', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly investment', hint: 'How much do you invest into this account each month?' },
         'Other':                      { cat: null,      bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Monthly contribution', hint: 'How much goes in each month, if anything? You can always update this later.' }
       };
@@ -1912,20 +1912,20 @@
 
         if (w === 'SIPP') {
           relief = personal * 0.25;
-          reliefLabel = '+ basic-rate tax relief (25%)';
+          reliefLabel = '+ basic-rate pension tax top-up (25%)';
           showRelief = true;
           if (BAND_RATE > 0.20) {
             var gross = personal + relief;
             selfAssess = gross * (BAND_RATE - 0.20);
             showSelfAssess = true;
-            selfAssessNote = 'You\'re a ' + TAX_BAND + '-rate taxpayer (' + Math.round(BAND_RATE * 100) + '%). Your provider adds 20% basic-rate tax relief. Claim the extra ' + Math.round((BAND_RATE - 0.20) * 100) + '% through Self Assessment — it is paid back to you, not into the pension.';
+            selfAssessNote = 'You\'re a ' + TAX_BAND + '-rate taxpayer (' + Math.round(BAND_RATE * 100) + '%). Your provider adds a 20% basic-rate pension tax top-up. Claim the extra ' + Math.round((BAND_RATE - 0.20) * 100) + '% through Self Assessment — it is paid back to you, not into the pension.';
           }
         } else if (w === 'Workplace Pension') {
           if (method === 'salary_sacrifice') {
             if (employer > 0) showEmp = true;
           } else {
             relief = personal * 0.25;
-            reliefLabel = '+ basic-rate tax relief (25%)';
+            reliefLabel = '+ basic-rate pension tax top-up (25%)';
             showRelief = true;
             if (BAND_RATE > 0.20) {
               var gross = personal + relief;

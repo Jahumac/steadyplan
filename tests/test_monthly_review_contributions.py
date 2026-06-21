@@ -80,7 +80,7 @@ def test_monthly_review_budget_match_uses_contribution_calendar_month(app, clien
     html = resp.get_data(as_text=True)
     assert "Lifetime ISA" in html
     assert "£4,000.00" in html
-    assert "+£1,000 into pot" in html
+    assert "+£1,000 added to account" in html
     assert "matches budget" in html
     assert "over budget" not in html
 

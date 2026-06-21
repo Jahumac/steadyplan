@@ -30,7 +30,7 @@
   <div class="hero-strip">
     {% call hero_stat('Total value') %}<strong>£{{ '{:,.0f}'.format(total_value) }}</strong>{% endcall %}
     {% call hero_stat('Into pots monthly', stat_id='accounts-monthly-in') %}
-      <strong title="Total landing in your accounts each month — your contributions plus any tax relief, Lifetime ISA bonus and employer top-ups">£{{ '{:,.0f}'.format(total_into_pot_monthly) }}</strong>
+      <strong title="Total landing in your accounts each month — what you pay plus any pension tax top-up, Lifetime ISA bonus and employer top-ups">£{{ '{:,.0f}'.format(total_into_pot_monthly) }}</strong>
     {% endcall %}
     {% call hero_stat('Holdings tracked') %}<strong>{{ accounts | selectattr('valuation_mode', 'equalto', 'holdings') | list | length }}</strong>{% endcall %}
   </div>
@@ -378,9 +378,9 @@
                 <span>Your Monthly Contribution</span>
                 <input type="number" step="0.01" name="monthly_contribution" value="{{ selected.monthly_contribution or 0 }}">
                 {% if 'sipp' in _wt_edit %}
-                <small class="form-hint">What you pay from your bank each month. Your provider adds 25% basic-rate tax relief on top.</small>
+                <small class="form-hint">What you pay from your bank each month. Your provider adds a 25% basic-rate pension tax top-up.</small>
                 {% elif _is_pension %}
-                <small class="form-hint">Your share of the pension contribution — either from your net pay or salary sacrifice, depending on your scheme.</small>
+                <small class="form-hint">Your share of the pension payment — either from take-home pay or before tax, depending on your workplace scheme.</small>
                 {% elif 'lifetime' in _wt_edit %}
                 <small class="form-hint">What you pay in. Your Lifetime ISA bonus adds 25% on top (up to £4,000/year contributions).</small>
                 {% else %}
@@ -400,12 +400,12 @@
                   <option value="salary_sacrifice" {{ 'selected' if cm == 'salary_sacrifice' }}>Salary sacrifice</option>
                   <option value="relief_at_source" {{ 'selected' if cm == 'relief_at_source' or cm == 'standard' }}>Relief at source (e.g. NEST)</option>
                 </select>
-                <small class="form-hint">Salary sacrifice = pre-tax, nothing extra to claim. Relief at source = your provider adds 20% basic-rate tax relief for you.</small>
+                <small class="form-hint">Before tax = nothing extra to claim. Take-home pay = your provider adds a 20% basic-rate pension tax top-up.</small>
               </label>
               <label>
                 <span>Pension contribution posting day</span>
                 <input type="number" name="pension_contribution_day" min="0" max="31" value="{{ selected.pension_contribution_day or 0 }}">
-                <small class="form-hint">Optional. Use the day the pension contribution actually lands/invests (for example 19 for a workplace pension paid from the previous month's salary). Set 0 to use the global investment day from assumptions.</small>
+                <small class="form-hint">Optional. Use the day the pension money actually lands or gets invested (for example 19 for a workplace pension paid from the previous month's salary). Set 0 to use the investment day from Settings.</small>
               </label>
               {% endif %}
             </div>
@@ -789,7 +789,7 @@
           </div>
         </div>
         <p class="helper-text mt-075">
-          Recorded balance uses saved account history. The comparison line uses your assumptions, contribution settings and recorded cash-flow adjustments; it is not a guarantee. It compounds at <strong>7% p.a.</strong> and credits contributions on your investment day (shifted for weekends, plus settlement). It uses your Budget overrides / monthly update entries and includes Lifetime ISA bonus, tax relief, and employer match where applicable.
+          Recorded balance uses saved account history. The comparison line uses your planning numbers, regular payments, and recorded money movements; it is not a guarantee. It uses <strong>7% yearly growth</strong> and adds payments on your investment day (shifted for weekends, plus settlement). It uses Budget overrides / Monthly Update entries and includes Lifetime ISA bonus, pension tax top-up, and employer payments where applicable.
         </p>
         {% elif has_first_baseline_only %}
         {{ empty_state('Your first baseline is saved',

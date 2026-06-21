@@ -173,7 +173,7 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert 'href="/goals/?mode=create&amp;focus=first_goal" class="badge badge-meta">Create your first goal</a>' in html
     assert 'href="/goals/" class="badge badge-meta">Review goals</a>' not in html
     assert "Review debts" in html
-    assert "Edit scenario estimate assumptions" in html
+    assert "Edit planning numbers" in html
     assert 'href="/settings/?mode=edit&amp;focus=scenario_estimate_assumptions"' in html
     assert 'href="/settings/?mode=edit"' not in html
     assert "Review scenario estimate assumptions" not in html

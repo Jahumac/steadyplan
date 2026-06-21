@@ -155,7 +155,7 @@ def test_performance_helper_uses_sentence_case_monthly_update_copy(app, client, 
     assert "investment day (shifted for weekends, plus settlement)" in html
     assert "monthly update due date" not in html
     assert "salary day shifted for weekends" not in html
-    assert "includes tax relief, Lifetime ISA bonus, employer match" in html
+    assert "includes pension tax top-up, Lifetime ISA bonus, and employer payments" in html
     assert "Over the period shown, that’s an average of £150 per month." in html
     assert "/mo." not in html
     assert "Recorded portfolio values use Monthly Update history. The comparison line uses your assumptions and contribution settings; it is not a guarantee." in html

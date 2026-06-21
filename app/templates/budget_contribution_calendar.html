@@ -56,7 +56,7 @@
           <th class="text-center">Stocks &amp; Shares ISA</th>
           <th class="text-center">Lifetime ISA</th>
           <th class="text-center">Premium Bonds</th>
-          <th class="text-center">Pension/SIPP gross</th>
+          <th class="text-center">Pension/SIPP total</th>
         </tr>
       </thead>
       <tbody>
@@ -193,7 +193,7 @@
           {% for account in calendar.accounts %}
           <tr>
             <td data-label="Account">{{ account.name }}</td>
-            <td data-label="Wrapper">{{ account.wrapper_type or 'Other' }}</td>
+            <td data-label="Account type">{{ account.wrapper_type or 'Other' }}</td>
             <td data-label="Default" class="text-right">£{{ '{:,.2f}'.format(account.monthly_contribution) }}</td>
             <td data-label="Temporary amount" class="text-right">
               <input type="number" step="0.01" min="0" name="amount_{{ account.id }}" placeholder="Leave blank">

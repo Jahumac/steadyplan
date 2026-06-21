@@ -133,7 +133,7 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     assert html.count("<h2>Where you stand now</h2>") == 2
     assert html.count("Use this as the quick summary") == 2
     assert "Current totals use your saved balances." in html
-    assert "Scenario estimates use your assumptions and are not guarantees." in html
+    assert "Future estimates use the planning numbers in Settings. They are not guarantees." in html
     assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in html
     assert "Use this as the quick truth" not in html
     assert "Accessible vs locked" not in html
@@ -142,7 +142,7 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     assert "Pension allowance" not in html
     assert "Pension Allowance" not in html
     assert "No daily snapshots yet" not in html
-    assert "Complete your first Monthly Update to start tracking net worth over time" not in html
+    assert "Complete your first Monthly Update to start tracking your total money over time" not in html
     assert "<h2>Accounts</h2>" not in html
 
 
@@ -839,10 +839,10 @@ def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, clien
     assert "Invested accessible — still reachable, but usually by selling invested holdings." in html
     assert "Locked for later" in html
     assert "Locked later" not in html
-    assert "Monthly contributions" in html
-    assert "Scenario estimate at retirement" in html
+    assert "Monthly payments in" in html
+    assert "Estimated total at retirement" in html
     assert "Current totals use your saved balances." in html
-    assert "Scenario estimates use your assumptions and are not guarantees." in html
+    assert "Future estimates use the planning numbers in Settings. They are not guarantees." in html
     assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in html
@@ -1021,7 +1021,7 @@ def test_overview_hides_zero_monthly_contribution_hero_stat(app, client, make_us
     assert "Accessible now" in html
     assert "Locked for later" in html
     assert "Locked later" not in html
-    assert "Monthly contributions" not in html
+    assert "Monthly payments in" not in html
 
 
 
@@ -1052,12 +1052,12 @@ def test_overview_hides_zero_locked_hero_stat(app, client, make_user):
     html = resp.get_data(as_text=True)
 
     assert "Accessible now" in html
-    assert "Monthly contributions" not in html
+    assert "Monthly payments in" not in html
     assert "Cash accessible — money you can usually reach without selling investments first." in html
     assert "Invested accessible — still reachable, but usually by selling invested holdings." in html
-    assert "Scenario estimate at retirement" in html
+    assert "Estimated total at retirement" in html
     assert "Current totals use your saved balances." in html
-    assert "Scenario estimates use your assumptions and are not guarantees." in html
+    assert "Future estimates use the planning numbers in Settings. They are not guarantees." in html
     assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in html
@@ -1095,9 +1095,9 @@ def test_overview_hides_retirement_projection_until_profile_exists(app, client, 
     assert "Accessible now" in html
     assert "Locked for later" in html
     assert "Locked later" not in html
-    assert "Monthly contributions" in html
+    assert "Monthly payments in" in html
     assert "Projected at retirement" not in html
-    assert "Scenario estimate at retirement" not in html
+    assert "Estimated total at retirement" not in html
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in html
     assert "Scenario estimate based on your current balances, contribution settings, and the assumptions you set in Settings." not in html
@@ -1598,8 +1598,8 @@ def test_overview_portfolio_card_uses_specific_refresh_prices_cta(app, client, m
     assert "Latest Value" not in html
     assert 'id="changeLabel" class="text-muted m-0">Change since start<' in html
     assert 'id="changeLabel" class="text-muted m-0">Change<' not in html
-    assert "Complete your first monthly update to start tracking net worth over time" in html
-    assert "Complete your first Monthly Update to start tracking net worth over time" not in html
+    assert "Complete your first Monthly Update to start tracking your total money over time" in html
+    assert "Complete your first monthly update to start tracking net worth over time" not in html
     assert "slow and steady wins the race" not in html
     assert "Refresh prices now" in html
     assert "↻ Refresh</button>" not in html
@@ -1649,8 +1649,8 @@ def test_overview_first_baseline_helper_uses_calm_trend_line_copy(app, client, m
 
     month_key = date.today().strftime("%Y-%m")
     assert "Your first baseline is saved" in html
-    assert "Complete next month's monthly update and the net worth trend line will appear." in html
-    assert "Your first baseline is saved. Complete next month's monthly update and the net worth trend line will appear." not in html
+    assert "Complete next month's Monthly Update and the total money trend line will appear." in html
+    assert "Your first baseline is saved. Complete next month's Monthly Update and the total money trend line will appear." not in html
     assert f'href="/monthly-review/?month={month_key}#expected-contributions"' in html
     assert 'href="/monthly-review/" class="badge badge-primary-action">Open monthly update</a>' not in html
     assert "One snapshot down — slow and steady." not in html

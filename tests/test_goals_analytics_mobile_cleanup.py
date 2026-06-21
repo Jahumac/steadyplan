@@ -47,21 +47,21 @@ def test_projections_marks_global_month_strip_for_mobile_hiding(app, client, mak
     html = resp.get_data(as_text=True)
 
     assert '<section class="budget-year-strip month-strip-global month-strip-mobile-hidden' in html
-    assert '<p class="eyebrow">Scenario estimates</p>' in html
+    assert '<p class="eyebrow">Future estimates</p>' in html
     assert '<p class="eyebrow">Projections</p>' not in html
-    assert 'class="subnav-active">Scenario estimates</a>' in html
+    assert 'class="subnav-active">Future estimates</a>' in html
     assert 'class="subnav-active">Projections</a>' not in html
-    assert '<summary>Scenario estimate assumptions</summary>' in html
+    assert '<summary>Planning numbers</summary>' in html
     assert '<summary>Assumptions</summary>' not in html
-    assert html.count('<p class="eyebrow">Scenario estimate assumptions</p>') == 2
-    assert '<summary>Account scenario estimates</summary>' in html
+    assert html.count('<p class="eyebrow">Planning numbers</p>') == 2
+    assert '<summary>Account future estimates</summary>' in html
     assert '<summary>Growth curve</summary>' not in html
-    assert '<summary>Scenario estimate growth curve</summary>' in html
+    assert '<summary>Estimate over time</summary>' in html
     assert '<summary>Scenario planner</summary>' not in html
     assert '<summary>Try a different scenario</summary>' in html
-    assert html.count('<p class="eyebrow">Account scenario estimates</p>') == 2
-    assert html.count('<p class="eyebrow">Scenario estimate growth curve</p>') == 2
-    assert html.count('<p class="eyebrow">Scenario estimate planner</p>') == 2
+    assert html.count('<p class="eyebrow">Account future estimates</p>') == 2
+    assert html.count('<p class="eyebrow">Estimate over time</p>') == 2
+    assert html.count('<p class="eyebrow">Try changes</p>') == 2
     assert 'class="card mb-1 projections-desktop-detail"' in html
     assert 'class="projections-compact-details projections-compact-only mb-1"' in html
     assert 'id="projectionChartMobile"' in html

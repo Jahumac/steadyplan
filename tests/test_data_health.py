@@ -369,7 +369,7 @@ def test_settings_still_mentions_backup_restore(app, client, make_user):
     assert "Check a JSON export before overwrite" in html
     assert "Downloads a portable JSON export for this user only" in html
     assert "whole-instance SQLite backup" in html
-    assert "This permanently deletes all data for this user: accounts, holdings, goals, budget, monthly updates, and assumptions." in html
+    assert "This permanently deletes this user’s SteadyPlan data: accounts, investments, goals, budget, monthly updates, and settings." in html
     assert "This permanently deletes all data for this user: accounts, holdings, goals, budget, monthly reviews, and assumptions." not in html
     assert "This cannot be undone. Download a per-user JSON export before continuing." in html
     assert "This cannot be undone. Download this user's JSON export before continuing." not in html
@@ -391,7 +391,7 @@ def test_settings_groups_trust_surfaces_at_a_glance(app, client, make_user):
     assert "Settings at a glance" in html
     assert "Start with day-to-day setup, then use the safety links when you need exports, restore checks, diagnostics, or account access." in html
     assert "Everyday setup" in html
-    assert "Planning assumptions" in html
+    assert "Plan settings" in html
     assert "User access" in html
     assert "Safety and recovery" in html
     assert "Data ownership" in html
@@ -410,7 +410,7 @@ def test_settings_groups_trust_surfaces_at_a_glance(app, client, make_user):
 
     glance_idx = html.index("Settings at a glance")
     after_glance = html[glance_idx:]
-    planning_idx = after_glance.index("Planning assumptions")
+    planning_idx = after_glance.index("Plan settings")
     admin_idx = after_glance.index("User Management")
     data_idx = after_glance.index("<h3>Data ownership</h3>")
     export_idx = after_glance.index("<h3>Download a per-user JSON export</h3>")

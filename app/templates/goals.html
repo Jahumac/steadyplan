@@ -53,7 +53,7 @@
 </section>
 
 {% if goal_cards %}
-<p class="helper-text goals-page-helper">Goal timing estimates use tagged accounts, planned contributions, and growth assumptions. Not a guarantee.</p>
+<p class="helper-text goals-page-helper">Goal timing estimates use tagged accounts, planned payments, and your planning numbers. Not a guarantee.</p>
 {% endif %}
 
 {% if goal_cards %}
@@ -108,16 +108,16 @@
               <strong>{{ goal.source_summary.account_count }} account{{ '' if goal.source_summary.account_count == 1 else 's' }}</strong>
             </div>
             <div class="goal-source-item">
-              <span>Contribution calendar</span>
+              <span>Payment calendar</span>
               <strong>{{ goal.source_summary.calendar_label }}</strong>
             </div>
             <div class="goal-source-item">
-              <span>Growth assumptions</span>
+              <span>Planning numbers</span>
               <strong>Included</strong>
             </div>
             {% if goal.source_summary.retirement_projection is not none %}
             <div class="goal-source-item goal-source-item-wide">
-              <span>Scenario estimate at retirement</span>
+              <span>Estimated total at retirement</span>
               <strong>£{{ '{:,.0f}'.format(goal.source_summary.retirement_projection) }}</strong>
             </div>
             {% endif %}

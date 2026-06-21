@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% from '_macros.html' import hero_stat %}
-{% block title %}Scenario estimates · SteadyPlan{% endblock %}
+{% block title %}Future estimates · SteadyPlan{% endblock %}
 {% block content %}
 
 {% set active_key = 'projections' %}
-{% set active_label = 'Scenario estimates' %}
+{% set active_label = 'Future estimates' %}
 {% include '_goals_subnav.html' %}
 
 {# ── Month strip ─────────────────────────────────────────────────────────── #}
@@ -15,16 +15,16 @@
 <section class="card highlight mb-1 month-accent-{{ current_month_num }}">
   <div class="hero-top">
     <div>
-      <p class="eyebrow">Scenario estimates</p>
+      <p class="eyebrow">Future estimates</p>
       <h2 class="hero-value">£{{ '{:,.0f}'.format(metrics.total_projected) }}</h2>
-      <p class="hero-subtitle">Retirement scenario estimate · age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% annual growth (nominal)</p>
-      <p class="helper-text m-0">Current totals use saved balances and contribution settings. Scenario estimates use your assumptions and are not guarantees; this is not financial advice.</p>
-      <p class="helper-text m-0">This view models accumulation only — it does not model retirement withdrawals or spending.</p>
+      <p class="hero-subtitle">Rough retirement estimate · age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% yearly growth</p>
+      <p class="helper-text m-0">Current totals use your saved balances and regular payments. Future estimates use the planning numbers in Settings. They are not guarantees, and this is not financial advice.</p>
+      <p class="helper-text m-0">This page only estimates money building up before retirement. It does not estimate retirement spending or withdrawals.</p>
     </div>
   </div>
   <div class="hero-strip">
     {% call hero_stat('Current total') %}<strong>£{{ '{:,.0f}'.format(metrics.total_current) }}</strong>{% endcall %}
-    {% call hero_stat('Monthly contributions') %}<strong>£{{ '{:,.0f}'.format(metrics.total_monthly) }}</strong>{% endcall %}
+    {% call hero_stat('Monthly payments in') %}<strong>£{{ '{:,.0f}'.format(metrics.total_monthly) }}</strong>{% endcall %}
     {% call hero_stat('Years to retirement') %}<strong>{{ '{:.0f}'.format(metrics.years_remaining) }}</strong>{% endcall %}
     {% call hero_stat('Current age → retirement') %}<strong>{{ metrics.current_age | int }} → {{ metrics.retirement_age }}</strong>{% endcall %}
     {% if metrics.total_fee_impact > 0 %}
@@ -36,11 +36,11 @@
 <section class="card alert-banner alert-info mb-1">
   <div class="flex flex-center gap-075 flex-wrap">
     <div style="flex:1; min-width:220px;">
-      <strong>About this scenario estimate</strong>
-      <p class="helper-text m-0">Built from your current account balances (today) and your monthly contribution settings, then grown using your assumptions (growth rate, retirement timing, fees and tax/allowance settings).</p>
-      <p class="helper-text m-0">This is a scenario estimate based on assumptions, not a promise. You can change your <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="link-accent">scenario estimate assumptions</a>.</p>
+      <strong>About this future estimate</strong>
+      <p class="helper-text m-0">Built from your current account balances and regular monthly payments, then grown using the planning numbers in Settings.</p>
+      <p class="helper-text m-0">This is an estimate, not a promise. You can change the <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="link-accent">planning numbers</a> behind it.</p>
     </div>
-    <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit scenario estimate assumptions</a>
+    <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit planning numbers</a>
   </div>
 </section>
 
@@ -52,11 +52,11 @@
     <span class="goal-track-icon">{% if on_track %}✓{% else %}⚠{% endif %}</span>
     <div style="flex:1; min-width:200px;">
       {% if on_track %}
-        <strong>Scenario estimate meets "{{ primary_goal.name }}"</strong>
-        <p class="helper-text m-0">Scenario estimate £{{ '{:,.0f}'.format(metrics.total_projected) }} vs target £{{ '{:,.0f}'.format(primary_goal.target) }} (margin £{{ '{:,.0f}'.format(metrics.total_projected - primary_goal.target) }}).</p>
+        <strong>Future estimate meets "{{ primary_goal.name }}"</strong>
+        <p class="helper-text m-0">Future estimate £{{ '{:,.0f}'.format(metrics.total_projected) }} vs target £{{ '{:,.0f}'.format(primary_goal.target) }} (margin £{{ '{:,.0f}'.format(metrics.total_projected - primary_goal.target) }}).</p>
       {% else %}
-        <strong>Scenario estimate is below "{{ primary_goal.name }}"</strong>
-        <p class="helper-text m-0">Scenario estimate £{{ '{:,.0f}'.format(metrics.total_projected) }} vs target £{{ '{:,.0f}'.format(primary_goal.target) }} (gap £{{ '{:,.0f}'.format(gap) }}).</p>
+        <strong>Future estimate is below "{{ primary_goal.name }}"</strong>
+        <p class="helper-text m-0">Future estimate £{{ '{:,.0f}'.format(metrics.total_projected) }} vs target £{{ '{:,.0f}'.format(primary_goal.target) }} (gap £{{ '{:,.0f}'.format(gap) }}).</p>
       {% endif %}
     </div>
     <a href="/goals/" class="badge badge-sm">View goals</a>
@@ -72,10 +72,10 @@
 <section class="card mb-1 projections-desktop-detail">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Scenario estimate assumptions</p>
-      <h2>Assumptions used here</h2>
+      <p class="eyebrow">Planning numbers</p>
+      <h2>Numbers used here</h2>
     </div>
-    <a class="badge badge-sm" href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit scenario estimate assumptions</a>
+    <a class="badge badge-sm" href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit planning numbers</a>
   </div>
   {% for item in assumption_summary.items_list %}
     <div class="mb-075">
@@ -88,14 +88,14 @@
 </section>
 
 <details class="projections-compact-details projections-compact-only mb-1">
-  <summary>Scenario estimate assumptions</summary>
+  <summary>Planning numbers</summary>
   <div class="projections-compact-panel">
     <div class="section-header">
       <div>
-        <p class="eyebrow">Scenario estimate assumptions</p>
-        <h2>Assumptions used here</h2>
+        <p class="eyebrow">Planning numbers</p>
+        <h2>Numbers used here</h2>
       </div>
-      <a class="badge badge-sm" href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit scenario estimate assumptions</a>
+      <a class="badge badge-sm" href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit planning numbers</a>
     </div>
     {% for item in assumption_summary.items_list %}
       <div class="mb-075">
@@ -112,9 +112,9 @@
 {# ── Summary cards ────────────────────────────────────────────────────────── #}
 <section class="card-grid mb-1">
   <div class="card stat-card">
-    <h2>Scenario estimate at retirement</h2>
+    <h2>Estimated total at retirement</h2>
     <p>£{{ '{:,.0f}'.format(metrics.total_projected) }}</p>
-    <small>Age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% annual growth (nominal)</small>
+    <small>Age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% yearly growth</small>
   </div>
   <div class="card stat-card">
     <h2>Current total</h2>
@@ -127,7 +127,7 @@
     <small>Age {{ metrics.current_age }} → {{ metrics.retirement_age }}</small>
   </div>
   <div class="card stat-card">
-    <h2>Monthly contributions</h2>
+    <h2>Monthly payments in</h2>
     <p>£{{ '{:,.0f}'.format(metrics.total_monthly) }}</p>
     <small>Total across all accounts</small>
   </div>
@@ -135,7 +135,7 @@
   <div class="card stat-card">
     <h2>Cost of fees over time</h2>
     <p class="text-danger">£{{ '{:,.0f}'.format(metrics.total_fee_impact) }}</p>
-    <small>Difference between gross and net growth</small>
+    <small>Estimated effect of fees over time</small>
   </div>
   {% endif %}
 </section>
@@ -145,36 +145,36 @@
 <section class="card mb-1 projections-desktop-detail">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Account scenario estimates</p>
-      <h2>Account scenario estimates at retirement</h2>
+      <p class="eyebrow">Account future estimates</p>
+      <h2>Estimated account totals at retirement</h2>
     </div>
   </div>
-  <p class="helper-text">See how each account could look at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, Lifetime ISA bonuses, and employer contributions).</p>
+  <p class="helper-text">See how each account could look at age {{ metrics.retirement_age }}, based on current balances and what goes in each month. Pension top-ups, Lifetime ISA bonuses, and employer payments are included where they apply.</p>
   <div class="budget-rows">
     {% for row in account_rows %}
     <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}">
       <summary class="budget-row proj-acc-summary">
         <div class="budget-row-left">
           <span class="budget-row-name">{{ row.name }}</span>
-          <span class="budget-row-note">{{ row.wrapper_type }} · {{ '{:.1f}'.format(row.growth_rate * 100) }}% net
-            {%- if row.annual_fee_pct %} <span style="color:var(--muted);">({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
+          <span class="budget-row-note">{{ row.wrapper_type }} · {{ '{:.1f}'.format(row.growth_rate * 100) }}% yearly growth after fees
+            {%- if row.annual_fee_pct %} <span style="color:var(--muted);">({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% before fees − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
             {%- if row.effective_contribution != row.monthly_contribution or row.contribution_fee > 0 %} · you pay £{{ '{:,.2f}'.format(row.monthly_contribution) }}
-              {%- if row.tax_relief %} + £{{ '{:,.2f}'.format(row.tax_relief) }} tax relief{% endif %}
+              {%- if row.tax_relief %} + £{{ '{:,.2f}'.format(row.tax_relief) }} pension tax top-up{% endif %}
               {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} Lifetime ISA bonus{% endif %}
               {%- if row.employer %} + £{{ '{:,.2f}'.format(row.employer) }} employer{% endif %}
               {%- if row.contribution_fee > 0 %} − £{{ '{:,.2f}'.format(row.contribution_fee) }} contribution fee{% endif %}
-              = £{{ '{:,.2f}'.format(row.effective_contribution) }} a month into pot
+              = £{{ '{:,.2f}'.format(row.effective_contribution) }} a month added
             {%- else %} · £{{ '{:,.0f}'.format(row.monthly_contribution) }} a month
             {%- endif %}
           </span>
           {% if row.self_assessment > 0 %}
-          <span class="budget-row-note" style="color:var(--accent-3);">Plus £{{ '{:,.2f}'.format(row.self_assessment) }} a month reclaimable via self-assessment</span>
+          <span class="budget-row-note" style="color:var(--accent-3);">Possible extra tax claim: £{{ '{:,.2f}'.format(row.self_assessment) }} a month</span>
           {% endif %}
           {% if row.contribution_fee > 0 %}
           <span class="budget-row-note text-danger">{{ '{:.2f}'.format(row.contribution_fee_pct) }}% contribution fee costs £{{ '{:,.2f}'.format(row.contribution_fee) }} a month — £{{ '{:,.0f}'.format(row.contribution_fee * 12) }} a year</span>
           {% endif %}
           {% if row.fee_impact > 0 %}
-          <span class="budget-row-note text-danger">Annual fees cost £{{ '{:,.0f}'.format(row.fee_impact) }} in lost growth over the period</span>
+          <span class="budget-row-note text-danger">Fees reduce the estimate by about £{{ '{:,.0f}'.format(row.fee_impact) }} over this period</span>
           {% endif %}
         </div>
         <div class="budget-row-right proj-row-right">
@@ -195,11 +195,11 @@
         <div class="proj-acc-schedule">
           <div class="section-header mb-05" style="padding:0;border:none;">
             <div>
-              <p class="eyebrow">Contribution schedule</p>
-              <h3 style="margin:0;font-size:1rem;">Change contributions by age</h3>
+              <p class="eyebrow">Payment plan</p>
+              <h3 style="margin:0;font-size:1rem;">Change monthly payments by age</h3>
             </div>
           </div>
-          <p class="helper-text m-0">Add rows like “from age 50 → £600 a month”. This saves to your plan and updates your scenario estimate.</p>
+          <p class="helper-text m-0">Add rows like “from age 50 → £600 a month”. This saves to your plan and updates the future estimate.</p>
           <div class="proj-schedule-rows" data-proj-schedule-rows></div>
           <div class="badge-row mt-075">
             <button type="button" class="badge badge-meta" data-proj-schedule-add>+ Add row</button>
@@ -223,40 +223,40 @@
 </section>
 
 <details class="projections-compact-details projections-compact-only mb-1">
-  <summary>Account scenario estimates</summary>
+  <summary>Account future estimates</summary>
   <div class="projections-compact-panel">
     <div class="section-header">
       <div>
-        <p class="eyebrow">Account scenario estimates</p>
-        <h2>Account scenario estimates at retirement</h2>
+        <p class="eyebrow">Account future estimates</p>
+        <h2>Estimated account totals at retirement</h2>
       </div>
     </div>
-    <p class="helper-text">See how each account could look at age {{ metrics.retirement_age }}, based on current balances and what goes into each pot every month (including tax relief, Lifetime ISA bonuses, and employer contributions).</p>
+    <p class="helper-text">See how each account could look at age {{ metrics.retirement_age }}, based on current balances and what goes in each month. Pension top-ups, Lifetime ISA bonuses, and employer payments are included where they apply.</p>
     <div class="budget-rows">
       {% for row in account_rows %}
       <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}">
         <summary class="budget-row proj-acc-summary">
           <div class="budget-row-left">
             <span class="budget-row-name">{{ row.name }}</span>
-            <span class="budget-row-note">{{ row.wrapper_type }} · {{ '{:.1f}'.format(row.growth_rate * 100) }}% net
-              {%- if row.annual_fee_pct %} <span style="color:var(--muted);">({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
+            <span class="budget-row-note">{{ row.wrapper_type }} · {{ '{:.1f}'.format(row.growth_rate * 100) }}% yearly growth after fees
+              {%- if row.annual_fee_pct %} <span style="color:var(--muted);">({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% before fees − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
               {%- if row.effective_contribution != row.monthly_contribution or row.contribution_fee > 0 %} · you pay £{{ '{:,.2f}'.format(row.monthly_contribution) }}
-                {%- if row.tax_relief %} + £{{ '{:,.2f}'.format(row.tax_relief) }} tax relief{% endif %}
+                {%- if row.tax_relief %} + £{{ '{:,.2f}'.format(row.tax_relief) }} pension tax top-up{% endif %}
                 {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} Lifetime ISA bonus{% endif %}
                 {%- if row.employer %} + £{{ '{:,.2f}'.format(row.employer) }} employer{% endif %}
                 {%- if row.contribution_fee > 0 %} − £{{ '{:,.2f}'.format(row.contribution_fee) }} contribution fee{% endif %}
-                = £{{ '{:,.2f}'.format(row.effective_contribution) }} a month into pot
+                = £{{ '{:,.2f}'.format(row.effective_contribution) }} a month added
               {%- else %} · £{{ '{:,.0f}'.format(row.monthly_contribution) }} a month
               {%- endif %}
             </span>
             {% if row.self_assessment > 0 %}
-            <span class="budget-row-note" style="color:var(--accent-3);">Plus £{{ '{:,.2f}'.format(row.self_assessment) }} a month reclaimable via self-assessment</span>
+            <span class="budget-row-note" style="color:var(--accent-3);">Possible extra tax claim: £{{ '{:,.2f}'.format(row.self_assessment) }} a month</span>
             {% endif %}
             {% if row.contribution_fee > 0 %}
             <span class="budget-row-note text-danger">{{ '{:.2f}'.format(row.contribution_fee_pct) }}% contribution fee costs £{{ '{:,.2f}'.format(row.contribution_fee) }} a month — £{{ '{:,.0f}'.format(row.contribution_fee * 12) }} a year</span>
             {% endif %}
             {% if row.fee_impact > 0 %}
-            <span class="budget-row-note text-danger">Annual fees cost £{{ '{:,.0f}'.format(row.fee_impact) }} in lost growth over the period</span>
+            <span class="budget-row-note text-danger">Fees reduce the estimate by about £{{ '{:,.0f}'.format(row.fee_impact) }} over this period</span>
             {% endif %}
           </div>
           <div class="budget-row-right proj-row-right">
@@ -277,11 +277,11 @@
           <div class="proj-acc-schedule">
             <div class="section-header mb-05" style="padding:0;border:none;">
               <div>
-                <p class="eyebrow">Contribution schedule</p>
-                <h3 style="margin:0;font-size:1rem;">Change contributions by age</h3>
+                <p class="eyebrow">Payment plan</p>
+                <h3 style="margin:0;font-size:1rem;">Change monthly payments by age</h3>
               </div>
             </div>
-            <p class="helper-text m-0">Add rows like “from age 50 → £600 a month”. This saves to your plan and updates your scenario estimate.</p>
+            <p class="helper-text m-0">Add rows like “from age 50 → £600 a month”. This saves to your plan and updates the future estimate.</p>
             <div class="proj-schedule-rows" data-proj-schedule-rows></div>
             <div class="badge-row mt-075">
               <button type="button" class="badge badge-meta" data-proj-schedule-add>+ Add row</button>
@@ -311,30 +311,30 @@
 <section class="card mb-1 projections-desktop-detail">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Scenario estimate growth curve</p>
-      <h2>Scenario estimate over time</h2>
+      <p class="eyebrow">Estimate over time</p>
+      <h2>Future estimate over time</h2>
     </div>
   </div>
-  <p class="helper-text">How your portfolio scenario estimate could change year by year under your current assumptions and contributions.</p>
+  <p class="helper-text">How your future estimate could change year by year using your current planning numbers and monthly payments.</p>
   <div class="chart-wrap-md">
-    <canvas id="projectionChart" role="img" aria-label="Portfolio scenario estimate growth chart"
+    <canvas id="projectionChart" role="img" aria-label="Future estimate chart"
       data-labels='{{ chart_labels | tojson | safe }}'
       data-values='{{ chart_values | tojson | safe }}'></canvas>
   </div>
 </section>
 
 <details class="projections-compact-details projections-compact-only mb-1">
-  <summary>Scenario estimate growth curve</summary>
+  <summary>Estimate over time</summary>
   <div class="projections-compact-panel">
     <div class="section-header">
       <div>
-        <p class="eyebrow">Scenario estimate growth curve</p>
-        <h2>Scenario estimate over time</h2>
+        <p class="eyebrow">Estimate over time</p>
+        <h2>Future estimate over time</h2>
       </div>
     </div>
-    <p class="helper-text">How your portfolio scenario estimate could change year by year under your current assumptions and contributions.</p>
+    <p class="helper-text">How your future estimate could change year by year using your current planning numbers and monthly payments.</p>
     <div class="chart-wrap-md">
-      <canvas id="projectionChartMobile" role="img" aria-label="Portfolio scenario estimate growth chart"
+      <canvas id="projectionChartMobile" role="img" aria-label="Future estimate chart"
         data-labels='{{ chart_labels | tojson | safe }}'
         data-values='{{ chart_values | tojson | safe }}'></canvas>
     </div>
@@ -346,12 +346,12 @@
 <section class="card mb-1 projections-desktop-detail">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Scenario estimate planner</p>
+      <p class="eyebrow">Try changes</p>
       <h2>Try a different scenario</h2>
     </div>
     <button class="badge badge-meta" id="wi_reset" type="button">Reset to plan</button>
   </div>
-  <p class="helper-text">Try different retirement ages, growth rates, or monthly contributions to see how the scenario estimate changes. Nothing here is saved unless you save changes elsewhere.</p>
+  <p class="helper-text">Try different retirement ages, growth rates, or monthly payments to see how the future estimate changes. Nothing here is saved unless you save changes elsewhere.</p>
 
   {# Global controls #}
   <div class="form-grid settings-form mb-1">
@@ -365,13 +365,13 @@
         data-default-rate-pct="{{ '{:.1f}'.format(metrics.growth_rate * 100) }}">
     </label>
     <label>
-      <span>Annual growth rate (%)</span>
+      <span>Yearly growth (%)</span>
       <input type="number" id="wi_rate" value="{{ '{:.1f}'.format(metrics.growth_rate * 100) }}" min="0" max="20" step="0.1">
     </label>
   </div>
 
   {# Per-account contributions #}
-  <p class="eyebrow mb-05">Monthly contributions by account</p>
+  <p class="eyebrow mb-05">Monthly payments by account</p>
   <div class="wi-account-list" id="wi_accounts">
     {% for row in account_rows %}
     <div class="wi-account-row">
@@ -402,7 +402,7 @@
   {# Summary #}
   <div class="whatif-result mt-125" id="whatifResult">
     <div class="whatif-result-item">
-      <span>Scenario estimate total</span>
+      <span>Future estimate total</span>
       <strong id="wi_total">—</strong>
     </div>
     <div class="whatif-result-item">
@@ -414,7 +414,7 @@
       <strong id="wi_years">—</strong>
     </div>
     <div class="whatif-result-item">
-      <span>Total monthly contributions</span>
+      <span>Total monthly payments</span>
       <strong id="wi_monthly">—</strong>
     </div>
   </div>
@@ -425,12 +425,12 @@
   <div class="projections-compact-panel">
     <div class="section-header">
       <div>
-        <p class="eyebrow">Scenario estimate planner</p>
+        <p class="eyebrow">Try changes</p>
         <h2>Try a different scenario</h2>
       </div>
       <button class="badge badge-meta" id="wi_reset_mobile" type="button">Reset to plan</button>
     </div>
-    <p class="helper-text">Try different retirement ages, growth rates, or monthly contributions to see how the scenario estimate changes. Nothing here is saved unless you save changes elsewhere.</p>
+    <p class="helper-text">Try different retirement ages, growth rates, or monthly payments to see how the future estimate changes. Nothing here is saved unless you save changes elsewhere.</p>
 
     <div class="form-grid settings-form mb-1">
       <label>
@@ -443,12 +443,12 @@
           data-default-rate-pct="{{ '{:.1f}'.format(metrics.growth_rate * 100) }}">
       </label>
       <label>
-        <span>Annual growth rate (%)</span>
+        <span>Yearly growth (%)</span>
         <input type="number" id="wi_rate_mobile" value="{{ '{:.1f}'.format(metrics.growth_rate * 100) }}" min="0" max="20" step="0.1">
       </label>
     </div>
 
-    <p class="eyebrow mb-05">Monthly contributions by account</p>
+    <p class="eyebrow mb-05">Monthly payments by account</p>
     <div class="wi-account-list" id="wi_accounts_mobile">
       {% for row in account_rows %}
       <div class="wi-account-row">
@@ -478,7 +478,7 @@
 
     <div class="whatif-result mt-125" id="whatifResultMobile">
       <div class="whatif-result-item">
-        <span>Scenario estimate total</span>
+        <span>Future estimate total</span>
         <strong id="wi_total_mobile">—</strong>
       </div>
       <div class="whatif-result-item">
@@ -490,7 +490,7 @@
         <strong id="wi_years_mobile">—</strong>
       </div>
       <div class="whatif-result-item">
-        <span>Total monthly contributions</span>
+        <span>Total monthly payments</span>
         <strong id="wi_monthly_mobile">—</strong>
       </div>
     </div>
