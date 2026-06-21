@@ -150,6 +150,14 @@
         <input type="number" name="opening_value" min="0" step="0.01" inputmode="decimal" placeholder="25.00">
         <small class="form-hint">Optional: e.g. Premium Bonds had £25 before a £775 top-up.</small>
       </label>
+      <label>
+        <span>Replace existing baseline</span>
+        <span class="checkbox-row">
+          <input type="checkbox" name="replace_existing_opening" value="1">
+          <span>Overwrite that month if it already has a different snapshot.</span>
+        </span>
+        <small class="form-hint">Leave unticked unless you are correcting an imported opening value.</small>
+      </label>
       <label class="form-full-col">
         <span>Note</span>
         <input type="text" name="note" placeholder="Premium Bonds top-up">

@@ -359,6 +359,7 @@ def test_performance_manual_movement_backfills_opening_and_contribution(app, cli
             "amount": "775",
             "opening_month": "2026-04",
             "opening_value": "25",
+            "replace_existing_opening": "1",
             "note": "Premium Bonds top-up",
         },
         follow_redirects=False,
