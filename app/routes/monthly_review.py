@@ -6,7 +6,6 @@ from flask_login import current_user, login_required
 
 from app.calculations import (
     projected_contribution_breakdown,
-    effective_account_value,
     goal_current_value,
     progress_to_goal,
     review_ready_date as calc_review_ready_date,
@@ -44,13 +43,16 @@ from app.models import (
     update_holding,
     update_monthly_review,
     update_monthly_review_notes,
-    upsert_monthly_snapshot,
     upsert_single_month_contribution_override,
 )
 from app.demo import is_read_only_demo_user
 from app.utils import optional_float, optional_int, valid_month_key
 from app.services.monthly_review_checklist import parse_monthly_review_notes
-from app.services.financial_truth import apply_account_balance_update, refresh_holdings_accounts_for_month
+from app.services.financial_truth import (
+    apply_account_balance_update,
+    refresh_account_snapshots_for_month,
+    refresh_holdings_accounts_for_month,
+)
 from app.services.csv_parsers import (
     count_csv_rows,
     detect_csv_headers,
@@ -153,20 +155,7 @@ def monthly_review():
         elif form_name == "mark_complete":
             review = fetch_or_create_monthly_review(month_key, uid)
             ensure_monthly_review_items(review["id"], uid)
-            items = fetch_monthly_review_items(review["id"])
-            items_by_account = {int(it["account_id"]): it for it in items}
-            all_accounts = fetch_all_accounts(uid)
-            holdings_totals = fetch_holding_totals_by_account(uid)
-            for acc in all_accounts:
-                aid = int(acc["id"])
-                if acc.get("valuation_mode") == "holdings":
-                    balance = effective_account_value(acc, holdings_totals)
-                    upsert_monthly_snapshot(aid, month_key, balance)
-                    continue
-                it = items_by_account.get(aid)
-                if it and int(it.get("balance_updated") or 0) == 1:
-                    balance = effective_account_value(acc, holdings_totals)
-                    upsert_monthly_snapshot(aid, month_key, balance)
+            refresh_account_snapshots_for_month(uid, month_key)
             update_monthly_review(review["id"], "complete", (review.get("notes") or ""), uid)
         elif form_name == "save_review_notes":
             review = fetch_or_create_monthly_review(month_key, uid)
