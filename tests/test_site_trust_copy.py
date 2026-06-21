@@ -302,6 +302,12 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "│   ├── projections.py     # Scenario estimates views and account series endpoints" in readme
     assert "│   ├── export.py          # Excel export (scenario estimates, budget, performance)" in readme
     assert "![Scenario estimates](Screenshots/demo/projections_desktop.png)" in readme
+    assert "Dashboard with metrics and total money chart" in readme
+    assert "Dashboard with metrics and net worth chart" not in readme
+    assert "**Overview** — total money, goals, allowances and portfolio chart at a glance" in readme
+    assert "**Overview** — net worth, goals, allowances and portfolio chart at a glance" not in readme
+    assert "These snapshots power the total money history chart on the overview page and the performance tracking calculations." in readme
+    assert "These snapshots power the net worth history chart on the overview page and the performance tracking calculations." not in readme
     assert "### Retirement Projections" not in readme
     assert "Export projections to Excel (.xlsx) with per-account breakdowns." not in readme
     assert 'Projections show "with fees" vs "without fees"' not in readme
@@ -335,6 +341,8 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Always use “scenario estimate”, “projection”, “based on assumptions”." not in voice_and_copy
     assert "intimidated by financial admin, scenario estimates, and long-term planning." in product_truth
     assert "Assumptions, scenario estimates, and confirmed numbers should not blur together." in product_truth
+    assert "Total money, key balances, and what needs attention should be obvious." in product_truth
+    assert "Net worth, key balances, and what needs attention should be obvious." not in product_truth
     assert "understand cash-accessible, invested-accessible, restricted, and locked-for-later money" in product_truth
     assert "See cash-accessible, invested-accessible, restricted, and locked-for-later money" in product_truth
     assert "Users should understand what cash they can use now, what invested money is still reachable, what has penalties/restrictions, and what is for later retirement." in product_truth

@@ -283,7 +283,7 @@ app/
 ├── extensions.py          # CSRF, limiter, cache-busting helpers, scheduler wiring
 ├── routes/
 │   ├── auth.py            # Login, setup, user management
-│   ├── overview.py        # Dashboard with metrics and net worth chart
+│   ├── overview.py        # Dashboard with metrics and total money chart
 │   ├── accounts.py        # Account + holdings CRUD, allocation charts
 │   ├── holdings.py        # Holdings catalogue, prices, refresh actions
 │   ├── budget.py          # Budget CRUD, auto-save, annual import, debts, trends
@@ -332,7 +332,7 @@ data/
 
 ## Screenshots
 
-**Overview** — net worth, goals, allowances and portfolio chart at a glance
+**Overview** — total money, goals, allowances and portfolio chart at a glance
 
 ![Overview](Screenshots/demo/overview_desktop.png)
 
@@ -390,7 +390,7 @@ Everything lives in a single SQLite file (`data/finance.db`). No external databa
 Holdings with a ticker symbol get live price lookups via Yahoo Finance. SteadyPlan tries the ticker as-is first, then appends `.L` for London Stock Exchange listings. Prices are cached in a local catalogue and updated when you refresh.
 
 ### Monthly Snapshots
-Each time you complete a monthly update (or update an account balance), SteadyPlan saves a snapshot. These snapshots power the net worth history chart on the overview page and the performance tracking calculations.
+Each time you complete a monthly update (or update an account balance), SteadyPlan saves a snapshot. These snapshots power the total money history chart on the overview page and the performance tracking calculations.
 
 ### Security
 SteadyPlan uses Flask-Login for authentication with hashed passwords. It's designed for home network use — if you want to expose it to the internet, put it behind a reverse proxy with additional auth (e.g. Authelia, Cloudflare Tunnel, or basic auth).

@@ -17,6 +17,8 @@ def test_login_page_uses_brand_logo_without_auth_mascot_icon(client, make_user):
     assert "Slow and steady" not in html
     assert "wins the race." not in html
     assert "Estimate retirement" in html
+    assert "Total money and investment tracking" in html
+    assert "Net worth &amp; investment tracking" not in html
     assert "run retirement projections" not in html
     assert "Estimate retirement by account" in html
     assert "Retirement projections by account" not in html
@@ -37,6 +39,8 @@ def test_setup_page_uses_brand_logo_without_auth_mascot_icon(client, monkeypatch
     assert "Create your account" in html
     assert "Start privately," in html
     assert "on your own server." in html
+    assert "Total money and investment tracking" in html
+    assert "Net worth &amp; investment tracking" not in html
     assert "Estimate retirement by account" in html
     assert "Retirement projections by account" not in html
     assert "Slow and steady," not in html

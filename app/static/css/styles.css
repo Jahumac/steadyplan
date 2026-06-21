@@ -6486,7 +6486,7 @@ button.button-danger:focus {
   color: #fff;
 }
 
-/* Net worth chart label */
+/* Total money chart label */
 .chart-label {
   font-size: 0.75rem;
   color: var(--muted);

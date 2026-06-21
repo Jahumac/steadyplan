@@ -54,7 +54,7 @@ SteadyPlan should help users:
 These jobs should outrank lower-value feature work:
 
 1. **Understand current position**
-   - Net worth, key balances, and what needs attention should be obvious.
+   - Total money, key balances, and what needs attention should be obvious.
 2. **See cash-accessible, invested-accessible, restricted, and locked-for-later money**
    - Users should understand what cash they can use now, what invested money is still reachable, what has penalties/restrictions, and what is for later retirement.
 3. **Track whether they are on course**
