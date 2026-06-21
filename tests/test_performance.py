@@ -48,6 +48,38 @@ def test_monthly_performance_carries_forward_missing_account_snapshots(app, make
         assert perf["carried_forward_months"] == 1
 
 
+def test_performance_hides_annualised_return_for_early_history():
+    from app.calculations import compute_performance_series
+
+    monthly_data = [
+        ("2026-03", 1000, 0, 0, None, 1000),
+        ("2026-04", 1100, 0, 0),
+        ("2026-05", 1210, 0, 0),
+        ("2026-06", 1331, 0, 0),
+    ]
+
+    perf = compute_performance_series(monthly_data, 0.07, 0)
+
+    assert perf["total_return"] == 33.1
+    assert perf["annualised_return"] is None
+    assert perf["annualised_return_note"] == "Not enough history yet"
+
+
+def test_performance_shows_annualised_return_after_full_year_history():
+    from app.calculations import compute_performance_series
+
+    monthly_data: list[tuple] = [("2026-01", 1000, 0, 0, None, 1000)]
+    balance = 1000.0
+    for month in range(2, 14):
+        balance *= 1.01
+        monthly_data.append((f"2026-{month:02d}", round(balance, 2), 0, 0))
+
+    perf = compute_performance_series(monthly_data, 0.07, 0)
+
+    assert perf["annualised_return"] is not None
+    assert perf["annualised_return_note"] is None
+
+
 def test_performance_empty_state_uses_monthly_update_copy(auth_client):
     month_key = date.today().strftime("%Y-%m")
     resp = auth_client.get("/performance/", follow_redirects=True)

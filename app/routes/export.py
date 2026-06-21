@@ -1785,13 +1785,18 @@ def export_performance():
         labels = perf.get("labels") or []
         start_m = labels[0] if labels else ""
         end_m = labels[-1] if labels else ""
+        annualised_value = (
+            float(perf.get("annualised_return"))
+            if perf.get("annualised_return") is not None
+            else perf.get("annualised_return_note")
+        )
         _data_row(ws, row, [
             entity_name,
             start_m,
             end_m,
             int(perf.get("n_months") or 0),
             float(perf.get("total_return") or 0),
-            float(perf.get("annualised_return") or 0) if perf.get("annualised_return") is not None else None,
+            annualised_value,
             float(perf.get("total_contributed") or 0),
             float(perf.get("total_imported_baseline") or 0),
             float(perf.get("total_market_gain") or 0),
