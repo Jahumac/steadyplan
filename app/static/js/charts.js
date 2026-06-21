@@ -807,7 +807,7 @@
       });
     })();
 
-    // ── 7. Overview Net Worth Chart ──────────────────────────────────────────
+    // ── 7. Overview total money chart ────────────────────────────────────────
     (function initNetWorthChart() {
       var canvas = document.getElementById('netWorthChart');
       if (!canvas || typeof window.Chart !== 'function') return;

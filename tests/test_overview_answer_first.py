@@ -1659,8 +1659,8 @@ def test_overview_first_baseline_helper_uses_calm_trend_line_copy(app, client, m
     assert "Remember: slow and steady wins the race." not in html
 
 
-def test_overview_fallback_net_worth_chart_uses_history_wording(app, client, make_user):
-    uid, username, password = make_user(username="overview-net-worth-history-copy", password="password123")
+def test_overview_fallback_total_money_chart_uses_history_wording(app, client, make_user):
+    uid, username, password = make_user(username="overview-total-money-history-copy", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
     current_month = date.today().replace(day=1)
@@ -1705,8 +1705,10 @@ def test_overview_fallback_net_worth_chart_uses_history_wording(app, client, mak
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Net worth history" in html
-    assert 'aria-label="Net worth history chart"' in html
+    assert "Total money history" in html
+    assert 'aria-label="Total money history chart"' in html
+    assert "Net worth history" not in html
+    assert 'aria-label="Net worth history chart"' not in html
     assert 'aria-label="Net worth growth chart"' not in html
 
 

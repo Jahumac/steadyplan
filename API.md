@@ -143,7 +143,7 @@ Returns:
 ```
 
 ### `GET /assistant/portfolio-overview`
-Assistant-oriented read-only portfolio snapshot for questions like current net worth, how much is accessible now, and how much sits in each account.
+Assistant-oriented read-only portfolio snapshot for questions like current total money, how much is accessible now, and how much sits in each account.
 
 Important behaviour:
 - uses **effective account values**, so holdings-based accounts use live holdings totals plus uninvested cash

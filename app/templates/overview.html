@@ -242,7 +242,7 @@
 {% endif %}
 
 {% if has_accounts %}
-{# ── Hero: Net Worth + Key Stats ─────────────────────────────────────────── #}
+{# ── Hero: Total money + Key Stats ──────────────────────────────────────── #}
 <section class="card highlight mb-1 month-accent-{{ current_month_num }}">
   <div class="hero-top">
     <div>
@@ -644,9 +644,9 @@
 
   {% if daily_labels | length < 2 and history_labels | length >= 2 %}
   <div class="mt-125">
-    <p class="chart-label">Net worth history</p>
+    <p class="chart-label">Total money history</p>
     <div class="chart-wrap chart-wrap-sm">
-      <canvas id="netWorthChart" height="120" role="img" aria-label="Net worth history chart"
+      <canvas id="netWorthChart" height="120" role="img" aria-label="Total money history chart"
         data-labels='{{ history_labels | tojson | safe }}'
         data-values='{{ history_values | tojson | safe }}'></canvas>
     </div>
