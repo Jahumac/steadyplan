@@ -90,7 +90,7 @@
     {% endcall %}
   </div>
   <p class="helper-text mt-05">
-    Opening/imported is money already present when tracking started. Contributions are later money into pots; gain/interest is what changed after those flows.
+    Opening/imported is money already present when tracking started. Contributions are later money added to accounts; gain/interest is what changed after those flows.
     {% if performance_summary.annualised_return is none %} Annualised return appears after 12 monthly return periods, so early results do not look falsely dramatic.{% endif %}
   </p>
   <details class="mt-075">
@@ -266,9 +266,9 @@
 
   {% if monthly_contribution_total is not none and monthly_contribution_total > 0 %}
   <p class="helper-text mt-075">
-    Plan uses your per-account contribution settings, adjusted by any contribution overrides and monthly update entries, and credits them on your investment day (shifted for weekends, plus settlement). It compounds at {{ assumed_rate_pct }}% p.a.
+    Plan uses your per-account contribution settings, adjusted by any contribution overrides and monthly update entries, and credits them on your investment day (shifted for weekends, plus settlement). It uses {{ assumed_rate_pct }}% yearly growth.
     {% if planned_monthly_avg is not none %}Over the period shown, that’s an average of £{{ '{:,.0f}'.format(planned_monthly_avg) }} per month.{% endif %}
-    The figure above includes tax relief, Lifetime ISA bonus, employer match — the *full* amount landing in each pot, not what comes out of your bank.
+    The figure above includes pension tax top-up, Lifetime ISA bonus, and employer payments — the full amount landing in each account, not just what leaves your bank.
     Short-term dips are normal — review yearly to see whether you're still broadly on track with this plan.
   </p>
   {% if contribution_breakdown_rows %}
@@ -280,11 +280,11 @@
         <tr>
           <th>Account</th>
           <th class="num">You pay</th>
-          <th class="num">Tax relief</th>
+          <th class="num">Pension tax top-up</th>
           <th class="num">Lifetime ISA bonus</th>
           <th class="num">Employer</th>
           <th class="num">Fee</th>
-          <th class="num">Into pot</th>
+          <th class="num">Into account</th>
         </tr>
       </thead>
       <tbody>

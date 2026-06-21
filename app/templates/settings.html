@@ -21,9 +21,9 @@
 <section class="card highlight mb-1">
   <div class="section-header">
     <div>
-      <p class="eyebrow">{{ 'Start here' if settings_needs_planning_dates else 'Scenario estimate assumptions' }}</p>
-      <h2>{{ 'Add your planning dates' if settings_needs_planning_dates else 'Edit scenario estimate assumptions' }}</h2>
-      <p class="helper-text m-0">{% if settings_needs_planning_dates %}You only need these basics to get timelines and scenario estimates started. Add your investment day too if you want monthly update nudges to arrive at the right time.{% else %}These inputs feed scenario estimates and goal timing estimates. Changing them does not change your saved balances or Monthly Update history.{% endif %}</p>
+      <p class="eyebrow">{{ 'Start here' if settings_needs_planning_dates else 'Plan settings' }}</p>
+      <h2>{{ 'Add your planning dates' if settings_needs_planning_dates else 'Edit plan settings' }}</h2>
+      <p class="helper-text m-0">{% if settings_needs_planning_dates %}You only need these basics to get the timeline started. Add your investment day too if you want monthly update reminders at the right time.{% else %}These settings change the estimates and goal dates only. They do not change your saved balances or Monthly Update history.{% endif %}</p>
     </div>
     <a class="badge" href="{{ url_for('settings.settings') }}">Cancel</a>
   </div>
@@ -37,7 +37,7 @@
       <div class="form-full-col settings-focus-note">
         <p class="eyebrow m-0">Just these basics first</p>
         <strong>Add the dates that make your timeline meaningful.</strong>
-        <p class="helper-text m-0">Date of birth and retirement age are enough to start. Add your investment day too if you want monthly update nudges to arrive at the right time.</p>
+        <p class="helper-text m-0">Date of birth and retirement age are enough to start. Add your investment day too if you want monthly update reminders at the right time.</p>
       </div>
       {% endif %}
       <label>
@@ -50,14 +50,14 @@
         <input type="number" name="retirement_age" value="{{ assumptions.retirement_age if assumptions else 60 }}">
       </label>
       <label>
-        <span>Retirement date basis</span>
+        <span>When to count retirement</span>
         {% set rdm = assumptions.retirement_date_mode if assumptions and assumptions.retirement_date_mode else 'birthday' %}
         <select name="retirement_date_mode">
           <option value="birthday" {{ 'selected' if rdm == 'birthday' }}>On your birthday</option>
           <option value="end_of_year" {{ 'selected' if rdm == 'end_of_year' }}>End of the calendar year</option>
           <option value="end_of_tax_year" {{ 'selected' if rdm == 'end_of_tax_year' }}>End of the tax year (5 April)</option>
         </select>
-        <small class="form-hint">When you should be counted as "retired" — affects scenario estimates and years-to-go</small>
+        <small class="form-hint">Choose the date SteadyPlan should use for retirement estimates.</small>
       </label>
       <label>
         <span>Investment day of month</span>
@@ -67,12 +67,12 @@
           <option value="{{ d }}" {{ 'selected' if assumptions and assumptions.salary_day == d }}>{{ d }}{{ 'st' if d in [1,21,31] else ('nd' if d in [2,22] else ('rd' if d in [3,23] else 'th')) }}</option>
           {% endfor %}
         </select>
-        <small class="form-hint">The day your ISA contributions and standing orders usually go out — often when your salary arrives or a day after. SteadyPlan uses it to time monthly update nudges after settlement, with weekend shifts handled automatically.</small>
+        <small class="form-hint">The usual day money leaves your bank for savings or investments. SteadyPlan uses this for monthly update reminders and moves weekends automatically.</small>
       </label>
       {% if settings_needs_planning_dates %}
       <div class="form-full-col settings-section-divider">
         <p class="eyebrow m-0">Can wait until later</p>
-        <p class="helper-text m-0">These assumptions refine scenario estimates and reporting, but you do not need them to finish the basics.</p>
+        <p class="helper-text m-0">These extra settings make estimates more accurate, but you can finish the basics without them.</p>
       </div>
       {% endif %}
       <label class="form-full-col">
@@ -81,16 +81,16 @@
         <small class="form-hint">Shown in the header on every page</small>
       </label>
       <label>
-        <span>Annual growth rate (%)</span>
+        <span>Expected yearly growth (%)</span>
         <input type="number" step="0.1" name="annual_growth_rate" value="{{ '{:.1f}'.format((assumptions.annual_growth_rate if assumptions else 0.07) * 100) }}" min="0" max="30">
-        <small class="form-hint">Enter as a percentage — e.g. 7 for 7%, 3.6 for 3.6%. Scenario estimates are in nominal future pounds (not inflation-adjusted). If you want a more conservative “today’s spending power” view, use a lower rate (e.g. 4–5% instead of 7%).</small>
+        <small class="form-hint">Enter a simple yearly rate, for example 7 for 7%. If you want a cautious view, use a lower number.</small>
       </label>
       <label>
-        <span>Benchmark rate (%) <small class="text-muted">optional</small></span>
+        <span>Comparison growth rate (%) <small class="text-muted">optional</small></span>
         <input type="number" step="0.1" name="benchmark_rate"
                value="{{ '{:.1f}'.format(assumptions.benchmark_rate * 100) if assumptions and assumptions.benchmark_rate is not none else '' }}"
                min="0" max="30" placeholder="e.g. 10 for FTSE All-World">
-        <small class="form-hint">Leave blank to hide the benchmark line on your performance chart. Set to e.g. 10 to compare against a 10% annual return index.</small>
+        <small class="form-hint">Leave blank to hide the comparison line on Performance. Use this only if you want a simple comparison rate.</small>
       </label>
       <label>
         <span>Income tax band</span>
@@ -100,47 +100,47 @@
           <option value="higher" {{ 'selected' if tb == 'higher' }}>Higher rate (40%)</option>
           <option value="additional" {{ 'selected' if tb == 'additional' }}>Additional rate (45%)</option>
         </select>
-        <small class="form-hint">Affects pension tax relief and what you can reclaim</small>
+        <small class="form-hint">Used for pension tax top-ups and what you may be able to claim back.</small>
       </label>
       <label>
         <span>ISA allowance</span>
         <input type="number" step="0.01" name="isa_allowance" value="{{ assumptions.isa_allowance if assumptions else 20000 }}">
-        <small class="form-hint">Annual limit — includes Lifetime ISA</small>
+        <small class="form-hint">The yearly ISA limit. Lifetime ISA counts inside this.</small>
       </label>
       <label>
         <span>Lifetime ISA allowance</span>
         <input type="number" step="0.01" name="lisa_allowance" value="{{ assumptions.lisa_allowance if assumptions else 4000 }}">
-        <small class="form-hint">Sub-limit within ISA allowance</small>
+        <small class="form-hint">The Lifetime ISA part of your ISA limit.</small>
       </label>
       <label>
         <span>Dividend allowance</span>
         <input type="number" step="0.01" name="dividend_allowance" value="{{ assumptions.dividend_allowance if assumptions and assumptions.dividend_allowance is not none else 500 }}">
-        <small class="form-hint">Tax-free dividend income outside ISA (UK allowance)</small>
+        <small class="form-hint">The amount of dividends outside an ISA that can be tax-free.</small>
       </label>
       <label>
         <span>Annual income (£)</span>
         <input type="number" step="0.01" name="annual_income" value="{{ assumptions.annual_income if assumptions and assumptions.annual_income is not none else 0 }}">
-        <small class="form-hint">Checks your personal pension tax-relief limit (typically up to 100% of relevant earnings)</small>
+        <small class="form-hint">Used to check how much personal pension tax top-up you can get.</small>
       </label>
       <label>
         <span>Pension allowance (£)</span>
         <input type="number" step="0.01" name="pension_annual_allowance" value="{{ assumptions.pension_annual_allowance if assumptions and assumptions.pension_annual_allowance is not none else 60000 }}">
-        <small class="form-hint">Annual gross limit (personal + employer) before carry-forward and tapering</small>
+        <small class="form-hint">The yearly pension limit before any special rules.</small>
       </label>
       <label class="form-full-col">
         <input type="checkbox" name="mpaa_enabled" value="1" id="mpaa-toggle" {{ 'checked' if assumptions and assumptions.mpaa_enabled else '' }}>
-        <span style="font-weight:600; font-size:0.95rem;">Money Purchase Annual Allowance (MPAA) applies</span>
-        <small class="form-hint" style="margin-top:-0.25rem;">Enable if you've flexibly accessed a DC pension (MPAA reduces your allowance)</small>
+        <span style="font-weight:600; font-size:0.95rem;">Lower pension limit applies</span>
+        <small class="form-hint" style="margin-top:-0.25rem;">Tick this only if you have taken flexible money from a pension and your pension limit is lower.</small>
       </label>
       <label id="mpaa-row">
-        <span>MPAA allowance (£)</span>
+        <span>Lower pension limit (£)</span>
         <input type="number" step="0.01" name="mpaa_allowance" value="{{ assumptions.mpaa_allowance if assumptions and assumptions.mpaa_allowance is not none else 10000 }}">
       </label>
 
       <label class="form-full-col" style="border-top:1px solid var(--border); padding-top:1rem; margin-top:0.5rem;">
         <input type="checkbox" name="auto_update_prices" value="1" id="auto-update-toggle" {{ 'checked' if not assumptions or assumptions.auto_update_prices != 0 else '' }}>
-        <span style="font-weight:600; font-size:0.95rem;">Auto-update portfolio prices</span>
-        <small class="form-hint" style="margin-top:-0.25rem;">Automatically fetch fresh prices at the times below (UK time)</small>
+        <span style="font-weight:600; font-size:0.95rem;">Update investment prices automatically</span>
+        <small class="form-hint" style="margin-top:-0.25rem;">Fetch fresh prices at the times below (UK time).</small>
       </label>
       <div id="update-times-row" style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; padding-left:1.5rem;">
         <label>
@@ -412,13 +412,13 @@
 <section class="card highlight mb-1 month-accent-{{ current_month_num }}">
   <div class="hero-top">
     <div>
-      <p class="eyebrow">Scenario estimate assumptions</p>
+      <p class="eyebrow">Plan settings</p>
       <h2 class="hero-value" style="font-size:2rem;">{{ assumptions.dashboard_name if assumptions and assumptions.dashboard_name else 'SteadyPlan' }}</h2>
-      <p class="hero-subtitle">The assumptions behind your scenario estimates — growth rates, ages, and allowances</p>
+      <p class="hero-subtitle">The simple settings behind your estimates, dates, and limits.</p>
     </div>
   </div>
   <div class="hero-strip">
-    {% call hero_stat('Growth rate') %}<strong>{{ '{:.1f}'.format((assumptions.annual_growth_rate if assumptions else 0.07) * 100) }}%</strong>{% endcall %}
+    {% call hero_stat('Expected yearly growth') %}<strong>{{ '{:.1f}'.format((assumptions.annual_growth_rate if assumptions else 0.07) * 100) }}%</strong>{% endcall %}
     {% call hero_stat('Age') %}<strong>{{ computed_age if computed_age else 'Not set' }}</strong>{% endcall %}
     {% call hero_stat('Retirement age') %}<strong>{{ assumptions.retirement_age if assumptions else 60 }}</strong>{% endcall %}
     {% call hero_stat('ISA allowance') %}<strong>£{{ '{:,.0f}'.format(assumptions.isa_allowance if assumptions else 20000) }}</strong>{% endcall %}
@@ -430,7 +430,7 @@
 </section>
 
 <div class="row-end">
-  <a class="badge badge-primary-action" href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit scenario estimate assumptions</a>
+  <a class="badge badge-primary-action" href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit plan settings</a>
 </div>
 
 <section class="panel mt-1">
@@ -448,10 +448,10 @@
     </div>
     <div class="simple-list-item">
       <div>
-        <strong>Planning assumptions</strong>
-        <p>Growth, ages, allowances, income, and monthly update timing.</p>
+        <strong>Plan settings</strong>
+        <p>Growth, ages, yearly limits, income, and monthly update timing.</p>
       </div>
-      <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit assumptions</a>
+      <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit plan settings</a>
     </div>
     {% if current_user.is_authenticated and current_user.is_admin %}
     <div class="simple-list-item">
@@ -1019,7 +1019,7 @@
     </div>
   </div>
   <p class="helper-text">
-    This permanently deletes all data for this user: accounts, holdings, goals, budget, monthly updates, and assumptions. Your login stays, but the data does not. Other users are not affected.
+    This permanently deletes this user’s SteadyPlan data: accounts, investments, goals, budget, monthly updates, and settings. Your login stays, but the data does not. Other users are not affected.
   </p>
   <p class="helper-text text-danger" style="margin-top:0.5rem;">
     This cannot be undone. Download a per-user JSON export before continuing.

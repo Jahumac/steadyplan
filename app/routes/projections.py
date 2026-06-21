@@ -134,18 +134,18 @@ def _projection_assumption_summary(assumptions, accounts, account_rows, metrics)
 
     items = []
     growth_lines = [
-        f"Assumes {global_growth * 100:.1f}% annual growth.",
-        "Fees reduce net growth where configured.",
+        f"Uses {global_growth * 100:.1f}% yearly growth.",
+        "Fees reduce the estimate where you have added them.",
     ]
     if has_custom_rates:
-        growth_lines.insert(1, "Some accounts use custom growth rates that override the global rate.")
-    items.append({"title": "Growth & fees", "lines": growth_lines})
+        growth_lines.insert(1, "Some accounts use their own growth rate instead of the usual one.")
+    items.append({"title": "Growth and fees", "lines": growth_lines})
 
     items.append({
         "title": "Inflation",
         "lines": [
-            "Scenario estimates are in nominal future pounds.",
-            "SteadyPlan does not model inflation or convert to ‘today’s spending power’.",
+            "Future estimates are shown in future pounds, not today's spending power.",
+            "SteadyPlan does not adjust these numbers for inflation.",
         ],
     })
 
@@ -159,33 +159,33 @@ def _projection_assumption_summary(assumptions, accounts, account_rows, metrics)
     })
 
     contrib_lines = [
-        f"Assumes ~£{total_monthly_into_pot:,.0f}/mo continues going into your pots.",
-        "Includes tax relief, employer contributions, and bonuses where applicable.",
+        f"Uses about £{total_monthly_into_pot:,.0f} a month going into your accounts.",
+        "Includes pension tax top-ups, employer payments, and bonuses where they apply.",
     ]
     if accounts_with_schedule > 0:
-        contrib_lines.append(f"Contribution schedules are set on {accounts_with_schedule} account(s).")
+        contrib_lines.append(f"Payment plans are set on {accounts_with_schedule} account(s).")
     elif accounts_with_any_override > 0:
-        contrib_lines.append(f"One-off contribution overrides exist on {accounts_with_any_override} account(s).")
-    items.append({"title": "Contributions", "lines": contrib_lines})
+        contrib_lines.append(f"One-off monthly payment changes exist on {accounts_with_any_override} account(s).")
+    items.append({"title": "Payments in", "lines": contrib_lines})
 
     items.append({
         "title": "Pensions",
         "lines": [
-            "Pension contributions may include tax relief and employer inputs based on your account settings.",
-            "Withdrawals and retirement tax are not modelled.",
+            "Pension payments may include tax top-ups and employer payments, based on your account settings.",
+            "Retirement withdrawals and tax are not estimated here.",
         ],
     })
 
-    fee_lines = ["Fees are included where configured on each account."]
+    fee_lines = ["Fees are included where you added them on each account."]
     if total_fee_impact > 0:
-        fee_lines.insert(0, f"Estimated lifetime fee drag: £{total_fee_impact:,.0f}.")
+        fee_lines.insert(0, f"Estimated effect of fees over time: £{total_fee_impact:,.0f}.")
     items.append({"title": "Fees", "lines": fee_lines})
 
     items.append({
         "title": "Retirement spending",
         "lines": [
-            "Retirement spending / drawdown is not modelled.",
-            "SteadyPlan compares pot totals to targets, not lifetime retirement cashflow.",
+            "Retirement spending and withdrawals are not estimated here.",
+            "SteadyPlan compares account totals to goals; it does not plan every retirement payment.",
         ],
     })
 

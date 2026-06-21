@@ -32,7 +32,7 @@
       {# ── Step 1 · The basics ────────────────────────────────────── #}
       <div class="cw-panel cw-visible" data-cw="1">
         <h3 class="cw-title">{% if is_first_account_focus %}Which account do you want to start with?{% else %}What's this account called?{% endif %}</h3>
-        <p class="cw-hint">{% if is_first_account_focus %}Use one of the quick templates if it fits, or type your own name and wrapper below. You only need enough detail to recognise the account later and get Monthly Update ready for real balances.{% else %}Name the account, set the provider and wrapper type, and you're ready to go.{% endif %}</p>
+        <p class="cw-hint">{% if is_first_account_focus %}Use one of the quick templates if it fits, or type your own account name and type below. You only need enough detail to recognise the account later and get Monthly Update ready for real balances.{% else %}Name the account, add the provider, choose the account type, and you're ready to go.{% endif %}</p>
         <div class="cw-template-grid" aria-label="Account templates">
           <button type="button" class="cw-template" data-cw-template="stocks_isa" aria-pressed="false" title="Use the Stocks &amp; Shares ISA template">
             <strong>Stocks &amp; Shares ISA</strong>
@@ -84,7 +84,7 @@
             <small class="form-hint">Start typing or pick from the list. You can leave this blank for now.</small>
           </label>
           <label>
-            <span>Wrapper type</span>
+            <span>Account type</span>
             <select name="wrapper_type" id="cw-wrapper">
               {% for option in wrapper_type_options %}
                 <option value="{{ option }}">{{ option }}</option>
@@ -119,21 +119,21 @@
 
       {# ── Step 2 · Balance & Growth ──────────────────────────────── #}
       <div class="cw-panel" data-cw="2">
-        <h3 class="cw-title">How is this account valued?</h3>
-        <p class="cw-hint">Choose how this account should be valued. If it holds investments, value can be calculated from holdings. Otherwise enter a manual balance.</p>
+        <h3 class="cw-title">How should SteadyPlan get the balance?</h3>
+        <p class="cw-hint">Choose the simplest way to keep the balance up to date. If this account has investments, SteadyPlan can add them up for you. Otherwise you can type the balance yourself.</p>
         <div class="form-grid">
           <label>
-            <span>Balance method</span>
+            <span>Balance source</span>
             <select name="valuation_mode" id="cw-valuation" data-valuation-mode>
-              <option value="manual">Manual — I'll enter the balance</option>
-              <option value="holdings">Built from holdings — units × price</option>
-              <option value="premium_bonds">Premium Bonds — balance + prize tracking</option>
+              <option value="manual">I will type the balance myself</option>
+              <option value="holdings">Add up the investments I enter</option>
+              <option value="premium_bonds">Premium Bonds balance and prizes</option>
             </select>
           </label>
           <label>
-            <span>Growth mode</span>
+            <span>Growth estimate</span>
             <select name="growth_mode" id="cw-growth-mode" data-growth-mode>
-              <option value="default">Use default growth rate from your scenario estimate assumptions</option>
+              <option value="default">Use the usual growth estimate from Settings</option>
               <option value="custom">Custom rate</option>
             </select>
           </label>
@@ -143,12 +143,12 @@
           <label data-custom-rate-field style="display:none;">
             <span id="cw-custom-rate-label">Custom growth rate (%)</span>
             <input type="number" step="0.1" name="growth_rate_override" placeholder="e.g. 4.5">
-            <small class="form-hint" id="cw-custom-rate-hint">Enter as a percentage — 4.5 for 4.5%, 3.6 for 3.6%</small>
+            <small class="form-hint" id="cw-custom-rate-hint">Enter a percentage — 4.5 means 4.5%.</small>
           </label>
           <label data-cash-rate-field style="display:none;">
             <span>Cash interest rate (%)</span>
             <input type="number" step="0.1" name="cash_interest_rate" placeholder="e.g. 3.6">
-            <small class="form-hint">Used by Performance and exports for Cash ISA or savings accounts. Leave blank if you do not want estimated cash interest.</small>
+            <small class="form-hint">Used for Cash ISA or savings reports. Leave blank if you do not want SteadyPlan to estimate interest.</small>
           </label>
           <label data-cash-rate-field style="display:none;">
             <span>Interest paid on day of month</span>
@@ -158,36 +158,36 @@
         </div>
         {# ── Advanced: Fees (collapsible, below the main grid) ────── #}
         <details class="fee-details mt-1">
-          <summary class="badge badge-outline cursor-pointer">Advanced: Fees</summary>
+          <summary class="badge badge-outline cursor-pointer">Optional: fees</summary>
           <div class="fee-fields">
             <label>
               <span>Platform fee (%)</span>
               <input type="number" step="0.001" name="platform_fee_pct" placeholder="e.g. 0.15" min="0" max="5">
-              <small class="form-hint">Broker's annual charge. E.g. Vanguard 0.15%, HL 0.45%.</small>
+              <small class="form-hint">What the platform charges each year. For example, Vanguard 0.15% or HL 0.45%.</small>
             </label>
             <label>
               <span>Fee cap (£/year)</span>
               <input type="number" step="1" name="platform_fee_cap" placeholder="e.g. 375" min="0">
-              <small class="form-hint">Cap on % fee. E.g. Vanguard £375/yr.</small>
+              <small class="form-hint">Maximum yearly platform fee, if there is one. For example, Vanguard £375/year.</small>
             </label>
             <label>
               <span>Flat fee (£/year)</span>
               <input type="number" step="1" name="platform_fee_flat" placeholder="e.g. 144" min="0">
-              <small class="form-hint">Fixed annual amount. E.g. ii ~£144/yr.</small>
+              <small class="form-hint">Fixed yearly platform fee, if there is one. For example, ii about £144/year.</small>
             </label>
             <label>
               <span>Fund fee / OCF (%)</span>
               <input type="number" step="0.001" name="fund_fee_pct" placeholder="e.g. 0.22" min="0" max="5">
-              <small class="form-hint">Fund ongoing charge. E.g. VWRP 0.22%.</small>
+              <small class="form-hint">Yearly fund charge, if you know it. For example, VWRP 0.22%.</small>
             </label>
             <label>
               <span>Contribution fee (%)</span>
               <input type="number" step="0.001" name="contribution_fee_pct" placeholder="e.g. 1.8" min="0" max="10">
-              <small class="form-hint">Charged on each contribution before it's invested. E.g. Nest 1.8%.</small>
+              <small class="form-hint">Taken from each payment before it is invested. For example, Nest 1.8%.</small>
             </label>
           </div>
           <input type="hidden" name="annual_fee_pct" value="0">
-          <small class="form-hint text-muted block mt-05">All optional — annual fees are combined into one effective rate. Contribution fee reduces each payment before it's invested.</small>
+          <small class="form-hint text-muted block mt-05">All optional. Fees reduce the estimate; payment fees reduce each payment before it is invested.</small>
         </details>
         <div class="cw-actions">
           <button type="button" class="badge" data-cw-prev>Back</button>
@@ -272,13 +272,13 @@
 
       {# ── Step 4 · Contributions ─────────────────────────────────── #}
       <div class="cw-panel" data-cw="4">
-        <h3 class="cw-title">Monthly contributions</h3>
-        <p class="cw-hint" id="cw-hint-contrib">How much goes into this account each month? This feeds into scenario estimates. You can update it later.</p>
+        <h3 class="cw-title">Monthly payments</h3>
+        <p class="cw-hint" id="cw-hint-contrib">How much normally goes into this account each month? This helps SteadyPlan estimate the future. You can change it later.</p>
 
         <label id="cw-method-field" style="display:none;">
-          <span>Contribution method</span>
+          <span>How pension payments are handled</span>
           <select name="contribution_method" id="cw-method-select">
-            <option value="standard">My own contributions</option>
+            <option value="standard">My own payments</option>
             <option value="salary_sacrifice">Salary sacrifice</option>
             <option value="relief_at_source">Relief at source (e.g. NEST)</option>
           </select>
@@ -297,7 +297,7 @@
           <label id="cw-posting-field" style="display:none;">
             <span>Pension contribution posting day</span>
             <input type="number" name="pension_contribution_day" id="cw-posting-day" min="0" max="31" value="0">
-            <small class="form-hint">Optional. Use the day the pension contribution actually lands/invests. Set 0 to use the global investment day from assumptions.</small>
+            <small class="form-hint">Optional. Use the day the pension money actually lands or gets invested. Set 0 to use the investment day from Settings.</small>
           </label>
         </div>
 
@@ -306,16 +306,16 @@
             <span>You pay</span><strong id="cw-prev-personal-val"></strong>
           </div>
           <div class="cw-preview-row cw-preview-bonus" id="cw-prev-relief" style="display:none;">
-            <span id="cw-prev-relief-label">Tax relief</span><strong id="cw-prev-relief-val"></strong>
+            <span id="cw-prev-relief-label">Pension tax top-up</span><strong id="cw-prev-relief-val"></strong>
           </div>
           <div class="cw-preview-row cw-preview-bonus" id="cw-prev-employer" style="display:none;">
             <span>Employer adds</span><strong id="cw-prev-employer-val"></strong>
           </div>
           <div class="cw-preview-total">
-            <span>Total into pot</span><strong id="cw-prev-total"></strong>
+            <span>Total added to account</span><strong id="cw-prev-total"></strong>
           </div>
           <div class="cw-preview-row cw-preview-selfassess" id="cw-prev-selfassess" style="display:none;">
-            <span id="cw-prev-selfassess-label">Extra via self-assessment</span>
+            <span id="cw-prev-selfassess-label">Possible extra tax claim</span>
             <strong id="cw-prev-selfassess-val"></strong>
           </div>
           <p class="text-sm text-muted" id="cw-prev-selfassess-note" style="display:none;margin-top:0.4rem;"></p>
@@ -336,7 +336,7 @@
             <input type="checkbox" name="pre_salary" value="1">
             <div class="acct-flag-text">
               <span class="acct-flag-title">Outside take-home pay</span>
-              <small class="acct-flag-desc">Tick if this money doesn't come from your take-home — either it leaves <strong>before</strong> your salary hits your account (e.g. salary sacrifice / workplace pension) or it arrives from <strong>outside</strong> your salary (e.g. cashback, gifts, refunds, dividends reinvested). Shown in Budget for visibility but not subtracted from take-home. Tick alongside <em>Include in budget</em>.</small>
+              <small class="acct-flag-desc">Tick if this money is not paid from your take-home pay. For example, a workplace pension taken before payday, cashback, gifts, refunds, or reinvested dividends. It is shown in Budget, but not taken off your take-home pay. Tick this together with <em>Include in budget</em>.</small>
             </div>
           </label>
         </div>
@@ -385,7 +385,7 @@
       <div class="cw-panel" data-cw="6">
         <div class="cw-success">
           <h3 class="cw-title" id="cw-success-title">You're all set!</h3>
-        <p class="cw-hint" id="cw-success-msg">{% if is_first_account_focus %}Your new account is ready. You'll see it in Accounts straight away, and Monthly Update now has somewhere real to work from.{% else %}Your new account is ready. You'll see it in Accounts straight away, and it can feed scenario estimates whenever you need it to.{% endif %}</p>
+        <p class="cw-hint" id="cw-success-msg">{% if is_first_account_focus %}Your new account is ready. You'll see it in Accounts straight away, and Monthly Update now has somewhere real to work from.{% else %}Your new account is ready. You'll see it in Accounts straight away, and it can help with future estimates whenever you need it to.{% endif %}</p>
           <div class="cw-success-actions">
             <a class="badge badge-accent" href="/accounts/">View your accounts</a>
             <a class="badge" href="/accounts/?mode=create">Add another account</a>

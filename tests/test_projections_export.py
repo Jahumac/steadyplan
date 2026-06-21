@@ -83,7 +83,7 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
 
     summary = wb["Summary"]
     assert [summary.cell(4, c).value for c in range(1, 6)] == [
-        "Account", "Current Value", "You pay monthly", "Into pots monthly", "Scenario estimate at retirement"
+        "Account", "Current Value", "You pay monthly", "Into account monthly", "Estimated total at retirement"
     ]
     summary_values = [cell.value for row in summary.iter_rows() for cell in row]
     assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in summary_values
@@ -115,8 +115,8 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
     assert "SteadyPlan — Tax-Year Scenario Estimate" in workbook_values
     assert "SteadyPlan — Year-by-Year Scenario Estimate" not in workbook_values
     assert "SteadyPlan — Monthly Scenario Estimate" in workbook_values
-    assert "Scenario estimate total" in workbook_values
-    assert "Scenario estimate value" in workbook_values
+    assert "Future estimate total" in workbook_values
+    assert "Future estimate value" in workbook_values
     assert "SteadyPlan — Retirement Projections" not in workbook_values
     assert "SteadyPlan — Projection Assumptions" not in workbook_values
     assert "SteadyPlan — Year-by-Year Projection" not in workbook_values
@@ -161,14 +161,14 @@ def test_lifetime_isa_one_off_override_export_includes_full_bonus(app, client, m
     headers = None
     header_row = None
     for idx, row in enumerate(ws.iter_rows(values_only=True), 1):
-        if row[:3] == ("Age", "Tax year", "Scenario estimate value"):
+        if row[:3] == ("Age", "Tax year", "Future estimate value"):
             headers = row
             header_row = idx
             break
     assert headers is not None
     assert header_row is not None
     you_pay_col = headers.index("You pay (yr)")
-    into_pot_col = headers.index("Into pot (yr)")
+    into_pot_col = headers.index("Into account (yr)")
     first_year = next(row for row in ws.iter_rows(min_row=header_row + 1, values_only=True) if row[you_pay_col] == 4000)
     assert first_year[into_pot_col] == 5000
 
@@ -211,7 +211,7 @@ def test_lifetime_isa_yearly_export_uses_tax_year_distribution(app, client, make
     headers = None
     header_row = None
     for idx, row in enumerate(ws.iter_rows(values_only=True), 1):
-        if row[:6] == ("Age", "Tax year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)"):
+        if row[:6] == ("Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into account (yr)"):
             headers = row
             header_row = idx
             break
@@ -281,7 +281,7 @@ def test_lifetime_isa_export_shows_next_planned_month_when_current_month_is_zero
     assert ("You pay (monthly)", 0) in summary_rows
     assert ("Next planned month", "2026-12") in summary_rows
     assert ("You pay (next planned month)", 1000) in summary_rows
-    assert ("Total into pot (next planned month)", 1250) in summary_rows
+    assert ("Total added to account (next planned month)", 1250) in summary_rows
 
 
 def test_premium_bonds_cap_is_not_reported_as_negative_growth(app, client, make_user):
@@ -303,7 +303,7 @@ def test_premium_bonds_cap_is_not_reported_as_negative_growth(app, client, make_
     headers = None
     header_row = None
     for idx, row in enumerate(ws.iter_rows(values_only=True), 1):
-        if row[:3] == ("Age", "Tax year", "Scenario estimate value"):
+        if row[:3] == ("Age", "Tax year", "Future estimate value"):
             headers = row
             header_row = idx
             break

@@ -464,7 +464,7 @@ def test_contribution_calendar_shows_isa_allowance_frame_for_planned_months(app,
     assert "Cash ISA" in html
     assert "Stocks &amp; Shares ISA" in html
     assert "Lifetime ISA" in html
-    assert "Pension/SIPP gross" in html
+    assert "Pension/SIPP total" in html
     assert "Premium Bonds" in html
     assert "Status" not in html
     assert "Visible months" not in html

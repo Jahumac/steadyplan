@@ -79,7 +79,7 @@
       +£{{ '{:,.0f}'.format(total_uplift) }}<span class="change-chip-label">tax + employer</span>
     </span>
     <span class="change-chip change-chip-into-pot">
-      £{{ '{:,.0f}'.format(total_into_pot) }}<span class="change-chip-label">into pots</span>
+      £{{ '{:,.0f}'.format(total_into_pot) }}<span class="change-chip-label">added to accounts</span>
     </span>
   </div>
   {% endif %}
@@ -193,8 +193,8 @@
               {% if br and br.total_into_pot > item.expected_contribution + 0.005 %}
                 {% set uplift = br.total_into_pot - item.expected_contribution %}
                 <span class="contrib-pot-chip"
-                      title="£{{ '{:,.2f}'.format(item.expected_contribution) }} from you{% if br.tax_relief %} · +£{{ '{:,.2f}'.format(br.tax_relief) }} tax relief{% endif %}{% if br.government_bonus %} · +£{{ '{:,.2f}'.format(br.government_bonus) }} Lifetime ISA bonus{% endif %}{% if br.employer %} · +£{{ '{:,.2f}'.format(br.employer) }} employer{% endif %}{% if br.contribution_fee %} · −£{{ '{:,.2f}'.format(br.contribution_fee) }} fee{% endif %} → £{{ '{:,.2f}'.format(br.total_into_pot) }} into pot">
-                  +£{{ '{:,.0f}'.format(uplift) }} into pot
+                      title="£{{ '{:,.2f}'.format(item.expected_contribution) }} from you{% if br.tax_relief %} · +£{{ '{:,.2f}'.format(br.tax_relief) }} pension tax top-up{% endif %}{% if br.government_bonus %} · +£{{ '{:,.2f}'.format(br.government_bonus) }} Lifetime ISA bonus{% endif %}{% if br.employer %} · +£{{ '{:,.2f}'.format(br.employer) }} employer{% endif %}{% if br.contribution_fee %} · −£{{ '{:,.2f}'.format(br.contribution_fee) }} fee{% endif %} → £{{ '{:,.2f}'.format(br.total_into_pot) }} added">
+                  +£{{ '{:,.0f}'.format(uplift) }} added to account
                 </span>
               {% endif %}
               {% set bc = budget_comparison_map.get(item.account_id) %}
@@ -546,7 +546,7 @@
     <div class="badge-row mt-075">
       <a href="{{ related_goals_href }}" class="badge badge-meta">{{ related_goals_text }}</a>
       <a href="/budget/debts/" class="badge badge-meta">Review debts</a>
-      <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit scenario estimate assumptions</a>
+      <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit planning numbers</a>
     </div>
   </details>
 </section>

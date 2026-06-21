@@ -163,7 +163,8 @@ def test_lifetime_isa_preview_js_uses_specific_bonus_copy():
     assert "+ government bonus (25%)" not in js
     assert "Your Lifetime ISA bonus adds 25% on top (up to £1,000/year)." in js
     assert "The government tops it up with a lovely 25% bonus (up to £1,000/year)." not in js
-    assert "How much do you put into this ISA each month? This feeds into scenario estimates. You can update it later." in js
+    assert "How much do you put into this ISA each month? This helps SteadyPlan estimate the future. You can update it later." in js
+    assert "How much do you put into this ISA each month? This feeds into scenario estimates. You can update it later." not in js
     assert "How much do you put into this ISA each month? This feeds into projections. You can update it later." not in js
     assert "How much do you put into this ISA each month? This feeds into projections — an estimate is fine." not in js
     assert "How much do you put into this ISA each month? Even an estimate helps with projections." not in js
@@ -179,13 +180,15 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "NS&amp;I, tax-free prize estimate" not in wizard_html
     assert "How much do you add to this Cash ISA each month?" in js
     assert "How much do you stash away in this Cash ISA each month?" not in js
-    assert "Prize draws are tracked separately; scenario estimates use the planning rate." in js
+    assert "Prize draws are tracked separately; future estimates use the planning rate." in js
+    assert "Prize draws are tracked separately; scenario estimates use the planning rate." not in js
     assert "Prize draws are tracked separately; projections use the planning rate." not in js
     assert "Prize draws are tracked separately; projections use a cautious estimate." not in js
     assert "Prize draws are tracked separately; projections use a gentle estimate." not in js
     assert "Monthly Update now has somewhere real to work from." in js
     assert "Monthly Update now has something real to work from." in js
-    assert "it can feed scenario estimates whenever you need it to." in js
+    assert "it can help with future estimates whenever you need it to." in js
+    assert "it can feed scenario estimates whenever you need it to." not in js
     assert "is live!" not in js
     assert "He's already crunching the numbers" not in js
     assert "check your dashboard to see how things are shaping up" not in js
@@ -193,32 +196,33 @@ def test_account_wizard_hints_use_plain_neutral_tone():
     assert "Premium Bonds do not pay guaranteed interest. Use this as a planning assumption only; NS&I can change the prize fund rate." in js
     assert "Premium Bonds do not pay guaranteed interest. Use this as a planning estimate only; NS&I can change the prize fund rate." not in js
     assert "Premium Bonds do not pay guaranteed interest. This is a calm estimate only; NS&I can change the prize fund rate." not in js
-    assert "Your provider adds 25% basic-rate tax relief on top." in js
+    assert "Your provider adds a 25% basic-rate pension tax top-up." in js
     assert "Your provider adds 25% basic-rate tax relief on top automatically." not in js
     assert "Your provider claims 25% tax relief from HMRC automatically." not in js
-    assert "your provider adds 20% basic-rate tax relief (e.g. NEST)." in js
+    assert "your provider adds a 20% basic-rate pension tax top-up." in js
     assert "your provider adds 20% basic-rate tax relief for you (e.g. NEST)." not in js
     assert "your provider claims 20% tax relief from HMRC (e.g. NEST)." not in js
-    assert "Your provider adds 20% basic-rate tax relief. Claim the extra " in js
+    assert "Your provider adds a 20% basic-rate pension tax top-up. Claim the extra " in js
     assert " through Self Assessment — it is paid back to you, not into the pension." in js
     assert "Your provider claims 20% automatically." not in js
     assert "through your self-assessment tax return — it goes to you, not the pension." not in js
     assert "free money, basically" not in js
     assert "You can always update this later." in js
     assert "No pressure — you can always update this later." not in js
-    assert "Use default growth rate from your scenario estimate assumptions" in wizard_html
+    assert "Use the usual growth estimate from Settings" in wizard_html
     assert "Use default growth rate (from Settings)" not in wizard_html
-    assert "Set 0 to use the global investment day from assumptions." in wizard_html
+    assert "Set 0 to use the investment day from Settings." in wizard_html
     assert "Set 0 to use salary day from Settings." not in wizard_html
     assert 'data-first-account-focus="{{ \'true\' if is_first_account_focus else \'false\' }}"' in wizard_html
     assert "Your new account is ready. You'll see it in Accounts straight away, and Monthly Update now has somewhere real to work from." in wizard_html
-    assert "Your new account is ready. You'll see it in Accounts straight away, and it can feed scenario estimates whenever you need it to." in wizard_html
+    assert "Your new account is ready. You'll see it in Accounts straight away, and it can help with future estimates whenever you need it to." in wizard_html
+    assert "Your new account is ready. You'll see it in Accounts straight away, and it can feed scenario estimates whenever you need it to." not in wizard_html
     assert "Your new account is ready. You'll see it in Accounts and it will be included in scenario estimates straight away." not in wizard_html
     assert "The contribution in use this month is shown at the top." in html
     assert "The <strong>currently active</strong> contribution is shown at the top." not in html
-    assert "Use the day the pension contribution actually lands/invests" in html
+    assert "Use the day the pension money actually lands or gets invested" in html
     assert "Use if workplace pension invests later than your investment day" not in html
-    assert "Set 0 to use the global investment day from assumptions." in html
+    assert "Set 0 to use the investment day from Settings." in html
     assert "Set 0 to use the investment day from your scenario estimate assumptions." not in html
     assert "Use if workplace pension invests later than salary day" not in html
     assert "Set 0 to use salary day from Settings." not in html

@@ -29,8 +29,8 @@
   </div>
   <div class="hero-strip">
     {% call hero_stat('Total value') %}<strong>£{{ '{:,.0f}'.format(total_value) }}</strong>{% endcall %}
-    {% call hero_stat('Into pots monthly', stat_id='accounts-monthly-in') %}
-      <strong title="Total landing in your accounts each month — your contributions plus any tax relief, Lifetime ISA bonus and employer top-ups">£{{ '{:,.0f}'.format(total_into_pot_monthly) }}</strong>
+    {% call hero_stat('Into accounts monthly', stat_id='accounts-monthly-in') %}
+      <strong title="Total landing in your accounts each month — what you pay plus any pension tax top-up, Lifetime ISA bonus and employer top-ups">£{{ '{:,.0f}'.format(total_into_pot_monthly) }}</strong>
     {% endcall %}
     {% call hero_stat('Holdings tracked') %}<strong>{{ accounts | selectattr('valuation_mode', 'equalto', 'holdings') | list | length }}</strong>{% endcall %}
   </div>
@@ -50,7 +50,7 @@
       +£{{ '{:,.0f}'.format(_uplift_monthly) }}<span class="change-chip-label">tax + employer</span>
     </span>
     <span class="change-chip change-chip-into-pot">
-      £{{ '{:,.0f}'.format(total_into_pot_monthly) }}<span class="change-chip-label">into pots</span>
+      £{{ '{:,.0f}'.format(total_into_pot_monthly) }}<span class="change-chip-label">into accounts</span>
     </span>
   </div>
   <details class="mt-075">
@@ -63,7 +63,7 @@
             <th>Account</th>
             <th class="num">Personal</th>
             <th class="num">Tax/bonus/employer</th>
-            <th class="num">Into pot</th>
+            <th class="num">Into account</th>
           </tr>
         </thead>
         <tbody>
@@ -145,7 +145,7 @@
       {% set source = contribution_sources.get(account.id, {}) %}
       {% set personal = cb.get('personal', account.monthly_contribution or 0) %}
       {% if cb.get('total_into_pot', 0) != personal and cb.get('total_into_pot', 0) > 0 %}
-      <span title="You pay £{{ '{:,.0f}'.format(personal) }} → £{{ '{:,.0f}'.format(cb.total_into_pot) }} goes into pot{% if source.reason and source.label == 'contribution calendar' %} · {{ source.reason }}{% endif %}">Into pots monthly £{{ '{:,.0f}'.format(cb.total_into_pot) }}{% if source.label == 'contribution calendar' %} · this month{% endif %}</span>
+      <span title="You pay £{{ '{:,.0f}'.format(personal) }} → £{{ '{:,.0f}'.format(cb.total_into_pot) }} goes into account{% if source.reason and source.label == 'contribution calendar' %} · {{ source.reason }}{% endif %}">Into accounts monthly £{{ '{:,.0f}'.format(cb.total_into_pot) }}{% if source.label == 'contribution calendar' %} · this month{% endif %}</span>
       {% else %}
       <span>{% if source.label == 'contribution calendar' %}This month{% else %}You pay monthly{% endif %} £{{ '{:,.0f}'.format(personal) }}</span>
       {% endif %}
@@ -154,7 +154,7 @@
       {% if account.cash_interest_rate and account.cash_interest_rate > 0 %}
         {% set _pay_day = account.interest_payment_day %}
         {% set _chip_title = ('Interest accrues daily, paid on the ' ~ _pay_day ~ 'th of each month') if _pay_day else 'Auto-compounding interest' %}
-        <span class="acct-rate-chip acct-rate-chip-interest" title="{{ _chip_title }}">{{ '{:.2g}'.format(account.cash_interest_rate * 100) }}% p.a.{% if _pay_day %} · {{ _pay_day }}th{% endif %}</span>
+        <span class="acct-rate-chip acct-rate-chip-interest" title="{{ _chip_title }}">{{ '{:.2g}'.format(account.cash_interest_rate * 100) }}% yearly{% if _pay_day %} · {{ _pay_day }}th{% endif %}</span>
       {% endif %}
     </div>
   </a>
@@ -329,7 +329,7 @@
               <label class="form-full-col">
                 <span>Prize fund rate (%)</span>
                 <input type="number" step="0.1" name="growth_rate_override" value="{{ '{:.1f}'.format(selected.growth_rate_override * 100) if selected.growth_rate_override else '3.3' }}" placeholder="e.g. 3.3">
-                <small class="form-hint">NS&amp;I's annual prize fund rate — currently <strong>3.3%</strong> (as of 2025). Used as a planning assumption for scenario estimates only. It doesn't mean you earn 3.3% — it's the total pot divided by all bonds, so your actual prizes depend on luck. Your real wins are tracked separately in the Prize Draw section of Monthly Update.</small>
+                <small class="form-hint">NS&amp;I's annual prize fund rate — currently <strong>3.3%</strong> (as of 2025). Used only as a planning number for future estimates. It doesn't mean you earn 3.3% — it is the total prize fund divided by all bonds, so your actual prizes depend on luck. Your real wins are tracked separately in the Prize Draw section of Monthly Update.</small>
               </label>
               {% else %}
               <label data-growth-mode-row>
@@ -378,9 +378,9 @@
                 <span>Your Monthly Contribution</span>
                 <input type="number" step="0.01" name="monthly_contribution" value="{{ selected.monthly_contribution or 0 }}">
                 {% if 'sipp' in _wt_edit %}
-                <small class="form-hint">What you pay from your bank each month. Your provider adds 25% basic-rate tax relief on top.</small>
+                <small class="form-hint">What you pay from your bank each month. Your provider adds a 25% basic-rate pension tax top-up.</small>
                 {% elif _is_pension %}
-                <small class="form-hint">Your share of the pension contribution — either from your net pay or salary sacrifice, depending on your scheme.</small>
+                <small class="form-hint">Your share of the pension payment — either from take-home pay or before tax, depending on your workplace scheme.</small>
                 {% elif 'lifetime' in _wt_edit %}
                 <small class="form-hint">What you pay in. Your Lifetime ISA bonus adds 25% on top (up to £4,000/year contributions).</small>
                 {% else %}
@@ -400,12 +400,12 @@
                   <option value="salary_sacrifice" {{ 'selected' if cm == 'salary_sacrifice' }}>Salary sacrifice</option>
                   <option value="relief_at_source" {{ 'selected' if cm == 'relief_at_source' or cm == 'standard' }}>Relief at source (e.g. NEST)</option>
                 </select>
-                <small class="form-hint">Salary sacrifice = pre-tax, nothing extra to claim. Relief at source = your provider adds 20% basic-rate tax relief for you.</small>
+                <small class="form-hint">Before tax = nothing extra to claim. Take-home pay = your provider adds a 20% basic-rate pension tax top-up.</small>
               </label>
               <label>
                 <span>Pension contribution posting day</span>
                 <input type="number" name="pension_contribution_day" min="0" max="31" value="{{ selected.pension_contribution_day or 0 }}">
-                <small class="form-hint">Optional. Use the day the pension contribution actually lands/invests (for example 19 for a workplace pension paid from the previous month's salary). Set 0 to use the global investment day from assumptions.</small>
+                <small class="form-hint">Optional. Use the day the pension money actually lands or gets invested (for example 19 for a workplace pension paid from the previous month's salary). Set 0 to use the investment day from Settings.</small>
               </label>
               {% endif %}
             </div>
@@ -569,7 +569,7 @@
           </div>
           <div class="acct-hero-monthly">
             {% if _hero_scb.get('total_into_pot', 0) != (selected.monthly_contribution or 0) and _hero_scb.get('total_into_pot', 0) > 0 %}
-              <span class="acct-hero-label">Into pot monthly</span>
+              <span class="acct-hero-label">Into account monthly</span>
               <strong style="color:var(--accent-2)">£{{ '{:,.2f}'.format(_hero_scb.total_into_pot) }}</strong>
               <small class="text-muted">you pay £{{ '{:,.2f}'.format(selected.monthly_contribution or 0) }}</small>
             {% else %}
@@ -789,7 +789,7 @@
           </div>
         </div>
         <p class="helper-text mt-075">
-          Recorded balance uses saved account history. The comparison line uses your assumptions, contribution settings and recorded cash-flow adjustments; it is not a guarantee. It compounds at <strong>7% p.a.</strong> and credits contributions on your investment day (shifted for weekends, plus settlement). It uses your Budget overrides / monthly update entries and includes Lifetime ISA bonus, tax relief, and employer match where applicable.
+          Recorded balance uses saved account history. The comparison line uses your planning numbers, regular payments, and recorded money movements; it is not a guarantee. It uses <strong>7% yearly growth</strong> and adds payments on your investment day (shifted for weekends, plus settlement). It uses Budget overrides / Monthly Update entries and includes Lifetime ISA bonus, pension tax top-up, and employer payments where applicable.
         </p>
         {% elif has_first_baseline_only %}
         {{ empty_state('Your first baseline is saved',

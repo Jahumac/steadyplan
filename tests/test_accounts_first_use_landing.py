@@ -38,9 +38,9 @@ def test_accounts_first_use_focus_surfaces_calm_start_here_guidance(app, client,
     assert "Start here" in html
     assert "Add one real account" in html
     assert "One real account is enough to get your picture started and gives Monthly Update somewhere real to work from." in html
-    assert "Use one of the quick templates if it fits, or type your own name and wrapper below. You only need enough detail to recognise the account later and get Monthly Update ready for real balances." in html
+    assert "Use one of the quick templates if it fits, or type your own account name and type below. You only need enough detail to recognise the account later and get Monthly Update ready for real balances." in html
     assert "One real account is enough to get your picture started." not in html
-    assert "Use one of the quick templates if it fits, or type your own name and wrapper below. You only need enough detail to recognise the account later." not in html
+    assert "Use one of the quick templates if it fits, or type your own account name and type below. You only need enough detail to recognise the account later." not in html
     assert "Can wait until later" in html
     assert "Just used for grouping. The default is fine if you're not sure." in html
     assert "Start typing or pick from the list. You can leave this blank for now." in html

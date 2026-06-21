@@ -41,16 +41,16 @@
     <small>Money with rules, penalties or special access conditions.</small>
   </div>
   <div class="card stat-card">
-    <h2>Private pot scenario estimate at retirement</h2>
+    <h2>Private pension/investment estimate at retirement</h2>
     <p>£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</p>
-    <small>Current totals use saved balances. Scenario estimates use your assumptions and are not guarantees.</small>
+    <small>Current totals use saved balances. Future estimates use the planning numbers in Settings. They are not guarantees.</small>
   </div>
 </section>
 
 <section class="card mb-1 planning-compact-only planning-signal-card">
   <p class="eyebrow">Current signal</p>
   <h2>{{ income_summary.limiting_factor }}</h2>
-  <p class="helper-text m-0">Private pot scenario estimate at age {{ '{:.0f}'.format(income_summary.retirement_age) }}: <strong>£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</strong>. Uses your assumptions and is not a guarantee.</p>
+  <p class="helper-text m-0">Private pension/investment estimate at age {{ '{:.0f}'.format(income_summary.retirement_age) }}: <strong>£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</strong>. Uses the planning numbers in Settings and is not a guarantee.</p>
 </section>
 
 <section class="card mb-1">
@@ -144,12 +144,12 @@
     </label>
     <div class="planning-form-actions">
       <button type="submit" class="badge badge-primary-action">Update analyser</button>
-      <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit scenario estimate assumptions</a>
+      <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit planning numbers</a>
     </div>
   </form>
 
   <details class="planning-compact-details planning-compact-only">
-    <summary>Adjust scenario estimate assumptions</summary>
+    <summary>Adjust planning numbers</summary>
     <form method="get" class="planning-assumptions-form mt-075">
       <label>
         <span>Target retirement income/year (optional)</span>
@@ -169,7 +169,7 @@
       </label>
       <div class="planning-form-actions">
         <button type="submit" class="badge badge-primary-action">Update analyser</button>
-        <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit scenario estimate assumptions</a>
+        <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit planning numbers</a>
       </div>
     </form>
   </details>
@@ -189,11 +189,11 @@
       <h2>Bridge before pension access</h2>
       {% if income_summary.bridge_years > 0 %}
         <p class="planning-big-number">{{ '{:.0f}'.format(income_summary.bridge_years) }} years</p>
-        <p class="helper-text">From age {{ '{:.0f}'.format(income_summary.retirement_age) }} to {{ '{:.0f}'.format(income_summary.pension_access_age) }}. Accessible pot scenario estimate at retirement: £{{ '{:,.0f}'.format(income_summary.accessible_at_retirement) }}.</p>
+        <p class="helper-text">From age {{ '{:.0f}'.format(income_summary.retirement_age) }} to {{ '{:.0f}'.format(income_summary.pension_access_age) }}. Accessible money estimate at retirement: £{{ '{:,.0f}'.format(income_summary.accessible_at_retirement) }}.</p>
         {% if income_summary.uses_goal_mode %}
           <p class="helper-text">At your entered income, simple bridge need is £{{ '{:,.0f}'.format(income_summary.bridge_need) }}. Surplus/gap: <strong class="{% if income_summary.bridge_surplus >= 0 %}text-gain{% else %}text-loss{% endif %}">£{{ '{:,.0f}'.format(income_summary.bridge_surplus) }}</strong>.</p>
         {% else %}
-          <p class="helper-text">Without a target income entered, that accessible pot could cover about £{{ '{:,.0f}'.format(income_summary.bridge_income_capacity) }}/yr for the bridge period before growth/tax detail.</p>
+          <p class="helper-text">Without a target income entered, that accessible money could cover about £{{ '{:,.0f}'.format(income_summary.bridge_income_capacity) }}/yr for the bridge period before growth/tax detail.</p>
         {% endif %}
       {% else %}
         <p class="planning-big-number">No bridge gap</p>
@@ -226,7 +226,7 @@
         <h2>Bridge before pension access</h2>
         {% if income_summary.bridge_years > 0 %}
           <p class="planning-big-number">{{ '{:.0f}'.format(income_summary.bridge_years) }} years</p>
-          <p class="helper-text">Accessible pot scenario estimate at retirement: £{{ '{:,.0f}'.format(income_summary.accessible_at_retirement) }}.</p>
+          <p class="helper-text">Accessible money estimate at retirement: £{{ '{:,.0f}'.format(income_summary.accessible_at_retirement) }}.</p>
         {% else %}
           <p class="planning-big-number">No bridge gap</p>
         {% endif %}
@@ -249,7 +249,7 @@
   <div class="section-header planning-section-header">
     <div>
       <p class="eyebrow">Account classification</p>
-      <h2>How SteadyPlan split your pots</h2>
+      <h2>How SteadyPlan split your money</h2>
     </div>
   </div>
 

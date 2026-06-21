@@ -220,9 +220,9 @@ General rule:
 - Before: “Works offline as a PWA”
 - After: “Installable as a PWA” / “Installable as an app (PWA). For privacy, financial pages aren’t stored for offline viewing.”
 
-### Scenario estimate certainty
+### Future estimate certainty
 - Before: “Projected at retirement”
-- After: “Scenario estimate at retirement”
+- After: “Estimated total at retirement”
 
 ### Warnings
 - Before: “Looks good!” (on a dashboard surface)

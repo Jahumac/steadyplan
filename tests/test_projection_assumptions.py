@@ -47,34 +47,34 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
 
-    assert "<title>Scenario estimates · SteadyPlan</title>" in body
+    assert "<title>Future estimates · SteadyPlan</title>" in body
     assert "<title>Projections · SteadyPlan</title>" not in body
-    assert '<p class="eyebrow">Scenario estimates</p>' in body
+    assert '<p class="eyebrow">Future estimates</p>' in body
     assert '<p class="eyebrow">Projections</p>' not in body
-    assert "Retirement scenario estimate · age 60" in body
-    assert "Current totals use saved balances and contribution settings. Scenario estimates use your assumptions and are not guarantees; this is not financial advice." in body
+    assert "Rough retirement estimate · age 60" in body
+    assert "Current totals use your saved balances and regular payments. Future estimates use the planning numbers in Settings. They are not guarantees, and this is not financial advice." in body
     assert "Based on your current balances, contributions, and assumptions. Not a guarantee, and not financial advice." not in body
     assert "Retirement projection · age 60" not in body
     assert "Retirement projection estimate" not in body
-    assert "Scenario estimate at retirement" in body
+    assert "Estimated total at retirement" in body
     assert "Scenario Estimate at Retirement" not in body
-    assert "About this scenario estimate" in body
+    assert "About this future estimate" in body
     assert "About this projection" not in body
     assert "About this estimate" not in body
-    assert "scenario estimate based on assumptions, not a promise" in body
+    assert "estimate, not a promise" in body
     assert "assumptions-based forecast, not a promise" not in body
-    assert "You can change your <a href=\"/settings/?mode=edit&amp;focus=scenario_estimate_assumptions\" class=\"link-accent\">scenario estimate assumptions</a>." in body
+    assert "You can change the <a href=\"/settings/?mode=edit&amp;focus=scenario_estimate_assumptions\" class=\"link-accent\">planning numbers</a> behind it." in body
     assert "You can change those assumptions in" not in body
     assert "Edit the scenario estimate assumptions in" not in body
     assert "Edit the inputs in" not in body
-    assert body.count("Edit scenario estimate assumptions") == 3
+    assert body.count("Edit planning numbers") == 3
     assert body.count('/settings/?mode=edit&amp;focus=scenario_estimate_assumptions') == 4
     assert 'href="/settings/?mode=edit"' not in body
     assert "Edit assumptions" not in body
-    assert body.count("Scenario estimate assumptions") == 3
+    assert body.count("Planning numbers") == 3
     assert "<summary>Assumptions</summary>" not in body
     assert '<p class="eyebrow">Assumptions</p>' not in body
-    assert body.count("Assumptions used here") == 2
+    assert body.count("Numbers used here") == 2
     assert "What drives this scenario estimate" not in body
     assert "What drives this projection" not in body
     assert "What drives this estimate" not in body
@@ -86,52 +86,52 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Years to Go" not in body
     assert body.count("<span>Years to retirement</span>") == 3
     assert "<span>Years to go</span>" not in body
-    assert "Monthly contributions" in body
+    assert "Monthly payments in" in body
     assert "Monthly Contributions" not in body
-    assert "<span>Monthly contributions</span>" in body
-    assert "<span>Monthly in</span>" not in body
+    assert "<span>Monthly payments in</span>" in body
+    assert "<span>Monthly contributions</span>" not in body
     assert "<span>Current age → retirement</span>" in body
     assert "<span>Your age</span>" not in body
     assert "Cost of fees over time" in body
     assert "Lifetime Cost of Fees" not in body
     assert body.count("<span>Cost of fees over time</span>") == 1
     assert "<span>Cost of fees</span>" not in body
-    assert '<summary>Account scenario estimates</summary>' in body
-    assert body.count('<p class="eyebrow">Account scenario estimates</p>') == 2
+    assert '<summary>Account future estimates</summary>' in body
+    assert body.count('<p class="eyebrow">Account future estimates</p>') == 2
     assert "Account breakdown" not in body
-    assert body.count("Account scenario estimates at retirement") == 2
+    assert body.count("Estimated account totals at retirement") == 2
     assert "Each account at retirement (scenario estimate)" not in body
     assert "See how each account could look at age 60" in body
     assert "Scenario estimates for each account at age 60" not in body
-    assert body.count("Change contributions by age") == 2
+    assert body.count("Change monthly payments by age") == 2
     assert "Change contributions at certain ages" not in body
     assert "Projected values for each account at age 60" not in body
     assert "Projection estimates for each account at age 60" not in body
-    assert '<summary>Scenario estimate growth curve</summary>' in body
-    assert body.count('<p class="eyebrow">Scenario estimate growth curve</p>') == 2
+    assert '<summary>Estimate over time</summary>' in body
+    assert body.count('<p class="eyebrow">Estimate over time</p>') == 2
     assert "Growth curve" not in body
-    assert body.count("Scenario estimate over time") == 2
-    assert body.count("How your portfolio scenario estimate could change year by year under your current assumptions and contributions.") == 2
-    assert body.count("aria-label=\"Portfolio scenario estimate growth chart\"") == 2
+    assert body.count("Future estimate over time") == 2
+    assert body.count("How your future estimate could change year by year using your current planning numbers and monthly payments.") == 2
+    assert body.count("aria-label=\"Future estimate chart\"") == 2
     assert "Portfolio Trajectory" not in body
     assert "How your portfolio could grow year by year under your current assumptions and contributions." not in body
     assert "aria-label=\"Projected portfolio growth chart\"" not in body
     assert body.count("Try a different scenario") == 3
-    assert body.count('<p class="eyebrow">Scenario estimate planner</p>') == 2
+    assert body.count('<p class="eyebrow">Try changes</p>') == 2
     assert "Scenario planner" not in body
-    assert body.count("Monthly contributions by account") == 2
-    assert body.count("Scenario estimate total") == 2
+    assert body.count("Monthly payments by account") == 2
+    assert body.count("Future estimate total") == 2
     assert body.count("Difference from your plan") == 2
-    assert body.count("Total monthly contributions") == 2
+    assert body.count("Total monthly payments") == 2
     assert "Scenario total" not in body
     assert "vs. your plan" not in body
-    assert "Monthly contributions per account" not in body
+    assert "Monthly payments in per account" not in body
     assert "Monthly total" not in body
-    assert "Try different retirement ages, growth rates, or monthly contributions to see how the scenario estimate changes. Nothing here is saved unless you save changes elsewhere." in body
-    assert body.count("Add rows like “from age 50 → £600 a month”. This saves to your plan and updates your scenario estimate.") == 2
+    assert "Try different retirement ages, growth rates, or monthly payments to see how the future estimate changes. Nothing here is saved unless you save changes elsewhere." in body
+    assert body.count("Add rows like “from age 50 → £600 a month”. This saves to your plan and updates the future estimate.") == 2
     assert "£600/mo" not in body
     assert "· £500 a month" in body
-    assert "/mo into pot" not in body
+    assert "/mo into account" not in body
     assert "/mo reclaimable via self-assessment" not in body
     assert "/mo — £" not in body
     assert "/yr" not in body
@@ -143,7 +143,7 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Adjust inputs to see how the scenario estimate changes. Nothing is saved unless you explicitly save it elsewhere." not in body
     assert "Inflation" in body
     assert "Retirement timing" in body
-    assert "Contributions" in body
+    assert "Payments in" in body
     assert "Pensions" in body
     assert "Fees" in body
     assert "Retirement spending" in body
@@ -214,8 +214,8 @@ def test_projections_goal_callout_uses_scenario_estimate_wording(app, client, ma
     resp = client.get("/projections/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert 'Scenario estimate meets "FI target"' in body or 'Scenario estimate is below "FI target"' in body
-    assert 'Scenario estimate £' in body
+    assert 'Future estimate meets "FI target"' in body or 'Future estimate is below "FI target"' in body
+    assert 'Future estimate £' in body
     assert 'Projected £' not in body
     assert 'Projection meets "FI target"' not in body
     assert 'Projection is below "FI target"' not in body
@@ -242,25 +242,25 @@ def test_settings_growth_hint_no_longer_says_nominal_todays_money(app, client, m
     resp = client.get("/settings/?mode=edit")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Edit scenario estimate assumptions" in body
+    assert "Edit plan settings" in body
     assert "Edit Assumptions" not in body
-    assert '<p class="eyebrow">Scenario estimate assumptions</p>' in body
+    assert '<p class="eyebrow">Plan settings</p>' in body
     assert '<p class="eyebrow">Global Settings</p>' not in body
-    assert "These inputs feed scenario estimates and goal timing estimates." in body
+    assert "These settings change the estimates and goal dates only." in body
     assert "These inputs feed Projections and goal timing estimates." not in body
     assert "These inputs feed Projections and goal ETAs." not in body
     assert "These inputs feed Projections and goal estimates." not in body
     assert "nominal (today's money)" not in body
-    assert "Scenario estimates are in nominal future pounds" in body
+    assert "Enter a simple yearly rate" in body
     assert "Projections are in nominal future pounds" not in body
-    assert "affects scenario estimates and years-to-go" in body
+    assert "Choose the date SteadyPlan should use for retirement estimates." in body
     assert "affects projections and years-to-go" not in body
-    assert "more conservative “today’s spending power” view" in body
+    assert "If you want a cautious view, use a lower number." in body
     assert "cautious “today’s spending power” estimate" not in body
     assert "rough “today’s spending power” estimate" not in body
-    assert "Affects pension tax relief and what you can reclaim" in body
+    assert "Used for pension tax top-ups and what you may be able to claim back." in body
     assert "Used to calculate pension tax relief and show what you can reclaim" not in body
-    assert "Checks your personal pension tax-relief limit" in body
+    assert "Used to check how much personal pension tax top-up you can get." in body
     assert "Used when checking your personal pension tax-relief limit" not in body
     assert "Used to estimate your personal pension tax-relief limit" not in body
     assert "Shows your age" in body
@@ -279,8 +279,8 @@ def test_settings_monthly_update_timing_helper_uses_monthly_update_wording(app, 
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Investment day of month" in body
-    assert "The day your ISA contributions and standing orders usually go out" in body
-    assert "SteadyPlan uses it to time monthly update nudges after settlement, with weekend shifts handled automatically." in body
+    assert "The usual day money leaves your bank for savings or investments." in body
+    assert "SteadyPlan uses this for monthly update reminders and moves weekends automatically." in body
     assert "Monthly Update Timing" not in body
     assert "Helps decide when your investments have settled and it's time for your monthly update" not in body
     assert "Used to work out when your investments have settled and it's time for your monthly update" not in body
@@ -299,19 +299,19 @@ def test_settings_uses_lifetime_isa_wording(app, client, make_user):
     assert edit_resp.status_code == 200
     edit_body = edit_resp.data.decode("utf-8", errors="ignore")
     assert "<span>Lifetime ISA allowance</span>" in edit_body
-    assert "Annual limit — includes Lifetime ISA" in edit_body
+    assert "The yearly ISA limit. Lifetime ISA counts inside this." in edit_body
     assert "<span>LISA allowance</span>" not in edit_body
     assert "Annual limit — includes LISA" not in edit_body
 
     view_resp = client.get("/settings/")
     assert view_resp.status_code == 200
     view_body = view_resp.data.decode("utf-8", errors="ignore")
-    assert '<p class="eyebrow">Scenario estimate assumptions</p>' in view_body
+    assert '<p class="eyebrow">Plan settings</p>' in view_body
     assert '<p class="eyebrow">Settings</p>' not in view_body
-    assert "The assumptions behind your scenario estimates — growth rates, ages, and allowances" in view_body
+    assert "The simple settings behind your estimates, dates, and limits." in view_body
     assert "The numbers used behind the scenes — growth rates, ages, and allowances" not in view_body
     assert "Lifetime ISA allowance" in view_body
-    assert "Edit scenario estimate assumptions" in view_body
+    assert "Edit plan settings" in view_body
     assert 'href="/settings/?mode=edit&amp;focus=scenario_estimate_assumptions"' in view_body
     assert 'href="/settings/?mode=edit"' not in view_body
     assert "Edit settings" not in view_body
@@ -343,12 +343,12 @@ def test_overview_projected_retirement_stat_has_estimate_qualifier(app, client, 
     resp = client.get("/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Scenario estimate at retirement" in body
+    assert "Estimated total at retirement" in body
     assert "Projected at retirement" not in body
     assert "<small>estimate</small>" not in body
     assert "Current totals use your saved balances." in body
-    assert "Scenario estimates use your assumptions and are not guarantees." in body
-    assert "Scenario estimate based on your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." in body
+    assert "Future estimates use the planning numbers in Settings. They are not guarantees." in body
+    assert "Future estimate based on your current balances, regular payments, and planning numbers in Settings. It is not a guarantee." in body
     assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in body
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in body
     assert "Scenario estimate based on your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in body
@@ -384,14 +384,14 @@ def test_planning_page_uses_scenario_estimate_copy_for_retirement_outputs(app, c
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
 
-    assert "Private pot scenario estimate at retirement" in body
+    assert "Private pension/investment estimate at retirement" in body
     assert "Private pot estimate at retirement" not in body
     assert "Locked for later" in body
     assert "Locked later" not in body
-    assert "Current totals use saved balances. Scenario estimates use your assumptions and are not guarantees." in body
+    assert "Current totals use saved balances. Future estimates use the planning numbers in Settings. They are not guarantees." in body
     assert "Scenario estimate at age 60 under current balances, contributions and growth assumptions. For planning only, not a guarantee." not in body
     assert "Estimate at age 60 under current balances, contributions and growth assumptions." not in body
-    assert "Private pot scenario estimate at age 60:" in body
+    assert "Private pension/investment estimate at age 60:" in body
     assert "Private pot estimate at age 60:" not in body
     assert body.count("Scenario estimate at 60:") == 2
     assert "Estimate at 60:" not in body
@@ -424,7 +424,7 @@ def test_goals_eta_helper_copy_present(app, client, make_user):
     resp = client.get("/goals/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Goal timing estimates use tagged accounts, planned contributions, and growth assumptions. Not a guarantee." in body
+    assert "Goal timing estimates use tagged accounts, planned payments, and your planning numbers. Not a guarantee." in body
     assert "Goal timing estimates use tagged accounts, contribution calendar overrides, and growth assumptions." not in body
     assert "Goal timing estimates use your current contributions and growth assumptions." not in body
     assert "Goal ETAs use your current contributions and growth assumptions." not in body
@@ -539,13 +539,13 @@ def test_goals_cards_show_tasteful_projection_source_details(app, client, make_u
     assert "Projection basis" not in body
     assert "Tagged accounts" in body
     assert "2 accounts" in body
-    assert "Contribution calendar" in body
+    assert "Payment calendar" in body
     assert "Overrides active" in body
-    assert "Growth assumptions" in body
-    assert "Scenario estimate at retirement" in body
+    assert "Planning numbers" in body
+    assert "Estimated total at retirement" in body
     assert "Same month-by-month projection as Planning." in body
     assert "Not a guarantee." in body
-    assert "Goal timing estimates use tagged accounts, planned contributions, and growth assumptions. Not a guarantee." in body
+    assert "Goal timing estimates use tagged accounts, planned payments, and your planning numbers. Not a guarantee." in body
     assert "Goal timing estimates use tagged accounts, contribution calendar overrides, and growth assumptions." not in body
     assert "Goal timing estimates use your current contributions and growth assumptions." not in body
 
