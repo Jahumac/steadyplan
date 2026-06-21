@@ -148,6 +148,7 @@ def fetch_monthly_performance_data(user_id):
                 amount = float(cr["amount"] or 0)
                 cash_flow_map[key] = cash_flow_map.get(key, 0.0) + amount
         rows = []
+        current_month_key = datetime.now().strftime("%Y-%m")
         for month in months:
             month_key = month["month_key"]
             total_balance = 0.0
@@ -156,6 +157,7 @@ def fetch_monthly_performance_data(user_id):
             valued_account_ids = set()
             first_value_by_account = {}
             first_balance_by_account = {}
+            current_balance_by_account = {}
 
             for account in accounts:
                 snap = conn.execute(
@@ -173,10 +175,12 @@ def fetch_monthly_performance_data(user_id):
                     continue
                 aid = int(account["id"])
                 valued_account_ids.add(aid)
+                current_balance = float(snap["balance"] or 0)
                 accounts_with_value += 1
-                total_balance += float(snap["balance"] or 0)
+                total_balance += current_balance
                 first_value_by_account[aid] = False
-                first_balance_by_account[aid] = float(snap["balance"] or 0)
+                first_balance_by_account[aid] = current_balance
+                current_balance_by_account[aid] = current_balance
                 if snap["month_key"] != month_key:
                     carried_forward += 1
                 else:
@@ -211,26 +215,46 @@ def fetch_monthly_performance_data(user_id):
                     )
                     continue
 
-                default_personal = float(account.get("monthly_contribution") or 0)
+                rkey = (aid, month_key)
+                if has_cash_flow:
+                    contribution = float(cash_flow_map.get(cash_flow_key, 0.0) or 0.0)
+                else:
+                    default_personal = float(account.get("monthly_contribution") or 0)
+                    override = select_best_matching_override(overrides_by_account.get(aid, []), month_key)
+                    personal = float(override["override_amount"] or 0) if override is not None else None
 
-                override = select_best_matching_override(overrides_by_account.get(aid, []), month_key)
-                personal = float(override["override_amount"] or 0) if override is not None else None
+                    contribution = 0.0
+                    if not (month_key == current_month_key and rkey not in review_map and override is None):
+                        if personal != 0.0:
+                            if rkey in review_map:
+                                personal = float(review_map[rkey] or 0)
 
-                planned_contribution = 0.0
-                if personal != 0.0:
-                    rkey = (aid, month_key)
-                    if rkey in review_map:
-                        personal = float(review_map[rkey] or 0)
+                            if personal is None:
+                                personal = default_personal
 
-                    if personal is None:
-                        personal = default_personal
+                            if personal > 0:
+                                adjusted = dict(account)
+                                adjusted["monthly_contribution"] = personal
+                                contribution = float(effective_monthly_contribution(adjusted, assumptions) or 0)
 
-                    if personal > 0:
-                        adjusted = dict(account)
-                        adjusted["monthly_contribution"] = personal
-                        planned_contribution = float(effective_monthly_contribution(adjusted, assumptions) or 0)
+                if (account.get("wrapper_type") or "").strip().lower() == "cash isa":
+                    prior_snap = conn.execute(
+                        """
+                        SELECT balance
+                        FROM monthly_snapshots
+                        WHERE account_id = ?
+                          AND month_key < ?
+                        ORDER BY month_key DESC
+                        LIMIT 1
+                        """,
+                        (account["id"], month_key),
+                    ).fetchone()
+                    if prior_snap:
+                        residual = current_balance_by_account.get(aid, 0.0) - float(prior_snap["balance"] or 0.0) - contribution
+                        if residual < -0.005:
+                            contribution += residual
 
-                total_contribution += planned_contribution + float(cash_flow_map.get(cash_flow_key, 0.0) or 0.0)
+                total_contribution += contribution
             rows.append({
                 "month_key": month_key,
                 "total_balance": total_balance,
@@ -322,6 +346,8 @@ def fetch_monthly_performance_data_by_account(user_id):
 
     out = {}
     seen_account_ids = set()
+    previous_balance_by_account = {}
+    current_month_key = datetime.now().strftime("%Y-%m")
     for r in rows:
         aid = int(r["account_id"])
         if aid not in out:
@@ -332,24 +358,36 @@ def fetch_monthly_performance_data_by_account(user_id):
         has_cash_flow = cash_flow_key in cash_flow_map
         cash_flow_total = float(cash_flow_map.get(cash_flow_key, 0.0) or 0.0)
         is_first_account_snapshot = aid not in seen_account_ids
+        prior_balance = previous_balance_by_account.get(aid)
+        current_balance = float(r["balance"] or 0)
         seen_account_ids.add(aid)
         default_personal = float(r.get("monthly_contribution") or 0)
         override = select_best_matching_override(overrides_by_account.get(aid, []), month_key)
         personal = float(override["override_amount"] or 0) if override is not None else None
         planned_contrib = 0.0
-        if personal != 0.0:
-            rk = (aid, month_key)
-            if rk in review_map:
-                personal = float(review_map[rk] or 0)
-            if personal is None:
-                personal = default_personal
-            if personal > 0:
-                adjusted = dict(r)
-                adjusted["monthly_contribution"] = personal
-                planned_contrib = float(effective_monthly_contribution(adjusted, assumptions) or 0)
-        contrib = planned_contrib + (0.0 if is_first_account_snapshot else cash_flow_total)
+        rk = (aid, month_key)
+        if not (month_key == current_month_key and rk not in review_map and override is None):
+            if personal != 0.0:
+                if rk in review_map:
+                    personal = float(review_map[rk] or 0)
+                if personal is None:
+                    personal = default_personal
+                if personal > 0:
+                    adjusted = dict(r)
+                    adjusted["monthly_contribution"] = personal
+                    planned_contrib = float(effective_monthly_contribution(adjusted, assumptions) or 0)
+        if has_cash_flow:
+            contrib = cash_flow_total
+        else:
+            contrib = planned_contrib
 
-        out[aid]["rows"].append((month_key, float(r["balance"] or 0), float(contrib or 0)))
+        if (r.get("wrapper_type") or "").strip().lower() == "cash isa" and prior_balance is not None:
+            residual = current_balance - float(prior_balance or 0.0) - contrib
+            if residual < -0.005:
+                contrib += residual
+
+        previous_balance_by_account[aid] = current_balance
+        out[aid]["rows"].append((month_key, current_balance, float(contrib or 0)))
     return out
 
 
