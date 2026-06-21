@@ -97,6 +97,9 @@ def test_performance_page_shows_imported_baseline_reconciliation(client, make_us
     assert "Gain / Interest" in body
     assert "+£50" in body
     assert "Opening/imported is money already present when tracking started." in body
+    assert "How to read Performance" in body
+    assert "Annualised</strong> appears only after enough history" in body
+    assert "Cash ISA uses cash interest; Premium Bonds use prize gain; investment accounts use market gain/loss." in body
     assert "Contributed / Initial funding" not in body
 
 
