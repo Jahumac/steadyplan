@@ -83,6 +83,40 @@ def _monthly_detail_totals(sheet):
 
 
 
+def test_performance_export_includes_how_to_read_sheet(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-readme", password="password123")
+    with app.app_context():
+        account_id = create_account(
+            {
+                **_account_payload(name="Cash ISA", wrapper_type="Cash ISA", value=1600, monthly=0),
+                "cash_interest_rate": 0.036,
+            },
+            uid,
+        )
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 1595), ("2026-06", 1600)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    assert workbook.sheetnames[0] == "How to read"
+    guide = workbook["How to read"]
+    rendered_values = "\n".join(str(cell.value) for row in guide.iter_rows() for cell in row if cell.value)
+    assert "SteadyPlan — How to read this performance report" in rendered_values
+    assert "Opening / Imported" in rendered_values
+    assert "Contributed" in rendered_values
+    assert "Gain / Interest" in rendered_values
+    assert "Cash ISA uses cash interest" in rendered_values
+    assert "Premium Bonds use prize gain" in rendered_values
+    assert "Annualised return appears after 12 monthly return periods" in rendered_values
+    assert "Market Gain / Loss explains every account" not in rendered_values
+
+
 def test_performance_export_keeps_zero_snapshot_message_for_selected_account(app, client, make_user):
     uid, username, password = make_user(username="perf-export-zero", password="password123")
     with app.app_context():

@@ -1684,6 +1684,49 @@ def export_budget_annual():
 
 # ── Performance export ────────────────────────────────────────────────────────
 
+def _add_performance_export_readme_sheet(wb):
+    ws = wb.active
+    ws.title = "How to read"
+    _set_col_width(ws, 1, 24)
+    _set_col_width(ws, 2, 96)
+    _title_cell(ws, 1, "SteadyPlan — How to read this performance report", 2)
+    ws.cell(row=2, column=1, value="Use the Summary sheet for the headline numbers, then the monthly sheets to see how each number is built.").font = _SUBTITLE_FONT
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=2)
+
+    _header_row(ws, 4, ["Term", "Meaning"])
+    rows = [
+        (
+            "Opening / Imported",
+            "Money already present when tracking started. It is not treated as a later contribution or gain.",
+        ),
+        (
+            "Contributed",
+            "Money added after tracking started, minus withdrawals and transfers out. Transfers between your own accounts net to zero at portfolio level.",
+        ),
+        (
+            "Gain / Interest",
+            "What changed after flows. Cash ISA uses cash interest, Premium Bonds use prize gain, and investment accounts use market gain or loss.",
+        ),
+        (
+            "Total return",
+            "Gain divided by the money at work over the tracked period. Deposits and withdrawals are separated first so they do not look like performance.",
+        ),
+        (
+            "Annualised return",
+            "Annualised return appears after 12 monthly return periods. Before that, the Summary sheet says 'Not enough history yet' to avoid dramatic early-history figures.",
+        ),
+        (
+            "Current value",
+            "The latest reconciled value used by Performance for the selected export window.",
+        ),
+    ]
+    for row_num, values in enumerate(rows, 5):
+        _data_row(ws, row_num, values)
+        ws.cell(row=row_num, column=2).alignment = Alignment(vertical="top", wrap_text=True)
+    ws.freeze_panes = "A5"
+    return ws
+
+
 @export_bp.route("/performance/export.xlsx")
 @login_required
 def export_performance():
@@ -1717,8 +1760,8 @@ def export_performance():
         perf_portfolio = compute_performance_series(monthly_data, assumed_rate, assumed_monthly_total)
 
     wb = Workbook()
-    ws = wb.active
-    ws.title = "Summary"
+    _add_performance_export_readme_sheet(wb)
+    ws = wb.create_sheet("Summary")
     _set_col_width(ws, 1, 26)
     _set_col_width(ws, 2, 12)
     _set_col_width(ws, 3, 12)
@@ -1844,7 +1887,7 @@ def export_performance():
                 return candidate
             i += 1
 
-    used_titles = {ws.title}
+    used_titles = {sheet.title for sheet in wb.worksheets}
 
     def _add_detail_sheet(title, perf, subtitle=None, gain_label="Market Gain / Loss"):
         ws_d = wb.create_sheet(_safe_sheet_title(title, used_titles))
