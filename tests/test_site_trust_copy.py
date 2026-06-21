@@ -227,6 +227,19 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional read-only broker beta." not in changelog
 
 
+def test_performance_docs_explain_imported_baseline_reconciliation():
+    readme = _read_readme()
+    voice_and_copy = _read_voice_and_copy()
+    changelog = _read_changelog()
+
+    assert "Performance reporting separates opening/imported starting balances from later contributions and gain/interest" in readme
+    assert "first tracked values do not look like investment performance or regular savings" in readme
+    assert "Keep opening/imported starting balances separate from later contributions and gain/interest." in voice_and_copy
+    assert "Performance reporting now separates opening/imported starting balances from later contributions and gain/interest." in changelog
+    assert "Contributed / Initial funding" not in readme
+    assert "first tracked values look like investment performance" not in readme
+
+
 
 def test_public_site_projection_copy_uses_scenario_estimate_language():
     homepage = _read("index.html")

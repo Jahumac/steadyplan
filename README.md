@@ -94,7 +94,7 @@ Year-by-year and month-by-month scenario estimates using saved balances, contrib
 Accounts support detailed fee modelling: platform fee (% with optional £ cap), flat annual platform fee (£), and fund fee / OCF (%). SteadyPlan combines these into an effective annual fee, subtracts it from your growth rate, and shows the lifetime cost of fees in both the app and Excel exports. All fee fields are optional — tucked behind an "Advanced: Fees" toggle so they don't clutter the setup for casual users. Scenario estimates show "with fees" vs "without fees" so you can see exactly what your broker and funds cost you over time.
 
 ### Performance Tracking
-Track your actual portfolio returns over time using the modified Dietz method. Compare actual performance against an assumptions-based "on-plan" growth line. Contribution cash flow uses the effective “into pot” amount (tax relief, LISA bonus, employer contributions, minus any contribution fee) and only treats completed monthly updates as confirmed truth.
+Track your actual portfolio returns over time using the modified Dietz method. Compare actual performance against an assumptions-based "on-plan" growth line. Contribution cash flow uses the effective “into pot” amount (tax relief, LISA bonus, employer contributions, minus any contribution fee) and only treats completed monthly updates as confirmed truth. Performance reporting separates opening/imported starting balances from later contributions and gain/interest, so first tracked values do not look like investment performance or regular savings.
 
 ### Tax Year Tracking
 ISA and Lifetime ISA allowance progress bars, tax year countdown, and automatic tax year labelling (April 6 boundary).

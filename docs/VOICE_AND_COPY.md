@@ -123,6 +123,7 @@ Goal:
 
 Rules:
 - Focus on method transparency: “based on recorded contributions”.
+- Keep opening/imported starting balances separate from later contributions and gain/interest.
 - Avoid competitive language (“winning”, “beating”, “crushing”).
 
 ### Settings / Diagnostics

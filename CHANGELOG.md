@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Settings now frames assistant tokens as Personal Pip access for users who run their own Pip setup.
 - Refreshed public demo screenshots and the public marketing/docs site presentation.
 - Settings at a glance now groups everyday setup, safety and recovery, and optional access.
+- Performance reporting now separates opening/imported starting balances from later contributions and gain/interest.
 
 ### Fixed
 - Account creation templates now visibly select and fill in the account name, wrapper type, and balance method.
