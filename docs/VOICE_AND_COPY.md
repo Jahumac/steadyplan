@@ -123,7 +123,9 @@ Goal:
 
 Rules:
 - Focus on method transparency: “based on recorded contributions”.
+- Use the same terms in app, docs, and exports: “Opening / Imported”, “Contributed”, and “Gain / Interest”.
 - Keep opening/imported starting balances separate from later contributions and gain/interest.
+- Hide annualised return until there are 12 monthly return periods; use “Not enough history yet” rather than dramatic early annualised percentages.
 - Avoid competitive language (“winning”, “beating”, “crushing”).
 
 ### Settings / Diagnostics
