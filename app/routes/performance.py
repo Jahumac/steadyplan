@@ -4,6 +4,7 @@ from flask import Blueprint, render_template
 from flask_login import current_user, login_required
 
 from app.calculations import (
+    _resolve_contribution_day,
     contribution_breakdown,
     effective_monthly_contribution,
     review_ready_date,
@@ -122,6 +123,14 @@ def performance():
                 salary_day = 28
             salary_day = max(1, min(31, salary_day))
 
+            def account_contribution_date(a, year, month):
+                try:
+                    account_day = int((a or {}).get("pension_contribution_day") or 0)
+                except (TypeError, ValueError):
+                    account_day = 0
+                day = account_day or salary_day
+                return datetime(year, month, _resolve_contribution_day(year, month, day)).date()
+
             today = datetime.now().date()
             daily_rate = (1 + assumed_rate) ** (1 / 365.25) - 1
 
@@ -170,12 +179,17 @@ def performance():
             end_y, end_m = end_date.year, end_date.month
             while (y, m) <= (end_y, end_m):
                 mk = f"{y:04d}-{m:02d}"
-                credit_date = review_ready_date(y, m, salary_day)
-                if credit_date <= today and credit_date <= end_date and credit_date > start_date:
-                    amt = month_total_for(mk)
-                    month_amount_cache[mk] = amt
-                    if amt > 0:
-                        events.append((credit_date, mk, amt))
+                active_overrides, items_by_acc = month_ctx(mk)
+                month_amount = 0.0
+                for a in accounts:
+                    credit_date = account_contribution_date(a, y, m)
+                    if credit_date <= today and credit_date <= end_date and credit_date > start_date:
+                        amt = into_pot_for_account_month(a, mk, active_overrides, items_by_acc)
+                        month_amount += amt
+                        if amt > 0:
+                            events.append((credit_date, mk, amt))
+                if month_amount > 0:
+                    month_amount_cache[mk] = month_amount
                 if m == 12:
                     y, m = y + 1, 1
                 else:
@@ -238,6 +252,14 @@ def performance():
             salary_day = 28
         salary_day = max(1, min(31, salary_day))
 
+        def account_contribution_date_for_breakdown(a, year, month):
+            try:
+                account_day = int((a or {}).get("pension_contribution_day") or 0)
+            except (TypeError, ValueError):
+                account_day = 0
+            day = account_day or salary_day
+            return datetime(year, month, _resolve_contribution_day(year, month, day)).date()
+
         today = datetime.now().date()
         daily_rate = (1 + assumed_rate) ** (1 / 365.25) - 1
 
@@ -289,7 +311,7 @@ def performance():
             end_y, end_m = end_d.year, end_d.month
             while (y, m) <= (end_y, end_m):
                 mk = f"{y:04d}-{m:02d}"
-                cd = review_ready_date(y, m, salary_day)
+                cd = account_contribution_date_for_breakdown(a, y, m)
                 if cd <= today and cd <= end_d and cd > base_d:
                     active_overrides, items_by_acc = month_ctx(mk)
                     amt = into_pot_for_account_month(a, mk, active_overrides, items_by_acc)

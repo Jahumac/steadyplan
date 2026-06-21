@@ -288,7 +288,7 @@ def test_accounts_create_form_includes_junior_isa_wrapper_option(app, client, ma
     assert '<option value="Junior ISA">Junior ISA</option>' in html
     assert 'Use default growth rate from your scenario estimate assumptions' in html
     assert 'Use default growth rate (from Settings)' not in html
-    assert 'Set 0 to use the investment day from your scenario estimate assumptions.' in html
+    assert 'Set 0 to use the global investment day from assumptions.' in html
     assert 'Set 0 to use salary day from Settings.' not in html
 
 
@@ -324,8 +324,8 @@ def test_accounts_edit_form_uses_assumptions_wording_for_pension_posting_day(app
 
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert 'Use if workplace pension invests later than your investment day' in html
-    assert 'Set 0 to use the investment day from your scenario estimate assumptions.' in html
+    assert 'Use the day the pension contribution actually lands/invests' in html
+    assert 'Set 0 to use the global investment day from assumptions.' in html
     assert 'Use if workplace pension invests later than salary day' not in html
     assert 'Set 0 to use salary day from Settings.' not in html
 

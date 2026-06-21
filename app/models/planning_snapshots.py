@@ -393,6 +393,7 @@ def fetch_monthly_performance_data_by_account(user_id):
                 a.contribution_method,
                 a.contribution_fee_pct,
                 a.pre_salary,
+                a.pension_contribution_day,
                 a.cash_interest_rate,
                 a.growth_mode,
                 a.growth_rate_override,

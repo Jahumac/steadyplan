@@ -250,6 +250,56 @@ def test_performance_export_treats_cash_isa_untracked_balance_drops_as_cash_move
     assert account["F5"].value == 0
 
 
+def test_performance_export_counts_regular_contribution_after_account_specific_pension_day(monkeypatch, app, client, make_user):
+    from datetime import date as real_date, datetime as real_datetime
+    import app.models.planning_snapshots as planning_snapshots
+    import app.routes.export as export_route
+
+    class FixedDatetime(real_datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 6, 21, 12, 0, 0, tzinfo=tz)
+
+    class FixedDate(real_date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 6, 21)
+
+    monkeypatch.setattr(planning_snapshots, "datetime", FixedDatetime)
+    monkeypatch.setattr(planning_snapshots, "date", FixedDate)
+    monkeypatch.setattr(export_route, "date", FixedDate)
+
+    uid, username, password = make_user(username="perf-export-workplace-pension-day", password="password123")
+    with app.app_context():
+        with get_connection() as conn:
+            conn.execute("UPDATE assumptions SET salary_day = 28 WHERE user_id = ?", (uid,))
+            conn.commit()
+        account_id = create_account(
+            {
+                **_account_payload(name="Workplace Pension", wrapper_type="Workplace Pension", value=3445.27, monthly=333.33),
+                "category": "Pension",
+                "contribution_method": "salary_sacrifice",
+                "pension_contribution_day": 19,
+            },
+            uid,
+        )
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 3031.02), ("2026-06", 3445.27)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    account = workbook["Workplace Pension (Monthly)"]
+    assert account["A5"].value == "Jun 2026"
+    assert account["C5"].value == 333.33
+    assert account["D5"].value == 80.92
+
+
 def test_performance_export_labels_cash_isa_with_cash_interest_and_not_global_growth(app, client, make_user):
     uid, username, password = make_user(username="perf-export-cash-rate", password="password123")
     with app.app_context():

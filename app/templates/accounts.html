@@ -392,8 +392,8 @@
               </label>
               <label>
                 <span>Pension contribution posting day</span>
-                <input type="number" name="pension_contribution_day" min="0" max="28" value="{{ selected.pension_contribution_day or 0 }}">
-                <small class="form-hint">Optional. Use if workplace pension invests later than your investment day (e.g. paid on the 28th, invested on the 7th). Set 0 to use the investment day from your scenario estimate assumptions.</small>
+                <input type="number" name="pension_contribution_day" min="0" max="31" value="{{ selected.pension_contribution_day or 0 }}">
+                <small class="form-hint">Optional. Use the day the pension contribution actually lands/invests (for example 19 for a workplace pension paid from the previous month's salary). Set 0 to use the global investment day from assumptions.</small>
               </label>
               {% endif %}
             </div>
