@@ -148,6 +148,7 @@ def fetch_monthly_performance_data(user_id):
                 amount = float(cr["amount"] or 0)
                 cash_flow_map[key] = cash_flow_map.get(key, 0.0) + amount
         rows = []
+        latest_month_key = months[-1]["month_key"] if months else None
         for month in months:
             month_key = month["month_key"]
             total_balance = 0.0
@@ -156,6 +157,7 @@ def fetch_monthly_performance_data(user_id):
             valued_account_ids = set()
             first_value_by_account = {}
             first_balance_by_account = {}
+            current_balance_by_account = {}
 
             for account in accounts:
                 snap = conn.execute(
@@ -209,6 +211,10 @@ def fetch_monthly_performance_data(user_id):
                         if has_cash_flow
                         else float(first_balance_by_account.get(aid, 0.0) or 0.0)
                     )
+                    continue
+
+                if has_cash_flow:
+                    total_contribution += float(cash_flow_map.get(cash_flow_key, 0.0) or 0.0)
                     continue
 
                 default_personal = float(account.get("monthly_contribution") or 0)
@@ -347,7 +353,10 @@ def fetch_monthly_performance_data_by_account(user_id):
                 adjusted = dict(r)
                 adjusted["monthly_contribution"] = personal
                 planned_contrib = float(effective_monthly_contribution(adjusted, assumptions) or 0)
-        contrib = planned_contrib + (0.0 if is_first_account_snapshot else cash_flow_total)
+        if has_cash_flow:
+            contrib = cash_flow_total
+        else:
+            contrib = planned_contrib
 
         out[aid]["rows"].append((month_key, float(r["balance"] or 0), float(contrib or 0)))
     return out

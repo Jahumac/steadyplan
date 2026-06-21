@@ -750,6 +750,27 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
 
     # ── Month-by-month breakdown table ────────────────────────────────────
     rows = []
+    first_month_is_actual_contribution = (
+        len(monthly_data) == 1
+        and abs(float(contribs[0] or 0)) > 0.005
+        and abs(float(contribs[0] or 0) - float(assumed_monthly or 0)) > 0.005
+    )
+    if first_month_is_actual_contribution:
+        closing = balances[0]
+        cf = contribs[0]
+        opening = max(closing - cf, 0.0)
+        gain = closing - opening - cf
+        denom = opening + 0.5 * cf
+        r = gain / denom if denom > 0 else 0.0
+        rows.append({
+            "month_key": display_labels[0],
+            "opening": round(opening, 2),
+            "contribution": round(cf, 2),
+            "market_gain": round(gain, 2),
+            "closing": round(closing, 2),
+            "return_pct": round(r * 100, 2),
+            "carried_forward_count": carried_counts[0] if carried_counts else 0,
+        })
     for i in range(1, len(monthly_data)):
         opening = balances[i - 1]
         closing = balances[i]
@@ -768,8 +789,12 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
     rows.reverse()   # most recent first
 
     # ── Totals for summary cards ──────────────────────────────────────────
-    total_contributed = sum(contribs[1:])   # exclude opening balance month
-    total_market_gain = balances[-1] - balances[0] - total_contributed
+    if first_month_is_actual_contribution:
+        total_contributed = round(float(contribs[0] or 0), 2)
+        total_market_gain = round(float(balances[0] or 0) - total_contributed, 2)
+    else:
+        total_contributed = sum(contribs[1:])   # exclude opening balance month
+        total_market_gain = balances[-1] - balances[0] - total_contributed
     vs_plan = balances[-1] - projected_values[-1] if projected_values else 0
 
     return {
