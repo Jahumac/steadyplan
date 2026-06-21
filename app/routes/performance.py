@@ -24,6 +24,7 @@ from app.models import (
     fetch_daily_snapshots,
     fetch_holding_totals_by_account,
     fetch_monthly_performance_data,
+    fetch_monthly_performance_data_by_account,
     fetch_monthly_review,
     fetch_monthly_review_items,
     fetch_tax_year_contributions,
@@ -65,6 +66,7 @@ def performance():
     monthly_contribution_total = None
     planned_monthly_avg = None
     performance_summary = None
+    account_reconciliation_rows = []
     contribution_breakdown_rows = []
 
     if has_data:
@@ -87,6 +89,24 @@ def performance():
             assumed_rate,
             monthly_contribution_total or 0,
         )
+        per_account_monthly_data = fetch_monthly_performance_data_by_account(uid)
+        for aid, payload in per_account_monthly_data.items():
+            rows = payload.get("rows") or []
+            if not rows:
+                continue
+            perf_acc = compute_performance_series(rows, assumed_rate, 0)
+            if not perf_acc:
+                continue
+            gain = float(perf_acc.get("total_market_gain") or 0)
+            account_reconciliation_rows.append({
+                "account_id": aid,
+                "account_name": payload.get("account_name") or "Account",
+                "imported_baseline": float(perf_acc.get("total_imported_baseline") or 0),
+                "contributed": float(perf_acc.get("total_contributed") or 0),
+                "gain": gain,
+                "current_value": float(perf_acc.get("current_value") or 0),
+            })
+        account_reconciliation_rows.sort(key=lambda r: -r["current_value"])
 
         # Per-account breakdown so the user can see exactly which accounts feed
         # into the plan total — and spot stale `monthly_contribution` values on
@@ -384,6 +404,7 @@ def performance():
         monthly_contribution_total=monthly_contribution_total,
         planned_monthly_avg=planned_monthly_avg,
         contribution_breakdown_rows=contribution_breakdown_rows,
+        account_reconciliation_rows=account_reconciliation_rows,
         performance_summary=performance_summary,
         account_perf=account_perf,
         account_breakdown=account_breakdown,

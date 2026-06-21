@@ -192,6 +192,43 @@
   {% endif %}
 </section>
 
+{% if account_reconciliation_rows %}
+<section class="card mb-1">
+  <div class="section-header mb-075">
+    <div>
+      <p class="eyebrow">Since tracking started</p>
+      <h3>Account reconciliation</h3>
+    </div>
+    <small class="text-muted">{{ account_reconciliation_rows | length }} accounts</small>
+  </div>
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Account</th>
+        <th class="num">Opening / Imported</th>
+        <th class="num">Contributed</th>
+        <th class="num">Gain / Interest</th>
+        <th class="num">Current value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in account_reconciliation_rows %}
+      <tr data-href="/accounts/{{ row.account_id }}#acctMonthlyChart">
+        <td>{{ row.account_name }}</td>
+        <td class="num">£{{ '{:,.0f}'.format(row.imported_baseline) }}</td>
+        <td class="num">£{{ '{:,.0f}'.format(row.contributed) }}</td>
+        <td class="num {% if row.gain >= 0 %}perf-positive{% else %}perf-negative{% endif %}">{% if row.gain >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(row.gain) }}</td>
+        <td class="num text-bold">£{{ '{:,.0f}'.format(row.current_value) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="helper-text mt-075">Shows how each account's current value is explained by opening/imported money, later contributions, and gain/interest.</p>
+</section>
+{% endif %}
+
 {# ── By Account ────────────────────────────────────────────────────── #}
 {% if account_breakdown %}
 <section class="card">
