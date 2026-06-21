@@ -124,6 +124,55 @@ def test_performance_export_uses_live_current_month_values_for_end_balances(app,
     assert "New SIPP (Monthly)" in workbook.sheetnames
 
 
+def test_performance_export_uses_cash_flow_events_for_monthly_attribution(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-cashflows", password="password123")
+    with app.app_context():
+        cash_id = create_account(_account_payload(name="Cash ISA", wrapper_type="Cash ISA", value=2600, monthly=1000), uid)
+        sipp_id = create_account(_account_payload(name="SIPP", wrapper_type="SIPP", value=1400, monthly=0), uid)
+        with get_connection() as conn:
+            for account_id, month_key, balance in [
+                (cash_id, "2026-05", 3000),
+                (cash_id, "2026-06", 2600),
+                (sipp_id, "2026-06", 1400),
+            ]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, counterparty_account_id, note, created_at)
+                VALUES (?, ?, '2026-06-15', -1400, 'transfer_out', ?, 'Moved to SIPP', '2026-06-15T00:00:00+00:00')
+                """,
+                (uid, cash_id, sipp_id),
+            )
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, counterparty_account_id, note, created_at)
+                VALUES (?, ?, '2026-06-15', 1400, 'deposit', ?, 'Transfer from Cash ISA', '2026-06-15T00:00:00+00:00')
+                """,
+                (uid, sipp_id, cash_id),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    summary = workbook["Summary"]
+    rows = {summary.cell(row=r, column=1).value: summary.cell(row=r, column=7).value for r in range(5, summary.max_row + 1)}
+    assert rows["Portfolio"] == 1000
+    assert rows["Cash ISA"] == -400
+    assert rows["SIPP"] == 0
+
+    portfolio = workbook["Portfolio (Monthly)"]
+    assert portfolio["C5"].value == 1000
+    assert portfolio["D5"].value == 0
+
+    cash = workbook["Cash ISA (Monthly)"]
+    assert cash["C5"].value == -400
+    assert cash["D5"].value == 0
+
+
 def test_performance_export_filters_to_requested_historical_window(app, client, make_user):
     uid, username, password = make_user(username="perf-export-window", password="password123")
     with app.app_context():
