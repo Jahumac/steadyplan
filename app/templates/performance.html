@@ -66,6 +66,19 @@
     {% endif %}
   </div>
   {% endif %}
+  {% if performance_summary %}
+  <div class="hero-strip mt-075">
+    {% call hero_stat('Opening / Imported') %}<strong>£{{ '{:,.0f}'.format(performance_summary.total_imported_baseline or 0) }}</strong>{% endcall %}
+    {% call hero_stat('Contributed') %}<strong>£{{ '{:,.0f}'.format(performance_summary.total_contributed or 0) }}</strong>{% endcall %}
+    {% set performance_gain = performance_summary.total_market_gain or 0 %}
+    {% call hero_stat('Gain / Interest') %}
+      <strong class="{% if performance_gain >= 0 %}perf-positive{% else %}perf-negative{% endif %}">
+        {% if performance_gain >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(performance_gain) }}
+      </strong>
+    {% endcall %}
+  </div>
+  <p class="helper-text mt-05">Opening/imported is money already present when tracking started. Contributions are later money into pots; gain/interest is what changed after those flows.</p>
+  {% endif %}
 </section>
 
 {% if not has_data %}

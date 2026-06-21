@@ -5,6 +5,7 @@ from flask_login import current_user, login_required
 
 from app.calculations import (
     _resolve_contribution_day,
+    compute_performance_series,
     contribution_breakdown,
     effective_monthly_contribution,
     review_ready_date,
@@ -22,6 +23,7 @@ from app.models import (
     fetch_cash_flow_events_for_account,
     fetch_daily_snapshots,
     fetch_holding_totals_by_account,
+    fetch_monthly_performance_data,
     fetch_monthly_review,
     fetch_monthly_review_items,
     fetch_tax_year_contributions,
@@ -62,6 +64,7 @@ def performance():
     current_value  = None
     monthly_contribution_total = None
     planned_monthly_avg = None
+    performance_summary = None
     contribution_breakdown_rows = []
 
     if has_data:
@@ -77,6 +80,12 @@ def performance():
         # months/weekends), and are only counted once their date has arrived.
         monthly_contribution_total = sum(
             effective_monthly_contribution(a, assumptions) for a in accounts
+        )
+        monthly_performance_data = fetch_monthly_performance_data(uid)
+        performance_summary = compute_performance_series(
+            monthly_performance_data,
+            assumed_rate,
+            monthly_contribution_total or 0,
         )
 
         # Per-account breakdown so the user can see exactly which accounts feed
@@ -375,6 +384,7 @@ def performance():
         monthly_contribution_total=monthly_contribution_total,
         planned_monthly_avg=planned_monthly_avg,
         contribution_breakdown_rows=contribution_breakdown_rows,
+        performance_summary=performance_summary,
         account_perf=account_perf,
         account_breakdown=account_breakdown,
         plan_value=plan_value,
