@@ -401,6 +401,28 @@ def test_performance_export_counts_regular_contribution_after_account_specific_p
     assert account["E6"].value == 80.92
 
 
+def test_performance_export_labels_unset_cash_isa_interest_rate_plainly(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-cash-rate-unset", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(name="Cash ISA", wrapper_type="Cash ISA", value=1597.51, monthly=0), uid)
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 1947.86), ("2026-06", 1597.51)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    account = workbook["Cash ISA (Monthly)"]
+    assert account["A2"].value == "Cash interest rate not set"
+    assert account["A2"].value != "Cash interest rate: 0.0%"
+    assert account["E4"].value == "Interest / Cash gain"
+
+
+
 def test_performance_export_labels_cash_isa_with_cash_interest_and_not_global_growth(app, client, make_user):
     uid, username, password = make_user(username="perf-export-cash-rate", password="password123")
     with app.app_context():

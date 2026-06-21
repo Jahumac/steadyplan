@@ -37,6 +37,86 @@ def _account_payload():
     }
 
 
+def test_cash_isa_edit_page_exposes_and_saves_cash_interest_rate(app, client, make_user):
+    uid, username, password = make_user(username="accounts-cash-interest-edit", password="password123")
+    with app.app_context():
+        payload = {
+            **_account_payload(),
+            "name": "Cash ISA",
+            "provider": "Trading 212",
+            "wrapper_type": "Cash ISA",
+            "category": "Cash",
+            "valuation_mode": "manual",
+            "growth_mode": "default",
+            "current_value": 1597.51,
+            "monthly_contribution": 0,
+            "cash_interest_rate": 0,
+        }
+        account_id = create_account(payload, uid)
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}?mode=edit")
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+
+    assert "Cash interest rate (%)" in html
+    assert 'name="cash_interest_rate"' in html
+    assert "Used by Performance and exports for cash-style accounts." in html
+    assert "Cash interest rate not set" not in html
+
+    post_payload = {
+        "form_name": "account",
+        "name": "Cash ISA",
+        "provider": "Trading 212",
+        "wrapper_type": "Cash ISA",
+        "category": "Cash",
+        "current_value": "1597.51",
+        "monthly_contribution": "0",
+        "pension_contribution_day": "0",
+        "valuation_mode": "manual",
+        "growth_mode": "default",
+        "growth_rate_override": "",
+        "cash_interest_rate": "3.6",
+        "interest_payment_day": "3",
+        "employer_contribution": "0",
+        "contribution_method": "standard",
+        "annual_fee_pct": "0",
+        "platform_fee_pct": "0",
+        "platform_fee_flat": "0",
+        "platform_fee_cap": "0",
+        "fund_fee_pct": "0",
+        "contribution_fee_pct": "0",
+        "owner": "Janusz",
+        "notes": "",
+    }
+    save_response = client.post(f"/accounts/{account_id}", data=post_payload, follow_redirects=False)
+    assert save_response.status_code == 302
+
+    with app.app_context():
+        row = get_connection().execute(
+            "SELECT cash_interest_rate, interest_payment_day FROM accounts WHERE id = ? AND user_id = ?",
+            (account_id, uid),
+        ).fetchone()
+        assert row is not None
+        assert round(float(row["cash_interest_rate"]), 3) == 0.036
+        assert int(row["interest_payment_day"]) == 3
+
+
+def test_cash_isa_create_wizard_exposes_cash_interest_fields(client, make_user):
+    _, username, password = make_user(username="accounts-cash-interest-create", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    response = client.get("/accounts/?mode=create")
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+
+    assert 'data-cash-rate-field' in html
+    assert 'name="cash_interest_rate"' in html
+    assert 'name="interest_payment_day"' in html
+    assert "Used by Performance and exports for Cash ISA or savings accounts." in html
+
+
+
 def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, client, make_user):
     uid, username, password = make_user(username="accounts-mobile", password="password123")
 
@@ -379,6 +459,43 @@ def test_accounts_create_wizard_uses_general_investment_account_label(app, clien
     assert 'How much goes into this account each month? This feeds into projections — an estimate is fine.' not in html
     assert 'How much goes into this account each month? This is used for projections — even an estimate helps.' not in html
     assert 'How much goes into this account each month? This is used for projections — even a rough number helps.' not in html
+    assert 'name="cash_interest_rate"' in html
+    assert 'Used by Performance and exports for Cash ISA or savings accounts.' in html
+    assert 'name="interest_payment_day" min="0" max="31" value="0"' in html
+
+
+def test_accounts_create_api_persists_cash_interest_fields(app, client, make_user):
+    uid, username, password = make_user(username="accounts-cash-interest-create", password="password123")
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.post(
+        "/accounts/api/create",
+        data={
+            "name": "My Cash ISA",
+            "provider": "",
+            "wrapper_type": "Cash ISA",
+            "category": "ISA",
+            "current_value": "1597.51",
+            "monthly_contribution": "0",
+            "valuation_mode": "manual",
+            "growth_mode": "custom",
+            "growth_rate_override": "",
+            "cash_interest_rate": "3.6",
+            "interest_payment_day": "3",
+            "owner": "Janusz",
+        },
+    )
+
+    assert response.status_code == 200
+    account_id = response.get_json()["account_id"]
+    with app.app_context():
+        with get_connection() as conn:
+            account = conn.execute(
+                "SELECT cash_interest_rate, interest_payment_day FROM accounts WHERE id = ? AND user_id = ?",
+                (account_id, uid),
+            ).fetchone()
+    assert round(account["cash_interest_rate"], 4) == 0.036
+    assert account["interest_payment_day"] == 3
 
 
 def test_accounts_page_uses_lifetime_isa_bonus_wording(app, client, make_user):

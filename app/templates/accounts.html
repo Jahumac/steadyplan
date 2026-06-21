@@ -344,7 +344,19 @@
                 <input type="number" step="0.1" name="growth_rate_override" value="{{ '{:.1f}'.format(selected.growth_rate_override * 100) if selected.growth_rate_override else '' }}" placeholder="e.g. 4.5">
                 <small class="form-hint">Enter as a percentage — e.g. 4.5 for 4.5%, 3.6 for 3.6%</small>
               </label>
-              {% if selected.growth_mode == 'custom' and ('cash isa' in _wt_lower or 'cash' in _cat_lower or 'savings' in _cat_lower) %}
+              {% set _is_cash_account = 'cash isa' in _wt_lower or 'cash' in _cat_lower or 'savings' in _cat_lower %}
+              {% if _is_cash_account %}
+              <label>
+                <span>Cash interest rate (%)</span>
+                <input type="number" step="0.1" name="cash_interest_rate" value="{{ '{:.1f}'.format((selected.cash_interest_rate or 0) * 100) if selected.cash_interest_rate else '' }}" placeholder="e.g. 3.6">
+                <small class="form-hint">Used by Performance and exports for cash-style accounts. Leave blank only if you do not want SteadyPlan to estimate cash interest.</small>
+              </label>
+              <label>
+                <span>Interest paid on day of month</span>
+                <input type="number" name="interest_payment_day" min="0" max="31" value="{{ selected.interest_payment_day or 0 }}">
+                <small class="form-hint">Day of the month when interest is credited to your account (e.g. 3 for the 3rd). Set 0 if unknown or not applicable.</small>
+              </label>
+              {% elif selected.growth_mode == 'custom' %}
               <label data-custom-rate-field {% if selected.growth_mode != 'custom' %}class="hidden"{% endif %}>
                 <span>Interest paid on day of month</span>
                 <input type="number" name="interest_payment_day" min="0" max="31" value="{{ selected.interest_payment_day or 0 }}">
