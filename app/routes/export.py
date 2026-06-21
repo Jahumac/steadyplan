@@ -1935,15 +1935,34 @@ def export_performance():
             return
 
         _header_row(ws_d, 4, ["Month", "Opening", "Opening / Imported", "Contributions", gain_label, "Closing", "Return"])
-        rows_chrono = list(reversed(perf["table_rows"]))
+        rows_chrono = [dict(r) for r in reversed(perf["table_rows"])]
+
+        def _round_money(value):
+            return round(float(value or 0), 2)
+
+        # The Summary uses rounded totals. If detail rows contain repeated values
+        # such as 333.333..., independently rounded monthly rows can otherwise
+        # add up to a visible penny less/more than Summary. Apply any tiny display
+        # remainder to the latest row so the exported workbook audits cleanly.
+        for row_key, total_key in [
+            ("imported_baseline", "total_imported_baseline"),
+            ("contribution", "total_contributed"),
+            ("market_gain", "total_market_gain"),
+        ]:
+            target = _round_money(perf.get(total_key))
+            displayed_total = _round_money(sum(_round_money(r.get(row_key)) for r in rows_chrono))
+            delta = _round_money(target - displayed_total)
+            if rows_chrono and abs(delta) >= 0.01:
+                rows_chrono[-1][row_key] = _round_money(_round_money(rows_chrono[-1].get(row_key)) + delta)
+
         for i, r in enumerate(rows_chrono, 5):
             _data_row(ws_d, i, [
                 r["month_key"],
-                float(r["opening"]),
-                float(r.get("imported_baseline") or 0),
-                float(r["contribution"]),
-                float(r["market_gain"]),
-                float(r["closing"]),
+                _round_money(r["opening"]),
+                _round_money(r.get("imported_baseline")),
+                _round_money(r["contribution"]),
+                _round_money(r["market_gain"]),
+                _round_money(r["closing"]),
                 float(r["return_pct"]),
             ], num_formats={2: GBP, 3: GBP, 4: GBP, 5: GBP, 6: GBP, 7: PCT})
 
