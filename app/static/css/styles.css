@@ -5838,6 +5838,21 @@ button.button-danger:focus {
   min-width: 0;
 }
 
+@media (min-width: 601px) and (max-width: 900px) {
+  .subnav-page.subnav-budget {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .subnav-page.subnav-budget a {
+    width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.15;
+  }
+}
+
 .subnav-history a,
 #history-period-tabs a {
   flex: 0 0 auto;

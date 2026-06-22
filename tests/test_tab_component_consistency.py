@@ -59,6 +59,16 @@ def test_tab_css_uses_one_consistent_mobile_safe_component():
     assert ".subnav-goals a:nth-child" not in css
 
 
+def test_budget_subnav_uses_tablet_safe_wrapping_before_mobile_switch():
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+
+    assert "@media (min-width: 601px) and (max-width: 900px) {" in css
+    assert ".subnav-page.subnav-budget {" in css
+    assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in css
+    assert "white-space: normal;" in css
+    assert "overflow-wrap: anywhere;" in css
+
+
 import pytest
 
 
