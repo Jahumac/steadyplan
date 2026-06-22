@@ -151,6 +151,74 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Retirement spending" in body
 
 
+def test_try_different_scenario_uses_server_plan_values_as_baseline(app, client, make_user):
+    import re
+
+    from app.calculations import projected_account_value, projection_start_month_key
+    from app.models import create_account, create_contribution_override, fetch_assumptions, update_assumptions
+    from tests.path_helpers import STATIC_ROOT
+
+    uid, username, password = make_user(username="proj-what-if-plan", password="password123")
+    with app.app_context():
+        assumptions = dict(fetch_assumptions(uid))
+        assumptions.update({
+            "annual_growth_rate": 0.07,
+            "retirement_age": 60,
+            "date_of_birth": "1990-06-15",
+            "retirement_date_mode": "birthday",
+            "salary_day": 25,
+        })
+        update_assumptions(assumptions, uid)
+        account = {
+            "name": "Lifetime ISA",
+            "provider": "Moneybox",
+            "wrapper_type": "Lifetime ISA",
+            "category": "ISA",
+            "tags": "ISA,Retirement,LISA",
+            "current_value": 280,
+            "monthly_contribution": 0,
+            "goal_value": None,
+            "valuation_mode": "manual",
+            "growth_mode": "default",
+            "growth_rate_override": None,
+            "owner": "Alex",
+            "notes": "",
+            "last_updated": "2026-06-01",
+            "fund_fee_pct": 0.28,
+        }
+        account_id = create_account(account, uid)
+        start_month = projection_start_month_key(assumptions)
+        override = {
+            "account_id": account_id,
+            "from_month": start_month,
+            "to_month": "9999-12",
+            "override_amount": 333,
+            "reason": "temporary_plan",
+        }
+        create_contribution_override(override, uid)
+        account.update({
+            "id": account_id,
+            "_contribution_overrides": [override],
+            "_projection_start_month": start_month,
+        })
+        expected_plan_value = projected_account_value(account, assumptions)
+
+    _login(client, username, password)
+    resp = client.get("/projections/")
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+
+    match = re.search(
+        r'data-plan-projected="([0-9.]+)"[^>]*data-wrapper="Lifetime ISA"', body
+    )
+    assert match is not None
+    assert float(match.group(1)) == round(expected_plan_value, 6)
+
+    js = STATIC_ROOT.joinpath("js/app.js").read_text()
+    assert "dataset.planProjected" in js
+    assert "var planVal = Number.isFinite(planProjected) ? planProjected" in js
+
+
 def test_projections_page_uses_lifetime_isa_bonus_wording(app, client, make_user):
     uid, username, password = make_user(username="proj-government-bonus", password="password123")
 
