@@ -90,6 +90,25 @@ def test_public_site_matches_current_broker_transfer_and_comparison_line_languag
     assert "read-only broker review" not in tour
 
 
+def test_public_site_uses_refreshed_demo_screenshots_for_current_surfaces():
+    homepage = _read("index.html")
+    tour = _read("tour.html")
+
+    for html in (homepage, tour):
+        assert "overview.png?v=20260622a" in html
+        assert "projections.png?v=20260622a" in html
+        assert "settings.png?v=20260622a" in html
+        assert "data-privacy.png?v=20260607b" not in html
+        assert "?v=20260607b" not in html
+
+    assert "SteadyPlan Settings safety and recovery panel (demo data)" in homepage
+    assert "SteadyPlan Settings safety and recovery panel (demo data)" in tour
+    assert "<span class=\"window-title\">Settings safety and recovery</span>" in homepage
+    assert "<span class=\"window-title\">Settings safety and recovery</span>" in tour
+    assert "SteadyPlan data ownership panel (demo data)" not in homepage
+    assert "SteadyPlan data ownership panel (demo data)" not in tour
+
+
 def test_docs_hub_and_backups_page_explain_automatic_pre_restore_backup():
     docs_index = _read("docs/index.html")
     backups = _read("docs/backups.html")
