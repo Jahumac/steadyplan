@@ -266,6 +266,7 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "Settings now frames assistant tokens as a default Pip setup." not in changelog
     assert "Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional broker snapshot review beta." in changelog
     assert "Public docs now use the same comparison-line, broker snapshot, and transfer-scope wording as the app." in changelog
+    assert "Public roadmap direction copy now uses not-guarantee wording instead of not-promise wording." in changelog
     assert "Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional read-only broker beta." not in changelog
 
 
@@ -328,6 +329,7 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     readme = _read_readme()
     voice_and_copy = _read_voice_and_copy()
     product_truth = _read_product_truth()
+    roadmap_page = _read("roadmap.html")
     changelog = _read_changelog()
 
     assert "Scenario estimates use your inputs and assumptions. They are not guarantees." in homepage
@@ -346,6 +348,8 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "what is entered data and what is forecast output" not in tour
     assert "<h3>Scenarios, not guarantees</h3>" in tour
     assert "<h3>Scenarios, not promises</h3>" not in tour
+    assert "This roadmap describes current direction, not guarantees. It shows what exists, what is improving next, and what is only being explored later." in roadmap_page
+    assert "This roadmap describes direction, not promises." not in roadmap_page
     assert "Scenario estimates are assumptions-based tools to explore trade-offs, not a guarantee of outcomes." in tour
     assert "SteadyPlan scenario estimates summary card (demo data)" in tour
     assert "<h3>Projections</h3>" not in tour
