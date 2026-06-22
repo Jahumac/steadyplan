@@ -88,7 +88,10 @@ Monthly income, expenses and savings overview with auto-save. Navigate between m
 Set savings targets and track progress. Goals can be linked to tagged accounts — e.g. tag your ISA accounts as "Retirement" and create a goal that tracks the combined balance.
 
 ### Retirement scenario estimates
-Year-by-year and month-by-month scenario estimates using saved balances, contribution settings, and growth assumptions. These scenario estimates are not guarantees. Respects Lifetime ISA contribution rules (stops at age 50). Export scenario estimates to Excel (.xlsx) with per-account breakdowns.
+Year-by-year and month-by-month scenario estimates using saved balances, contribution settings, and growth assumptions. Per-account future payments can be changed from a specific calendar month, so planned payment changes are not tied to rough age guesses. These scenario estimates are not guarantees. Respects Lifetime ISA contribution rules (stops at age 50). Export scenario estimates to Excel (.xlsx) with per-account breakdowns.
+
+### Account transfers
+Record provider/account moves between tracked accounts, including pension, ISA, Lifetime ISA, and other wrapper transfers. SteadyPlan records a linked internal transfer-out/transfer-in pair, keeps the old account history visible, and treats the movement as neutral for contributions and allowance use.
 
 ### Granular Fee Tracking
 Accounts support detailed fee modelling: platform fee (% with optional £ cap), flat annual platform fee (£), and fund fee / OCF (%). SteadyPlan combines these into an effective annual fee, subtracts it from your growth rate, and shows the lifetime cost of fees in both the app and Excel exports. All fee fields are optional — tucked behind an "Advanced: Fees" toggle so they don't clutter the setup for casual users. Scenario estimates show "with fees" vs "without fees" so you can see exactly what your broker and funds cost you over time.

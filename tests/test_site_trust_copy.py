@@ -244,6 +244,27 @@ def test_performance_docs_explain_imported_baseline_reconciliation():
     assert "Performance reporting separates opening/imported starting balances from later contributions and gain/interest" not in readme
     assert "dramatic early annualised percentages" not in readme
 
+def test_docs_explain_month_based_future_payments_and_neutral_account_transfers():
+    readme = _read_readme()
+    changelog = _read_changelog()
+    architecture = (REPO_ROOT / "ARCHITECTURE.md").read_text()
+
+    assert "Per-account future payments can be changed from a specific calendar month" in readme
+    assert "planned payment changes are not tied to rough age guesses" in readme
+    assert "### Account transfers" in readme
+    assert "Record provider/account moves between tracked accounts" in readme
+    assert "keeps the old account history visible" in readme
+    assert "neutral for contributions and allowance use" in readme
+    assert "Future payment schedules for scenario estimates now use calendar start months instead of rough age-based overrides." in changelog
+    assert "Account detail transfer workflow for moving value between tracked providers/accounts while preserving the old account history." in changelog
+    assert "Monthly Update completion refreshes month and daily snapshots from live account truth" in changelog
+    assert "Monthly Update completion refreshes all active accounts from live account truth" in architecture
+    assert "`account_transfer_out` and `account_transfer_in`" in architecture
+    assert "`allowance_effect = none`" in architecture
+    assert "Manual/Premium Bonds accounts snapshot only if their balance was updated in that review" not in architecture
+    assert "Change monthly payments by age" not in readme
+    assert "rough age-based overrides" not in readme
+
 
 
 def test_public_site_projection_copy_uses_scenario_estimate_language():
