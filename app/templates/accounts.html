@@ -799,6 +799,59 @@
         <p class="helper-text">No history yet. Update your account balance or run the price scheduler to start recording daily snapshots.</p>
         {% endif %}
 
+        <section class="panel panel-sm mt-1" id="accountTransfer">
+          <div class="section-header">
+            <div>
+              <p class="eyebrow">Account transfer</p>
+              <h3>Move this account to another provider/account</h3>
+            </div>
+          </div>
+          <p class="helper-text">Use this for pension, ISA, Lifetime ISA, or provider moves. It records an internal transfer pair, keeps the old account history, and does not count the movement as a new contribution or allowance use.</p>
+
+          <form method="post" action="/accounts/{{ selected.id }}/transfers/add" class="settings-form mt-075">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-grid">
+              <label>
+                <span>Transfer date</span>
+                <input type="date" name="transfer_date" value="{{ (now_date.isoformat() if now_date is defined else '') }}" required>
+              </label>
+              <label>
+                <span>Amount (£)</span>
+                <input type="number" name="transfer_amount" step="0.01" min="0" placeholder="0.00" required>
+              </label>
+              <label>
+                <span>To account</span>
+                <select name="to_account_id" required>
+                  <option value="">Choose destination…</option>
+                  {% for a in accounts %}
+                    {% if a.id != selected.id %}
+                      <option value="{{ a.id }}">{{ a.name }}{% if a.wrapper_type %} · {{ a.wrapper_type }}{% endif %}</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                <span>Transfer scope</span>
+                <select name="transfer_scope">
+                  <option value="full" selected>Full transfer — set this account to £0 and stop future payments</option>
+                  <option value="partial">Partial transfer — reduce this account by the amount</option>
+                </select>
+              </label>
+              <label class="form-full-col checkbox-label">
+                <input type="checkbox" name="update_balances" value="1" checked>
+                <span>Update current balances and write transfer-month snapshots</span>
+              </label>
+            </div>
+            <label class="mt-05">
+              <span>Note (optional)</span>
+              <input type="text" name="transfer_note" placeholder="e.g. InvestEngine to Trading 212 SIPP transfer reference">
+            </label>
+            <div class="badge-row mt-075">
+              <button type="submit">Record account transfer</button>
+            </div>
+          </form>
+        </section>
+
         <section class="panel panel-sm mt-1">
           <div class="section-header">
             <div>
