@@ -1,3 +1,4 @@
+import app.routes.holdings as holdings_routes
 from app.models import add_holding_catalogue_item, get_connection
 
 
@@ -82,3 +83,35 @@ def test_holdings_list_uses_plain_instrument_and_day_change_labels(client, make_
     assert "Day change" in html
     assert "My Instruments" not in html
     assert "Day %" not in html
+
+
+def test_holding_history_uses_comparison_line_copy_for_lagging_fund(client, make_user, monkeypatch):
+    uid, username, password = make_user(username="holding-comparison-copy", password="password123")
+    with client.application.app_context():
+        catalogue_id = add_holding_catalogue_item(
+            {
+                "holding_name": "Example Global Fund",
+                "ticker": "EXGF",
+                "asset_type": "Fund",
+                "bucket": "Global Equity",
+                "notes": "",
+            },
+            uid,
+        )
+
+    monkeypatch.setattr(
+        holdings_routes,
+        "fetch_history",
+        lambda ticker, period=None: [
+            {"date": "2025-06-22", "price": 100.0},
+            {"date": "2026-06-22", "price": 99.0},
+        ],
+    )
+
+    _login(client, username, password)
+    response = client.get(f"/holdings/{catalogue_id}?period=1y")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "behind</strong> the comparison line over this period" in html
+    assert "behind</strong> the benchmark over this period" not in html
