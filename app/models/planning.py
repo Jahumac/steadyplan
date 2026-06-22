@@ -44,6 +44,7 @@ from .planning_allowances import (
     fetch_isa_allowance_cash_flow_events,
     fetch_pension_overrides_for_tax_year,
     add_cash_flow_event,
+    add_account_transfer_events,
     fetch_cash_flow_events_for_account,
     delete_cash_flow_event,
     create_contribution_override,

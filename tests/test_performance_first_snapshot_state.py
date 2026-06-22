@@ -107,6 +107,160 @@ def test_performance_page_shows_imported_baseline_reconciliation(client, make_us
     assert "Contributed / Initial funding" not in body
 
 
+def test_performance_page_renders_account_transfer_form(client, make_user):
+    uid, username, password = make_user(username="perf-transfer-form", password="password123")
+    with client.application.app_context():
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
+                VALUES (?, 'InvestEngine Pension', 'SIPP', 12000, 0, 1)
+                """,
+                (uid,),
+            )
+            conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
+                VALUES (?, 'Trading 212 SIPP', 'SIPP', 0, 0, 1)
+                """,
+                (uid,),
+            )
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/performance/")
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+
+    assert "Record an account transfer" in body
+    assert "Use this when money moves from one tracked account to another" in body
+    assert "From account" in body
+    assert "To account" in body
+    assert "Transfer date" in body
+    assert "No new contribution or allowance use is recorded." in body
+    assert "Record transfer" in body
+
+
+def test_performance_account_transfer_records_linked_neutral_cash_flows(client, make_user):
+    uid, username, password = make_user(username="perf-transfer-submit", password="password123")
+    with client.application.app_context():
+        with get_connection() as conn:
+            from_account = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
+                VALUES (?, 'InvestEngine Pension', 'SIPP', 0, 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            to_account = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
+                VALUES (?, 'Trading 212 SIPP', 'SIPP', 12000, 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-05-01', ?, 12000, '2026-05')",
+                (from_account,),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-06-01', ?, 0, '2026-06')",
+                (from_account,),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-06-01', ?, 12000, '2026-06')",
+                (to_account,),
+            )
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.post(
+        "/performance/account-transfers",
+        data={
+            "from_account_id": str(from_account),
+            "to_account_id": str(to_account),
+            "event_date": "2026-06-15",
+            "amount": "12000",
+            "note": "Pension transfer to Trading 212",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Recorded transfer £12,000.00 from InvestEngine Pension to Trading 212 SIPP." in body
+    assert "Pension transfer to Trading 212" in body
+
+    with client.application.app_context():
+        from app.models import fetch_monthly_performance_data
+
+        with get_connection() as conn:
+            events = conn.execute(
+                """
+                SELECT account_id, amount, kind, counterparty_account_id, note, allowance_effect
+                FROM cash_flow_events
+                WHERE user_id = ?
+                ORDER BY amount ASC
+                """,
+                (uid,),
+            ).fetchall()
+            from_current = conn.execute("SELECT current_value FROM accounts WHERE id = ?", (from_account,)).fetchone()["current_value"]
+            to_current = conn.execute("SELECT current_value FROM accounts WHERE id = ?", (to_account,)).fetchone()["current_value"]
+        perf_rows = fetch_monthly_performance_data(uid)
+
+    assert len(events) == 2
+    assert events[0]["account_id"] == from_account
+    assert events[0]["amount"] == -12000
+    assert events[0]["kind"] == "transfer_out"
+    assert events[0]["counterparty_account_id"] == to_account
+    assert events[0]["allowance_effect"] == "transfer_neutral"
+    assert events[1]["account_id"] == to_account
+    assert events[1]["amount"] == 12000
+    assert events[1]["kind"] == "transfer_in"
+    assert events[1]["counterparty_account_id"] == from_account
+    assert events[1]["allowance_effect"] == "transfer_neutral"
+    assert events[1]["note"] == "Pension transfer to Trading 212"
+    assert from_current == 0
+    assert to_current == 12000
+    june = next(row for row in perf_rows if row[0] == "2026-06")
+    assert june[1] == 12000
+    assert june[2] == 0
+
+
+def test_performance_account_transfer_rejects_same_account(client, make_user):
+    uid, username, password = make_user(username="perf-transfer-same-account", password="password123")
+    with client.application.app_context():
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
+                VALUES (?, 'Trading 212 SIPP', 'SIPP', 12000, 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.post(
+        "/performance/account-transfers",
+        data={
+            "from_account_id": str(account_id),
+            "to_account_id": str(account_id),
+            "event_date": "2026-06-15",
+            "amount": "12000",
+            "note": "Impossible transfer",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "Choose two different accounts for the transfer." in body
+
+    with client.application.app_context():
+        with get_connection() as conn:
+            event_count = conn.execute("SELECT COUNT(*) AS count FROM cash_flow_events WHERE user_id = ?", (uid,)).fetchone()["count"]
+    assert event_count == 0
+
+
 def test_performance_page_renders_historical_movement_form(client, make_user):
     uid, username, password = make_user(username="perf-manual-event-form", password="password123")
     today = date.today()

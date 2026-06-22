@@ -16,6 +16,7 @@ from app.calculations import (
 )
 from app.models import (
     add_cash_flow_event,
+    add_account_transfer_events,
     delete_cash_flow_event,
     fetch_all_accounts,
     fetch_all_active_overrides,
@@ -69,17 +70,22 @@ def _recent_performance_event_rows(accounts, user_id, limit=8):
     rows = []
     for account_id, account_name in account_names.items():
         for event in fetch_cash_flow_events_for_account(account_id, user_id, limit=50):
-            if (event.get("allowance_effect") or "none") != "performance_only":
+            effect = (event.get("allowance_effect") or "none")
+            if effect not in {"performance_only", "transfer_neutral"}:
                 continue
             amount = float(event.get("amount") or 0)
+            counterparty_id = event.get("counterparty_account_id")
+            counterparty_name = account_names.get(int(counterparty_id)) if counterparty_id else None
             rows.append(
                 {
                     "id": event["id"],
                     "account_name": account_name,
+                    "counterparty_name": counterparty_name,
                     "event_date": event.get("event_date") or "",
                     "amount": amount,
                     "kind": event.get("kind") or "movement",
                     "note": event.get("note") or "",
+                    "allowance_effect": effect,
                     "signed_label": f"{'+' if amount >= 0 else '−'}£{abs(amount):,.2f}",
                 }
             )
@@ -172,6 +178,59 @@ def delete_performance_cash_flow_event(event_id):
         flash("Removed that Performance movement. Account balances and snapshots were not changed.", "success")
     else:
         flash("That Performance movement was not found or has already been removed.", "error")
+    return redirect(url_for("performance.performance"))
+
+
+@performance_bp.route("/account-transfers", methods=["POST"])
+@login_required
+def record_account_transfer():
+    uid = current_user.id
+    accounts = fetch_all_accounts(uid)
+    account_map = {int(a["id"]): a for a in accounts}
+    try:
+        from_account_id = int(request.form.get("from_account_id") or 0)
+        to_account_id = int(request.form.get("to_account_id") or 0)
+    except (TypeError, ValueError):
+        from_account_id = 0
+        to_account_id = 0
+
+    if from_account_id not in account_map or to_account_id not in account_map:
+        flash("Choose two of your accounts for the transfer.", "error")
+        return redirect(url_for("performance.performance"))
+    if from_account_id == to_account_id:
+        flash("Choose two different accounts for the transfer.", "error")
+        return redirect(url_for("performance.performance"))
+
+    raw_date = (request.form.get("event_date") or "").strip()
+    try:
+        event_date = datetime.strptime(raw_date, "%Y-%m-%d").date().isoformat()
+    except ValueError:
+        flash("Enter the transfer date as YYYY-MM-DD.", "error")
+        return redirect(url_for("performance.performance"))
+
+    amount = _parse_money(request.form.get("amount"), 0.0) or 0.0
+    if amount < 0.005:
+        flash("Enter an amount for the account transfer.", "error")
+        return redirect(url_for("performance.performance"))
+
+    note = (request.form.get("note") or "Account transfer").strip()
+    event_ids = add_account_transfer_events(
+        {
+            "from_account_id": from_account_id,
+            "to_account_id": to_account_id,
+            "event_date": event_date,
+            "amount": amount,
+            "note": note,
+        },
+        uid,
+    )
+    if not event_ids:
+        flash("Could not record that account transfer.", "error")
+        return redirect(url_for("performance.performance"))
+
+    from_name = account_map[from_account_id]["name"]
+    to_name = account_map[to_account_id]["name"]
+    flash(f"Recorded transfer £{abs(amount):,.2f} from {from_name} to {to_name}.", "success")
     return redirect(url_for("performance.performance"))
 
 

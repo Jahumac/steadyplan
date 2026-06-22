@@ -105,6 +105,55 @@
   {% endif %}
 </section>
 
+{% if performance_event_accounts and performance_event_accounts|length >= 2 %}
+<section class="card mb-1" id="performance-account-transfer">
+  <div class="section-header mb-075">
+    <div>
+      <p class="eyebrow">Transfers</p>
+      <h3>Record an account transfer</h3>
+      <p class="helper-text m-0">Use this when money moves from one tracked account to another, such as a pension, ISA, or Lifetime ISA provider transfer. No new contribution or allowance use is recorded.</p>
+    </div>
+  </div>
+  <form method="post" action="{{ url_for('performance.record_account_transfer') }}" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-grid">
+      <label>
+        <span>From account</span>
+        <select name="from_account_id" required>
+          {% for account in performance_event_accounts %}
+          <option value="{{ account.id }}">{{ account.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        <span>To account</span>
+        <select name="to_account_id" required>
+          {% for account in performance_event_accounts %}
+          <option value="{{ account.id }}">{{ account.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        <span>Transfer date</span>
+        <input type="date" name="event_date" required>
+      </label>
+      <label>
+        <span>Amount</span>
+        <input type="number" name="amount" min="0.01" step="0.01" inputmode="decimal" placeholder="12000.00" required>
+      </label>
+      <label class="form-full-col">
+        <span>Note</span>
+        <input type="text" name="note" placeholder="Pension transfer to Trading 212">
+      </label>
+    </div>
+    <div class="badge-row mt-075">
+      <button type="submit">Record transfer</button>
+    </div>
+  </form>
+  <p class="helper-text mt-05">This creates matching transfer-out and transfer-in records for Performance. It does not edit account balances or delete old history.</p>
+</section>
+{% endif %}
+
 {% if performance_event_accounts %}
 <section class="card mb-1" id="performance-cash-flow-event">
   <div class="section-header mb-075">
@@ -185,14 +234,18 @@
         <tr>
           <td>{{ event.event_date }}</td>
           <td>{{ event.account_name }}</td>
-          <td>{{ event.kind | replace('_', ' ') | title }}</td>
+          <td>{{ event.kind | replace('_', ' ') | title }}{% if event.counterparty_name %}<div class="helper-text m-0">{{ event.counterparty_name }}</div>{% endif %}</td>
           <td class="num {% if event.amount >= 0 %}perf-positive{% else %}perf-negative{% endif %}">{{ event.signed_label }}</td>
           <td>{{ event.note or '—' }}</td>
           <td class="num">
+            {% if event.allowance_effect == 'performance_only' %}
             <form method="post" action="{{ url_for('performance.delete_performance_cash_flow_event', event_id=event.id) }}" class="form-reset">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="badge badge-meta" data-confirm="This removes the Performance movement only. Account balances and snapshots are not changed." data-confirm-title="Remove this Performance movement?" data-confirm-ok="Remove movement" data-confirm-cancel="Keep it">Remove</button>
             </form>
+            {% else %}
+            <span class="helper-text">Linked transfer</span>
+            {% endif %}
           </td>
         </tr>
         {% endfor %}

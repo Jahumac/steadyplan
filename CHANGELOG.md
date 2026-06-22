@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Account-to-account transfer recording on Performance, creating linked neutral transfer-out/transfer-in events for pension, ISA, LISA, and other tracked account moves without counting them as new contributions or allowance use.
 - Public roadmap page and a manual light/dark toggle on the public website.
 - Scoped assistant access in Settings with UI-managed tokens, permission labels, and recent write activity.
 
