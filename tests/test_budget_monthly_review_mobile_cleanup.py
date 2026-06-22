@@ -66,6 +66,9 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert ".contribution-check-toggle .helper-text {" in css
     assert ".contribution-check-account p {" in css
     assert ".contribution-check-side .badge {" in css
+    assert "@media (min-width: 601px) and (max-width: 1024px)" in css
+    assert ".subnav-page.subnav-budget {\n    display: grid;\n    grid-template-columns: repeat(3, minmax(0, 1fr));" in css
+    assert ".subnav-page.subnav-budget a {\n    white-space: normal;" in css
     assert "@media (max-width: 768px)" in css
     assert "grid-template-columns: minmax(0, 1fr);" in css
     assert "padding-left: 1.7rem;" in css

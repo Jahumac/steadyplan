@@ -5844,6 +5844,21 @@ button.button-danger:focus {
   scroll-snap-align: start;
 }
 
+@media (min-width: 601px) and (max-width: 1024px) {
+  .subnav-page.subnav-budget {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  .subnav-page.subnav-budget a {
+    white-space: normal;
+    min-height: 2.75rem;
+    padding-inline: 0.75rem;
+    line-height: 1.15;
+  }
+}
+
 @media (max-width: 600px) {
   .subnav-mobile-family {
     display: block;
