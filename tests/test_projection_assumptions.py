@@ -120,15 +120,18 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert body.count("Try a different scenario") == 3
     assert body.count('<p class="eyebrow">Try changes</p>') == 2
     assert "Scenario planner" not in body
-    assert body.count("Monthly payments by account") == 2
+    assert body.count("Starting monthly payments by account") == 2
+    assert "Monthly payments by account" not in body
     assert body.count("Future estimate total") == 2
     assert body.count("Difference from your plan") == 2
-    assert body.count("Total monthly payments") == 2
+    assert body.count("<span>Starting monthly payments</span>") == 2
+    assert "Total monthly payments" not in body
     assert "Scenario total" not in body
     assert "vs. your plan" not in body
     assert "Monthly payments in per account" not in body
     assert "Monthly total" not in body
-    assert "Try different retirement ages, growth rates, or monthly payments to see how the future estimate changes. Nothing here is saved unless you save changes elsewhere." in body
+    assert "Try different retirement ages, growth rates, or starting monthly payments to see how the future estimate changes. Saved month-by-month payment schedules stay in your plan baseline; changes here are temporary and not saved." in body
+    assert "Try different retirement ages, growth rates, or monthly payments to see how the future estimate changes. Nothing here is saved unless you save changes elsewhere." not in body
     assert body.count("Add rows like “from September 2030 → £600 a month”. This saves to your plan and updates the future estimate.") == 2
     assert "Add rows like “from age 50 → £600 a month”. This saves to your plan and updates the future estimate." not in body
     assert "£600/mo" not in body

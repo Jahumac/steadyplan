@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Future payment schedules for scenario estimates now use calendar start months instead of rough age-based overrides.
+- Try a different scenario now clarifies that its payment fields are starting what-if values while saved month-by-month schedules remain in the plan baseline.
 - Monthly Update completion refreshes month and daily snapshots from live account truth so Performance reconciles after a completed review.
 - Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional broker snapshot review beta.
 - Settings now frames assistant tokens as Personal Pip access for users who run their own Pip setup.
