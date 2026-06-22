@@ -347,7 +347,7 @@ data/
 
 ![Goals](Screenshots/demo/goals_desktop.png)
 
-**Scenario estimates** — retirement scenario estimates with fee impact and scenario planner
+**Scenario estimates** — retirement scenario estimates with fee impact and Try a different scenario controls
 
 ![Scenario estimates](Screenshots/demo/projections_desktop.png)
 
