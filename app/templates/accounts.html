@@ -859,7 +859,7 @@
               <h3>Transfers &amp; withdrawals</h3>
             </div>
           </div>
-          <p class="helper-text">Track deposits, withdrawals and transfers. For Cash ISA, this also stops the comparison line treating transfers out as “being behind”.</p>
+          <p class="helper-text">Track deposits, withdrawals and one-off cash movements. For full provider/account moves, use the Account transfer panel above so both sides stay linked and allowance-neutral.</p>
 
           <form method="post" action="/accounts/{{ selected.id }}/cash-events/add" class="settings-form mt-075">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -871,7 +871,7 @@
               <label>
                 <span>Type</span>
                 <select name="cash_event_kind">
-                  <option value="transfer_out">Transfer out</option>
+                  <option value="transfer_out">Cash transfer out</option>
                   <option value="deposit">Deposit</option>
                   <option value="withdrawal">Withdrawal</option>
                 </select>
@@ -916,6 +916,15 @@
           </form>
 
           {% if cash_flow_events %}
+          {% set cash_event_kind_labels = {
+            'account_transfer_out': 'Account transfer out',
+            'account_transfer_in': 'Account transfer in',
+            'transfer_out': 'Cash transfer out',
+            'transfer_in': 'Cash transfer in',
+            'deposit': 'Deposit',
+            'withdrawal': 'Withdrawal',
+            'performance_only': 'Performance-only adjustment'
+          } %}
           <div class="table-scroll mt-1">
             <table class="data-table">
               <thead>
@@ -932,7 +941,7 @@
                 {% for e in cash_flow_events[:10] %}
                 <tr>
                   <td>{{ (e.event_date or '')[:10] }}</td>
-                  <td>{{ e.kind }}</td>
+                  <td>{{ cash_event_kind_labels.get(e.kind, (e.kind or 'Cash movement') | replace('_', ' ') | title) }}</td>
                   <td class="num">
                     {% set amt = (e.amount or 0) | float %}
                     <span class="{% if amt < 0 %}perf-negative{% else %}perf-positive{% endif %}">

@@ -51,6 +51,11 @@ def test_provider_transfer_moves_value_without_archiving_source_history(app, cli
     body = page.data.decode("utf-8", errors="ignore")
     assert "Move this account to another provider/account" in body
     assert "does not count the movement as a new contribution or allowance use" in body
+    assert "Track deposits, withdrawals and one-off cash movements" in body
+    assert "use the Account transfer panel above so both sides stay linked and allowance-neutral" in body
+    assert "Cash transfer out" in body
+    assert "Track deposits, withdrawals and transfers" not in body
+    assert ">Transfer out<" not in body
     assert 'action="/accounts/{}/transfers/add"'.format(source_id) in body
 
     resp = client.post(
@@ -98,6 +103,16 @@ def test_provider_transfer_moves_value_without_archiving_source_history(app, cli
             (source_id, 0.0),
             (dest_id, 15500.0),
         ]
+
+    source_page = client.get(f"/accounts/{source_id}")
+    source_body = source_page.data.decode("utf-8", errors="ignore")
+    assert "Account transfer out" in source_body
+    assert "account_transfer_out" not in source_body
+
+    dest_page = client.get(f"/accounts/{dest_id}")
+    dest_body = dest_page.data.decode("utf-8", errors="ignore")
+    assert "Account transfer in" in dest_body
+    assert "account_transfer_in" not in dest_body
 
 
 def test_provider_transfer_is_wrapper_neutral_for_stocks_isa_and_lisa(app, client, make_user):

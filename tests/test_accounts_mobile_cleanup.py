@@ -227,7 +227,8 @@ def test_accounts_page_uses_plan_line_copy_for_account_comparison(app, client, m
     assert "monthly update due date" not in html
     assert "salary day shifted for weekends" not in html
     assert "Use it as a planning guide, not a guarantee." not in html
-    assert "comparison line treating transfers out as “being behind”" in html
+    assert "Track deposits, withdrawals and one-off cash movements" in html
+    assert "comparison line treating transfers out as “being behind”" not in html
     assert "Actual vs plan for this account." not in html
     assert "Plan line @7%" not in html
     assert "assumptions-based plan line for this account" not in html
