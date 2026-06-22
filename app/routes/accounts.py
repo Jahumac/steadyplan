@@ -839,6 +839,144 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     )
 
 
+def _append_account_note(existing, line):
+    existing = (existing or "").strip()
+    line = (line or "").strip()
+    if not line:
+        return existing
+    if line in existing:
+        return existing
+    return f"{existing}\n{line}".strip() if existing else line
+
+
+def _update_account_transfer_fields(account, user_id, *, current_value=None, monthly_contribution=None, note_line=None, last_updated=None):
+    payload = dict(account)
+    if current_value is not None:
+        payload["current_value"] = round(float(current_value or 0), 2)
+    if monthly_contribution is not None:
+        payload["monthly_contribution"] = round(float(monthly_contribution or 0), 2)
+    if note_line:
+        payload["notes"] = _append_account_note(payload.get("notes"), note_line)
+    if last_updated:
+        payload["last_updated"] = last_updated
+    update_account(payload, user_id)
+
+
+@accounts_bp.route("/<int:account_id>/transfers/add", methods=["POST"])
+@login_required
+def add_account_transfer(account_id):
+    uid = current_user.id
+    source = fetch_account(account_id, uid)
+    if not source:
+        flash("Source account not found.", "error")
+        return redirect(url_for("accounts.accounts"))
+
+    try:
+        dest_id = int(request.form.get("to_account_id") or 0)
+    except (TypeError, ValueError):
+        dest_id = 0
+    dest = fetch_account(dest_id, uid) if dest_id else None
+    if not dest or dest_id == int(account_id):
+        flash("Choose a different destination account for the transfer.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id) + "#accountTransfer")
+
+    raw_date = (request.form.get("transfer_date") or "").strip()
+    try:
+        transfer_date = datetime.strptime(raw_date, "%Y-%m-%d").date().isoformat()
+    except ValueError:
+        flash("Enter the transfer date as YYYY-MM-DD.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id) + "#accountTransfer")
+
+    try:
+        amount = abs(float(request.form.get("transfer_amount") or 0))
+    except (TypeError, ValueError):
+        amount = 0.0
+    if amount <= 0:
+        flash("Enter a positive transfer amount.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id) + "#accountTransfer")
+
+    full_transfer = (request.form.get("transfer_scope") or "full") == "full"
+    update_balances = request.form.get("update_balances") == "1"
+    note = (request.form.get("transfer_note") or "").strip()
+    source_name = (source.get("name") or "Source account").strip()
+    dest_name = (dest.get("name") or "Destination account").strip()
+    base_note = note or f"Provider/account transfer from {source_name} to {dest_name}"
+
+    source_event_id = add_cash_flow_event(
+        {
+            "account_id": int(account_id),
+            "event_date": transfer_date,
+            "amount": -amount,
+            "kind": "account_transfer_out",
+            "counterparty_account_id": dest_id,
+            "note": base_note if note else f"Transfer to {dest_name}",
+            "allowance_effect": "none",
+        },
+        uid,
+    )
+    dest_event_id = add_cash_flow_event(
+        {
+            "account_id": dest_id,
+            "event_date": transfer_date,
+            "amount": amount,
+            "kind": "account_transfer_in",
+            "counterparty_account_id": int(account_id),
+            "note": base_note if note else f"Transfer from {source_name}",
+            "allowance_effect": "none",
+        },
+        uid,
+    )
+    if not source_event_id or not dest_event_id:
+        flash("Could not save the account transfer.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id) + "#accountTransfer")
+
+    source_current = to_float(source.get("current_value"), 0.0)
+    dest_current = to_float(dest.get("current_value"), 0.0)
+    if full_transfer:
+        source_new = 0.0
+    else:
+        source_new = max(source_current - amount, 0.0)
+    dest_new = dest_current + amount
+
+    if update_balances:
+        _update_account_transfer_fields(
+            source,
+            uid,
+            current_value=source_new,
+            monthly_contribution=0.0 if full_transfer else None,
+            note_line=f"Transferred to {dest_name} on {transfer_date}.",
+            last_updated=transfer_date,
+        )
+        _update_account_transfer_fields(
+            dest,
+            uid,
+            current_value=dest_new,
+            note_line=f"Transfer received from {source_name} on {transfer_date}.",
+            last_updated=transfer_date,
+        )
+        month_key = transfer_date[:7]
+        upsert_monthly_snapshot(int(account_id), month_key, source_new)
+        upsert_monthly_snapshot(dest_id, month_key, dest_new)
+        save_account_daily_snapshots(uid, [(int(account_id), source_new), (dest_id, dest_new)], transfer_date)
+    else:
+        _update_account_transfer_fields(
+            source,
+            uid,
+            monthly_contribution=0.0 if full_transfer else None,
+            note_line=f"Transferred to {dest_name} on {transfer_date}. Balances were not changed automatically.",
+            last_updated=transfer_date,
+        )
+        _update_account_transfer_fields(
+            dest,
+            uid,
+            note_line=f"Transfer received from {source_name} on {transfer_date}. Balances were not changed automatically.",
+            last_updated=transfer_date,
+        )
+
+    flash("Account transfer recorded. History is preserved and the movement is marked as internal, not a new contribution.", "success")
+    return redirect(url_for("accounts.account_detail", account_id=dest_id) + "#acctMonthlyChart")
+
+
 @accounts_bp.route("/<int:account_id>/cash-events/add", methods=["POST"])
 @login_required
 def add_cash_event(account_id):
