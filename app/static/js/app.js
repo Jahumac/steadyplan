@@ -2263,9 +2263,7 @@
           if (m >= 12) { y += 1; m = 0; }
           return m === 0 ? (y + 'y') : (y + 'y ' + m + 'm');
         }
-        var head = mode === 'monthly'
-          ? '<tr><th>Month</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Future estimate</th></tr>'
-          : '<tr><th>Point</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Future estimate</th></tr>';
+        var head = '<tr><th>Month</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Future estimate</th></tr>';
         var rows = points.map(function(p) {
           var label = (p && p.label) ? String(p.label) : '';
           var age = fmtAge(p && p.age);
