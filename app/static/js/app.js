@@ -2310,11 +2310,11 @@
         }
       }
 
-      function buildScheduleRow(startAge, amount) {
+      function buildScheduleRow(startMonth, amount) {
         var row = document.createElement('div');
         row.className = 'proj-schedule-row';
         row.innerHTML =
-          '<label><span>Start age</span><input type="number" min="0" step="1" data-age value="' + (startAge !== null && startAge !== undefined ? startAge : '') + '"></label>' +
+          '<label><span>Start month</span><input type="month" data-month value="' + (startMonth !== null && startMonth !== undefined ? startMonth : '') + '"></label>' +
           '<label><span>£ / month</span><input type="number" min="0" step="10" data-amount value="' + (amount !== null && amount !== undefined ? amount : '') + '"></label>' +
           '<button type="button" class="badge badge-meta" data-remove>Remove</button>';
         var rm = row.querySelector('[data-remove]');
@@ -2332,14 +2332,10 @@
           var resp = await fetch('/projections/api/account-schedule?account_id=' + encodeURIComponent(details.dataset.accountId));
           var data = await resp.json();
           if (!resp.ok || !data.ok) throw new Error((data && data.error) || 'Request failed');
-          if (!data.has_dob) {
-            if (statusEl) statusEl.textContent = 'Add your date of birth in Settings to use age-based schedules.';
-            return;
-          }
           (data.rules || []).forEach(function(r) {
-            var age = r && r.start_age !== null && r.start_age !== undefined ? Math.round(parseFloat(r.start_age)) : '';
+            var month = r && r.start_month ? String(r.start_month) : '';
             var amt = r && r.amount !== null && r.amount !== undefined ? parseFloat(r.amount) : '';
-            rowsEl.appendChild(buildScheduleRow(age, amt));
+            rowsEl.appendChild(buildScheduleRow(month, amt));
           });
           if (!rowsEl.children.length) {
             rowsEl.appendChild(buildScheduleRow('', ''));
@@ -2355,13 +2351,13 @@
         if (!rowsEl) return;
         var rules = [];
         rowsEl.querySelectorAll('.proj-schedule-row').forEach(function(row) {
-          var ageEl = row.querySelector('input[data-age]');
+          var monthEl = row.querySelector('input[data-month]');
           var amtEl = row.querySelector('input[data-amount]');
-          var age = ageEl ? parseFloat(ageEl.value) : NaN;
+          var month = monthEl ? String(monthEl.value || '') : '';
           var amt = amtEl ? parseFloat(amtEl.value) : NaN;
-          if (!isFinite(age) || age <= 0) return;
+          if (!/^\d{4}-\d{2}$/.test(month)) return;
           if (!isFinite(amt) || amt < 0) amt = 0;
-          rules.push({ start_age: age, amount: amt });
+          rules.push({ start_month: month, amount: amt });
         });
         if (statusEl) statusEl.textContent = 'Saving…';
         try {

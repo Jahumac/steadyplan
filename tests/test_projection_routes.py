@@ -177,6 +177,53 @@ def test_schedule_api_replaces_existing_schedule_rules_instead_of_appending(app,
         ]
 
 
+def test_schedule_api_saves_month_based_rules_without_date_of_birth(app, client, make_user):
+    uid, username, password = make_user(username="proj-schedule-month", password="password123")
+    with app.app_context():
+        assumptions = dict(fetch_assumptions(uid))
+        assumptions.update({
+            "annual_growth_rate": 0.05,
+            "retirement_age": 62,
+            "date_of_birth": None,
+            "salary_day": 25,
+        })
+        update_assumptions(assumptions, uid)
+        account_id = create_account(_account("ISA", "Stocks & Shares ISA", 10000, 300), uid)
+
+    _login(client, username, password)
+    resp = client.post(
+        "/projections/api/account-schedule",
+        json={
+            "account_id": account_id,
+            "rules": [
+                {"start_month": "2030-09", "amount": 700},
+                {"start_month": "2032-01", "amount": 950},
+            ],
+        },
+    )
+
+    assert resp.status_code == 200
+    assert resp.get_json() == {"ok": True}
+
+    with app.app_context():
+        remaining = fetch_contribution_overrides_for_reason(account_id, uid, "schedule")
+        assert [(row["from_month"], row["to_month"]) for row in remaining] == [
+            ("2030-09", "2031-12"),
+            ("2032-01", "9999-12"),
+        ]
+        assert [float(row["override_amount"]) for row in remaining] == [700.0, 950.0]
+
+    get_resp = client.get(f"/projections/api/account-schedule?account_id={account_id}")
+    assert get_resp.status_code == 200
+    data = get_resp.get_json()
+    assert data["ok"] is True
+    assert data["has_dob"] is False
+    assert data["rules"] == [
+        {"from_month": "2030-09", "start_month": "2030-09", "start_age": None, "amount": 700.0},
+        {"from_month": "2032-01", "start_month": "2032-01", "start_age": None, "amount": 950.0},
+    ]
+
+
 def test_schedule_api_allows_intentional_clear_with_empty_rules(app, client, make_user):
     uid, username, password = make_user(username="proj-schedule-clear", password="password123")
     with app.app_context():

@@ -91,6 +91,18 @@ def _date_at_age(dob_str, age):
     return date(year, dob.month, day)
 
 
+def _normalise_month_key(month_key):
+    if not month_key:
+        return None
+    try:
+        y, m = [int(x) for x in str(month_key).split("-")]
+        if y < 1900 or m < 1 or m > 12:
+            return None
+    except (ValueError, TypeError):
+        return None
+    return f"{y:04d}-{m:02d}"
+
+
 def _age_at_month_key(dob_str, month_key):
     if not dob_str or not month_key:
         return None
@@ -297,6 +309,7 @@ def api_account_schedule():
             amt = ov.get("override_amount") if isinstance(ov, dict) else ov["override_amount"]
             rules.append({
                 "from_month": mk,
+                "start_month": mk,
                 "start_age": _age_at_month_key(dob, mk),
                 "amount": float(amt or 0),
             })
@@ -308,33 +321,45 @@ def api_account_schedule():
         return jsonify({"ok": False, "error": "account_id required"}), 400
     if not fetch_account(int(account_id), uid):
         return jsonify({"ok": False, "error": "account not found"}), 404
-    if not dob:
-        return jsonify({"ok": False, "error": "date_of_birth required in Settings"}), 400
 
     rules_in = data.get("rules") or []
     cleaned = []
     for r in rules_in:
-        try:
-            start_age = int(float(r.get("start_age")))
-        except (TypeError, ValueError):
-            continue
+        start_month = _normalise_month_key(r.get("start_month") or r.get("from_month"))
         try:
             amount = float(r.get("amount") or 0)
         except (TypeError, ValueError):
             amount = 0.0
+        if start_month:
+            cleaned.append((start_month, amount))
+            continue
+        if not dob:
+            continue
+        try:
+            start_age = int(float(r.get("start_age")))
+        except (TypeError, ValueError):
+            continue
         if start_age <= 0:
             continue
-        cleaned.append((start_age, amount))
+        d = _date_at_age(dob, start_age)
+        mk = _month_key_from_date(d) if d else None
+        if mk:
+            cleaned.append((mk, amount))
 
     start_month = projection_start_month_key(assumptions)
-    cleaned.sort(key=lambda x: x[0])
+    normalised = []
+    for mk, amount in cleaned:
+        if mk < start_month:
+            mk = start_month
+        normalised.append((mk, amount))
+    normalised.sort(key=lambda x: x[0])
     uniq = []
     seen = set()
-    for start_age, amount in cleaned:
-        if start_age in seen:
+    for mk, amount in normalised:
+        if mk in seen:
             continue
-        seen.add(start_age)
-        uniq.append((start_age, amount))
+        seen.add(mk)
+        uniq.append((mk, amount))
 
     if rules_in and not uniq:
         return jsonify({"ok": False, "error": "at least one valid schedule row is required"}), 400
@@ -342,28 +367,10 @@ def api_account_schedule():
         delete_contribution_overrides_for_reason(int(account_id), uid, "schedule")
         return jsonify({"ok": True})
 
-    month_keys = []
-    for start_age, amount in uniq:
-        d = _date_at_age(dob, start_age)
-        if not d:
-            continue
-        mk = _month_key_from_date(d)
-        if mk < start_month:
-            mk = start_month
-        month_keys.append((mk, amount))
-    month_keys.sort(key=lambda x: x[0])
-    filtered = []
-    last_mk = None
-    for mk, amount in month_keys:
-        if last_mk is not None and mk <= last_mk:
-            continue
-        last_mk = mk
-        filtered.append((mk, amount))
-
     delete_contribution_overrides_for_reason(int(account_id), uid, "schedule")
 
-    for i, (from_m, amount) in enumerate(filtered):
-        next_m = filtered[i + 1][0] if i + 1 < len(filtered) else None
+    for i, (from_m, amount) in enumerate(uniq):
+        next_m = uniq[i + 1][0] if i + 1 < len(uniq) else None
         to_m = add_months_to_key(next_m, -1) if next_m else "9999-12"
         if to_m < from_m:
             continue
