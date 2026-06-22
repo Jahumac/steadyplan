@@ -109,36 +109,64 @@ def test_performance_page_shows_imported_baseline_reconciliation(client, make_us
 
 def test_performance_page_renders_account_transfer_form(client, make_user):
     uid, username, password = make_user(username="perf-transfer-form", password="password123")
+    today = date.today()
+    prior_day = today - timedelta(days=35)
+    current_month = today.strftime("%Y-%m")
+    prior_month_day = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+    prior_month = prior_month_day.strftime("%Y-%m")
     with client.application.app_context():
         with get_connection() as conn:
-            conn.execute(
+            from_account = conn.execute(
                 """
                 INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
                 VALUES (?, 'InvestEngine Pension', 'SIPP', 12000, 0, 1)
                 """,
                 (uid,),
-            )
-            conn.execute(
+            ).lastrowid
+            to_account = conn.execute(
                 """
                 INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active)
                 VALUES (?, 'Trading 212 SIPP', 'SIPP', 0, 0, 1)
                 """,
                 (uid,),
-            )
+            ).lastrowid
+            for account_id, prior_balance, current_balance in [
+                (from_account, 10000, 12000),
+                (to_account, 0, 0),
+            ]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (prior_month_day.isoformat(), account_id, prior_balance, prior_month),
+                )
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (today.replace(day=1).isoformat(), account_id, current_balance, current_month),
+                )
             conn.commit()
+        save_daily_snapshot(uid, 10000, prior_day.isoformat())
+        save_daily_snapshot(uid, 12000, today.isoformat())
 
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
     response = client.get("/performance/")
     assert response.status_code == 200
     body = response.get_data(as_text=True)
 
-    assert "Record an account transfer" in body
-    assert "Use this when money moves from one tracked account to another" in body
+    assert "Record a Performance-only transfer" in body
+    assert "Use this to backfill a transfer that already happened between tracked accounts." in body
+    assert "It keeps Performance cash flow neutral, but does not update today’s account balances." in body
+    assert "Linked Performance-only transfers keep portfolio cash flow neutral" in body
+    assert "Use account detail for provider/account moves that should update balances." in body
+    assert "Transfers between accounts will usually show as “behind”" not in body
+    assert "For Cash ISA, you can log withdrawals/transfers" not in body
     assert "From account" in body
     assert "To account" in body
     assert "Transfer date" in body
-    assert "No new contribution or allowance use is recorded." in body
-    assert "Record transfer" in body
+    assert "Record Performance-only transfer" in body
+    assert "For a live provider/account move where SteadyPlan should update balances and stop future payments on the old account" in body
+    assert "Record an account transfer" not in body
+    assert "Use this when money moves from one tracked account to another" not in body
+    assert "No new contribution or allowance use is recorded." not in body
+    assert "Record transfer" not in body
 
 
 def test_performance_account_transfer_records_linked_neutral_cash_flows(client, make_user):
