@@ -41,3 +41,44 @@ def test_holding_detail_uses_sentence_case_price_stat_labels(client, make_user):
     assert "Day change" in html
     assert "Latest Price" not in html
     assert "Day Change" not in html
+
+
+def test_holdings_list_uses_plain_instrument_and_day_change_labels(client, make_user):
+    uid, username, password = make_user(username="holdings-list-copy", password="password123")
+    with client.application.app_context():
+        catalogue_id = add_holding_catalogue_item(
+            {
+                "holding_name": "Vanguard FTSE Global All Cap",
+                "ticker": "VWRP",
+                "asset_type": "ETF",
+                "bucket": "Global Equity",
+                "notes": "",
+            },
+            uid,
+        )
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, category, valuation_mode, current_value, is_active)
+                VALUES (?, 'Stocks ISA', 'Stocks & Shares ISA', 'ISA', 'holdings', 0, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                """
+                INSERT INTO holdings (account_id, holding_catalogue_id, holding_name, ticker, asset_type, value, units, price)
+                VALUES (?, ?, 'Vanguard FTSE Global All Cap', 'VWRP', 'ETF', 1234, 10, 123.4)
+                """,
+                (account_id, catalogue_id),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    response = client.get("/holdings/")
+
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "My instruments" in html
+    assert "Day change" in html
+    assert "My Instruments" not in html
+    assert "Day %" not in html
