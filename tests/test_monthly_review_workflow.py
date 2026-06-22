@@ -1,3 +1,4 @@
+from datetime import date
 from io import BytesIO
 
 from openpyxl import load_workbook
@@ -929,7 +930,7 @@ def test_mark_complete_refreshes_current_month_snapshots_for_all_active_accounts
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
     month_key = "2026-06"
-    today = "2026-06-21"
+    today = date.today().isoformat()
 
     with app.app_context():
         from app.models import fetch_or_create_monthly_review, get_connection
@@ -999,7 +1000,7 @@ def test_monthly_review_holding_update_refreshes_snapshots_and_export_current_va
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
     month_key = "2026-06"
-    today = "2026-06-21"
+    today = date.today().isoformat()
 
     with app.app_context():
         from app.models import get_connection
