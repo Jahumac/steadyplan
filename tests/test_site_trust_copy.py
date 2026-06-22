@@ -261,6 +261,7 @@ def test_performance_docs_explain_imported_baseline_reconciliation():
     assert "Use the same terms in app, docs, and exports: “Opening / Imported”, “Contributed”, and “Gain / Interest”." in voice_and_copy
     assert "Hide annualised return until there are 12 monthly return periods" in voice_and_copy
     assert "Performance reporting now separates Opening / Imported starting balances from later Contributed cash flow and Gain / Interest, hides annualised return until 12 monthly return periods, and includes a workbook “How to read” guide." in changelog
+    assert "Performance export contribution handling now matches the app’s into-pot contribution model, including pension tax top-ups, Lifetime ISA bonuses, and employer payments where applicable." in changelog
     assert "Contributed / Initial funding" not in readme
     assert "first tracked values look like investment performance" not in readme
     assert "Performance reporting separates opening/imported starting balances from later contributions and gain/interest" not in readme

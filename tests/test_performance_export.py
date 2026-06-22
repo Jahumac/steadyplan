@@ -113,9 +113,118 @@ def test_performance_export_includes_how_to_read_sheet(app, client, make_user):
     assert "Gain / Interest" in rendered_values
     assert "Cash ISA uses cash interest" in rendered_values
     assert "Premium Bonds use prize gain" in rendered_values
+    assert "Pension tax top-ups, Lifetime ISA bonuses, and employer payments are included where they apply." in rendered_values
+    assert "Only your personal monthly payment is counted." not in rendered_values
     assert "Annualised return appears after 12 monthly return periods" in rendered_values
     assert "If the first recorded balance includes both old money and a new top-up" in rendered_values
     assert "Market Gain / Loss explains every account" not in rendered_values
+
+
+def test_performance_export_summary_matches_page_effective_contribution_copy(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-effective-copy", password="password123")
+    with app.app_context():
+        sipp_id = create_account(
+            {
+                **_account_payload(name="SIPP", wrapper_type="SIPP", value=1625, monthly=500),
+                "category": "Pension",
+                "contribution_method": "standard",
+            },
+            uid,
+        )
+        lisa_id = create_account(
+            _account_payload(name="Lifetime ISA", wrapper_type="Lifetime ISA", value=625, monthly=500),
+            uid,
+        )
+        workplace_id = create_account(
+            {
+                **_account_payload(name="Workplace Pension", wrapper_type="Workplace Pension", value=1300, monthly=300),
+                "category": "Pension",
+                "employer_contribution": 100,
+                "contribution_method": "relief_at_source",
+            },
+            uid,
+        )
+        with get_connection() as conn:
+            for account_id, prior, current in [
+                (sipp_id, 1000, 1625),
+                (lisa_id, 0, 625),
+                (workplace_id, 925, 1300),
+            ]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-05-01', ?, ?, '2026-05')",
+                    (account_id, prior),
+                )
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-06-01', ?, ?, '2026-06')",
+                    (account_id, current),
+                )
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2026-05-01', 1925)",
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2026-06-01', 3550)",
+                (uid,),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    page = client.get("/performance/")
+    assert page.status_code == 200
+    page_html = page.get_data(as_text=True)
+    assert "includes pension tax top-up, Lifetime ISA bonus, and employer payments" in page_html
+
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+    guide = workbook["How to read"]
+    rendered_values = "\n".join(str(cell.value) for row in guide.iter_rows() for cell in row if cell.value)
+    assert "Pension tax top-ups, Lifetime ISA bonuses, and employer payments are included where they apply." in rendered_values
+    assert "Only your personal monthly payment is counted." not in rendered_values
+
+
+def test_performance_export_counts_first_month_sipp_cash_flow_like_performance_page(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-first-sipp-flow", password="password123")
+    with app.app_context():
+        account_id = create_account(
+            {
+                **_account_payload(name="SIPP", wrapper_type="SIPP", value=500, monthly=500),
+                "category": "Pension",
+                "contribution_method": "standard",
+            },
+            uid,
+        )
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-06-01', ?, 500, '2026-06')",
+                (account_id,),
+            )
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, allowance_effect, created_at)
+                VALUES (?, ?, '2026-06-01', 500, 'deposit', 'First tracked SIPP payment', 'performance_only', '2026-06-01T00:00:00+00:00')
+                """,
+                (uid, account_id),
+            )
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2026-06-01', 500)",
+                (uid,),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    summary = _summary_row_values(workbook, "SIPP")
+    assert summary["contributed"] == 500
+    assert summary["imported"] == 0
+    assert summary["gain"] == 0
+
+    sipp = workbook["SIPP (Monthly)"]
+    assert sipp["A5"].value == "Jun 2026"
+    assert sipp["B5"].value == 0
+    assert sipp["C5"].value == 0
+    assert sipp["D5"].value == 500
+    assert sipp["E5"].value == 0
+    assert sipp["F5"].value == 500
 
 
 def test_performance_export_keeps_zero_snapshot_message_for_selected_account(app, client, make_user):

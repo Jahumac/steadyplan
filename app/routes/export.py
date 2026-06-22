@@ -24,6 +24,7 @@ from app.calculations import (
     current_age_from_assumptions,
     effective_account_value,
     effective_fee_pct,
+    effective_monthly_contribution,
     future_value,
     is_pension_account,
     projected_contribution_breakdown,
@@ -1701,7 +1702,7 @@ def _add_performance_export_readme_sheet(wb):
         ),
         (
             "Contributed",
-            "Money added after tracking started, minus withdrawals and transfers out. Transfers between your own accounts net to zero at portfolio level.",
+            "Money added after tracking started, minus withdrawals and transfers out. Pension tax top-ups, Lifetime ISA bonuses, and employer payments are included where they apply. Transfers between your own accounts net to zero at portfolio level.",
         ),
         (
             "Gain / Interest",
@@ -1743,7 +1744,11 @@ def export_performance():
     selected_period = _normalise_performance_export_period(request.args.get("period"))
 
     assumed_rate = to_float(assumptions["annual_growth_rate"]) if assumptions else 0.07
-    assumed_monthly_total = sum(to_float(a["monthly_contribution"]) for a in accounts)
+
+    def _performance_assumed_monthly(acc):
+        return float(effective_monthly_contribution(acc, assumptions) or 0)
+
+    assumed_monthly_total = sum(_performance_assumed_monthly(a) for a in accounts)
 
     per_account_data = fetch_monthly_performance_data_by_account(uid)
     account_map = {int(a["id"]): a for a in accounts}
@@ -1861,7 +1866,7 @@ def export_performance():
                 continue
             _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
             ctx = _performance_export_account_context(acc)
-            assumed_monthly = to_float(acc.get("monthly_contribution", 0))
+            assumed_monthly = _performance_assumed_monthly(acc)
             perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
             _append_summary(payload["account_name"], perf_acc)
     else:
@@ -1869,7 +1874,7 @@ def export_performance():
         acc = account_map[selected_account_id]
         _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
         ctx = _performance_export_account_context(acc)
-        assumed_monthly = to_float(acc.get("monthly_contribution", 0))
+        assumed_monthly = _performance_assumed_monthly(acc)
         perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
         _append_summary(payload["account_name"], perf_acc)
 
@@ -1979,7 +1984,7 @@ def export_performance():
                 continue
             _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
             ctx = _performance_export_account_context(acc)
-            assumed_monthly = to_float(acc.get("monthly_contribution", 0))
+            assumed_monthly = _performance_assumed_monthly(acc)
             perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
             _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc, subtitle=ctx["subtitle"], gain_label=ctx["gain_label"])
     else:
@@ -1987,7 +1992,7 @@ def export_performance():
         acc = account_map[selected_account_id]
         _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
         ctx = _performance_export_account_context(acc)
-        assumed_monthly = to_float(acc.get("monthly_contribution", 0))
+        assumed_monthly = _performance_assumed_monthly(acc)
         perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
         _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc, ctx["subtitle"], ctx["gain_label"])
 
