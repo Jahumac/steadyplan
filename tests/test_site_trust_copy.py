@@ -369,11 +369,12 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "<strong>Projections</strong>" not in concept_b
     assert "### Retirement scenario estimates" in readme
     assert "Year-by-year and month-by-month scenario estimates using saved balances, contribution settings, and growth assumptions." in readme
+    assert "**Scenario estimates** — retirement scenario estimates with fee impact and Try a different scenario controls" in readme
     assert "These scenario estimates are not guarantees." in readme
     assert "scenario estimates based on current balances, monthly contributions, and growth assumptions" not in readme
     assert "Export scenario estimates to Excel (.xlsx) with per-account breakdowns." in readme
     assert 'Scenario estimates show "with fees" vs "without fees"' in readme
-    assert "**Scenario estimates** — retirement scenario estimates with fee impact and scenario planner" in readme
+    assert "**Scenario estimates** — retirement scenario estimates with fee impact and scenario planner" not in readme
     assert "Compare actual performance against an assumptions-based comparison line, not a promise or target." in readme
     assert 'Compare actual performance against an assumptions-based "on-plan" growth line.' not in readme
     assert "├── calculations.py        # Scenario estimates, returns, goal tracking, tax year logic" in readme
