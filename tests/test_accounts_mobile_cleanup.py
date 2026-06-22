@@ -116,6 +116,33 @@ def test_cash_isa_create_wizard_exposes_cash_interest_fields(client, make_user):
     assert "Used for Cash ISA or savings reports. Leave blank if you do not want SteadyPlan to estimate interest." in html
 
 
+def test_holdings_cash_panel_uses_sentence_case_cash_settings_copy(app, client, make_user):
+    uid, username, password = make_user(username="accounts-holdings-cash-copy", password="password123")
+    with app.app_context():
+        payload = _account_payload()
+        payload["name"] = "Stocks ISA"
+        payload["valuation_mode"] = "holdings"
+        payload["uninvested_cash"] = 125.50
+        payload["cash_interest_rate"] = 0.036
+        payload["interest_payment_day"] = 3
+        account_id = create_account(payload, uid)
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get(f"/accounts/{account_id}")
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+
+    assert "Uninvested cash (£)" in html
+    assert "Cash interest rate (%)" in html
+    assert "Interest paid day" in html
+    assert "Save cash settings" in html
+    assert "Day of the month interest is credited (e.g. 3 for the 3rd). Use 0 if unknown or not applicable." in html
+    assert "Uninvested Cash (£)" not in html
+    assert "Cash Interest Rate (%)" not in html
+    assert "Interest Paid on Day" not in html
+    assert "Save Cash Balance" not in html
+    assert "Day of month interest is credited (e.g. 3 for 3rd). 0 = not set." not in html
+
 
 def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, client, make_user):
     uid, username, password = make_user(username="accounts-mobile", password="password123")
