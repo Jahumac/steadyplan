@@ -252,13 +252,22 @@ def test_docs_explain_month_based_future_payments_and_neutral_account_transfers(
     assert "Per-account future payments can be changed from a specific calendar month" in readme
     assert "planned payment changes are not tied to rough age guesses" in readme
     assert "### Account transfers" in readme
-    assert "Record provider/account moves between tracked accounts" in readme
-    assert "keeps the old account history visible" in readme
+    assert "Use the account detail transfer workflow for provider/account moves" in readme
+    assert "can update balances, stop future payments on the old account" in readme
+    assert "Performance-only transfer backfill for older moves" in readme
+    assert "without changing today’s balances" in readme
     assert "neutral for contributions and allowance use" in readme
+    assert "Record provider/account moves between tracked accounts" not in readme
     assert "Future payment schedules for scenario estimates now use calendar start months instead of rough age-based overrides." in changelog
+    assert "Performance-only transfer backfill for older pension, ISA, LISA, and other tracked-account moves" in changelog
+    assert "without changing today’s balances or counting them as new contributions or allowance use" in changelog
+    assert "Account-to-account transfer recording on Performance" not in changelog
     assert "Account detail transfer workflow for moving value between tracked providers/accounts while preserving the old account history." in changelog
     assert "Monthly Update completion refreshes month and daily snapshots from live account truth" in changelog
     assert "Monthly Update completion refreshes all active accounts from live account truth" in architecture
+    assert "Account detail transfers are recorded as paired internal movements" in architecture
+    assert "Performance-only transfers use the same paired-event shape to backfill neutral reporting cash flow without updating today’s account balances." in architecture
+    assert "Account transfers are recorded as paired internal movements" not in architecture
     assert "`account_transfer_out` and `account_transfer_in`" in architecture
     assert "`allowance_effect = none`" in architecture
     assert "Manual/Premium Bonds accounts snapshot only if their balance was updated in that review" not in architecture
