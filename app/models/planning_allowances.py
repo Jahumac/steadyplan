@@ -1017,6 +1017,62 @@ def add_cash_flow_event(payload, user_id):
         return cursor.lastrowid
 
 
+def add_account_transfer_events(payload, user_id):
+    from_account_id = int(payload.get("from_account_id") or 0)
+    to_account_id = int(payload.get("to_account_id") or 0)
+    if from_account_id == to_account_id:
+        return None
+    amount = abs(float(payload.get("amount") or 0))
+    if amount <= 0:
+        return None
+    event_date = payload.get("event_date")
+    note = payload.get("note") or "Account transfer"
+    created_at = datetime.now(timezone.utc).isoformat()
+    with get_connection() as conn:
+        if not _account_belongs_to_user(conn, from_account_id, user_id):
+            return None
+        if not _account_belongs_to_user(conn, to_account_id, user_id):
+            return None
+        from_cursor = conn.execute(
+            """
+            INSERT INTO cash_flow_events
+              (user_id, account_id, event_date, amount, kind, counterparty_account_id, note, allowance_effect, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                from_account_id,
+                event_date,
+                -amount,
+                "transfer_out",
+                to_account_id,
+                note,
+                "transfer_neutral",
+                created_at,
+            ),
+        )
+        to_cursor = conn.execute(
+            """
+            INSERT INTO cash_flow_events
+              (user_id, account_id, event_date, amount, kind, counterparty_account_id, note, allowance_effect, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                to_account_id,
+                event_date,
+                amount,
+                "transfer_in",
+                from_account_id,
+                note,
+                "transfer_neutral",
+                created_at,
+            ),
+        )
+        conn.commit()
+        return {"from_event_id": from_cursor.lastrowid, "to_event_id": to_cursor.lastrowid}
+
+
 def fetch_cash_flow_events_for_account(account_id, user_id, from_date=None, to_date=None, limit=200):
     with get_connection() as conn:
         if not _account_belongs_to_user(conn, account_id, user_id):
