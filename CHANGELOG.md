@@ -20,6 +20,7 @@ All notable changes to this project will be documented in this file.
 - Settings at a glance now groups everyday setup, safety and recovery, and optional access.
 - Performance reporting now separates Opening / Imported starting balances from later Contributed cash flow and Gain / Interest, hides annualised return until 12 monthly return periods, and includes a workbook “How to read” guide.
 - Public docs now use the same comparison-line, broker snapshot, and transfer-scope wording as the app.
+- Public roadmap direction copy now uses not-guarantee wording instead of not-promise wording.
 
 ### Fixed
 - Account creation templates now visibly select and fill in the account name, wrapper type, and balance method.
