@@ -3192,7 +3192,7 @@ button.button-danger:focus {
 }
 
 .proj-schedule-row input[type="number"] { width: 8.5rem; }
-.proj-schedule-row input[data-age] { width: 6.5rem; }
+.proj-schedule-row input[data-month] { width: 9.5rem; }
 
 .budget-amount-input {
   width: 110px;
