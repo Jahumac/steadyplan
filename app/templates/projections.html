@@ -351,7 +351,7 @@
     </div>
     <button class="badge badge-meta" id="wi_reset" type="button">Reset to plan</button>
   </div>
-  <p class="helper-text">Try different retirement ages, growth rates, or monthly payments to see how the future estimate changes. Nothing here is saved unless you save changes elsewhere.</p>
+  <p class="helper-text">Try different retirement ages, growth rates, or starting monthly payments to see how the future estimate changes. Saved month-by-month payment schedules stay in your plan baseline; changes here are temporary and not saved.</p>
 
   {# Global controls #}
   <div class="form-grid settings-form mb-1">
@@ -371,7 +371,7 @@
   </div>
 
   {# Per-account contributions #}
-  <p class="eyebrow mb-05">Monthly payments by account</p>
+  <p class="eyebrow mb-05">Starting monthly payments by account</p>
   <div class="wi-account-list" id="wi_accounts">
     {% for row in account_rows %}
     <div class="wi-account-row">
@@ -415,7 +415,7 @@
       <strong id="wi_years">—</strong>
     </div>
     <div class="whatif-result-item">
-      <span>Total monthly payments</span>
+      <span>Starting monthly payments</span>
       <strong id="wi_monthly">—</strong>
     </div>
   </div>
@@ -431,7 +431,7 @@
       </div>
       <button class="badge badge-meta" id="wi_reset_mobile" type="button">Reset to plan</button>
     </div>
-    <p class="helper-text">Try different retirement ages, growth rates, or monthly payments to see how the future estimate changes. Nothing here is saved unless you save changes elsewhere.</p>
+    <p class="helper-text">Try different retirement ages, growth rates, or starting monthly payments to see how the future estimate changes. Saved month-by-month payment schedules stay in your plan baseline; changes here are temporary and not saved.</p>
 
     <div class="form-grid settings-form mb-1">
       <label>
@@ -449,7 +449,7 @@
       </label>
     </div>
 
-    <p class="eyebrow mb-05">Monthly payments by account</p>
+    <p class="eyebrow mb-05">Starting monthly payments by account</p>
     <div class="wi-account-list" id="wi_accounts_mobile">
       {% for row in account_rows %}
       <div class="wi-account-row">
@@ -492,7 +492,7 @@
         <strong id="wi_years_mobile">—</strong>
       </div>
       <div class="whatif-result-item">
-        <span>Total monthly payments</span>
+        <span>Starting monthly payments</span>
         <strong id="wi_monthly_mobile">—</strong>
       </div>
     </div>

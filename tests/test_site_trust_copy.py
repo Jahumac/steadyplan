@@ -301,6 +301,7 @@ def test_docs_explain_month_based_future_payments_and_neutral_account_transfers(
     assert "neutral for contributions and allowance use" in readme
     assert "Record provider/account moves between tracked accounts" not in readme
     assert "Future payment schedules for scenario estimates now use calendar start months instead of rough age-based overrides." in changelog
+    assert "Try a different scenario now clarifies that its payment fields are starting what-if values while saved month-by-month schedules remain in the plan baseline." in changelog
     assert "Performance-only transfer backfill for older pension, ISA, LISA, and other tracked-account moves" in changelog
     assert "without changing today’s balances or counting them as new contributions or allowance use" in changelog
     assert "Account-to-account transfer recording on Performance" not in changelog
