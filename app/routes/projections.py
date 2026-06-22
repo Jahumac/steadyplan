@@ -316,15 +316,23 @@ def api_account_schedule():
         return jsonify({"ok": True, "rules": rules, "has_dob": bool(dob)})
 
     data = request.get_json(silent=True) or {}
-    account_id = data.get("account_id")
-    if not account_id:
+    account_id_raw = data.get("account_id")
+    if not account_id_raw:
         return jsonify({"ok": False, "error": "account_id required"}), 400
-    if not fetch_account(int(account_id), uid):
+    try:
+        account_id = int(account_id_raw)
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "account_id must be a valid account"}), 400
+    if not fetch_account(account_id, uid):
         return jsonify({"ok": False, "error": "account not found"}), 404
 
-    rules_in = data.get("rules") or []
+    if "rules" not in data or not isinstance(data.get("rules"), list):
+        return jsonify({"ok": False, "error": "rules must be a list"}), 400
+    rules_in = data["rules"]
     cleaned = []
     for r in rules_in:
+        if not isinstance(r, dict):
+            return jsonify({"ok": False, "error": "each schedule row must be an object"}), 400
         start_month = _normalise_month_key(r.get("start_month") or r.get("from_month"))
         try:
             amount = float(r.get("amount") or 0)
@@ -335,8 +343,11 @@ def api_account_schedule():
             continue
         if not dob:
             continue
+        start_age_raw = r.get("start_age")
+        if start_age_raw is None:
+            continue
         try:
-            start_age = int(float(r.get("start_age")))
+            start_age = int(float(start_age_raw))
         except (TypeError, ValueError):
             continue
         if start_age <= 0:
@@ -364,10 +375,10 @@ def api_account_schedule():
     if rules_in and not uniq:
         return jsonify({"ok": False, "error": "at least one valid schedule row is required"}), 400
     if not uniq:
-        delete_contribution_overrides_for_reason(int(account_id), uid, "schedule")
+        delete_contribution_overrides_for_reason(account_id, uid, "schedule")
         return jsonify({"ok": True})
 
-    delete_contribution_overrides_for_reason(int(account_id), uid, "schedule")
+    delete_contribution_overrides_for_reason(account_id, uid, "schedule")
 
     for i, (from_m, amount) in enumerate(uniq):
         next_m = uniq[i + 1][0] if i + 1 < len(uniq) else None
@@ -376,7 +387,7 @@ def api_account_schedule():
             continue
         create_contribution_override(
             {
-                "account_id": int(account_id),
+                "account_id": account_id,
                 "from_month": from_m,
                 "to_month": to_m,
                 "override_amount": amount,
