@@ -115,8 +115,11 @@ Contribution truth within a completed monthly update is included only when the r
 
 Monthly snapshot truth on completion:
 
+- Monthly Update completion refreshes all active accounts from live account truth for the selected month, then refreshes the daily portfolio/account snapshots for the actual run date.
 - Holdings-based accounts snapshot from effective holdings value.
-- Manual/Premium Bonds accounts snapshot only if their balance was updated in that review (to avoid writing a fresh “truth” snapshot from a stale balance).
+- Manual/Premium Bonds accounts snapshot from the current account balance at completion time, so the month-end history reconciles with Accounts/Performance after the review is marked complete.
+
+Account transfers are recorded as paired internal movements (`account_transfer_out` and `account_transfer_in`) with `allowance_effect = none`. Full transfers may set the source balance and future payment to zero, but the source account stays available for history/performance visibility rather than being hidden as if it never existed.
 
 Performance contribution cash flow uses the effective “into pot” amount (tax relief / government bonus / employer contributions, minus any contribution fee), not just the personal monthly payment.
 

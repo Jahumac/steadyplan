@@ -6,10 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Account-to-account transfer recording on Performance, creating linked neutral transfer-out/transfer-in events for pension, ISA, LISA, and other tracked account moves without counting them as new contributions or allowance use.
+- Account detail transfer workflow for moving value between tracked providers/accounts while preserving the old account history.
 - Public roadmap page and a manual light/dark toggle on the public website.
 - Scoped assistant access in Settings with UI-managed tokens, permission labels, and recent write activity.
 
 ### Changed
+- Future payment schedules for scenario estimates now use calendar start months instead of rough age-based overrides.
+- Monthly Update completion refreshes month and daily snapshots from live account truth so Performance reconciles after a completed review.
 - Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional broker snapshot review beta.
 - Settings now frames assistant tokens as Personal Pip access for users who run their own Pip setup.
 - Refreshed public demo screenshots and the public marketing/docs site presentation.
