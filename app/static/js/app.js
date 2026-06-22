@@ -2169,13 +2169,15 @@
             var personal = parseFloat(inp.value) || 0;
             var planPersonal = parseFloat(inp.dataset.plan) || 0;
             var planEffective = parseFloat(inp.dataset.effective) || planPersonal;
+            var planProjected = parseFloat(inp.dataset.projectedPlan) || 0;
             var acctRate = parseFloat(inp.dataset.rate) || 0;
             var isLISA = inp.dataset.wrapper === 'Lifetime ISA';
             var ratio = planPersonal > 0 ? (planEffective / planPersonal) : 1;
             var monthly = personal * ratio;
             var useRate = rateChanged ? (globalPct / 100) : acctRate;
-            var proj = projectAccount(current, monthly, useRate, retAge, isLISA);
-            var planVal = projectAccount(current, planEffective, acctRate, BASE_RETIREMENT_AGE, isLISA);
+            var unchangedFromPlan = !rateChanged && retAge === BASE_RETIREMENT_AGE && Math.abs(personal - planPersonal) < 0.005;
+            var proj = unchangedFromPlan ? planProjected : projectAccount(current, monthly, useRate, retAge, isLISA);
+            var planVal = planProjected;
             scenarioTotal += proj;
             planTotal += planVal;
             totalMonthly += personal;

@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Account creation templates now visibly select and fill in the account name, wrapper type, and balance method.
 - Future estimate payment-plan API now rejects malformed save requests instead of treating them as an instruction to clear the saved plan.
+- Try a different scenario now uses the exact saved future-estimate totals as its reset baseline before modelling changes.
 - Test-account reset now clears dependent user-owned rows safely instead of failing on SQLite foreign-key constraints.
 - Public dark-mode logo rendering no longer uses the semi-transparent showcase mark that caused pale edge haloing.
 

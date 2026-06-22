@@ -134,6 +134,16 @@ def test_progress_future_estimate_table_uses_month_labels_not_age_labels_in_poin
     assert '<tr><th>Point</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Future estimate</th></tr>' not in js
 
 
+def test_try_different_scenario_js_keeps_saved_plan_as_exact_baseline():
+    js = STATIC_ROOT.joinpath("js/app.js").read_text()
+
+    assert "var planProjected = parseFloat(inp.dataset.projectedPlan) || 0;" in js
+    assert "var unchangedFromPlan" in js
+    assert "var proj = unchangedFromPlan ? planProjected : projectAccount" in js
+    assert "var planVal = planProjected;" in js
+    assert "var planVal = projectAccount(current, planEffective" not in js
+
+
 def test_pwa_offline_comments_match_privacy_first_caching_behavior():
     js = STATIC_ROOT.joinpath("js/app.js").read_text()
     sw = STATIC_ROOT.joinpath("sw.js").read_text()

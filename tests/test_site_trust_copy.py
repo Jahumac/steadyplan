@@ -222,6 +222,7 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "Settings at a glance now groups everyday setup, safety and recovery, and optional access." in changelog
     assert "Account creation templates now visibly select and fill in the account name, wrapper type, and balance method." in changelog
     assert "Future estimate payment-plan API now rejects malformed save requests instead of treating them as an instruction to clear the saved plan." in changelog
+    assert "Try a different scenario now uses the exact saved future-estimate totals as its reset baseline before modelling changes." in changelog
     assert "Settings density pass groups everyday setup, safety and recovery, and optional access." not in changelog
     assert "Account creation template cards were polished." not in changelog
     assert "Monthly Review" not in readme

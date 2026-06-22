@@ -151,6 +151,85 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Retirement spending" in body
 
 
+def test_try_different_scenario_uses_exact_saved_plan_values_for_reset_state(app, client, make_user):
+    uid, username, password = make_user(username="proj-whatif-plan-values", password="password123")
+
+    with app.app_context():
+        from app.calculations import projected_account_value
+        from app.models import (
+            create_account,
+            create_contribution_override,
+            fetch_account,
+            fetch_assumptions,
+            update_assumptions,
+        )
+
+        assumptions = dict(fetch_assumptions(uid))
+        assumptions.update({
+            "annual_growth_rate": 0.07,
+            "retirement_age": 60,
+            "date_of_birth": "1980-01-01",
+            "salary_day": 25,
+        })
+        update_assumptions(assumptions, uid)
+        account_id = create_account(
+            {
+                "name": "Scheduled ISA",
+                "provider": "Provider",
+                "wrapper_type": "Stocks & Shares ISA",
+                "category": "Investment",
+                "tags": "",
+                "current_value": 7787,
+                "monthly_contribution": 550,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "Janusz",
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-01",
+                "employer_contribution": 0,
+                "contribution_method": "standard",
+                "annual_fee_pct": 0,
+                "platform_fee_pct": 0,
+                "platform_fee_flat": 0,
+                "platform_fee_cap": 0,
+                "fund_fee_pct": 0,
+                "contribution_fee_pct": 0,
+                "uninvested_cash": 0,
+                "cash_interest_rate": 0,
+                "interest_payment_day": 0,
+            },
+            uid,
+        )
+        create_contribution_override(
+            {
+                "account_id": account_id,
+                "from_month": "2030-09",
+                "to_month": "9999-12",
+                "override_amount": 1500,
+                "reason": "schedule",
+            },
+            uid,
+        )
+        account = dict(fetch_account(account_id, uid))
+        account["_contribution_overrides"] = [
+            {"from_month": "2030-09", "to_month": "9999-12", "override_amount": 1500, "reason": "schedule"}
+        ]
+        account["_projection_start_month"] = "2026-06"
+        exact_projected = projected_account_value(account, assumptions)
+
+    _login(client, username, password)
+    resp = client.get("/projections/")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+
+    assert 'data-projected-plan="' in body
+    assert f'data-projected-plan="{exact_projected}"' in body
+
+
 def test_projections_page_uses_lifetime_isa_bonus_wording(app, client, make_user):
     uid, username, password = make_user(username="proj-government-bonus", password="password123")
 
