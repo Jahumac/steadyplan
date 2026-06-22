@@ -63,11 +63,31 @@ def test_tour_trust_copy_matches_restore_safety_story():
     assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in html
     assert "Long-term planning is easier when you separate cash you could reach now, invested money you could sell, money with conditions, and money reserved for later." in html
     assert "Settings keeps safety and recovery links visible" in html
-    assert "Settings groups data ownership, JSON export, restore checks, backup health, assistant scope, and read-only broker review so trust is inspectable without digging through one long admin page." in html
+    assert "Settings groups data ownership, JSON export, restore checks, backup health, assistant scope, and read-only Trading 212 broker snapshot review so trust is inspectable without digging through one long admin page." in html
     assert "Diagnostics keep trust visible" not in html
     assert "Settings keeps backup health, restore boundaries, assistant scope, and read-only broker review close to the product so trust is inspectable." not in html
+    assert "read-only broker review so trust is inspectable" not in html
     assert "Accessible vs locked money" not in html
     assert "Long-term planning is easier when you keep “available now” separate from money reserved for later." not in html
+
+
+def test_public_site_matches_current_broker_transfer_and_comparison_line_language():
+    homepage = _read("index.html")
+    roadmap = _read("roadmap.html")
+    tour = _read("tour.html")
+
+    assert "UK-focused accounts, Monthly Update, account transfers, and planning" in homepage
+    assert "Goals, holdings, Performance comparison lines, and retirement scenario estimates" in homepage
+    assert "UK-focused accounts, Monthly Update, account transfers, and planning" in roadmap
+    assert "Goals, holdings, Performance comparison lines, and retirement scenario estimates" in roadmap
+    assert "read-only Trading 212 broker snapshot review beta" in roadmap
+    assert "UK-focused accounts, Monthly Update, and planning" not in homepage
+    assert "Goals, holdings, performance, and retirement scenario estimates" not in homepage
+    assert "UK-focused accounts, Monthly Update, and planning" not in roadmap
+    assert "Goals, holdings, performance, and retirement scenario estimates" not in roadmap
+    assert "read-only Trading 212 broker review beta" not in roadmap
+    assert "read-only Trading 212 broker snapshot review" in tour
+    assert "read-only broker review" not in tour
 
 
 def test_docs_hub_and_backups_page_explain_automatic_pre_restore_backup():
@@ -185,7 +205,8 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "Settings density pass groups everyday setup, safety and recovery, and optional access." not in changelog
     assert "Account creation template cards were polished." not in changelog
     assert "Monthly Review" not in readme
-    assert "It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for preview-first broker account review." in readme
+    assert "It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for preview-first broker snapshot review." in readme
+    assert "preview-first broker account review" not in readme
     assert "It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for API-first account review." not in readme
     assert "See where you stand today, what is available now vs later, and how monthly decisions connect to long-term scenario estimates" not in readme
     assert "Settings includes optional scoped **Assistant access** for a personal Pip setup." in readme
@@ -224,6 +245,7 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "Settings now frames assistant tokens as Personal Pip access for users who run their own Pip setup." in changelog
     assert "Settings now frames assistant tokens as a default Pip setup." not in changelog
     assert "Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional broker snapshot review beta." in changelog
+    assert "Public docs now use the same comparison-line, broker snapshot, and transfer-scope wording as the app." in changelog
     assert "Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional read-only broker beta." not in changelog
 
 
@@ -327,7 +349,8 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Export scenario estimates to Excel (.xlsx) with per-account breakdowns." in readme
     assert 'Scenario estimates show "with fees" vs "without fees"' in readme
     assert "**Scenario estimates** — retirement scenario estimates with fee impact and scenario planner" in readme
-    assert 'Compare actual performance against an assumptions-based "on-plan" growth line.' in readme
+    assert "Compare actual performance against an assumptions-based comparison line, not a promise or target." in readme
+    assert 'Compare actual performance against an assumptions-based "on-plan" growth line.' not in readme
     assert "├── calculations.py        # Scenario estimates, returns, goal tracking, tax year logic" in readme
     assert "│   ├── projections.py     # Scenario estimates views and account series endpoints" in readme
     assert "│   ├── export.py          # Excel export (scenario estimates, budget, performance)" in readme
