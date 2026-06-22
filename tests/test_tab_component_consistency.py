@@ -127,6 +127,13 @@ def test_confirm_helper_js_no_longer_carries_dead_mascot_icon_wiring():
     assert "/static/icons/shelly/Accounts.png" not in js
 
 
+def test_progress_future_estimate_table_uses_month_labels_not_age_labels_in_point_column():
+    js = STATIC_ROOT.joinpath("js/app.js").read_text()
+
+    assert '<tr><th>Month</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Future estimate</th></tr>' in js
+    assert '<tr><th>Point</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Future estimate</th></tr>' not in js
+
+
 def test_pwa_offline_comments_match_privacy_first_caching_behavior():
     js = STATIC_ROOT.joinpath("js/app.js").read_text()
     sw = STATIC_ROOT.joinpath("sw.js").read_text()

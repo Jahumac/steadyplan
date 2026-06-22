@@ -126,10 +126,12 @@ def test_yearly_account_series_uses_the_point_month_not_the_previous_year_for_ov
     data = resp.get_json()
     assert data["ok"] is True
 
-    age_47 = next(point for point in data["points"] if point["label"] == "Age 47")
-    assert age_47["month_key"] == "2030-06"
-    assert age_47["personal_monthly"] == 0.0
-    assert age_47["into_pot_monthly"] == 0.0
+    point_2030_06 = next(point for point in data["points"] if point["month_key"] == "2030-06")
+    assert point_2030_06["label"] == "2030-06"
+    assert point_2030_06["age"] == 47.5
+    assert point_2030_06["personal_monthly"] == 0.0
+    assert point_2030_06["into_pot_monthly"] == 0.0
+    assert "Age 47" not in {point["label"] for point in data["points"]}
 
 
 def test_schedule_api_replaces_existing_schedule_rules_instead_of_appending(app, client, make_user):
