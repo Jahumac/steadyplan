@@ -25,7 +25,7 @@
   <div class="mt-1">
     <div style="display:flex; gap: 2rem; flex-wrap: wrap;">
       <div>
-        <p class="text-sm text-muted uppercase">Latest Price</p>
+        <p class="text-sm text-muted uppercase">Latest price</p>
         <h3 class="mt-025">
           {% if item.last_price %}
             {% if item.price_currency == 'GBp' %}{{ '{:,.2f}p'.format(item.last_price) }}{% else %}£{{ '{:,.4f}'.format(item.last_price) }}{% endif %}
@@ -39,7 +39,7 @@
       </div>
       
       <div>
-        <p class="text-sm text-muted uppercase">Day Change</p>
+        <p class="text-sm text-muted uppercase">Day change</p>
         <h3 class="mt-025">
           {% if item.price_change_pct is not none and item.last_price %}
             <span class="{% if item.price_change_pct >= 0 %}perf-positive{% else %}perf-negative{% endif %} text-bold">
