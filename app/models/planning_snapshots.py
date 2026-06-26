@@ -496,9 +496,15 @@ def fetch_monthly_performance_data_by_account(user_id):
         personal = float(override["override_amount"] or 0) if override is not None else None
         planned_contrib = 0.0
         rk = (aid, month_key)
-        if not has_cash_flow and (rk in review_map or override is not None or _regular_contribution_is_due_for_month(month_key, r, assumptions, datetime.now().date())):
+        is_current_month = month_key == current_month_key
+        is_confirmed = rk in review_map
+        if not has_cash_flow and (
+            is_confirmed
+            or override is not None
+            or _regular_contribution_is_due_for_month(month_key, r, assumptions, datetime.now().date())
+        ):
             if personal != 0.0:
-                if rk in review_map:
+                if is_confirmed:
                     personal = float(review_map[rk] or 0)
                 if personal is None:
                     personal = default_personal
@@ -520,6 +526,10 @@ def fetch_monthly_performance_data_by_account(user_id):
             fixed_gain = _performance_fixed_gain(r, month_key, float(prior_balance or 0.0), current_balance, prize_map)
             if fixed_gain is not None:
                 contrib = current_balance - float(prior_balance or 0.0) - fixed_gain
+            elif is_current_month and (not has_cash_flow) and (not is_confirmed) and planned_contrib > 0:
+                delta = current_balance - float(prior_balance or 0.0)
+                if delta + 0.01 < planned_contrib:
+                    contrib = 0.0
 
         previous_balance_by_account[aid] = current_balance
         row = (month_key, current_balance, float(contrib or 0))
