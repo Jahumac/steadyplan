@@ -2310,13 +2310,19 @@
         }
       }
 
-      function buildScheduleRow(startMonth, amount) {
+      function buildScheduleRow(startMonth, amount, investedAmount, cashParkAmount, cashParkEnabled) {
         var row = document.createElement('div');
         row.className = 'proj-schedule-row';
-        row.innerHTML =
-          '<label><span>Start month</span><input type="month" data-month value="' + (startMonth !== null && startMonth !== undefined ? startMonth : '') + '"></label>' +
-          '<label><span>£ / month</span><input type="number" min="0" step="10" data-amount value="' + (amount !== null && amount !== undefined ? amount : '') + '"></label>' +
-          '<button type="button" class="badge badge-meta" data-remove>Remove</button>';
+        var html =
+          '<label><span>Start month</span><input type="month" data-month value="' + (startMonth !== null && startMonth !== undefined ? startMonth : '') + '"></label>';
+        if (cashParkEnabled) {
+          html += '<label><span>Invested £ / month</span><input type="number" min="0" step="10" data-invested value="' + (investedAmount !== null && investedAmount !== undefined ? investedAmount : '') + '"></label>';
+          html += '<label><span>Cash park £ / month</span><input type="number" min="0" step="10" data-cash-park value="' + (cashParkAmount !== null && cashParkAmount !== undefined ? cashParkAmount : '') + '"></label>';
+        } else {
+          html += '<label><span>£ / month</span><input type="number" min="0" step="10" data-amount value="' + (amount !== null && amount !== undefined ? amount : '') + '"></label>';
+        }
+        html += '<button type="button" class="badge badge-meta" data-remove>Remove</button>';
+        row.innerHTML = html;
         var rm = row.querySelector('[data-remove]');
         if (rm) rm.addEventListener('click', function() { row.remove(); });
         return row;
@@ -2325,6 +2331,7 @@
       async function loadSchedule(details) {
         var rowsEl = details.querySelector('[data-proj-schedule-rows]');
         var statusEl = details.querySelector('[data-proj-schedule-status]');
+        var cashParkEnabled = details.dataset.cashParkEnabled === '1';
         if (!rowsEl) return;
         rowsEl.innerHTML = '';
         if (statusEl) statusEl.textContent = '';
@@ -2335,10 +2342,12 @@
           (data.rules || []).forEach(function(r) {
             var month = r && r.start_month ? String(r.start_month) : '';
             var amt = r && r.amount !== null && r.amount !== undefined ? parseFloat(r.amount) : '';
-            rowsEl.appendChild(buildScheduleRow(month, amt));
+            var investedAmt = r && r.invested_amount !== null && r.invested_amount !== undefined ? parseFloat(r.invested_amount) : '';
+            var cashParkAmt = r && r.cash_park_amount !== null && r.cash_park_amount !== undefined ? parseFloat(r.cash_park_amount) : '';
+            rowsEl.appendChild(buildScheduleRow(month, amt, investedAmt, cashParkAmt, cashParkEnabled));
           });
           if (!rowsEl.children.length) {
-            rowsEl.appendChild(buildScheduleRow('', ''));
+            rowsEl.appendChild(buildScheduleRow('', '', '', '', cashParkEnabled));
           }
         } catch (e) {
           if (statusEl) statusEl.textContent = 'Could not load schedule.';
@@ -2348,16 +2357,27 @@
       async function saveSchedule(details) {
         var rowsEl = details.querySelector('[data-proj-schedule-rows]');
         var statusEl = details.querySelector('[data-proj-schedule-status]');
+        var cashParkEnabled = details.dataset.cashParkEnabled === '1';
         if (!rowsEl) return;
         var rules = [];
         rowsEl.querySelectorAll('.proj-schedule-row').forEach(function(row) {
           var monthEl = row.querySelector('input[data-month]');
-          var amtEl = row.querySelector('input[data-amount]');
           var month = monthEl ? String(monthEl.value || '') : '';
-          var amt = amtEl ? parseFloat(amtEl.value) : NaN;
           if (!/^\d{4}-\d{2}$/.test(month)) return;
-          if (!isFinite(amt) || amt < 0) amt = 0;
-          rules.push({ start_month: month, amount: amt });
+          if (cashParkEnabled) {
+            var investedEl = row.querySelector('input[data-invested]');
+            var cashParkEl = row.querySelector('input[data-cash-park]');
+            var investedAmt = investedEl ? parseFloat(investedEl.value) : NaN;
+            var cashParkAmt = cashParkEl ? parseFloat(cashParkEl.value) : NaN;
+            if (!isFinite(investedAmt) || investedAmt < 0) investedAmt = 0;
+            if (!isFinite(cashParkAmt) || cashParkAmt < 0) cashParkAmt = 0;
+            rules.push({ start_month: month, invested_amount: investedAmt, cash_park_amount: cashParkAmt });
+          } else {
+            var amtEl = row.querySelector('input[data-amount]');
+            var amt = amtEl ? parseFloat(amtEl.value) : NaN;
+            if (!isFinite(amt) || amt < 0) amt = 0;
+            rules.push({ start_month: month, amount: amt });
+          }
         });
         if (statusEl) statusEl.textContent = 'Saving…';
         try {
@@ -2414,7 +2434,7 @@
           addBtn.addEventListener('click', function() {
             var rowsEl = details.querySelector('[data-proj-schedule-rows]');
             if (!rowsEl) return;
-            rowsEl.appendChild(buildScheduleRow('', ''));
+            rowsEl.appendChild(buildScheduleRow('', '', '', '', details.dataset.cashParkEnabled === '1'));
           });
         }
         var saveBtn = details.querySelector('[data-proj-schedule-save]');

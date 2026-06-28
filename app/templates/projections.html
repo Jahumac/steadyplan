@@ -152,7 +152,7 @@
   <p class="helper-text">See how each account could look at age {{ metrics.retirement_age }}, based on current balances and what goes in each month. Pension top-ups, Lifetime ISA bonuses, and employer payments are included where they apply.</p>
   <div class="budget-rows">
     {% for row in account_rows %}
-    <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}">
+    <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}" data-cash-park-enabled="{{ 1 if row.cash_park_enabled else 0 }}">
       <summary class="budget-row proj-acc-summary">
         <div class="budget-row-left">
           <span class="budget-row-name">{{ row.name }}</span>
@@ -235,7 +235,7 @@
     <p class="helper-text">See how each account could look at age {{ metrics.retirement_age }}, based on current balances and what goes in each month. Pension top-ups, Lifetime ISA bonuses, and employer payments are included where they apply.</p>
     <div class="budget-rows">
       {% for row in account_rows %}
-      <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}">
+      <details class="proj-acc" data-proj-account data-account-id="{{ row.account_id }}" data-retirement-age="{{ metrics.retirement_age }}" data-cash-park-enabled="{{ 1 if row.cash_park_enabled else 0 }}">
         <summary class="budget-row proj-acc-summary">
           <div class="budget-row-left">
             <span class="budget-row-name">{{ row.name }}</span>

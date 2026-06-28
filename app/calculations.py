@@ -155,6 +155,18 @@ def account_monthly_cash_park(account):
     return to_float(_safe_get(account, "monthly_cash_park", 0))
 
 
+def account_supports_cash_park(account):
+    wrapper = str(_safe_get(account, "wrapper_type", "") or "").lower()
+    category = str(_safe_get(account, "category", "") or "").lower()
+    valuation_mode = str(_safe_get(account, "valuation_mode", "") or "").lower()
+    return (
+        valuation_mode == "holdings"
+        and "pension" not in wrapper
+        and "sipp" not in wrapper
+        and category != "pension"
+    )
+
+
 def account_monthly_personal_total(account):
     return to_float(_safe_get(account, "monthly_contribution", 0)) + account_monthly_cash_park(account)
 
@@ -790,6 +802,7 @@ def projected_accounts(accounts, assumptions):
             "monthly_contribution": personal,
             "monthly_invested_contribution": invested_personal,
             "monthly_cash_park": cash_park,
+            "cash_park_enabled": account_supports_cash_park(account),
             "effective_contribution": effective_contribution,
             "tax_relief": breakdown["tax_relief"],
             "government_bonus": breakdown["government_bonus"],

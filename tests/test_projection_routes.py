@@ -19,6 +19,7 @@ def _account(name, wrapper_type, value=0, monthly=0, **overrides):
         "tags": "",
         "current_value": value,
         "monthly_contribution": monthly,
+        "monthly_cash_park": 0,
         "pension_contribution_day": 0,
         "goal_value": None,
         "valuation_mode": "manual",
@@ -184,6 +185,122 @@ def test_schedule_api_rejects_invalid_account_id_without_server_error(app, clien
 
     assert resp.status_code == 400
     assert resp.get_json() == {"ok": False, "error": "account_id must be a valid account"}
+
+
+def test_schedule_api_get_returns_split_cash_park_rules(app, client, make_user):
+    uid, username, password = make_user(username="proj-schedule-split-get", password="password123")
+    with app.app_context():
+        assumptions = dict(fetch_assumptions(uid))
+        assumptions.update({
+            "annual_growth_rate": 0.05,
+            "retirement_age": 62,
+            "date_of_birth": "1983-05-25",
+            "salary_day": 25,
+        })
+        update_assumptions(assumptions, uid)
+        account_id = create_account(
+            _account(
+                "Trading 212 ISA",
+                "Stocks & Shares ISA",
+                10000,
+                100,
+                monthly_cash_park=25,
+                valuation_mode="holdings",
+                cash_interest_rate=0.038,
+            ),
+            uid,
+        )
+        create_contribution_override({
+            "account_id": account_id,
+            "from_month": "2028-11",
+            "to_month": "9999-12",
+            "override_amount": 140,
+            "component": "invested",
+            "reason": "schedule",
+        }, uid)
+        create_contribution_override({
+            "account_id": account_id,
+            "from_month": "2028-11",
+            "to_month": "9999-12",
+            "override_amount": 60,
+            "component": "cash_park",
+            "reason": "schedule",
+        }, uid)
+
+    _login(client, username, password)
+    resp = client.get(f"/projections/api/account-schedule?account_id={account_id}")
+
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["ok"] is True
+    assert data["cash_park_enabled"] is True
+    assert data["rules"] == [{
+        "from_month": "2028-11",
+        "start_month": "2028-11",
+        "start_age": 45,
+        "amount": 200.0,
+        "invested_amount": 140.0,
+        "cash_park_amount": 60.0,
+    }]
+
+
+def test_schedule_api_saves_split_cash_park_rules(app, client, make_user):
+    uid, username, password = make_user(username="proj-schedule-split-save", password="password123")
+    with app.app_context():
+        assumptions = dict(fetch_assumptions(uid))
+        assumptions.update({
+            "annual_growth_rate": 0.05,
+            "retirement_age": 62,
+            "date_of_birth": "1983-05-25",
+            "salary_day": 25,
+        })
+        update_assumptions(assumptions, uid)
+        account_id = create_account(
+            _account(
+                "Trading 212 ISA",
+                "Stocks & Shares ISA",
+                10000,
+                100,
+                monthly_cash_park=25,
+                valuation_mode="holdings",
+                cash_interest_rate=0.038,
+            ),
+            uid,
+        )
+
+    _login(client, username, password)
+    resp = client.post(
+        "/projections/api/account-schedule",
+        json={
+            "account_id": account_id,
+            "rules": [
+                {"start_month": "2028-11", "invested_amount": 140, "cash_park_amount": 60},
+                {"start_month": "2030-01", "invested_amount": 200, "cash_park_amount": 25},
+            ],
+        },
+    )
+
+    assert resp.status_code == 200
+    assert resp.get_json() == {"ok": True}
+
+    with app.app_context():
+        remaining = fetch_contribution_overrides_for_reason(account_id, uid, "schedule")
+        serialised = [
+            (
+                row["from_month"],
+                row["to_month"],
+                row["component"],
+                float(row["override_amount"]),
+            )
+            for row in remaining
+        ]
+        serialised.sort()
+        assert serialised == [
+            ("2028-11", "2029-12", "cash_park", 60.0),
+            ("2028-11", "2029-12", "invested", 140.0),
+            ("2030-01", "9999-12", "cash_park", 25.0),
+            ("2030-01", "9999-12", "invested", 200.0),
+        ]
 
 
 def test_yearly_account_series_uses_the_point_month_not_the_previous_year_for_overrides(app, client, make_user, monkeypatch):
