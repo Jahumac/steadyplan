@@ -245,7 +245,7 @@ def api_account_series():
             mk = add_months_to_key(start_month, contrib_idx)
             label = mk
             override = contribution_override_for_month(a, mk)
-            personal = override if override is not None else to_float(a.get("monthly_contribution", 0))
+            personal = override if override is not None else to_float(a.get("monthly_contribution", 0)) + to_float(a.get("monthly_cash_park", 0))
             applied_personal = 0.0 if (is_lisa and (current_age + contrib_idx / 12.0) >= 50) else personal
             points.append({
                 "label": label,
@@ -259,7 +259,7 @@ def api_account_series():
             val = projected_account_value(a, assumptions)
             mk = add_months_to_key(start_month, months_total)
             override = contribution_override_for_month(a, mk)
-            personal = override if override is not None else to_float(a.get("monthly_contribution", 0))
+            personal = override if override is not None else to_float(a.get("monthly_contribution", 0)) + to_float(a.get("monthly_cash_park", 0))
             applied_personal = 0.0 if (is_lisa and (current_age + months_total / 12.0) >= 50) else personal
             points.append({
                 "label": mk,
@@ -274,7 +274,7 @@ def api_account_series():
             mk = add_months_to_key(start_month, idx)
             val = projected_account_value_at_month(a, assumptions, idx)
             override = contribution_override_for_month(a, mk)
-            personal = override if override is not None else to_float(a.get("monthly_contribution", 0))
+            personal = override if override is not None else to_float(a.get("monthly_contribution", 0)) + to_float(a.get("monthly_cash_park", 0))
             applied_personal = 0.0 if (is_lisa and (current_age + idx / 12.0) >= 50) else personal
             points.append({
                 "label": mk,

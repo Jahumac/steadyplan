@@ -159,12 +159,13 @@
           <span class="budget-row-note">{{ row.wrapper_type }} · {{ '{:.1f}'.format(row.growth_rate * 100) }}% yearly growth after fees
             {%- if row.annual_fee_pct %} <span style="color:var(--muted);">({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% before fees − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
             {%- if row.effective_contribution != row.monthly_contribution or row.contribution_fee > 0 %} · you pay £{{ '{:,.2f}'.format(row.monthly_contribution) }}
+              {%- if row.monthly_cash_park > 0 %} (invested £{{ '{:,.2f}'.format(row.monthly_invested_contribution) }}, cash park £{{ '{:,.2f}'.format(row.monthly_cash_park) }}){% endif %}
               {%- if row.tax_relief %} + £{{ '{:,.2f}'.format(row.tax_relief) }} pension tax top-up{% endif %}
               {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} Lifetime ISA bonus{% endif %}
               {%- if row.employer %} + £{{ '{:,.2f}'.format(row.employer) }} employer{% endif %}
               {%- if row.contribution_fee > 0 %} − £{{ '{:,.2f}'.format(row.contribution_fee) }} contribution fee{% endif %}
               = £{{ '{:,.2f}'.format(row.effective_contribution) }} a month added
-            {%- else %} · £{{ '{:,.0f}'.format(row.monthly_contribution) }} a month
+            {%- else %} · £{{ '{:,.0f}'.format(row.monthly_contribution) }} a month{% if row.monthly_cash_park > 0 %} (invested £{{ '{:,.0f}'.format(row.monthly_invested_contribution) }}, cash park £{{ '{:,.0f}'.format(row.monthly_cash_park) }}){% endif %}
             {%- endif %}
           </span>
           {% if row.self_assessment > 0 %}
@@ -241,12 +242,13 @@
             <span class="budget-row-note">{{ row.wrapper_type }} · {{ '{:.1f}'.format(row.growth_rate * 100) }}% yearly growth after fees
               {%- if row.annual_fee_pct %} <span style="color:var(--muted);">({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% before fees − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
               {%- if row.effective_contribution != row.monthly_contribution or row.contribution_fee > 0 %} · you pay £{{ '{:,.2f}'.format(row.monthly_contribution) }}
+                {%- if row.monthly_cash_park > 0 %} (invested £{{ '{:,.2f}'.format(row.monthly_invested_contribution) }}, cash park £{{ '{:,.2f}'.format(row.monthly_cash_park) }}){% endif %}
                 {%- if row.tax_relief %} + £{{ '{:,.2f}'.format(row.tax_relief) }} pension tax top-up{% endif %}
                 {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} Lifetime ISA bonus{% endif %}
                 {%- if row.employer %} + £{{ '{:,.2f}'.format(row.employer) }} employer{% endif %}
                 {%- if row.contribution_fee > 0 %} − £{{ '{:,.2f}'.format(row.contribution_fee) }} contribution fee{% endif %}
                 = £{{ '{:,.2f}'.format(row.effective_contribution) }} a month added
-              {%- else %} · £{{ '{:,.0f}'.format(row.monthly_contribution) }} a month
+              {%- else %} · £{{ '{:,.0f}'.format(row.monthly_contribution) }} a month{% if row.monthly_cash_park > 0 %} (invested £{{ '{:,.0f}'.format(row.monthly_invested_contribution) }}, cash park £{{ '{:,.0f}'.format(row.monthly_cash_park) }}){% endif %}
               {%- endif %}
             </span>
             {% if row.self_assessment > 0 %}

@@ -1580,11 +1580,13 @@ def update_cash(account_id):
     cash = request.form.get("uninvested_cash", "")
     rate = request.form.get("cash_interest_rate", "")
     payment_day = request.form.get("interest_payment_day", "")
+    monthly_cash_park = request.form.get("monthly_cash_park", "")
 
     payload = dict(account)
     payload["uninvested_cash"] = to_float(cash) if cash else 0.0
     payload["cash_interest_rate"] = (to_float(rate) / 100.0) if rate else 0.0
     payload["interest_payment_day"] = max(0, min(31, optional_int(payment_day, default=0)))
+    payload["monthly_cash_park"] = to_float(monthly_cash_park) if monthly_cash_park else float(account.get("monthly_cash_park") or 0)
     payload["last_updated"] = datetime.now(timezone.utc).isoformat()
 
     # ensure missing fields are populated before update

@@ -86,6 +86,18 @@ def _linked_account_default_amount(item, account):
     return float(_row_value(account, "monthly_contribution", 0) or 0)
 
 
+def _parse_calendar_entry_key(raw_key):
+    account_text, _, component = str(raw_key or "").partition(":")
+    try:
+        account_id = int(account_text)
+    except (TypeError, ValueError):
+        return None, None
+    component = (component or LINKED_ACCOUNT_COMPONENT_INVESTED).strip().lower()
+    if component not in {LINKED_ACCOUNT_COMPONENT_INVESTED, LINKED_ACCOUNT_COMPONENT_CASH_PARK}:
+        component = LINKED_ACCOUNT_COMPONENT_INVESTED
+    return account_id, component
+
+
 def _linked_account_budget_total(month_key, user_id, account_id, account=None, entry_overrides=None):
     account = account or fetch_account(account_id, user_id)
     if not account:
@@ -548,20 +560,20 @@ def contribution_calendar():
             for key, raw_value in request.form.items():
                 if not key.startswith("amount_"):
                     continue
-                account_suffix = key[len("amount_"):]
-                try:
-                    account_id = int(account_suffix)
-                except (TypeError, ValueError):
+                entry_key = key[len("amount_"):]
+                account_id, component = _parse_calendar_entry_key(entry_key)
+                if account_id is None:
                     continue
                 amount_text = (raw_value or "").strip()
                 if not amount_text:
                     continue
                 amount = optional_float(amount_text, default=None, min_val=0.0)
                 if amount is None:
-                    invalid_amount_fields.append(account_suffix)
+                    invalid_amount_fields.append(entry_key)
                     continue
                 rows.append({
                     "account_id": account_id,
+                    "component": component,
                     "from_month": start_month,
                     "to_month": end_month,
                     "override_amount": amount,
@@ -592,7 +604,8 @@ def contribution_calendar():
 
         if form_name == "create_annual_pot_fill_plan":
             plan_name = (request.form.get("plan_name") or "").strip()
-            account_id = request.form.get("pattern_account_id", type=int)
+            account_key = request.form.get("pattern_account_key")
+            account_id, component = _parse_calendar_entry_key(account_key)
             start_month = valid_month_key(request.form.get("pattern_start_month"))
             months_per_year = optional_int(request.form.get("pattern_months_per_year"), 0) or 0
             years = optional_int(request.form.get("pattern_years"), 0) or 0
@@ -619,6 +632,7 @@ def contribution_calendar():
                             month_key = add_months_to_key(year_start_month, month_idx)
                             rows.append({
                                 "account_id": account_id,
+                                "component": component,
                                 "from_month": month_key,
                                 "to_month": month_key,
                                 "override_amount": amount,
@@ -626,6 +640,7 @@ def contribution_calendar():
                     elif monthly_amount is not None:
                         rows.append({
                             "account_id": account_id,
+                            "component": component,
                             "from_month": year_start_month,
                             "to_month": add_months_to_key(year_start_month, months_per_year - 1),
                             "override_amount": monthly_amount,

@@ -143,8 +143,7 @@
     <div class="acct-card-foot">
       {% set cb = contrib_breakdowns.get(account.id, {}) %}
       {% set source = contribution_sources.get(account.id, {}) %}
-      {% set personal = cb.get('personal', account.monthly_contribution or 0) %}
-      {% if account.monthly_cash_park %}{% set personal = personal + (account.monthly_cash_park or 0) %}{% endif %}
+      {% set personal = cb.get('personal', (account.monthly_contribution or 0) + (account.monthly_cash_park or 0)) %}
       {% if cb.get('total_into_pot', 0) != personal and cb.get('total_into_pot', 0) > 0 %}
       <span title="You pay £{{ '{:,.0f}'.format(personal) }} → £{{ '{:,.0f}'.format(cb.total_into_pot) }} goes into account{% if account.monthly_cash_park %}, with £{{ '{:,.0f}'.format(account.monthly_cash_park or 0) }} parked as cash{% endif %}{% if source.reason and source.label == 'Payment calendar' %} · {{ source.reason }}{% endif %}">Into accounts monthly £{{ '{:,.0f}'.format(cb.total_into_pot) }}{% if source.label == 'Payment calendar' %} · this month{% endif %}</span>
       {% else %}
