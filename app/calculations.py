@@ -148,8 +148,15 @@ def contribution_breakdown(account, assumptions=None):
     }
 
 
+def account_monthly_cash_park(account):
+    return to_float(_safe_get(account, "monthly_cash_park", 0))
 
-def future_value(current_value, monthly_contribution, annual_growth_rate, years):
+
+def account_monthly_personal_total(account):
+    return to_float(_safe_get(account, "monthly_contribution", 0)) + account_monthly_cash_park(account)
+
+
+
     monthly_rate = annual_growth_rate / 12
     months = int(years * 12)
 
@@ -1054,7 +1061,7 @@ def calculate_isa_usage(
 ):
     """Auto-calculate ISA and LISA usage for the current tax year.
 
-    accounts: list of account dicts (need wrapper_type, monthly_contribution)
+    accounts: list of account dicts (need wrapper_type, monthly_contribution, monthly_cash_park)
     ad_hoc_contributions: list of isa_contributions rows (need wrapper_type, amount)
     salary_day: day of month when contributions go in (affects April handling)
     isa_overrides: list of override rows (account_id, from_month, to_month, override_amount)
@@ -1129,10 +1136,7 @@ def calculate_isa_usage(
         if is_lisa_account and not lisa_contributions_allowed:
             monthly = 0.0
         else:
-            try:
-                monthly = float(acc["monthly_contribution"] or 0)
-            except (KeyError, TypeError):
-                monthly = 0.0
+            monthly = account_monthly_personal_total(acc)
         override_rows = override_map.get(acc["id"], [])
         total = sum(
             _effective_personal_amount_for_month(acc["id"], monthly, mk, override_rows, review_amount_map)

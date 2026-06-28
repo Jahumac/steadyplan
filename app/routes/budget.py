@@ -56,10 +56,59 @@ from app.services.import_staging import (
 
 budget_bp = Blueprint("budget", __name__)
 
+LINKED_ACCOUNT_COMPONENT_INVESTED = "invested"
+LINKED_ACCOUNT_COMPONENT_CASH_PARK = "cash_park"
+
 
 def _default_month_key():
     today = date.today()
     return f"{today.year}-{today.month:02d}"
+
+
+def _row_value(row, key, default=None):
+    try:
+        value = row[key]
+    except (KeyError, IndexError, TypeError):
+        return default
+    return default if value is None else value
+
+
+def _linked_account_component(item):
+    component = str(_row_value(item, "linked_account_component", LINKED_ACCOUNT_COMPONENT_INVESTED)).strip().lower()
+    if component not in {LINKED_ACCOUNT_COMPONENT_INVESTED, LINKED_ACCOUNT_COMPONENT_CASH_PARK}:
+        return LINKED_ACCOUNT_COMPONENT_INVESTED
+    return component
+
+
+def _linked_account_default_amount(item, account):
+    if _linked_account_component(item) == LINKED_ACCOUNT_COMPONENT_CASH_PARK:
+        return float(_row_value(account, "monthly_cash_park", 0) or 0)
+    return float(_row_value(account, "monthly_contribution", 0) or 0)
+
+
+def _linked_account_budget_total(month_key, user_id, account_id, account=None, entry_overrides=None):
+    account = account or fetch_account(account_id, user_id)
+    if not account:
+        return 0.0
+
+    items = fetch_budget_items(user_id)
+    entries = fetch_budget_entries(month_key, user_id)
+    entry_map = {e["budget_item_id"]: e for e in entries}
+    entry_overrides = entry_overrides or {}
+    total = 0.0
+
+    for item in items:
+        if _row_value(item, "linked_account_id") != account_id:
+            continue
+        if item["id"] in entry_overrides:
+            amount = float(entry_overrides[item["id"]] or 0)
+        elif item["id"] in entry_map:
+            amount = float(entry_map[item["id"]]["amount"] or 0)
+        else:
+            amount = _linked_account_default_amount(item, account)
+        total += amount
+
+    return total
 
 
 def _debt_payoff_month_key(debt):
@@ -88,13 +137,41 @@ def _sync_linked_override(item_id, month_key, amount, user_id):
     item = fetch_budget_item(item_id, user_id)
     if not item:
         return
-    linked = item.get("linked_account_id")
+    linked = _row_value(item, "linked_account_id")
     if not linked:
         return
+
+    account = fetch_account(int(linked), user_id)
+    if not account:
+        return
+    desired = float(amount or 0)
+    total = _linked_account_budget_total(
+        month_key,
+        user_id,
+        int(linked),
+        account=account,
+        entry_overrides={int(item_id): desired},
+    )
     upsert_single_month_contribution_override(
-        int(linked), month_key, float(amount or 0), user_id, reason="from budget"
+        int(linked), month_key, total, user_id, reason="from budget"
     )
 
+    today_key = _default_month_key()
+    if month_key < today_key:
+        return
+
+    component = _linked_account_component(item)
+    field_name = "monthly_cash_park" if component == LINKED_ACCOUNT_COMPONENT_CASH_PARK else "monthly_contribution"
+    try:
+        current = float(account.get(field_name) or 0)
+    except (TypeError, ValueError):
+        current = 0.0
+    if abs(current - desired) < 0.005:
+        return
+
+    updated = dict(account)
+    updated[field_name] = desired
+    update_account(updated, user_id)
 
 def _month_label(month_key):
     return datetime.strptime(month_key, "%Y-%m").strftime("%B %Y")
@@ -224,6 +301,12 @@ def _build_monthly_data(month_key, user_id):
     active_overrides = fetch_all_active_overrides(month_key, user_id)
     accounts = fetch_all_accounts(user_id)
     account_map = {a["id"]: a for a in accounts}
+    cash_park_accounts = {
+        item["linked_account_id"]
+        for item in items
+        if _row_value(item, "linked_account_id")
+        and _linked_account_component(item) == LINKED_ACCOUNT_COMPONENT_CASH_PARK
+    }
     debts = fetch_all_debts(user_id)
     debt_map = {d["id"]: d for d in debts}
 
@@ -255,17 +338,28 @@ def _build_monthly_data(month_key, user_id):
             linked_account = account_map.get(item["linked_account_id"]) if item["linked_account_id"] else None
             is_linked_account = linked_account is not None
             is_linked_debt = linked_debt is not None
+            linked_component = _linked_account_component(item)
+            override_reason = ""
+            linked_component = _linked_account_component(item)
             override_reason = ""
 
             if item["id"] in entry_map:
                 amount = float(entry_map[item["id"]]["amount"] or 0)
                 source = "manual_override"
-            elif is_linked_account and linked_account["id"] in active_overrides:
+            elif (
+                is_linked_account
+                and linked_component == LINKED_ACCOUNT_COMPONENT_INVESTED
+                and linked_account["id"] in active_overrides
+                and linked_account["id"] not in cash_park_accounts
+            ):
                 amount = float(active_overrides[linked_account["id"]]["override_amount"] or 0)
                 override_reason = (active_overrides[linked_account["id"]]["reason"] or "").strip()
                 source = "manual_override"
             elif is_linked_account:
-                amount = float(linked_account["monthly_contribution"] or 0)
+                if linked_component == LINKED_ACCOUNT_COMPONENT_CASH_PARK:
+                    amount = float(linked_account.get("monthly_cash_park") or 0)
+                else:
+                    amount = float(linked_account["monthly_contribution"] or 0)
                 source = "linked_account"
             elif is_linked_debt:
                 amount = float(linked_debt.get("monthly_payment") or 0)
@@ -297,8 +391,12 @@ def _build_monthly_data(month_key, user_id):
                     source_title = "Saved for this month (linked debt)"
             elif source == "linked_account":
                 ln = (linked_account.get("name") or "—").strip()
-                source_label = f"linked account · {ln}"
-                source_title = "Pulled from your linked account’s monthly payment"
+                if linked_component == LINKED_ACCOUNT_COMPONENT_CASH_PARK:
+                    source_label = f"cash park · {ln}"
+                    source_title = "Pulled from your linked account's monthly cash park setting"
+                else:
+                    source_label = f"linked account · {ln}"
+                    source_title = "Pulled from your linked account's monthly payment"
             else:  # linked_debt
                 source_label = "linked debt"
                 source_title = "Pulled from your Debts page — update the monthly payment there to change this amount"
@@ -387,7 +485,7 @@ def budget():
     db_sections = fetch_budget_sections(uid)
     all_items = fetch_budget_items(uid)
     has_budget_basics = any(
-        (not item.get("linked_account_id")) or float(item.get("default_amount") or 0) > 0
+        (not _row_value(item, "linked_account_id")) or float(_row_value(item, "default_amount", 0) or 0) > 0
         for item in all_items
     )
     budget_setup_href = (
@@ -1245,7 +1343,7 @@ def budget_items_view():
     page_mode = request.args.get("mode", "view" if selected_id else "list")
     section_options = [(s["key"], s["label"]) for s in db_sections]
     has_budget_basics = any(
-        (not item.get("linked_account_id")) or float(item.get("default_amount") or 0) > 0
+        (not _row_value(item, "linked_account_id")) or float(_row_value(item, "default_amount", 0) or 0) > 0
         for item in all_items
     )
     first_budget_focus = request.args.get("focus") == "first_budget" and not has_budget_basics

@@ -126,6 +126,7 @@ def _account_payload_from_form(form):
         "tags": ", ".join(t.strip() for t in form.getlist("tags") if t.strip()),
         "current_value": optional_float(form.get("current_value"), 0.0, min_val=0.0),
         "monthly_contribution": optional_float(form.get("monthly_contribution"), 0.0, min_val=0.0),
+        "monthly_cash_park": optional_float(form.get("monthly_cash_park"), 0.0, min_val=0.0),
         "pension_contribution_day": max(0, min(31, optional_int(form.get("pension_contribution_day"), default=0))),
         "goal_value": optional_float(form.get("goal_value"), None, min_val=0.0),
         "valuation_mode": form.get("valuation_mode", "manual"),
@@ -1598,6 +1599,7 @@ def update_cash(account_id):
     payload.setdefault("uninvested_cash", 0)
     payload.setdefault("cash_interest_rate", 0)
     payload.setdefault("interest_payment_day", 0)
+    payload.setdefault("monthly_cash_park", 0)
     payload.setdefault("include_in_budget", True)
     payload.setdefault("pre_salary", False)
 

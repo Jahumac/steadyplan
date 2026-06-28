@@ -144,8 +144,9 @@
       {% set cb = contrib_breakdowns.get(account.id, {}) %}
       {% set source = contribution_sources.get(account.id, {}) %}
       {% set personal = cb.get('personal', account.monthly_contribution or 0) %}
+      {% if account.monthly_cash_park %}{% set personal = personal + (account.monthly_cash_park or 0) %}{% endif %}
       {% if cb.get('total_into_pot', 0) != personal and cb.get('total_into_pot', 0) > 0 %}
-      <span title="You pay £{{ '{:,.0f}'.format(personal) }} → £{{ '{:,.0f}'.format(cb.total_into_pot) }} goes into account{% if source.reason and source.label == 'Payment calendar' %} · {{ source.reason }}{% endif %}">Into accounts monthly £{{ '{:,.0f}'.format(cb.total_into_pot) }}{% if source.label == 'Payment calendar' %} · this month{% endif %}</span>
+      <span title="You pay £{{ '{:,.0f}'.format(personal) }} → £{{ '{:,.0f}'.format(cb.total_into_pot) }} goes into account{% if account.monthly_cash_park %}, with £{{ '{:,.0f}'.format(account.monthly_cash_park or 0) }} parked as cash{% endif %}{% if source.reason and source.label == 'Payment calendar' %} · {{ source.reason }}{% endif %}">Into accounts monthly £{{ '{:,.0f}'.format(cb.total_into_pot) }}{% if source.label == 'Payment calendar' %} · this month{% endif %}</span>
       {% else %}
       <span>{% if source.label == 'Payment calendar' %}This month{% else %}You pay monthly{% endif %} £{{ '{:,.0f}'.format(personal) }}</span>
       {% endif %}
@@ -375,7 +376,7 @@
             </div>
             <div class="form-grid">
               <label>
-                <span>Your Monthly Contribution</span>
+                <span>{% if not _is_pension and selected.valuation_mode == 'holdings' %}Monthly invested contribution{% else %}Your Monthly Contribution{% endif %}</span>
                 <input type="number" step="0.01" name="monthly_contribution" value="{{ selected.monthly_contribution or 0 }}">
                 {% if 'sipp' in _wt_edit %}
                 <small class="form-hint">What you pay from your bank each month. Your provider adds a 25% basic-rate pension tax top-up.</small>
@@ -383,10 +384,19 @@
                 <small class="form-hint">Your share of the pension payment — either from take-home pay or before tax, depending on your workplace scheme.</small>
                 {% elif 'lifetime' in _wt_edit %}
                 <small class="form-hint">What you pay in. Your Lifetime ISA bonus adds 25% on top (up to £4,000/year contributions).</small>
+                {% elif selected.valuation_mode == 'holdings' %}
+                <small class="form-hint">How much you expect to invest each month. Use the cash park field below for money you intentionally leave in the account's cash balance.</small>
                 {% else %}
                 <small class="form-hint">How much you put in each month. If you link a budget item to this account, it can feed into your budget.</small>
                 {% endif %}
               </label>
+              {% if not _is_pension and selected.valuation_mode == 'holdings' %}
+              <label>
+                <span>Monthly cash park</span>
+                <input type="number" step="0.01" name="monthly_cash_park" value="{{ selected.monthly_cash_park or 0 }}">
+                <small class="form-hint">Money you plan to leave parked as cash inside this account each month. It appears as a separate Budget row and still counts toward ISA subscriptions where relevant.</small>
+              </label>
+              {% endif %}
               {% if _is_pension %}
               <label>
                 <span>Employer Contribution</span>
@@ -568,13 +578,14 @@
             {% endif %}
           </div>
           <div class="acct-hero-monthly">
-            {% if _hero_scb.get('total_into_pot', 0) != (selected.monthly_contribution or 0) and _hero_scb.get('total_into_pot', 0) > 0 %}
+            {% set _hero_total_paid = (selected.monthly_contribution or 0) + (selected.monthly_cash_park or 0) %}
+            {% if _hero_scb.get('total_into_pot', 0) != _hero_total_paid and _hero_scb.get('total_into_pot', 0) > 0 %}
               <span class="acct-hero-label">Into account monthly</span>
               <strong style="color:var(--accent-2)">£{{ '{:,.2f}'.format(_hero_scb.total_into_pot) }}</strong>
-              <small class="text-muted">you pay £{{ '{:,.2f}'.format(selected.monthly_contribution or 0) }}</small>
+              <small class="text-muted">you pay £{{ '{:,.2f}'.format(_hero_total_paid) }}</small>
             {% else %}
               <span class="acct-hero-label">You pay monthly</span>
-              <strong>£{{ '{:,.2f}'.format(selected.monthly_contribution or 0) }}</strong>
+              <strong>£{{ '{:,.2f}'.format(_hero_total_paid) }}</strong>
             {% endif %}
           </div>
         </div>
@@ -1036,7 +1047,7 @@
             {% set active_override.ov = ov %}
           {% endif %}
         {% endfor %}
-        {% set standard_amount = selected.monthly_contribution|float if selected.monthly_contribution else 0 %}
+        {% set standard_amount = (selected.monthly_contribution|float if selected.monthly_contribution else 0) + (selected.monthly_cash_park|float if selected.monthly_cash_park else 0) %}
 
         <div class="override-list mt-075">
           {% if active_override.ov %}

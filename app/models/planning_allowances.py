@@ -1,7 +1,11 @@
 """Allowance tracking: ISA, pension, dividend, CGT, carry-forward, overrides."""
 from collections import defaultdict
 from datetime import datetime, timezone
-from app.calculations import add_months_to_key, select_best_matching_override
+from app.calculations import (
+    account_monthly_personal_total,
+    add_months_to_key,
+    select_best_matching_override,
+)
 from ._conn import get_connection
 
 
@@ -543,12 +547,13 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
     with get_connection() as conn:
         accounts = conn.execute(
             """
-            SELECT id, name, wrapper_type, category, monthly_contribution, employer_contribution, contribution_method, current_value, valuation_mode
+            SELECT id, name, wrapper_type, category, monthly_contribution, monthly_cash_park, employer_contribution, contribution_method, current_value, valuation_mode
             FROM accounts
             WHERE user_id = ?
               AND is_active = 1
               AND (
                     COALESCE(monthly_contribution, 0) > 0
+                 OR COALESCE(monthly_cash_park, 0) > 0
                  OR LOWER(COALESCE(wrapper_type, '')) LIKE '%isa%'
                  OR LOWER(COALESCE(wrapper_type, '')) LIKE '%lisa%'
                  OR LOWER(COALESCE(wrapper_type, '')) LIKE '%sipp%'
@@ -595,7 +600,7 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
     calendar_accounts = []
     for account in accounts:
         account_id = int(account["id"])
-        default_amount = float(account["monthly_contribution"] or 0)
+        default_amount = account_monthly_personal_total(account)
         month_cells = []
         for month_key in month_keys:
             active_rows = [
@@ -689,7 +694,7 @@ def _effective_override_amount_for_month(conn, account_id, month_key, fallback_a
 
 def _recalculate_review_items_for_account_month_range(conn, account_id, user_id, from_month, to_month):
     account = conn.execute(
-        "SELECT monthly_contribution FROM accounts WHERE id = ? AND user_id = ?",
+            "SELECT monthly_contribution, monthly_cash_park FROM accounts WHERE id = ? AND user_id = ?",
         (account_id, user_id),
     ).fetchone()
     if not account:
@@ -707,7 +712,7 @@ def _recalculate_review_items_for_account_month_range(conn, account_id, user_id,
         """,
         (user_id, account_id, from_month, to_month),
     ).fetchall()
-    fallback_amount = float(account["monthly_contribution"] or 0)
+    fallback_amount = account_monthly_personal_total(account)
     for review in review_rows:
         expected = _effective_override_amount_for_month(
             conn,

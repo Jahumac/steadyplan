@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     tags TEXT DEFAULT '',
     current_value REAL DEFAULT 0,
     monthly_contribution REAL DEFAULT 0,
+    monthly_cash_park REAL DEFAULT 0,
     pension_contribution_day INTEGER DEFAULT 0,
     goal_value REAL,
     valuation_mode TEXT DEFAULT 'manual',
@@ -167,6 +168,7 @@ CREATE TABLE IF NOT EXISTS budget_items (
     section TEXT NOT NULL,
     default_amount REAL DEFAULT 0,
     linked_account_id INTEGER,
+    linked_account_component TEXT DEFAULT 'invested',
     linked_debt_id INTEGER,
     notes TEXT,
     sort_order INTEGER DEFAULT 0,
@@ -781,6 +783,7 @@ def _run_migrations(conn):
         "uninvested_cash REAL DEFAULT 0",
         "cash_interest_rate REAL DEFAULT 0",
         "interest_payment_day INTEGER DEFAULT 0",
+        "monthly_cash_park REAL DEFAULT 0",
         "include_in_budget INTEGER DEFAULT 1",
         "pre_salary INTEGER DEFAULT 0",
     ]:
@@ -1125,11 +1128,20 @@ def _run_migrations(conn):
     for col in [
         "include_in_budget INTEGER DEFAULT 1",
         "pre_salary INTEGER DEFAULT 0",
+        "monthly_cash_park REAL DEFAULT 0",
     ]:
         try:
             conn.execute(f"ALTER TABLE accounts ADD COLUMN {col}")
         except Exception as e:
             _log_migration_error(e)
+
+    # ── Budget item component for multi-row account funding ───────────────
+    try:
+        conn.execute(
+            "ALTER TABLE budget_items ADD COLUMN linked_account_component TEXT DEFAULT 'invested'"
+        )
+    except Exception as e:
+        _log_migration_error(e)
 
     # ── v8: purge legacy soft-deleted accounts ──────────────────────────
     # Delete now means really-delete (see app/models/accounts.py). Old
@@ -1205,6 +1217,7 @@ def _ensure_indexes(conn):
         "CREATE INDEX IF NOT EXISTS idx_monthly_review_items_account_id ON monthly_review_items(account_id)",
         "CREATE INDEX IF NOT EXISTS idx_budget_items_user_id ON budget_items(user_id)",
         "CREATE INDEX IF NOT EXISTS idx_budget_items_linked_account ON budget_items(linked_account_id)",
+        "CREATE INDEX IF NOT EXISTS idx_budget_items_linked_account_component ON budget_items(linked_account_id, linked_account_component)",
         "CREATE INDEX IF NOT EXISTS idx_budget_entries_month ON budget_entries(month_key)",
         "CREATE INDEX IF NOT EXISTS idx_budget_entries_item ON budget_entries(budget_item_id)",
         "CREATE INDEX IF NOT EXISTS idx_budget_sections_user_id ON budget_sections(user_id)",
