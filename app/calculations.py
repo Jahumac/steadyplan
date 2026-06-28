@@ -3,6 +3,9 @@ from datetime import date, datetime, timedelta, timezone
 
 PRICE_STALE_AFTER_HOURS = 36     # >36h since last successful fetch ⇒ stale badge on holdings
 SCHEDULER_STALE_AFTER_HOURS = 24  # >24h since last scheduler run ⇒ alert on overview
+OVERRIDE_COMPONENT_TOTAL = "total"
+OVERRIDE_COMPONENT_INVESTED = "invested"
+OVERRIDE_COMPONENT_CASH_PARK = "cash_park"
 
 
 def is_price_stale(price_updated_at, now=None):
@@ -71,7 +74,7 @@ def contribution_breakdown(account, assumptions=None):
         self_assessment — additional relief reclaimable by higher/additional-rate taxpayers
         method_label    — human-readable description of the method
     """
-    personal = to_float(_safe_get(account, "monthly_contribution", 0))
+    personal = account_monthly_personal_total(account)
     employer = to_float(_safe_get(account, "employer_contribution", 0))
     wrapper = (_safe_get(account, "wrapper_type") or "")
     method = (_safe_get(account, "contribution_method") or "standard")
@@ -152,10 +155,102 @@ def account_monthly_cash_park(account):
     return to_float(_safe_get(account, "monthly_cash_park", 0))
 
 
+def account_supports_cash_park(account):
+    wrapper = str(_safe_get(account, "wrapper_type", "") or "").lower()
+    category = str(_safe_get(account, "category", "") or "").lower()
+    valuation_mode = str(_safe_get(account, "valuation_mode", "") or "").lower()
+    return (
+        valuation_mode == "holdings"
+        and "pension" not in wrapper
+        and "sipp" not in wrapper
+        and category != "pension"
+    )
+
+
 def account_monthly_personal_total(account):
     return to_float(_safe_get(account, "monthly_contribution", 0)) + account_monthly_cash_park(account)
 
 
+def contribution_override_component(row):
+    component = str(_safe_get(row, "component", OVERRIDE_COMPONENT_TOTAL) or OVERRIDE_COMPONENT_TOTAL).strip().lower()
+    if component not in {OVERRIDE_COMPONENT_TOTAL, OVERRIDE_COMPONENT_INVESTED, OVERRIDE_COMPONENT_CASH_PARK}:
+        return OVERRIDE_COMPONENT_TOTAL
+    return component
+
+
+def contribution_override_components_for_month(overrides, month_key, default_invested=0.0, default_cash_park=0.0):
+    active_rows = []
+    for row in overrides or []:
+        try:
+            from_month = row["from_month"]
+            to_month = row["to_month"]
+        except (KeyError, TypeError):
+            continue
+        if from_month <= month_key <= to_month:
+            active_rows.append(row)
+
+    invested_row = select_best_matching_override(
+        [row for row in active_rows if contribution_override_component(row) == OVERRIDE_COMPONENT_INVESTED],
+        month_key,
+    )
+    cash_park_row = select_best_matching_override(
+        [row for row in active_rows if contribution_override_component(row) == OVERRIDE_COMPONENT_CASH_PARK],
+        month_key,
+    )
+    total_row = select_best_matching_override(
+        [row for row in active_rows if contribution_override_component(row) == OVERRIDE_COMPONENT_TOTAL],
+        month_key,
+    )
+
+    has_component_overrides = invested_row is not None or cash_park_row is not None
+    if has_component_overrides:
+        invested = (
+            to_float(_safe_get(invested_row, "override_amount", default_invested))
+            if invested_row is not None
+            else to_float(default_invested)
+        )
+        cash_park = (
+            to_float(_safe_get(cash_park_row, "override_amount", default_cash_park))
+            if cash_park_row is not None
+            else to_float(default_cash_park)
+        )
+    elif total_row is not None:
+        total_amount = to_float(_safe_get(total_row, "override_amount", 0))
+        cash_park = min(to_float(default_cash_park), total_amount)
+        invested = max(total_amount - cash_park, 0.0)
+    else:
+        invested = to_float(default_invested)
+        cash_park = to_float(default_cash_park)
+
+    return {
+        "invested": invested,
+        "cash_park": cash_park,
+        "total": invested + cash_park,
+        "has_component_overrides": has_component_overrides,
+        "invested_override": invested_row,
+        "cash_park_override": cash_park_row,
+        "total_override": total_row,
+    }
+
+
+def projected_invested_personal_contribution(account, month_key):
+    overrides = _safe_get(account, "_contribution_overrides", []) or []
+    return contribution_override_components_for_month(
+        overrides,
+        month_key,
+        default_invested=to_float(_safe_get(account, "monthly_contribution", 0)),
+        default_cash_park=account_monthly_cash_park(account),
+    )["invested"]
+
+
+def projected_cash_park_contribution(account, month_key):
+    overrides = _safe_get(account, "_contribution_overrides", []) or []
+    return contribution_override_components_for_month(
+        overrides,
+        month_key,
+        default_invested=to_float(_safe_get(account, "monthly_contribution", 0)),
+        default_cash_park=account_monthly_cash_park(account),
+    )["cash_park"]
 def future_value(current_value, monthly_contribution, annual_growth_rate, years):
     monthly_rate = annual_growth_rate / 12
     months = int(years * 12)
@@ -268,16 +363,23 @@ def select_best_matching_override(overrides, month_key):
 
 def contribution_override_for_month(account, month_key):
     """Return a personal monthly contribution override for account/month, if any."""
-    override = select_best_matching_override(_safe_get(account, "_contribution_overrides", []) or [], month_key)
-    return to_float(override["override_amount"]) if override is not None else None
+    overrides = _safe_get(account, "_contribution_overrides", []) or []
+    parts = contribution_override_components_for_month(
+        overrides,
+        month_key,
+        default_invested=to_float(_safe_get(account, "monthly_contribution", 0)),
+        default_cash_park=account_monthly_cash_park(account),
+    )
+    if parts["has_component_overrides"] or parts["total_override"] is not None:
+        return parts["total"]
+    return None
 
 
 def projected_personal_contribution(account, month_key):
     """Personal contribution planned for a projected month before wrappers add uplifts."""
-    override = contribution_override_for_month(account, month_key) if month_key else None
-    if override is not None:
-        return override
-    return to_float(_safe_get(account, "monthly_contribution", 0))
+    if month_key:
+        return projected_invested_personal_contribution(account, month_key) + projected_cash_park_contribution(account, month_key)
+    return account_monthly_personal_total(account)
 
 
 def _tax_year_start_for_month_key(month_key, assumptions=None):
@@ -329,10 +431,10 @@ def projected_contribution_breakdown(account, assumptions=None, month_index=0):
     """
     start_month = _safe_get(account, "_projection_start_month")
     month_key = add_months_to_key(start_month, month_index) if start_month else None
-    override = contribution_override_for_month(account, month_key) if month_key else None
     adjusted = dict(account)
-    if override is not None:
-        adjusted["monthly_contribution"] = override
+    personal_total = projected_personal_contribution(account, month_key) if month_key else account_monthly_personal_total(adjusted)
+    adjusted["monthly_contribution"] = personal_total
+    adjusted["monthly_cash_park"] = 0.0
 
     breakdown = contribution_breakdown(adjusted, assumptions)
     wrapper = (_safe_get(account, "wrapper_type") or "")
@@ -347,7 +449,7 @@ def projected_contribution_breakdown(account, assumptions=None, month_index=0):
         breakdown["method_label"] = "Lifetime ISA contributions stop at age 50"
         return breakdown
 
-    personal = projected_personal_contribution(account, month_key) if month_key else to_float(adjusted.get("monthly_contribution", 0))
+    personal = personal_total
     prior_personal = _lisa_projected_prior_personal_in_tax_year(account, assumptions, month_index)
     eligible = max(min(personal, LISA_ANNUAL_CAP - prior_personal), 0.0)
     government_bonus = eligible * LISA_BONUS_RATE
@@ -376,6 +478,10 @@ def projection_monthly_contribution(account, assumptions=None, month_index=0):
 
 def effective_monthly_contribution(account, assumptions=None):
     return contribution_breakdown(account, assumptions)["total_into_pot"]
+
+
+def account_cash_interest_rate(account):
+    return to_float(_safe_get(account, "cash_interest_rate", 0))
 
 
 def convert_to_gbp(amount, from_currency, fx_rates=None):
@@ -577,22 +683,45 @@ def account_gross_growth_rate(account, assumptions):
 def _project_account_month_by_month(account, assumptions, month_count, rate):
     """Project account value month by month so budget overrides can apply."""
     from .models.accounts import is_premium_bonds_account, PREMIUM_BONDS_MAX_BALANCE
-    value = to_float(account["current_value"])
+    current_value = to_float(account["current_value"])
+    cash_value = min(to_float(_safe_get(account, "uninvested_cash", 0)), current_value)
+    invested_value = max(current_value - cash_value, 0.0)
     monthly_rate = rate / 12.0
+    monthly_cash_rate = account_cash_interest_rate(account) / 12.0
     current_age = current_age_from_assumptions(assumptions)
     is_lisa = account["wrapper_type"] == "Lifetime ISA"
     is_pb = is_premium_bonds_account(account)
     months = max(int(month_count), 0)
+    start_month = _safe_get(account, "_projection_start_month")
 
     for idx in range(months):
-        value *= (1 + monthly_rate)
+        invested_value *= (1 + monthly_rate)
+        cash_value *= (1 + monthly_cash_rate)
         if not is_lisa or (current_age + idx / 12.0) < 50:
-            value += projection_monthly_contribution(account, assumptions, idx)
+            month_key = add_months_to_key(start_month, idx) if start_month else None
+            invested_personal = (
+                projected_invested_personal_contribution(account, month_key)
+                if month_key
+                else to_float(_safe_get(account, "monthly_contribution", 0))
+            )
+            if invested_personal > 0:
+                invested_account = dict(account)
+                invested_account["monthly_contribution"] = invested_personal
+                invested_account["monthly_cash_park"] = 0.0
+                invested_value += contribution_breakdown(invested_account, assumptions)["total_into_pot"]
+            cash_value += (
+                projected_cash_park_contribution(account, month_key)
+                if month_key
+                else account_monthly_cash_park(account)
+            )
         # Premium Bonds can't compound past £50k — NS&I would pay overflow
         # as cash prizes, so the balance line stays flat at the cap.
-        if is_pb and value > PREMIUM_BONDS_MAX_BALANCE:
-            value = PREMIUM_BONDS_MAX_BALANCE
-    return value
+        total_value = invested_value + cash_value
+        if is_pb and total_value > PREMIUM_BONDS_MAX_BALANCE:
+            total_value = PREMIUM_BONDS_MAX_BALANCE
+            cash_value = min(cash_value, total_value)
+            invested_value = max(total_value - cash_value, 0.0)
+    return invested_value + cash_value
 
 
 def projected_account_value_at_year(account, assumptions, yr):
@@ -646,7 +775,9 @@ def projected_accounts(accounts, assumptions):
     rows = []
     for account in accounts:
         current = to_float(account["current_value"])
-        personal = to_float(account["monthly_contribution"])
+        personal = account_monthly_personal_total(account)
+        invested_personal = to_float(account.get("monthly_contribution") or 0)
+        cash_park = account_monthly_cash_park(account)
         first_month_override = None
         start_month = _safe_get(account, "_projection_start_month")
         if start_month:
@@ -654,6 +785,7 @@ def projected_accounts(accounts, assumptions):
         contribution_account = dict(account)
         if first_month_override is not None:
             contribution_account["monthly_contribution"] = first_month_override
+            contribution_account["monthly_cash_park"] = 0.0
         breakdown = contribution_breakdown(contribution_account, assumptions)
         effective_contribution = breakdown["total_into_pot"]
         growth = account_growth_rate(account, assumptions)
@@ -666,6 +798,9 @@ def projected_accounts(accounts, assumptions):
             "wrapper_type": account["wrapper_type"],
             "current_value": current,
             "monthly_contribution": personal,
+            "monthly_invested_contribution": invested_personal,
+            "monthly_cash_park": cash_park,
+            "cash_park_enabled": account_supports_cash_park(account),
             "effective_contribution": effective_contribution,
             "tax_relief": breakdown["tax_relief"],
             "government_bonus": breakdown["government_bonus"],

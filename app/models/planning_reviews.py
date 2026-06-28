@@ -1,5 +1,8 @@
 """Monthly reviews: fetch, create, update, review items, contribution flags."""
-from app.calculations import account_monthly_personal_total, select_best_matching_override
+from app.calculations import (
+    account_monthly_personal_total,
+    contribution_override_components_for_month,
+)
 from ._conn import get_connection
 from .accounts import fetch_all_accounts
 
@@ -16,12 +19,15 @@ def _expected_contribution_for_month(conn, account_id, month_key, fallback_month
         """,
         (account_id, month_key, month_key),
     ).fetchall()
-    override = select_best_matching_override(overrides, month_key)
-    return (
-        float(override["override_amount"])
-        if override is not None
-        else float(fallback_monthly_contribution or 0)
+    parts = contribution_override_components_for_month(
+        overrides,
+        month_key,
+        default_invested=fallback_monthly_contribution,
+        default_cash_park=0.0,
     )
+    if parts["has_component_overrides"] or parts["total_override"] is not None:
+        return float(parts["total"] or 0)
+    return float(fallback_monthly_contribution or 0)
 
 
 def fetch_or_create_monthly_review(month_key, user_id):

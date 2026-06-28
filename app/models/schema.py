@@ -201,6 +201,7 @@ CREATE TABLE IF NOT EXISTS contribution_overrides (
     from_month TEXT NOT NULL,
     to_month TEXT NOT NULL,
     override_amount REAL NOT NULL,
+    component TEXT NOT NULL DEFAULT 'total',
     reason TEXT,
     created_at TEXT,
     FOREIGN KEY(account_id) REFERENCES accounts(id) ON DELETE CASCADE
@@ -443,6 +444,7 @@ def _run_migrations(conn):
                 from_month TEXT NOT NULL,
                 to_month TEXT NOT NULL,
                 override_amount REAL NOT NULL,
+                component TEXT NOT NULL DEFAULT 'total',
                 reason TEXT,
                 created_at TEXT,
                 FOREIGN KEY(account_id) REFERENCES accounts(id)
@@ -1143,6 +1145,13 @@ def _run_migrations(conn):
     except Exception as e:
         _log_migration_error(e)
 
+    try:
+        conn.execute(
+            "ALTER TABLE contribution_overrides ADD COLUMN component TEXT NOT NULL DEFAULT 'total'"
+        )
+    except Exception as e:
+        _log_migration_error(e)
+
     # ── v8: purge legacy soft-deleted accounts ──────────────────────────
     # Delete now means really-delete (see app/models/accounts.py). Old
     # soft-deleted accounts (is_active = 0) were still leaking their
@@ -1222,6 +1231,7 @@ def _ensure_indexes(conn):
         "CREATE INDEX IF NOT EXISTS idx_budget_entries_item ON budget_entries(budget_item_id)",
         "CREATE INDEX IF NOT EXISTS idx_budget_sections_user_id ON budget_sections(user_id)",
         "CREATE INDEX IF NOT EXISTS idx_contribution_overrides_account ON contribution_overrides(account_id)",
+        "CREATE INDEX IF NOT EXISTS idx_contribution_overrides_account_component ON contribution_overrides(account_id, component)",
         "CREATE INDEX IF NOT EXISTS idx_cash_flow_events_account_date ON cash_flow_events(account_id, event_date)",
         "CREATE INDEX IF NOT EXISTS idx_cash_flow_events_user_date ON cash_flow_events(user_id, event_date)",
         "CREATE INDEX IF NOT EXISTS idx_isa_contributions_user ON isa_contributions(user_id, contribution_date)",

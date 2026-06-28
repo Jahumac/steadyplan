@@ -1,7 +1,12 @@
 """Portfolio snapshots: monthly, daily, and performance history."""
 from datetime import date, datetime
 from ._conn import get_connection
-from app.calculations import effective_monthly_contribution, select_best_matching_override, _resolve_contribution_day
+from app.calculations import (
+    _resolve_contribution_day,
+    account_monthly_personal_total,
+    contribution_override_components_for_month,
+    effective_monthly_contribution,
+)
 
 
 _CASH_BALANCE_WRAPPERS = {"cash isa", "premium bonds"}
@@ -321,12 +326,18 @@ def fetch_monthly_performance_data(user_id):
                 if has_cash_flow:
                     contribution = float(cash_flow_map.get(cash_flow_key, 0.0) or 0.0)
                 else:
-                    default_personal = float(account.get("monthly_contribution") or 0)
-                    override = select_best_matching_override(overrides_by_account.get(aid, []), month_key)
-                    personal = float(override["override_amount"] or 0) if override is not None else None
+                    default_personal = float(account_monthly_personal_total(account) or 0)
+                    parts = contribution_override_components_for_month(
+                        overrides_by_account.get(aid, []),
+                        month_key,
+                        default_invested=float(account.get("monthly_contribution") or 0),
+                        default_cash_park=float(account.get("monthly_cash_park") or 0),
+                    )
+                    override = parts["total_override"] or parts["invested_override"] or parts["cash_park_override"]
+                    personal = float(parts["total"] or 0) if override is not None or parts["has_component_overrides"] else None
 
                     contribution = 0.0
-                    if (rkey in review_map or override is not None or _regular_contribution_is_due_for_month(month_key, account, assumptions, datetime.now().date())):
+                    if (rkey in review_map or override is not None or parts["has_component_overrides"] or _regular_contribution_is_due_for_month(month_key, account, assumptions, datetime.now().date())):
                         if personal != 0.0:
                             if rkey in review_map:
                                 personal = float(review_map[rkey] or 0)
@@ -491,9 +502,15 @@ def fetch_monthly_performance_data_by_account(user_id):
         prior_balance = previous_balance_by_account.get(aid)
         current_balance = float(r["balance"] or 0)
         seen_account_ids.add(aid)
-        default_personal = float(r.get("monthly_contribution") or 0)
-        override = select_best_matching_override(overrides_by_account.get(aid, []), month_key)
-        personal = float(override["override_amount"] or 0) if override is not None else None
+        default_personal = float(account_monthly_personal_total(r) or 0)
+        parts = contribution_override_components_for_month(
+            overrides_by_account.get(aid, []),
+            month_key,
+            default_invested=float(r.get("monthly_contribution") or 0),
+            default_cash_park=float(r.get("monthly_cash_park") or 0),
+        )
+        override = parts["total_override"] or parts["invested_override"] or parts["cash_park_override"]
+        personal = float(parts["total"] or 0) if override is not None or parts["has_component_overrides"] else None
         planned_contrib = 0.0
         rk = (aid, month_key)
         is_current_month = month_key == current_month_key
@@ -501,6 +518,7 @@ def fetch_monthly_performance_data_by_account(user_id):
         if not has_cash_flow and (
             is_confirmed
             or override is not None
+            or parts["has_component_overrides"]
             or _regular_contribution_is_due_for_month(month_key, r, assumptions, datetime.now().date())
         ):
             if personal != 0.0:
