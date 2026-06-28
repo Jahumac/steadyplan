@@ -5,8 +5,7 @@ from flask import Blueprint, current_app, flash, jsonify, redirect, render_templ
 from flask_login import current_user, login_required
 
 from app.calculations import (
-    contribution_breakdown,
-    effective_account_value,
+    projected_contribution_breakdown,
     goal_current_value,
     progress_to_goal,
     review_ready_date as calc_review_ready_date,
@@ -24,6 +23,7 @@ from app.models import (
     fetch_all_holdings,
     fetch_all_holdings_grouped,
     fetch_assumptions,
+    fetch_budget_entries,
     fetch_budget_items,
     fetch_holding,
     fetch_holding_totals_by_account,
@@ -43,13 +43,16 @@ from app.models import (
     update_holding,
     update_monthly_review,
     update_monthly_review_notes,
-    upsert_monthly_snapshot,
     upsert_single_month_contribution_override,
 )
 from app.demo import is_read_only_demo_user
 from app.utils import optional_float, optional_int, valid_month_key
 from app.services.monthly_review_checklist import parse_monthly_review_notes
-from app.services.financial_truth import apply_account_balance_update
+from app.services.financial_truth import (
+    apply_account_balance_update,
+    refresh_account_snapshots_for_month,
+    refresh_holdings_accounts_for_month,
+)
 from app.services.csv_parsers import (
     count_csv_rows,
     detect_csv_headers,
@@ -132,6 +135,7 @@ def monthly_review():
                 },
                 uid,
             )
+            refresh_holdings_accounts_for_month(uid, [account_id], month_key)
             review = fetch_or_create_monthly_review(month_key, uid)
             mark_review_item_updated(review["id"], account_id, "holdings_updated")
         elif form_name == "update_account_balance":
@@ -151,20 +155,7 @@ def monthly_review():
         elif form_name == "mark_complete":
             review = fetch_or_create_monthly_review(month_key, uid)
             ensure_monthly_review_items(review["id"], uid)
-            items = fetch_monthly_review_items(review["id"])
-            items_by_account = {int(it["account_id"]): it for it in items}
-            all_accounts = fetch_all_accounts(uid)
-            holdings_totals = fetch_holding_totals_by_account(uid)
-            for acc in all_accounts:
-                aid = int(acc["id"])
-                if acc.get("valuation_mode") == "holdings":
-                    balance = effective_account_value(acc, holdings_totals)
-                    upsert_monthly_snapshot(aid, month_key, balance)
-                    continue
-                it = items_by_account.get(aid)
-                if it and int(it.get("balance_updated") or 0) == 1:
-                    balance = effective_account_value(acc, holdings_totals)
-                    upsert_monthly_snapshot(aid, month_key, balance)
+            refresh_account_snapshots_for_month(uid, month_key)
             update_monthly_review(review["id"], "complete", (review.get("notes") or ""), uid)
         elif form_name == "save_review_notes":
             review = fetch_or_create_monthly_review(month_key, uid)
@@ -303,11 +294,19 @@ def monthly_review():
     if contribution_items:
         budget_items_all = fetch_budget_items(uid)
         linked = {b["linked_account_id"]: b for b in budget_items_all if b.get("linked_account_id")}
+        budget_entry_map = {entry["budget_item_id"]: entry for entry in fetch_budget_entries(month_key, uid)}
+        active_overrides = fetch_all_active_overrides(month_key, uid)
         for item in contribution_items:
             budget_item = linked.get(item["account_id"])
             if budget_item is not None:
                 expected = float(item["expected_contribution"] or 0)
-                budgeted = float(budget_item["default_amount"] or 0)
+                entry = budget_entry_map.get(budget_item["id"])
+                if entry is not None:
+                    budgeted = float(entry["amount"] or 0)
+                elif item["account_id"] in active_overrides:
+                    budgeted = float(active_overrides[item["account_id"]]["override_amount"] or 0)
+                else:
+                    budgeted = float(budget_item["default_amount"] or 0)
                 budget_comparison_map[item["account_id"]] = {
                     "budgeted": budgeted,
                     "expected": expected,
@@ -329,7 +328,9 @@ def monthly_review():
             personal = float(item["expected_contribution"] or 0)
             adjusted = dict(acc)
             adjusted["monthly_contribution"] = personal
-            br = contribution_breakdown(adjusted, assumptions)
+            adjusted["_projection_start_month"] = month_key
+            adjusted["_contribution_overrides"] = []
+            br = projected_contribution_breakdown(adjusted, assumptions, 0)
             contribution_breakdowns[item["account_id"]] = br
             total_personal += personal
             total_into_pot += br["total_into_pot"]
@@ -655,6 +656,7 @@ def confirm_import():
 
     if updated and touched_account_ids:
         month_key = effective_month_key or default_month_key()
+        refresh_holdings_accounts_for_month(current_user.id, touched_account_ids, month_key)
         review = fetch_or_create_monthly_review(month_key, current_user.id)
         ensure_monthly_review_items(review["id"], current_user.id)
         for aid in touched_account_ids:

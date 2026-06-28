@@ -95,23 +95,57 @@
     </details>
   </div>
   <div class="budget-edit-callout">
-    <strong>✏️ Click any number and type to change it for this month.</strong>
-    <span>Changes save as you edit. <em>Budget Setup</em> is where you add or remove recurring budget lines.</span>
+    <strong>✏️ Normal edits save as you type.</strong>
+    <span>Use <em>Budget what-if</em> below for temporary simulations. <em>Budget Setup</em> is where you add or remove recurring budget lines.</span>
   </div>
 </div>
+
+<section class="budget-what-if-card card mb-1" aria-labelledby="budget-what-if-title">
+  <div class="section-header budget-what-if-header">
+    <div>
+      <p class="eyebrow">Simulation only</p>
+      <h2 id="budget-what-if-title">Budget what-if</h2>
+      <p class="helper-text m-0">Try changes without saving them to the real budget.</p>
+    </div>
+    <div class="budget-what-if-actions">
+      <button type="button" class="badge" id="budget-what-if-toggle">Start simulation</button>
+      <button type="button" class="badge badge-meta" id="budget-what-if-reset" hidden>Reset scenario</button>
+    </div>
+  </div>
+  <div class="budget-what-if-strip" aria-label="Budget what-if summary">
+    <div class="budget-what-if-stat">
+      <span>Scenario income</span>
+      <strong id="what-if-income">£{{ '{:,.0f}'.format(summary.total_income) }}</strong>
+    </div>
+    <div class="budget-what-if-stat">
+      <span>Scenario expenses</span>
+      <strong id="what-if-expenses">£{{ '{:,.0f}'.format(summary.total_expenses) }}</strong>
+    </div>
+    <div class="budget-what-if-stat">
+      <span>Scenario left over</span>
+      <strong id="what-if-surplus" class="{% if summary.surplus >= 0 %}stat-positive-text{% else %}stat-negative-text{% endif %}">{% if summary.surplus >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(summary.surplus) }}</strong>
+    </div>
+    <div class="budget-what-if-stat">
+      <span>Vs real budget</span>
+      <strong id="what-if-surplus-delta">£0</strong>
+    </div>
+    <div class="budget-what-if-stat">
+      <span>Savings rate</span>
+      <strong id="what-if-savings">{{ '{:.1f}'.format(summary.savings_rate) }}%</strong>
+    </div>
+  </div>
+  <p class="helper-text budget-what-if-status" id="budget-what-if-status">Nothing is written to the database unless you leave simulation mode and edit normally.</p>
+</section>
 
 {# ── Budget sections ──────────────────────────────────────────────────────── #}
 <div class="budget-container" data-month-key="{{ month_key }}" data-income-key="{{ income_key }}">
 {% for section in sections %}
 <section class="panel mb-1 budget-section-panel" id="{{ section.key | replace('_', '-') }}" data-sec="{{ section.key }}">
-  <div class="section-header">
+  <div class="section-header budget-section-title-row">
     <div>
       <p class="eyebrow budget-section-eyebrow">{{ section.key | replace('_', ' ') | upper }}</p>
       <h3>{{ section.label }}</h3>
     </div>
-    <strong class="budget-section-total" id="total-{{ section.key }}">
-      £{{ '{:,.2f}'.format(section.total) }}
-    </strong>
   </div>
   {# Section-level helper hints #}
   {% if loop.first %}
@@ -119,12 +153,29 @@
   {% elif 'debt' in section.key %}
   <p class="helper-text helper-text-section">Minimum payments and extra debt overpayments — use this section to track what you plan to repay this month.</p>
   {% elif 'invest' in section.key or 'saving' in section.key %}
-  <p class="helper-text helper-text-section">Set aside money for future goals. Items marked <em>linked account</em> use the monthly contribution from that account. Edit the number here for <strong>this month only</strong> — to change future months, update the contribution in the account settings.</p>
+  <p class="helper-text helper-text-section">Set aside money for future goals. Items marked <em>linked account</em> use the monthly payment from that account. Edit the number here for <strong>this month only</strong> — to change future months, update the account’s monthly payment setting.</p>
   {% elif 'fixed' in section.key or 'expense' in section.key %}
   <p class="helper-text helper-text-section">The essentials — bills, rent, subscriptions. These tend to stay steady month to month.</p>
   {% elif 'discretionary' in section.key or 'variable' in section.key or 'personal' in section.key %}
   <p class="helper-text helper-text-section">The flexible stuff — eating out, hobbies, shopping.</p>
   {% endif %}
+
+  <div class="budget-section-metrics" aria-label="{{ section.label }} summary">
+    <div class="budget-section-metric">
+      <span class="budget-section-metric-label">Monthly</span>
+      <strong class="budget-section-total" id="total-{{ section.key }}">£{{ '{:,.2f}'.format(section.total) }}</strong>
+    </div>
+    <div class="budget-section-metric">
+      <span class="budget-section-metric-label">Income share</span>
+      <strong class="budget-section-income-share" id="share-{{ section.key }}" title="This section as a percentage of budgeted income">
+        {% if section.income_percent is not none %}{{ '{:.1f}'.format(section.income_percent) }}%{% else %}—{% endif %}
+      </strong>
+    </div>
+    <div class="budget-section-metric">
+      <span class="budget-section-metric-label">Yearly</span>
+      <strong class="budget-section-annual" id="annual-{{ section.key }}" title="Monthly amount multiplied by 12">£{{ '{:,.0f}'.format(section.annual_total) }}</strong>
+    </div>
+  </div>
 
   {% if section.rows %}
   <div class="budget-rows">
@@ -140,12 +191,16 @@
         {% endif %}
         {% if item.notes %}<span class="budget-row-note">{{ item.notes }}</span>{% endif %}
       </div>
+      <div class="budget-row-annual" id="annual-item-{{ item.id }}" title="Monthly amount multiplied by 12">
+        £{{ '{:,.0f}'.format(item.annual_amount) }} / year
+      </div>
       <div class="budget-row-right">
         <span class="budget-row-currency">£</span>
         <input type="number" step="0.01"
                class="budget-amount-input"
                data-item-id="{{ item.id }}"
                data-section="{{ section.key }}"
+               data-real-value="{{ '{:.2f}'.format(item.amount) }}"
                {% if item.pre_salary %}data-pre-salary="1"{% endif %}
                value="{{ '{:.2f}'.format(item.amount) }}">
         <span class="budget-save-indicator" id="ind-{{ item.id }}"></span>

@@ -1,9 +1,8 @@
-from pathlib import Path
+from tests.path_helpers import REPO_ROOT
 import json
 import subprocess
 
 
-REPO_ROOT = Path("/opt/data/steadyplan")
 DOCKERFILE = REPO_ROOT / "Dockerfile"
 
 

@@ -1,6 +1,7 @@
 """Backup service tests."""
 from datetime import datetime
 from pathlib import Path
+from tests.path_helpers import TEMPLATES_ROOT
 
 
 def test_backup_creates_file(app, tmp_path):
@@ -385,7 +386,7 @@ def test_diagnostics_shows_latest_backup_metadata(app, client, make_user, tmp_pa
 def test_diagnostics_price_sample_template_uses_clearer_column_labels():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "<th>Holding name</th>" in body
     assert "<th>Price updated</th>" in body
@@ -398,7 +399,7 @@ def test_diagnostics_price_sample_template_uses_clearer_column_labels():
 def test_diagnostics_instance_counts_template_uses_clearer_stale_price_label():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "Linked prices needing attention in sample (&gt;2 days old or missing)" in body
     assert "Stale prices (sample, &gt;2d/none)" not in body
@@ -408,7 +409,7 @@ def test_diagnostics_instance_counts_template_uses_clearer_stale_price_label():
 def test_diagnostics_linked_prices_empty_state_uses_clearer_saved_prices_wording():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "No linked holdings are using saved prices yet." in body
     assert "No holdings are linked to saved prices yet." not in body
@@ -417,7 +418,7 @@ def test_diagnostics_linked_prices_empty_state_uses_clearer_saved_prices_wording
 def test_diagnostics_instance_overview_template_uses_clearer_price_update_label():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "Latest saved portfolio snapshot" in body
     assert "Latest portfolio snapshot" not in body
@@ -429,7 +430,7 @@ def test_diagnostics_instance_overview_template_uses_clearer_price_update_label(
 def test_diagnostics_instance_counts_template_uses_clearer_catalogue_count_labels():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "SQLite database" in body
     assert "hero_stat('Database')" not in body
@@ -454,7 +455,7 @@ def test_diagnostics_instance_counts_template_uses_clearer_catalogue_count_label
 def test_diagnostics_backup_metadata_template_uses_clearer_backup_labels():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "SQLite backup files" in body
     assert "Latest SQLite backup file" in body
@@ -475,7 +476,7 @@ def test_diagnostics_backup_metadata_template_uses_clearer_backup_labels():
 def test_diagnostics_runtime_status_template_uses_clearer_state_labels():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "Reachable" in body
     assert "Available" not in body
@@ -496,12 +497,53 @@ def test_diagnostics_runtime_status_template_uses_clearer_state_labels():
 def test_diagnostics_trust_checkpoint_copy_uses_clearer_setup_wording():
     from pathlib import Path
 
-    body = Path("/opt/data/steadyplan/app/templates/settings.html").read_text()
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
 
     assert "Live runtime checks for the main trust-related settings on this instance." in body
     assert "This is not a full security audit, but it should make the current setup easier to review." in body
     assert "Live runtime checks for the main trust settings on this instance." not in body
     assert "it should make the current posture easier to review." not in body
+
+
+def test_settings_glance_groups_recovery_links_and_anchors():
+    body = TEMPLATES_ROOT.joinpath("settings.html").read_text()
+
+    assert "Start with day-to-day setup, then use the safety links when you need exports, restore checks, diagnostics, or account access." in body
+    assert "Everyday setup" in body
+    assert "Safety and recovery" in body
+    assert "Optional access" in body
+    assert 'href="#data-ownership"' in body
+    assert 'href="#json-export"' in body
+    assert 'href="#restore-check"' in body
+    assert 'href="/settings/?mode=diagnostics#sqlite-backups"' in body
+    assert 'href="#connections-tokens"' in body
+    assert '<section class="panel mt-1" id="data-ownership">' in body
+    assert '<section class="panel mt-1" id="json-export">' in body
+    assert '<section class="panel mt-1" id="restore-check">' in body
+    assert '<section class="panel mt-1" id="connections-tokens">' in body
+    assert '<span class="text-muted">Below</span>' not in body
+    assert '<span class="text-muted">Optional</span>' not in body
+
+
+def test_settings_page_renders_safety_map_before_recovery_sections(app, client, make_user, tmp_path):
+    app.config["DATA_DIR"] = tmp_path
+    uid, username, password = make_user(username="settings-map-user", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/settings/")
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+
+    glance_idx = body.index("Settings at a glance")
+    data_idx = body.index('<h3>Data ownership</h3>')
+    export_idx = body.index('<h3>Download a per-user JSON export</h3>')
+    restore_idx = body.index('<h3>Check a JSON export before overwrite</h3>')
+    assert glance_idx < data_idx < export_idx < restore_idx
+    assert "Safety and recovery" in body[glance_idx:data_idx]
+    assert "Review backup health" in body[glance_idx:data_idx]
+    assert "Check restore file" in body[glance_idx:data_idx]
+    assert "Settings overview" not in body
+    assert "Use this as the map for the heavier trust and admin areas below." not in body
 
 
 def test_backup_health_is_good_for_recent_backup(app, client, make_user, tmp_path):

@@ -4,6 +4,7 @@ from flask_login import current_user, login_required
 
 from app.calculations import (
     effective_account_value,
+    projected_account_value,
     projection_monthly_contribution,
     projection_start_month_key,
     progress_to_goal,
@@ -23,7 +24,7 @@ from app.models import (
     update_goal,
 )
 from app.services.goal_projection import project_goal
-from app.services.goal_ui import goal_projection_copy
+from app.services.goal_ui import goal_projection_copy, goal_track_status
 
 goals_bp = Blueprint("goals", __name__)
 
@@ -43,6 +44,40 @@ def _goal_payload_from_form(form):
 
 def _project_goal(included_accounts, target, assumptions):
     return project_goal(included_accounts, target, assumptions, today=date.today())
+
+
+def _has_contribution_overrides(accounts):
+    return any(account.get("_contribution_overrides") for account in accounts)
+
+
+def _is_retirement_goal(goal, selected_tags):
+    goal_type = (goal["goal_type"] or "").lower()
+    tags = " ".join(selected_tags).lower()
+    return "retirement" in goal_type or "pension" in goal_type or "retirement" in tags or "pension" in tags
+
+
+def _build_projection_source_summary(goal, included_accounts, assumptions, monthly_contribution, selected_tags):
+    if not included_accounts:
+        return None
+
+    has_overrides = _has_contribution_overrides(included_accounts)
+    summary = {
+        "account_count": len(included_accounts),
+        "monthly_contribution": monthly_contribution,
+        "uses_overrides": has_overrides,
+        "calendar_label": "Overrides active" if has_overrides else "Account defaults",
+        "growth_label": "Planning numbers",
+        "method_note": "Same month-by-month future estimate as Planning.",
+        "caveat": "Not a guarantee.",
+        "retirement_projection": None,
+    }
+
+    if assumptions and _is_retirement_goal(goal, selected_tags):
+        summary["retirement_projection"] = sum(
+            projected_account_value(account, assumptions) for account in included_accounts
+        )
+
+    return summary
 
 
 def _build_goal_card(goal, accounts, holdings_totals, assumptions=None):
@@ -67,11 +102,16 @@ def _build_goal_card(goal, accounts, holdings_totals, assumptions=None):
     )
     projection = _project_goal(included_accounts, target, assumptions)
 
+    visible_tags = selected_tags[:2]
+    hidden_tag_count = max(len(selected_tags) - len(visible_tags), 0)
+
     return {
         "id": goal["id"],
         "name": goal["name"],
         "goal_type": goal["goal_type"] or "Tagged Goal",
         "selected_tags": selected_tags,
+        "visible_tags": visible_tags,
+        "hidden_tag_count": hidden_tag_count,
         "current": current_total,
         "target": target,
         "progress": progress_to_goal(current_total, target),
@@ -80,11 +120,25 @@ def _build_goal_card(goal, accounts, holdings_totals, assumptions=None):
         "notes": goal["notes"] or "",
         "monthly_contribution": monthly_contribution,
         "projection": projection,
+        "track_status": goal_track_status(
+            projection,
+            monthly_contribution,
+            remaining,
+            len(included_accounts),
+            selected_tags,
+        ),
         "projection_copy": goal_projection_copy(
             projection,
             monthly_contribution,
             remaining,
             len(included_accounts),
+            selected_tags,
+        ),
+        "source_summary": _build_projection_source_summary(
+            goal,
+            included_accounts,
+            assumptions,
+            monthly_contribution,
             selected_tags,
         ),
     }

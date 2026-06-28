@@ -175,11 +175,11 @@ def test_empty_user_gets_warnings(app, new_user_id):
         titles = [item["title"] for item in summary["health_items"]]
         assert "No accounts set up" in titles
         assert "No financial goals set" in titles
-        assert "No assumptions set up" in titles
+        assert "No plan settings set up" in titles
         assert "No budget entries for the current month" in titles
 
         accounts_warning = next(item for item in summary["health_items"] if item["title"] == "No accounts set up")
-        assert accounts_warning["explanation"] == "You haven't added any financial accounts yet. Add one so totals, progress, and scenario estimates can start from real balances."
+        assert accounts_warning["explanation"] == "You haven't added any financial accounts yet. Add one so totals, progress, and future estimates can start from real balances."
         assert "Add accounts to track your finances" not in accounts_warning["explanation"]
 
         goals_warning = next(item for item in summary["health_items"] if item["title"] == "No financial goals set")
@@ -231,7 +231,7 @@ def test_missing_history_warning_still_shows_when_some_accounts_have_history(app
         assert "Some accounts have stale or missing history" in titles
         stale_warning = next(item for item in summary["health_items"] if item["title"] == "Some accounts have stale or missing history")
         assert "Needs History" in stale_warning["explanation"]
-        assert "keep your scenario estimates grounded in recent balances" in stale_warning["explanation"]
+        assert "future estimates use recent balances" in stale_warning["explanation"]
         assert "ensure accurate projections" not in stale_warning["explanation"]
 
 
@@ -268,8 +268,8 @@ def test_stale_account_warning_uses_review_history_cta(app, setup_stale_account_
 def test_missing_assumptions_warning_uses_scenario_estimate_wording(app, new_user_id):
     with app.app_context():
         summary = build_data_health_summary(new_user_id)
-        assumptions_warning = next(item for item in summary["health_items"] if item["title"] == "No assumptions set up")
-        assert assumptions_warning["explanation"] == "You haven't set up your financial assumptions yet. These help scenario estimates and goal timing estimates reflect your plans."
+        assumptions_warning = next(item for item in summary["health_items"] if item["title"] == "No plan settings set up")
+        assert assumptions_warning["explanation"] == "You haven't set up your plan settings yet. These help future estimates and goal timing estimates reflect your plans."
         assert "build scenario estimates that match your plans" not in assumptions_warning["explanation"]
         assert "crucial for projections" not in assumptions_warning["explanation"]
 
@@ -369,7 +369,7 @@ def test_settings_still_mentions_backup_restore(app, client, make_user):
     assert "Check a JSON export before overwrite" in html
     assert "Downloads a portable JSON export for this user only" in html
     assert "whole-instance SQLite backup" in html
-    assert "This permanently deletes all data for this user: accounts, holdings, goals, budget, monthly updates, and assumptions." in html
+    assert "This permanently deletes this user’s SteadyPlan data: accounts, investments, goals, budget, monthly updates, and settings." in html
     assert "This permanently deletes all data for this user: accounts, holdings, goals, budget, monthly reviews, and assumptions." not in html
     assert "This cannot be undone. Download a per-user JSON export before continuing." in html
     assert "This cannot be undone. Download this user's JSON export before continuing." not in html
@@ -378,6 +378,46 @@ def test_settings_still_mentions_backup_restore(app, client, make_user):
     assert "Delete all data for this user" not in html
     assert "Type <strong>RESET</strong> below to confirm. This permanently deletes this user's finance data." in html
     assert "Type <strong>RESET</strong> below to confirm. This permanently deletes all data for this user." not in html
+
+
+def test_settings_groups_trust_surfaces_at_a_glance(app, client, make_user):
+    _, username, password = make_user(username="dh-settings-map", is_admin=True)
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/settings/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "Settings at a glance" in html
+    assert "Start with day-to-day setup, then use the safety links when you need exports, restore checks, diagnostics, or account access." in html
+    assert "Everyday setup" in html
+    assert "Plan settings" in html
+    assert "User access" in html
+    assert "Safety and recovery" in html
+    assert "Data ownership" in html
+    assert "JSON export" in html
+    assert "Restore check" in html
+    assert "SQLite backup health" in html
+    assert "Optional access" in html
+    assert "Assistant and broker review" in html
+    assert "Optional assistant access and read-only Trading 212 broker snapshot review." in html
+    assert "Connections &amp; tokens" not in html
+    assert "Optional assistant access and read-only broker snapshot connections." not in html
+    assert "Diagnostics and system posture" in html
+    assert "Danger zone" in html
+    assert "Settings overview" not in html
+    assert "Admin tools" not in html
+
+    glance_idx = html.index("Settings at a glance")
+    after_glance = html[glance_idx:]
+    planning_idx = after_glance.index("Plan settings")
+    admin_idx = after_glance.index("User Management")
+    data_idx = after_glance.index("<h3>Data ownership</h3>")
+    export_idx = after_glance.index("<h3>Download a per-user JSON export</h3>")
+    assistant_idx = after_glance.index("<h3>Create a scoped token only if you run your own Pip setup</h3>")
+    danger_idx = after_glance.index("<h3>Delete this user's finance data</h3>")
+
+    assert planning_idx < admin_idx < data_idx < export_idx < assistant_idx < danger_idx
 
 
 def test_settings_explains_backup_restore_scope_at_a_glance(app, client, make_user):
@@ -672,7 +712,7 @@ def test_overview_data_health_stale_history_warning_uses_review_history_cta(app,
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "Some accounts have stale or missing history" in html
-    assert "keep your scenario estimates grounded in recent balances" in html
+    assert "future estimates use recent balances" in html
     assert "ensure accurate projections" not in html
     assert 'href="/history"' in html
     assert "Review history" in html

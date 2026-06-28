@@ -1,5 +1,7 @@
 import pytest
 
+from tests.path_helpers import STATIC_ROOT
+
 
 def _seed_default_budget_sections(app, user_id):
     from app.models import fetch_budget_items
@@ -254,3 +256,124 @@ def test_pre_salary_surplus_adds_back_outside_take_home(app, make_user):
         assert summary["pre_salary_total"] == 500.0
         assert summary["surplus"] == 2000.0
 
+
+
+def test_budget_sections_show_share_of_income(app, client, make_user):
+    uid, username, password = make_user(username="budget-section-income-share", password="password123")
+    _seed_default_budget_sections(app, uid)
+
+    from app.models import get_connection
+
+    with app.app_context():
+        with get_connection() as conn:
+            conn.executemany(
+                """
+                INSERT INTO budget_items (user_id, name, section, default_amount, notes, sort_order, is_active)
+                VALUES (?, ?, ?, ?, '', ?, 1)
+                """,
+                [
+                    (uid, "Salary", "income", 4000.0, 0),
+                    (uid, "Rent", "fixed", 1000.0, 0),
+                    (uid, "Car loan", "debt", 500.0, 0),
+                    (uid, "Stocks ISA", "investment", 800.0, 0),
+                    (uid, "Food and fun", "discretionary", 400.0, 0),
+                ],
+            )
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    resp = client.get("/budget/?month=2026-06")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert 'class="budget-section-metrics"' in html
+    assert 'class="budget-section-summary budget-section-summary-stack"' not in html
+    assert "Monthly" in html
+    assert "Income share" in html
+    assert "Yearly" in html
+    assert 'id="total-income"' in html
+    assert 'id="share-income"' in html
+    assert 'id="annual-income"' in html
+    assert 'id="total-fixed"' in html
+    assert 'id="share-fixed"' in html
+    assert 'id="annual-fixed"' in html
+    assert "100.0%" in html
+    assert "25.0%" in html
+    assert "12.5%" in html
+    assert "20.0%" in html
+    assert "10.0%" in html
+    assert "£48,000" in html
+    assert "£12,000" in html
+    assert "£6,000" in html
+    assert "£9,600" in html
+    assert "£4,800" in html
+    assert 'class="budget-row-annual"' in html
+    assert "£12,000 / year" in html
+    assert "£6,000 / year" in html
+    assert "£9,600 / year" in html
+
+
+def test_budget_page_renders_non_persistent_what_if_sandbox(app, client, make_user):
+    uid, username, password = make_user(username="budget-what-if", password="password123")
+    _seed_default_budget_sections(app, uid)
+
+    from app.models import get_connection
+
+    with app.app_context():
+        with get_connection() as conn:
+            conn.executemany(
+                """
+                INSERT INTO budget_items (user_id, name, section, default_amount, notes, sort_order, is_active)
+                VALUES (?, ?, ?, ?, '', ?, 1)
+                """,
+                [
+                    (uid, "Salary", "income", 4000.0, 0),
+                    (uid, "Rent", "fixed", 1000.0, 0),
+                    (uid, "Stocks ISA", "investment", 800.0, 0),
+                ],
+            )
+            conn.commit()
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    resp = client.get("/budget/?month=2026-06")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "budget-what-if-card" in html
+    assert "Budget what-if" in html
+    assert "Simulation only" in html
+    assert "Try changes without saving them to the real budget." in html
+    assert 'id="budget-what-if-toggle"' in html
+    assert 'id="budget-what-if-reset"' in html
+    assert 'id="what-if-surplus-delta"' in html
+    assert "Nothing is written to the database unless you leave simulation mode and edit normally." in html
+    assert 'data-real-value="4000.00"' in html
+    assert 'data-real-value="1000.00"' in html
+    assert 'data-real-value="800.00"' in html
+
+
+def test_budget_what_if_javascript_blocks_auto_save_and_restores_real_values():
+    js = STATIC_ROOT.joinpath("js/app.js").read_text()
+
+    assert "budget-what-if-toggle" in js
+    assert "budget-what-if-reset" in js
+    assert "budget-what-if-active" in js
+    assert "function resetWhatIfValues" in js
+    assert "if (whatIfMode)" in js
+    assert "updateWhatIfSummary();" in js
+    assert "saveEntry(input.dataset.itemId, input.value, ind);" in js
+
+
+def test_budget_mobile_layout_keeps_summary_and_rows_compact():
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+
+    assert "@media (max-width: 640px)" in css
+    assert ".budget-section-metrics {\n    grid-template-columns: repeat(3, minmax(0, 1fr));" in css
+    assert ".budget-section-metric {\n    min-height: 3.15rem;" in css
+    assert "padding: 0.5rem 0.35rem;" in css
+    assert ".budget-section-panel .budget-row {\n    display: grid;" in css
+    assert "grid-template-columns: minmax(0, 1fr) auto;" in css
+    assert ".budget-section-panel .budget-row-left {\n    grid-column: 1 / -1;" in css
+    assert ".budget-section-panel .budget-row-annual {\n    grid-column: 1;" in css
+    assert ".budget-section-panel .budget-row-right {\n    grid-column: 2;" in css
+    assert ".budget-section-panel .budget-row .budget-amount-input {\n    width: 6.2rem;" in css

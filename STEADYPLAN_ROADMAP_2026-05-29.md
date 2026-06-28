@@ -34,7 +34,7 @@ The foundations are now much stronger than this roadmap originally assumed:
 - product truth, calm positioning, and public trust language are now committed in-repo
 - Overview, Monthly Update, Planning, and the main compact-screen flows have had substantial answer-first cleanup
 - Diagnostics, backup/restore boundaries, assistant access, safe demo guidance, and public-site trust copy are now real shipped product surfaces
-- an optional read-only Trading 212 connection beta exists for API-first broker review without forcing users away from manual/CSV tracking
+- an optional Trading 212 broker snapshot review beta exists for preview-first broker review without forcing users away from manual/CSV tracking
 
 That means the next stretch is no longer “invent the direction from scratch”. The next stretch is to keep the shipped experience coherent, reduce density in the heaviest flows, and strengthen supportability and trust before any tiny hosted beta discussion.
 
@@ -126,7 +126,7 @@ SteadyPlan must feel safe and honest.
 
 Needs:
 - visible assumptions
-- clear projection caveats
+- clear scenario-estimate caveats
 - no exaggerated certainty
 - no pressure language
 
@@ -217,19 +217,21 @@ The product should be easier to understand from the outside.
 
 ---
 
-## Phase 5 — create a first-use friendly demo path (safe path exists; keep polishing)
+## Phase 5 — keep the safe evaluation path clear
 
 ### Goal
 Keep SteadyPlan easy to evaluate without setup friction while preserving the safest trust path for real use.
 
+The read-only demo path and sample data now exist, so the remaining work is to keep the evaluation story honest and easy to follow.
+
 ### Why this matters
 The product will be hard to share if every new person needs to install/configure it before even understanding the value.
 
-### Options to explore
-- demo mode
-- sample household / sample finances
-- guided walkthrough
-- limited no-risk exploration mode
+### Current safe path
+- screenshots and tour first
+- local install on LAN/VPN for hands-on evaluation
+- optional host-controlled read-only demo using sample data
+- real financial data only after the operator understands the local/self-hosted boundary
 
 ### Purpose
 This is not about flashy marketing.
@@ -239,10 +241,10 @@ It is about helping people see:
 - whether it matches their needs
 
 ### Deliverables
-- decision on demo approach
-- sample data strategy
-- guided walkthrough concept
-- first-time exploration flow
+- keep README, public docs, and roadmap aligned on the safest evaluation order
+- keep demo-data screenshots and sample-data language current
+- make the read-only demo boundary obvious whenever demo access is mentioned
+- avoid presenting public demo access as the default trust path for real use
 
 ---
 
@@ -347,7 +349,7 @@ For now, these are probably too early:
 3. improve mobile-first experience for those journeys
 4. simplify onboarding / first-use experience
 5. improve trust copy and product explanation
-6. design demo/sample walkthrough approach
+6. keep the safe demo/sample walkthrough path clear
 7. review what would be needed for eventual tiny private external use
 
 ---

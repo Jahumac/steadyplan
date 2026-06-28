@@ -7,6 +7,24 @@
 {% set month_strip_class = 'month-strip-mobile-hidden' %}
 {% include '_month_strip.html' %}
 
+{% if is_read_only_demo %}
+<section class="card panel-soft mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Read-only demo</p>
+      <h2>You are viewing demo data</h2>
+    </div>
+  </div>
+  <p class="helper-text mb-075">This is sample data only. Writes are blocked, so you can explore without changing anything.</p>
+  <p class="helper-text mb-075">Start with Overview, then Planning, Monthly Update, and Settings → Safety and recovery.</p>
+  <div class="badge-row">
+    <a class="badge" href="/planning/">Planning</a>
+    <a class="badge" href="/monthly-review/">Monthly Update</a>
+    <a class="badge" href="/settings/">Settings</a>
+  </div>
+</section>
+{% endif %}
+
 {# ── Onboarding state ────────────────────────────────────────────────────── #}
 {% set has_profile = assumptions and assumptions.date_of_birth %}
 {% set has_accounts = accounts | length > 0 %}
@@ -164,7 +182,7 @@
   <div class="flex flex-center flex-wrap gap-075">
     <div style="flex:1; min-width:200px;">
       <strong>It's your investment day</strong>
-      <p class="helper-text" style="margin:0.15rem 0 0;">Time to move your contributions — check the budget now, then expect your monthly update nudge once this month's money has settled.</p>
+      <p class="helper-text" style="margin:0.15rem 0 0;">Time to move your payments — check the budget now, then expect your Monthly Update nudge once this month's money has settled.</p>
     </div>
     <a href="/budget/" class="badge badge-meta">Review budget</a>
   </div>
@@ -224,7 +242,7 @@
 {% endif %}
 
 {% if has_accounts %}
-{# ── Hero: Net Worth + Key Stats ─────────────────────────────────────────── #}
+{# ── Hero: Total money + Key Stats ──────────────────────────────────────── #}
 <section class="card highlight mb-1 month-accent-{{ current_month_num }}">
   <div class="hero-top">
     <div>
@@ -251,14 +269,14 @@
     {% call hero_stat('Active debts') %}<strong>£{{ '{:,.0f}'.format(metrics.total_debt_balance) }}</strong>{% endcall %}
     {% endif %}
     {% if metrics.monthly_total > 0 %}
-    {% call hero_stat('Monthly contributions') %}<strong>£{{ '{:,.0f}'.format(metrics.monthly_total) }}</strong>{% endcall %}
+    {% call hero_stat('Monthly payments in') %}<strong>£{{ '{:,.0f}'.format(metrics.monthly_total) }}</strong>{% endcall %}
     {% endif %}
     {% if has_profile %}
-    {% call hero_stat('Scenario estimate at retirement') %}<strong title="Scenario estimate based on your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee.">£{{ '{:,.0f}'.format(metrics.projected_total) }}</strong>{% endcall %}
+    {% call hero_stat('Estimated total at retirement') %}<strong title="Future estimate based on your current balances, regular payments, and planning numbers in Settings. It is not a guarantee.">£{{ '{:,.0f}'.format(metrics.projected_total) }}</strong>{% endcall %}
     {% endif %}
   </div>
   {% if has_profile %}
-  <p class="helper-text mt-05 mb-0">Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee.</p>
+  <p class="helper-text mt-05 mb-0">Current totals use your saved balances. Future estimates use the planning numbers in Settings. They are not guarantees.</p>
   {% endif %}
 </section>
 
@@ -626,9 +644,9 @@
 
   {% if daily_labels | length < 2 and history_labels | length >= 2 %}
   <div class="mt-125">
-    <p class="chart-label">Net worth history</p>
+    <p class="chart-label">Total money history</p>
     <div class="chart-wrap chart-wrap-sm">
-      <canvas id="netWorthChart" height="120" role="img" aria-label="Net worth history chart"
+      <canvas id="netWorthChart" height="120" role="img" aria-label="Total money history chart"
         data-labels='{{ history_labels | tojson | safe }}'
         data-values='{{ history_values | tojson | safe }}'></canvas>
     </div>
@@ -636,14 +654,14 @@
   {% elif daily_labels | length < 2 and history_labels | length == 1 %}
   <p class="helper-text mt-1">
     <strong>Your first baseline is saved</strong><br>
-    Complete next month's monthly update and the net worth trend line will appear.
+    Complete next month's Monthly Update and the total money trend line will appear.
   </p>
   <div class="badge-row mt-075">
     <a href="{{ current_monthly_update_href }}" class="badge badge-primary-action">Open monthly update</a>
   </div>
   {% elif daily_labels | length < 2 %}
   <p class="helper-text mt-1">
-    Complete your first monthly update to start tracking net worth over time.
+    Complete your first Monthly Update to start tracking your total money over time.
   </p>
   {% endif %}
 

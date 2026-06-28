@@ -66,6 +66,39 @@ def test_login_demo_callout_explains_read_only_boundaries(app, client, make_user
     assert "Take a quick look without risking real data" not in html
 
 
+def test_demo_overview_orients_sample_data_without_hiding_read_only_boundary(app, client, make_user):
+    app.config.update(DEMO_PUBLIC_LOGIN_ENABLED=True, DEMO_READ_ONLY_USERNAME="demo")
+    make_user(username="demo", password="password123")
+
+    login_resp = client.get("/demo", follow_redirects=False)
+    assert login_resp.status_code in (301, 302)
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "You are viewing demo data" in html
+    assert "This is sample data only. Writes are blocked, so you can explore without changing anything." in html
+    assert "Start with Overview, then Planning, Monthly Update, and Settings → Safety and recovery." in html
+    assert "Start with Overview, then Planning, Monthly Update, and Settings → Data ownership." not in html
+    assert 'href="/planning/"' in html
+    assert 'href="/monthly-review/"' in html
+    assert 'href="/settings/"' in html
+    assert "Demo mode lets you change sample data" not in html
+
+
+def test_normal_overview_does_not_show_demo_orientation(app, client, make_user):
+    _, username, password = make_user(username="regular-overview", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert "You are viewing demo data" not in html
+    assert "This is sample data only. Writes are blocked" not in html
+
+
 def test_demo_monthly_review_get_does_not_create_review_rows(app, client, make_user):
     app.config.update(DEMO_PUBLIC_LOGIN_ENABLED=True, DEMO_READ_ONLY_USERNAME="demo")
     uid, _, _ = make_user(username="demo", password="password123")
@@ -182,6 +215,7 @@ BLUEPRINT_PAGES = [
     "/settings/",
     "/monthly-review/",
     "/budget/",
+    "/budget/contribution-calendar",
     "/performance/",
     "/allowance/",
 ]

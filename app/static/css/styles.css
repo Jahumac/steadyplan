@@ -202,7 +202,9 @@ nav a.active {
 }
 
 .goal-link-card {
-  display: block;
+  display: grid;
+  align-content: start;
+  gap: 0.7rem;
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -383,18 +385,67 @@ body.is-back-online .site-header {
 }
 
 .goal-card-title {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.18rem;
+  font-size: 1.08rem;
+  line-height: 1.2;
   /* color inherits from .card h2:not(.hero-value) — no override needed. */
+}
+
+.goal-card-heading {
+  margin-bottom: 0;
+}
+
+.goals-page-helper {
+  margin: 0 0 0.85rem;
+  max-width: 52rem;
+  font-size: 0.84rem;
 }
 
 .goal-card-meta {
   margin: 0;
   color: var(--muted);
-  font-size: 0.86rem;
+  font-size: 0.82rem;
+}
+
+.goal-value-line {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.goal-progress-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.45rem 0.75rem;
+  color: var(--muted);
+}
+
+.goal-progress-summary small {
+  color: inherit;
+}
+
+.goal-status-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.55rem;
+  margin: -0.1rem 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.goal-status-label {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.goal-status-detail {
+  color: var(--muted);
 }
 
 .goal-projection {
-  margin: 0.4rem 0 0;
+  margin: 0;
   font-size: 0.82rem;
   color: var(--accent);
 }
@@ -406,6 +457,90 @@ body.is-back-online .site-header {
 .goal-projection-none,
 .goal-projection-long {
   color: var(--muted);
+}
+
+.goal-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.goal-chip-overflow {
+  color: var(--muted);
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+.goal-card-note {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.goal-source-details {
+  margin-top: 0.1rem;
+}
+
+.goal-source-details summary {
+  list-style: none;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.goal-source-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.goal-source-details[open] summary {
+  color: var(--accent);
+}
+
+.goal-source-panel {
+  margin-top: 0.55rem;
+  padding: 0.72rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.18);
+}
+
+.goal-source-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.goal-source-item {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.goal-source-item span {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.goal-source-item strong {
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.goal-source-item-wide {
+  grid-column: 1 / -1;
+  margin-top: 0.2rem;
+  padding-top: 0.48rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.card .goal-source-caveat {
+  margin: 0.48rem 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
 }
 
 .goal-row {
@@ -479,6 +614,37 @@ body.is-back-online .site-header {
 @media (max-width: 480px) {
   .allowance-grid {
     grid-template-columns: 1fr;
+  }
+
+  .goals-page-helper {
+    margin-bottom: 0.7rem;
+    font-size: 0.8rem;
+  }
+
+  .goal-link-card {
+    gap: 0.6rem;
+    padding: 1rem;
+  }
+
+  .goal-progress-summary {
+    gap: 0.3rem 0.55rem;
+  }
+
+  .goal-status-line {
+    gap: 0.25rem 0.45rem;
+    font-size: 0.8rem;
+  }
+
+  .goal-chip-row {
+    gap: 0.35rem;
+  }
+
+  .goal-source-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .goal-source-item-wide {
+    grid-column: 1 / -1;
   }
 
   .goal-row-header {
@@ -608,6 +774,19 @@ body.is-back-online .site-header {
   border-color: rgba(248, 113, 113, 0.55);
   background: rgba(248, 113, 113, 0.08);
   color: #fee2e2;
+}
+
+.badge.badge-warning {
+  border-color: rgba(245,158,11,0.35);
+  background: rgba(245,158,11,0.08);
+  color: #fbbf24;
+}
+
+.badge.badge-warning:hover,
+.badge.badge-warning:focus {
+  border-color: rgba(245,158,11,0.55);
+  background: rgba(245,158,11,0.14);
+  color: #fde68a;
 }
 
 .badge.badge-outline {
@@ -1907,6 +2086,7 @@ button.button-danger:focus {
   input[type="search"],
   input[type="tel"],
   input[type="url"],
+  input[type="month"],
   textarea,
   select {
     font-size: 16px;
@@ -3012,7 +3192,7 @@ button.button-danger:focus {
 }
 
 .proj-schedule-row input[type="number"] { width: 8.5rem; }
-.proj-schedule-row input[data-age] { width: 6.5rem; }
+.proj-schedule-row input[data-month] { width: 9.5rem; }
 
 .budget-amount-input {
   width: 110px;
@@ -3169,6 +3349,103 @@ button.button-danger:focus {
 .budget-edit-callout strong { color: var(--accent); }
 .budget-edit-callout span { color: var(--muted); }
 
+.budget-what-if-card {
+  border-color: rgba(56, 189, 248, 0.22);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.68));
+}
+
+.budget-what-if-header {
+  align-items: flex-start;
+  margin-bottom: 0.85rem;
+}
+
+.budget-what-if-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.budget-what-if-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.budget-what-if-stat {
+  display: grid;
+  gap: 0.2rem;
+  align-content: center;
+  min-height: 4.1rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 13px;
+  background: rgba(2, 6, 23, 0.18);
+}
+
+.budget-what-if-stat span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.budget-what-if-stat strong {
+  color: var(--text);
+  font-size: 1.05rem;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.card .budget-what-if-status {
+  margin: 0.7rem 0 0;
+  font-size: 0.82rem;
+}
+
+.budget-container.budget-what-if-active .budget-amount-input {
+  border-color: rgba(56, 189, 248, 0.48);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.14);
+}
+
+.budget-container.budget-what-if-active .budget-save-indicator {
+  color: var(--accent);
+}
+
+@media (max-width: 760px) {
+  .budget-what-if-header {
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .budget-what-if-actions {
+    justify-content: flex-start;
+  }
+
+  .budget-what-if-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .budget-what-if-strip {
+    gap: 0.42rem;
+  }
+
+  .budget-what-if-stat {
+    min-height: 3.55rem;
+    padding: 0.48rem 0.55rem;
+  }
+
+  .budget-what-if-stat span {
+    font-size: 0.58rem;
+  }
+
+  .budget-what-if-stat strong {
+    font-size: 0.9rem;
+  }
+}
+
 /* Budget linked hint */
 
 /* Section-level helper hints */
@@ -3236,8 +3513,131 @@ button.button-danger:focus {
   color: var(--sec-color, var(--muted));
 }
 
+.budget-section-title-row {
+  margin-bottom: 0.45rem;
+}
+
+.budget-section-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 0.95rem 0 0.85rem;
+}
+
+.budget-section-metric {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  min-height: 4.2rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.18);
+  text-align: center;
+}
+
+.budget-section-metric-label {
+  margin-bottom: 0.32rem;
+  color: var(--muted);
+  font-size: 0.73rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .budget-section-panel .budget-section-total {
   color: var(--sec-color, var(--accent));
+  font-size: 1.18rem;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.budget-section-income-share {
+  color: color-mix(in srgb, var(--sec-color, var(--accent)) 78%, var(--text));
+  font-size: 1.18rem;
+  font-weight: 800;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.budget-section-annual {
+  color: var(--text);
+  font-size: 1.18rem;
+  font-weight: 800;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.budget-row-annual {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media (min-width: 641px) {
+  .budget-section-panel .budget-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(7.5rem, 0.34fr) auto;
+    align-items: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .budget-section-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.38rem;
+    margin: 0.7rem 0 0.65rem;
+  }
+
+  .budget-section-metric {
+    min-height: 3.15rem;
+    padding: 0.5rem 0.35rem;
+    border-radius: 11px;
+  }
+
+  .budget-section-metric-label {
+    margin-bottom: 0.18rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.055em;
+  }
+
+  .budget-section-panel .budget-section-total,
+  .budget-section-income-share,
+  .budget-section-annual {
+    font-size: 0.92rem;
+  }
+
+  .budget-section-panel .budget-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.42rem 0.65rem;
+    padding: 0.62rem 0.72rem;
+  }
+
+  .budget-section-panel .budget-row-left {
+    grid-column: 1 / -1;
+  }
+
+  .budget-section-panel .budget-row-annual {
+    grid-column: 1;
+    width: auto;
+    align-self: center;
+    color: color-mix(in srgb, var(--muted) 88%, var(--text));
+    font-size: 0.78rem;
+    text-align: left;
+  }
+
+  .budget-section-panel .budget-row-right {
+    grid-column: 2;
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .budget-section-panel .budget-row .budget-amount-input {
+    width: 6.2rem;
+  }
 }
 
 /* ── Edit Budget page — row actions + default amount ─────────────── */
@@ -3391,6 +3791,328 @@ button.button-danger:focus {
 }
 .budget-import-label {
   cursor: pointer;
+}
+
+/* Contribution calendar — keep the new feature in the normal SteadyPlan
+   visual system instead of month-coloured accents/native form controls. */
+.contribution-calendar-hero .hero-top {
+  align-items: flex-start;
+}
+
+.contribution-calendar-hero-badges {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+
+.contribution-calendar-form input[type="text"],
+.contribution-calendar-form input[type="number"],
+.contribution-calendar-form input[type="month"] {
+  width: 100%;
+  background: #0b1220;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 0.95rem;
+  min-height: 48px;
+  font: inherit;
+  color-scheme: dark;
+}
+
+.contribution-calendar-form input::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+.contribution-plan-table input[type="number"] {
+  min-width: 8.5rem;
+}
+
+.allowance-frame-table th,
+.allowance-frame-table td {
+  vertical-align: top;
+  text-align: center;
+}
+
+.allowance-frame-table .text-center {
+  text-align: center;
+}
+
+.allowance-frame-pension-note,
+.allowance-frame-overage {
+  margin-top: 0.35rem;
+}
+
+.allowance-frame-pension-note {
+  max-width: 11rem;
+  margin-inline: auto;
+}
+
+.allowance-frame-overage {
+  color: #fbbf24;
+}
+
+.allowance-frame-cell-pension {
+  min-width: 11rem;
+}
+
+.contribution-calendar-details {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.28);
+  padding: 0.35rem 0.75rem 0.75rem;
+}
+
+.contribution-calendar-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  cursor: pointer;
+  list-style: none;
+  padding: 0.45rem 0;
+}
+
+.contribution-calendar-summary::-webkit-details-marker {
+  display: none;
+}
+
+.contribution-calendar-summary > span:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.contribution-calendar-summary strong {
+  color: var(--text-white);
+}
+
+.contribution-calendar-details[open] .contribution-calendar-summary {
+  margin-bottom: 0.55rem;
+}
+
+.contribution-calendar-scroll {
+  max-height: min(72vh, 46rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 0.35rem;
+  scrollbar-width: none;
+  scrollbar-gutter: stable;
+}
+
+.contribution-calendar-scroll:hover,
+.contribution-calendar-scroll:focus,
+.contribution-calendar-scroll:focus-within {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.55) transparent;
+}
+
+.contribution-calendar-scroll::-webkit-scrollbar {
+  width: 0;
+}
+
+.contribution-calendar-scroll:hover::-webkit-scrollbar,
+.contribution-calendar-scroll:focus::-webkit-scrollbar,
+.contribution-calendar-scroll:focus-within::-webkit-scrollbar {
+  width: 0.55rem;
+}
+
+.contribution-calendar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.55);
+  border-radius: 999px;
+}
+
+.contribution-calendar-stack {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.contribution-month-card {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.42);
+  padding: 0.95rem;
+}
+
+.contribution-month-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.8rem;
+}
+
+.contribution-month-card-head h4 {
+  margin: 0;
+  color: var(--text-white);
+}
+
+.contribution-month-account-list {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.contribution-month-account-row {
+  display: grid;
+  grid-template-columns: minmax(11rem, 1.15fr) minmax(13rem, 1.2fr) minmax(10rem, 1fr);
+  gap: 0.8rem;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: rgba(2, 6, 23, 0.18);
+}
+
+.contribution-month-account-row.has-override {
+  border-color: rgba(96, 165, 250, 0.42);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.contribution-month-account-row.has-overlap {
+  border-color: rgba(251, 191, 36, 0.5);
+}
+
+.contribution-month-account-main,
+.contribution-month-source {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.contribution-month-account-main span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.contribution-month-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.7rem;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .contribution-calendar-hero .hero-top {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .contribution-calendar-hero-badges {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+    justify-content: stretch;
+  }
+
+  .contribution-calendar-hero-badges .badge {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .contribution-calendar-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .contribution-calendar-summary .badge {
+    width: fit-content;
+  }
+
+  .contribution-calendar-hero .hero-value {
+    font-size: clamp(1.85rem, 10vw, 2.4rem);
+    line-height: 1.05;
+  }
+
+  .contribution-calendar-hero .hero-subtitle {
+    max-width: 32rem;
+    line-height: 1.55;
+  }
+
+  .contribution-calendar-form .form-grid {
+    gap: 0.8rem;
+  }
+
+  .contribution-calendar-scroll {
+    max-height: 68vh;
+    padding-right: 0;
+  }
+
+  .contribution-month-card {
+    padding: 0.8rem;
+    border-radius: 16px;
+  }
+
+  .contribution-month-card-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .contribution-month-account-row {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    padding: 0.7rem;
+  }
+
+  .contribution-month-amounts {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .contribution-plan-scroll {
+    overflow-x: visible;
+  }
+
+  .contribution-plan-table,
+  .contribution-plan-table thead,
+  .contribution-plan-table tbody,
+  .contribution-plan-table tr,
+  .contribution-plan-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .contribution-plan-table thead {
+    display: none;
+  }
+
+  .contribution-plan-table tr {
+    padding: 0.85rem 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  }
+
+  .contribution-plan-table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .contribution-plan-table td {
+    display: grid;
+    grid-template-columns: minmax(7rem, 0.42fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.3rem 0;
+    text-align: left;
+  }
+
+  .contribution-plan-table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .contribution-plan-table td.text-right {
+    text-align: left;
+  }
+
+  .contribution-plan-table input[type="number"] {
+    min-width: 0;
+  }
 }
 
 /* ── Month colour accents ──────────────────────────────────────────── */
@@ -3677,6 +4399,67 @@ button.button-danger:focus {
   font-size: 1rem;
   color: var(--text);
   font-weight: 600;
+}
+
+.linked-broker-summary-panel {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(56, 189, 248, 0.18);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.34);
+}
+
+.linked-broker-summary-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.linked-broker-summary-header h3 {
+  margin: 0.1rem 0 0;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+}
+
+.linked-broker-difference {
+  flex: 0 0 auto;
+  text-align: right;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.linked-broker-difference span,
+.linked-broker-grid p {
+  display: block;
+  margin: 0 0 0.22rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.linked-broker-difference strong,
+.linked-broker-grid strong {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.linked-broker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.8rem 1rem;
+}
+
+@media (max-width: 640px) {
+  .linked-broker-summary-header {
+    flex-direction: column;
+  }
+  .linked-broker-difference {
+    width: 100%;
+    text-align: left;
+  }
 }
 
 /* "Show details" toggle is mobile-only — hidden on desktop. */
@@ -5061,6 +5844,21 @@ button.button-danger:focus {
   scroll-snap-align: start;
 }
 
+@media (min-width: 601px) and (max-width: 1024px) {
+  .subnav-page.subnav-budget {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+  }
+
+  .subnav-page.subnav-budget a {
+    white-space: normal;
+    min-height: 2.75rem;
+    padding-inline: 0.75rem;
+    line-height: 1.15;
+  }
+}
+
 @media (max-width: 600px) {
   .subnav-mobile-family {
     display: block;
@@ -5703,7 +6501,7 @@ button.button-danger:focus {
   color: #fff;
 }
 
-/* Net worth chart label */
+/* Total money chart label */
 .chart-label {
   font-size: 0.75rem;
   color: var(--muted);
@@ -5983,10 +6781,21 @@ a.link-accent:hover {
 }
 
 .cw-template:hover,
-.cw-template-selected {
+.cw-template:focus-visible {
   background: rgba(56,189,248,0.08);
   border-color: rgba(56,189,248,0.32);
   transform: translateY(-1px);
+}
+
+.cw-template-selected {
+  background: rgba(56,189,248,0.16);
+  border-color: rgba(56,189,248,0.72);
+  box-shadow: 0 0 0 2px rgba(56,189,248,0.14), inset 0 0 0 1px rgba(56,189,248,0.18);
+  transform: translateY(-1px);
+}
+
+.cw-template-selected strong {
+  color: var(--accent);
 }
 
 .cw-template strong {
@@ -6000,6 +6809,24 @@ a.link-accent:hover {
   color: var(--muted);
   font-size: 0.78rem;
   line-height: 1.35;
+}
+
+.cw-template .cw-template-action {
+  margin-top: 0.45rem;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.cw-template-selected .cw-template-action {
+  color: var(--accent);
+}
+
+.cw-template-status {
+  margin: -0.35rem 0 1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 /* Provider combobox — dark-theme replacement for native <datalist> */
@@ -6861,4 +7688,3 @@ a.link-accent:hover {
     grid-template-columns: 1fr;
   }
 }
-

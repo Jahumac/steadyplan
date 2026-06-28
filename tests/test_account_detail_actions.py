@@ -102,7 +102,7 @@ def test_account_detail_helper_uses_lifetime_isa_bonus_wording(app, client, make
 
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-    assert "includes Lifetime ISA bonus, tax relief, and employer match where applicable" in html
+    assert "includes Lifetime ISA bonus, pension tax top-up, and employer payments where applicable" in html
     assert "includes LISA bonus, tax relief, and employer match where applicable" not in html
 
 

@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% block title %}Payment calendar · SteadyPlan{% endblock %}
+{% block content %}
+
+{% set active_key = 'contribution_calendar' %}
+{% include '_budget_subnav.html' %}
+
+<section class="card highlight mb-1 contribution-calendar-hero">
+  <div class="hero-top">
+    <div>
+      <p class="eyebrow">Budget</p>
+      <h2 class="hero-value">Payment calendar</h2>
+      <p class="hero-subtitle">Set short-term monthly payment plans without changing the account’s normal monthly payment.</p>
+    </div>
+    <div class="badge-row contribution-calendar-hero-badges">
+      <span class="badge badge-meta">{{ month_columns|length }} months shown</span>
+      <span class="badge badge-meta">{{ calendar.accounts|length }} accounts</span>
+    </div>
+  </div>
+  <div class="hero-strip">
+    <div class="hero-strip-stat">
+      <strong>{{ from_month }}</strong>
+      <span>From month</span>
+    </div>
+    <div class="hero-strip-stat">
+      <strong>{{ to_month }}</strong>
+      <span>To month</span>
+    </div>
+    <div class="hero-strip-stat">
+      <strong>{{ plans|length }}</strong>
+      <span>Temporary plans</span>
+    </div>
+    <div class="hero-strip-stat">
+      <strong>{{ calendar.overlap_count }}</strong>
+      <span>Cells with overlaps</span>
+    </div>
+  </div>
+</section>
+
+{% if allowance_frame %}
+<section class="panel mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Allowance frame</p>
+      <h3>Planned allowances in this calendar range</h3>
+    </div>
+  </div>
+  <p class="helper-text">This uses the current From/To calendar range: payment calendar overrides first, then each account’s normal monthly payment. If a temporary plan continues beyond the current From/To range, later months are not counted here until you extend the calendar. ISA total planned includes Cash ISA, Stocks &amp; Shares ISA, and Lifetime ISA together against the shared £20,000 ISA frame. Premium Bonds shows your current holding against the NS&amp;I £50,000 cap.</p>
+  <div class="table-scroll mt-05">
+    <table class="mini-table allowance-frame-table">
+      <thead>
+        <tr>
+          <th class="text-center">Tax year</th>
+          <th class="text-center">ISA total planned</th>
+          <th class="text-center">Cash ISA</th>
+          <th class="text-center">Stocks &amp; Shares ISA</th>
+          <th class="text-center">Lifetime ISA</th>
+          <th class="text-center">Premium Bonds</th>
+          <th class="text-center">Pension/SIPP total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in allowance_frame %}
+        <tr>
+          <td class="text-center">{{ row.tax_year }}</td>
+          <td class="text-center">
+            <div>£{{ '{:,.0f}'.format(row.isa_planned) }} / £{{ '{:,.0f}'.format(row.isa_allowance) }}</div>
+            {% if row.isa_over %}<div class="helper-text allowance-frame-overage">ISA over by £{{ '{:,.0f}'.format(row.isa_over) }}</div>{% endif %}
+          </td>
+          <td class="text-center">£{{ '{:,.0f}'.format(row.cash_isa_planned) }}</td>
+          <td class="text-center">£{{ '{:,.0f}'.format(row.stocks_and_shares_isa_planned) }}</td>
+          <td class="text-center">
+            <div>£{{ '{:,.0f}'.format(row.lisa_planned) }} / £{{ '{:,.0f}'.format(row.lisa_allowance) }}</div>
+            {% if row.lisa_over %}<div class="helper-text allowance-frame-overage">Lifetime ISA over by £{{ '{:,.0f}'.format(row.lisa_over) }}</div>{% endif %}
+          </td>
+          <td class="text-center">£{{ '{:,.0f}'.format(row.premium_bonds_holding) }} / £{{ '{:,.0f}'.format(row.premium_bonds_cap) }}</td>
+          <td class="text-center allowance-frame-cell-pension">
+            <div>£{{ '{:,.0f}'.format(row.pension_planned) }} / £{{ '{:,.0f}'.format(row.pension_display_cap) }}</div>
+            {% if row.pension_display_cap < row.pension_allowance %}<div class="helper-text allowance-frame-pension-note">Based on salary</div>{% endif %}
+            {% if row.pension_over %}<div class="helper-text allowance-frame-overage">Pension over by £{{ '{:,.0f}'.format(row.pension_over) }}</div>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% if calendar.overlap_count %}
+<div class="flash-msg flash-warning">
+  <span>Some months have overlapping overrides. SteadyPlan still uses the narrowest, newest override for calculations, but the calendar flags those cells so you can clean them up.</span>
+</div>
+{% endif %}
+
+<section class="panel mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Fast setup</p>
+      <h3>Yearly account-filling pattern</h3>
+    </div>
+  </div>
+  <p class="helper-text">Use this for things like Lifetime ISA: “put £1,000 in for 4 months every year”. It creates one yearly block per year, instead of making you type every month by hand.</p>
+  <form method="post" class="settings-form contribution-calendar-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="form_name" value="create_annual_pot_fill_plan">
+    <input type="hidden" name="from_month" value="{{ from_month }}">
+    <input type="hidden" name="to_month" value="{{ to_month }}">
+    <div class="form-grid mb-1">
+      <label>
+        Plan name / reason
+        <input type="text" name="plan_name" value="Yearly LISA fill" required>
+      </label>
+      <label>
+        Account
+        <select name="pattern_account_id" required>
+          <option value="">Choose account…</option>
+          {% for account in calendar.accounts %}
+          <option value="{{ account.id }}">{{ account.name }}{% if account.wrapper_type %} · {{ account.wrapper_type }}{% endif %}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        First start month
+        <input type="month" name="pattern_start_month" value="{{ from_month }}" required>
+      </label>
+      <label>
+        Monthly amount
+        <input type="number" step="0.01" min="0" name="pattern_monthly_amount" value="1000" required>
+      </label>
+      <label>
+        Optional month-by-month amounts
+        <input type="text" name="pattern_monthly_amounts" placeholder="e.g. 1500, 1500, 1000">
+      </label>
+      <label>
+        Months each year
+        <input type="number" step="1" min="1" max="12" name="pattern_months_per_year" value="4" required>
+      </label>
+      <label>
+        Number of years
+        <input type="number" step="1" min="1" max="10" name="pattern_years" value="2" required>
+      </label>
+    </div>
+    <div class="badge-row">
+      <button type="submit" class="badge badge-primary-action">Create yearly pattern</button>
+      <span class="helper-text">Example: £1,000 × 4 months each year fills a £4,000 LISA allowance. For an uneven run, enter comma amounts like 1500, 1500, 1000.</span>
+    </div>
+  </form>
+</section>
+
+<section class="panel mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Create plan</p>
+      <h3>Temporary payment plan</h3>
+    </div>
+  </div>
+  <p class="helper-text">Enter only the accounts you want to override. Blank fields keep using the account default. Enter <strong>0</strong> to pause an account temporarily.</p>
+
+  <form method="post" class="settings-form contribution-calendar-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="form_name" value="create_temporary_plan">
+    <input type="hidden" name="from_month" value="{{ from_month }}">
+    <input type="hidden" name="to_month" value="{{ to_month }}">
+
+    <div class="form-grid mb-1">
+      <label>
+        Plan name / reason
+        <input type="text" name="plan_name" placeholder="Cash buffer build-up" required>
+      </label>
+      <label>
+        Start month
+        <input type="month" name="start_month" value="{{ from_month }}" required>
+      </label>
+      <label>
+        End month
+        <input type="month" name="end_month" value="{{ to_month }}" required>
+      </label>
+    </div>
+
+    {% if calendar.accounts %}
+    <div class="table-scroll contribution-plan-scroll">
+      <table class="mini-table contribution-plan-table">
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Wrapper</th>
+            <th class="text-right">Default</th>
+            <th class="text-right">Temporary amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for account in calendar.accounts %}
+          <tr>
+            <td data-label="Account">{{ account.name }}</td>
+            <td data-label="Account type">{{ account.wrapper_type or 'Other' }}</td>
+            <td data-label="Default" class="text-right">£{{ '{:,.2f}'.format(account.monthly_contribution) }}</td>
+            <td data-label="Temporary amount" class="text-right">
+              <input type="number" step="0.01" min="0" name="amount_{{ account.id }}" placeholder="Leave blank">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="badge-row">
+      <button type="submit" class="badge badge-primary-action">Save temporary plan</button>
+    </div>
+    {% else %}
+    <p class="helper-text">No eligible active contribution accounts are available yet.</p>
+    {% endif %}
+  </form>
+</section>
+
+<section class="panel mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Active plans</p>
+      <h3>Temporary plans</h3>
+    </div>
+  </div>
+  {% if plans %}
+    <div class="badge-row mt-0">
+      {% for plan in plans %}
+      <details class="budget-tools-details">
+        <summary class="badge badge-meta">
+          {{ plan.plan_name }} · {{ plan.from_month }} to {{ plan.to_month }} · {{ plan.rows|length }} row{% if plan.rows|length != 1 %}s{% endif %}
+        </summary>
+        <div class="table-scroll mt-075">
+          <table class="mini-table">
+            <thead>
+              <tr>
+                <th>Account</th>
+                <th>Wrapper</th>
+                <th>Range</th>
+                <th class="text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in plan.rows %}
+              <tr>
+                <td>{{ row.account_name }}</td>
+                <td>{{ row.wrapper_type or 'Other' }}</td>
+                <td>{{ row.from_month }} to {{ row.to_month }}</td>
+                <td class="text-right">£{{ '{:,.2f}'.format(row.override_amount) }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <form method="post" class="badge-row">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="form_name" value="delete_temporary_plan">
+          <input type="hidden" name="reason" value="{{ plan.reason }}">
+          <input type="hidden" name="from_month" value="{{ from_month }}">
+          <input type="hidden" name="to_month" value="{{ to_month }}">
+          <button type="submit" class="badge badge-danger">Remove plan</button>
+        </form>
+      </details>
+      {% endfor %}
+    </div>
+  {% else %}
+  <p class="helper-text">No temporary plans saved yet.</p>
+  {% endif %}
+</section>
+
+<section class="panel mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Calendar</p>
+      <h3>Default vs temporary override</h3>
+    </div>
+  </div>
+  {% if calendar.accounts %}
+  <details class="contribution-calendar-details">
+    <summary class="contribution-calendar-summary">
+      <span>
+        <strong>Show month-by-month calendar</strong>
+        <span class="helper-text">Open only when you want to inspect month-by-month defaults and overrides.</span>
+      </span>
+      <span class="badge badge-meta">{{ month_columns|length }} months</span>
+    </summary>
+    <p class="helper-text">Month-by-month view. Move your mouse over this calendar, or touch it on mobile, then scroll down through the months.</p>
+    <div class="contribution-calendar-scroll" tabindex="0" aria-label="Default vs temporary override calendar, vertically scrollable">
+      <div class="contribution-calendar-stack">
+        {% for month in month_columns %}
+        {% set month_loop = loop.index0 %}
+        <article class="contribution-month-card">
+          <div class="contribution-month-card-head">
+            <h4>{{ month.label }}</h4>
+            <span class="badge badge-meta">{{ month.key }}</span>
+          </div>
+          <div class="contribution-month-account-list">
+            {% for account in calendar.accounts %}
+            {% set cell = account.months[month_loop] %}
+            <div class="contribution-month-account-row{% if cell.has_override %} has-override{% endif %}{% if cell.overlap %} has-overlap{% endif %}">
+              <div class="contribution-month-account-main">
+                <strong>{{ account.name }}</strong>
+                <span>{{ account.wrapper_type or 'Other' }}</span>
+              </div>
+              <div class="contribution-month-amounts">
+                <span><span class="badge badge-meta badge-sm">Default</span> £{{ '{:,.2f}'.format(cell.default_amount) }}</span>
+                {% if cell.has_override %}
+                <span><span class="badge badge-sm {% if cell.is_temporary %}badge-primary-action{% else %}badge-meta{% endif %}">Override</span> £{{ '{:,.2f}'.format(cell.override_amount) }}</span>
+                {% else %}
+                <span class="helper-text">Using default</span>
+                {% endif %}
+              </div>
+              <div class="contribution-month-source">
+                {% if cell.has_override %}
+                <span class="helper-text">
+                  {{ cell.source_label }}
+                  {% if cell.plan_name %}
+                    · {{ cell.plan_name }}
+                  {% elif cell.reason %}
+                    · {{ cell.reason }}
+                  {% endif %}
+                </span>
+                {% endif %}
+                {% if cell.overlap %}
+                <span class="badge badge-warning badge-sm">Overlap · {{ cell.active_override_count }} active rules</span>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </details>
+  {% else %}
+  <p class="helper-text">No eligible contribution accounts are active yet.</p>
+  {% endif %}
+</section>
+
+{% endblock %}

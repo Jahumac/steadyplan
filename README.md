@@ -26,7 +26,7 @@ Legacy image (during transition): `ghcr.io/jahumac/shelly-finance:latest`
 
 Most finance apps want your login credentials or send your data to the cloud. SteadyPlan runs entirely on your machine (or home server) with a local SQLite database. Core use does not require any bank login sharing, broker linking, or third-party account. You only need an external API key if you choose to enable optional automated price lookups.
 
-It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for preview-first broker account review.
+It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for preview-first broker snapshot review.
 
 ---
 
@@ -88,13 +88,16 @@ Monthly income, expenses and savings overview with auto-save. Navigate between m
 Set savings targets and track progress. Goals can be linked to tagged accounts — e.g. tag your ISA accounts as "Retirement" and create a goal that tracks the combined balance.
 
 ### Retirement scenario estimates
-Year-by-year and month-by-month scenario estimates based on current balances, monthly contributions, and growth assumptions. These scenario estimates are not guarantees. Respects Lifetime ISA contribution rules (stops at age 50). Export scenario estimates to Excel (.xlsx) with per-account breakdowns.
+Year-by-year and month-by-month scenario estimates using saved balances, contribution settings, and growth assumptions. Per-account future payments can be changed from a specific calendar month, so planned payment changes are not tied to rough age guesses. These scenario estimates are not guarantees. Respects Lifetime ISA contribution rules (stops at age 50). Export scenario estimates to Excel (.xlsx) with per-account breakdowns.
+
+### Account transfers
+Use the account detail transfer workflow for provider/account moves, including pension, ISA, Lifetime ISA, and other wrapper transfers. SteadyPlan can update balances, stop future payments on the old account, keep the old account history visible, and treat the movement as neutral for contributions and allowance use. The Performance page also has a Performance-only transfer backfill for older moves that should keep reporting cash flow neutral without changing today’s balances.
 
 ### Granular Fee Tracking
 Accounts support detailed fee modelling: platform fee (% with optional £ cap), flat annual platform fee (£), and fund fee / OCF (%). SteadyPlan combines these into an effective annual fee, subtracts it from your growth rate, and shows the lifetime cost of fees in both the app and Excel exports. All fee fields are optional — tucked behind an "Advanced: Fees" toggle so they don't clutter the setup for casual users. Scenario estimates show "with fees" vs "without fees" so you can see exactly what your broker and funds cost you over time.
 
 ### Performance Tracking
-Track your actual portfolio returns over time using the modified Dietz method. Compare actual performance against an assumptions-based "on-plan" growth line. Contribution cash flow uses the effective “into pot” amount (tax relief, LISA bonus, employer contributions, minus any contribution fee) and only treats completed monthly updates as confirmed truth.
+Track your actual portfolio returns over time using the modified Dietz method. Compare actual performance against an assumptions-based comparison line, not a promise or target. Contribution cash flow uses the effective “into pot” amount (tax relief, LISA bonus, employer contributions, minus any contribution fee) and only treats completed monthly updates as confirmed truth. Performance reporting separates **Opening / Imported** starting balances from later **Contributed** cash flow and **Gain / Interest**, so first tracked values do not look like investment performance or regular savings. Annualised return is shown only after 12 monthly return periods; early reports use “Not enough history yet” and the XLSX export includes a “How to read” guide explaining the same terms.
 
 ### Tax Year Tracking
 ISA and Lifetime ISA allowance progress bars, tax year countdown, and automatic tax year labelling (April 6 boundary).
@@ -283,7 +286,7 @@ app/
 ├── extensions.py          # CSRF, limiter, cache-busting helpers, scheduler wiring
 ├── routes/
 │   ├── auth.py            # Login, setup, user management
-│   ├── overview.py        # Dashboard with metrics and net worth chart
+│   ├── overview.py        # Dashboard with metrics and total money chart
 │   ├── accounts.py        # Account + holdings CRUD, allocation charts
 │   ├── holdings.py        # Holdings catalogue, prices, refresh actions
 │   ├── budget.py          # Budget CRUD, auto-save, annual import, debts, trends
@@ -332,7 +335,7 @@ data/
 
 ## Screenshots
 
-**Overview** — net worth, goals, allowances and portfolio chart at a glance
+**Overview** — total money, goals, allowances and portfolio chart at a glance
 
 ![Overview](Screenshots/demo/overview_desktop.png)
 
@@ -344,7 +347,7 @@ data/
 
 ![Goals](Screenshots/demo/goals_desktop.png)
 
-**Scenario estimates** — retirement scenario estimates with fee impact and scenario planner
+**Scenario estimates** — retirement scenario estimates with fee impact and Try a different scenario controls
 
 ![Scenario estimates](Screenshots/demo/projections_desktop.png)
 
@@ -390,7 +393,7 @@ Everything lives in a single SQLite file (`data/finance.db`). No external databa
 Holdings with a ticker symbol get live price lookups via Yahoo Finance. SteadyPlan tries the ticker as-is first, then appends `.L` for London Stock Exchange listings. Prices are cached in a local catalogue and updated when you refresh.
 
 ### Monthly Snapshots
-Each time you complete a monthly update (or update an account balance), SteadyPlan saves a snapshot. These snapshots power the net worth history chart on the overview page and the performance tracking calculations.
+Each time you complete a monthly update (or update an account balance), SteadyPlan saves a snapshot. These snapshots power the total money history chart on the overview page and the performance tracking calculations.
 
 ### Security
 SteadyPlan uses Flask-Login for authentication with hashed passwords. It's designed for home network use — if you want to expose it to the internet, put it behind a reverse proxy with additional auth (e.g. Authelia, Cloudflare Tunnel, or basic auth).

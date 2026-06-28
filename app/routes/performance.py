@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
 
-from flask import Blueprint, render_template
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.calculations import (
+    _resolve_contribution_day,
+    compute_performance_series,
     contribution_breakdown,
     effective_monthly_contribution,
     review_ready_date,
@@ -13,6 +15,9 @@ from app.calculations import (
     uk_tax_year_label,
 )
 from app.models import (
+    add_cash_flow_event,
+    add_account_transfer_events,
+    delete_cash_flow_event,
     fetch_all_accounts,
     fetch_all_active_overrides,
     fetch_account_daily_snapshot_points_on_or_after_date,
@@ -21,21 +26,223 @@ from app.models import (
     fetch_cash_flow_events_for_account,
     fetch_daily_snapshots,
     fetch_holding_totals_by_account,
+    fetch_monthly_performance_data,
+    fetch_monthly_performance_data_by_account,
     fetch_monthly_review,
     fetch_monthly_review_items,
     fetch_tax_year_contributions,
+    get_connection,
+    upsert_monthly_snapshot,
 )
+from app.services.financial_truth import refresh_account_snapshots_for_month
 
 performance_bp = Blueprint("performance", __name__)
+
+
+def _parse_money(value, default=None):
+    try:
+        if value is None or str(value).strip() == "":
+            return default
+        return float(str(value).replace(",", "").strip())
+    except (TypeError, ValueError):
+        return default
+
+
+def _valid_month_key(value):
+    try:
+        datetime.strptime(str(value or ""), "%Y-%m")
+        return True
+    except ValueError:
+        return False
+
+
+def _existing_monthly_snapshot_balance(account_id, month_key):
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT balance FROM monthly_snapshots WHERE account_id = ? AND month_key = ?",
+            (account_id, month_key),
+        ).fetchone()
+    return None if row is None else float(row["balance"] or 0)
+
+
+def _recent_performance_event_rows(accounts, user_id, limit=8):
+    account_names = {int(a["id"]): a["name"] for a in accounts}
+    rows = []
+    for account_id, account_name in account_names.items():
+        for event in fetch_cash_flow_events_for_account(account_id, user_id, limit=50):
+            effect = (event.get("allowance_effect") or "none")
+            if effect not in {"performance_only", "transfer_neutral"}:
+                continue
+            amount = float(event.get("amount") or 0)
+            counterparty_id = event.get("counterparty_account_id")
+            counterparty_name = account_names.get(int(counterparty_id)) if counterparty_id else None
+            rows.append(
+                {
+                    "id": event["id"],
+                    "account_name": account_name,
+                    "counterparty_name": counterparty_name,
+                    "event_date": event.get("event_date") or "",
+                    "amount": amount,
+                    "kind": event.get("kind") or "movement",
+                    "note": event.get("note") or "",
+                    "allowance_effect": effect,
+                    "signed_label": f"{'+' if amount >= 0 else '−'}£{abs(amount):,.2f}",
+                }
+            )
+    rows.sort(key=lambda r: (r["event_date"], r["id"]), reverse=True)
+    return rows[:limit]
+
+
+@performance_bp.route("/cash-flow-events", methods=["POST"])
+@login_required
+def record_cash_flow_event():
+    uid = current_user.id
+    accounts = fetch_all_accounts(uid)
+    account_map = {int(a["id"]): a for a in accounts}
+    try:
+        account_id = int(request.form.get("account_id") or 0)
+    except (TypeError, ValueError):
+        account_id = 0
+    if account_id not in account_map:
+        flash("Choose one of your accounts before recording a performance movement.", "error")
+        return redirect(url_for("performance.performance"))
+
+    raw_date = (request.form.get("event_date") or "").strip()
+    try:
+        event_date = datetime.strptime(raw_date, "%Y-%m-%d").date().isoformat()
+    except ValueError:
+        flash("Enter the movement date as YYYY-MM-DD.", "error")
+        return redirect(url_for("performance.performance"))
+
+    amount = _parse_money(request.form.get("amount"), 0.0) or 0.0
+    if abs(amount) < 0.005:
+        flash("Enter an amount for the performance movement.", "error")
+        return redirect(url_for("performance.performance"))
+
+    kind = (request.form.get("kind") or "deposit").strip().lower()
+    if kind in {"withdrawal", "transfer_out"}:
+        signed_amount = -abs(amount)
+        kind = "withdrawal"
+    else:
+        signed_amount = abs(amount)
+        kind = "deposit"
+
+    opening_month = (request.form.get("opening_month") or "").strip()
+    opening_value = _parse_money(request.form.get("opening_value"), None)
+    if opening_month or opening_value is not None:
+        if not _valid_month_key(opening_month) or opening_value is None or opening_value < 0:
+            flash("Opening baseline needs a YYYY-MM month and a non-negative value.", "error")
+            return redirect(url_for("performance.performance"))
+        existing_opening_value = _existing_monthly_snapshot_balance(account_id, opening_month)
+        replace_existing_opening = request.form.get("replace_existing_opening") == "1"
+        if existing_opening_value is not None and abs(existing_opening_value - opening_value) >= 0.005 and not replace_existing_opening:
+            flash(
+                f"Opening baseline for {opening_month} is already £{existing_opening_value:,.2f}. Tick replace existing baseline to overwrite it.",
+                "error",
+            )
+            return redirect(url_for("performance.performance"))
+        upsert_monthly_snapshot(account_id, opening_month, opening_value)
+
+    note = (request.form.get("note") or "Manual performance movement").strip()
+    event_id = add_cash_flow_event(
+        {
+            "account_id": account_id,
+            "event_date": event_date,
+            "amount": signed_amount,
+            "kind": kind,
+            "note": note,
+            "allowance_effect": "performance_only",
+        },
+        uid,
+    )
+    if not event_id:
+        flash("Could not record that performance movement.", "error")
+        return redirect(url_for("performance.performance"))
+
+    account_name = account_map[account_id]["name"]
+    if opening_month and opening_value is not None:
+        flash(
+            f"Recorded {account_name} opening baseline £{opening_value:,.2f} and {kind} £{abs(signed_amount):,.2f}.",
+            "success",
+        )
+    else:
+        flash(f"Recorded {account_name} {kind} £{abs(signed_amount):,.2f} for Performance.", "success")
+    return redirect(url_for("performance.performance"))
+
+
+@performance_bp.route("/cash-flow-events/<int:event_id>/delete", methods=["POST"])
+@login_required
+def delete_performance_cash_flow_event(event_id):
+    deleted = delete_cash_flow_event(event_id, current_user.id, allowance_effect="performance_only")
+    if deleted:
+        flash("Removed that Performance movement. Account balances and snapshots were not changed.", "success")
+    else:
+        flash("That Performance movement was not found or has already been removed.", "error")
+    return redirect(url_for("performance.performance"))
+
+
+@performance_bp.route("/account-transfers", methods=["POST"])
+@login_required
+def record_account_transfer():
+    uid = current_user.id
+    accounts = fetch_all_accounts(uid)
+    account_map = {int(a["id"]): a for a in accounts}
+    try:
+        from_account_id = int(request.form.get("from_account_id") or 0)
+        to_account_id = int(request.form.get("to_account_id") or 0)
+    except (TypeError, ValueError):
+        from_account_id = 0
+        to_account_id = 0
+
+    if from_account_id not in account_map or to_account_id not in account_map:
+        flash("Choose two of your accounts for the transfer.", "error")
+        return redirect(url_for("performance.performance"))
+    if from_account_id == to_account_id:
+        flash("Choose two different accounts for the transfer.", "error")
+        return redirect(url_for("performance.performance"))
+
+    raw_date = (request.form.get("event_date") or "").strip()
+    try:
+        event_date = datetime.strptime(raw_date, "%Y-%m-%d").date().isoformat()
+    except ValueError:
+        flash("Enter the transfer date as YYYY-MM-DD.", "error")
+        return redirect(url_for("performance.performance"))
+
+    amount = _parse_money(request.form.get("amount"), 0.0) or 0.0
+    if amount < 0.005:
+        flash("Enter an amount for the account transfer.", "error")
+        return redirect(url_for("performance.performance"))
+
+    note = (request.form.get("note") or "Account transfer").strip()
+    event_ids = add_account_transfer_events(
+        {
+            "from_account_id": from_account_id,
+            "to_account_id": to_account_id,
+            "event_date": event_date,
+            "amount": amount,
+            "note": note,
+        },
+        uid,
+    )
+    if not event_ids:
+        flash("Could not record that account transfer.", "error")
+        return redirect(url_for("performance.performance"))
+
+    from_name = account_map[from_account_id]["name"]
+    to_name = account_map[to_account_id]["name"]
+    flash(f"Recorded transfer £{abs(amount):,.2f} from {from_name} to {to_name}.", "success")
+    return redirect(url_for("performance.performance"))
 
 
 @performance_bp.route("/")
 @login_required
 def performance():
     uid = current_user.id
+    current_month_key = datetime.now().strftime('%Y-%m')
+    refresh_account_snapshots_for_month(uid, current_month_key, require_existing_month=True)
     assumptions   = fetch_assumptions(uid)
     accounts      = fetch_all_accounts(uid)
-    current_monthly_update_href = f"/monthly-review/?month={datetime.now().strftime('%Y-%m')}#expected-contributions"
+    current_monthly_update_href = f"/monthly-review/?month={current_month_key}#expected-contributions"
 
     assumed_rate   = to_float(assumptions["annual_growth_rate"]) if assumptions else 0.07
 
@@ -43,6 +250,13 @@ def performance():
     daily_snapshots = fetch_daily_snapshots(uid, limit=730)
     snapshot_count = len(daily_snapshots)
     has_data = snapshot_count >= 2
+    has_snapshot_history = snapshot_count >= 1
+    export_period_links = [
+        {"label": "1M", "href": "/performance/export.xlsx?period=1M"},
+        {"label": "6M", "href": "/performance/export.xlsx?period=6M"},
+        {"label": "1Y", "href": "/performance/export.xlsx?period=1Y"},
+        {"label": "ALL", "href": "/performance/export.xlsx?period=ALL"},
+    ]
 
     daily_labels   = []  # raw YYYY-MM-DD for client-side period filtering
     daily_actual   = []
@@ -51,6 +265,8 @@ def performance():
     current_value  = None
     monthly_contribution_total = None
     planned_monthly_avg = None
+    performance_summary = None
+    account_reconciliation_rows = []
     contribution_breakdown_rows = []
 
     if has_data:
@@ -67,6 +283,30 @@ def performance():
         monthly_contribution_total = sum(
             effective_monthly_contribution(a, assumptions) for a in accounts
         )
+        monthly_performance_data = fetch_monthly_performance_data(uid)
+        performance_summary = compute_performance_series(
+            monthly_performance_data,
+            assumed_rate,
+            monthly_contribution_total or 0,
+        )
+        per_account_monthly_data = fetch_monthly_performance_data_by_account(uid)
+        for aid, payload in per_account_monthly_data.items():
+            rows = payload.get("rows") or []
+            if not rows:
+                continue
+            perf_acc = compute_performance_series(rows, assumed_rate, 0)
+            if not perf_acc:
+                continue
+            gain = float(perf_acc.get("total_market_gain") or 0)
+            account_reconciliation_rows.append({
+                "account_id": aid,
+                "account_name": payload.get("account_name") or "Account",
+                "imported_baseline": float(perf_acc.get("total_imported_baseline") or 0),
+                "contributed": float(perf_acc.get("total_contributed") or 0),
+                "gain": gain,
+                "current_value": float(perf_acc.get("current_value") or 0),
+            })
+        account_reconciliation_rows.sort(key=lambda r: -r["current_value"])
 
         # Per-account breakdown so the user can see exactly which accounts feed
         # into the plan total — and spot stale `monthly_contribution` values on
@@ -111,6 +351,14 @@ def performance():
             except (TypeError, ValueError):
                 salary_day = 28
             salary_day = max(1, min(31, salary_day))
+
+            def account_contribution_date(a, year, month):
+                try:
+                    account_day = int((a or {}).get("pension_contribution_day") or 0)
+                except (TypeError, ValueError):
+                    account_day = 0
+                day = account_day or salary_day
+                return datetime(year, month, _resolve_contribution_day(year, month, day)).date()
 
             today = datetime.now().date()
             daily_rate = (1 + assumed_rate) ** (1 / 365.25) - 1
@@ -160,12 +408,17 @@ def performance():
             end_y, end_m = end_date.year, end_date.month
             while (y, m) <= (end_y, end_m):
                 mk = f"{y:04d}-{m:02d}"
-                credit_date = review_ready_date(y, m, salary_day)
-                if credit_date <= today and credit_date <= end_date and credit_date > start_date:
-                    amt = month_total_for(mk)
-                    month_amount_cache[mk] = amt
-                    if amt > 0:
-                        events.append((credit_date, mk, amt))
+                active_overrides, items_by_acc = month_ctx(mk)
+                month_amount = 0.0
+                for a in accounts:
+                    credit_date = account_contribution_date(a, y, m)
+                    if credit_date <= today and credit_date <= end_date and credit_date > start_date:
+                        amt = into_pot_for_account_month(a, mk, active_overrides, items_by_acc)
+                        month_amount += amt
+                        if amt > 0:
+                            events.append((credit_date, mk, amt))
+                if month_amount > 0:
+                    month_amount_cache[mk] = month_amount
                 if m == 12:
                     y, m = y + 1, 1
                 else:
@@ -228,6 +481,14 @@ def performance():
             salary_day = 28
         salary_day = max(1, min(31, salary_day))
 
+        def account_contribution_date_for_breakdown(a, year, month):
+            try:
+                account_day = int((a or {}).get("pension_contribution_day") or 0)
+            except (TypeError, ValueError):
+                account_day = 0
+            day = account_day or salary_day
+            return datetime(year, month, _resolve_contribution_day(year, month, day)).date()
+
         today = datetime.now().date()
         daily_rate = (1 + assumed_rate) ** (1 / 365.25) - 1
 
@@ -279,7 +540,7 @@ def performance():
             end_y, end_m = end_d.year, end_d.month
             while (y, m) <= (end_y, end_m):
                 mk = f"{y:04d}-{m:02d}"
-                cd = review_ready_date(y, m, salary_day)
+                cd = account_contribution_date_for_breakdown(a, y, m)
                 if cd <= today and cd <= end_d and cd > base_d:
                     active_overrides, items_by_acc = month_ctx(mk)
                     amt = into_pot_for_account_month(a, mk, active_overrides, items_by_acc)
@@ -334,6 +595,7 @@ def performance():
     return render_template(
         "performance.html",
         has_data=has_data,
+        has_snapshot_history=has_snapshot_history,
         snapshot_count=snapshot_count,
         daily_labels=daily_labels,
         daily_actual=daily_actual,
@@ -342,11 +604,16 @@ def performance():
         monthly_contribution_total=monthly_contribution_total,
         planned_monthly_avg=planned_monthly_avg,
         contribution_breakdown_rows=contribution_breakdown_rows,
+        account_reconciliation_rows=account_reconciliation_rows,
+        performance_summary=performance_summary,
         account_perf=account_perf,
         account_breakdown=account_breakdown,
         plan_value=plan_value,
         current_value=current_value,
         current_monthly_update_href=current_monthly_update_href,
+        export_period_links=export_period_links,
+        performance_event_accounts=accounts,
+        recent_performance_events=_recent_performance_event_rows(accounts, uid),
         active_page="performance",
     )
 

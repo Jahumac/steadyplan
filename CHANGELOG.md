@@ -5,14 +5,26 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Performance-only transfer backfill for older pension, ISA, LISA, and other tracked-account moves, creating linked neutral transfer-out/transfer-in events without changing today’s balances or counting them as new contributions or allowance use.
+- Account detail transfer workflow for moving value between tracked providers/accounts while preserving the old account history.
 - Public roadmap page and a manual light/dark toggle on the public website.
 - Scoped assistant access in Settings with UI-managed tokens, permission labels, and recent write activity.
 
 ### Changed
+- Future payment schedules for scenario estimates now use calendar start months instead of rough age-based overrides.
+- Try a different scenario now clarifies that its payment fields are starting what-if values while saved month-by-month schedules remain in the plan baseline.
+- Monthly Update completion refreshes month and daily snapshots from live account truth so Performance reconciles after a completed review.
 - Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional broker snapshot review beta.
+- Settings now frames assistant tokens as Personal Pip access for users who run their own Pip setup.
 - Refreshed public demo screenshots and the public marketing/docs site presentation.
+- Settings at a glance now groups everyday setup, safety and recovery, and optional access.
+- Performance reporting now separates Opening / Imported starting balances from later Contributed cash flow and Gain / Interest, hides annualised return until 12 monthly return periods, and includes a workbook “How to read” guide.
+- Public docs now use the same comparison-line, broker snapshot, and transfer-scope wording as the app.
+- Public roadmap direction copy now uses not-guarantee wording instead of not-promise wording.
 
 ### Fixed
+- Account creation templates now visibly select and fill in the account name, wrapper type, and balance method.
+- Future estimate payment-plan API now rejects malformed save requests instead of treating them as an instruction to clear the saved plan.
 - Test-account reset now clears dependent user-owned rows safely instead of failing on SQLite foreign-key constraints.
 - Public dark-mode logo rendering no longer uses the semi-transparent showcase mark that caused pale edge haloing.
 
@@ -24,7 +36,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Continued mobile polish across the private app experience.
-- Updated runtime dependencies to current releases, including Flask 3.1.3, Flask-WTF 1.3.0, yfinance 1.4.0, Gunicorn 26.0.0, APScheduler 3.11.2, pytz 2026.2, Flask-Limiter 4.1.1, and openpyxl 3.1.5.
+- Updated runtime dependencies to current installable releases, including Flask 3.1.3, Flask-WTF 1.2.2, yfinance 1.4.1, Gunicorn 23.0.0, APScheduler 3.11.2, pytz 2026.2, Flask-Limiter 4.1.1, cryptography 48.0.0, and openpyxl 3.1.5.
 - Updated the Docker base image to Python 3.14 slim.
 - Updated GitHub Actions workflow dependencies for checkout, GHCR login, metadata, and Docker build/push.
 

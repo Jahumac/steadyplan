@@ -78,8 +78,8 @@
     <div class="simple-list">
       <div class="simple-list-item">
         <div>
-          <strong>Scheduled monthly contributions</strong>
-          <p class="helper-text m-0">Regular ISA contributions from account settings.</p>
+          <strong>Scheduled monthly payments</strong>
+          <p class="helper-text m-0">Regular ISA payments from account settings.</p>
         </div>
         <strong>£{{ '{:,.0f}'.format(allowance_truth_checkpoint.monthly_total) }}</strong>
       </div>
@@ -152,7 +152,7 @@
       </tfoot>
     </table>
   </div>
-  <p class="helper-text" style="font-size:0.78rem;">Monthly uses each account's regular contribution setting. Regular to date is that monthly amount multiplied by the months elapsed. Cash-flow adjustments only count when you label a movement as using ISA allowance. If an amount looks wrong, check the account's <a href="/accounts/" class="link-accent">monthly contribution setting</a>.</p>
+  <p class="helper-text" style="font-size:0.78rem;">Monthly uses each account’s regular payment setting. Regular to date is that monthly amount multiplied by the months elapsed. Cash-flow adjustments only count when you label a movement as using ISA allowance. If an amount looks wrong, check the account’s <a href="/accounts/" class="link-accent">monthly payment setting</a>.</p>
   {% else %}
   <p class="helper-text">No ISA accounts yet. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add a Stocks &amp; Shares ISA, Cash ISA, or Lifetime ISA</a> to start tracking.</p>
   {% endif %}
@@ -241,7 +241,7 @@
       <button class="badge badge-sm" data-allowance-toggle="carry-forward-panel">+ Carry-forward</button>
     </div>
   </div>
-  <p class="helper-text">Contributions grow free of CGT and income tax. Tax relief on the way in; income tax applies on the way out in retirement.</p>
+  <p class="helper-text">Money in a pension can grow without CGT or income tax while it stays there. Pension tax top-up can be added when money goes in; income tax can apply when money comes out in retirement.</p>
 
   {# ── Progress card ── #}
   <div class="allowance-grid mb-1" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
@@ -266,7 +266,7 @@
       <p class="mt-025">£{{ '{:,.0f}'.format(extra_relief) }} <span class="allowance-denom">extra ({{ '20%' if tax_band == 'higher' else '25%' }})</span></p>
       <small style="color:var(--accent-3)">Claim the extra relief through Self Assessment.</small>
       {% else %}
-      <small class="text-muted">Your provider adds 20% basic-rate tax relief.</small>
+      <small class="text-muted">Your provider adds a 20% basic-rate pension tax top-up.</small>
       {% endif %}
     </div>
     {% endif %}
@@ -280,7 +280,7 @@
         <tr>
           <th>Account</th>
           <th class="text-center">Type</th>
-          <th class="text-right">Monthly (gross)</th>
+          <th class="text-right">Monthly total</th>
           <th class="text-right">Regular to date</th>
           <th class="text-right">One-offs</th>
           <th class="text-right">Total</th>
@@ -337,7 +337,7 @@
             </select>
           </label>
           <label>
-            <span>Amount (£, gross)</span>
+            <span>Total amount (£)</span>
             <input type="number" name="amount" step="0.01" min="0.01" placeholder="1000.00" required>
           </label>
           <label>
@@ -473,7 +473,7 @@
         {% if cgt_over_exemption > 0 %}
         ⚠ Over by £{{ '{:,.0f}'.format(cgt_over_exemption) }} — declare on Self Assessment
         {% else %}
-        £{{ '{:,.0f}'.format(cgt_remaining) }} remaining · net gains only
+        £{{ '{:,.0f}'.format(cgt_remaining) }} remaining · gains after losses only
         {% endif %}
       </small>
     </div>

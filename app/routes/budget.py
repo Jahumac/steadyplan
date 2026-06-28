@@ -4,6 +4,13 @@ from io import BytesIO
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, send_file, session, url_for
 from flask_login import current_user, login_required
 
+from app.calculations import (
+    add_months_to_key,
+    apply_pension_carry_forward,
+    contribution_breakdown,
+    is_pension_account,
+    pension_allowance_limits,
+)
 from app.utils import optional_float, optional_int, valid_month_key
 
 from app.models import (
@@ -11,12 +18,13 @@ from app.models import (
     compare_debt_payoff_strategies,
     create_budget_item,
     create_budget_section,
+    create_temporary_contribution_plan,
     create_debt,
     delete_budget_item,
     delete_budget_items_by_section,
     delete_budget_section,
+    delete_temporary_contribution_plan,
     delete_debt,
-    fetch_account,
     fetch_all_accounts,
     fetch_all_debts,
     fetch_budget_entries,
@@ -24,11 +32,14 @@ from app.models import (
     fetch_budget_items,
     fetch_budget_sections,
     fetch_budget_trend,
+    fetch_contribution_calendar,
+    fetch_temporary_contribution_plans,
     fetch_all_active_overrides,
+    fetch_assumptions,
     fetch_debt,
     fetch_months_with_budget_entries,
+    fetch_pension_carry_forward,
     fetch_prior_month_budget_entries,
-    update_account,
     update_budget_item,
     update_budget_section,
     update_debt,
@@ -36,6 +47,7 @@ from app.models import (
     upsert_single_month_contribution_override,
 )
 from app.models.debts import amortisation_schedule, schedule_anchor
+from app.models.accounts import PREMIUM_BONDS_MAX_BALANCE, is_premium_bonds_account
 from app.services.import_staging import (
     delete_staged,
     read_staged,
@@ -118,7 +130,9 @@ def _sync_linked_override(item_id, month_key, amount, user_id):
     so projections and account views pick up the per-month edit automatically.
 
     Does nothing for unlinked items. Silently no-ops if the account isn't owned by
-    user_id (handled by upsert_single_month_contribution_override).
+    user_id (handled by upsert_single_month_contribution_override). This keeps the
+    account's normal monthly_contribution unchanged, so future months naturally
+    fall back to the default unless they have their own override.
     """
     item = fetch_budget_item(item_id, user_id)
     if not item:
@@ -159,9 +173,124 @@ def _sync_linked_override(item_id, month_key, amount, user_id):
     updated[field_name] = desired
     update_account(updated, user_id)
 
-
 def _month_label(month_key):
     return datetime.strptime(month_key, "%Y-%m").strftime("%B %Y")
+
+
+def _default_contribution_calendar_range():
+    today = date.today()
+    start_year = today.year if today.month >= 4 else today.year - 1
+    start_month = f"{start_year}-04"
+    end_month = f"{start_year + 2}-03"
+    return start_month, end_month
+
+
+def _tax_year_label_for_month(month_key):
+    year = int(month_key[:4])
+    month = int(month_key[5:7])
+    start_year = year if month >= 4 else year - 1
+    return f"{start_year}/{str(start_year + 1)[-2:]}"
+
+
+def _is_lifetime_isa_account(account):
+    wrapper = (account.get("wrapper_type") or "").lower()
+    return "lifetime isa" in wrapper or "lisa" in wrapper
+
+
+def _is_isa_account(account):
+    wrapper = (account.get("wrapper_type") or "").lower()
+    return "isa" in wrapper or "lisa" in wrapper
+
+
+def _is_cash_isa_account(account):
+    wrapper = (account.get("wrapper_type") or "").lower()
+    return "cash isa" in wrapper
+
+
+def _is_stocks_and_shares_isa_account(account):
+    wrapper = (account.get("wrapper_type") or "").lower()
+    return "stocks" in wrapper and "isa" in wrapper
+
+
+def _is_premium_bonds_account(account):
+    return is_premium_bonds_account(account)
+
+
+def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_forward_entries=None):
+    isa_allowance = float(assumptions["isa_allowance"]) if assumptions else 20000.0
+    lisa_allowance = float(assumptions["lisa_allowance"]) if assumptions else 4000.0
+    assumptions_map = dict(assumptions) if assumptions else {}
+    pension_limits = apply_pension_carry_forward(
+        pension_allowance_limits(assumptions_map),
+        pension_carry_forward_entries or [],
+    )
+    pension_allowance = float(pension_limits.get("effective_allowance") or 0.0)
+    pension_salary_cap = min(
+        float(assumptions_map.get("annual_income") or 0.0),
+        pension_allowance,
+    ) if assumptions_map else 0.0
+    premium_bonds_current_holding = sum(
+        float(account.get("current_value") or 0.0)
+        for account in calendar.get("accounts", [])
+        if _is_premium_bonds_account(account)
+    )
+    by_tax_year = {}
+    for month_key in calendar.get("months", []):
+        tax_year = _tax_year_label_for_month(month_key)
+        row = by_tax_year.setdefault(tax_year, {
+            "tax_year": tax_year,
+            "isa_planned": 0.0,
+            "cash_isa_planned": 0.0,
+            "stocks_and_shares_isa_planned": 0.0,
+            "lisa_planned": 0.0,
+            "pension_planned": 0.0,
+        })
+        for account in calendar.get("accounts", []):
+            cell = next((c for c in account.get("months", []) if c.get("month_key") == month_key), None)
+            if not cell:
+                continue
+            amount = float(cell["override_amount"] if cell.get("has_override") else cell.get("default_amount") or 0.0)
+            if amount <= 0:
+                continue
+            if _is_lifetime_isa_account(account):
+                row["isa_planned"] += amount
+                row["lisa_planned"] += amount
+            elif _is_cash_isa_account(account):
+                row["isa_planned"] += amount
+                row["cash_isa_planned"] += amount
+            elif _is_stocks_and_shares_isa_account(account):
+                row["isa_planned"] += amount
+                row["stocks_and_shares_isa_planned"] += amount
+            elif _is_isa_account(account):
+                row["isa_planned"] += amount
+            elif is_pension_account(account):
+                adjusted = dict(account)
+                adjusted["monthly_contribution"] = amount
+                row["pension_planned"] += float(
+                    contribution_breakdown(adjusted, assumptions).get("total_into_pot") or 0.0
+                )
+
+    rows = []
+    for row in by_tax_year.values():
+        row["isa_allowance"] = isa_allowance
+        row["lisa_allowance"] = lisa_allowance
+        row["pension_allowance"] = pension_allowance
+        row["premium_bonds_holding"] = premium_bonds_current_holding
+        row["premium_bonds_cap"] = PREMIUM_BONDS_MAX_BALANCE
+        row["pension_personal_relief_limit"] = float(pension_limits.get("personal_relief_limit") or 0.0)
+        row["pension_personal_tax_relief_cap"] = min(row["pension_personal_relief_limit"], row["pension_allowance"])
+        row["pension_display_cap"] = pension_salary_cap or row["pension_personal_tax_relief_cap"] or row["pension_allowance"]
+        row["pension_carry_forward_total"] = float(pension_limits.get("carry_forward_total") or 0.0)
+        row["pension_mpaa_enabled"] = bool(pension_limits.get("mpaa_enabled"))
+        row["isa_remaining"] = isa_allowance - row["isa_planned"]
+        row["lisa_remaining"] = lisa_allowance - row["lisa_planned"]
+        row["pension_remaining"] = pension_allowance - row["pension_planned"]
+        row["isa_over"] = max(row["isa_planned"] - isa_allowance, 0.0)
+        row["lisa_over"] = max(row["lisa_planned"] - lisa_allowance, 0.0)
+        row["pension_over"] = max(row["pension_planned"] - pension_allowance, 0.0)
+        row["has_warning"] = bool(row["isa_over"] or row["lisa_over"] or row["pension_over"])
+        rows.append(row)
+    return sorted(rows, key=lambda row: row["tax_year"])
 
 
 def _build_monthly_data(month_key, user_id):
@@ -210,6 +339,9 @@ def _build_monthly_data(month_key, user_id):
             is_linked_account = linked_account is not None
             is_linked_debt = linked_debt is not None
             linked_component = _linked_account_component(item)
+            override_reason = ""
+            linked_component = _linked_account_component(item)
+            override_reason = ""
 
             if item["id"] in entry_map:
                 amount = float(entry_map[item["id"]]["amount"] or 0)
@@ -221,6 +353,7 @@ def _build_monthly_data(month_key, user_id):
                 and linked_account["id"] not in cash_park_accounts
             ):
                 amount = float(active_overrides[linked_account["id"]]["override_amount"] or 0)
+                override_reason = (active_overrides[linked_account["id"]]["reason"] or "").strip()
                 source = "manual_override"
             elif is_linked_account:
                 if linked_component == LINKED_ACCOUNT_COMPONENT_CASH_PARK:
@@ -249,7 +382,11 @@ def _build_monthly_data(month_key, user_id):
                 source_title = "Saved for this month"
                 if is_linked_account:
                     ln = (linked_account.get("name") or "linked account").strip()
-                    source_title = f"Saved for this month (linked account · {ln})"
+                    if override_reason and override_reason != "from budget":
+                        source_label = "Payment calendar"
+                        source_title = f"Pulled from your Payment calendar for this month ({override_reason})"
+                    else:
+                        source_title = f"Saved for this month (linked account · {ln})"
                 elif is_linked_debt:
                     source_title = "Saved for this month (linked debt)"
             elif source == "linked_account":
@@ -259,7 +396,7 @@ def _build_monthly_data(month_key, user_id):
                     source_title = "Pulled from your linked account's monthly cash park setting"
                 else:
                     source_label = f"linked account · {ln}"
-                    source_title = "Pulled from your linked account's monthly contribution"
+                    source_title = "Pulled from your linked account's monthly payment"
             else:  # linked_debt
                 source_label = "linked debt"
                 source_title = "Pulled from your Debts page — update the monthly payment there to change this amount"
@@ -275,6 +412,7 @@ def _build_monthly_data(month_key, user_id):
                 "name": item["name"],
                 "notes": item["notes"],
                 "amount": amount,
+                "annual_amount": amount * 12,
                 "default_amount": float(item["default_amount"] or 0),
                 "section": section_key,
                 "linked_account": item["linked_account_id"] is not None,
@@ -306,6 +444,9 @@ def _build_monthly_data(month_key, user_id):
         if item.get("pre_salary")
     )
     total_income = section_totals.get(income_key, 0)
+    for section in sections:
+        section["income_percent"] = (section["total"] / total_income * 100) if total_income > 0 else None
+        section["annual_total"] = section["total"] * 12
     total_expenses = sum(v for k, v in section_totals.items() if k != income_key)
     surplus = total_income - (total_expenses - pre_salary_total)
     savings_total = 0.0
@@ -370,6 +511,180 @@ def budget():
         budget_setup_href=budget_setup_href,
         has_budget_basics=has_budget_basics,
         active_page="budget",
+    )
+
+
+@budget_bp.route("/contribution-calendar", methods=["GET", "POST"])
+@login_required
+def contribution_calendar():
+    uid = current_user.id
+    default_from_month, default_to_month = _default_contribution_calendar_range()
+    selected_from_month = valid_month_key(request.values.get("from_month")) or default_from_month
+    raw_to_month = valid_month_key(request.values.get("to_month"))
+    if raw_to_month:
+        selected_to_month = raw_to_month
+    elif selected_from_month == default_from_month:
+        selected_to_month = default_to_month
+    else:
+        selected_to_month = add_months_to_key(selected_from_month, 23)
+    if selected_to_month < selected_from_month:
+        selected_to_month = add_months_to_key(selected_from_month, 23)
+
+    redirect_args = {
+        "from_month": selected_from_month,
+        "to_month": selected_to_month,
+    }
+
+    if request.method == "POST":
+        form_name = (request.form.get("form_name") or "").strip()
+
+        if form_name == "create_temporary_plan":
+            plan_name = (request.form.get("plan_name") or "").strip()
+            start_month = valid_month_key(request.form.get("start_month"))
+            end_month = valid_month_key(request.form.get("end_month"))
+            invalid_amount_fields = []
+            rows = []
+
+            for key, raw_value in request.form.items():
+                if not key.startswith("amount_"):
+                    continue
+                account_suffix = key[len("amount_"):]
+                try:
+                    account_id = int(account_suffix)
+                except (TypeError, ValueError):
+                    continue
+                amount_text = (raw_value or "").strip()
+                if not amount_text:
+                    continue
+                amount = optional_float(amount_text, default=None, min_val=0.0)
+                if amount is None:
+                    invalid_amount_fields.append(account_suffix)
+                    continue
+                rows.append({
+                    "account_id": account_id,
+                    "from_month": start_month,
+                    "to_month": end_month,
+                    "override_amount": amount,
+                })
+
+            if not plan_name:
+                flash("Name the temporary plan so it can be grouped and removed later.", "error")
+            elif not start_month or not end_month:
+                flash("Choose a valid start and end month for the temporary plan.", "error")
+            elif end_month < start_month:
+                flash("The end month must be the same as or after the start month.", "error")
+            elif invalid_amount_fields:
+                flash("One or more plan amounts were not valid numbers.", "error")
+            elif not rows:
+                flash("Add at least one account amount to create a temporary plan.", "error")
+            else:
+                created = create_temporary_contribution_plan(uid, plan_name, rows)
+                if created.get("created_count"):
+                    flash(
+                        f"Saved temporary plan '{created['plan_name']}' for {created['created_count']} account override"
+                        f"{'s' if created['created_count'] != 1 else ''}.",
+                        "success",
+                    )
+                else:
+                    flash("No eligible account rows were saved for that temporary plan.", "error")
+
+            return redirect(url_for("budget.contribution_calendar", **redirect_args))
+
+        if form_name == "create_annual_pot_fill_plan":
+            plan_name = (request.form.get("plan_name") or "").strip()
+            account_id = request.form.get("pattern_account_id", type=int)
+            start_month = valid_month_key(request.form.get("pattern_start_month"))
+            months_per_year = optional_int(request.form.get("pattern_months_per_year"), 0) or 0
+            years = optional_int(request.form.get("pattern_years"), 0) or 0
+            monthly_amount = optional_float(request.form.get("pattern_monthly_amount"), default=None, min_val=0.0)
+            amount_sequence = []
+            invalid_sequence = False
+            sequence_text = (request.form.get("pattern_monthly_amounts") or "").strip()
+            if sequence_text:
+                for part in sequence_text.split(","):
+                    amount = optional_float(part.strip(), default=None, min_val=0.0)
+                    if amount is None:
+                        invalid_sequence = True
+                        break
+                    amount_sequence.append(amount)
+                months_per_year = len(amount_sequence)
+            rows = []
+            if account_id and start_month and months_per_year > 0 and years > 0 and not invalid_sequence:
+                months_per_year = min(months_per_year, 12)
+                years = min(years, 10)
+                for year_idx in range(years):
+                    year_start_month = add_months_to_key(start_month, year_idx * 12)
+                    if amount_sequence:
+                        for month_idx, amount in enumerate(amount_sequence[:months_per_year]):
+                            month_key = add_months_to_key(year_start_month, month_idx)
+                            rows.append({
+                                "account_id": account_id,
+                                "from_month": month_key,
+                                "to_month": month_key,
+                                "override_amount": amount,
+                            })
+                    elif monthly_amount is not None:
+                        rows.append({
+                            "account_id": account_id,
+                            "from_month": year_start_month,
+                            "to_month": add_months_to_key(year_start_month, months_per_year - 1),
+                            "override_amount": monthly_amount,
+                        })
+
+            if not plan_name:
+                flash("Name the yearly pot-fill plan so it can be grouped and removed later.", "error")
+            elif not account_id:
+                flash("Choose which account the yearly pot-fill plan belongs to.", "error")
+            elif not start_month:
+                flash("Choose a valid first start month for the yearly pot-fill plan.", "error")
+            elif invalid_sequence:
+                flash("Use only valid comma-separated amounts for the optional month-by-month pattern.", "error")
+            elif months_per_year <= 0 or years <= 0 or (monthly_amount is None and not amount_sequence):
+                flash("Enter a valid monthly amount, months per year and number of years.", "error")
+            else:
+                created = create_temporary_contribution_plan(uid, plan_name, rows)
+                if created.get("created_count"):
+                    flash(
+                        f"Saved yearly pot-fill plan '{created['plan_name']}' for {created['created_count']} yearly block"
+                        f"{'s' if created['created_count'] != 1 else ''}.",
+                        "success",
+                    )
+                else:
+                    flash("No eligible yearly pot-fill rows were saved.", "error")
+
+            return redirect(url_for("budget.contribution_calendar", **redirect_args))
+
+        if form_name == "delete_temporary_plan":
+            reason = (request.form.get("reason") or request.form.get("plan_name") or "").strip()
+            deleted = delete_temporary_contribution_plan(uid, reason)
+            if deleted:
+                flash(f"Removed {deleted} temporary override row{'s' if deleted != 1 else ''}.", "success")
+            else:
+                flash("That temporary plan was not found.", "error")
+            return redirect(url_for("budget.contribution_calendar", **redirect_args))
+
+        return redirect(url_for("budget.contribution_calendar", **redirect_args))
+
+    calendar = fetch_contribution_calendar(uid, selected_from_month, selected_to_month)
+    plans = fetch_temporary_contribution_plans(uid)
+    assumptions = fetch_assumptions(uid)
+    pension_carry_forward_entries = fetch_pension_carry_forward(uid)
+    allowance_frame = _build_contribution_allowance_frame(calendar, assumptions, pension_carry_forward_entries)
+    month_columns = [
+        {"key": month_key, "label": datetime.strptime(month_key, "%Y-%m").strftime("%b %Y")}
+        for month_key in calendar["months"]
+    ]
+
+    return render_template(
+        "budget_contribution_calendar.html",
+        from_month=selected_from_month,
+        to_month=selected_to_month,
+        month_columns=month_columns,
+        calendar=calendar,
+        allowance_frame=allowance_frame,
+        plans=plans,
+        active_page="budget",
+        monthly_update_href=url_for("monthly_review.monthly_review", month=selected_from_month),
     )
 
 

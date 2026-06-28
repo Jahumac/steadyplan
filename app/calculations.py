@@ -272,6 +272,98 @@ def contribution_override_for_month(account, month_key):
     return to_float(override["override_amount"]) if override is not None else None
 
 
+def projected_personal_contribution(account, month_key):
+    """Personal contribution planned for a projected month before wrappers add uplifts."""
+    override = contribution_override_for_month(account, month_key) if month_key else None
+    if override is not None:
+        return override
+    return to_float(_safe_get(account, "monthly_contribution", 0))
+
+
+def _tax_year_start_for_month_key(month_key, assumptions=None):
+    """Return the UK tax-year start year for a projected contribution month."""
+    try:
+        year_text, month_text = str(month_key).split("-")
+        year = int(year_text)
+        month = int(month_text)
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+    salary_day = 0
+    try:
+        salary_day = int(_safe_get(assumptions, "salary_day", 0) or 0)
+    except (TypeError, ValueError):
+        salary_day = 0
+
+    if month > 4:
+        return year
+    if month < 4:
+        return year - 1
+    return year if salary_day >= 6 else year - 1
+
+
+def _lisa_projected_prior_personal_in_tax_year(account, assumptions, month_index):
+    start_month = _safe_get(account, "_projection_start_month")
+    if not start_month or month_index <= 0:
+        return 0.0
+
+    month_key = add_months_to_key(start_month, month_index)
+    tax_year_start = _tax_year_start_for_month_key(month_key, assumptions)
+    if tax_year_start is None:
+        return 0.0
+
+    total = 0.0
+    for idx in range(month_index):
+        prior_key = add_months_to_key(start_month, idx)
+        if _tax_year_start_for_month_key(prior_key, assumptions) == tax_year_start:
+            total += projected_personal_contribution(account, prior_key)
+    return total
+
+
+def projected_contribution_breakdown(account, assumptions=None, month_index=0):
+    """Projected contribution breakdown for one month, including overrides.
+
+    This keeps one-off Lifetime ISA temporary plans as real one-off payments:
+    a £4,000 projected month earns a £1,000 Lifetime ISA bonus in that month,
+    rather than being treated as a £4,000/month annualised contribution.
+    """
+    start_month = _safe_get(account, "_projection_start_month")
+    month_key = add_months_to_key(start_month, month_index) if start_month else None
+    override = contribution_override_for_month(account, month_key) if month_key else None
+    adjusted = dict(account)
+    if override is not None:
+        adjusted["monthly_contribution"] = override
+
+    breakdown = contribution_breakdown(adjusted, assumptions)
+    wrapper = (_safe_get(account, "wrapper_type") or "")
+    is_lisa = "Lifetime" in wrapper or "LISA" in wrapper
+    if not is_lisa:
+        return breakdown
+
+    if current_age_from_assumptions(assumptions) + month_index / 12.0 >= 50:
+        breakdown["personal"] = 0.0
+        breakdown["government_bonus"] = 0.0
+        breakdown["total_into_pot"] = 0.0
+        breakdown["method_label"] = "Lifetime ISA contributions stop at age 50"
+        return breakdown
+
+    personal = projected_personal_contribution(account, month_key) if month_key else to_float(adjusted.get("monthly_contribution", 0))
+    prior_personal = _lisa_projected_prior_personal_in_tax_year(account, assumptions, month_index)
+    eligible = max(min(personal, LISA_ANNUAL_CAP - prior_personal), 0.0)
+    government_bonus = eligible * LISA_BONUS_RATE
+    contribution_fee_pct = to_float(_safe_get(account, "contribution_fee_pct", 0))
+    gross_into_pot = personal + government_bonus + to_float(_safe_get(account, "employer_contribution", 0))
+    contribution_fee = gross_into_pot * (contribution_fee_pct / 100.0)
+
+    breakdown["personal"] = personal
+    breakdown["tax_relief"] = 0.0
+    breakdown["government_bonus"] = government_bonus
+    breakdown["contribution_fee"] = contribution_fee
+    breakdown["total_into_pot"] = gross_into_pot - contribution_fee
+    breakdown["method_label"] = "Lifetime ISA bonus (25%)"
+    return breakdown
+
+
 def projection_monthly_contribution(account, assumptions=None, month_index=0):
     """Effective contribution for a projected month, including overrides.
 
@@ -279,15 +371,7 @@ def projection_monthly_contribution(account, assumptions=None, month_index=0):
     months, then the normal account rules add tax relief, LISA bonus, employer
     contribution, and contribution fees.
     """
-    start_month = _safe_get(account, "_projection_start_month")
-    month_key = add_months_to_key(start_month, month_index) if start_month else None
-    override = contribution_override_for_month(account, month_key) if month_key else None
-    if override is None:
-        return effective_monthly_contribution(account, assumptions)
-
-    adjusted = dict(account)
-    adjusted["monthly_contribution"] = override
-    return effective_monthly_contribution(adjusted, assumptions)
+    return projected_contribution_breakdown(account, assumptions, month_index)["total_into_pot"]
 
 
 def effective_monthly_contribution(account, assumptions=None):
@@ -626,6 +710,8 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
     balances     = [m[1] for m in monthly_data]
     contribs     = [m[2] for m in monthly_data]
     carried_counts = [m[3] if len(m) > 3 else 0 for m in monthly_data]
+    fixed_gains = [m[4] if len(m) > 4 else None for m in monthly_data]
+    imported_baselines = [float(m[5] or 0) if len(m) > 5 else 0.0 for m in monthly_data]
 
     def _fmt(mk):
         try:
@@ -642,8 +728,12 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
         start = balances[i - 1]
         end   = balances[i]
         cf    = contribs[i]
-        denom = start + 0.5 * cf
-        monthly_returns.append((end - start - cf) / denom if denom > 0 else 0.0)
+        imported = imported_baselines[i] if i < len(imported_baselines) else 0.0
+        total_flow = cf + imported
+        fixed_gain = fixed_gains[i] if i < len(fixed_gains) else None
+        gain = float(fixed_gain) if fixed_gain is not None else (end - start - total_flow)
+        denom = start + 0.5 * total_flow
+        monthly_returns.append(gain / denom if denom > 0 else 0.0)
 
     # ── Chain-linked cumulative & annualised return ────────────────────────
     cum = 1.0
@@ -651,9 +741,12 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
         cum *= (1 + r)
     total_return = cum - 1.0
     n = len(monthly_returns)
-    # Require at least 3 months before annualising — with fewer data points
-    # the figure is statistically meaningless and often alarming.
-    annualised_return = ((cum ** (12.0 / n)) - 1) if n >= 3 else None
+    # Do not annualise short early histories. A few good/bad months can explode
+    # into a scary-looking annual figure, especially just after importing an
+    # opening baseline. Show total return immediately, then annualise once there
+    # is roughly a full year of return periods.
+    annualised_return = ((cum ** (12.0 / n)) - 1) if n >= 12 else None
+    annualised_return_note = None if annualised_return is not None else "Not enough history yet"
 
     # ── Projected "on plan" series from first recorded balance ────────────
     # Uses the contribution recorded for each month instead of today's normal
@@ -673,15 +766,45 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
 
     # ── Month-by-month breakdown table ────────────────────────────────────
     rows = []
+    first_month_has_initial_flow = (
+        abs(float(imported_baselines[0] if imported_baselines else 0.0)) > 0.005
+        or (
+            len(monthly_data) == 1
+            and abs(float(contribs[0] or 0)) > 0.005
+            and abs(float(contribs[0] or 0) - float(assumed_monthly or 0)) > 0.005
+        )
+    )
+    if first_month_has_initial_flow:
+        closing = balances[0]
+        cf = contribs[0]
+        imported = imported_baselines[0] if imported_baselines else 0.0
+        opening = max(closing - cf - imported, 0.0)
+        fixed_gain = fixed_gains[0] if fixed_gains else None
+        gain = float(fixed_gain) if fixed_gain is not None else (closing - opening - cf - imported)
+        denom = opening + 0.5 * (cf + imported)
+        r = gain / denom if denom > 0 else 0.0
+        rows.append({
+            "month_key": display_labels[0],
+            "opening": round(opening, 2),
+            "imported_baseline": round(imported, 2),
+            "contribution": round(cf, 2),
+            "market_gain": round(gain, 2),
+            "closing": round(closing, 2),
+            "return_pct": round(r * 100, 2),
+            "carried_forward_count": carried_counts[0] if carried_counts else 0,
+        })
     for i in range(1, len(monthly_data)):
         opening = balances[i - 1]
         closing = balances[i]
         cf      = contribs[i]
-        gain    = closing - opening - cf
+        imported = imported_baselines[i] if i < len(imported_baselines) else 0.0
+        fixed_gain = fixed_gains[i] if i < len(fixed_gains) else None
+        gain = float(fixed_gain) if fixed_gain is not None else (closing - opening - cf - imported)
         r       = monthly_returns[i - 1]
         rows.append({
             "month_key":    display_labels[i],
             "opening":      round(opening, 2),
+            "imported_baseline": round(imported, 2),
             "contribution": round(cf, 2),
             "market_gain":  round(gain, 2),
             "closing":      round(closing, 2),
@@ -691,8 +814,23 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
     rows.reverse()   # most recent first
 
     # ── Totals for summary cards ──────────────────────────────────────────
-    total_contributed = sum(contribs[1:])   # exclude opening balance month
-    total_market_gain = balances[-1] - balances[0] - total_contributed
+    total_imported_baseline = sum(imported_baselines)
+    total_contributed = sum(contribs[1:])   # exclude opening balance month unless it is an explicit first-month flow
+    total_market_gain = 0.0
+    if first_month_has_initial_flow:
+        first_cf = float(contribs[0] or 0)
+        first_imported = float(imported_baselines[0] if imported_baselines else 0.0)
+        first_fixed_gain = fixed_gains[0] if fixed_gains else None
+        first_opening = max(float(balances[0] or 0) - first_cf - first_imported, 0.0)
+        total_contributed += first_cf
+        total_market_gain += (
+            float(first_fixed_gain)
+            if first_fixed_gain is not None
+            else float(balances[0] or 0) - first_opening - first_cf - first_imported
+        )
+    for i in range(1, len(balances)):
+        fixed_gain = fixed_gains[i] if i < len(fixed_gains) else None
+        total_market_gain += float(fixed_gain) if fixed_gain is not None else (balances[i] - balances[i - 1] - contribs[i] - imported_baselines[i])
     vs_plan = balances[-1] - projected_values[-1] if projected_values else 0
 
     return {
@@ -705,7 +843,9 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
         "n_months":          n,
         "total_return":      round(total_return * 100, 2),
         "annualised_return": round(annualised_return * 100, 2) if annualised_return is not None else None,
+        "annualised_return_note": annualised_return_note,
         "total_contributed": round(total_contributed, 2),
+        "total_imported_baseline": round(total_imported_baseline, 2),
         "total_market_gain": round(total_market_gain, 2),
         "vs_plan":           round(vs_plan, 2),
         "current_value":     round(balances[-1], 2) if balances else 0,

@@ -91,6 +91,18 @@ def _date_at_age(dob_str, age):
     return date(year, dob.month, day)
 
 
+def _normalise_month_key(month_key):
+    if not month_key:
+        return None
+    try:
+        y, m = [int(x) for x in str(month_key).split("-")]
+        if y < 1900 or m < 1 or m > 12:
+            return None
+    except (ValueError, TypeError):
+        return None
+    return f"{y:04d}-{m:02d}"
+
+
 def _age_at_month_key(dob_str, month_key):
     if not dob_str or not month_key:
         return None
@@ -134,18 +146,18 @@ def _projection_assumption_summary(assumptions, accounts, account_rows, metrics)
 
     items = []
     growth_lines = [
-        f"Assumes {global_growth * 100:.1f}% annual growth.",
-        "Fees reduce net growth where configured.",
+        f"Uses {global_growth * 100:.1f}% yearly growth.",
+        "Fees reduce the estimate where you have added them.",
     ]
     if has_custom_rates:
-        growth_lines.insert(1, "Some accounts use custom growth rates that override the global rate.")
-    items.append({"title": "Growth & fees", "lines": growth_lines})
+        growth_lines.insert(1, "Some accounts use their own growth rate instead of the usual one.")
+    items.append({"title": "Growth and fees", "lines": growth_lines})
 
     items.append({
         "title": "Inflation",
         "lines": [
-            "Scenario estimates are in nominal future pounds.",
-            "SteadyPlan does not model inflation or convert to ‘today’s spending power’.",
+            "Future estimates are shown in future pounds, not today's spending power.",
+            "SteadyPlan does not adjust these numbers for inflation.",
         ],
     })
 
@@ -159,33 +171,33 @@ def _projection_assumption_summary(assumptions, accounts, account_rows, metrics)
     })
 
     contrib_lines = [
-        f"Assumes ~£{total_monthly_into_pot:,.0f}/mo continues going into your pots.",
-        "Includes tax relief, employer contributions, and bonuses where applicable.",
+        f"Uses about £{total_monthly_into_pot:,.0f} a month going into your accounts.",
+        "Includes pension tax top-ups, employer payments, and bonuses where they apply.",
     ]
     if accounts_with_schedule > 0:
-        contrib_lines.append(f"Contribution schedules are set on {accounts_with_schedule} account(s).")
+        contrib_lines.append(f"Payment plans are set on {accounts_with_schedule} account(s).")
     elif accounts_with_any_override > 0:
-        contrib_lines.append(f"One-off contribution overrides exist on {accounts_with_any_override} account(s).")
-    items.append({"title": "Contributions", "lines": contrib_lines})
+        contrib_lines.append(f"One-off monthly payment changes exist on {accounts_with_any_override} account(s).")
+    items.append({"title": "Payments in", "lines": contrib_lines})
 
     items.append({
         "title": "Pensions",
         "lines": [
-            "Pension contributions may include tax relief and employer inputs based on your account settings.",
-            "Withdrawals and retirement tax are not modelled.",
+            "Pension payments may include tax top-ups and employer payments, based on your account settings.",
+            "Retirement withdrawals and tax are not estimated here.",
         ],
     })
 
-    fee_lines = ["Fees are included where configured on each account."]
+    fee_lines = ["Fees are included where you added them on each account."]
     if total_fee_impact > 0:
-        fee_lines.insert(0, f"Estimated lifetime fee drag: £{total_fee_impact:,.0f}.")
+        fee_lines.insert(0, f"Estimated effect of fees over time: £{total_fee_impact:,.0f}.")
     items.append({"title": "Fees", "lines": fee_lines})
 
     items.append({
         "title": "Retirement spending",
         "lines": [
-            "Retirement spending / drawdown is not modelled.",
-            "SteadyPlan compares pot totals to targets, not lifetime retirement cashflow.",
+            "Retirement spending and withdrawals are not estimated here.",
+            "SteadyPlan compares account totals to goals; it does not plan every retirement payment.",
         ],
     })
 
@@ -229,9 +241,9 @@ def api_account_series():
         whole_years = int(exact_years)
         for yr in range(0, whole_years + 1):
             val = projected_account_value_at_year(a, assumptions, yr)
-            label = "Today" if yr == 0 else f"Age {int(current_age + yr)}"
-            contrib_idx = 0 if yr == 0 else (yr - 1) * 12
+            contrib_idx = yr * 12
             mk = add_months_to_key(start_month, contrib_idx)
+            label = mk
             override = contribution_override_for_month(a, mk)
             personal = override if override is not None else to_float(a.get("monthly_contribution", 0))
             applied_personal = 0.0 if (is_lisa and (current_age + contrib_idx / 12.0) >= 50) else personal
@@ -246,18 +258,16 @@ def api_account_series():
         if exact_years > whole_years:
             val = projected_account_value(a, assumptions)
             mk = add_months_to_key(start_month, months_total)
-            last_idx = max(months_total - 1, 0)
-            last_mk = add_months_to_key(start_month, last_idx)
-            override = contribution_override_for_month(a, last_mk)
+            override = contribution_override_for_month(a, mk)
             personal = override if override is not None else to_float(a.get("monthly_contribution", 0))
-            applied_personal = 0.0 if (is_lisa and (current_age + last_idx / 12.0) >= 50) else personal
+            applied_personal = 0.0 if (is_lisa and (current_age + months_total / 12.0) >= 50) else personal
             points.append({
-                "label": f"Age {int(retirement_age)}",
+                "label": mk,
                 "value": round(val, 0),
                 "age": round(retirement_age, 2),
                 "month_key": mk,
                 "personal_monthly": round(applied_personal, 2),
-                "into_pot_monthly": round(projection_monthly_contribution(a, assumptions, last_idx), 2) if not (is_lisa and (current_age + last_idx / 12.0) >= 50) else 0.0,
+                "into_pot_monthly": round(projection_monthly_contribution(a, assumptions, months_total), 2) if not (is_lisa and (current_age + months_total / 12.0) >= 50) else 0.0,
             })
     else:
         for idx in range(0, months_total + 1):
@@ -299,79 +309,85 @@ def api_account_schedule():
             amt = ov.get("override_amount") if isinstance(ov, dict) else ov["override_amount"]
             rules.append({
                 "from_month": mk,
+                "start_month": mk,
                 "start_age": _age_at_month_key(dob, mk),
                 "amount": float(amt or 0),
             })
         return jsonify({"ok": True, "rules": rules, "has_dob": bool(dob)})
 
     data = request.get_json(silent=True) or {}
-    account_id = data.get("account_id")
-    if not account_id:
+    account_id_raw = data.get("account_id")
+    if not account_id_raw:
         return jsonify({"ok": False, "error": "account_id required"}), 400
-    if not fetch_account(int(account_id), uid):
+    try:
+        account_id = int(account_id_raw)
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "account_id must be a valid account"}), 400
+    if not fetch_account(account_id, uid):
         return jsonify({"ok": False, "error": "account not found"}), 404
-    if not dob:
-        return jsonify({"ok": False, "error": "date_of_birth required in Settings"}), 400
 
-    rules_in = data.get("rules") or []
+    if "rules" not in data or not isinstance(data.get("rules"), list):
+        return jsonify({"ok": False, "error": "rules must be a list"}), 400
+    rules_in = data["rules"]
     cleaned = []
     for r in rules_in:
-        try:
-            start_age = int(float(r.get("start_age")))
-        except (TypeError, ValueError):
-            continue
+        if not isinstance(r, dict):
+            return jsonify({"ok": False, "error": "each schedule row must be an object"}), 400
+        start_month = _normalise_month_key(r.get("start_month") or r.get("from_month"))
         try:
             amount = float(r.get("amount") or 0)
         except (TypeError, ValueError):
             amount = 0.0
+        if start_month:
+            cleaned.append((start_month, amount))
+            continue
+        if not dob:
+            continue
+        start_age_raw = r.get("start_age")
+        if start_age_raw is None:
+            continue
+        try:
+            start_age = int(float(start_age_raw))
+        except (TypeError, ValueError):
+            continue
         if start_age <= 0:
             continue
-        cleaned.append((start_age, amount))
+        d = _date_at_age(dob, start_age)
+        mk = _month_key_from_date(d) if d else None
+        if mk:
+            cleaned.append((mk, amount))
 
     start_month = projection_start_month_key(assumptions)
-    cleaned.sort(key=lambda x: x[0])
+    normalised = []
+    for mk, amount in cleaned:
+        if mk < start_month:
+            mk = start_month
+        normalised.append((mk, amount))
+    normalised.sort(key=lambda x: x[0])
     uniq = []
     seen = set()
-    for start_age, amount in cleaned:
-        if start_age in seen:
+    for mk, amount in normalised:
+        if mk in seen:
             continue
-        seen.add(start_age)
-        uniq.append((start_age, amount))
+        seen.add(mk)
+        uniq.append((mk, amount))
 
     if rules_in and not uniq:
         return jsonify({"ok": False, "error": "at least one valid schedule row is required"}), 400
     if not uniq:
-        delete_contribution_overrides_for_reason(int(account_id), uid, "schedule")
+        delete_contribution_overrides_for_reason(account_id, uid, "schedule")
         return jsonify({"ok": True})
 
-    month_keys = []
-    for start_age, amount in uniq:
-        d = _date_at_age(dob, start_age)
-        if not d:
-            continue
-        mk = _month_key_from_date(d)
-        if mk < start_month:
-            mk = start_month
-        month_keys.append((mk, amount))
-    month_keys.sort(key=lambda x: x[0])
-    filtered = []
-    last_mk = None
-    for mk, amount in month_keys:
-        if last_mk is not None and mk <= last_mk:
-            continue
-        last_mk = mk
-        filtered.append((mk, amount))
+    delete_contribution_overrides_for_reason(account_id, uid, "schedule")
 
-    delete_contribution_overrides_for_reason(int(account_id), uid, "schedule")
-
-    for i, (from_m, amount) in enumerate(filtered):
-        next_m = filtered[i + 1][0] if i + 1 < len(filtered) else None
+    for i, (from_m, amount) in enumerate(uniq):
+        next_m = uniq[i + 1][0] if i + 1 < len(uniq) else None
         to_m = add_months_to_key(next_m, -1) if next_m else "9999-12"
         if to_m < from_m:
             continue
         create_contribution_override(
             {
-                "account_id": int(account_id),
+                "account_id": account_id,
                 "from_month": from_m,
                 "to_month": to_m,
                 "override_amount": amount,

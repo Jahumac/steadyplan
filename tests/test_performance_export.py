@@ -5,7 +5,7 @@ from openpyxl import load_workbook
 from app.models import create_account, get_connection
 
 
-def _account_payload(name="ISA", wrapper_type="Stocks & Shares ISA", value=1000, monthly=0):
+def _account_payload(name="ISA", wrapper_type="Stocks & Shares ISA", value=1000.0, monthly=0.0):
     return {
         "name": name,
         "provider": "Provider",
@@ -46,6 +46,78 @@ def _workbook_from_response(response):
     return load_workbook(BytesIO(response.data), data_only=True)
 
 
+def _summary_row_values(workbook, entity_name):
+    summary = workbook["Summary"]
+    for row in range(5, summary.max_row + 1):
+        if summary.cell(row=row, column=1).value == entity_name:
+            return {
+                "contributed": summary.cell(row=row, column=7).value or 0,
+                "imported": summary.cell(row=row, column=8).value or 0,
+                "gain": summary.cell(row=row, column=9).value or 0,
+                "current": summary.cell(row=row, column=11).value or 0,
+            }
+    raise AssertionError(f"Summary row {entity_name!r} not found")
+
+
+def _monthly_detail_totals(sheet):
+    rows = []
+    for row in range(5, sheet.max_row + 1):
+        if not sheet.cell(row=row, column=1).value:
+            continue
+        rows.append({
+            "opening": sheet.cell(row=row, column=2).value or 0,
+            "imported": sheet.cell(row=row, column=3).value or 0,
+            "contributed": sheet.cell(row=row, column=4).value or 0,
+            "gain": sheet.cell(row=row, column=5).value or 0,
+            "closing": sheet.cell(row=row, column=6).value or 0,
+        })
+    if not rows:
+        raise AssertionError(f"No monthly detail rows found in {sheet.title}")
+    return {
+        "opening": rows[0]["opening"],
+        "imported": round(sum(row["imported"] for row in rows), 2),
+        "contributed": round(sum(row["contributed"] for row in rows), 2),
+        "gain": round(sum(row["gain"] for row in rows), 2),
+        "current": rows[-1]["closing"],
+    }
+
+
+
+def test_performance_export_includes_how_to_read_sheet(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-readme", password="password123")
+    with app.app_context():
+        account_id = create_account(
+            {
+                **_account_payload(name="Cash ISA", wrapper_type="Cash ISA", value=1600, monthly=0),
+                "cash_interest_rate": 0.036,
+            },
+            uid,
+        )
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 1595), ("2026-06", 1600)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    assert workbook.sheetnames[0] == "How to read"
+    guide = workbook["How to read"]
+    rendered_values = "\n".join(str(cell.value) for row in guide.iter_rows() for cell in row if cell.value)
+    assert "SteadyPlan — How to read this performance report" in rendered_values
+    assert "Opening / Imported" in rendered_values
+    assert "Contributed" in rendered_values
+    assert "Gain / Interest" in rendered_values
+    assert "Cash ISA uses cash interest" in rendered_values
+    assert "Premium Bonds use prize gain" in rendered_values
+    assert "Annualised return appears after 12 monthly return periods" in rendered_values
+    assert "If the first recorded balance includes both old money and a new top-up" in rendered_values
+    assert "Market Gain / Loss explains every account" not in rendered_values
+
+
 def test_performance_export_keeps_zero_snapshot_message_for_selected_account(app, client, make_user):
     uid, username, password = make_user(username="perf-export-zero", password="password123")
     with app.app_context():
@@ -59,7 +131,7 @@ def test_performance_export_keeps_zero_snapshot_message_for_selected_account(app
     assert detail["A5"].value is None
 
 
-def test_performance_export_acknowledges_first_baseline_for_portfolio_and_account(app, client, make_user):
+def test_performance_export_shows_first_snapshot_as_initial_funding_for_portfolio_and_account(app, client, make_user):
     uid, username, password = make_user(username="perf-export-first-baseline", password="password123")
     with app.app_context():
         account_id = create_account(_account_payload(value=6000, monthly=150), uid)
@@ -73,23 +145,696 @@ def test_performance_export_acknowledges_first_baseline_for_portfolio_and_accoun
     _login(client, username, password)
     workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
 
-    expected_detail_title = "Your first baseline is saved"
-    expected_detail_message = "Complete next month's monthly update and the month-by-month table will appear."
-
     portfolio = workbook["Portfolio (Monthly)"]
-    assert portfolio["A4"].value == expected_detail_title
-    assert portfolio["A5"].value == expected_detail_message
-    assert "Come back after next month's monthly update" not in portfolio["A5"].value
-    assert "SteadyPlan has the first snapshot for this report." not in portfolio["A5"].value
-    assert portfolio["A4"].value != "Not enough data yet (need at least two monthly snapshots)."
-    assert portfolio["A4"].value != "First baseline saved."
-    assert portfolio["A4"].value != "Your first baseline is saved."
+    assert portfolio["A4"].value == "Month"
+    assert portfolio["A5"].value == "May 2026"
+    assert portfolio["B5"].value == 0
+    assert portfolio["C5"].value == 6000
+    assert portfolio["D5"].value == 0
+    assert portfolio["E5"].value == 0
+    assert portfolio["F5"].value == 6000
+    assert "Your first baseline is saved" not in str(portfolio["A4"].value)
 
     account = workbook["ISA (Monthly)"]
-    assert account["A4"].value == expected_detail_title
-    assert account["A5"].value == expected_detail_message
-    assert "Come back after next month's monthly update" not in account["A5"].value
-    assert "SteadyPlan has the first snapshot for this report." not in account["A5"].value
-    assert account["A4"].value != "Not enough data yet (need at least two monthly snapshots)."
-    assert account["A4"].value != "First baseline saved."
-    assert account["A4"].value != "Your first baseline is saved."
+    assert account["A4"].value == "Month"
+    assert account["A5"].value == "May 2026"
+    assert account["B5"].value == 0
+    assert account["C5"].value == 6000
+    assert account["D5"].value == 0
+    assert account["E5"].value == 0
+    assert account["F5"].value == 6000
+    assert "Your first baseline is saved" not in str(account["A4"].value)
+
+
+
+def test_performance_export_shows_initial_funding_rows_for_one_snapshot_accounts(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-initial-funding", password="password123")
+    with app.app_context():
+        premium_id = create_account(_account_payload(name="Premium Bonds", wrapper_type="Premium Bonds", value=800, monthly=0), uid)
+        my_sipp_id = create_account(_account_payload(name="My SIPP", wrapper_type="SIPP", value=206.36, monthly=0), uid)
+        with get_connection() as conn:
+            for account_id, balance in [(premium_id, 800), (my_sipp_id, 206.36)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-06-01', ?, ?, '2026-06')",
+                    (account_id, balance),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    summary = workbook["Summary"]
+    imported = {summary.cell(row=r, column=1).value: summary.cell(row=r, column=8).value for r in range(5, summary.max_row + 1)}
+    assert imported["Portfolio"] == 1006.36
+    assert imported["Premium Bonds"] == 800
+    assert imported["My SIPP"] == 206.36
+
+    premium = workbook["Premium Bonds (Monthly)"]
+    assert premium["A4"].value == "Month"
+    assert premium["A5"].value == "Jun 2026"
+    assert premium["B5"].value == 0
+    assert premium["C5"].value == 800
+    assert premium["D5"].value == 0
+    assert premium["E5"].value == 0
+    assert premium["F5"].value == 800
+
+    my_sipp = workbook["My SIPP (Monthly)"]
+    assert my_sipp["A4"].value == "Month"
+    assert my_sipp["A5"].value == "Jun 2026"
+    assert my_sipp["B5"].value == 0
+    assert my_sipp["C5"].value == 206.36
+    assert my_sipp["D5"].value == 0
+    assert my_sipp["E5"].value == 0
+    assert my_sipp["F5"].value == 206.36
+
+
+def test_performance_export_uses_live_current_month_values_for_end_balances(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-live-current", password="password123")
+    with app.app_context():
+        stale_id = create_account(_account_payload(name="Stale ISA", value=2500, monthly=100), uid)
+        new_id = create_account(_account_payload(name="New SIPP", wrapper_type="SIPP", value=206, monthly=250), uid)
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-05-01', ?, 2000, '2026-05')",
+                (stale_id,),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-06-01', ?, 2000, '2026-06')",
+                (stale_id,),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    summary = workbook["Summary"]
+    rows = {summary.cell(row=r, column=1).value: summary.cell(row=r, column=11).value for r in range(5, summary.max_row + 1)}
+
+    assert rows["Portfolio"] == 2706
+    assert rows["Stale ISA"] == 2500
+    assert rows["New SIPP"] == 206
+    assert "New SIPP (Monthly)" in workbook.sheetnames
+
+
+def test_performance_export_uses_cash_flow_events_for_monthly_attribution(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-cashflows", password="password123")
+    with app.app_context():
+        cash_id = create_account(_account_payload(name="Cash ISA", wrapper_type="Cash ISA", value=1600, monthly=1000), uid)
+        sipp_id = create_account(_account_payload(name="SIPP", wrapper_type="SIPP", value=1400, monthly=0), uid)
+        with get_connection() as conn:
+            for account_id, month_key, balance in [
+                (cash_id, "2026-05", 3000),
+                (cash_id, "2026-06", 1600),
+                (sipp_id, "2026-06", 1400),
+            ]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, counterparty_account_id, note, created_at)
+                VALUES (?, ?, '2026-06-15', -1400, 'transfer_out', ?, 'Moved to SIPP', '2026-06-15T00:00:00+00:00')
+                """,
+                (uid, cash_id, sipp_id),
+            )
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, counterparty_account_id, note, created_at)
+                VALUES (?, ?, '2026-06-15', 1400, 'deposit', ?, 'Transfer from Cash ISA', '2026-06-15T00:00:00+00:00')
+                """,
+                (uid, sipp_id, cash_id),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    summary = workbook["Summary"]
+    rows = {summary.cell(row=r, column=1).value: summary.cell(row=r, column=7).value for r in range(5, summary.max_row + 1)}
+    assert rows["Portfolio"] == 0
+    assert rows["Cash ISA"] == -1400
+    assert rows["SIPP"] == 1400
+
+    portfolio = workbook["Portfolio (Monthly)"]
+    assert portfolio["A5"].value == "May 2026"
+    assert portfolio["C5"].value == 3000
+    assert portfolio["A6"].value == "Jun 2026"
+    assert portfolio["C6"].value == 0
+    assert portfolio["D6"].value == 0
+
+    cash = workbook["Cash ISA (Monthly)"]
+    assert cash["A5"].value == "May 2026"
+    assert cash["C5"].value == 3000
+    assert cash["A6"].value == "Jun 2026"
+    assert cash["C6"].value == 0
+    assert cash["D6"].value == -1400
+    assert cash["E6"].value == 0
+
+
+def test_performance_export_summary_reconciles_to_monthly_detail_rows(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-reconciles", password="password123")
+    with app.app_context():
+        account_id = create_account(
+            _account_payload(name="Reconciled ISA", wrapper_type="Stocks & Shares ISA", value=1250, monthly=0),
+            uid,
+        )
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 1000), ("2026-06", 1250)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, created_at)
+                VALUES (?, ?, '2026-06-01', 200, 'deposit', 'Monthly deposit', '2026-06-01T00:00:00+00:00')
+                """,
+                (uid, account_id),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    for entity_name, detail_sheet_name in [
+        ("Portfolio", "Portfolio (Monthly)"),
+        ("Reconciled ISA", "Reconciled ISA (Monthly)"),
+    ]:
+        summary = _summary_row_values(workbook, entity_name)
+        detail = _monthly_detail_totals(workbook[detail_sheet_name])
+
+        assert summary["imported"] == detail["imported"] == 1000
+        assert summary["contributed"] == detail["contributed"] == 200
+        assert summary["gain"] == detail["gain"] == 50
+        assert summary["current"] == detail["current"] == 1250
+        assert detail["opening"] + detail["imported"] + detail["contributed"] + detail["gain"] == summary["current"]
+
+
+def test_performance_manual_movement_backfills_opening_and_contribution(app, client, make_user):
+    uid, username, password = make_user(username="perf-manual-movement", password="password123")
+    with app.app_context():
+        account_id = create_account(
+            _account_payload(name="Premium Bonds", wrapper_type="Premium Bonds", value=800, monthly=0),
+            uid,
+        )
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-04-01', ?, 800, '2026-04')",
+                (account_id,),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-06-01', ?, 800, '2026-06')",
+                (account_id,),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    response = client.post(
+        "/performance/cash-flow-events",
+        data={
+            "account_id": str(account_id),
+            "event_date": "2026-05-15",
+            "kind": "deposit",
+            "amount": "775",
+            "opening_month": "2026-04",
+            "opening_value": "25",
+            "replace_existing_opening": "1",
+            "note": "Premium Bonds top-up",
+        },
+        follow_redirects=False,
+    )
+    assert response.status_code == 302
+
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+    summary = _summary_row_values(workbook, "Premium Bonds")
+    detail = _monthly_detail_totals(workbook["Premium Bonds (Monthly)"])
+
+    assert summary["imported"] == detail["imported"] == 25
+    assert summary["contributed"] == detail["contributed"] == 775
+    assert summary["gain"] == detail["gain"] == 0
+    assert summary["current"] == detail["current"] == 800
+
+    premium = workbook["Premium Bonds (Monthly)"]
+    assert premium["A5"].value == "Apr 2026"
+    assert premium["C5"].value == 25
+    assert premium["A6"].value == "Jun 2026"
+    assert premium["D6"].value == 775
+    assert premium["E6"].value == 0
+    assert premium["F6"].value == 800
+
+
+def test_performance_export_applies_penny_remainder_to_displayed_detail_rows(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-penny-remainder", password="password123")
+    with app.app_context():
+        account_id = create_account(
+            _account_payload(name="Penny Pension", wrapper_type="SIPP", value=2000, monthly=0),
+            uid,
+        )
+        with get_connection() as conn:
+            for month_key, balance in [
+                ("2026-03", 1000),
+                ("2026-04", 1333.333333),
+                ("2026-05", 1666.666666),
+                ("2026-06", 2000),
+            ]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            for event_date in ["2026-04-01", "2026-05-01", "2026-06-01"]:
+                conn.execute(
+                    """
+                    INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, created_at)
+                    VALUES (?, ?, ?, 333.333333, 'deposit', 'Penny split', ?)
+                    """,
+                    (uid, account_id, event_date, f"{event_date}T00:00:00+00:00"),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    for entity_name, detail_sheet_name in [
+        ("Portfolio", "Portfolio (Monthly)"),
+        ("Penny Pension", "Penny Pension (Monthly)"),
+    ]:
+        summary = _summary_row_values(workbook, entity_name)
+        detail = _monthly_detail_totals(workbook[detail_sheet_name])
+        assert summary["contributed"] == 1000
+        assert detail["contributed"] == 1000
+        assert summary["imported"] == detail["imported"] == 1000
+        assert summary["gain"] == detail["gain"] == 0
+        assert summary["current"] == detail["current"] == 2000
+        assert detail["opening"] + detail["imported"] + detail["contributed"] + detail["gain"] == summary["current"]
+
+    penny = workbook["Penny Pension (Monthly)"]
+    assert [penny[f"D{row}"].value for row in range(6, 9)] == [333.33, 333.33, 333.34]
+
+
+def test_performance_export_includes_first_imported_baseline_row_in_monthly_detail(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-baseline-detail", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(value=6200, monthly=0), uid)
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 6000), ("2026-06", 6200)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    account = workbook["ISA (Monthly)"]
+    assert account["A4"].value == "Month"
+    assert account["A5"].value == "May 2026"
+    assert account["B5"].value == 0
+    assert account["C5"].value == 6000
+    assert account["D5"].value == 0
+    assert account["E5"].value == 0
+    assert account["F5"].value == 6000
+    assert account["A6"].value == "Jun 2026"
+    assert account["B6"].value == 6000
+    assert account["C6"].value == 0
+    assert account["D6"].value == 0
+    assert account["E6"].value == 200
+    assert account["F6"].value == 6200
+
+
+
+def test_performance_export_shows_actual_first_month_contribution(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-first-cashflow", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(name="My SIPP", wrapper_type="SIPP", value=206, monthly=0), uid)
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-06-01', ?, 206.36, '2026-06')",
+                (account_id,),
+            )
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, created_at)
+                VALUES (?, ?, '2026-06-01', 200, 'deposit', 'Opened SIPP', '2026-06-01T00:00:00+00:00')
+                """,
+                (uid, account_id),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    account = workbook["My SIPP (Monthly)"]
+    assert account["A4"].value == "Month"
+    assert account["A5"].value == "Jun 2026"
+    assert account["B5"].value == 6
+    assert account["C5"].value == 0
+    assert account["D5"].value == 200
+    assert account["E5"].value == 0
+    assert account["F5"].value == 206
+
+
+def test_performance_export_does_not_count_unconfirmed_current_month_plan_as_actual_contribution(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-current-plan", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(name="Stocks & Shares ISA", value=7774.07, monthly=500), uid)
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 7609.35), ("2026-06", 7774.07)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    account = workbook["Stocks & Shares ISA (Monthly)"]
+    assert account["A5"].value == "May 2026"
+    assert account["B5"].value == 0
+    assert account["C5"].value == 7609.35
+    assert account["D5"].value == 0
+    assert account["E5"].value == 0
+    assert account["F5"].value == 7609.35
+    assert account["A6"].value == "Jun 2026"
+    assert account["B6"].value == 7609.35
+    assert account["C6"].value == 0
+    assert account["D6"].value == 0
+    assert account["E6"].value == 164.72
+    assert account["F6"].value == 7774.07
+
+
+def test_performance_export_treats_cash_isa_untracked_balance_drops_as_cash_movements(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-cash-drop", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(name="Cash ISA", wrapper_type="Cash ISA", value=1597.51, monthly=0), uid)
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 1947.86), ("2026-06", 1597.51)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    account = workbook["Cash ISA (Monthly)"]
+    assert account["A5"].value == "May 2026"
+    assert account["B5"].value == 0
+    assert account["C5"].value == 1947.86
+    assert account["D5"].value == 0
+    assert account["E5"].value == 0
+    assert account["F5"].value == 1947.86
+    assert account["G5"].value == 0
+    assert account["A6"].value == "Jun 2026"
+    assert account["B6"].value == 1947.86
+    assert account["C6"].value == 0
+    assert account["D6"].value == -350.35
+    assert account["E6"].value == 0
+    assert account["F6"].value == 1597.51
+    assert account["G6"].value == 0
+
+
+def test_performance_export_counts_regular_contribution_after_account_specific_pension_day(monkeypatch, app, client, make_user):
+    from datetime import date as real_date, datetime as real_datetime
+    import app.models.planning_snapshots as planning_snapshots
+    import app.routes.export as export_route
+
+    class FixedDatetime(real_datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 6, 21, 12, 0, 0, tzinfo=tz)
+
+    class FixedDate(real_date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 6, 21)
+
+    monkeypatch.setattr(planning_snapshots, "datetime", FixedDatetime)
+    monkeypatch.setattr(planning_snapshots, "date", FixedDate)
+    monkeypatch.setattr(export_route, "date", FixedDate)
+
+    uid, username, password = make_user(username="perf-export-workplace-pension-day", password="password123")
+    with app.app_context():
+        with get_connection() as conn:
+            conn.execute("UPDATE assumptions SET salary_day = 28 WHERE user_id = ?", (uid,))
+            conn.commit()
+        account_id = create_account(
+            {
+                **_account_payload(name="Workplace Pension", wrapper_type="Workplace Pension", value=3445.27, monthly=333.33),
+                "category": "Pension",
+                "contribution_method": "salary_sacrifice",
+                "pension_contribution_day": 19,
+            },
+            uid,
+        )
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 3031.02), ("2026-06", 3445.27)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    account = workbook["Workplace Pension (Monthly)"]
+    assert account["A5"].value == "May 2026"
+    assert account["C5"].value == 3031.02
+    assert account["D5"].value == 0
+    assert account["E5"].value == 0
+    assert account["A6"].value == "Jun 2026"
+    assert account["C6"].value == 0
+    assert account["D6"].value == 333.33
+    assert account["E6"].value == 80.92
+
+
+def test_performance_export_hides_annualised_return_until_history_is_mature(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-early-annualised", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(name="SIPP", wrapper_type="SIPP", value=1331, monthly=0), uid)
+        with get_connection() as conn:
+            for month_key, balance in [("2026-03", 1000), ("2026-04", 1100), ("2026-05", 1210), ("2026-06", 1331)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    summary = workbook["Summary"]
+    portfolio_row = next(r for r in range(5, summary.max_row + 1) if summary.cell(row=r, column=1).value == "Portfolio")
+    sipp_row = next(r for r in range(5, summary.max_row + 1) if summary.cell(row=r, column=1).value == "SIPP")
+    assert summary.cell(row=portfolio_row, column=5).value == 33.1
+    assert summary.cell(row=portfolio_row, column=6).value == "Not enough history yet"
+    assert summary.cell(row=sipp_row, column=6).value == "Not enough history yet"
+
+
+
+def test_performance_export_labels_unset_cash_isa_interest_rate_plainly(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-cash-rate-unset", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(name="Cash ISA", wrapper_type="Cash ISA", value=1597.51, monthly=0), uid)
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 1947.86), ("2026-06", 1597.51)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    account = workbook["Cash ISA (Monthly)"]
+    assert account["A2"].value == "Cash interest rate not set"
+    assert account["A2"].value != "Cash interest rate: 0.0%"
+    assert account["E4"].value == "Interest / Cash gain"
+
+
+
+def test_performance_export_labels_cash_isa_with_cash_interest_and_not_global_growth(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-cash-rate", password="password123")
+    with app.app_context():
+        account_id = create_account(
+            {
+                **_account_payload(name="Cash ISA", wrapper_type="Cash ISA", value=1597.51, monthly=0),
+                "cash_interest_rate": 0.036,
+            },
+            uid,
+        )
+        with get_connection() as conn:
+            for month_key, balance in [("2026-04", 2600), ("2026-05", 1947.86), ("2026-06", 1597.51)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    summary = workbook["Summary"]
+    cash_row = next(r for r in range(5, summary.max_row + 1) if summary.cell(row=r, column=1).value == "Cash ISA")
+    total_return = float(summary.cell(row=cash_row, column=5).value or 0)
+    total_gain = float(summary.cell(row=cash_row, column=9).value or 0)
+    assert 0 < total_return < 1
+    assert 0 < total_gain < 20
+
+    account = workbook["Cash ISA (Monthly)"]
+    assert account["A2"].value == "Cash interest rate: 3.6%"
+    assert account["E4"].value == "Interest / Cash gain"
+    assert account["A5"].value == "Apr 2026"
+    assert account["C5"].value == 2600
+    assert account["E5"].value == 0
+    assert 0 < float(account["E6"].value or 0) < 10
+    assert 0 < float(account["E7"].value or 0) < 10
+
+
+def test_performance_export_splits_late_added_premium_bonds_topup_from_opening_balance(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-premium-bonds-topup", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(name="Premium Bonds", wrapper_type="Premium Bonds", value=800, monthly=0), uid)
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES ('2026-06-01', ?, 800, '2026-06')",
+                (account_id,),
+            )
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount, kind, note, created_at)
+                VALUES (?, ?, '2026-06-01', 775, 'deposit', 'Premium Bonds top-up', '2026-06-01T00:00:00+00:00')
+                """,
+                (uid, account_id),
+            )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    summary = _summary_row_values(workbook, "Premium Bonds")
+    assert summary["imported"] == 0
+    assert summary["contributed"] == 775
+    assert summary["gain"] == 0
+    assert summary["current"] == 800
+
+    premium = workbook["Premium Bonds (Monthly)"]
+    assert premium["A5"].value == "Jun 2026"
+    assert premium["B5"].value == 25
+    assert premium["C5"].value == 0
+    assert premium["D5"].value == 775
+    assert premium["E5"].value == 0
+    assert premium["F5"].value == 800
+
+
+def test_performance_export_labels_premium_bonds_with_expected_prize_rate(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-premium-bonds-rate", password="password123")
+    with app.app_context():
+        account_id = create_account(
+            {
+                **_account_payload(name="Premium Bonds", wrapper_type="Premium Bonds", value=800, monthly=0),
+                "growth_mode": "custom",
+                "growth_rate_override": 0.033,
+            },
+            uid,
+        )
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 800), ("2026-06", 800)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    account = workbook["Premium Bonds (Monthly)"]
+    assert account["A2"].value == "Expected prize rate: 3.3%"
+    assert account["E4"].value == "Prize gain"
+
+
+def test_performance_export_counts_regular_contribution_after_salary_day(monkeypatch, app, client, make_user):
+    from datetime import date as real_date, datetime as real_datetime
+    import app.models.planning_snapshots as planning_snapshots
+    import app.routes.export as export_route
+
+    class FixedDatetime(real_datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 6, 29, 12, 0, 0, tzinfo=tz)
+
+    class FixedDate(real_date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 6, 29)
+
+    monkeypatch.setattr(planning_snapshots, "datetime", FixedDatetime)
+    monkeypatch.setattr(export_route, "date", FixedDate)
+
+    uid, username, password = make_user(username="perf-export-after-salary-day", password="password123")
+    with app.app_context():
+        with get_connection() as conn:
+            conn.execute("UPDATE assumptions SET salary_day = 28 WHERE user_id = ?", (uid,))
+            conn.commit()
+        account_id = create_account(_account_payload(name="Stocks & Shares ISA", value=8109.35, monthly=500), uid)
+        with get_connection() as conn:
+            for month_key, balance in [("2026-05", 7609.35), ("2026-06", 8109.35)]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx"))
+
+    account = workbook["Stocks & Shares ISA (Monthly)"]
+    assert account["A5"].value == "May 2026"
+    assert account["C5"].value == 7609.35
+    assert account["D5"].value == 0
+    assert account["E5"].value == 0
+    assert account["A6"].value == "Jun 2026"
+    assert account["C6"].value == 0
+    assert account["D6"].value == 500
+    assert account["E6"].value == 0
+
+
+def test_performance_export_filters_to_requested_historical_window(app, client, make_user):
+    uid, username, password = make_user(username="perf-export-window", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload(value=1500, monthly=100), uid)
+        with get_connection() as conn:
+            for month_key, balance in [
+                ("2026-01", 1000),
+                ("2026-02", 1100),
+                ("2026-03", 1200),
+                ("2026-04", 1350),
+                ("2026-05", 1500),
+            ]:
+                conn.execute(
+                    "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                    (f"{month_key}-01", account_id, balance, month_key),
+                )
+            conn.commit()
+
+    _login(client, username, password)
+    workbook = _workbook_from_response(client.get("/performance/export.xlsx?period=1M"))
+
+    summary = workbook["Summary"]
+    assert summary["B5"].value == "Apr 2026"
+    assert summary["C5"].value == "May 2026"
+    assert summary["D5"].value == 1
+
+    portfolio = workbook["Portfolio (Monthly)"]
+    assert portfolio["A5"].value == "May 2026"
+    assert portfolio["A6"].value is None
+
+    account = workbook["ISA (Monthly)"]
+    assert account["A5"].value == "May 2026"
+    assert account["A6"].value is None

@@ -116,7 +116,7 @@ def test_allowance_page_uses_plain_basic_rate_relief_copy(app, client, make_user
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Your provider adds 20% basic-rate tax relief." in html
+    assert "Your provider adds a 20% basic-rate pension tax top-up." in html
     assert "Your provider adds 20% basic-rate tax relief automatically." not in html
     assert "Applied automatically by your provider at 20%." not in html
     assert "Regular contributions are already included." in html
@@ -155,7 +155,7 @@ def test_allowance_page_uses_plain_monthly_column_helper_copy(app, client, make_
     assert "Estimated by tax year end:" not in html
     assert "On track:" not in html
     assert "Where your ISA usage figure comes from" in html
-    assert "Scheduled monthly contributions" in html
+    assert "Scheduled monthly payments" in html
     assert "One-off top-ups" in html
     assert "Cash-flow adjustments" in html
     assert "Net tracked ISA usage" in html
@@ -163,10 +163,10 @@ def test_allowance_page_uses_plain_monthly_column_helper_copy(app, client, make_
     assert "No cash movements have been labelled as changing tracked ISA room yet." in html
     assert 'href="/accounts/" class="badge badge-meta">Review cash-flow events</a>' in html
     assert "Regular to date" in html
-    assert "Monthly uses each account's regular contribution setting. Regular to date is that monthly amount multiplied by the months elapsed. Cash-flow adjustments only count when you label a movement as using ISA allowance." in html
-    assert "Monthly column uses each account's monthly contribution setting × months elapsed. Cash-flow adjustments are only counted when you label a cash movement as affecting tracked ISA usage." not in html
+    assert "Monthly uses each account’s regular payment setting. Regular to date is that monthly amount multiplied by the months elapsed. Cash-flow adjustments only count when you label a movement as using ISA allowance." in html
+    assert "Monthly column uses each account's monthly payment setting × months elapsed. Cash-flow adjustments are only counted when you label a cash movement as affecting tracked ISA usage." not in html
     assert "Monthly column is estimated from each account's contribution setting × months elapsed." not in html
-    assert 'href="/accounts/" class="link-accent">monthly contribution setting</a>' in html
+    assert 'href="/accounts/" class="link-accent">monthly payment setting</a>' in html
 
 
 def test_allowance_page_uses_plain_taxable_account_labels(app, client, make_user):

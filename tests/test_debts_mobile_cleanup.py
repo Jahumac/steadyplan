@@ -1,3 +1,4 @@
+from tests.path_helpers import STATIC_ROOT
 def test_debts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, client, make_user):
     _, username, password = make_user(username="debts-mobile", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
@@ -15,7 +16,7 @@ def test_debts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, clie
     assert '<div class="row-end">' not in html
     assert 'No debts tracked' in html
 
-    css = open("/opt/data/steadyplan/app/static/css/styles.css").read()
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
     assert ".debts-hero-actions {" in css
     assert "align-items: stretch;" in css
     assert "justify-content: flex-start;" in css

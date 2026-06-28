@@ -1,6 +1,11 @@
 """Allowance tracking: ISA, pension, dividend, CGT, carry-forward, overrides."""
+from collections import defaultdict
 from datetime import datetime, timezone
-from app.calculations import account_monthly_personal_total, select_best_matching_override
+from app.calculations import (
+    account_monthly_personal_total,
+    add_months_to_key,
+    select_best_matching_override,
+)
 from ._conn import get_connection
 
 
@@ -52,6 +57,21 @@ def _account_belongs_to_user(conn, account_id, user_id):
         "SELECT 1 FROM accounts WHERE id = ? AND user_id = ?",
         (account_id, user_id),
     ).fetchone() is not None
+
+
+TEMPORARY_PLAN_PREFIX = "temporary_plan:"
+
+
+def _temporary_plan_reason(plan_name):
+    plan_name = (plan_name or "").strip()
+    return f"{TEMPORARY_PLAN_PREFIX}{plan_name}" if plan_name else ""
+
+
+def _plan_name_from_reason(reason):
+    reason = (reason or "").strip()
+    if reason.startswith(TEMPORARY_PLAN_PREFIX):
+        return reason[len(TEMPORARY_PLAN_PREFIX):]
+    return reason
 
 
 def add_isa_contribution(user_id, account_id, amount, contribution_date, note=None):
@@ -299,14 +319,335 @@ def fetch_contribution_overrides_for_reason(account_id, user_id, reason):
 
 def delete_contribution_overrides_for_reason(account_id, user_id, reason):
     with get_connection() as conn:
-        if not _account_belongs_to_user(conn, account_id, user_id):
+        deleted = _delete_overrides_for_reason(conn, account_id, user_id, reason)
+        conn.commit()
+        return deleted
+
+
+def create_temporary_contribution_plan(user_id, plan_name, rows):
+    reason = _temporary_plan_reason(plan_name)
+    if not reason:
+        return {"ok": False, "reason": None, "created_count": 0}
+
+    prepared_rows = []
+    touched_ranges = {}
+    for row in rows or []:
+        try:
+            account_id = int(row["account_id"])
+            override_amount = float(row["override_amount"] or 0)
+        except (KeyError, TypeError, ValueError):
+            continue
+        from_month = str(row.get("from_month") or "").strip()
+        to_month = str(row.get("to_month") or "").strip()
+        if not from_month or not to_month:
+            continue
+        if _month_key_to_index(from_month) is None or _month_key_to_index(to_month) is None:
+            continue
+        if _month_key_to_index(from_month) > _month_key_to_index(to_month):
+            continue
+        prepared_rows.append({
+            "account_id": account_id,
+            "from_month": from_month,
+            "to_month": to_month,
+            "override_amount": override_amount,
+            "reason": reason,
+        })
+        existing = touched_ranges.get(account_id)
+        if existing is None:
+            touched_ranges[account_id] = {"from_month": from_month, "to_month": to_month}
+        else:
+            existing["from_month"] = min(existing["from_month"], from_month)
+            existing["to_month"] = max(existing["to_month"], to_month)
+
+    with get_connection() as conn:
+        account_ids = {row["account_id"] for row in prepared_rows}
+        if account_ids:
+            placeholders = ", ".join("?" for _ in account_ids)
+            owned_ids = {
+                row["id"]
+                for row in conn.execute(
+                    f"SELECT id FROM accounts WHERE user_id = ? AND id IN ({placeholders})",
+                    (user_id, *sorted(account_ids)),
+                ).fetchall()
+            }
+            prepared_rows = [row for row in prepared_rows if row["account_id"] in owned_ids]
+            touched_ranges = {
+                account_id: bounds
+                for account_id, bounds in touched_ranges.items()
+                if account_id in owned_ids
+            }
+
+        existing_rows = conn.execute(
+            """
+            SELECT co.account_id, co.from_month, co.to_month
+            FROM contribution_overrides co
+            JOIN accounts a ON a.id = co.account_id
+            WHERE a.user_id = ? AND co.reason = ?
+            """,
+            (user_id, reason),
+        ).fetchall()
+        if existing_rows:
+            for row in existing_rows:
+                bounds = touched_ranges.setdefault(
+                    row["account_id"],
+                    {"from_month": row["from_month"], "to_month": row["to_month"]},
+                )
+                bounds["from_month"] = min(bounds["from_month"], row["from_month"])
+                bounds["to_month"] = max(bounds["to_month"], row["to_month"])
+            conn.execute(
+                """
+                DELETE FROM contribution_overrides
+                WHERE reason = ?
+                  AND account_id IN (SELECT id FROM accounts WHERE user_id = ?)
+                """,
+                (reason, user_id),
+            )
+
+        created_at = datetime.now(timezone.utc).isoformat()
+        for row in prepared_rows:
+            conn.execute(
+                """
+                INSERT INTO contribution_overrides (account_id, from_month, to_month, override_amount, reason, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    row["account_id"],
+                    row["from_month"],
+                    row["to_month"],
+                    row["override_amount"],
+                    reason,
+                    created_at,
+                ),
+            )
+
+        for account_id, bounds in touched_ranges.items():
+            _recalculate_review_items_for_account_month_range(
+                conn,
+                account_id,
+                user_id,
+                bounds["from_month"],
+                bounds["to_month"],
+            )
+
+        conn.commit()
+        return {
+            "ok": True,
+            "reason": reason,
+            "plan_name": _plan_name_from_reason(reason),
+            "created_count": len(prepared_rows),
+        }
+
+
+def fetch_temporary_contribution_plans(user_id):
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT
+                co.*,
+                a.name AS account_name,
+                a.wrapper_type,
+                a.user_id
+            FROM contribution_overrides co
+            JOIN accounts a ON a.id = co.account_id
+            WHERE a.user_id = ?
+              AND co.reason LIKE ?
+            ORDER BY co.created_at DESC, co.reason ASC, a.name ASC, co.from_month ASC, co.id ASC
+            """,
+            (user_id, f"{TEMPORARY_PLAN_PREFIX}%"),
+        ).fetchall()
+
+    grouped = {}
+    for row in rows:
+        reason = row["reason"]
+        plan = grouped.setdefault(reason, {
+            "reason": reason,
+            "plan_name": _plan_name_from_reason(reason),
+            "created_at": row["created_at"],
+            "from_month": row["from_month"],
+            "to_month": row["to_month"],
+            "rows": [],
+        })
+        plan["created_at"] = max(plan["created_at"] or "", row["created_at"] or "")
+        plan["from_month"] = min(plan["from_month"], row["from_month"])
+        plan["to_month"] = max(plan["to_month"], row["to_month"])
+        plan["rows"].append({
+            "id": row["id"],
+            "account_id": row["account_id"],
+            "account_name": row["account_name"],
+            "wrapper_type": row["wrapper_type"],
+            "from_month": row["from_month"],
+            "to_month": row["to_month"],
+            "override_amount": float(row["override_amount"] or 0),
+            "created_at": row["created_at"],
+        })
+
+    return sorted(
+        grouped.values(),
+        key=lambda row: (row["created_at"] or "", row["plan_name"].lower()),
+        reverse=True,
+    )
+
+
+def delete_temporary_contribution_plan(user_id, plan_name_or_reason):
+    raw_reason = (plan_name_or_reason or "").strip()
+    reason = (
+        raw_reason
+        if raw_reason.startswith(TEMPORARY_PLAN_PREFIX)
+        else _temporary_plan_reason(raw_reason)
+    )
+    if not reason:
+        return 0
+
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT co.account_id, co.from_month, co.to_month
+            FROM contribution_overrides co
+            JOIN accounts a ON a.id = co.account_id
+            WHERE a.user_id = ?
+              AND co.reason = ?
+            ORDER BY co.account_id ASC, co.from_month ASC
+            """,
+            (user_id, reason),
+        ).fetchall()
+        if not rows:
             return 0
+
+        by_account = defaultdict(lambda: {"from_month": None, "to_month": None})
+        for row in rows:
+            bounds = by_account[row["account_id"]]
+            bounds["from_month"] = row["from_month"] if bounds["from_month"] is None else min(bounds["from_month"], row["from_month"])
+            bounds["to_month"] = row["to_month"] if bounds["to_month"] is None else max(bounds["to_month"], row["to_month"])
+
         cur = conn.execute(
-            "DELETE FROM contribution_overrides WHERE account_id = ? AND reason = ?",
-            (account_id, reason),
+            """
+            DELETE FROM contribution_overrides
+            WHERE reason = ?
+              AND account_id IN (SELECT id FROM accounts WHERE user_id = ?)
+            """,
+            (reason, user_id),
         )
+        for account_id, bounds in by_account.items():
+            _recalculate_review_items_for_account_month_range(
+                conn,
+                account_id,
+                user_id,
+                bounds["from_month"],
+                bounds["to_month"],
+            )
         conn.commit()
         return cur.rowcount or 0
+
+
+def fetch_contribution_calendar(user_id, from_month, to_month):
+    month_keys = _month_keys_between(from_month, to_month)
+    if not month_keys:
+        return {"months": [], "accounts": [], "overlap_count": 0}
+
+    with get_connection() as conn:
+        accounts = conn.execute(
+            """
+            SELECT id, name, wrapper_type, category, monthly_contribution, monthly_cash_park, employer_contribution, contribution_method, current_value, valuation_mode
+            FROM accounts
+            WHERE user_id = ?
+              AND is_active = 1
+              AND (
+                    COALESCE(monthly_contribution, 0) > 0
+                 OR COALESCE(monthly_cash_park, 0) > 0
+                 OR LOWER(COALESCE(wrapper_type, '')) LIKE '%isa%'
+                 OR LOWER(COALESCE(wrapper_type, '')) LIKE '%lisa%'
+                 OR LOWER(COALESCE(wrapper_type, '')) LIKE '%sipp%'
+                 OR LOWER(COALESCE(wrapper_type, '')) LIKE '%pension%'
+                 OR LOWER(COALESCE(wrapper_type, '')) LIKE '%cash%'
+                 OR LOWER(COALESCE(wrapper_type, '')) LIKE '%premium bond%'
+                 OR COALESCE(valuation_mode, '') = 'premium_bonds'
+                 OR LOWER(COALESCE(category, '')) = 'cash'
+              )
+            ORDER BY
+              CASE
+                WHEN LOWER(COALESCE(wrapper_type, '')) LIKE '%cash isa%' THEN 0
+                WHEN LOWER(COALESCE(wrapper_type, '')) LIKE '%lifetime isa%' THEN 1
+                WHEN LOWER(COALESCE(wrapper_type, '')) LIKE '%isa%' THEN 2
+                WHEN LOWER(COALESCE(wrapper_type, '')) LIKE '%sipp%' THEN 3
+                WHEN LOWER(COALESCE(wrapper_type, '')) LIKE '%pension%' THEN 4
+                ELSE 5
+              END,
+              name COLLATE NOCASE ASC
+            """,
+            (user_id,),
+        ).fetchall()
+        account_ids = [int(row["id"]) for row in accounts]
+        overrides_by_account = defaultdict(list)
+        if account_ids:
+            placeholders = ", ".join("?" for _ in account_ids)
+            override_rows = conn.execute(
+                f"""
+                SELECT co.*, a.name AS account_name
+                FROM contribution_overrides co
+                JOIN accounts a ON a.id = co.account_id
+                WHERE a.user_id = ?
+                  AND co.account_id IN ({placeholders})
+                  AND co.from_month <= ?
+                  AND co.to_month >= ?
+                ORDER BY co.account_id ASC, co.id DESC
+                """,
+                (user_id, *account_ids, to_month, from_month),
+            ).fetchall()
+            for row in override_rows:
+                overrides_by_account[int(row["account_id"])].append(dict(row))
+
+    overlap_count = 0
+    calendar_accounts = []
+    for account in accounts:
+        account_id = int(account["id"])
+        default_amount = account_monthly_personal_total(account)
+        month_cells = []
+        for month_key in month_keys:
+            active_rows = [
+                row
+                for row in overrides_by_account.get(account_id, [])
+                if row["from_month"] <= month_key <= row["to_month"]
+            ]
+            selected = select_best_matching_override(active_rows, month_key)
+            if len(active_rows) > 1:
+                overlap_count += 1
+            selected_reason = selected["reason"] if selected is not None else ""
+            month_cells.append({
+                "month_key": month_key,
+                "default_amount": default_amount,
+                "has_override": selected is not None,
+                "override_amount": float(selected["override_amount"] or 0) if selected is not None else None,
+                "reason": selected_reason,
+                "plan_name": _plan_name_from_reason(selected_reason) if selected_reason.startswith(TEMPORARY_PLAN_PREFIX) else "",
+                "source_label": (
+                    "Temporary override"
+                    if selected_reason.startswith(TEMPORARY_PLAN_PREFIX)
+                    else (selected_reason or "Override")
+                ) if selected is not None else "Default",
+                "is_temporary": bool(selected_reason.startswith(TEMPORARY_PLAN_PREFIX)),
+                "active_override_count": len(active_rows),
+                "overlap": len(active_rows) > 1,
+                "overlap_reasons": [row["reason"] or "Override" for row in active_rows],
+                "overlap_amounts": [float(row["override_amount"] or 0) for row in active_rows],
+            })
+        calendar_accounts.append({
+            "id": account_id,
+            "name": account["name"],
+            "wrapper_type": account["wrapper_type"],
+            "category": account["category"],
+            "current_value": float(account["current_value"] or 0),
+            "monthly_contribution": default_amount,
+            "employer_contribution": float(account["employer_contribution"] or 0),
+            "contribution_method": account["contribution_method"] or "standard",
+            "valuation_mode": account["valuation_mode"] or "manual",
+            "months": month_cells,
+        })
+
+    return {
+        "months": month_keys,
+        "accounts": calendar_accounts,
+        "overlap_count": overlap_count,
+    }
 
 
 def _month_key_to_index(month_key):
@@ -323,6 +664,94 @@ def _override_span_months(row):
     if start is None or end is None:
         return None
     return max(end - start, 0)
+
+
+def _month_keys_between(from_month, to_month):
+    start = _month_key_to_index(from_month)
+    end = _month_key_to_index(to_month)
+    if start is None or end is None or start > end:
+        return []
+    return [add_months_to_key(from_month, idx) for idx in range(end - start + 1)]
+
+
+def _effective_override_amount_for_month(conn, account_id, month_key, fallback_amount):
+    rows = conn.execute(
+        """
+        SELECT *
+        FROM contribution_overrides
+        WHERE account_id = ?
+          AND from_month <= ?
+          AND to_month >= ?
+        ORDER BY id DESC
+        """,
+        (account_id, month_key, month_key),
+    ).fetchall()
+    override = select_best_matching_override(rows, month_key)
+    if override is not None:
+        return float(override["override_amount"] or 0)
+    return float(fallback_amount or 0)
+
+
+def _recalculate_review_items_for_account_month_range(conn, account_id, user_id, from_month, to_month):
+    account = conn.execute(
+            "SELECT monthly_contribution, monthly_cash_park FROM accounts WHERE id = ? AND user_id = ?",
+        (account_id, user_id),
+    ).fetchone()
+    if not account:
+        return
+
+    review_rows = conn.execute(
+        """
+        SELECT mr.id, mr.month_key
+        FROM monthly_reviews mr
+        JOIN monthly_review_items mri ON mri.review_id = mr.id
+        WHERE mr.user_id = ?
+          AND mri.account_id = ?
+          AND mr.month_key >= ?
+          AND mr.month_key <= ?
+        """,
+        (user_id, account_id, from_month, to_month),
+    ).fetchall()
+    fallback_amount = account_monthly_personal_total(account)
+    for review in review_rows:
+        expected = _effective_override_amount_for_month(
+            conn,
+            account_id,
+            review["month_key"],
+            fallback_amount,
+        )
+        conn.execute(
+            """
+            UPDATE monthly_review_items
+            SET expected_contribution = ?
+            WHERE review_id = ? AND account_id = ?
+            """,
+            (expected, review["id"], account_id),
+        )
+
+
+def _delete_overrides_for_reason(conn, account_id, user_id, reason):
+    if not _account_belongs_to_user(conn, account_id, user_id):
+        return 0
+    rows = conn.execute(
+        """
+        SELECT from_month, to_month
+        FROM contribution_overrides
+        WHERE account_id = ? AND reason = ?
+        ORDER BY from_month ASC, id ASC
+        """,
+        (account_id, reason),
+    ).fetchall()
+    if not rows:
+        return 0
+    cur = conn.execute(
+        "DELETE FROM contribution_overrides WHERE account_id = ? AND reason = ?",
+        (account_id, reason),
+    )
+    from_month = min(row["from_month"] for row in rows)
+    to_month = max(row["to_month"] for row in rows)
+    _recalculate_review_items_for_account_month_range(conn, account_id, user_id, from_month, to_month)
+    return cur.rowcount or 0
 
 
 def fetch_all_active_overrides(month_key, user_id):
@@ -394,7 +823,9 @@ def fetch_isa_allowance_cash_flow_events(user_id, ty_start, ty_end):
                   'Stocks & Shares ISA', 'Cash ISA', 'Lifetime ISA',
                   'Stocks and Shares ISA'
               )
-              AND COALESCE(c.allowance_effect, 'none') != 'none'
+              AND c.allowance_effect IN (
+                  'subscription', 'flexible_withdrawal', 'flexible_replacement'
+              )
             ORDER BY c.event_date DESC, c.id DESC
             """,
             (user_id, ty_start, ty_end),
@@ -445,23 +876,12 @@ def create_contribution_override(payload, user_id=None):
             ),
         )
         if user_id is not None:
-            conn.execute(
-                """UPDATE monthly_review_items
-                   SET expected_contribution = ?
-                   WHERE account_id = ?
-                     AND review_id IN (
-                         SELECT id FROM monthly_reviews
-                         WHERE user_id = ?
-                           AND month_key >= ?
-                           AND month_key <= ?
-                     )""",
-                (
-                    payload["override_amount"],
-                    payload["account_id"],
-                    user_id,
-                    payload["from_month"],
-                    payload["to_month"],
-                ),
+            _recalculate_review_items_for_account_month_range(
+                conn,
+                payload["account_id"],
+                user_id,
+                payload["from_month"],
+                payload["to_month"],
             )
         conn.commit()
         return cursor.lastrowid
@@ -470,11 +890,7 @@ def create_contribution_override(payload, user_id=None):
 def remove_contribution_override_for_month(account_id, month_key, user_id):
     """Delete a single-month skip override (from_month == to_month == month_key)."""
     with get_connection() as conn:
-        account = conn.execute(
-            "SELECT monthly_contribution, monthly_cash_park FROM accounts WHERE id = ? AND user_id = ?",
-            (account_id, user_id),
-        ).fetchone()
-        if not account:
+        if not _account_belongs_to_user(conn, account_id, user_id):
             return
         conn.execute(
             """DELETE FROM contribution_overrides
@@ -482,15 +898,12 @@ def remove_contribution_override_for_month(account_id, month_key, user_id):
                AND account_id IN (SELECT id FROM accounts WHERE user_id = ?)""",
             (account_id, month_key, month_key, user_id),
         )
-        conn.execute(
-            """UPDATE monthly_review_items
-               SET expected_contribution = ?
-               WHERE account_id = ?
-                 AND review_id IN (
-                     SELECT id FROM monthly_reviews
-                     WHERE user_id = ? AND month_key = ?
-                 )""",
-            (account_monthly_personal_total(account), account_id, user_id, month_key),
+        _recalculate_review_items_for_account_month_range(
+            conn,
+            account_id,
+            user_id,
+            month_key,
+            month_key,
         )
         conn.commit()
 
@@ -522,15 +935,12 @@ def upsert_single_month_contribution_override(account_id, month_key, amount, use
                VALUES (?, ?, ?, ?, ?, ?)""",
             (account_id, month_key, month_key, amount, reason, datetime.now(timezone.utc).isoformat()),
         )
-        conn.execute(
-            """UPDATE monthly_review_items
-               SET expected_contribution = ?
-               WHERE account_id = ?
-                 AND review_id IN (
-                     SELECT id FROM monthly_reviews
-                     WHERE user_id = ? AND month_key = ?
-                 )""",
-            (amount, account_id, user_id, month_key),
+        _recalculate_review_items_for_account_month_range(
+            conn,
+            account_id,
+            user_id,
+            month_key,
+            month_key,
         )
         conn.commit()
 
@@ -538,11 +948,28 @@ def upsert_single_month_contribution_override(account_id, month_key, amount, use
 def delete_contribution_override(override_id, user_id=None):
     with get_connection() as conn:
         if user_id is not None:
+            row = conn.execute(
+                """
+                SELECT co.account_id, co.from_month, co.to_month
+                FROM contribution_overrides co
+                JOIN accounts a ON a.id = co.account_id
+                WHERE co.id = ? AND a.user_id = ?
+                """,
+                (override_id, user_id),
+            ).fetchone()
             conn.execute(
                 """DELETE FROM contribution_overrides
                    WHERE id = ? AND account_id IN (SELECT id FROM accounts WHERE user_id = ?)""",
                 (override_id, user_id),
             )
+            if row:
+                _recalculate_review_items_for_account_month_range(
+                    conn,
+                    row["account_id"],
+                    user_id,
+                    row["from_month"],
+                    row["to_month"],
+                )
         else:
             conn.execute("DELETE FROM contribution_overrides WHERE id = ?", (override_id,))
         conn.commit()
@@ -595,6 +1022,62 @@ def add_cash_flow_event(payload, user_id):
         return cursor.lastrowid
 
 
+def add_account_transfer_events(payload, user_id):
+    from_account_id = int(payload.get("from_account_id") or 0)
+    to_account_id = int(payload.get("to_account_id") or 0)
+    if from_account_id == to_account_id:
+        return None
+    amount = abs(float(payload.get("amount") or 0))
+    if amount <= 0:
+        return None
+    event_date = payload.get("event_date")
+    note = payload.get("note") or "Account transfer"
+    created_at = datetime.now(timezone.utc).isoformat()
+    with get_connection() as conn:
+        if not _account_belongs_to_user(conn, from_account_id, user_id):
+            return None
+        if not _account_belongs_to_user(conn, to_account_id, user_id):
+            return None
+        from_cursor = conn.execute(
+            """
+            INSERT INTO cash_flow_events
+              (user_id, account_id, event_date, amount, kind, counterparty_account_id, note, allowance_effect, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                from_account_id,
+                event_date,
+                -amount,
+                "transfer_out",
+                to_account_id,
+                note,
+                "transfer_neutral",
+                created_at,
+            ),
+        )
+        to_cursor = conn.execute(
+            """
+            INSERT INTO cash_flow_events
+              (user_id, account_id, event_date, amount, kind, counterparty_account_id, note, allowance_effect, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                to_account_id,
+                event_date,
+                amount,
+                "transfer_in",
+                from_account_id,
+                note,
+                "transfer_neutral",
+                created_at,
+            ),
+        )
+        conn.commit()
+        return {"from_event_id": from_cursor.lastrowid, "to_event_id": to_cursor.lastrowid}
+
+
 def fetch_cash_flow_events_for_account(account_id, user_id, from_date=None, to_date=None, limit=200):
     with get_connection() as conn:
         if not _account_belongs_to_user(conn, account_id, user_id):
@@ -619,10 +1102,16 @@ def fetch_cash_flow_events_for_account(account_id, user_id, from_date=None, to_d
         ).fetchall()
 
 
-def delete_cash_flow_event(event_id, user_id):
+def delete_cash_flow_event(event_id, user_id, allowance_effect=None):
     with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM cash_flow_events WHERE id = ? AND user_id = ?",
-            (event_id, user_id),
+        params = [event_id, user_id]
+        where = "id = ? AND user_id = ?"
+        if allowance_effect is not None:
+            where += " AND allowance_effect = ?"
+            params.append(allowance_effect)
+        cursor = conn.execute(
+            f"DELETE FROM cash_flow_events WHERE {where}",
+            tuple(params),
         )
         conn.commit()
+        return cursor.rowcount

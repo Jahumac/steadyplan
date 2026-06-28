@@ -88,7 +88,7 @@ def test_account_detail_balance_panel_uses_open_monthly_update_cta(app, client, 
     assert 'investment day (shifted for weekends, plus settlement)' in html
     assert 'monthly update due date' not in html
     assert 'salary day shifted for weekends' not in html
-    assert 'Budget overrides / monthly update entries' in html
+    assert 'Budget overrides / Monthly Update entries' in html
     assert '>Go to Monthly Update<' not in html
     assert 'Monthly Review entries' not in html
 

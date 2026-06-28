@@ -7,6 +7,7 @@ from flask_login import current_user, login_required
 from app.calculations import (
     ISA_WRAPPER_TYPES,
     contribution_breakdown,
+    projected_contribution_breakdown,
     effective_account_value,
     effective_monthly_contribution,
     is_pension_account,
@@ -34,8 +35,10 @@ from app.models import (
     fetch_all_accounts,
     fetch_broker_connection,
     fetch_broker_connections,
+    update_broker_connection_status,
     fetch_catalogue_with_prices,
     fetch_contribution_overrides,
+    fetch_all_active_overrides,
     fetch_cash_flow_events_for_account,
     add_cash_flow_event,
     delete_cash_flow_event,
@@ -69,6 +72,12 @@ from app.models import (
     update_holding,
 )
 from app.services.prices import fetch_price, lookup_instrument, to_gbp
+from app.services.trading212 import (
+    Trading212ConnectionError,
+    Trading212CredentialError,
+    decrypt_trading212_credential,
+    fetch_trading212_account_summary,
+)
 from app.services.financial_truth import apply_account_balance_update, recompute_user_daily_snapshots
 from app.utils import optional_float, optional_int, split_tags, valid_month_key
 
@@ -232,6 +241,86 @@ def _format_iso_datetime_short(value):
         return text[:16]
 
 
+def _parse_iso_datetime_utc(value):
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace(" UTC", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _linked_broker_summary_refresh_enabled():
+    if current_app.config.get("TESTING"):
+        return bool(current_app.config.get("REFRESH_LINKED_BROKER_SUMMARIES_ON_ACCOUNTS", False))
+    return current_app.config.get("REFRESH_LINKED_BROKER_SUMMARIES_ON_ACCOUNTS", True)
+
+
+def _broker_summary_refresh_due(connection, *, now=None):
+    if not connection:
+        return False
+    now = now or datetime.now(timezone.utc)
+    last_checked = _parse_iso_datetime_utc(connection.get("last_tested_at"))
+    if last_checked is None:
+        return True
+    return (now - last_checked).total_seconds() >= 15 * 60
+
+
+def _refresh_linked_trading212_summaries(user_id, rows, trading212_connections):
+    """Refresh stale linked Trading 212 account totals before account cards render."""
+    if not _linked_broker_summary_refresh_enabled():
+        return trading212_connections
+
+    linked_connection_ids = []
+    for row in rows or []:
+        connection_id = row.get("linked_broker_connection_id")
+        if not connection_id or not _supports_trading212_public_api(row.get("wrapper_type")):
+            continue
+        connection_id = int(connection_id)
+        if connection_id not in linked_connection_ids:
+            linked_connection_ids.append(connection_id)
+
+    refreshed = dict(trading212_connections or {})
+    for connection_id in linked_connection_ids:
+        connection = refreshed.get(connection_id) or fetch_broker_connection(connection_id, user_id)
+        if not connection or connection.get("provider") != PROVIDER_TRADING212:
+            continue
+        if not _broker_summary_refresh_due(connection):
+            continue
+        try:
+            api_key = decrypt_trading212_credential(connection.get("api_key_ciphertext"))
+            api_secret = decrypt_trading212_credential(connection.get("api_secret_ciphertext"))
+            summary = fetch_trading212_account_summary(
+                api_key=api_key,
+                api_secret=api_secret,
+                environment=connection.get("environment") or "live",
+            )
+            updated = update_broker_connection_status(
+                connection_id,
+                user_id,
+                status="connected",
+                last_error=None,
+                last_tested_at=summary.get("fetched_at"),
+                external_account_id=summary.get("account_id"),
+                external_account_currency=summary.get("currency"),
+                external_total_value=summary.get("total_value"),
+            )
+        except (Trading212ConnectionError, Trading212CredentialError) as exc:
+            updated = update_broker_connection_status(
+                connection_id,
+                user_id,
+                status="error",
+                last_error=str(exc),
+                last_tested_at=datetime.now(timezone.utc).isoformat(),
+            )
+        if updated:
+            refreshed[connection_id] = updated
+    return refreshed
+
+
 def _display_schedule_to_month(to_month):
     """Render open-ended contribution schedule sentinels as user-facing text."""
     if not to_month:
@@ -302,6 +391,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         for connection in fetch_broker_connections(user_id, provider=PROVIDER_TRADING212)
         if connection and connection.get("id") is not None
     }
+    trading212_connections = _refresh_linked_trading212_summaries(user_id, rows, trading212_connections)
     linked_trading212_connection = None
     if selected and selected.get("linked_broker_connection_id"):
         linked_trading212_connection = trading212_connections.get(int(selected["linked_broker_connection_id"])) or fetch_broker_connection(selected["linked_broker_connection_id"], user_id)
@@ -334,13 +424,34 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
             linked_trading212_connection,
             effective_values.get(int(selected["id"]), 0),
         )
-    contrib_breakdowns = {row["id"]: contribution_breakdown(row, assumptions) for row in rows}
-
-    # Tax-year logged contributions per account: sum of isa/pension contributions
-    # logged against each account this UK tax year. Empty for taxable (GIA) accounts.
     today = date.today()
     next_url = _safe_next_accounts(request.args.get("next"))
     budget_context_month_key = _monthly_review_month_from_next(next_url) or today.strftime("%Y-%m")
+    active_account_overrides = fetch_all_active_overrides(budget_context_month_key, user_id)
+    contrib_breakdowns = {}
+    contribution_sources = {}
+    for row in rows:
+        account_id = int(row["id"])
+        plan_account = dict(row)
+        plan_account["_projection_start_month"] = budget_context_month_key
+        plan_account["_contribution_overrides"] = fetch_contribution_overrides(account_id)
+        contrib_breakdowns[account_id] = projected_contribution_breakdown(plan_account, assumptions, 0)
+        override = active_account_overrides.get(account_id)
+        if override is not None:
+            contribution_sources[account_id] = {
+                "label": "Payment calendar",
+                "title": f"Using Payment calendar plan for {budget_context_month_key}: {override['reason'] or 'override'}",
+                "reason": override["reason"] or "Override",
+            }
+        else:
+            contribution_sources[account_id] = {
+                "label": "account setting",
+                "title": "Using this account's regular monthly contribution setting",
+                "reason": "Account setting",
+            }
+
+    # Tax-year logged contributions per account: sum of isa/pension contributions
+    # logged against each account this UK tax year. Empty for taxable (GIA) accounts.
     monthly_update_return_href = (
         next_url
         if next_url and next_url.startswith("/monthly-review")
@@ -416,9 +527,9 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
 
         monthly_rows = (fetch_monthly_performance_data_by_account(user_id).get(int(selected["id"])) or {}).get("rows", [])
         if monthly_rows:
-            account_monthly_labels = [m for (m, _b, _c) in monthly_rows][-36:]
-            balances = [float(b or 0) for (_m, b, _c) in monthly_rows][-36:]
-            into_pot_contribs = [float(c or 0) for (_m, _b, c) in monthly_rows][-36:]
+            account_monthly_labels = [row[0] for row in monthly_rows][-36:]
+            balances = [float(row[1] or 0) for row in monthly_rows][-36:]
+            into_pot_contribs = [float(row[2] or 0) for row in monthly_rows][-36:]
             account_monthly_values = [round(v, 2) for v in balances]
 
             if wrapper == "cash isa" and cash_flow_events:
@@ -674,6 +785,7 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         ),
         total_into_pot_monthly=sum(float(b.get("total_into_pot", 0) or 0) for b in contrib_breakdowns.values()),
         contrib_breakdowns=contrib_breakdowns,
+        contribution_sources=contribution_sources,
         account_create_href=account_create_href,
         active_page="accounts",
         wrapper_type_options=_wrapper_type_options_for(selected),
@@ -726,6 +838,144 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
         pb_prizes_ty_total=pb_prizes_ty_total,
         pb_month_options=pb_month_options,
     )
+
+
+def _append_account_note(existing, line):
+    existing = (existing or "").strip()
+    line = (line or "").strip()
+    if not line:
+        return existing
+    if line in existing:
+        return existing
+    return f"{existing}\n{line}".strip() if existing else line
+
+
+def _update_account_transfer_fields(account, user_id, *, current_value=None, monthly_contribution=None, note_line=None, last_updated=None):
+    payload = dict(account)
+    if current_value is not None:
+        payload["current_value"] = round(float(current_value or 0), 2)
+    if monthly_contribution is not None:
+        payload["monthly_contribution"] = round(float(monthly_contribution or 0), 2)
+    if note_line:
+        payload["notes"] = _append_account_note(payload.get("notes"), note_line)
+    if last_updated:
+        payload["last_updated"] = last_updated
+    update_account(payload, user_id)
+
+
+@accounts_bp.route("/<int:account_id>/transfers/add", methods=["POST"])
+@login_required
+def add_account_transfer(account_id):
+    uid = current_user.id
+    source = fetch_account(account_id, uid)
+    if not source:
+        flash("Source account not found.", "error")
+        return redirect(url_for("accounts.accounts"))
+
+    try:
+        dest_id = int(request.form.get("to_account_id") or 0)
+    except (TypeError, ValueError):
+        dest_id = 0
+    dest = fetch_account(dest_id, uid) if dest_id else None
+    if not dest or dest_id == int(account_id):
+        flash("Choose a different destination account for the transfer.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id) + "#accountTransfer")
+
+    raw_date = (request.form.get("transfer_date") or "").strip()
+    try:
+        transfer_date = datetime.strptime(raw_date, "%Y-%m-%d").date().isoformat()
+    except ValueError:
+        flash("Enter the transfer date as YYYY-MM-DD.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id) + "#accountTransfer")
+
+    try:
+        amount = abs(float(request.form.get("transfer_amount") or 0))
+    except (TypeError, ValueError):
+        amount = 0.0
+    if amount <= 0:
+        flash("Enter a positive transfer amount.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id) + "#accountTransfer")
+
+    full_transfer = (request.form.get("transfer_scope") or "full") == "full"
+    update_balances = request.form.get("update_balances") == "1"
+    note = (request.form.get("transfer_note") or "").strip()
+    source_name = (source.get("name") or "Source account").strip()
+    dest_name = (dest.get("name") or "Destination account").strip()
+    base_note = note or f"Provider/account transfer from {source_name} to {dest_name}"
+
+    source_event_id = add_cash_flow_event(
+        {
+            "account_id": int(account_id),
+            "event_date": transfer_date,
+            "amount": -amount,
+            "kind": "account_transfer_out",
+            "counterparty_account_id": dest_id,
+            "note": base_note if note else f"Transfer to {dest_name}",
+            "allowance_effect": "none",
+        },
+        uid,
+    )
+    dest_event_id = add_cash_flow_event(
+        {
+            "account_id": dest_id,
+            "event_date": transfer_date,
+            "amount": amount,
+            "kind": "account_transfer_in",
+            "counterparty_account_id": int(account_id),
+            "note": base_note if note else f"Transfer from {source_name}",
+            "allowance_effect": "none",
+        },
+        uid,
+    )
+    if not source_event_id or not dest_event_id:
+        flash("Could not save the account transfer.", "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id) + "#accountTransfer")
+
+    source_current = to_float(source.get("current_value"), 0.0)
+    dest_current = to_float(dest.get("current_value"), 0.0)
+    if full_transfer:
+        source_new = 0.0
+    else:
+        source_new = max(source_current - amount, 0.0)
+    dest_new = dest_current + amount
+
+    if update_balances:
+        _update_account_transfer_fields(
+            source,
+            uid,
+            current_value=source_new,
+            monthly_contribution=0.0 if full_transfer else None,
+            note_line=f"Transferred to {dest_name} on {transfer_date}.",
+            last_updated=transfer_date,
+        )
+        _update_account_transfer_fields(
+            dest,
+            uid,
+            current_value=dest_new,
+            note_line=f"Transfer received from {source_name} on {transfer_date}.",
+            last_updated=transfer_date,
+        )
+        month_key = transfer_date[:7]
+        upsert_monthly_snapshot(int(account_id), month_key, source_new)
+        upsert_monthly_snapshot(dest_id, month_key, dest_new)
+        save_account_daily_snapshots(uid, [(int(account_id), source_new), (dest_id, dest_new)], transfer_date)
+    else:
+        _update_account_transfer_fields(
+            source,
+            uid,
+            monthly_contribution=0.0 if full_transfer else None,
+            note_line=f"Transferred to {dest_name} on {transfer_date}. Balances were not changed automatically.",
+            last_updated=transfer_date,
+        )
+        _update_account_transfer_fields(
+            dest,
+            uid,
+            note_line=f"Transfer received from {source_name} on {transfer_date}. Balances were not changed automatically.",
+            last_updated=transfer_date,
+        )
+
+    flash("Account transfer recorded. History is preserved and the movement is marked as internal, not a new contribution.", "success")
+    return redirect(url_for("accounts.account_detail", account_id=dest_id) + "#acctMonthlyChart")
 
 
 @accounts_bp.route("/<int:account_id>/cash-events/add", methods=["POST"])

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import app.routes.auth as auth_routes
+from tests.path_helpers import STATIC_ROOT
 
 
 def test_login_page_uses_brand_logo_without_auth_mascot_icon(client, make_user):
@@ -15,9 +16,11 @@ def test_login_page_uses_brand_logo_without_auth_mascot_icon(client, make_user):
     assert "on your own server." in html
     assert "Slow and steady" not in html
     assert "wins the race." not in html
-    assert "run retirement scenario estimates" in html
+    assert "Estimate retirement" in html
+    assert "Total money and investment tracking" in html
+    assert "Net worth &amp; investment tracking" not in html
     assert "run retirement projections" not in html
-    assert "Retirement scenario estimates by account" in html
+    assert "Estimate retirement by account" in html
     assert "Retirement projections by account" not in html
     assert 'brand/steadyplan-mark.png' in html
     assert 'class="auth-brand-mark auth-brand-mark--float"' in html
@@ -36,7 +39,9 @@ def test_setup_page_uses_brand_logo_without_auth_mascot_icon(client, monkeypatch
     assert "Create your account" in html
     assert "Start privately," in html
     assert "on your own server." in html
-    assert "Retirement scenario estimates by account" in html
+    assert "Total money and investment tracking" in html
+    assert "Net worth &amp; investment tracking" not in html
+    assert "Estimate retirement by account" in html
     assert "Retirement projections by account" not in html
     assert "Slow and steady," not in html
     assert 'brand/steadyplan-mark.png' in html
@@ -47,7 +52,7 @@ def test_setup_page_uses_brand_logo_without_auth_mascot_icon(client, monkeypatch
 
 
 def test_auth_css_no_longer_contains_auth_brand_icon_or_auth_turtle_classes():
-    css = Path("/opt/data/steadyplan/app/static/css/styles.css").read_text()
+    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
 
     assert ".auth-brand-mark {" in css
     assert ".auth-brand-mark--float {" in css
@@ -62,10 +67,10 @@ def test_auth_css_no_longer_contains_auth_brand_icon_or_auth_turtle_classes():
 
 
 def test_brand_png_assets_exist_for_shell_auth_and_pwa():
-    assert Path("/opt/data/steadyplan/app/static/brand/steadyplan-mark.png").exists()
-    assert Path("/opt/data/steadyplan/app/static/brand/steadyplan-app-icon-1024.png").exists()
-    assert Path("/opt/data/steadyplan/app/static/icons/icon-180.png").exists()
-    assert Path("/opt/data/steadyplan/app/static/icons/icon-192.png").exists()
-    assert Path("/opt/data/steadyplan/app/static/icons/icon-512.png").exists()
-    assert Path("/opt/data/steadyplan/app/static/icons/favicon-32.png").exists()
-    assert Path("/opt/data/steadyplan/app/static/icons/favicon-16.png").exists()
+    assert STATIC_ROOT.joinpath("brand/steadyplan-mark.png").exists()
+    assert STATIC_ROOT.joinpath("brand/steadyplan-app-icon-1024.png").exists()
+    assert STATIC_ROOT.joinpath("icons/icon-180.png").exists()
+    assert STATIC_ROOT.joinpath("icons/icon-192.png").exists()
+    assert STATIC_ROOT.joinpath("icons/icon-512.png").exists()
+    assert STATIC_ROOT.joinpath("icons/favicon-32.png").exists()
+    assert STATIC_ROOT.joinpath("icons/favicon-16.png").exists()

@@ -397,6 +397,11 @@
       var MONTH      = container.dataset.monthKey;
       var INCOME_KEY = container.dataset.incomeKey;
       var SAVE_KEYS  = ['invest', 'saving'];
+      var whatIfMode = false;
+      var whatIfToggle = document.getElementById('budget-what-if-toggle');
+      var whatIfReset = document.getElementById('budget-what-if-reset');
+      var whatIfStatus = document.getElementById('budget-what-if-status');
+      var realSummary = null;
 
       function fmtGBP(v, showSign) {
         var s = Math.abs(v).toLocaleString('en-GB', {minimumFractionDigits:0, maximumFractionDigits:0});
@@ -404,7 +409,20 @@
         return '£' + s;
       }
 
-      function recalcSummary() {
+      function fmtIncomeShare(value, income) {
+        if (income <= 0) return '—';
+        return (value / income * 100).toFixed(1) + '%';
+      }
+
+      function fmtAnnualAmount(value) {
+        return '£' + (value * 12).toLocaleString('en-GB', {minimumFractionDigits:0, maximumFractionDigits:0});
+      }
+
+      function fmtAnnualRow(value) {
+        return fmtAnnualAmount(value) + ' / year';
+      }
+
+      function computeBudgetTotals() {
         var sectionTotals = {};
         var preSalaryTotal = 0;
         document.querySelectorAll('.budget-amount-input').forEach(function(inp) {
@@ -426,6 +444,22 @@
         // section totals but never reduce take-home, so add them back.
         var surplus      = income - (expenses - preSalaryTotal);
         var savingsRate  = income > 0 ? (savings / income * 100) : 0;
+        return {
+          sectionTotals: sectionTotals,
+          preSalaryTotal: preSalaryTotal,
+          income: income,
+          expenses: expenses,
+          surplus: surplus,
+          savingsRate: savingsRate
+        };
+      }
+
+      function recalcSummary() {
+        var totals = computeBudgetTotals();
+        var income = totals.income;
+        var expenses = totals.expenses;
+        var surplus = totals.surplus;
+        var savingsRate = totals.savingsRate;
 
         var si = document.getElementById('stat-income');
         var se = document.getElementById('stat-expenses');
@@ -441,14 +475,73 @@
 
         var psNote = document.getElementById('pre-salary-note');
         var psAmt  = document.getElementById('pre-salary-total');
-        if (psNote) psNote.style.display = preSalaryTotal > 0 ? '' : 'none';
-        if (psAmt) psAmt.textContent = fmtGBP(preSalaryTotal);
+        if (psNote) psNote.style.display = totals.preSalaryTotal > 0 ? '' : 'none';
+        if (psAmt) psAmt.textContent = fmtGBP(totals.preSalaryTotal);
 
-        // Update section totals
-        Object.keys(sectionTotals).forEach(function(k) {
+        // Update section totals and their share of income
+        Object.keys(totals.sectionTotals).forEach(function(k) {
           var el = document.getElementById('total-' + k);
-          if (el) el.textContent = '£' + sectionTotals[k].toLocaleString('en-GB', {minimumFractionDigits:2, maximumFractionDigits:2});
+          if (el) el.textContent = '£' + totals.sectionTotals[k].toLocaleString('en-GB', {minimumFractionDigits:2, maximumFractionDigits:2});
+          var share = document.getElementById('share-' + k);
+          if (share) share.textContent = fmtIncomeShare(totals.sectionTotals[k], income);
+          var annual = document.getElementById('annual-' + k);
+          if (annual) annual.textContent = fmtAnnualAmount(totals.sectionTotals[k]);
         });
+        updateWhatIfSummary();
+      }
+
+      function updateWhatIfSummary() {
+        if (!whatIfToggle) return;
+        var totals = computeBudgetTotals();
+        if (!realSummary) realSummary = {
+          income: totals.income,
+          expenses: totals.expenses,
+          surplus: totals.surplus,
+          savingsRate: totals.savingsRate
+        };
+        var incomeEl = document.getElementById('what-if-income');
+        var expensesEl = document.getElementById('what-if-expenses');
+        var surplusEl = document.getElementById('what-if-surplus');
+        var deltaEl = document.getElementById('what-if-surplus-delta');
+        var savingsEl = document.getElementById('what-if-savings');
+        var delta = totals.surplus - realSummary.surplus;
+        if (incomeEl) incomeEl.textContent = fmtGBP(totals.income);
+        if (expensesEl) expensesEl.textContent = fmtGBP(totals.expenses);
+        if (surplusEl) {
+          surplusEl.textContent = (totals.surplus >= 0 ? '+' : '-') + fmtGBP(Math.abs(totals.surplus));
+          surplusEl.className = totals.surplus >= 0 ? 'stat-positive-text' : 'stat-negative-text';
+        }
+        if (deltaEl) {
+          deltaEl.textContent = (delta >= 0 ? '+' : '-') + fmtGBP(Math.abs(delta));
+          deltaEl.className = delta >= 0 ? 'stat-positive-text' : 'stat-negative-text';
+        }
+        if (savingsEl) savingsEl.textContent = totals.savingsRate.toFixed(1) + '%';
+      }
+
+      function resetWhatIfValues() {
+        document.querySelectorAll('.budget-amount-input').forEach(function(input) {
+          var real = input.dataset.realValue;
+          if (typeof real !== 'undefined') input.value = real;
+          var rowAnnual = document.getElementById('annual-item-' + input.dataset.itemId);
+          if (rowAnnual) rowAnnual.textContent = fmtAnnualRow(parseFloat(input.value) || 0);
+          var ind = document.getElementById('ind-' + input.dataset.itemId);
+          if (ind) { ind.textContent = ''; ind.style.opacity = '1'; ind.style.color = ''; }
+        });
+        recalcSummary();
+      }
+
+      function setWhatIfMode(enabled) {
+        whatIfMode = enabled;
+        container.classList.toggle('budget-what-if-active', whatIfMode);
+        if (whatIfToggle) whatIfToggle.textContent = whatIfMode ? 'Exit simulation' : 'Start simulation';
+        if (whatIfReset) whatIfReset.hidden = !whatIfMode;
+        if (whatIfStatus) {
+          whatIfStatus.textContent = whatIfMode
+            ? 'Simulation mode is on. Edits update the page only and are not saved.'
+            : 'Nothing is written to the database unless you leave simulation mode and edit normally.';
+        }
+        if (!whatIfMode) resetWhatIfValues();
+        updateWhatIfSummary();
       }
 
       function saveEntry(itemId, amount, ind) {
@@ -461,6 +554,10 @@
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (d.ok && ind) {
+            var savedInput = document.querySelector('.budget-amount-input[data-item-id="' + itemId + '"]');
+            if (savedInput) savedInput.dataset.realValue = String(amount);
+            realSummary = null;
+            updateWhatIfSummary();
             ind.textContent = '✓';
             ind.style.opacity = '1';
             setTimeout(function() {
@@ -496,6 +593,18 @@
         });
       }
 
+      if (whatIfToggle) {
+        whatIfToggle.addEventListener('click', function() {
+          setWhatIfMode(!whatIfMode);
+        });
+      }
+      if (whatIfReset) {
+        whatIfReset.addEventListener('click', function() {
+          resetWhatIfValues();
+          updateWhatIfSummary();
+        });
+      }
+
       document.querySelectorAll('.budget-amount-input').forEach(function(input) {
         var debounceTimer = null;
         var ind = document.getElementById('ind-' + input.dataset.itemId);
@@ -505,6 +614,18 @@
         var sourceBadge = row.querySelector('.budget-row-source');
 
         input.addEventListener('input', function() {
+          var rowAnnual = document.getElementById('annual-item-' + input.dataset.itemId);
+          if (rowAnnual) rowAnnual.textContent = fmtAnnualRow(parseFloat(input.value) || 0);
+          clearTimeout(debounceTimer);
+          if (whatIfMode) {
+            if (ind) {
+              ind.textContent = 'simulation';
+              ind.style.opacity = '1';
+            }
+            recalcSummary();
+            updateWhatIfSummary();
+            return;
+          }
           if (sourceBadge) { sourceBadge.style.display = 'none'; sourceBadge = null; }
           if (isLinked && !linkedNotified) {
             linkedNotified = true;
@@ -514,7 +635,6 @@
               setTimeout(function() { ind.style.opacity = '0'; }, 3000);
             }
           }
-          clearTimeout(debounceTimer);
           debounceTimer = setTimeout(function() {
             saveEntry(input.dataset.itemId, input.value, ind);
             recalcSummary();
@@ -1242,12 +1362,25 @@
 
       var growthModeEl    = document.getElementById('cw-growth-mode');
       var customRateField = form.querySelector('[data-custom-rate-field]');
+      var cashRateFields  = form.querySelectorAll('[data-cash-rate-field]');
       var customRateLabel = document.getElementById('cw-custom-rate-label');
       var customRateHint  = document.getElementById('cw-custom-rate-hint');
+      function isCashTemplate() {
+        var wrapper = wrapperEl ? (wrapperEl.value || '').toLowerCase() : '';
+        var category = categoryEl ? (categoryEl.value || '').toLowerCase() : '';
+        return wrapper.indexOf('cash isa') !== -1 || category.indexOf('savings') !== -1;
+      }
+      function toggleCashRateFields() {
+        var show = isCashTemplate();
+        cashRateFields.forEach(function(field) {
+          field.style.display = show ? '' : 'none';
+        });
+      }
       function toggleCustomRate() {
         if (customRateField) {
           customRateField.style.display = growthModeEl && growthModeEl.value === 'custom' ? '' : 'none';
         }
+        toggleCashRateFields();
       }
       if (growthModeEl) {
         growthModeEl.addEventListener('change', toggleCustomRate);
@@ -1489,7 +1622,7 @@
       var errorBox = document.getElementById('cw-create-error');
       var progressEl = document.getElementById('cw-progress');
       var cancelBtn = document.getElementById('cw-cancel');
-      var firstAccountFocus = wizardRoot.getAttribute('data-first-account-focus') === 'true';
+      var firstAccountFocus = form.getAttribute('data-first-account-focus') === 'true';
 
       if (createBtn) {
         createBtn.addEventListener('click', function() {
@@ -1539,12 +1672,12 @@
                     pendingHoldings.length + (pendingHoldings.length === 1 ? ' holding' : ' holdings') +
                     (firstAccountFocus
                       ? '. You\'ll see it in Accounts straight away, and Monthly Update now has something real to work from.'
-                      : '. You\'ll see it in Accounts straight away, and it can feed scenario estimates whenever you need it to.');
+                      : '. You\'ll see it in Accounts straight away, and it can help with future estimates whenever you need it to.');
                 } else {
                   title.textContent = 'You\'re all set!';
                   msg.textContent = firstAccountFocus
                     ? accName + ' is ready. You\'ll see it in Accounts straight away, and Monthly Update now has somewhere real to work from.'
-                    : accName + ' is ready. You\'ll see it in Accounts straight away, and it can feed scenario estimates whenever you need it to.';
+                    : accName + ' is ready. You\'ll see it in Accounts straight away, and it can help with future estimates whenever you need it to.';
                 }
                 goTo(6, 'forward');
               });
@@ -1557,6 +1690,8 @@
         });
       }
       var wrapperEl    = document.getElementById('cw-wrapper');
+      var nameEl       = document.getElementById('cw-name');
+      var providerEl   = form.querySelector('input[name="provider"]');
       var categoryEl   = document.getElementById('cw-category');
       var valModeEl    = document.getElementById('cw-valuation');
       var employerEl   = document.getElementById('cw-employer-field');
@@ -1580,14 +1715,14 @@
       var prevTotal       = document.getElementById('cw-prev-total');
 
       var CFG = {
-        'Stocks & Shares ISA':       { cat: 'ISA',     bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly contribution', hint: 'How much do you put into this ISA each month? This feeds into scenario estimates. You can update it later.' },
+        'Stocks & Shares ISA':       { cat: 'ISA',     bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly payment', hint: 'How much do you put into this ISA each month? This helps SteadyPlan estimate the future. You can update it later.' },
         'Cash ISA':                   { cat: 'ISA',     bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Monthly deposit', hint: 'How much do you add to this Cash ISA each month?' },
-        'Lifetime ISA':               { cat: 'ISA',     bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in each month? Your Lifetime ISA bonus adds 25% on top (up to £1,000/year).' },
-        'Premium Bonds':              { cat: 'Savings', bal: 'premium_bonds', showEmployer: false, method: null, personalLabel: 'Monthly purchase', hint: 'How much do you usually add to Premium Bonds each month? Prize draws are tracked separately; scenario estimates use the planning rate.' },
-        'SIPP':                       { cat: 'Pension', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Your monthly contribution', hint: 'How much do you pay in? Your provider adds 25% basic-rate tax relief on top.' },
-        'Workplace Pension':          { cat: 'Pension', bal: 'manual',   showEmployer: true,  method: ['salary_sacrifice','relief_at_source'], methodDefault: 'salary_sacrifice', personalLabel: 'Your employee contribution', hint: 'How is your workplace pension set up? Pick the method first, then fill in the amounts.', methodHints: { salary_sacrifice: 'Contributions come out of your pay before tax — no further relief needed.', relief_at_source: 'You pay from net pay; your provider adds 20% basic-rate tax relief (e.g. NEST).' } },
+        'Lifetime ISA':               { cat: 'ISA',     bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Your monthly payment', hint: 'How much do you pay in each month? Your Lifetime ISA bonus adds 25% on top (up to £1,000/year).' },
+        'Premium Bonds':              { cat: 'Savings', bal: 'premium_bonds', showEmployer: false, method: null, personalLabel: 'Monthly purchase', hint: 'How much do you usually add to Premium Bonds each month? Prize draws are tracked separately; future estimates use the planning rate.' },
+        'SIPP':                       { cat: 'Pension', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Your monthly payment', hint: 'How much do you pay in? Your provider adds a 25% basic-rate pension tax top-up.' },
+        'Workplace Pension':          { cat: 'Pension', bal: 'manual',   showEmployer: true,  method: ['salary_sacrifice','relief_at_source'], methodDefault: 'salary_sacrifice', personalLabel: 'Your employee payment', hint: 'How is your workplace pension set up? Pick the method first, then fill in the amounts.', methodHints: { salary_sacrifice: 'Payments come out before tax, so there is no extra top-up to claim.', relief_at_source: 'You pay from take-home pay; your provider adds a 20% basic-rate pension tax top-up.' } },
         'General Investment Account': { cat: 'Taxable', bal: 'holdings', showEmployer: false, method: null, personalLabel: 'Monthly investment', hint: 'How much do you invest into this account each month?' },
-        'Other':                      { cat: null,      bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Monthly contribution', hint: 'How much goes in each month, if anything? You can always update this later.' }
+        'Other':                      { cat: null,      bal: 'manual',   showEmployer: false, method: null, personalLabel: 'Monthly payment', hint: 'How much goes in each month, if anything? You can always update this later.' }
       };
       var ACCOUNT_TEMPLATES = {
         stocks_isa: {
@@ -1664,6 +1799,46 @@
         }
       };
       var currentWrapper = '';
+      var applyingTemplate = false;
+      var templateStatus = document.getElementById('cw-template-status');
+      var basicsNextBtn = document.getElementById('cw-step1-next');
+
+      function templateLabel(tpl) {
+        return tpl && tpl.wrapper ? tpl.wrapper : 'template';
+      }
+
+      function updateTemplateSelection(selectedBtn, tpl) {
+        var selectedLabel = templateLabel(tpl);
+        form.querySelectorAll('[data-cw-template]').forEach(function(other) {
+          var isSelected = other === selectedBtn;
+          var action = other.querySelector('[data-cw-template-action]');
+          other.classList.toggle('cw-template-selected', isSelected);
+          other.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+          if (action) action.textContent = isSelected ? 'Selected' : 'Choose template';
+        });
+        if (templateStatus) {
+          templateStatus.textContent = 'Selected: ' + selectedLabel + '. Name, wrapper type and balance method have been filled in.';
+        }
+        if (basicsNextBtn) basicsNextBtn.textContent = 'Continue with ' + selectedLabel;
+      }
+
+      function clearTemplateSelection(reason) {
+        form.querySelectorAll('[data-cw-template]').forEach(function(other) {
+          var action = other.querySelector('[data-cw-template-action]');
+          other.classList.remove('cw-template-selected');
+          other.setAttribute('aria-pressed', 'false');
+          if (action) action.textContent = 'Choose template';
+        });
+        if (templateStatus) {
+          templateStatus.textContent = reason || 'Choose a template above or fill in the details manually.';
+        }
+        if (basicsNextBtn) basicsNextBtn.textContent = 'Continue';
+      }
+
+      function resetTemplateSelectionOnManualEdit() {
+        if (applyingTemplate) return;
+        clearTemplateSelection('Manual details in use. Choose a template again if you want to refill these fields.');
+      }
 
       function applyConfig() {
         if (!wrapperEl) return;
@@ -1704,6 +1879,7 @@
         }
         if (employerEl) employerEl.style.display = cfg.showEmployer ? '' : 'none';
         if (postingEl) postingEl.style.display = (w === 'Workplace Pension') ? '' : 'none';
+        toggleCustomRate();
         refreshStepCount();
         updatePreview();
       }
@@ -1736,20 +1912,20 @@
 
         if (w === 'SIPP') {
           relief = personal * 0.25;
-          reliefLabel = '+ basic-rate tax relief (25%)';
+          reliefLabel = '+ basic-rate pension tax top-up (25%)';
           showRelief = true;
           if (BAND_RATE > 0.20) {
             var gross = personal + relief;
             selfAssess = gross * (BAND_RATE - 0.20);
             showSelfAssess = true;
-            selfAssessNote = 'You\'re a ' + TAX_BAND + '-rate taxpayer (' + Math.round(BAND_RATE * 100) + '%). Your provider adds 20% basic-rate tax relief. Claim the extra ' + Math.round((BAND_RATE - 0.20) * 100) + '% through Self Assessment — it is paid back to you, not into the pension.';
+            selfAssessNote = 'You\'re a ' + TAX_BAND + '-rate taxpayer (' + Math.round(BAND_RATE * 100) + '%). Your provider adds a 20% basic-rate pension tax top-up. Claim the extra ' + Math.round((BAND_RATE - 0.20) * 100) + '% through Self Assessment — it is paid back to you, not into the pension.';
           }
         } else if (w === 'Workplace Pension') {
           if (method === 'salary_sacrifice') {
             if (employer > 0) showEmp = true;
           } else {
             relief = personal * 0.25;
-            reliefLabel = '+ basic-rate tax relief (25%)';
+            reliefLabel = '+ basic-rate pension tax top-up (25%)';
             showRelief = true;
             if (BAND_RATE > 0.20) {
               var gross = personal + relief;
@@ -1794,6 +1970,16 @@
         }
       }
 
+      if (nameEl) nameEl.addEventListener('input', resetTemplateSelectionOnManualEdit);
+      if (providerEl) providerEl.addEventListener('input', resetTemplateSelectionOnManualEdit);
+      if (categoryEl) categoryEl.addEventListener('change', resetTemplateSelectionOnManualEdit);
+      if (wrapperEl) wrapperEl.addEventListener('change', resetTemplateSelectionOnManualEdit);
+      if (valModeEl) valModeEl.addEventListener('change', resetTemplateSelectionOnManualEdit);
+      if (growthModeEl) growthModeEl.addEventListener('change', resetTemplateSelectionOnManualEdit);
+      form.querySelectorAll('input[name="growth_rate_override"]').forEach(function(el) {
+        el.addEventListener('input', resetTemplateSelectionOnManualEdit);
+      });
+
       if (valModeEl) { valModeEl.addEventListener('change', function() { refreshStepCount(); toggleManualFields(); toggleCustomRate(); }); }
       if (wrapperEl) { wrapperEl.addEventListener('change', applyConfig); applyConfig(); }
       if (growthModeEl) growthModeEl.addEventListener('change', toggleCustomRate);
@@ -1810,6 +1996,7 @@
         btn.addEventListener('click', function() {
           var tpl = ACCOUNT_TEMPLATES[btn.getAttribute('data-cw-template')];
           if (!tpl) return;
+          applyingTemplate = true;
           setField('input[name="name"]', tpl.name);
           setField('input[name="provider"]', tpl.provider);
           if (wrapperEl) wrapperEl.value = tpl.wrapper;
@@ -1817,12 +2004,11 @@
           if (valModeEl) valModeEl.value = tpl.valuation;
           if (growthModeEl) growthModeEl.value = tpl.growthMode;
           setField('input[name="growth_rate_override"]', tpl.rate);
-          form.querySelectorAll('[data-cw-template]').forEach(function(other) {
-            other.classList.toggle('cw-template-selected', other === btn);
-          });
           applyConfig();
           toggleManualFields();
           toggleCustomRate();
+          applyingTemplate = false;
+          updateTemplateSelection(btn, tpl);
         });
       });
     })();
@@ -1929,7 +2115,7 @@
       });
     })();
 
-    // 19. Projections What-If Logic
+    // 19. Future estimates What-If Logic
     (function initWhatIf() {
       function initScenario(config) {
         var ageInput = document.getElementById(config.ageId);
@@ -1983,13 +2169,15 @@
             var personal = parseFloat(inp.value) || 0;
             var planPersonal = parseFloat(inp.dataset.plan) || 0;
             var planEffective = parseFloat(inp.dataset.effective) || planPersonal;
+            var planProjected = parseFloat(inp.dataset.planProjected);
             var acctRate = parseFloat(inp.dataset.rate) || 0;
             var isLISA = inp.dataset.wrapper === 'Lifetime ISA';
             var ratio = planPersonal > 0 ? (planEffective / planPersonal) : 1;
             var monthly = personal * ratio;
             var useRate = rateChanged ? (globalPct / 100) : acctRate;
-            var proj = projectAccount(current, monthly, useRate, retAge, isLISA);
-            var planVal = projectAccount(current, planEffective, acctRate, BASE_RETIREMENT_AGE, isLISA);
+            var unchangedPlan = !rateChanged && retAge === BASE_RETIREMENT_AGE && Math.abs(personal - planPersonal) < 0.0001;
+            var planVal = Number.isFinite(planProjected) ? planProjected : projectAccount(current, planEffective, acctRate, BASE_RETIREMENT_AGE, isLISA);
+            var proj = unchangedPlan ? planVal : projectAccount(current, monthly, useRate, retAge, isLISA);
             scenarioTotal += proj;
             planTotal += planVal;
             totalMonthly += personal;
@@ -2066,7 +2254,7 @@
       function renderSeries(container, points, mode) {
         if (!container) return;
         if (!points || !points.length) {
-          container.innerHTML = '<p class="helper-text m-0">No projection data yet.</p>';
+          container.innerHTML = '<p class="helper-text m-0">No future estimate data yet.</p>';
           return;
         }
         function fmtAge(age) {
@@ -2077,9 +2265,7 @@
           if (m >= 12) { y += 1; m = 0; }
           return m === 0 ? (y + 'y') : (y + 'y ' + m + 'm');
         }
-        var head = mode === 'monthly'
-          ? '<tr><th>Month</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Projected</th></tr>'
-          : '<tr><th>Point</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Projected</th></tr>';
+        var head = '<tr><th>Month</th><th class="num">Age</th><th class="num">You pay/mo</th><th class="num">Future estimate</th></tr>';
         var rows = points.map(function(p) {
           var label = (p && p.label) ? String(p.label) : '';
           var age = fmtAge(p && p.age);
@@ -2120,15 +2306,15 @@
           details._seriesCache[key] = data.points || [];
           renderSeries(container, details._seriesCache[key], mode);
         } catch (e) {
-          container.innerHTML = '<p class="helper-text m-0" style="color:var(--danger);">Could not load projection.</p>';
+          container.innerHTML = '<p class="helper-text m-0" style="color:var(--danger);">Could not load future estimate.</p>';
         }
       }
 
-      function buildScheduleRow(startAge, amount) {
+      function buildScheduleRow(startMonth, amount) {
         var row = document.createElement('div');
         row.className = 'proj-schedule-row';
         row.innerHTML =
-          '<label><span>Start age</span><input type="number" min="0" step="1" data-age value="' + (startAge !== null && startAge !== undefined ? startAge : '') + '"></label>' +
+          '<label><span>Start month</span><input type="month" data-month value="' + (startMonth !== null && startMonth !== undefined ? startMonth : '') + '"></label>' +
           '<label><span>£ / month</span><input type="number" min="0" step="10" data-amount value="' + (amount !== null && amount !== undefined ? amount : '') + '"></label>' +
           '<button type="button" class="badge badge-meta" data-remove>Remove</button>';
         var rm = row.querySelector('[data-remove]');
@@ -2146,14 +2332,10 @@
           var resp = await fetch('/projections/api/account-schedule?account_id=' + encodeURIComponent(details.dataset.accountId));
           var data = await resp.json();
           if (!resp.ok || !data.ok) throw new Error((data && data.error) || 'Request failed');
-          if (!data.has_dob) {
-            if (statusEl) statusEl.textContent = 'Add your date of birth in Settings to use age-based schedules.';
-            return;
-          }
           (data.rules || []).forEach(function(r) {
-            var age = r && r.start_age !== null && r.start_age !== undefined ? Math.round(parseFloat(r.start_age)) : '';
+            var month = r && r.start_month ? String(r.start_month) : '';
             var amt = r && r.amount !== null && r.amount !== undefined ? parseFloat(r.amount) : '';
-            rowsEl.appendChild(buildScheduleRow(age, amt));
+            rowsEl.appendChild(buildScheduleRow(month, amt));
           });
           if (!rowsEl.children.length) {
             rowsEl.appendChild(buildScheduleRow('', ''));
@@ -2169,13 +2351,13 @@
         if (!rowsEl) return;
         var rules = [];
         rowsEl.querySelectorAll('.proj-schedule-row').forEach(function(row) {
-          var ageEl = row.querySelector('input[data-age]');
+          var monthEl = row.querySelector('input[data-month]');
           var amtEl = row.querySelector('input[data-amount]');
-          var age = ageEl ? parseFloat(ageEl.value) : NaN;
+          var month = monthEl ? String(monthEl.value || '') : '';
           var amt = amtEl ? parseFloat(amtEl.value) : NaN;
-          if (!isFinite(age) || age <= 0) return;
+          if (!/^\d{4}-\d{2}$/.test(month)) return;
           if (!isFinite(amt) || amt < 0) amt = 0;
-          rules.push({ start_age: age, amount: amt });
+          rules.push({ start_month: month, amount: amt });
         });
         if (statusEl) statusEl.textContent = 'Saving…';
         try {
@@ -2714,27 +2896,6 @@
     navigator.serviceWorker.register('/sw.js')
       .then(reg => { setInterval(() => reg.update(), 60 * 60 * 1000); })
       .catch(() => { });
-  }
-
-  /* ── Offline: cache warming ───────────────────────────────────────── */
-  if ('serviceWorker' in navigator) {
-    /* Warm the cache so every top-level page works offline next time.
-       Runs once per load, only when online, 2s after load to stay out of
-       the critical path. */
-    var PAGES_TO_WARM = [
-      '/', '/accounts/', '/budget/', '/goals/',
-      '/projections/', '/performance/', '/holdings/',
-      '/allowance/', '/settings/'
-    ];
-    window.addEventListener('load', function() {
-      if (!navigator.onLine) return;
-      setTimeout(function() {
-        PAGES_TO_WARM.forEach(function(path) {
-          if (path === window.location.pathname) return;
-          fetch(path, { credentials: 'same-origin' }).catch(function() {});
-        });
-      }, 2000);
-    });
   }
 
 })();

@@ -28,7 +28,7 @@
             {% endif %}
             · {{ daily_labels | length }} days tracked
           </p>
-          <p class="helper-text m-0">This compares your recorded portfolio value with an assumptions-based comparison line. It is a planning guide, not a guarantee.</p>
+          <p class="helper-text m-0">Recorded portfolio values use Monthly Update history. The comparison line uses your assumptions and contribution settings; it is not a guarantee.</p>
         {% else %}
           <p class="hero-subtitle">{{ daily_labels | length }} days tracked</p>
         {% endif %}
@@ -43,6 +43,15 @@
       {% endif %}
     </div>
   </div>
+  {% if has_snapshot_history %}
+  <div class="badge-row" style="margin-top:0.75rem; flex-wrap: wrap; gap: 0.5rem; align-items: center;">
+    <span class="text-muted text-sm-2">Download report</span>
+    {% for option in export_period_links %}
+      <a class="badge badge-meta" href="{{ option.href }}">{{ option.label }}</a>
+    {% endfor %}
+  </div>
+  <p class="helper-text mt-05">From the latest month back over the selected window.</p>
+  {% endif %}
   {% if has_data and current_value is not none %}
   <div class="hero-strip">
     {% call hero_stat('Portfolio now') %}<strong>£{{ '{:,.0f}'.format(current_value) }}</strong>{% endcall %}
@@ -57,7 +66,196 @@
     {% endif %}
   </div>
   {% endif %}
+  {% if performance_summary %}
+  <div class="hero-strip mt-075">
+    {% call hero_stat('Opening / Imported') %}<strong>£{{ '{:,.0f}'.format(performance_summary.total_imported_baseline or 0) }}</strong>{% endcall %}
+    {% call hero_stat('Contributed') %}<strong>£{{ '{:,.0f}'.format(performance_summary.total_contributed or 0) }}</strong>{% endcall %}
+    {% set performance_gain = performance_summary.total_market_gain or 0 %}
+    {% call hero_stat('Gain / Interest') %}
+      <strong class="{% if performance_gain >= 0 %}perf-positive{% else %}perf-negative{% endif %}">
+        {% if performance_gain >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(performance_gain) }}
+      </strong>
+    {% endcall %}
+    {% set total_return = performance_summary.total_return or 0 %}
+    {% call hero_stat('Total return') %}
+      <strong class="{% if total_return >= 0 %}perf-positive{% else %}perf-negative{% endif %}">{% if total_return >= 0 %}+{% endif %}{{ '{:,.2f}'.format(total_return) }}%</strong>
+    {% endcall %}
+    {% call hero_stat('Annualised return') %}
+      {% if performance_summary.annualised_return is not none %}
+        {% set annualised_return = performance_summary.annualised_return or 0 %}
+        <strong class="{% if annualised_return >= 0 %}perf-positive{% else %}perf-negative{% endif %}">{% if annualised_return >= 0 %}+{% endif %}{{ '{:,.2f}'.format(annualised_return) }}%</strong>
+      {% else %}
+        <strong>Not enough history yet</strong>
+      {% endif %}
+    {% endcall %}
+  </div>
+  <p class="helper-text mt-05">
+    Opening/imported is money already present when tracking started. Contributions are later money added to accounts; gain/interest is what changed after those flows.
+    {% if performance_summary.annualised_return is none %} Annualised return appears after 12 monthly return periods, so early results do not look falsely dramatic.{% endif %}
+  </p>
+  <details class="mt-075">
+    <summary class="link-accent">How to read Performance</summary>
+    <div class="helper-text mt-05">
+      <p class="m-0"><strong>Opening / Imported</strong> is money already there when tracking started. It is not treated as a contribution or gain.</p>
+      <p class="m-0 mt-025"><strong>Contributed</strong> is money added or withdrawn after tracking started, including transfers recorded as cash-flow events.</p>
+      <p class="m-0 mt-025"><strong>Gain / Interest</strong> is what changed after those flows. Cash ISA uses cash interest; Premium Bonds use prize gain; investment accounts use market gain/loss.</p>
+      <p class="m-0 mt-025"><strong>Annualised</strong> appears only after enough history, so early months do not look artificially dramatic.</p>
+    </div>
+  </details>
+  {% endif %}
 </section>
+
+{% if performance_event_accounts and performance_event_accounts|length >= 2 %}
+<section class="card mb-1" id="performance-account-transfer">
+  <div class="section-header mb-075">
+    <div>
+      <p class="eyebrow">Transfers</p>
+      <h3>Record a Performance-only transfer</h3>
+      <p class="helper-text m-0">Use this to backfill a transfer that already happened between tracked accounts. It keeps Performance cash flow neutral, but does not update today’s account balances.</p>
+    </div>
+  </div>
+  <form method="post" action="{{ url_for('performance.record_account_transfer') }}" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-grid">
+      <label>
+        <span>From account</span>
+        <select name="from_account_id" required>
+          {% for account in performance_event_accounts %}
+          <option value="{{ account.id }}">{{ account.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        <span>To account</span>
+        <select name="to_account_id" required>
+          {% for account in performance_event_accounts %}
+          <option value="{{ account.id }}">{{ account.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        <span>Transfer date</span>
+        <input type="date" name="event_date" required>
+      </label>
+      <label>
+        <span>Amount</span>
+        <input type="number" name="amount" min="0.01" step="0.01" inputmode="decimal" placeholder="12000.00" required>
+      </label>
+      <label class="form-full-col">
+        <span>Note</span>
+        <input type="text" name="note" placeholder="Pension transfer to Trading 212">
+      </label>
+    </div>
+    <div class="badge-row mt-075">
+      <button type="submit">Record Performance-only transfer</button>
+    </div>
+  </form>
+  <p class="helper-text mt-05">For a live provider/account move where SteadyPlan should update balances and stop future payments on the old account, use the Account transfer panel on the account detail page.</p>
+</section>
+{% endif %}
+
+{% if performance_event_accounts %}
+<section class="card mb-1" id="performance-cash-flow-event">
+  <div class="section-header mb-075">
+    <div>
+      <p class="eyebrow">Performance history</p>
+      <h3>Record a historical movement</h3>
+      <p class="helper-text m-0">Use this when an account was added late or a top-up/withdrawal was missed. It affects Performance reporting only; it does not move money.</p>
+    </div>
+  </div>
+  <form method="post" action="{{ url_for('performance.record_cash_flow_event') }}" class="settings-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-grid">
+      <label>
+        <span>Account</span>
+        <select name="account_id" required>
+          {% for account in performance_event_accounts %}
+          <option value="{{ account.id }}">{{ account.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        <span>Movement date</span>
+        <input type="date" name="event_date" required>
+      </label>
+      <label>
+        <span>Movement type</span>
+        <select name="kind">
+          <option value="deposit">Deposit / top-up</option>
+          <option value="withdrawal">Withdrawal / money out</option>
+        </select>
+      </label>
+      <label>
+        <span>Amount</span>
+        <input type="number" name="amount" min="0.01" step="0.01" inputmode="decimal" placeholder="775.00" required>
+      </label>
+      <label>
+        <span>Opening baseline month</span>
+        <input type="month" name="opening_month" placeholder="2026-04">
+        <small class="form-hint">Optional: set this if the account existed before the missed movement.</small>
+      </label>
+      <label>
+        <span>Opening value</span>
+        <input type="number" name="opening_value" min="0" step="0.01" inputmode="decimal" placeholder="25.00">
+        <small class="form-hint">Optional: e.g. Premium Bonds had £25 before a £775 top-up.</small>
+      </label>
+      <label>
+        <span>Replace existing baseline</span>
+        <span class="checkbox-row">
+          <input type="checkbox" name="replace_existing_opening" value="1">
+          <span>Overwrite that month if it already has a different snapshot.</span>
+        </span>
+        <small class="form-hint">Leave unticked unless you are correcting an imported opening value.</small>
+      </label>
+      <label class="form-full-col">
+        <span>Note</span>
+        <input type="text" name="note" placeholder="Premium Bonds top-up">
+      </label>
+    </div>
+    <div class="badge-row mt-075">
+      <button type="submit">Record movement</button>
+    </div>
+  </form>
+  {% if recent_performance_events %}
+  <div class="table-scroll mt-1">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Account</th>
+          <th>Type</th>
+          <th class="num">Amount</th>
+          <th>Note</th>
+          <th class="num">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in recent_performance_events %}
+        <tr>
+          <td>{{ event.event_date }}</td>
+          <td>{{ event.account_name }}</td>
+          <td>{{ event.kind | replace('_', ' ') | title }}{% if event.counterparty_name %}<div class="helper-text m-0">{{ event.counterparty_name }}</div>{% endif %}</td>
+          <td class="num {% if event.amount >= 0 %}perf-positive{% else %}perf-negative{% endif %}">{{ event.signed_label }}</td>
+          <td>{{ event.note or '—' }}</td>
+          <td class="num">
+            {% if event.allowance_effect == 'performance_only' %}
+            <form method="post" action="{{ url_for('performance.delete_performance_cash_flow_event', event_id=event.id) }}" class="form-reset">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="badge badge-meta" data-confirm="This removes the Performance movement only. Account balances and snapshots are not changed." data-confirm-title="Remove this Performance movement?" data-confirm-ok="Remove movement" data-confirm-cancel="Keep it">Remove</button>
+            </form>
+            {% else %}
+            <span class="helper-text">Linked transfer</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="helper-text mt-05">Only Performance-only movements are listed here. Removing one does not change account balances, snapshots, or real-world money.</p>
+  {% endif %}
+</section>
+{% endif %}
 
 {% if not has_data %}
 <section class="card">
@@ -121,9 +319,9 @@
 
   {% if monthly_contribution_total is not none and monthly_contribution_total > 0 %}
   <p class="helper-text mt-075">
-    Plan uses your per-account contribution settings, adjusted by any contribution overrides and monthly update entries, and credits them on your investment day (shifted for weekends, plus settlement). It compounds at {{ assumed_rate_pct }}% p.a.
+    Plan uses your per-account contribution settings, adjusted by any contribution overrides and monthly update entries, and credits them on your investment day (shifted for weekends, plus settlement). It uses {{ assumed_rate_pct }}% yearly growth.
     {% if planned_monthly_avg is not none %}Over the period shown, that’s an average of £{{ '{:,.0f}'.format(planned_monthly_avg) }} per month.{% endif %}
-    The figure above includes tax relief, Lifetime ISA bonus, employer match — the *full* amount landing in each pot, not what comes out of your bank.
+    The figure above includes pension tax top-up, Lifetime ISA bonus, and employer payments — the full amount landing in each account, not just what leaves your bank.
     Short-term dips are normal — review yearly to see whether you're still broadly on track with this plan.
   </p>
   {% if contribution_breakdown_rows %}
@@ -135,11 +333,11 @@
         <tr>
           <th>Account</th>
           <th class="num">You pay</th>
-          <th class="num">Tax relief</th>
+          <th class="num">Pension tax top-up</th>
           <th class="num">Lifetime ISA bonus</th>
           <th class="num">Employer</th>
           <th class="num">Fee</th>
-          <th class="num">Into pot</th>
+          <th class="num">Into account</th>
         </tr>
       </thead>
       <tbody>
@@ -163,12 +361,49 @@
     </table>
     </div>
     <p class="helper-text mt-05">
-      If a row looks wrong — say, an old monthly contribution that no longer matches reality — edit that account on the <a href="/accounts/" class="link-accent">Accounts page</a> to bring the plan in line.
+      If a row looks wrong — say, an old monthly payment that no longer matches reality — edit that account on the <a href="/accounts/" class="link-accent">Accounts page</a> to bring the plan in line.
     </p>
   </details>
   {% endif %}
   {% endif %}
 </section>
+
+{% if account_reconciliation_rows %}
+<section class="card mb-1">
+  <div class="section-header mb-075">
+    <div>
+      <p class="eyebrow">Since tracking started</p>
+      <h3>Account reconciliation</h3>
+    </div>
+    <small class="text-muted">{{ account_reconciliation_rows | length }} accounts</small>
+  </div>
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Account</th>
+        <th class="num">Opening / Imported</th>
+        <th class="num">Contributed</th>
+        <th class="num">Gain / Interest</th>
+        <th class="num">Current value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in account_reconciliation_rows %}
+      <tr data-href="/accounts/{{ row.account_id }}#acctMonthlyChart">
+        <td>{{ row.account_name }}</td>
+        <td class="num">£{{ '{:,.0f}'.format(row.imported_baseline) }}</td>
+        <td class="num">£{{ '{:,.0f}'.format(row.contributed) }}</td>
+        <td class="num {% if row.gain >= 0 %}perf-positive{% else %}perf-negative{% endif %}">{% if row.gain >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(row.gain) }}</td>
+        <td class="num text-bold">£{{ '{:,.0f}'.format(row.current_value) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="helper-text mt-075">Shows how each account's current value is explained by opening/imported money, later contributions, and gain/interest.</p>
+</section>
+{% endif %}
 
 {# ── By Account ────────────────────────────────────────────────────── #}
 {% if account_breakdown %}
@@ -212,7 +447,7 @@
   </table>
   </div>
   <p class="helper-text mt-075">
-    Transfers between accounts will usually show as “behind” in the account you withdrew from and “ahead” in the account you moved into. For Cash ISA, you can log withdrawals/transfers on the account page so the comparison line stays meaningful.
+    Linked Performance-only transfers keep portfolio cash flow neutral, but they do not change live account balances. Use account detail for provider/account moves that should update balances.
   </p>
 </section>
 {% elif account_perf %}

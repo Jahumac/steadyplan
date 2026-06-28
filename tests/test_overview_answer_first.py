@@ -132,6 +132,9 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     assert "Start your first budget when you want a simple monthly plan. Goals and monthly updates can wait until later." in html
     assert html.count("<h2>Where you stand now</h2>") == 2
     assert html.count("Use this as the quick summary") == 2
+    assert "Current totals use your saved balances." in html
+    assert "Future estimates use the planning numbers in Settings. They are not guarantees." in html
+    assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in html
     assert "Use this as the quick truth" not in html
     assert "Accessible vs locked" not in html
     assert "Portfolio Value" not in html
@@ -139,7 +142,7 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     assert "Pension allowance" not in html
     assert "Pension Allowance" not in html
     assert "No daily snapshots yet" not in html
-    assert "Complete your first Monthly Update to start tracking net worth over time" not in html
+    assert "Complete your first Monthly Update to start tracking your total money over time" not in html
     assert "<h2>Accounts</h2>" not in html
 
 
@@ -338,7 +341,7 @@ def test_overview_multi_goal_state_restores_goal_progress_panel(app, client, mak
     assert "goal-track-status" in html
     assert "goal-track-label" in html
     assert "goal-track-detail" in html
-    assert "set a monthly contribution" in html
+    assert "set a monthly payment" in html
     assert "est." in html
 
 
@@ -389,7 +392,7 @@ def test_overview_goal_progress_glance_statuses_cover_on_track_behind_and_ahead(
     assert ">On course<" in html
     assert "est. " in html
     assert ">Needs attention<" in html
-    assert "set a monthly contribution" in html
+    assert "set a monthly payment" in html
     assert ">Reached<" in html
     assert "target already reached" in html
     assert ">On track<" not in html
@@ -451,6 +454,7 @@ def test_overview_goal_progress_uses_same_projection_copy_as_goals_page(app, cli
         from app.calculations import effective_account_value, projection_start_month_key
         from app.models import fetch_all_accounts, fetch_assumptions, fetch_contribution_overrides, get_connection
         from app.services.goal_projection import project_goal
+        from app.services.goal_ui import goal_track_status
 
         with get_connection() as conn:
             conn.execute(
@@ -490,6 +494,13 @@ def test_overview_goal_progress_uses_same_projection_copy_as_goals_page(app, cli
         account["_contribution_overrides"] = fetch_contribution_overrides(account["id"])
         account["_projection_start_month"] = start_month
         projection = project_goal([account], 5000, assumptions)
+        goals_track_status = goal_track_status(
+            projection,
+            account["monthly_contribution"],
+            5000 - account["current_value"],
+            1,
+            ["deposit"],
+        )
 
     overview = client.get("/")
     goals = client.get("/goals/")
@@ -500,10 +511,12 @@ def test_overview_goal_progress_uses_same_projection_copy_as_goals_page(app, cli
 
     assert projection is not None
     assert projection["total_months"]
-    expected = f"~ {projection['duration']} to go · {projection['eta_label']}"
+    expected_overview = f"~ {projection['duration']} to go · {projection['eta_label']}"
 
-    assert expected in goals_html
-    assert expected in overview_html
+    assert expected_overview in overview_html
+    assert goals_track_status["label"] in goals_html
+    assert goals_track_status["detail"] in goals_html
+    assert expected_overview not in goals_html
     assert f"~{date.today().year}" not in overview_html
 
 
@@ -826,9 +839,11 @@ def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, clien
     assert "Invested accessible — still reachable, but usually by selling invested holdings." in html
     assert "Locked for later" in html
     assert "Locked later" not in html
-    assert "Monthly contributions" in html
-    assert "Scenario estimate at retirement" in html
-    assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." in html
+    assert "Monthly payments in" in html
+    assert "Estimated total at retirement" in html
+    assert "Current totals use your saved balances." in html
+    assert "Future estimates use the planning numbers in Settings. They are not guarantees." in html
+    assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in html
     assert "Projected at retirement" not in html
@@ -1006,7 +1021,7 @@ def test_overview_hides_zero_monthly_contribution_hero_stat(app, client, make_us
     assert "Accessible now" in html
     assert "Locked for later" in html
     assert "Locked later" not in html
-    assert "Monthly contributions" not in html
+    assert "Monthly payments in" not in html
 
 
 
@@ -1037,11 +1052,13 @@ def test_overview_hides_zero_locked_hero_stat(app, client, make_user):
     html = resp.get_data(as_text=True)
 
     assert "Accessible now" in html
-    assert "Monthly contributions" not in html
+    assert "Monthly payments in" not in html
     assert "Cash accessible — money you can usually reach without selling investments first." in html
     assert "Invested accessible — still reachable, but usually by selling invested holdings." in html
-    assert "Scenario estimate at retirement" in html
-    assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." in html
+    assert "Estimated total at retirement" in html
+    assert "Current totals use your saved balances." in html
+    assert "Future estimates use the planning numbers in Settings. They are not guarantees." in html
+    assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in html
     assert "Projected at retirement" not in html
@@ -1078,9 +1095,9 @@ def test_overview_hides_retirement_projection_until_profile_exists(app, client, 
     assert "Accessible now" in html
     assert "Locked for later" in html
     assert "Locked later" not in html
-    assert "Monthly contributions" in html
+    assert "Monthly payments in" in html
     assert "Projected at retirement" not in html
-    assert "Scenario estimate at retirement" not in html
+    assert "Estimated total at retirement" not in html
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and assumptions in Settings. It is not a guarantee." not in html
     assert "Scenario estimate based on your current balances, contribution settings, and the assumptions you set in Settings." not in html
@@ -1135,8 +1152,10 @@ def test_overview_payday_banner_uses_specific_budget_cta(app, client, make_user,
     html = resp.get_data(as_text=True)
 
     assert "investment day" in html
-    assert "check the budget now, then expect your monthly update nudge once this month's money has settled." in html
-    assert "check the budget, then do your monthly update" not in html
+    assert "check the budget now, then expect your Monthly Update nudge once this month's money has settled." in html
+    assert "Time to move your payments" in html
+    assert "Time to move your contributions" not in html
+    assert "check the budget, then do your Monthly Update" not in html
     assert "check the budget, then do your Monthly Update" not in html
     assert "in a day or two once everything settles" not in html
     assert '>Review budget</a>' in html
@@ -1405,7 +1424,7 @@ def test_overview_missing_salary_day_uses_single_settings_nudge(app, client, mak
     assert "Set your investment day — it helps SteadyPlan send monthly update nudges after your money has settled." in html
     assert "Set your investment day in Settings" not in html
     assert "monthly update nudges after your money has settled" in html
-    assert "remind you to do your monthly update" not in html
+    assert "remind you to do your Monthly Update" not in html
     assert "do your Monthly Update" not in html
     assert "Set your investment day" in html
     assert 'href="/settings/?mode=edit&amp;focus=planning_dates"' in html
@@ -1581,8 +1600,8 @@ def test_overview_portfolio_card_uses_specific_refresh_prices_cta(app, client, m
     assert "Latest Value" not in html
     assert 'id="changeLabel" class="text-muted m-0">Change since start<' in html
     assert 'id="changeLabel" class="text-muted m-0">Change<' not in html
-    assert "Complete your first monthly update to start tracking net worth over time" in html
-    assert "Complete your first Monthly Update to start tracking net worth over time" not in html
+    assert "Complete your first Monthly Update to start tracking your total money over time" in html
+    assert "Complete your first monthly update to start tracking net worth over time" not in html
     assert "slow and steady wins the race" not in html
     assert "Refresh prices now" in html
     assert "↻ Refresh</button>" not in html
@@ -1632,16 +1651,16 @@ def test_overview_first_baseline_helper_uses_calm_trend_line_copy(app, client, m
 
     month_key = date.today().strftime("%Y-%m")
     assert "Your first baseline is saved" in html
-    assert "Complete next month's monthly update and the net worth trend line will appear." in html
-    assert "Your first baseline is saved. Complete next month's monthly update and the net worth trend line will appear." not in html
+    assert "Complete next month's Monthly Update and the total money trend line will appear." in html
+    assert "Your first baseline is saved. Complete next month's Monthly Update and the total money trend line will appear." not in html
     assert f'href="/monthly-review/?month={month_key}#expected-contributions"' in html
     assert 'href="/monthly-review/" class="badge badge-primary-action">Open monthly update</a>' not in html
     assert "One snapshot down — slow and steady." not in html
     assert "Remember: slow and steady wins the race." not in html
 
 
-def test_overview_fallback_net_worth_chart_uses_history_wording(app, client, make_user):
-    uid, username, password = make_user(username="overview-net-worth-history-copy", password="password123")
+def test_overview_fallback_total_money_chart_uses_history_wording(app, client, make_user):
+    uid, username, password = make_user(username="overview-total-money-history-copy", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
     current_month = date.today().replace(day=1)
@@ -1686,8 +1705,10 @@ def test_overview_fallback_net_worth_chart_uses_history_wording(app, client, mak
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Net worth history" in html
-    assert 'aria-label="Net worth history chart"' in html
+    assert "Total money history" in html
+    assert 'aria-label="Total money history chart"' in html
+    assert "Net worth history" not in html
+    assert 'aria-label="Net worth history chart"' not in html
     assert 'aria-label="Net worth growth chart"' not in html
 
 

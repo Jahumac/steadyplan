@@ -1,14 +1,15 @@
 from pathlib import Path
+from tests.path_helpers import DOCS_ROOT, REPO_ROOT, SITE_ROOT
 
 
-SITE_ROOT = Path("/opt/data/steadyplan/site")
-README_PATH = Path("/opt/data/steadyplan/README.md")
-VOICE_AND_COPY_PATH = Path("/opt/data/steadyplan/docs/VOICE_AND_COPY.md")
-PRODUCT_TRUTH_PATH = Path("/opt/data/steadyplan/docs/PRODUCT_TRUTH.md")
-CHANGELOG_PATH = Path("/opt/data/steadyplan/CHANGELOG.md")
-SITE_README_PATH = Path("/opt/data/steadyplan/site/README.md")
-ROADMAP_PATH = Path("/opt/data/steadyplan/STEADYPLAN_ROADMAP_2026-05-29.md")
-ROADMAP_EXECUTION_PATH = Path("/opt/data/steadyplan/docs/plans/2026-05-29-roadmap-execution.md")
+SITE_ROOT = SITE_ROOT
+README_PATH = REPO_ROOT / "README.md"
+VOICE_AND_COPY_PATH = DOCS_ROOT / "VOICE_AND_COPY.md"
+PRODUCT_TRUTH_PATH = DOCS_ROOT / "PRODUCT_TRUTH.md"
+CHANGELOG_PATH = REPO_ROOT / "CHANGELOG.md"
+SITE_README_PATH = SITE_ROOT / "README.md"
+ROADMAP_PATH = REPO_ROOT / "STEADYPLAN_ROADMAP_2026-05-29.md"
+ROADMAP_EXECUTION_PATH = DOCS_ROOT / "plans/2026-05-29-roadmap-execution.md"
 
 
 def _read(relative_path: str) -> str:
@@ -48,7 +49,8 @@ def test_homepage_trust_card_mentions_restore_preview_and_safety_backup():
 
     assert 'content="SteadyPlan is a self-hosted UK finance planning and visibility tool. Understand where you are, what is cash-accessible now, what invested money is still reachable, what is restricted, and how today’s choices connect to long-term scenarios."' in html
     assert 'content="SteadyPlan is a self-hosted UK finance planning and visibility tool. Understand where you are, what’s available now vs locked for later, and how today’s choices connect to long-term scenarios."' not in html
-    assert "SteadyPlan uses a local SQLite database, keeps backup and restore guidance close to the product, and now surfaces Diagnostics plus trust-posture checks so the trust story is explicit rather than implied." in html
+    assert "SteadyPlan uses a local SQLite database, keeps backup and restore guidance close to the product, and now groups Settings into everyday setup, safety and recovery, and optional access so the trust story is explicit rather than implied." in html
+    assert "SteadyPlan uses a local SQLite database, keeps backup and restore guidance close to the product, and now surfaces Diagnostics plus trust-posture checks so the trust story is explicit rather than implied." not in html
     assert "See how JSON exports, whole-instance backups, and restore checks fit together" not in html
 
 
@@ -60,9 +62,51 @@ def test_tour_trust_copy_matches_restore_safety_story():
     assert "<h2 class=\"section-title\">Data ownership</h2>" in html
     assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in html
     assert "Long-term planning is easier when you separate cash you could reach now, invested money you could sell, money with conditions, and money reserved for later." in html
-    assert "Diagnostics keep trust visible" in html
+    assert "Settings keeps safety and recovery links visible" in html
+    assert "Settings groups data ownership, JSON export, restore checks, backup health, assistant scope, and read-only Trading 212 broker snapshot review so trust is inspectable without digging through one long admin page." in html
+    assert "Diagnostics keep trust visible" not in html
+    assert "Settings keeps backup health, restore boundaries, assistant scope, and read-only broker review close to the product so trust is inspectable." not in html
+    assert "read-only broker review so trust is inspectable" not in html
     assert "Accessible vs locked money" not in html
     assert "Long-term planning is easier when you keep “available now” separate from money reserved for later." not in html
+
+
+def test_public_site_matches_current_broker_transfer_and_comparison_line_language():
+    homepage = _read("index.html")
+    roadmap = _read("roadmap.html")
+    tour = _read("tour.html")
+
+    assert "UK-focused accounts, Monthly Update, account transfers, and planning" in homepage
+    assert "Goals, holdings, Performance comparison lines, and retirement scenario estimates" in homepage
+    assert "UK-focused accounts, Monthly Update, account transfers, and planning" in roadmap
+    assert "Goals, holdings, Performance comparison lines, and retirement scenario estimates" in roadmap
+    assert "read-only Trading 212 broker snapshot review beta" in roadmap
+    assert "UK-focused accounts, Monthly Update, and planning" not in homepage
+    assert "Goals, holdings, performance, and retirement scenario estimates" not in homepage
+    assert "UK-focused accounts, Monthly Update, and planning" not in roadmap
+    assert "Goals, holdings, performance, and retirement scenario estimates" not in roadmap
+    assert "read-only Trading 212 broker review beta" not in roadmap
+    assert "read-only Trading 212 broker snapshot review" in tour
+    assert "read-only broker review" not in tour
+
+
+def test_public_site_uses_refreshed_demo_screenshots_for_current_surfaces():
+    homepage = _read("index.html")
+    tour = _read("tour.html")
+
+    for html in (homepage, tour):
+        assert "overview.png?v=20260622a" in html
+        assert "projections.png?v=20260622a" in html
+        assert "settings.png?v=20260622a" in html
+        assert "data-privacy.png?v=20260607b" not in html
+        assert "?v=20260607b" not in html
+
+    assert "SteadyPlan Settings safety and recovery panel (demo data)" in homepage
+    assert "SteadyPlan Settings safety and recovery panel (demo data)" in tour
+    assert "<span class=\"window-title\">Settings safety and recovery</span>" in homepage
+    assert "<span class=\"window-title\">Settings safety and recovery</span>" in tour
+    assert "SteadyPlan data ownership panel (demo data)" not in homepage
+    assert "SteadyPlan data ownership panel (demo data)" not in tour
 
 
 def test_docs_hub_and_backups_page_explain_automatic_pre_restore_backup():
@@ -175,8 +219,14 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "### Assistant access" in readme
     assert "### Diagnostics & backup health" in readme
     assert "Public site supports a manual light/dark toggle without a build step" in readme
+    assert "Settings at a glance now groups everyday setup, safety and recovery, and optional access." in changelog
+    assert "Account creation templates now visibly select and fill in the account name, wrapper type, and balance method." in changelog
+    assert "Future estimate payment-plan API now rejects malformed save requests instead of treating them as an instruction to clear the saved plan." in changelog
+    assert "Settings density pass groups everyday setup, safety and recovery, and optional access." not in changelog
+    assert "Account creation template cards were polished." not in changelog
     assert "Monthly Review" not in readme
-    assert "It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for preview-first broker account review." in readme
+    assert "It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for preview-first broker snapshot review." in readme
+    assert "preview-first broker account review" not in readme
     assert "It's designed specifically for **UK investors** — ISAs, SIPPs, Lifetime ISAs, workplace pensions, and taxable accounts (GIAs) — with GBP currency, UK tax year tracking, CSV import from major UK brokers, and an optional Trading 212 broker snapshot review beta for API-first account review." not in readme
     assert "See where you stand today, what is available now vs later, and how monthly decisions connect to long-term scenario estimates" not in readme
     assert "Settings includes optional scoped **Assistant access** for a personal Pip setup." in readme
@@ -193,8 +243,16 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "│   ├── planning.py        # Accessible vs locked money view and insights" not in readme
     assert "understand cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap
     assert "see cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap
+    assert "clear scenario-estimate caveats" in roadmap
+    assert "clear projection caveats" not in roadmap
     assert "## Current standing (June 2026)" in roadmap
+    assert "preview-first broker review without forcing users away from manual/CSV tracking" in roadmap
+    assert "API-first broker review" not in roadmap
     assert "Overview, Monthly Update, Planning, and the main compact-screen flows have had substantial answer-first cleanup" in roadmap
+    assert "## Phase 5 — keep the safe evaluation path clear" in roadmap
+    assert "The read-only demo path and sample data now exist, so the remaining work is to keep the evaluation story honest and easy to follow." in roadmap
+    assert "### Options to explore\n- demo mode" not in roadmap
+    assert "- decision on demo approach" not in roadmap
     assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap_execution
     assert "trust surfaces such as Diagnostics, backup/restore boundaries, assistant access, and safe demo guidance are now shipped" in roadmap_execution
     assert "Accessible vs locked money" not in roadmap_execution
@@ -204,8 +262,61 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "what is accessible vs locked?" not in roadmap_execution
     assert "Public roadmap page and a manual light/dark toggle on the public website." in changelog
     assert "Scoped assistant access in Settings with UI-managed tokens, permission labels, and recent write activity." in changelog
+    assert "Settings now frames assistant tokens as Personal Pip access for users who run their own Pip setup." in changelog
+    assert "Settings now frames assistant tokens as a default Pip setup." not in changelog
     assert "Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional broker snapshot review beta." in changelog
+    assert "Public docs now use the same comparison-line, broker snapshot, and transfer-scope wording as the app." in changelog
+    assert "Public roadmap direction copy now uses not-guarantee wording instead of not-promise wording." in changelog
     assert "Refreshed the roadmap, GitHub docs, and public site so they match the current first-use flows, Monthly Update, Diagnostics, safe demo/evaluation path, and optional read-only broker beta." not in changelog
+
+
+def test_performance_docs_explain_imported_baseline_reconciliation():
+    readme = _read_readme()
+    voice_and_copy = _read_voice_and_copy()
+    changelog = _read_changelog()
+
+    assert "Performance reporting separates **Opening / Imported** starting balances from later **Contributed** cash flow and **Gain / Interest**" in readme
+    assert "first tracked values do not look like investment performance or regular savings" in readme
+    assert "Annualised return is shown only after 12 monthly return periods" in readme
+    assert "XLSX export includes a “How to read” guide explaining the same terms" in readme
+    assert "Use the same terms in app, docs, and exports: “Opening / Imported”, “Contributed”, and “Gain / Interest”." in voice_and_copy
+    assert "Hide annualised return until there are 12 monthly return periods" in voice_and_copy
+    assert "Performance reporting now separates Opening / Imported starting balances from later Contributed cash flow and Gain / Interest, hides annualised return until 12 monthly return periods, and includes a workbook “How to read” guide." in changelog
+    assert "Contributed / Initial funding" not in readme
+    assert "first tracked values look like investment performance" not in readme
+    assert "Performance reporting separates opening/imported starting balances from later contributions and gain/interest" not in readme
+    assert "dramatic early annualised percentages" not in readme
+
+def test_docs_explain_month_based_future_payments_and_neutral_account_transfers():
+    readme = _read_readme()
+    changelog = _read_changelog()
+    architecture = (REPO_ROOT / "ARCHITECTURE.md").read_text()
+
+    assert "Per-account future payments can be changed from a specific calendar month" in readme
+    assert "planned payment changes are not tied to rough age guesses" in readme
+    assert "### Account transfers" in readme
+    assert "Use the account detail transfer workflow for provider/account moves" in readme
+    assert "can update balances, stop future payments on the old account" in readme
+    assert "Performance-only transfer backfill for older moves" in readme
+    assert "without changing today’s balances" in readme
+    assert "neutral for contributions and allowance use" in readme
+    assert "Record provider/account moves between tracked accounts" not in readme
+    assert "Future payment schedules for scenario estimates now use calendar start months instead of rough age-based overrides." in changelog
+    assert "Try a different scenario now clarifies that its payment fields are starting what-if values while saved month-by-month schedules remain in the plan baseline." in changelog
+    assert "Performance-only transfer backfill for older pension, ISA, LISA, and other tracked-account moves" in changelog
+    assert "without changing today’s balances or counting them as new contributions or allowance use" in changelog
+    assert "Account-to-account transfer recording on Performance" not in changelog
+    assert "Account detail transfer workflow for moving value between tracked providers/accounts while preserving the old account history." in changelog
+    assert "Monthly Update completion refreshes month and daily snapshots from live account truth" in changelog
+    assert "Monthly Update completion refreshes all active accounts from live account truth" in architecture
+    assert "Account detail transfers are recorded as paired internal movements" in architecture
+    assert "Performance-only transfers use the same paired-event shape to backfill neutral reporting cash flow without updating today’s account balances." in architecture
+    assert "Account transfers are recorded as paired internal movements" not in architecture
+    assert "`account_transfer_out` and `account_transfer_in`" in architecture
+    assert "`allowance_effect = none`" in architecture
+    assert "Manual/Premium Bonds accounts snapshot only if their balance was updated in that review" not in architecture
+    assert "Change monthly payments by age" not in readme
+    assert "rough age-based overrides" not in readme
 
 
 
@@ -218,9 +329,11 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     readme = _read_readme()
     voice_and_copy = _read_voice_and_copy()
     product_truth = _read_product_truth()
+    roadmap_page = _read("roadmap.html")
     changelog = _read_changelog()
 
-    assert "Scenario estimates are based on your inputs. No promises." in homepage
+    assert "Scenario estimates use your inputs and assumptions. They are not guarantees." in homepage
+    assert "Scenario estimates are based on your inputs. No promises." not in homepage
     assert "Projections are scenario estimates based on your inputs. No promises." not in homepage
     assert "Projections are illustrative and based on your inputs." not in homepage
     assert "Scenario estimates" in homepage
@@ -229,7 +342,14 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Projections are illustrative and based on your inputs, assumptions, and scenarios." not in about
     assert "<h2 class=\"section-title\">Scenario estimates</h2>" in tour
     assert 'content="Feature-led tour of SteadyPlan. See what each area does and why it exists, with grounded notes and demo screenshots."' in tour
-    assert "The scenario estimates view is built around assumptions you control. The goal is to support long-term thinking while staying clear about what is entered data and what is forecast output." in tour
+    assert "The scenario estimates view is built around assumptions you control. The goal is to support long-term thinking while staying clear about what is entered data and what is scenario-estimate output." in tour
+    assert "Scenario estimates use your inputs and assumptions. They are not guarantees." in tour
+    assert "Estimates are based on your inputs and assumptions." not in tour
+    assert "what is entered data and what is forecast output" not in tour
+    assert "<h3>Scenarios, not guarantees</h3>" in tour
+    assert "<h3>Scenarios, not promises</h3>" not in tour
+    assert "This roadmap describes current direction, not guarantees. It shows what exists, what is improving next, and what is only being explored later." in roadmap_page
+    assert "This roadmap describes direction, not promises." not in roadmap_page
     assert "Scenario estimates are assumptions-based tools to explore trade-offs, not a guarantee of outcomes." in tour
     assert "SteadyPlan scenario estimates summary card (demo data)" in tour
     assert "<h3>Projections</h3>" not in tour
@@ -239,21 +359,34 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "The projections view is built around assumptions you control. The goal is to support long-term thinking while staying clear about what is entered data and what is forecast output." not in tour
     assert "SteadyPlan projections screen with demo data" not in tour
     assert "<strong>Scenario estimates</strong>" in concept_a
+    assert "No bank linking. Scenario estimates use inputs and assumptions; they are not guarantees. Just visibility and planning." in concept_a
+    assert "No bank linking. No promises. Just visibility and planning." not in concept_a
     assert "<strong>Projections</strong>" not in concept_a
-    assert "Scenario estimates are assumptions-based estimates." in concept_b
+    assert "No bank linking. No cloud sync. Scenario estimates use inputs and assumptions; they are not guarantees." in concept_b
+    assert "Scenario estimates are assumptions-based estimates." not in concept_b
     assert "<strong>Scenario estimates</strong>" in concept_b
     assert "Projections are assumptions-based estimates." not in concept_b
     assert "<strong>Projections</strong>" not in concept_b
     assert "### Retirement scenario estimates" in readme
-    assert "Year-by-year and month-by-month scenario estimates based on current balances, monthly contributions, and growth assumptions." in readme
+    assert "Year-by-year and month-by-month scenario estimates using saved balances, contribution settings, and growth assumptions." in readme
+    assert "**Scenario estimates** — retirement scenario estimates with fee impact and Try a different scenario controls" in readme
+    assert "These scenario estimates are not guarantees." in readme
+    assert "scenario estimates based on current balances, monthly contributions, and growth assumptions" not in readme
     assert "Export scenario estimates to Excel (.xlsx) with per-account breakdowns." in readme
     assert 'Scenario estimates show "with fees" vs "without fees"' in readme
-    assert "**Scenario estimates** — retirement scenario estimates with fee impact and scenario planner" in readme
-    assert 'Compare actual performance against an assumptions-based "on-plan" growth line.' in readme
+    assert "**Scenario estimates** — retirement scenario estimates with fee impact and scenario planner" not in readme
+    assert "Compare actual performance against an assumptions-based comparison line, not a promise or target." in readme
+    assert 'Compare actual performance against an assumptions-based "on-plan" growth line.' not in readme
     assert "├── calculations.py        # Scenario estimates, returns, goal tracking, tax year logic" in readme
     assert "│   ├── projections.py     # Scenario estimates views and account series endpoints" in readme
     assert "│   ├── export.py          # Excel export (scenario estimates, budget, performance)" in readme
     assert "![Scenario estimates](Screenshots/demo/projections_desktop.png)" in readme
+    assert "Dashboard with metrics and total money chart" in readme
+    assert "Dashboard with metrics and net worth chart" not in readme
+    assert "**Overview** — total money, goals, allowances and portfolio chart at a glance" in readme
+    assert "**Overview** — net worth, goals, allowances and portfolio chart at a glance" not in readme
+    assert "These snapshots power the total money history chart on the overview page and the performance tracking calculations." in readme
+    assert "These snapshots power the net worth history chart on the overview page and the performance tracking calculations." not in readme
     assert "### Retirement Projections" not in readme
     assert "Export projections to Excel (.xlsx) with per-account breakdowns." not in readme
     assert 'Projections show "with fees" vs "without fees"' not in readme
@@ -265,9 +398,15 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "![Projections](Screenshots/demo/projections_desktop.png)" not in readme
     assert "- Scenario estimate: calculated outcome based on assumptions" in voice_and_copy
     assert "### Scenario estimates" in voice_and_copy
+    assert "Explain scenarios as assumption-based estimates, not guarantees." in voice_and_copy
+    assert "Track progress, not guarantees." in voice_and_copy
     assert "Scenario estimate certainty and disclaimers" in voice_and_copy
+    assert "- After: “Estimated total at retirement”" in voice_and_copy
+    assert "- After: “Projected at retirement (estimate)” / “Estimated total at retirement”" not in voice_and_copy
     assert "you will / you’ll have (for scenario estimates)" in voice_and_copy
-    assert "### Scenario estimate certainty" in voice_and_copy
+    assert "Explain scenarios, not promises." not in voice_and_copy
+    assert "Track progress, not promises." not in voice_and_copy
+    assert "### Future estimate certainty" in voice_and_copy
     assert "2. Scenario estimate labels and estimate disclaimers" in voice_and_copy
     assert "Overview/Review/Scenario estimates/etc." in voice_and_copy
     assert "Always use “scenario estimate” / “scenario estimates” and “based on assumptions”; avoid “projection” / “projections” in user-facing copy." in voice_and_copy
@@ -281,6 +420,8 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Always use “scenario estimate”, “projection”, “based on assumptions”." not in voice_and_copy
     assert "intimidated by financial admin, scenario estimates, and long-term planning." in product_truth
     assert "Assumptions, scenario estimates, and confirmed numbers should not blur together." in product_truth
+    assert "Total money, key balances, and what needs attention should be obvious." in product_truth
+    assert "Net worth, key balances, and what needs attention should be obvious." not in product_truth
     assert "understand cash-accessible, invested-accessible, restricted, and locked-for-later money" in product_truth
     assert "See cash-accessible, invested-accessible, restricted, and locked-for-later money" in product_truth
     assert "Users should understand what cash they can use now, what invested money is still reachable, what has penalties/restrictions, and what is for later retirement." in product_truth

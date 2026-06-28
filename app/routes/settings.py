@@ -600,7 +600,7 @@ def _build_trading212_added_holding_payload(account_id, broker_row):
 
 def _broker_sync_event_action_label(action_type):
     labels = {
-        "preview": "Previewed snapshot",
+        "preview": "Broker snapshot preview saved",
         "apply_matched": "Applied matched updates",
         "apply_broker_additions": "Added broker-only positions",
         "resolve_possible_match": "Confirmed likely match",

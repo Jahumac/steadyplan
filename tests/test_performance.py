@@ -38,7 +38,7 @@ def test_monthly_performance_carries_forward_missing_account_snapshots(app, make
 
         monthly_data = fetch_monthly_performance_data(uid)
         assert monthly_data == [
-            ("2026-03", 62011.0, 0.0, 0),
+            ("2026-03", 62011.0, 0.0, 0, None, 62011.0),
             ("2026-04", 62011.0, 0.0, 1),
         ]
 
@@ -46,6 +46,38 @@ def test_monthly_performance_carries_forward_missing_account_snapshots(app, make
         assert perf["total_return"] == 0.0
         assert perf["total_market_gain"] == 0.0
         assert perf["carried_forward_months"] == 1
+
+
+def test_performance_hides_annualised_return_for_early_history():
+    from app.calculations import compute_performance_series
+
+    monthly_data = [
+        ("2026-03", 1000, 0, 0, None, 1000),
+        ("2026-04", 1100, 0, 0),
+        ("2026-05", 1210, 0, 0),
+        ("2026-06", 1331, 0, 0),
+    ]
+
+    perf = compute_performance_series(monthly_data, 0.07, 0)
+
+    assert perf["total_return"] == 33.1
+    assert perf["annualised_return"] is None
+    assert perf["annualised_return_note"] == "Not enough history yet"
+
+
+def test_performance_shows_annualised_return_after_full_year_history():
+    from app.calculations import compute_performance_series
+
+    monthly_data: list[tuple] = [("2026-01", 1000, 0, 0, None, 1000)]
+    balance = 1000.0
+    for month in range(2, 14):
+        balance *= 1.01
+        monthly_data.append((f"2026-{month:02d}", round(balance, 2), 0, 0))
+
+    perf = compute_performance_series(monthly_data, 0.07, 0)
+
+    assert perf["annualised_return"] is not None
+    assert perf["annualised_return_note"] is None
 
 
 def test_performance_empty_state_uses_monthly_update_copy(auth_client):
@@ -123,10 +155,11 @@ def test_performance_helper_uses_sentence_case_monthly_update_copy(app, client, 
     assert "investment day (shifted for weekends, plus settlement)" in html
     assert "monthly update due date" not in html
     assert "salary day shifted for weekends" not in html
-    assert "includes tax relief, Lifetime ISA bonus, employer match" in html
+    assert "includes pension tax top-up, Lifetime ISA bonus, and employer payments" in html
     assert "Over the period shown, that’s an average of £150 per month." in html
     assert "/mo." not in html
-    assert "This compares your recorded portfolio value with an assumptions-based comparison line. It is a planning guide, not a guarantee." in html
+    assert "Recorded portfolio values use Monthly Update history. The comparison line uses your assumptions and contribution settings; it is not a guarantee." in html
+    assert "This compares your recorded portfolio value with an assumptions-based comparison line. It is a planning guide, not a guarantee." not in html
     assert "Actual vs. comparison line" in html
     assert ">Comparison line<" in html
     assert "this comparison line" in html
@@ -254,6 +287,36 @@ def test_performance_by_account_cash_isa_cash_events_adjust_plan(auth_client, ap
     assert "+£0" in html
 
 
+def test_performance_page_offers_historical_export_links(auth_client, app, make_user):
+    uid, _, _ = make_user()
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2026-04-01', 1000)",
+                (uid,),
+            )
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, '2026-05-01', 1100)",
+                (uid,),
+            )
+            conn.commit()
+
+    resp = auth_client.get("/performance/", follow_redirects=True)
+    assert resp.status_code == 200
+    html = resp.get_data(as_text=True)
+
+    assert '>Download report<' in html
+    assert 'href="/performance/export.xlsx?period=1M"' in html
+    assert 'href="/performance/export.xlsx?period=6M"' in html
+    assert 'href="/performance/export.xlsx?period=1Y"' in html
+    assert 'href="/performance/export.xlsx?period=ALL"' in html
+    assert 'From the latest month back over the selected window.' in html
+
+
+
 def test_performance_cash_flow_uses_into_pot_for_sipp(app, make_user):
     uid, _, _ = make_user()
 
@@ -281,7 +344,7 @@ def test_performance_cash_flow_uses_into_pot_for_sipp(app, make_user):
 
         monthly_data = fetch_monthly_performance_data(uid)
         assert monthly_data == [
-            ("2026-04", 1000.0, 1000.0, 0),
+            ("2026-04", 1000.0, 0.0, 0, None, 1000.0),
             ("2026-05", 2000.0, 1000.0, 0),
         ]
 
@@ -331,11 +394,11 @@ def test_performance_uses_narrowest_override_for_monthly_cash_flow(app, make_use
         by_account = fetch_monthly_performance_data_by_account(uid)
 
     assert monthly_data == [
-        ('2026-05', 1000.0, 100.0, 0),
+        ('2026-05', 1000.0, 0.0, 0, None, 1000.0),
         ('2026-06', 1250.0, 250.0, 0),
     ]
     assert by_account[isa]["rows"] == [
-        ('2026-05', 1000.0, 100.0),
+        ('2026-05', 1000.0, 0.0, 0, None, 1000.0),
         ('2026-06', 1250.0, 250.0),
     ]
 

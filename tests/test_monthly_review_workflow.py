@@ -1,3 +1,8 @@
+from datetime import date
+from io import BytesIO
+
+from openpyxl import load_workbook
+
 from app.services.monthly_review_checklist import (
     encode_monthly_review_notes,
     parse_monthly_review_notes,
@@ -116,15 +121,16 @@ def test_overview_completed_monthly_review_does_not_show_stale_checklist(app, cl
     review_html = review_page.get_data(as_text=True)
     assert "✓ Complete" in review_html
     assert "✓ Completed" not in review_html
-    assert ">Reopen monthly update<" in review_html
+    assert ">Reopen Monthly Update<" in review_html
     assert ">Reopen review<" not in review_html
-    assert 'data-confirm-title="Reopen monthly update?"' in review_html
+    assert 'data-confirm-title="Reopen Monthly Update?"' in review_html
     assert 'data-confirm-title="Reopen review?"' not in review_html
     assert 'data-confirm-ok="Yes, reopen monthly update"' in review_html
     assert 'data-confirm-ok="Yes, reopen review"' not in review_html
-    assert 'data-confirm-cancel="Keep monthly update complete">Reopen monthly update<' in review_html
+    assert 'data-confirm-cancel="Keep Monthly Update complete">Reopen Monthly Update<' in review_html
     assert 'data-confirm-cancel="Keep review complete">Reopen review<' not in review_html
-    assert "· ✓ Monthly update complete" in review_html
+    assert "· ✓ Monthly Update complete" in review_html
+    assert "· ✓ Monthly update complete" not in review_html
     assert "· ✓ Review done" not in review_html
 
 
@@ -159,7 +165,8 @@ def test_monthly_review_month_strip_uses_monthly_update_tooltips(app, client, ma
     open_resp = client.get(f"/monthly-review/?month={month_key}")
     assert open_resp.status_code == 200
     open_html = open_resp.get_data(as_text=True)
-    assert "· Monthly update not finished" in open_html
+    assert "· Monthly Update not finished" in open_html
+    assert "· Monthly update not finished" not in open_html
     assert "· Review not finished" not in open_html
 
     complete_resp = client.post(
@@ -172,7 +179,8 @@ def test_monthly_review_month_strip_uses_monthly_update_tooltips(app, client, ma
     )
     assert complete_resp.status_code == 200
     complete_html = complete_resp.get_data(as_text=True)
-    assert "· ✓ Monthly update complete" in complete_html
+    assert "· ✓ Monthly Update complete" in complete_html
+    assert "· ✓ Monthly update complete" not in complete_html
     assert "· ✓ Review done" not in complete_html
 
 
@@ -216,7 +224,7 @@ def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_u
     assert 'href="/budget/debts/' in html
     assert 'href="/settings/?mode=edit&amp;focus=scenario_estimate_assumptions"' in html
     assert 'href="/settings/?mode=edit"' not in html
-    assert "Edit scenario estimate assumptions" in html
+    assert "Edit planning numbers" in html
     assert "Review scenario estimate assumptions" not in html
 
 def test_monthly_review_notes_persist(app, client, make_user):
@@ -308,7 +316,7 @@ def test_mark_complete_does_not_wipe_saved_monthly_review_notes(app, client, mak
     assert parsed["checked"] == set()
 
 
-def test_mark_complete_skips_unupdated_manual_and_premium_bonds_snapshots(app, client, make_user):
+def test_mark_complete_refreshes_all_active_account_snapshots(app, client, make_user):
     uid, username, password = make_user(username="mr-snap-safe", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
@@ -360,17 +368,17 @@ def test_mark_complete_skips_unupdated_manual_and_premium_bonds_snapshots(app, c
         with get_connection() as conn:
             rows = conn.execute(
                 """
-                SELECT account_id FROM monthly_snapshots
+                SELECT account_id, balance FROM monthly_snapshots
                 WHERE month_key = ?
                 ORDER BY account_id ASC
                 """,
                 (month_key,),
             ).fetchall()
-            snapped = [int(r["account_id"]) for r in rows]
+            snapped = {int(r["account_id"]): float(r["balance"]) for r in rows}
 
-    assert holdings_acc in snapped
-    assert manual_acc not in snapped
-    assert pb_acc not in snapped
+    assert snapped[int(holdings_acc)] == 1000.0
+    assert snapped[int(manual_acc)] == 1234.0
+    assert snapped[int(pb_acc)] == 5678.0
 
 
 def test_confirm_import_marks_holdings_updated_for_touched_accounts_only(app, client, make_user):
@@ -914,3 +922,163 @@ def test_corrupted_internal_json_like_notes_do_not_leak_marker(app, client, make
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
     assert "__shelly_monthly_review_notes_v" not in html
+
+
+
+def test_mark_complete_refreshes_current_month_snapshots_for_all_active_accounts(app, client, make_user):
+    uid, username, password = make_user(username="mr-complete-all-snapshots", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = "2026-06"
+    today = date.today().isoformat()
+
+    with app.app_context():
+        from app.models import fetch_or_create_monthly_review, get_connection
+
+        review = fetch_or_create_monthly_review(month_key, uid)
+        with get_connection() as conn:
+            manual_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, category, valuation_mode,
+                    current_value, monthly_contribution, is_active
+                ) VALUES (?, 'My SIPP', 'SIPP', 'Pension', 'manual', 206, 250, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            stale_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, category, valuation_mode,
+                    current_value, monthly_contribution, is_active
+                ) VALUES (?, 'Stocks ISA', 'Stocks & Shares ISA', 'Investment', 'manual', 7774, 500, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO monthly_review_items (review_id, account_id, balance_updated, expected_contribution) VALUES (?, ?, 0, 250)",
+                (review["id"], manual_id),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                (f"{month_key}-01", stale_id, 7600, month_key),
+            )
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, ?, ?)",
+                (uid, today, 7600),
+            )
+            conn.commit()
+
+    resp = client.post(
+        "/monthly-review/",
+        data={"form_name": "mark_complete", "month": month_key},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            snapshots = conn.execute(
+                "SELECT account_id, balance FROM monthly_snapshots WHERE month_key = ?",
+                (month_key,),
+            ).fetchall()
+            daily_total = conn.execute(
+                "SELECT total_value FROM portfolio_daily_snapshots WHERE user_id = ? AND snapshot_date = ?",
+                (uid, today),
+            ).fetchone()
+
+    by_account = {int(row["account_id"]): float(row["balance"]) for row in snapshots}
+    assert by_account[manual_id] == 206.0
+    assert by_account[stale_id] == 7774.0
+    assert float(daily_total["total_value"]) == 7980.0
+
+
+def test_monthly_review_holding_update_refreshes_snapshots_and_export_current_value(app, client, make_user):
+    uid, username, password = make_user(username="mr-holding-refresh", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    month_key = "2026-06"
+    today = date.today().isoformat()
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (
+                    user_id, name, wrapper_type, category, valuation_mode,
+                    current_value, is_active, uninvested_cash
+                ) VALUES (?, 'Workplace Pension', 'Workplace Pension', 'Pension', 'holdings', 0, 1, 0)
+                """,
+                (uid,),
+            ).lastrowid
+            holding_id = conn.execute(
+                """
+                INSERT INTO holdings (
+                    account_id, holding_name, ticker, asset_type, bucket,
+                    value, units, price, notes
+                ) VALUES (?, 'Pension Fund', 'PEN', 'Fund', 'Core', 3000, 30, 100, '')
+                """,
+                (account_id,),
+            ).lastrowid
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, balance, month_key) VALUES (?, ?, ?, ?)",
+                (f"{month_key}-01", account_id, 3000, month_key),
+            )
+            conn.execute(
+                "INSERT INTO portfolio_daily_snapshots (user_id, snapshot_date, total_value) VALUES (?, ?, ?)",
+                (uid, today, 3000),
+            )
+            conn.execute(
+                "INSERT INTO account_daily_snapshots (user_id, account_id, snapshot_date, value) VALUES (?, ?, ?, ?)",
+                (uid, account_id, today, 3000),
+            )
+            conn.commit()
+
+    resp = client.post(
+        "/monthly-review/",
+        data={
+            "form_name": "update_holding",
+            "month": month_key,
+            "account_id": str(account_id),
+            "holding_id": str(holding_id),
+            "holding_name": "Pension Fund",
+            "ticker": "PEN",
+            "asset_type": "Fund",
+            "bucket": "Core",
+            "units": "35",
+            "price": "100",
+            "notes": "",
+        },
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            monthly = conn.execute(
+                "SELECT balance FROM monthly_snapshots WHERE account_id = ? AND month_key = ?",
+                (account_id, month_key),
+            ).fetchone()
+            portfolio_daily = conn.execute(
+                "SELECT total_value FROM portfolio_daily_snapshots WHERE user_id = ? AND snapshot_date = ?",
+                (uid, today),
+            ).fetchone()
+            account_daily = conn.execute(
+                "SELECT value FROM account_daily_snapshots WHERE user_id = ? AND account_id = ? AND snapshot_date = ?",
+                (uid, account_id, today),
+            ).fetchone()
+
+    assert float(monthly["balance"]) == 3500.0
+    assert float(portfolio_daily["total_value"]) == 3500.0
+    assert float(account_daily["value"]) == 3500.0
+
+    export_resp = client.get("/performance/export.xlsx")
+    workbook = load_workbook(BytesIO(export_resp.data), data_only=True)
+    summary = workbook["Summary"]
+    assert summary["K5"].value == 3500

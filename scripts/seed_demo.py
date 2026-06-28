@@ -34,6 +34,7 @@ from app.models.planning_reviews import (
 )
 from app.models.planning_assumptions import update_assumptions, fetch_assumptions
 from app.models.planning_allowances import add_isa_contribution, add_pension_contribution
+from app.models import create_temporary_contribution_plan
 
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -428,6 +429,32 @@ def seed(username="demo"):
         add_isa_contribution(uid, cash_isa_id, 100, "2025-11-01")
         add_isa_contribution(uid, cash_isa_id, 100, "2025-12-01")
         print("  ✓ ISA + pension contributions")
+
+        create_temporary_contribution_plan(
+            uid,
+            "Cash buffer build-up",
+            [
+                {
+                    "account_id": cash_isa_id,
+                    "from_month": "2026-06",
+                    "to_month": "2026-09",
+                    "override_amount": 200,
+                },
+                {
+                    "account_id": lisa_id,
+                    "from_month": "2026-06",
+                    "to_month": "2026-09",
+                    "override_amount": 0,
+                },
+                {
+                    "account_id": isa_id,
+                    "from_month": "2026-10",
+                    "to_month": "2027-03",
+                    "override_amount": 650,
+                },
+            ],
+        )
+        print("  ✓ Temporary contribution plan")
 
         # ── Portfolio daily snapshots (last 90 days) ──────────────────────────
         _seed_daily_snapshots(uid, account_ids)

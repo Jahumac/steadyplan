@@ -3,8 +3,9 @@
  *
  * Strategy:
  *  - App shell (CSS, JS, icons): Cache-first with background revalidation
- *  - Page navigations: Network-first with offline fallback
- *  - API calls: Network-first, cache response for offline reads
+ *  - Public/safe pages: Network-first with offline fallback
+ *  - Authenticated financial pages: network-only with offline fallback
+ *  - API-style JSON calls: network-only, never cached
  *
  * Cache name carries a version suffix — bump it on every deploy so old
  * caches get cleaned up by the activate handler and clients pick up new
@@ -137,31 +138,6 @@ async function networkOnlyPage(request) {
     return await fetch(request);
   } catch (e) {
     return await offlinePage();
-  }
-}
-
-async function networkFirstAPI(request) {
-  const url = new URL(request.url);
-  try {
-    const response = await fetch(request);
-    if (response.ok && url.pathname !== '/api/ping') {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch (e) {
-    if (url.pathname === '/api/ping') {
-      return new Response(JSON.stringify({ error: 'Offline' }), {
-        status: 503,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
-    const cached = await caches.match(request);
-    if (cached) return cached;
-    return new Response(JSON.stringify({ error: 'Offline' }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json' },
-    });
   }
 }
 

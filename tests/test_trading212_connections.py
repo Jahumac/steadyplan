@@ -929,6 +929,9 @@ def test_account_edit_can_link_existing_account_to_saved_trading212_connection(a
     assert "Linked Trading 212 connection:" not in body
     assert "Trading 212 ISA live" in body
     assert "ISA-111" in body
+    assert "linked-broker-summary-panel" in body
+    assert body.index('data-detail-stats') < body.index('linked-broker-summary-panel')
+    assert body.index('account-detail-actions') < body.index('linked-broker-summary-panel')
     assert "Broker status" in body
     assert "Account source" in body
     assert "Broker primary" in body
@@ -1221,6 +1224,81 @@ def test_account_list_shows_trading212_account_source_summary(app, client, make_
     assert "Broker total (GBP): <strong>£12,000.00</strong>" in body
     assert "Broker total (GBP): <strong>£5,000.00</strong>" not in body
     assert "Broker total (GBP): <strong>—</strong>" not in body
+
+
+def test_account_list_refreshes_linked_trading212_summary_before_render(app, client, make_user, monkeypatch):
+    app.config["REFRESH_LINKED_BROKER_SUMMARIES_ON_ACCOUNTS"] = True
+    uid, username, password = make_user(username="t212-account-list-refresh")
+    calls = []
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 ISA live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("isa-refresh-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("isa-refresh-secret"),
+            status="connected",
+            last_tested_at="2026-06-08T10:00:00+00:00",
+            external_account_id="ISA-111",
+            external_account_currency="GBP",
+            external_total_value=7900.0,
+        )
+        assert connection is not None
+        create_account(
+            {
+                "name": "Trading 212 ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "Stocks & Shares ISA",
+                "category": "Investments",
+                "tags": "",
+                "current_value": 8000.0,
+                "monthly_contribution": 150.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-09T07:20:00+00:00",
+            },
+            uid,
+        )
+
+    def fake_fetch_trading212_account_summary(*, api_key, api_secret, environment):
+        calls.append((api_key, api_secret, environment))
+        return {
+            "environment": environment,
+            "account_id": "ISA-111",
+            "currency": "GBP",
+            "total_value": 8123.45,
+            "fetched_at": "2026-06-09T08:05:00+00:00",
+        }
+
+    monkeypatch.setattr(
+        "app.routes.accounts.fetch_trading212_account_summary",
+        fake_fetch_trading212_account_summary,
+        raising=False,
+    )
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    response = client.get("/accounts/")
+    assert response.status_code == 200
+    body = response.data.decode("utf-8", errors="ignore")
+
+    assert calls == [("isa-refresh-key", "isa-refresh-secret", "live")]
+    assert "Broker total (GBP): <strong>£8,123.45</strong>" in body
+    assert "Broker total (GBP): <strong>£7,900.00</strong>" not in body
+    assert "Last broker check: <strong>2026-06-09 08:05 UTC</strong>" in body
+
+    with app.app_context():
+        [refreshed] = fetch_broker_connections(uid, provider=PROVIDER_TRADING212)
+        assert refreshed["external_total_value"] == 8123.45
+        assert refreshed["last_tested_at"] == "2026-06-09T08:05:00+00:00"
 
 
 def test_delete_trading212_connection_clears_linked_account_reference(app, make_user):
@@ -1518,10 +1596,14 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     assert "This preview found differences to review. Nothing runs automatically from here; any later write should stay explicit, account-scoped, and non-destructive." not in body
     assert "Still preview only. If you choose a write step later, SteadyPlan should ask you to confirm each step separately for <strong>Trading 212 ISA</strong>." not in body
     assert "Back to account" in body
-    assert "Recent preview and write history" in body
-    assert "Keep a visible record of the last broker snapshot preview and the last reviewed write you confirmed on this linked account." in body
-    assert "Previewed snapshot" in body
-    assert "Last reviewed write" in body
+    assert "Recent broker snapshot preview and write history" in body
+    assert "Recent preview and write history" not in body
+    assert "Keep a visible record of the latest broker snapshot preview and the latest reviewed write you confirmed on this linked account." in body
+    assert "Keep a visible record of the last broker snapshot preview and the last reviewed write you confirmed on this linked account." not in body
+    assert "Broker snapshot preview saved" in body
+    assert "Previewed snapshot" not in body
+    assert "Latest reviewed write" in body
+    assert "Last reviewed write" not in body
     assert "Recent sync activity" not in body
     assert "Keep a visible record of the last preview and last confirmed write step on this linked broker connection." not in body
     assert "Last confirmed write step" not in body
@@ -1814,14 +1896,18 @@ def test_preview_trading212_shows_recent_sync_history(app, client, make_user, mo
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Recent preview and write history" in body
-    assert "Keep a visible record of the last broker snapshot preview and the last reviewed write you confirmed on this linked account." in body
+    assert "Recent broker snapshot preview and write history" in body
+    assert "Recent preview and write history" not in body
+    assert "Keep a visible record of the latest broker snapshot preview and the latest reviewed write you confirmed on this linked account." in body
+    assert "Keep a visible record of the last broker snapshot preview and the last reviewed write you confirmed on this linked account." not in body
     assert "Applied matched updates" in body
     assert "Added broker-only positions" in body
     assert "Confirmed likely match" in body
-    assert "Previewed snapshot" in body
+    assert "Broker snapshot preview saved" in body
+    assert "Previewed snapshot" not in body
     assert "Resolved possible match" not in body
-    assert "Last reviewed write" in body
+    assert "Latest reviewed write" in body
+    assert "Last reviewed write" not in body
     assert "Recent sync activity" not in body
     assert "Keep a visible record of the last preview and last confirmed write step on this linked broker connection." not in body
     assert "Last confirmed write step" not in body

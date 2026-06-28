@@ -30,7 +30,7 @@ Primary domain:
 
 Tagline candidates:
 - Your plan. Your data. Your pace.
-- Track progress, not promises.
+- Track progress, not guarantees.
 - Self-hosted clarity for ISAs and pensions.
 - Slow and steady, on your own server.
 
@@ -94,7 +94,7 @@ Rules:
 
 ### Scenario estimates
 Goal:
-- Explain scenarios, not promises.
+- Explain scenarios as assumption-based estimates, not guarantees.
 
 Rules:
 - Always use “scenario estimate” / “scenario estimates” and “based on assumptions”; avoid “projection” / “projections” in user-facing copy.
@@ -123,6 +123,9 @@ Goal:
 
 Rules:
 - Focus on method transparency: “based on recorded contributions”.
+- Use the same terms in app, docs, and exports: “Opening / Imported”, “Contributed”, and “Gain / Interest”.
+- Keep opening/imported starting balances separate from later contributions and gain/interest.
+- Hide annualised return until there are 12 monthly return periods; use “Not enough history yet” rather than dramatic early annualised percentages.
 - Avoid competitive language (“winning”, “beating”, “crushing”).
 
 ### Settings / Diagnostics
@@ -217,9 +220,9 @@ General rule:
 - Before: “Works offline as a PWA”
 - After: “Installable as a PWA” / “Installable as an app (PWA). For privacy, financial pages aren’t stored for offline viewing.”
 
-### Scenario estimate certainty
+### Future estimate certainty
 - Before: “Projected at retirement”
-- After: “Projected at retirement (estimate)” / “Scenario estimate at retirement”
+- After: “Estimated total at retirement”
 
 ### Warnings
 - Before: “Looks good!” (on a dashboard surface)

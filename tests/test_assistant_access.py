@@ -148,9 +148,12 @@ def test_settings_can_create_regenerate_and_revoke_assistant_token(app, client, 
     settings_resp = client.get("/settings/")
     settings_html = settings_resp.get_data(as_text=True)
     assert settings_resp.status_code == 200
-    assert "Optional: create a scoped token for your own Pip setup" in settings_html
+    assert "Personal Pip access" in settings_html
+    assert "Create a scoped token only if you run your own Pip setup" in settings_html
+    assert "Most people can ignore this section. It is for Janusz-style personal Pip setups that need a separate assistant token you can replace or revoke here." in settings_html
+    assert "Optional: create a scoped token for your own Pip setup" not in settings_html
     assert "Optional: add a token for your own Pip setup" not in settings_html
-    assert "Most people can ignore this section. Only set it up if you run your own Pip and want a separate assistant token you can replace or revoke here." in settings_html
+    assert "Most people can ignore this section. Only set it up if you run your own Pip and want a separate assistant token you can replace or revoke here." not in settings_html
     assert "Most people can leave this section unused. Only set it up if you run your own Pip and want a separate assistant token you can revoke or replace here." not in settings_html
     assert "Optional local label so you can recognise this saved token later." in settings_html
     assert "Optional local label so you can recognise this token later." not in settings_html

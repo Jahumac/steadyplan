@@ -36,7 +36,7 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
             health_items.append({
                 "status": HEALTH_STATUS_WARNING,
                 "title": "No accounts set up",
-                "explanation": "You haven't added any financial accounts yet. Add one so totals, progress, and scenario estimates can start from real balances.",
+                "explanation": "You haven't added any financial accounts yet. Add one so totals, progress, and future estimates can start from real balances.",
                 "link": "/accounts/?mode=create",
                 "cta_text": "Add your first account",
             })
@@ -76,7 +76,7 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
                 health_items.append({
                     "status": HEALTH_STATUS_WARNING,
                     "title": "Some accounts have stale or missing history",
-                    "explanation": f"The following accounts have no recent balance history: {', '.join(history_warning_accounts)}. Update them to keep your scenario estimates grounded in recent balances.",
+                    "explanation": f"The following accounts have no recent balance history: {', '.join(history_warning_accounts)}. Update them so future estimates use recent balances.",
                     "link": "/history",
                     "cta_text": "Review history",
                 })
@@ -127,8 +127,8 @@ def build_data_health_summary(user_id: int) -> Dict[str, Any]:
         else:
             health_items.append({
                 "status": HEALTH_STATUS_WARNING,
-                "title": "No assumptions set up",
-                "explanation": "You haven't set up your financial assumptions yet. These help scenario estimates and goal timing estimates reflect your plans.",
+                "title": "No plan settings set up",
+                "explanation": "You haven't set up your plan settings yet. These help future estimates and goal timing estimates reflect your plans.",
                 "link": "/settings#assumptions",
             })
             if overall_status == HEALTH_STATUS_GOOD:

@@ -237,12 +237,18 @@ def _accrue_manual_accounts(user_id, accounts):
             rate = to_float(row["annual_growth_rate"]) if row else 0.05
 
         monthly_contrib = to_float(acc.get("monthly_contribution", 0))
-        daily_contrib = (monthly_contrib * 12) / 365.0
 
         # For cash accounts (Cash ISA, savings) use cash_interest_rate to grow
-        # the account value rather than the market growth rate.
+        # the account value rather than the market growth rate. Planned monthly
+        # contributions are projection inputs, not confirmed deposits; adding
+        # them here makes manually corrected cash balances drift upward by tens
+        # of pounds between real updates.
         cash_interest = to_float(acc.get("cash_interest_rate", 0))
-        if cash_interest > 0 and (is_cash_isa or acc.get("category", "").lower() in ("cash", "savings")):
+        uses_cash_interest = cash_interest > 0 and (
+            is_cash_isa or acc.get("category", "").lower() in ("cash", "savings")
+        )
+        daily_contrib = 0.0 if uses_cash_interest else (monthly_contrib * 12) / 365.0
+        if uses_cash_interest:
             effective_rate = cash_interest / 365.0
         else:
             effective_rate = rate / 365.0

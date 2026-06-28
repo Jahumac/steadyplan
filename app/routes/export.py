@@ -26,6 +26,7 @@ from app.calculations import (
     effective_fee_pct,
     future_value,
     is_pension_account,
+    projected_contribution_breakdown,
     projected_account_value,
     projected_account_value_at_year,
     projected_account_value_at_month,
@@ -34,9 +35,11 @@ from app.calculations import (
     projected_account_value_no_fees,
     projection_monthly_contribution,
     projection_start_month_key,
+    month_key_to_index,
     projected_total_retirement_value,
     to_float,
     uk_tax_year_end,
+    uk_tax_year_label,
     uk_tax_year_start,
     years_to_retirement,
     ISA_WRAPPER_TYPES,
@@ -58,9 +61,31 @@ from app.models import (
     fetch_prior_month_budget_entries,
 )
 from app.models.accounts import PREMIUM_BONDS_MAX_BALANCE, is_premium_bonds_account
+from app.services.financial_truth import refresh_account_snapshots_for_month
 from app.services.planning_insights import classify_account
 
 export_bp = Blueprint("export", __name__)
+
+_PERFORMANCE_EXPORT_PERIODS = {
+    "1M": 1,
+    "6M": 6,
+    "1Y": 12,
+    "ALL": None,
+}
+
+
+def _normalise_performance_export_period(period):
+    key = str(period or "ALL").upper()
+    return key if key in _PERFORMANCE_EXPORT_PERIODS else "ALL"
+
+
+def _filter_monthly_data_for_period(monthly_data, period):
+    filtered = list(monthly_data or [])
+    period_key = _normalise_performance_export_period(period)
+    months = _PERFORMANCE_EXPORT_PERIODS[period_key]
+    if months is None or len(filtered) <= months + 1:
+        return period_key, filtered
+    return period_key, filtered[-(months + 1):]
 
 # ── Clean Shelly colour palette ──────────────────────────────────────────────
 _SHELLY_TEAL   = "0F766E"   # Shelly's signature teal (header bg)
@@ -125,6 +150,91 @@ def _title_cell(ws, row_num, text, col_span=1):
         ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=col_span)
 
 
+def _tax_year_label_for_month_key(month_key, assumptions=None):
+    """Return the UK tax-year label for a projected contribution month.
+
+    SteadyPlan treats April contributions according to the configured salary day:
+    if the salary/review day is before 6 April, that April contribution still
+    belongs to the previous tax year; otherwise April belongs to the new tax year.
+    """
+    try:
+        year_text, month_text = str(month_key).split("-")
+        year = int(year_text)
+        month = int(month_text)
+    except (AttributeError, TypeError, ValueError):
+        return ""
+
+    salary_day = 0
+    try:
+        salary_day = int(_safe_get(assumptions, "salary_day", 0) or 0)
+    except (TypeError, ValueError):
+        salary_day = 0
+
+    if month > 4:
+        start_year = year
+    elif month < 4:
+        start_year = year - 1
+    else:
+        start_year = year if salary_day >= 6 else year - 1
+    return f"{start_year}/{str(start_year + 1)[-2:]}"
+
+
+def _build_tax_year_projection_buckets(
+    start_month,
+    total_months,
+    current_value,
+    value_at_month_fn,
+    *,
+    assumptions=None,
+    month_breakdown_fn=None,
+    value_no_fees_at_month_fn=None,
+):
+    """Aggregate projection months into UK tax-year buckets.
+
+    ISA, Lifetime ISA and pension allowances are tax-year based, so the export's
+    yearly contribution rows must not make a Jan-Jul LISA fill look like one
+    £7k allowance-year payment. The month-by-month sheet remains the source of
+    truth; this helper groups those months into 6 Apr–5 Apr allowance years.
+    """
+    if not start_month or total_months <= 0:
+        return []
+
+    buckets = []
+    bucket = None
+
+    for month_count in range(1, total_months + 1):
+        month_key = add_months_to_key(start_month, month_count - 1)
+        tax_year = _tax_year_label_for_month_key(month_key, assumptions)
+        if bucket is None or bucket["tax_year"] != tax_year:
+            if bucket is not None:
+                buckets.append(bucket)
+            bucket = {
+                "tax_year": tax_year,
+                "end_month_count": month_count,
+                "end_value": current_value,
+                "end_value_no_fees": current_value,
+                "personal": 0.0,
+                "into_pot": 0.0,
+                "contrib_fee": 0.0,
+            }
+
+        bucket["end_month_count"] = month_count
+        bucket["end_value"] = float(value_at_month_fn(month_count) or 0)
+        if value_no_fees_at_month_fn is not None:
+            bucket["end_value_no_fees"] = float(value_no_fees_at_month_fn(month_count) or 0)
+
+        if month_breakdown_fn is not None:
+            breakdown = month_breakdown_fn(month_count - 1) or {}
+            bucket["personal"] += float(breakdown.get("personal") or 0)
+            bucket["into_pot"] += float(breakdown.get("total_into_pot") or 0)
+            bucket["contrib_fee"] += float(breakdown.get("contribution_fee") or 0)
+
+    if bucket is not None:
+        buckets.append(bucket)
+
+    return buckets
+
+
 # ── Projections export ────────────────────────────────────────────────────────
 
 @export_bp.route("/projections/export.xlsx")
@@ -162,11 +272,11 @@ def export_projections():
     _set_col_width(ws, 4, 20)
     _set_col_width(ws, 5, 24)
 
-    _title_cell(ws, 1, "SteadyPlan — Retirement Scenario Estimates", 5)
+    _title_cell(ws, 1, "SteadyPlan — Retirement Future Estimates", 5)
     cell = ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}")
     cell.font = _SUBTITLE_FONT
 
-    _header_row(ws, 4, ["Account", "Current Value", "You pay monthly", "Into pots monthly", "Scenario estimate at retirement"])
+    _header_row(ws, 4, ["Account", "Current Value", "You pay monthly", "Into account monthly", "Estimated total at retirement"])
 
     # UK pound formats
     GBP  = '£#,##0.00'
@@ -235,7 +345,7 @@ def export_projections():
 
     r += 2
     ws.cell(row=r, column=1, value="Cash-accessible, invested-accessible, restricted, and locked-for-later money").font = _ACCENT_FONT
-    _header_row(ws, r + 1, ["Type", "Current value", "Scenario estimate at retirement", "Account count"])
+    _header_row(ws, r + 1, ["Type", "Current value", "Estimated total at retirement", "Account count"])
     access_rows = {
         "Cash accessible": [0.0, 0.0, 0],
         "Invested accessible": [0.0, 0.0, 0],
@@ -260,16 +370,16 @@ def export_projections():
     r += 3
     ws.cell(row=r, column=1, value="Notes").font = _ACCENT_FONT
     for note in [
-        "Values are nominal scenario estimates before inflation unless stated otherwise.",
-        "You pay monthly is your personal contribution; into pots includes tax relief, employer contributions and bonuses where applicable.",
+        "Values are future estimates before inflation unless stated otherwise.",
+        "You pay monthly is your own payment; into account includes pension tax top-ups, employer payments and bonuses where applicable.",
         "This is a planning estimate, not financial advice.",
     ]:
         r += 1
         ws.cell(row=r, column=1, value=note).font = _SUBTITLE_FONT
 
     # ── Sheet 2: Assumptions ─────────────────────────────────────────────────
-    ws_ass = wb.create_sheet("Scenario Estimate Assumptions")
-    _title_cell(ws_ass, 1, "SteadyPlan — Scenario Estimate Assumptions", 3)
+    ws_ass = wb.create_sheet("Planning Numbers")
+    _title_cell(ws_ass, 1, "SteadyPlan — Planning Numbers", 3)
     _set_col_width(ws_ass, 1, 32)
     _set_col_width(ws_ass, 2, 24)
     _set_col_width(ws_ass, 3, 52)
@@ -277,22 +387,22 @@ def export_projections():
     assumption_rows = [
         ("Generated", datetime.now().strftime("%d %b %Y at %H:%M"), "Snapshot date for this export."),
         ("Current age", int(current_age), "Derived from date of birth when available."),
-        ("Retirement age", int(retirement_age), "Target age used for this scenario estimate."),
+        ("Retirement age", int(retirement_age), "Target age used for this future estimate."),
         ("Years to retirement", round(exact_years, 1), "Exact years when a retirement date is available."),
-        ("Scenario estimate start month", start_month, "First future contribution month considered by scenario estimates."),
-        ("Annual growth rate", f"{growth_rate*100:.1f}%", "Default gross annual growth before account fees."),
+        ("Future estimate start month", start_month, "First future payment month used by future estimates."),
+        ("Annual growth rate", f"{growth_rate*100:.1f}%", "Default yearly growth before account fees."),
         ("Inflation treatment", "Nominal", "Future values are not inflation-adjusted in this export."),
-        ("Salary/review day", _safe_get(assumptions, "salary_day", "") if assumptions else "", "Used to decide whether the current month has already settled."),
+        ("Monthly update day", _safe_get(assumptions, "salary_day", "") if assumptions else "", "Used to decide whether this month should already count."),
     ]
     for idx, row_vals in enumerate(assumption_rows, 4):
         _data_row(ws_ass, idx, row_vals)
 
     # ── Sheet 3: Contribution schedule ───────────────────────────────────────
-    ws_sched = wb.create_sheet("Contribution Schedule")
-    _title_cell(ws_sched, 1, "SteadyPlan — Contribution Schedule", 7)
+    ws_sched = wb.create_sheet("Payment Schedule")
+    _title_cell(ws_sched, 1, "SteadyPlan — Payment Schedule", 7)
     for col, width in enumerate([28, 18, 16, 16, 16, 16, 36], 1):
         _set_col_width(ws_sched, col, width)
-    _header_row(ws_sched, 3, ["Account", "Wrapper", "From", "To", "You pay monthly", "Into pot monthly", "Reason"])
+    _header_row(ws_sched, 3, ["Account", "Wrapper", "From", "To", "You pay monthly", "Into account monthly", "Reason"])
     sched_row = 4
     for acc in accounts:
         baseline_breakdown = contribution_breakdown(acc, assumptions)
@@ -304,7 +414,16 @@ def export_projections():
         for override in acc.get("_contribution_overrides", []) or []:
             adjusted = dict(acc)
             adjusted["monthly_contribution"] = override["override_amount"]
-            b = contribution_breakdown(adjusted, assumptions)
+            override_month_index = None
+            if start_month:
+                start_idx = month_key_to_index(start_month)
+                override_idx = month_key_to_index(override["from_month"])
+                if start_idx is not None and override_idx is not None:
+                    override_month_index = override_idx - start_idx
+            if override_month_index is not None and override_month_index >= 0:
+                b = projected_contribution_breakdown(acc, assumptions, override_month_index)
+            else:
+                b = contribution_breakdown(adjusted, assumptions)
             _data_row(ws_sched, sched_row, [
                 acc["name"], acc.get("wrapper_type") or "", override["from_month"], _display_schedule_to_month(override["to_month"]),
                 b["personal"], b["total_into_pot"], _safe_get(override, "reason") or "Override",
@@ -319,39 +438,46 @@ def export_projections():
 
     # ── Sheet 4: Year by year ─────────────────────────────────────────────────
     ws2 = wb.create_sheet("Year by Year")
-    _title_cell(ws2, 1, "SteadyPlan — Year-by-Year Scenario Estimate", 3)
-    _header_row(ws2, 3, ["Age", "Year", "Scenario estimate total"])
+    _title_cell(ws2, 1, "SteadyPlan — Tax-Year Future Estimate", 3)
+    _header_row(ws2, 3, ["Age", "Tax year", "Future estimate total"])
     _set_col_width(ws2, 1, 10)
     _set_col_width(ws2, 2, 10)
     _set_col_width(ws2, 3, 22)
 
-    curr_year = date.today().year
-    for yr in range(0, whole_years + 1):
-        age = int(current_age + yr)
-        total = sum(
-            projected_account_value_at_year(a, assumptions, yr)
-            for a in accounts
-        )
-        yby_year_label = f"{curr_year + yr} (today)" if yr == 0 else curr_year + yr
-        _data_row(ws2, yr + 4, [age, yby_year_label, total], num_formats={3: GBP0})
+    curr_tax_year = uk_tax_year_label(date.today())
+    total_months = int(exact_years * 12)
+    current_total = sum(to_float(a["current_value"]) for a in accounts)
+    _data_row(ws2, 4, [int(current_age), f"{curr_tax_year} (today)", current_total], num_formats={3: GBP0})
+
+    portfolio_buckets = _build_tax_year_projection_buckets(
+        start_month,
+        total_months,
+        current_total,
+        lambda month_count: sum(projected_account_value_at_month(a, assumptions, month_count) for a in accounts),
+        assumptions=assumptions,
+    )
+    for idx, bucket in enumerate(portfolio_buckets, start=5):
+        age = int(current_age + bucket["end_month_count"] / 12.0)
+        _data_row(ws2, idx, [age, bucket["tax_year"], bucket["end_value"]], num_formats={3: GBP0})
 
     # Final fractional-year point (matches summary card exactly)
-    if exact_years > whole_years:
-        final_row = whole_years + 4 + 1
+    if exact_years > whole_years and (
+        not portfolio_buckets or abs(float(portfolio_buckets[-1]["end_value"]) - float(total_projected)) > 0.005
+    ):
+        final_row = 4 + len(portfolio_buckets) + 1
         _data_row(ws2, final_row, [
             int(retirement_age),
-            curr_year + whole_years + 1,
+            "Retirement",
             total_projected,
         ], bold=True, num_formats={3: GBP0})
 
     # ── Sheet 3: Month by month (total portfolio) ────────────────────────────
     ws3 = wb.create_sheet("Month by Month")
-    _title_cell(ws3, 1, "SteadyPlan — Monthly Scenario Estimate", 3)
-    _header_row(ws3, 3, ["Month", "Scenario estimate total"])
+    _title_cell(ws3, 1, "SteadyPlan — Monthly Future Estimate", 3)
+    _header_row(ws3, 3, ["Month", "Future estimate total"])
     _set_col_width(ws3, 1, 16)
     _set_col_width(ws3, 2, 22)
 
-    total_months = int(exact_years * 12)
     for m in range(0, total_months + 1):
         month_label = "Today" if m == 0 else add_months_to_key(start_month, m - 1)
         total = sum(
@@ -389,8 +515,10 @@ def export_projections():
         acc_projected = projected_account_value(acc, assumptions)
         acc_projected_no_fees = projected_account_value_no_fees(acc, assumptions)
         acc_fee_impact = acc_projected_no_fees - acc_projected
-        acc_breakdown = contribution_breakdown(contribution_account, assumptions)
+        acc_breakdown = projected_contribution_breakdown(acc, assumptions, 0)
         acc_total_months_for_fees = int(exact_years * 12)
+        next_planned_month = None
+        next_planned_breakdown = None
         has_annual_fees = acc_fee_pct > 0
         has_contrib_fee = acc_contribution_fee_pct > 0
         has_fees = has_annual_fees or has_contrib_fee
@@ -399,15 +527,20 @@ def export_projections():
         is_pb = is_premium_bonds_account(acc)
 
         def _month_breakdown(month_index):
-            mk = add_months_to_key(start_month, month_index) if start_month else None
-            override = contribution_override_for_month(acc, mk) if mk else None
-            ca = dict(acc)
-            if override is not None:
-                ca["monthly_contribution"] = override
-            return contribution_breakdown(ca, assumptions)
+            return projected_contribution_breakdown(acc, assumptions, month_index)
 
         first_contrib_fee_monthly = 0.0
         acc_total_contrib_fees = 0.0
+        if acc_total_months_for_fees > 0:
+            for mi in range(0, acc_total_months_for_fees):
+                if is_lisa and (current_age + mi / 12.0) >= 50:
+                    continue
+                b = _month_breakdown(mi)
+                if next_planned_month is None and (
+                    abs(float(b.get("personal") or 0)) > 0.005 or abs(float(b.get("total_into_pot") or 0)) > 0.005
+                ):
+                    next_planned_month = add_months_to_key(start_month, mi) if start_month else None
+                    next_planned_breakdown = b
         if has_contrib_fee:
             if not (is_lisa and current_age >= 50):
                 first_contrib_fee_monthly = float(_month_breakdown(0).get("contribution_fee") or 0)
@@ -430,12 +563,26 @@ def export_projections():
             ("Current value", acc_current, GBP),
             ("You pay (monthly)", acc_breakdown["personal"], GBP),
         ]
+        if (
+            next_planned_month
+            and next_planned_breakdown is not None
+            and next_planned_month != start_month
+            and (
+                abs(float(next_planned_breakdown.get("personal") or 0) - float(acc_breakdown["personal"] or 0)) > 0.005
+                or abs(float(next_planned_breakdown.get("total_into_pot") or 0) - float(acc_monthly or 0)) > 0.005
+            )
+        ):
+            summary_rows.extend([
+                ("Next planned month", next_planned_month, None),
+                ("You pay (next planned month)", float(next_planned_breakdown.get("personal") or 0), GBP),
+                ("Total added to account (next planned month)", float(next_planned_breakdown.get("total_into_pot") or 0), GBP),
+            ])
         if first_month_override is not None and abs(to_float(acc.get("monthly_contribution", 0)) - to_float(first_month_override)) > 0.005:
             summary_rows.append(("Account setting (monthly)", to_float(acc.get("monthly_contribution", 0)), GBP))
         if has_contrib_fee:
             summary_rows.append(("Contribution fee deducted (monthly)", -first_contrib_fee_monthly, GBP))
         summary_rows += [
-            ("Total into pot (monthly)", acc_monthly, GBP),
+            ("Total added to account (monthly)", acc_monthly, GBP),
             ("Growth rate (net of fees)", f"{acc_growth*100:.1f}%", None),
         ]
         if has_annual_fees:
@@ -452,7 +599,7 @@ def export_projections():
         if has_contrib_fee:
             summary_rows.append(("Contribution fee", f"{acc_contribution_fee_pct:.2f}% per contribution", None))
             summary_rows.append(("Total contribution fees paid", acc_total_contrib_fees, GBP0))
-        summary_rows.append(("Scenario estimate at retirement", acc_projected, GBP0))
+        summary_rows.append(("Estimated total at retirement", acc_projected, GBP0))
         if has_annual_fees:
             summary_rows.append(("Value without annual fees", acc_projected_no_fees, GBP0))
             summary_rows.append(("Lifetime cost of annual fees", acc_fee_impact, GBP0))
@@ -463,15 +610,15 @@ def export_projections():
         # Year-by-year table — columns vary by which fees apply
         yby_start = 5 + len(summary_rows) + 1
         if has_annual_fees and has_contrib_fee:
-            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)", "Value (no ann. fees)", "Ann. Fee Impact"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into account (yr)", "Contrib. Fee (yr)", "Value (no ann. fees)", "Ann. Fee Impact"]
         elif has_annual_fees:
-            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Value (no fees)", "Fee Impact"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into account (yr)", "Value (no fees)", "Fee Impact"]
         elif has_contrib_fee:
-            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)", "Contrib. Fee (yr)"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into account (yr)", "Contrib. Fee (yr)"]
         elif is_pb:
-            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "Cap adjustment", "You pay (yr)", "Into pot (yr)"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "Cap adjustment", "You pay (yr)", "Into account (yr)"]
         else:
-            yby_headers = ["Age", "Year", "Scenario estimate value", "Growth", "You pay (yr)", "Into pot (yr)"]
+            yby_headers = ["Age", "Tax year", "Future estimate value", "Growth", "You pay (yr)", "Into account (yr)"]
         _header_row(ws_acc, yby_start, yby_headers)
         _set_col_width(ws_acc, 3, 22)
         _set_col_width(ws_acc, 4, 18)
@@ -486,98 +633,123 @@ def export_projections():
             _set_col_width(ws_acc, 9, 18)
 
         prev_val = acc_current
+        acc_total_months = int(exact_years * 12)
+        yearly_buckets = _build_tax_year_projection_buckets(
+            start_month,
+            acc_total_months,
+            acc_current,
+            lambda month_count: projected_account_value_at_month(acc, assumptions, month_count),
+            assumptions=assumptions,
+            month_breakdown_fn=_month_breakdown,
+            value_no_fees_at_month_fn=(
+                (lambda month_count: projected_account_value_at_month_no_fees(acc, assumptions, month_count))
+                if has_annual_fees else None
+            ),
+        )
 
-        for yr in range(0, whole_years + 1):
-            age = int(current_age + yr)
-            val = projected_account_value_at_year(acc, assumptions, yr)
-            if yr == 0:
-                contrib_this_year = 0
-                contrib_fee_this_year = 0
-                personal_this_year = 0
-            else:
-                start_idx = (yr - 1) * 12
-                end_idx = yr * 12
-                contrib_this_year = 0.0
-                contrib_fee_this_year = 0.0
-                personal_this_year = 0.0
-                for mi in range(start_idx, end_idx):
-                    if is_lisa and (current_age + mi / 12.0) >= 50:
-                        continue
-                    b = _month_breakdown(mi)
-                    contrib_this_year += float(b.get("total_into_pot") or 0)
-                    personal_this_year += float(b.get("personal") or 0)
-                    contrib_fee_this_year += float(b.get("contribution_fee") or 0)
-            growth_this_year = (val - prev_val - contrib_this_year) if yr > 0 else 0
+        if has_annual_fees and has_contrib_fee:
+            _data_row(ws_acc, yby_start + 1, [
+                int(current_age), f"{curr_tax_year} (today)", acc_current, 0, 0, 0,
+                0, acc_current, 0,
+            ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0, 8: GBP0, 9: GBP0})
+        elif has_annual_fees:
+            _data_row(ws_acc, yby_start + 1, [
+                int(current_age), f"{curr_tax_year} (today)", acc_current, 0, 0, 0,
+                acc_current, 0,
+            ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0, 8: GBP0})
+        elif has_contrib_fee:
+            _data_row(ws_acc, yby_start + 1, [
+                int(current_age), f"{curr_tax_year} (today)", acc_current, 0, 0, 0, 0,
+            ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0})
+        elif is_pb:
+            _data_row(ws_acc, yby_start + 1, [
+                int(current_age), f"{curr_tax_year} (today)", acc_current, 0, 0, 0, 0,
+            ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0})
+        else:
+            _data_row(ws_acc, yby_start + 1, [
+                int(current_age), f"{curr_tax_year} (today)", acc_current, 0, 0, 0,
+            ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0})
+
+        prev_val = acc_current
+        for bucket_index, bucket in enumerate(yearly_buckets, start=1):
+            age = int(current_age + bucket["end_month_count"] / 12.0)
+            val = bucket["end_value"]
+            personal_this_year = bucket["personal"]
+            contrib_this_year = bucket["into_pot"]
+            contrib_fee_this_year = bucket["contrib_fee"]
+            growth_this_year = val - prev_val - contrib_this_year
             cap_adjustment_this_year = 0.0
             if is_pb and growth_this_year < 0 and val >= PREMIUM_BONDS_MAX_BALANCE - 0.005:
                 cap_adjustment_this_year = growth_this_year
                 growth_this_year = 0.0
-            year_label = f"{curr_year + yr} (today)" if yr == 0 else curr_year + yr
+            year_label = bucket["tax_year"]
+            row_num = yby_start + 1 + bucket_index
 
             if has_annual_fees and has_contrib_fee:
-                val_no_fees = projected_account_value_at_year_no_fees(acc, assumptions, yr)
-                _data_row(ws_acc, yby_start + 1 + yr, [
+                val_no_fees = bucket["end_value_no_fees"]
+                _data_row(ws_acc, row_num, [
                     age, year_label, val, growth_this_year, personal_this_year, contrib_this_year,
                     contrib_fee_this_year, val_no_fees, val_no_fees - val,
                 ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0, 8: GBP0, 9: GBP0})
             elif has_annual_fees:
-                val_no_fees = projected_account_value_at_year_no_fees(acc, assumptions, yr)
-                _data_row(ws_acc, yby_start + 1 + yr, [
+                val_no_fees = bucket["end_value_no_fees"]
+                _data_row(ws_acc, row_num, [
                     age, year_label, val, growth_this_year, personal_this_year, contrib_this_year,
                     val_no_fees, val_no_fees - val,
                 ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0, 8: GBP0})
             elif has_contrib_fee:
-                _data_row(ws_acc, yby_start + 1 + yr, [
+                _data_row(ws_acc, row_num, [
                     age, year_label, val, growth_this_year, personal_this_year, contrib_this_year, contrib_fee_this_year,
                 ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0})
             elif is_pb:
-                _data_row(ws_acc, yby_start + 1 + yr, [
+                _data_row(ws_acc, row_num, [
                     age, year_label, val, growth_this_year, cap_adjustment_this_year, personal_this_year, contrib_this_year,
                 ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0, 7: GBP0})
             else:
-                _data_row(ws_acc, yby_start + 1 + yr, [
+                _data_row(ws_acc, row_num, [
                     age, year_label, val, growth_this_year, personal_this_year, contrib_this_year,
                 ], num_formats={3: GBP0, 4: GBP0, 5: GBP0, 6: GBP0})
             prev_val = val
 
         # Final fractional-year row
-        if exact_years > whole_years:
-            final_r = yby_start + 1 + whole_years + 1
+        final_year_value = float(yearly_buckets[-1]["end_value"]) if yearly_buckets else float(acc_current)
+        if exact_years > whole_years and abs(final_year_value - float(acc_projected)) > 0.005:
+            final_r = yby_start + 1 + len(yearly_buckets) + 1
             if has_annual_fees and has_contrib_fee:
                 _data_row(ws_acc, final_r, [
-                    int(retirement_age), curr_year + whole_years + 1, acc_projected, "", "", "", "",
+                    int(retirement_age), "Retirement", acc_projected, "", "", "", "",
                     acc_projected_no_fees, acc_fee_impact,
                 ], bold=True, num_formats={3: GBP0, 8: GBP0, 9: GBP0})
             elif has_annual_fees:
                 _data_row(ws_acc, final_r, [
-                    int(retirement_age), curr_year + whole_years + 1, acc_projected, "", "", "",
+                    int(retirement_age), "Retirement", acc_projected, "", "", "",
                     acc_projected_no_fees, acc_fee_impact,
                 ], bold=True, num_formats={3: GBP0, 7: GBP0, 8: GBP0})
             elif has_contrib_fee:
                 _data_row(ws_acc, final_r, [
-                    int(retirement_age), curr_year + whole_years + 1, acc_projected, "", "", "", "",
+                    int(retirement_age), "Retirement", acc_projected, "", "", "", "",
                 ], bold=True, num_formats={3: GBP0})
             elif is_pb:
                 _data_row(ws_acc, final_r, [
-                    int(retirement_age), curr_year + whole_years + 1, acc_projected, "", "", "", "",
+                    int(retirement_age), "Retirement", acc_projected, "", "", "", "",
                 ], bold=True, num_formats={3: GBP0})
             else:
                 _data_row(ws_acc, final_r, [
-                    int(retirement_age), curr_year + whole_years + 1, acc_projected, "", "", "",
+                    int(retirement_age), "Retirement", acc_projected, "", "", "",
                 ], bold=True, num_formats={3: GBP0})
 
         # ── Monthly breakdown table ──────────────────────────────────
-        yearly_end = yby_start + 1 + whole_years + (2 if exact_years > whole_years else 1)
+        yearly_end = yby_start + 2 + len(yearly_buckets) + (1 if exact_years > whole_years and abs(final_year_value - float(acc_projected)) > 0.005 else 0)
         mby_start = yearly_end + 2  # gap of 1 empty row
 
         if has_annual_fees and has_contrib_fee:
-            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Scenario estimate value", "Contrib. Fee (mo)", "Value (no ann. fees)", "Ann. Fee Impact"])
+            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Future estimate value", "Contrib. Fee (mo)", "Value (no ann. fees)", "Ann. Fee Impact"])
         elif has_annual_fees:
-            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Scenario estimate value", "Value (no fees)", "Fee Impact"])
+            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Future estimate value", "Value (no fees)", "Fee Impact"])
         elif has_contrib_fee:
-            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Scenario estimate value", "Contrib. Fee (mo)"])
+            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Future estimate value", "Contrib. Fee (mo)"])
         else:
-            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Scenario estimate value"])
+            _header_row(ws_acc, mby_start, ["Month", "You pay (mo)", "Future estimate value"])
 
         acc_total_months = int(exact_years * 12)
         for m in range(0, acc_total_months + 1):
@@ -1226,7 +1398,7 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=7)
     row += 2
 
-    _header_row(ws, row, ["Account", "Wrapper", "Budget source (example)", "Personal", "Tax relief", "Lifetime ISA bonus", "Employer/mo"])
+    _header_row(ws, row, ["Account", "Wrapper", "Budget source (example)", "Personal", "Pension tax top-up", "Lifetime ISA bonus", "Employer/mo"])
     row += 1
     item_name_map = {int(it["id"]): (it.get("name") or "") for it in items}
     first_month_sheet = month_sheet_names[0] if month_sheet_names else ""
@@ -1273,7 +1445,7 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
         row += 1
 
     row += 1
-    _header_row(ws, row, ["Month", "Personal", "Tax relief", "Lifetime ISA bonus", "Employer", "Total into pot", "Running total"])
+    _header_row(ws, row, ["Month", "Personal", "Pension tax top-up", "Lifetime ISA bonus", "Employer", "Total added to account", "Running total"])
     row += 1
 
     ws.column_dimensions["P"].hidden = True
@@ -1354,7 +1526,7 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
         lisa_running_personal_cell = lisa_running_cell
 
     row = row + len(month_keys) + 2
-    _header_row(ws, row, ["Month (logged)", "Personal", "Tax relief", "Lifetime ISA bonus", "Employer", "Total into pot", "Running total"])
+    _header_row(ws, row, ["Month (logged)", "Personal", "Pension tax top-up", "Lifetime ISA bonus", "Employer", "Total added to account", "Running total"])
     row += 1
 
     isa_personal_by_month = {mk: 0.0 for mk in month_keys}
@@ -1512,13 +1684,63 @@ def export_budget_annual():
 
 # ── Performance export ────────────────────────────────────────────────────────
 
+def _add_performance_export_readme_sheet(wb):
+    ws = wb.active
+    ws.title = "How to read"
+    _set_col_width(ws, 1, 24)
+    _set_col_width(ws, 2, 96)
+    _title_cell(ws, 1, "SteadyPlan — How to read this performance report", 2)
+    ws.cell(row=2, column=1, value="Use the Summary sheet for the headline numbers, then the monthly sheets to see how each number is built.").font = _SUBTITLE_FONT
+    ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=2)
+
+    _header_row(ws, 4, ["Term", "Meaning"])
+    rows = [
+        (
+            "Opening / Imported",
+            "Money already present when tracking started. It is not treated as a later contribution or gain.",
+        ),
+        (
+            "Contributed",
+            "Money added after tracking started, minus withdrawals and transfers out. Transfers between your own accounts net to zero at portfolio level.",
+        ),
+        (
+            "Gain / Interest",
+            "What changed after flows. Cash ISA uses cash interest, Premium Bonds use prize gain, and investment accounts use market gain or loss.",
+        ),
+        (
+            "First tracked month",
+            "If the first recorded balance includes both old money and a new top-up, record the top-up as a cash-flow event. The report can then leave only the old balance as opening money.",
+        ),
+        (
+            "Total return",
+            "Gain divided by the money at work over the tracked period. Deposits and withdrawals are separated first so they do not look like performance.",
+        ),
+        (
+            "Annualised return",
+            "Annualised return appears after 12 monthly return periods. Before that, the Summary sheet says 'Not enough history yet' to avoid dramatic early-history figures.",
+        ),
+        (
+            "Current value",
+            "The latest reconciled value used by Performance for the selected export window.",
+        ),
+    ]
+    for row_num, values in enumerate(rows, 5):
+        _data_row(ws, row_num, values)
+        ws.cell(row=row_num, column=2).alignment = Alignment(vertical="top", wrap_text=True)
+    ws.freeze_panes = "A5"
+    return ws
+
+
 @export_bp.route("/performance/export.xlsx")
 @login_required
 def export_performance():
     uid = current_user.id
+    current_month_key = date.today().strftime("%Y-%m")
+    refresh_account_snapshots_for_month(uid, current_month_key, require_existing_month=True)
     assumptions = fetch_assumptions(uid)
     accounts = fetch_all_accounts(uid)
     account_id = request.args.get("account_id")
+    selected_period = _normalise_performance_export_period(request.args.get("period"))
 
     assumed_rate = to_float(assumptions["annual_growth_rate"]) if assumptions else 0.07
     assumed_monthly_total = sum(to_float(a["monthly_contribution"]) for a in accounts)
@@ -1538,11 +1760,12 @@ def export_performance():
     perf_portfolio = None
     if selected_account_id is None:
         monthly_data = fetch_monthly_performance_data(uid)
+        _, monthly_data = _filter_monthly_data_for_period(monthly_data, selected_period)
         perf_portfolio = compute_performance_series(monthly_data, assumed_rate, assumed_monthly_total)
 
     wb = Workbook()
-    ws = wb.active
-    ws.title = "Summary"
+    _add_performance_export_readme_sheet(wb)
+    ws = wb.create_sheet("Summary")
     _set_col_width(ws, 1, 26)
     _set_col_width(ws, 2, 12)
     _set_col_width(ws, 3, 12)
@@ -1550,11 +1773,12 @@ def export_performance():
     _set_col_width(ws, 5, 16)
     _set_col_width(ws, 6, 16)
     _set_col_width(ws, 7, 16)
-    _set_col_width(ws, 8, 16)
+    _set_col_width(ws, 8, 18)
     _set_col_width(ws, 9, 16)
-    _set_col_width(ws, 10, 18)
+    _set_col_width(ws, 10, 16)
+    _set_col_width(ws, 11, 18)
 
-    _title_cell(ws, 1, "SteadyPlan — Performance Report", 10)
+    _title_cell(ws, 1, "SteadyPlan — Performance Report", 11)
     cell = ws.cell(row=2, column=1, value=f"Generated {datetime.now().strftime('%d %b %Y at %H:%M')}")
     cell.font = _SUBTITLE_FONT
 
@@ -1566,7 +1790,8 @@ def export_performance():
         "Total Return",
         "Annualised",
         "Contributed",
-        "Market Gain",
+        "Opening / Imported",
+        "Gain / Interest",
         "Vs Plan",
         "Current Value",
     ])
@@ -1575,27 +1800,56 @@ def export_performance():
     PCT = '0.00"%"'
     row = 5
 
+    def _performance_export_account_context(acc):
+        wrapper = (acc.get("wrapper_type") or "").strip().lower()
+        if wrapper == "cash isa":
+            rate = to_float(acc.get("cash_interest_rate") or 0)
+            subtitle = f"Cash interest rate: {rate*100:.1f}%" if rate > 0 else "Cash interest rate not set"
+            return {
+                "rate": rate,
+                "subtitle": subtitle,
+                "gain_label": "Interest / Cash gain",
+            }
+        if wrapper == "premium bonds":
+            rate = to_float(acc.get("growth_rate_override") if acc.get("growth_rate_override") is not None else 0.033)
+            return {
+                "rate": rate,
+                "subtitle": f"Expected prize rate: {rate*100:.1f}%",
+                "gain_label": "Prize gain",
+            }
+        return {
+            "rate": account_growth_rate(acc, assumptions),
+            "subtitle": f"Assumed growth: {account_growth_rate(acc, assumptions)*100:.1f}%",
+            "gain_label": "Market Gain / Loss",
+        }
+
     def _append_summary(entity_name, perf):
         nonlocal row
         if not perf:
-            _data_row(ws, row, [entity_name, "", "", 0, "", "", "", "", "", ""], bold=True)
+            _data_row(ws, row, [entity_name, "", "", 0, "", "", "", "", "", "", ""], bold=True)
             row += 1
             return
         labels = perf.get("labels") or []
         start_m = labels[0] if labels else ""
         end_m = labels[-1] if labels else ""
+        annualised_value = (
+            float(perf.get("annualised_return"))
+            if perf.get("annualised_return") is not None
+            else perf.get("annualised_return_note")
+        )
         _data_row(ws, row, [
             entity_name,
             start_m,
             end_m,
             int(perf.get("n_months") or 0),
             float(perf.get("total_return") or 0),
-            float(perf.get("annualised_return") or 0) if perf.get("annualised_return") is not None else None,
+            annualised_value,
             float(perf.get("total_contributed") or 0),
+            float(perf.get("total_imported_baseline") or 0),
             float(perf.get("total_market_gain") or 0),
             float(perf.get("vs_plan") or 0),
             float(perf.get("current_value") or 0),
-        ], bold=True, num_formats={5: PCT, 6: PCT, 7: GBP, 8: GBP, 9: GBP, 10: GBP})
+        ], bold=True, num_formats={5: PCT, 6: PCT, 7: GBP, 8: GBP, 9: GBP, 10: GBP, 11: GBP})
         row += 1
 
     if selected_account_id is None:
@@ -1605,14 +1859,18 @@ def export_performance():
             acc = account_map.get(aid)
             if not acc:
                 continue
+            _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
+            ctx = _performance_export_account_context(acc)
             assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-            perf_acc = compute_performance_series(payload["rows"], assumed_rate, assumed_monthly)
+            perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
             _append_summary(payload["account_name"], perf_acc)
     else:
         payload = per_account_data.get(selected_account_id, {"account_name": account_map[selected_account_id]["name"], "rows": []})
         acc = account_map[selected_account_id]
+        _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
+        ctx = _performance_export_account_context(acc)
         assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-        perf_acc = compute_performance_series(payload["rows"], assumed_rate, assumed_monthly)
+        perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
         _append_summary(payload["account_name"], perf_acc)
 
     def _safe_sheet_title(base, used):
@@ -1633,19 +1891,20 @@ def export_performance():
                 return candidate
             i += 1
 
-    used_titles = {ws.title}
+    used_titles = {sheet.title for sheet in wb.worksheets}
 
-    def _add_detail_sheet(title, perf):
+    def _add_detail_sheet(title, perf, subtitle=None, gain_label="Market Gain / Loss"):
         ws_d = wb.create_sheet(_safe_sheet_title(title, used_titles))
         _set_col_width(ws_d, 1, 10)
         _set_col_width(ws_d, 2, 16)
         _set_col_width(ws_d, 3, 16)
         _set_col_width(ws_d, 4, 18)
-        _set_col_width(ws_d, 5, 16)
-        _set_col_width(ws_d, 6, 12)
+        _set_col_width(ws_d, 5, 18)
+        _set_col_width(ws_d, 6, 16)
+        _set_col_width(ws_d, 7, 12)
 
-        _title_cell(ws_d, 1, f"SteadyPlan — {title}", 6)
-        sub = ws_d.cell(row=2, column=1, value=f"Assumed growth: {assumed_rate*100:.1f}%")
+        _title_cell(ws_d, 1, f"SteadyPlan — {title}", 7)
+        sub = ws_d.cell(row=2, column=1, value=subtitle or f"Assumed growth: {assumed_rate*100:.1f}%")
         sub.font = _SUBTITLE_FONT
 
         has_first_baseline_only = bool(
@@ -1655,9 +1914,21 @@ def export_performance():
             and not perf.get("table_rows")
         )
         if has_first_baseline_only:
-            ws_d.cell(row=4, column=1, value="Your first baseline is saved").font = _DATA_FONT
+            ws_d.cell(row=4, column=1, value="First value saved").font = _DATA_FONT
+            first_value = float((perf.get("actual_values") or [0])[-1] or 0)
+            first_label = (perf.get("labels") or [""])[-1]
             ws_d.cell(
                 row=5,
+                column=1,
+                value=f"First tracked value: £{first_value:,.2f} in {first_label}.",
+            ).font = _DATA_FONT
+            ws_d.cell(
+                row=6,
+                column=1,
+                value="It is treated as an opening/imported baseline, not performance gain.",
+            ).font = _DATA_FONT
+            ws_d.cell(
+                row=7,
                 column=1,
                 value="Complete next month's monthly update and the month-by-month table will appear.",
             ).font = _DATA_FONT
@@ -1667,34 +1938,58 @@ def export_performance():
             ws_d.cell(row=4, column=1, value="Not enough data yet (need at least two monthly snapshots).").font = _DATA_FONT
             return
 
-        _header_row(ws_d, 4, ["Month", "Opening", "Contributions", "Market Gain / Loss", "Closing", "Return"])
-        rows_chrono = list(reversed(perf["table_rows"]))
+        _header_row(ws_d, 4, ["Month", "Opening", "Opening / Imported", "Contributions", gain_label, "Closing", "Return"])
+        rows_chrono = [dict(r) for r in reversed(perf["table_rows"])]
+
+        def _round_money(value):
+            return round(float(value or 0), 2)
+
+        # The Summary uses rounded totals. If detail rows contain repeated values
+        # such as 333.333..., independently rounded monthly rows can otherwise
+        # add up to a visible penny less/more than Summary. Apply any tiny display
+        # remainder to the latest row so the exported workbook audits cleanly.
+        for row_key, total_key in [
+            ("imported_baseline", "total_imported_baseline"),
+            ("contribution", "total_contributed"),
+            ("market_gain", "total_market_gain"),
+        ]:
+            target = _round_money(perf.get(total_key))
+            displayed_total = _round_money(sum(_round_money(r.get(row_key)) for r in rows_chrono))
+            delta = _round_money(target - displayed_total)
+            if rows_chrono and abs(delta) >= 0.01:
+                rows_chrono[-1][row_key] = _round_money(_round_money(rows_chrono[-1].get(row_key)) + delta)
+
         for i, r in enumerate(rows_chrono, 5):
             _data_row(ws_d, i, [
                 r["month_key"],
-                float(r["opening"]),
-                float(r["contribution"]),
-                float(r["market_gain"]),
-                float(r["closing"]),
+                _round_money(r["opening"]),
+                _round_money(r.get("imported_baseline")),
+                _round_money(r["contribution"]),
+                _round_money(r["market_gain"]),
+                _round_money(r["closing"]),
                 float(r["return_pct"]),
-            ], num_formats={2: GBP, 3: GBP, 4: GBP, 5: GBP, 6: PCT})
+            ], num_formats={2: GBP, 3: GBP, 4: GBP, 5: GBP, 6: GBP, 7: PCT})
 
     if selected_account_id is None:
-        _add_detail_sheet("Portfolio (Monthly)", perf_portfolio)
+        _add_detail_sheet("Portfolio (Monthly)", perf_portfolio, subtitle=f"Assumed growth: {assumed_rate*100:.1f}%", gain_label="Gain / Interest")
 
         for aid, payload in per_account_data.items():
             acc = account_map.get(aid)
             if not acc:
                 continue
+            _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
+            ctx = _performance_export_account_context(acc)
             assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-            perf_acc = compute_performance_series(payload["rows"], assumed_rate, assumed_monthly)
-            _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc)
+            perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
+            _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc, subtitle=ctx["subtitle"], gain_label=ctx["gain_label"])
     else:
         payload = per_account_data.get(selected_account_id, {"account_name": account_map[selected_account_id]["name"], "rows": []})
         acc = account_map[selected_account_id]
+        _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
+        ctx = _performance_export_account_context(acc)
         assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-        perf_acc = compute_performance_series(payload["rows"], assumed_rate, assumed_monthly)
-        _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc)
+        perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
+        _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc, ctx["subtitle"], ctx["gain_label"])
 
     buf = BytesIO()
     wb.save(buf)
