@@ -251,8 +251,6 @@ def projected_cash_park_contribution(account, month_key):
         default_invested=to_float(_safe_get(account, "monthly_contribution", 0)),
         default_cash_park=account_monthly_cash_park(account),
     )["cash_park"]
-
-
 def future_value(current_value, monthly_contribution, annual_growth_rate, years):
     monthly_rate = annual_growth_rate / 12
     months = int(years * 12)
