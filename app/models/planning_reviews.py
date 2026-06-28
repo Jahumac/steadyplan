@@ -1,5 +1,5 @@
 """Monthly reviews: fetch, create, update, review items, contribution flags."""
-from app.calculations import select_best_matching_override
+from app.calculations import account_monthly_personal_total, select_best_matching_override
 from ._conn import get_connection
 from .accounts import fetch_all_accounts
 
@@ -95,7 +95,7 @@ def ensure_monthly_review_items(review_id, user_id):
                 conn,
                 account["id"],
                 month_key,
-                account.get("monthly_contribution"),
+                account_monthly_personal_total(account),
             )
 
             if account["id"] not in existing_map:
@@ -143,7 +143,7 @@ def preview_monthly_review_items(review, user_id):
                 conn,
                 account["id"],
                 month_key,
-                account.get("monthly_contribution"),
+                account_monthly_personal_total(account),
             )
             existing = existing_map.get(account["id"], {})
             preview.append({
@@ -159,7 +159,7 @@ def preview_monthly_review_items(review, user_id):
                 "provider": account.get("provider"),
                 "wrapper_type": account.get("wrapper_type"),
                 "valuation_mode": account.get("valuation_mode"),
-                "account_monthly_contribution": account.get("monthly_contribution"),
+                "account_monthly_contribution": account_monthly_personal_total(account),
                 "current_value": account.get("current_value"),
             })
 

@@ -1,6 +1,6 @@
 """Allowance tracking: ISA, pension, dividend, CGT, carry-forward, overrides."""
 from datetime import datetime, timezone
-from app.calculations import select_best_matching_override
+from app.calculations import account_monthly_personal_total, select_best_matching_override
 from ._conn import get_connection
 
 
@@ -471,7 +471,7 @@ def remove_contribution_override_for_month(account_id, month_key, user_id):
     """Delete a single-month skip override (from_month == to_month == month_key)."""
     with get_connection() as conn:
         account = conn.execute(
-            "SELECT monthly_contribution FROM accounts WHERE id = ? AND user_id = ?",
+            "SELECT monthly_contribution, monthly_cash_park FROM accounts WHERE id = ? AND user_id = ?",
             (account_id, user_id),
         ).fetchone()
         if not account:
@@ -490,7 +490,7 @@ def remove_contribution_override_for_month(account_id, month_key, user_id):
                      SELECT id FROM monthly_reviews
                      WHERE user_id = ? AND month_key = ?
                  )""",
-            (account["monthly_contribution"] or 0, account_id, user_id, month_key),
+            (account_monthly_personal_total(account), account_id, user_id, month_key),
         )
         conn.commit()
 

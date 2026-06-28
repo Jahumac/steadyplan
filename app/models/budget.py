@@ -6,6 +6,52 @@ given month. Default is the item's default_amount; entries override.
 """
 from ._conn import get_connection
 
+LINKED_ACCOUNT_COMPONENT_INVESTED = "invested"
+LINKED_ACCOUNT_COMPONENT_CASH_PARK = "cash_park"
+
+
+def _row_value(row, key, default=None):
+    try:
+        value = row[key]
+    except (KeyError, IndexError, TypeError):
+        return default
+    return default if value is None else value
+
+
+def _linked_account_component(item):
+    component = _row_value(item, "linked_account_component", "invested")
+    component = str(component).strip().lower()
+    if component not in {LINKED_ACCOUNT_COMPONENT_INVESTED, LINKED_ACCOUNT_COMPONENT_CASH_PARK}:
+        return LINKED_ACCOUNT_COMPONENT_INVESTED
+    return component
+
+
+def _cash_park_budget_enabled(account):
+    return (
+        float(_row_value(account, "monthly_cash_park", 0) or 0) > 0
+        or float(_row_value(account, "cash_interest_rate", 0) or 0) > 0
+        or float(_row_value(account, "uninvested_cash", 0) or 0) > 0
+    )
+
+
+def _account_component_default_amount(account, component):
+    if component == LINKED_ACCOUNT_COMPONENT_CASH_PARK:
+        return float(_row_value(account, "monthly_cash_park", 0) or 0)
+    return float(_row_value(account, "monthly_contribution", 0) or 0)
+
+
+def _account_component_name(account, component):
+    name = (str(_row_value(account, "name", "Account"))).strip() or "Account"
+    if component == LINKED_ACCOUNT_COMPONENT_CASH_PARK:
+        return f"{name} cash park"
+    return name
+
+
+def _account_component_note(component):
+    if component == LINKED_ACCOUNT_COMPONENT_CASH_PARK:
+        return "Auto-created from monthly cash park."
+    return "Auto-created from account contribution."
+
 
 def fetch_budget_items(user_id):
     with get_connection() as conn:
@@ -45,7 +91,7 @@ def _ensure_account_contribution_items(conn, user_id):
 
     accounts = conn.execute(
         """
-        SELECT id, name, monthly_contribution
+        SELECT id, name, monthly_contribution, monthly_cash_park, cash_interest_rate, uninvested_cash
         FROM accounts
         WHERE user_id = ?
           AND is_active = 1
@@ -69,18 +115,37 @@ def _ensure_account_contribution_items(conn, user_id):
             (user_id, ex["id"]),
         )
 
-    for account in accounts:
-        amount = float(account["monthly_contribution"] or 0)
+    def _ensure_component_row(account, component, enabled=True):
         existing = conn.execute(
             """
-            SELECT id FROM budget_items
+            SELECT id, name, section, default_amount, notes, sort_order, is_active
+            FROM budget_items
             WHERE user_id = ?
               AND linked_account_id = ?
-              AND is_active = 1
+              AND COALESCE(linked_account_component, 'invested') = ?
+            ORDER BY is_active DESC, id ASC
             LIMIT 1
             """,
-            (user_id, account["id"]),
+            (user_id, account["id"], component),
         ).fetchone()
+
+        if not enabled:
+            conn.execute(
+                """
+                UPDATE budget_items
+                SET is_active = 0
+                WHERE user_id = ?
+                  AND linked_account_id = ?
+                  AND COALESCE(linked_account_component, 'invested') = ?
+                  AND is_active = 1
+                """,
+                (user_id, account["id"], component),
+            )
+            return
+
+        amount = _account_component_default_amount(account, component)
+        name = _account_component_name(account, component)
+        note = _account_component_note(component)
         if not existing:
             sort_row = conn.execute(
                 "SELECT COALESCE(MAX(sort_order), -1) AS max_sort FROM budget_items WHERE user_id = ? AND section = ?",
@@ -90,20 +155,43 @@ def _ensure_account_contribution_items(conn, user_id):
                 """
                 INSERT INTO budget_items (
                     user_id, name, section, default_amount, linked_account_id,
-                    notes, sort_order, is_active
+                    linked_account_component, notes, sort_order, is_active
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
                 """,
                 (
                     user_id,
-                    account["name"],
+                    name,
                     section_key,
                     amount,
                     account["id"],
-                    "Auto-created from account contribution.",
+                    component,
+                    note,
                     (sort_row["max_sort"] or -1) + 1,
                 ),
             )
+            return
+
+        conn.execute(
+            """
+            UPDATE budget_items
+            SET name = ?,
+                section = ?,
+                default_amount = ?,
+                notes = ?,
+                is_active = 1
+            WHERE id = ?
+            """,
+            (name, section_key, amount, note, existing["id"]),
+        )
+
+    for account in accounts:
+        _ensure_component_row(account, LINKED_ACCOUNT_COMPONENT_INVESTED, enabled=True)
+        _ensure_component_row(
+            account,
+            LINKED_ACCOUNT_COMPONENT_CASH_PARK,
+            enabled=_cash_park_budget_enabled(account),
+        )
         # Retire any old unlinked items in investment/saving sections with the same
         # name — they were created manually before auto-linking existed and are now
         # duplicates. This runs across all invest/saving section keys so a legacy
@@ -111,18 +199,22 @@ def _ensure_account_contribution_items(conn, user_id):
         # is created under "investment" (or vice versa).
         if invest_keys:
             placeholders = ", ".join("?" for _ in invest_keys)
-            conn.execute(
-                f"""
-                UPDATE budget_items
-                SET is_active = 0
-                WHERE user_id = ?
-                  AND section IN ({placeholders})
-                  AND linked_account_id IS NULL
-                  AND is_active = 1
-                  AND name = ?
-                """,
-                (user_id, *invest_keys, account["name"]),
-            )
+            for legacy_name in (
+                _account_component_name(account, LINKED_ACCOUNT_COMPONENT_INVESTED),
+                _account_component_name(account, LINKED_ACCOUNT_COMPONENT_CASH_PARK),
+            ):
+                conn.execute(
+                    f"""
+                    UPDATE budget_items
+                    SET is_active = 0
+                    WHERE user_id = ?
+                      AND section IN ({placeholders})
+                      AND linked_account_id IS NULL
+                      AND is_active = 1
+                      AND name = ?
+                    """,
+                    (user_id, *invest_keys, legacy_name),
+                )
     conn.commit()
 
     linked_rows = conn.execute(
@@ -130,7 +222,9 @@ def _ensure_account_contribution_items(conn, user_id):
         SELECT bi.id AS budget_item_id,
                bi.default_amount AS old_default_amount,
                bi.linked_account_id AS account_id,
-               a.monthly_contribution AS monthly_contribution
+               COALESCE(bi.linked_account_component, 'invested') AS linked_account_component,
+               a.monthly_contribution AS monthly_contribution,
+               a.monthly_cash_park AS monthly_cash_park
         FROM budget_items bi
         JOIN accounts a ON a.id = bi.linked_account_id
         WHERE bi.user_id = ?
@@ -144,7 +238,11 @@ def _ensure_account_contribution_items(conn, user_id):
     ).fetchall()
 
     for row in linked_rows:
-        new_amount = float(row["monthly_contribution"] or 0)
+        component = _linked_account_component(row)
+        if component == LINKED_ACCOUNT_COMPONENT_CASH_PARK:
+            new_amount = float(row["monthly_cash_park"] or 0)
+        else:
+            new_amount = float(row["monthly_contribution"] or 0)
         old_amount = float(row["old_default_amount"] or 0)
         if abs(old_amount - new_amount) < 0.005:
             continue
@@ -290,10 +388,14 @@ def fetch_budget_item(item_id, user_id=None):
 def create_budget_item(payload, user_id):
     with get_connection() as conn:
         linked_account_id = _owned_linked_account_id(conn, payload.get("linked_account_id"), user_id)
+        linked_account_component = _linked_account_component(payload)
         cursor = conn.execute(
             """
-            INSERT INTO budget_items (user_id, name, section, default_amount, linked_account_id, notes, sort_order, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+            INSERT INTO budget_items (
+                user_id, name, section, default_amount, linked_account_id,
+                linked_account_component, notes, sort_order, is_active
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
             """,
             (
                 user_id,
@@ -301,6 +403,7 @@ def create_budget_item(payload, user_id):
                 payload["section"],
                 payload["default_amount"],
                 linked_account_id,
+                linked_account_component,
                 payload.get("notes", ""),
                 payload.get("sort_order", 0),
             ),
@@ -313,10 +416,11 @@ def update_budget_item(payload, user_id):
     """Update a budget item, scoped to user_id."""
     with get_connection() as conn:
         linked_account_id = _owned_linked_account_id(conn, payload.get("linked_account_id"), user_id)
+        linked_account_component = _linked_account_component(payload)
         cursor = conn.execute(
             """
             UPDATE budget_items
-            SET name = ?, section = ?, default_amount = ?, linked_account_id = ?, notes = ?
+            SET name = ?, section = ?, default_amount = ?, linked_account_id = ?, linked_account_component = ?, notes = ?
             WHERE id = ? AND user_id = ?
             """,
             (
@@ -324,6 +428,7 @@ def update_budget_item(payload, user_id):
                 payload["section"],
                 payload["default_amount"],
                 linked_account_id,
+                linked_account_component,
                 payload.get("notes", ""),
                 payload["id"],
                 user_id,
