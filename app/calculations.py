@@ -156,7 +156,7 @@ def account_monthly_personal_total(account):
     return to_float(_safe_get(account, "monthly_contribution", 0)) + account_monthly_cash_park(account)
 
 
-
+def future_value(current_value, monthly_contribution, annual_growth_rate, years):
     monthly_rate = annual_growth_rate / 12
     months = int(years * 12)
 
