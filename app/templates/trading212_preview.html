@@ -18,16 +18,16 @@
   <p class="helper-text" style="margin-top:0;">
     This is a preview only. SteadyPlan fetched a broker snapshot using read-only broker access and compared it with your current tracked holdings. Nothing in SteadyPlan has been changed.
   </p>
-  <p class="helper-text" style="margin-top:0.45rem;">
+  <p class="helper-text mt-045" >
     {{ trading212_sync_support_note() }}
   </p>
   {% if preview.linked_account %}
-  <p class="helper-text" style="margin-top:0.45rem;">
+  <p class="helper-text mt-045" >
     Focused on linked account <strong>{{ preview.linked_account.name }}</strong>. Only holdings from this SteadyPlan account were compared with the broker snapshot.
   </p>
   {% endif %}
 
-  <div class="metrics-grid" style="margin-top:1rem;">
+  <div class="metrics-grid mt-1" >
     <div class="metric-card">
       <div class="metric-label">Broker positions</div>
       <div class="metric-value">{{ preview.stats.positions_count }}</div>
@@ -64,18 +64,18 @@
   <div class="section-header">
     <div>
       <h3>Recent broker snapshot preview and write history</h3>
-      <p class="helper-text" style="margin:0;">Keep a visible record of the latest broker snapshot preview and the latest reviewed write you confirmed on this linked account.</p>
+      <p class="helper-text m-0" >Keep a visible record of the latest broker snapshot preview and the latest reviewed write you confirmed on this linked account.</p>
     </div>
   </div>
   <div class="metrics-grid">
     <div class="metric-card">
       <div class="metric-label">Latest broker snapshot preview</div>
-      <div class="metric-value" style="font-size:1rem;">{{ preview.sync_history.last_preview.created_label if preview.sync_history.last_preview else '—' }}</div>
+      <div class="metric-value text-base" >{{ preview.sync_history.last_preview.created_label if preview.sync_history.last_preview else '—' }}</div>
       <div class="helper-text">{{ preview.sync_history.last_preview.action_label if preview.sync_history.last_preview else 'No broker snapshot preview saved yet' }}</div>
     </div>
     <div class="metric-card">
       <div class="metric-label">Latest reviewed write</div>
-      <div class="metric-value" style="font-size:1rem;">{{ preview.sync_history.last_apply.created_label if preview.sync_history.last_apply else '—' }}</div>
+      <div class="metric-value text-base" >{{ preview.sync_history.last_apply.created_label if preview.sync_history.last_apply else '—' }}</div>
       <div class="helper-text">{{ preview.sync_history.last_apply.action_label if preview.sync_history.last_apply else 'No reviewed write saved yet' }}</div>
     </div>
   </div>
@@ -97,7 +97,7 @@
           <td>{{ event.action_label }}</td>
           <td>
             {{ event.created_label }}
-            {% if event.snapshot_at %}<div class="helper-text" style="margin-top:0.2rem;">Snapshot {{ event.snapshot_label }}</div>{% endif %}
+            {% if event.snapshot_at %}<div class="helper-text mt-02" >Snapshot {{ event.snapshot_label }}</div>{% endif %}
           </td>
           <td class="num">{{ event.matched_updates_count }}</td>
           <td class="num">{{ event.broker_add_count }}</td>
@@ -116,7 +116,7 @@
     <div class="section-header">
       <div>
         <h3>Reviewed write steps</h3>
-        <p class="helper-text" style="margin:0;">Preview only. Any later write stays separate and needs confirmation for <strong>{{ preview.linked_account.name }}</strong>.</p>
+        <p class="helper-text m-0" >Preview only. Any later write stays separate and needs confirmation for <strong>{{ preview.linked_account.name }}</strong>.</p>
       </div>
     </div>
     <div class="metrics-grid">
@@ -147,9 +147,9 @@
     {% if preview.apply_plan.can_apply_matched_changes %}
     <form method="post" action="{{ url_for('settings.apply_trading212_reviewed_changes', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-apply-form">
       <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
-      <h4 style="margin:0;">Apply matched holding updates</h4>
-      <p class="helper-text" style="margin:0.45rem 0 0;">Updates matched holdings only on <strong>{{ preview.linked_account.name }}</strong>. Broker-only positions and tracked-only holdings stay untouched.</p>
-      <label class="checkbox-row" style="margin-top:0.75rem; align-items:flex-start; gap:0.55rem;">
+      <h4 class="m-0" >Apply matched holding updates</h4>
+      <p class="helper-text mt-045" >Updates matched holdings only on <strong>{{ preview.linked_account.name }}</strong>. Broker-only positions and tracked-only holdings stay untouched.</p>
+      <label class="checkbox-row mt-075 flex-start gap-055" >
         <input type="checkbox" name="confirm_apply_matched" value="yes">
         <span>I reviewed this and want to update matched holdings only.</span>
       </label>
@@ -160,16 +160,16 @@
     {% endif %}
     {% if preview.apply_plan.can_resolve_possible_matches %}
     <div class="panel inset-panel mt-1 trading212-apply-form trading212-possible-match-note">
-      <h4 style="margin:0;">Review likely tracked matches</h4>
-      <p class="helper-text" style="margin:0.45rem 0 0;">Use the broker-only cards below to compare one likely tracked match at a time when the name clues look right. SteadyPlan will only update the holding you explicitly choose.</p>
+      <h4 class="m-0" >Review likely tracked matches</h4>
+      <p class="helper-text mt-045" >Use the broker-only cards below to compare one likely tracked match at a time when the name clues look right. SteadyPlan will only update the holding you explicitly choose.</p>
     </div>
     {% endif %}
     {% if preview.apply_plan.can_apply_broker_additions %}
     <form method="post" action="{{ url_for('settings.apply_trading212_reviewed_broker_additions', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-apply-form trading212-apply-additions-form">
       <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
-      <h4 style="margin:0;">Add broker-only positions</h4>
-      <p class="helper-text" style="margin:0.45rem 0 0;">Adds broker-only positions with no likely tracked match clues. Positions with likely matches stay out for manual review.</p>
-      <label class="checkbox-row" style="margin-top:0.75rem; align-items:flex-start; gap:0.55rem;">
+      <h4 class="m-0" >Add broker-only positions</h4>
+      <p class="helper-text mt-045" >Adds broker-only positions with no likely tracked match clues. Positions with likely matches stay out for manual review.</p>
+      <label class="checkbox-row mt-075 flex-start gap-055" >
         <input type="checkbox" name="confirm_apply_broker_additions" value="yes">
         <span>I reviewed the broker-only positions and want SteadyPlan to add the {{ preview.apply_plan.addable_broker_count }} position{{ '' if preview.apply_plan.addable_broker_count == 1 else 's' }} with no likely tracked matches.</span>
       </label>
@@ -179,9 +179,9 @@
     </form>
     {% endif %}
     {% if preview.apply_plan.needs_changes %}
-    <p class="helper-text trading212-apply-footer" style="margin-top:0.75rem; margin-bottom:0;">Differences found. Nothing runs automatically; any later write stays explicit, account-scoped, and non-destructive.</p>
+    <p class="helper-text trading212-apply-footer mt-075 mb-0" >Differences found. Nothing runs automatically; any later write stays explicit, account-scoped, and non-destructive.</p>
     {% else %}
-    <p class="helper-text" style="margin-top:0.75rem; margin-bottom:0;">This preview already lines up cleanly. No write step is needed unless you explicitly choose one later.</p>
+    <p class="helper-text mt-075 mb-0" >This preview already lines up cleanly. No write step is needed unless you explicitly choose one later.</p>
     {% endif %}
   </section>
   {% endif %}
@@ -210,7 +210,7 @@
   <div class="section-header">
     <div>
       <h3>Matched holdings</h3>
-      <p class="helper-text" style="margin:0;">Ticker matches are used first, then a cautious name fallback.</p>
+      <p class="helper-text m-0" >Ticker matches are used first, then a cautious name fallback.</p>
     </div>
   </div>
   {% if preview.matched %}
@@ -230,20 +230,20 @@
         <tr>
           <td>
             {{ pair.csv.name }}
-            {% if pair.csv.ticker %}<div class="helper-text" style="margin-top:0.2rem;">{{ pair.csv.ticker }}</div>{% endif %}
+            {% if pair.csv.ticker %}<div class="helper-text mt-02" >{{ pair.csv.ticker }}</div>{% endif %}
           </td>
           <td>
             {{ pair.holding.holding_name }}
-            <div class="helper-text" style="margin-top:0.2rem;">{{ pair.holding.account_name }}</div>
+            <div class="helper-text mt-02" >{{ pair.holding.account_name }}</div>
           </td>
           <td>{{ trading212_match_type_label(pair.match_type) }}</td>
           <td class="num">
             {{ '%.4f'|format(pair.csv.units or 0) }} broker
-            <div class="helper-text" style="margin-top:0.2rem;">{{ '%.4f'|format(pair.holding.units or 0) }} tracked{% if pair.units_difference is not none %} · diff {{ '%+.4f'|format(pair.units_difference) }}{% endif %}</div>
+            <div class="helper-text mt-02" >{{ '%.4f'|format(pair.holding.units or 0) }} tracked{% if pair.units_difference is not none %} · diff {{ '%+.4f'|format(pair.units_difference) }}{% endif %}</div>
           </td>
           <td class="num">
             {{ '%.2f'|format(pair.csv.value or 0) }} {{ summary.currency or '' }}
-            <div class="helper-text" style="margin-top:0.2rem;">{{ '%.2f'|format(pair.holding.value or 0) }} tracked{% if pair.value_difference is not none %} · diff {{ '%+.2f'|format(pair.value_difference) }}{% endif %}</div>
+            <div class="helper-text mt-02" >{{ '%.2f'|format(pair.holding.value or 0) }} tracked{% if pair.value_difference is not none %} · diff {{ '%+.2f'|format(pair.value_difference) }}{% endif %}</div>
           </td>
         </tr>
         {% endfor %}
@@ -251,7 +251,7 @@
     </table>
   </div>
   {% else %}
-  <p class="helper-text" style="margin:0;">No existing tracked holdings matched this broker snapshot yet.</p>
+  <p class="helper-text m-0" >No existing tracked holdings matched this broker snapshot yet.</p>
   {% endif %}
 </section>
 
@@ -259,7 +259,7 @@
   <div class="section-header">
     <div>
       <h3>Broker-only positions</h3>
-      <p class="helper-text" style="margin:0;">These came from this broker snapshot but do not currently match a tracked holding. When SteadyPlan sees a close name clue, it shows likely tracked matches without updating anything automatically.</p>
+      <p class="helper-text m-0" >These came from this broker snapshot but do not currently match a tracked holding. When SteadyPlan sees a close name clue, it shows likely tracked matches without updating anything automatically.</p>
     </div>
   </div>
   {% if preview.broker_only %}
@@ -300,14 +300,14 @@
             <form method="post" action="{{ url_for('settings.resolve_trading212_possible_match', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-possible-match-form">
               <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
               <input type="hidden" name="preview_key" value="{{ row.preview_key }}">
-              <div class="helper-text" style="margin:0 0 0.5rem;">Choose the tracked holding that should receive this broker snapshot update.</div>
+              <div class="helper-text mb-05" >Choose the tracked holding that should receive this broker snapshot update.</div>
               {% for candidate in row.possible_matches %}
-              <label class="checkbox-row" style="align-items:flex-start; gap:0.55rem; margin-top:0.4rem;">
+              <label class="checkbox-row flex-start gap-055 mt-04" >
                 <input type="radio" name="selected_holding_id" value="{{ candidate.holding.id }}">
                 <span><strong>{{ candidate.holding.holding_name }}</strong> on {{ candidate.holding.account_name }}</span>
               </label>
               {% endfor %}
-              <label class="checkbox-row" style="margin-top:0.75rem; align-items:flex-start; gap:0.55rem;">
+              <label class="checkbox-row mt-075 flex-start gap-055" >
                 <input type="checkbox" name="confirm_resolve_possible_match" value="yes">
                 <span>I reviewed this likely match and want SteadyPlan to update only the tracked holding I selected.</span>
               </label>
@@ -399,14 +399,14 @@
       <form method="post" action="{{ url_for('settings.resolve_trading212_possible_match', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-possible-match-form">
         <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
         <input type="hidden" name="preview_key" value="{{ row.preview_key }}">
-        <div class="helper-text" style="margin:0 0 0.5rem;">Choose the tracked holding that should receive this broker snapshot update.</div>
+        <div class="helper-text mb-05" >Choose the tracked holding that should receive this broker snapshot update.</div>
         {% for candidate in row.possible_matches %}
-        <label class="checkbox-row" style="align-items:flex-start; gap:0.55rem; margin-top:0.4rem;">
+        <label class="checkbox-row flex-start gap-055 mt-04" >
           <input type="radio" name="selected_holding_id" value="{{ candidate.holding.id }}">
           <span><strong>{{ candidate.holding.holding_name }}</strong> on {{ candidate.holding.account_name }}</span>
         </label>
         {% endfor %}
-        <label class="checkbox-row" style="margin-top:0.75rem; align-items:flex-start; gap:0.55rem;">
+        <label class="checkbox-row mt-075 flex-start gap-055" >
           <input type="checkbox" name="confirm_resolve_possible_match" value="yes">
           <span>I reviewed this likely match and want SteadyPlan to update only the tracked holding I selected.</span>
         </label>
@@ -419,7 +419,7 @@
     {% endfor %}
   </div>
   {% else %}
-  <p class="helper-text" style="margin:0;">Every broker position found a likely tracked holding.</p>
+  <p class="helper-text m-0" >Every broker position found a likely tracked holding.</p>
   {% endif %}
 </section>
 
@@ -427,7 +427,7 @@
   <div class="section-header">
     <div>
       <h3>Tracked holdings not seen in this snapshot</h3>
-      <p class="helper-text" style="margin:0;">Useful for spotting holdings that are probably stale/manual versus ones that still need a careful rematch on this linked account.</p>
+      <p class="helper-text m-0" >Useful for spotting holdings that are probably stale/manual versus ones that still need a careful rematch on this linked account.</p>
     </div>
   </div>
   {% if preview.db_only %}
@@ -446,8 +446,8 @@
         <tr>
           <td>
             <div><strong>{{ row.holding_name }}</strong></div>
-            <div class="helper-text" style="margin-top:0.25rem;">{{ row.review_hint }}</div>
-            <div class="helper-text" style="margin-top:0.25rem;">{{ row.next_step_hint }}</div>
+            <div class="helper-text mt-025" >{{ row.review_hint }}</div>
+            <div class="helper-text mt-025" >{{ row.next_step_hint }}</div>
             <div class="badge-row mt-1">
               <span class="badge badge-meta">{{ row.review_label }}</span>
               {% for candidate in row.possible_broker_matches %}
@@ -464,7 +464,7 @@
     </table>
   </div>
   {% else %}
-  <p class="helper-text" style="margin:0;">No extra tracked holdings were left unmatched.</p>
+  <p class="helper-text m-0" >No extra tracked holdings were left unmatched.</p>
   {% endif %}
 </section>
 {% endblock %}

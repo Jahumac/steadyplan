@@ -182,7 +182,7 @@
         {% endif %}
 
         {# ── Inline add-holding bar ──────────────────────────────────────── #}
-        <div class="add-holding-bar" id="add-holding-bar" style="display:none;">
+        <div class="add-holding-bar hidden" id="add-holding-bar" >
 
           {# Mode A: search by ticker #}
           <div id="ah-mode-ticker">
@@ -204,7 +204,7 @@
                 </div>
                 <button type="submit" class="badge badge-primary-action add-holding-submit">Add</button>
               </div>
-              <p id="ah-status" class="text-sm" style="margin:0.4rem 0 0.2rem;min-height:1.25rem;"></p>
+              <p id="ah-status" class="text-sm my-04-02 min-h-125" ></p>
             </form>
             <button type="button" id="ah-switch-manual" class="btn-link text-sm text-muted">
               No ticker / pension fund? Add manually →
@@ -216,7 +216,7 @@
             <form method="post" action="/accounts/{{ selected.id }}/holdings/add-manual" id="add-manual-form">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <div class="add-holding-fields flex-wrap gap-06">
-                <div class="add-holding-field" style="flex:1;min-width:12rem;">
+                <div class="add-holding-field flex-1-min-12" >
                   <label for="am-name">Fund / holding name</label>
                   <input type="text" id="am-name" name="name" class="input-full"
                          placeholder="e.g. Nest Higher Risk Fund">

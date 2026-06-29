@@ -50,7 +50,7 @@
 <section class="card goal-track-callout {% if on_track %}goal-track-ok{% else %}goal-track-short{% endif %} mb-1">
   <div class="flex flex-center gap-075 flex-wrap">
     <span class="goal-track-icon">{% if on_track %}✓{% else %}⚠{% endif %}</span>
-    <div style="flex:1; min-width:200px;">
+    <div class="flex-1-min-200" >
       {% if on_track %}
         <strong>Future estimate meets "{{ primary_goal.name }}"</strong>
         <p class="helper-text m-0">Future estimate £{{ '{:,.0f}'.format(metrics.total_projected) }} vs target £{{ '{:,.0f}'.format(primary_goal.target) }} (margin £{{ '{:,.0f}'.format(metrics.total_projected - primary_goal.target) }}).</p>
@@ -157,7 +157,7 @@
         <div class="budget-row-left">
           <span class="budget-row-name">{{ row.name }}</span>
           <span class="budget-row-note">{{ row.wrapper_type }} · {{ '{:.1f}'.format(row.growth_rate * 100) }}% yearly growth after fees
-            {%- if row.annual_fee_pct %} <span style="color:var(--muted);">({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% before fees − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
+            {%- if row.annual_fee_pct %} <span class="text-muted" >({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% before fees − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
             {%- if row.effective_contribution != row.monthly_contribution or row.contribution_fee > 0 %} · you pay £{{ '{:,.2f}'.format(row.monthly_contribution) }}
               {%- if row.tax_relief %} + £{{ '{:,.2f}'.format(row.tax_relief) }} pension tax top-up{% endif %}
               {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} Lifetime ISA bonus{% endif %}
@@ -168,7 +168,7 @@
             {%- endif %}
           </span>
           {% if row.self_assessment > 0 %}
-          <span class="budget-row-note" style="color:var(--accent-3);">Possible extra tax claim: £{{ '{:,.2f}'.format(row.self_assessment) }} a month</span>
+          <span class="budget-row-note text-accent-3" >Possible extra tax claim: £{{ '{:,.2f}'.format(row.self_assessment) }} a month</span>
           {% endif %}
           {% if row.contribution_fee > 0 %}
           <span class="budget-row-note text-danger">{{ '{:.2f}'.format(row.contribution_fee_pct) }}% contribution fee costs £{{ '{:,.2f}'.format(row.contribution_fee) }} a month — £{{ '{:,.0f}'.format(row.contribution_fee * 12) }} a year</span>
@@ -193,10 +193,10 @@
         <div class="proj-acc-series" data-proj-series aria-live="polite"></div>
 
         <div class="proj-acc-schedule">
-          <div class="section-header mb-05" style="padding:0;border:none;">
+          <div class="section-header mb-05 p-0 border-none" >
             <div>
               <p class="eyebrow">Payment plan</p>
-              <h3 style="margin:0;font-size:1rem;">Change monthly payments by month</h3>
+              <h3 class="m-0 text-base" >Change monthly payments by month</h3>
             </div>
           </div>
           <p class="helper-text m-0">Add rows like “from September 2030 → £600 a month”. This saves to your plan and updates the future estimate.</p>
@@ -210,13 +210,13 @@
       </div>
     </details>
     {% endfor %}
-    <div class="budget-row" style="border-top:1px solid var(--border); margin-top:0.25rem; padding-top:0.75rem;">
+    <div class="budget-row border-t mt-025 pt-075" >
       <div class="budget-row-left">
-        <span class="budget-row-name" style="font-weight:700;">Total</span>
+        <span class="budget-row-name fw-bold" >Total</span>
       </div>
-      <div class="budget-row-right" style="gap:1.5rem;">
-        <span class="muted-cell" style="font-size:0.82rem;">now £{{ '{:,.0f}'.format(metrics.total_current) }}</span>
-        <strong style="color:var(--accent-2);">£{{ '{:,.0f}'.format(metrics.total_projected) }}</strong>
+      <div class="budget-row-right gap-15" >
+        <span class="muted-cell text-sm-alt" >now £{{ '{:,.0f}'.format(metrics.total_current) }}</span>
+        <strong class="text-accent-2" >£{{ '{:,.0f}'.format(metrics.total_projected) }}</strong>
       </div>
     </div>
   </div>
@@ -239,7 +239,7 @@
           <div class="budget-row-left">
             <span class="budget-row-name">{{ row.name }}</span>
             <span class="budget-row-note">{{ row.wrapper_type }} · {{ '{:.1f}'.format(row.growth_rate * 100) }}% yearly growth after fees
-              {%- if row.annual_fee_pct %} <span style="color:var(--muted);">({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% before fees − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
+              {%- if row.annual_fee_pct %} <span class="text-muted" >({{ '{:.1f}'.format(row.gross_growth_rate * 100) }}% before fees − {{ '{:.2f}'.format(row.annual_fee_pct) }}% fees{% if row.platform_fee_pct or row.platform_fee_flat %}: {{ '{:.2f}'.format(row.platform_fee_pct) }}% platform{% if row.platform_fee_flat %} + £{{ '{:,.0f}'.format(row.platform_fee_flat) }}/yr{% endif %}{% if row.fund_fee_pct %} + {{ '{:.2f}'.format(row.fund_fee_pct) }}% fund{% endif %}{% endif %})</span>{% endif %}
               {%- if row.effective_contribution != row.monthly_contribution or row.contribution_fee > 0 %} · you pay £{{ '{:,.2f}'.format(row.monthly_contribution) }}
                 {%- if row.tax_relief %} + £{{ '{:,.2f}'.format(row.tax_relief) }} pension tax top-up{% endif %}
                 {%- if row.government_bonus %} + £{{ '{:,.2f}'.format(row.government_bonus) }} Lifetime ISA bonus{% endif %}
@@ -250,7 +250,7 @@
               {%- endif %}
             </span>
             {% if row.self_assessment > 0 %}
-            <span class="budget-row-note" style="color:var(--accent-3);">Possible extra tax claim: £{{ '{:,.2f}'.format(row.self_assessment) }} a month</span>
+            <span class="budget-row-note text-accent-3" >Possible extra tax claim: £{{ '{:,.2f}'.format(row.self_assessment) }} a month</span>
             {% endif %}
             {% if row.contribution_fee > 0 %}
             <span class="budget-row-note text-danger">{{ '{:.2f}'.format(row.contribution_fee_pct) }}% contribution fee costs £{{ '{:,.2f}'.format(row.contribution_fee) }} a month — £{{ '{:,.0f}'.format(row.contribution_fee * 12) }} a year</span>
@@ -275,10 +275,10 @@
           <div class="proj-acc-series" data-proj-series aria-live="polite"></div>
 
           <div class="proj-acc-schedule">
-            <div class="section-header mb-05" style="padding:0;border:none;">
+            <div class="section-header mb-05 p-0 border-none" >
               <div>
                 <p class="eyebrow">Payment plan</p>
-                <h3 style="margin:0;font-size:1rem;">Change monthly payments by month</h3>
+                <h3 class="m-0 text-base" >Change monthly payments by month</h3>
               </div>
             </div>
             <p class="helper-text m-0">Add rows like “from September 2030 → £600 a month”. This saves to your plan and updates the future estimate.</p>
@@ -292,13 +292,13 @@
         </div>
       </details>
       {% endfor %}
-      <div class="budget-row" style="border-top:1px solid var(--border); margin-top:0.25rem; padding-top:0.75rem;">
+      <div class="budget-row border-t mt-025 pt-075" >
         <div class="budget-row-left">
-          <span class="budget-row-name" style="font-weight:700;">Total</span>
+          <span class="budget-row-name fw-bold" >Total</span>
         </div>
-        <div class="budget-row-right" style="gap:1.5rem;">
-          <span class="muted-cell" style="font-size:0.82rem;">now £{{ '{:,.0f}'.format(metrics.total_current) }}</span>
-          <strong style="color:var(--accent-2);">£{{ '{:,.0f}'.format(metrics.total_projected) }}</strong>
+        <div class="budget-row-right gap-15" >
+          <span class="muted-cell text-sm-alt" >now £{{ '{:,.0f}'.format(metrics.total_current) }}</span>
+          <strong class="text-accent-2" >£{{ '{:,.0f}'.format(metrics.total_projected) }}</strong>
         </div>
       </div>
     </div>

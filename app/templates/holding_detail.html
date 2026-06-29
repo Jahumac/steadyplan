@@ -102,7 +102,7 @@
     {% if perf_stats.vs_pct >= 0 %}This fund is <strong class="perf-positive">ahead</strong> of the comparison line over this period.{% else %}This fund is <strong class="perf-negative">behind</strong> the comparison line over this period.{% endif %}
   </p>
   {% endif %}
-  <p id="history-chart-error" class="helper-text mt-05" style="display:none;"></p>
+  <p id="history-chart-error" class="helper-text mt-05 hidden" ></p>
 </section>
 {% else %}
   {% if item.ticker %}

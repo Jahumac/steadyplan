@@ -106,7 +106,7 @@
     </div>
     <div class="hero-stat">
       <span class="hero-stat-label">Monthly to principal</span>
-      <span class="hero-stat-value"><strong style="color:var(--accent-3);">£{{ '{:,.2f}'.format([selected_debt.monthly_payment - selected_debt.monthly_interest, 0] | max) }}</strong></span>
+      <span class="hero-stat-value"><strong class="text-accent-3" >£{{ '{:,.2f}'.format([selected_debt.monthly_payment - selected_debt.monthly_interest, 0] | max) }}</strong></span>
     </div>
     {% endif %}
     {% if selected_debt.total_interest is not none %}
@@ -174,18 +174,18 @@
       <button type="button" class="badge badge-accent" id="debt-calc-btn">↻ Calculate new schedule</button>
     </div>
   </div>
-  <div id="result-{{ selected_debt.id }}" class="whatif-result mt-1" style="display:none;">
+  <div id="result-{{ selected_debt.id }}" class="whatif-result mt-1 hidden" >
     <div class="whatif-result-item">
       <span>New payoff date</span>
       <strong id="wi-date-{{ selected_debt.id }}">—</strong>
     </div>
     <div class="whatif-result-item">
       <span>Months saved</span>
-      <strong id="wi-months-saved-{{ selected_debt.id }}" style="color:var(--accent-3);">—</strong>
+      <strong class="text-accent-3" id="wi-months-saved-{{ selected_debt.id }}" >—</strong>
     </div>
     <div class="whatif-result-item">
       <span>Interest saved</span>
-      <strong id="wi-int-saved-{{ selected_debt.id }}" style="color:var(--accent-3);">—</strong>
+      <strong class="text-accent-3" id="wi-int-saved-{{ selected_debt.id }}" >—</strong>
     </div>
     <div class="whatif-result-item">
       <span>Total interest (new)</span>
@@ -207,7 +207,7 @@
       <h3 id="debt-sched-title">{% if payments_made > 0 %}Full loan history · {% endif %}Month by month</h3>
     </div>
     <div class="badge-row">
-      <button type="button" class="badge" id="debt-sched-reset" style="display:none;">↺ Reset</button>
+      <button type="button" class="badge hidden" id="debt-sched-reset" >↺ Reset</button>
       <button type="button" class="badge" id="debt-sched-export">↓ Export schedule</button>
     </div>
   </div>
@@ -232,14 +232,14 @@
           {% for row in schedule %}
           {% set is_past = loop.index <= payments_made %}
           {% set is_hidden = loop.index > 24 and not is_past %}
-          <tr{% if is_hidden %} class="sched-extra" style="display:none;"{% endif %}
+          <tr{% if is_hidden %} class="sched-extra hidden" {% endif %}
               {% if is_past %}style="opacity:0.5;"{% endif %}>
             <td class="text-muted">
               {% if row.date is defined %}{{ row.date.strftime('%-d %b %Y') }}{% else %}{{ row.month }}{% endif %}{% if is_past %} ✓{% endif %}
             </td>
             <td class="num">£{{ '{:,.2f}'.format(row.payment) }}</td>
             <td class="num stat-negative-text">£{{ '{:,.2f}'.format(row.interest) }}</td>
-            <td class="num" style="color:var(--accent-3);">£{{ '{:,.2f}'.format(row.principal) }}</td>
+            <td class="num text-accent-3" >£{{ '{:,.2f}'.format(row.principal) }}</td>
             <td class="num"><strong>£{{ '{:,.2f}'.format(row.balance) }}</strong></td>
           </tr>
           {% endfor %}
@@ -291,12 +291,12 @@
         <small class="form-hint">Shows how much you've paid off.</small>
       </label>
       <label>
-        <span>First payment date <span style="color:var(--muted);font-weight:400;">optional</span></span>
+        <span>First payment date <span class="text-muted fw-normal" >optional</span></span>
         <input type="date" name="start_date" value="{{ selected_debt.start_date or '' }}">
         <small class="form-hint">Add this to let SteadyPlan work out the current balance from the payment schedule.</small>
       </label>
       <label>
-        <span>Manual balance override (£) <span style="color:var(--muted);font-weight:400;">optional</span></span>
+        <span>Manual balance override (£) <span class="text-muted fw-normal" >optional</span></span>
         <input type="number" step="0.01" name="current_balance" value="{{ selected_debt.stored_balance or '' }}">
         <small class="form-hint">Leave blank if using auto-tracking above. Use this to enter a balance from a statement.</small>
       </label>
@@ -356,7 +356,7 @@
       </label>
     </div>
   </div>
-  <div id="zero-result" style="display:none;" class="mt-075">
+  <div class="hidden" id="zero-result"  class="mt-075">
     <p class="helper-text">
       Pay <strong id="zero-monthly" style="color:var(--accent-3);font-size:1.1rem;"></strong> per month to clear it in time.
       <span id="zero-note" class="text-muted"></span>
@@ -396,12 +396,12 @@
         <small class="form-hint">Shows how much you've paid off.</small>
       </label>
       <label>
-        <span>First payment date <span style="color:var(--muted);font-weight:400;">recommended</span></span>
+        <span>First payment date <span class="text-muted fw-normal" >recommended</span></span>
         <input type="date" name="start_date">
         <small class="form-hint">Automatically calculates your current balance and updates it each month.</small>
       </label>
       <label>
-        <span>Current balance (£) <span style="color:var(--muted);font-weight:400;">if no start date</span></span>
+        <span>Current balance (£) <span class="text-muted fw-normal" >if no start date</span></span>
         <input type="number" step="0.01" name="current_balance" placeholder="e.g. 14882">
         <small class="form-hint">Only needed if you're not using auto-tracking above.</small>
       </label>
@@ -468,7 +468,7 @@
     {% endfor %}
   </div>
 
-  <div class="hero-strip" style="margin-bottom:0.75rem;">
+  <div class="hero-strip mb-075" >
     <div class="hero-stat">
       <span class="hero-stat-label">Payoff time estimate</span>
       <span class="hero-stat-value"><strong>{{ payoff_guidance.total_months }} month{{ '' if payoff_guidance.total_months == 1 else 's' }}</strong></span>
