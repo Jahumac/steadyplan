@@ -104,7 +104,7 @@ def test_overview_uses_effective_account_values_for_holdings_accounts(app, clien
                 INSERT INTO accounts (
                     user_id, name, wrapper_type, category, valuation_mode,
                     current_value, uninvested_cash, monthly_contribution, is_active
-                ) VALUES (?, 'Cash ISA', 'Cash ISA', 'ISA', 'manual', 700, 25, 75, 1)
+                ) VALUES (?, 'GIA Portfolio', 'GIA', 'GIA', 'manual', 700, 25, 75, 1)
                 """,
                 (uid,),
             )

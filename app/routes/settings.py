@@ -499,7 +499,14 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
         tracked_value_total = sum(float((row or {}).get("value") or 0) for row in existing_holdings)
         value_gap = stats["position_value_total"] - tracked_value_total
         broker_cash_total = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
-        tracked_cash = float(linked_account.get("uninvested_cash") or 0)
+        if (
+            linked_account.get("broker_sync_focus") == "cash_only"
+            or linked_account.get("category") == "Cash"
+            or (linked_account.get("wrapper_type") or "").lower() == "cash isa"
+        ):
+            tracked_cash = float(linked_account.get("current_value") or 0)
+        else:
+            tracked_cash = float(linked_account.get("uninvested_cash") or 0)
         cash_difference = broker_cash_total - tracked_cash
         can_apply_cash = abs(cash_difference) >= 0.01 if sync_focus in ["all", "cash_only"] else False
         
@@ -1550,7 +1557,15 @@ def apply_trading212_cash(connection_id):
 
     broker_cash_total = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
     
-    linked_account["uninvested_cash"] = broker_cash_total
+    if (
+        linked_account.get("broker_sync_focus") == "cash_only"
+        or linked_account.get("category") == "Cash"
+        or (linked_account.get("wrapper_type") or "").lower() == "cash isa"
+    ):
+        linked_account["current_value"] = broker_cash_total
+        linked_account["uninvested_cash"] = 0.0
+    else:
+        linked_account["uninvested_cash"] = broker_cash_total
     update_account(linked_account, current_user.id)
 
     flash(f"Updated account cash balance to {broker_cash_total:.2f}.", "success")
