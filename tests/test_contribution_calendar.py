@@ -750,7 +750,8 @@ def test_contribution_calendar_page_loads(app, client, make_user, monkeypatch):
 
 
 def test_contribution_calendar_has_mobile_style_safeguards():
-    css = (Path(__file__).resolve().parents[1] / "app" / "static" / "css" / "styles.css").read_text()
+    css_files = list((Path(__file__).resolve().parents[1] / "app" / "static" / "css" / "modules").glob("*.css"))
+    css = "".join(f.read_text() for f in css_files)
 
     assert ".contribution-calendar-form input[type=\"month\"]" in css
     assert "color-scheme: dark;" in css

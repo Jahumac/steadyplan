@@ -70,7 +70,8 @@ def test_projections_marks_global_month_strip_for_mobile_hiding(app, client, mak
     assert html.count('Lifetime ISA contributions stop at age 50') == 2
     assert 'LISA contributions stop at age 50' not in html
 
-    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+    css_files = list(STATIC_ROOT.joinpath("css/modules").glob("*.css"))
+    css = "".join(f.read_text() for f in css_files)
     assert ".projections-compact-only {" in css
     assert ".projections-desktop-detail {" in css
     assert ".projections-compact-details summary::after {" in css

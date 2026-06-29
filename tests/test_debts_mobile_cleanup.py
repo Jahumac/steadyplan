@@ -16,7 +16,8 @@ def test_debts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, clie
     assert '<div class="row-end">' not in html
     assert 'No debts tracked' in html
 
-    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+    css_files = list(STATIC_ROOT.joinpath("css/modules").glob("*.css"))
+    css = "".join(f.read_text() for f in css_files)
     assert ".debts-hero-actions {" in css
     assert "align-items: stretch;" in css
     assert "justify-content: flex-start;" in css

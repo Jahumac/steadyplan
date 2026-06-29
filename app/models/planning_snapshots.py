@@ -197,6 +197,20 @@ def fetch_monthly_performance_data(user_id):
         for ov in overrides:
             overrides_by_account.setdefault(int(ov["account_id"]), []).append(ov)
 
+        all_snaps_rows = conn.execute(
+            """
+            SELECT s.account_id, s.month_key, s.balance
+            FROM monthly_snapshots s
+            JOIN accounts a ON a.id = s.account_id
+            WHERE a.user_id = ?
+            ORDER BY s.account_id, s.month_key ASC
+            """,
+            (user_id,),
+        ).fetchall()
+        snaps_by_account = {}
+        for sr in all_snaps_rows:
+            snaps_by_account.setdefault(int(sr["account_id"]), []).append(dict(sr))
+
         review_map = {}
         cash_flow_map = {}
         prize_map = {}
@@ -265,20 +279,13 @@ def fetch_monthly_performance_data(user_id):
             current_balance_by_account = {}
 
             for account in accounts:
-                snap = conn.execute(
-                    """
-                    SELECT balance, month_key
-                    FROM monthly_snapshots
-                    WHERE account_id = ?
-                      AND month_key <= ?
-                    ORDER BY month_key DESC
-                    LIMIT 1
-                    """,
-                    (account["id"], month_key),
-                ).fetchone()
-                if not snap:
-                    continue
                 aid = int(account["id"])
+                account_snaps = snaps_by_account.get(aid, [])
+                valid_snaps = [s for s in account_snaps if s["month_key"] <= month_key]
+                if not valid_snaps:
+                    continue
+
+                snap = valid_snaps[-1]
                 valued_account_ids.add(aid)
                 current_balance = float(snap["balance"] or 0)
                 accounts_with_value += 1
@@ -289,17 +296,10 @@ def fetch_monthly_performance_data(user_id):
                 if snap["month_key"] != month_key:
                     carried_forward += 1
                 else:
-                    prior_snap = conn.execute(
-                        """
-                        SELECT 1
-                        FROM monthly_snapshots
-                        WHERE account_id = ?
-                          AND month_key < ?
-                        LIMIT 1
-                        """,
-                        (account["id"], month_key),
-                    ).fetchone()
-                    first_value_by_account[aid] = prior_snap is None
+                    if len(valid_snaps) == 1:
+                        first_value_by_account[aid] = True
+                    else:
+                        first_value_by_account[aid] = False
 
             if accounts_with_value == 0:
                 continue

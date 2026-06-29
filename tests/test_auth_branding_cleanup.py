@@ -52,7 +52,8 @@ def test_setup_page_uses_brand_logo_without_auth_mascot_icon(client, monkeypatch
 
 
 def test_auth_css_no_longer_contains_auth_brand_icon_or_auth_turtle_classes():
-    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+    css_files = list(STATIC_ROOT.joinpath("css/modules").glob("*.css"))
+    css = "".join(f.read_text() for f in css_files)
 
     assert ".auth-brand-mark {" in css
     assert ".auth-brand-mark--float {" in css

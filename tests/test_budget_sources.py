@@ -365,7 +365,8 @@ def test_budget_what_if_javascript_blocks_auto_save_and_restores_real_values():
 
 
 def test_budget_mobile_layout_keeps_summary_and_rows_compact():
-    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+    css_files = list(STATIC_ROOT.joinpath("css/modules").glob("*.css"))
+    css = "".join(f.read_text() for f in css_files)
 
     assert "@media (max-width: 640px)" in css
     assert ".budget-section-metrics {\n    grid-template-columns: repeat(3, minmax(0, 1fr));" in css
