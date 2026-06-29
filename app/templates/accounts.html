@@ -264,6 +264,16 @@
                 <small class="form-hint">No saved broker snapshot connections yet. Manual/CSV tracking stays available until you add one in Settings.</small>
                 {% endif %}
               </label>
+              
+              <label class="form-full-col mt-1">
+                <span>Broker sync focus</span>
+                <select name="broker_sync_focus">
+                  <option value="all" {% if selected.broker_sync_focus == 'all' or not selected.broker_sync_focus %}selected{% endif %}>Sync holdings and cash</option>
+                  <option value="holdings_only" {% if selected.broker_sync_focus == 'holdings_only' %}selected{% endif %}>Sync holdings only (ignore cash)</option>
+                  <option value="cash_only" {% if selected.broker_sync_focus == 'cash_only' %}selected{% endif %}>Sync cash only (ignore holdings)</option>
+                </select>
+                <small class="form-hint">Choose which parts of the broker snapshot apply to this SteadyPlan account.</small>
+              </label>
               {% else %}
               {% if selected.linked_broker_connection_id %}
               <input type="hidden" name="linked_broker_connection_id" value="{{ selected.linked_broker_connection_id }}">

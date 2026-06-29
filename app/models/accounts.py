@@ -165,7 +165,8 @@ def update_account(payload, user_id=None):
                 cash_interest_rate = ?,
                 interest_payment_day = ?,
                 include_in_budget = ?,
-                pre_salary = ?
+                pre_salary = ?,
+                broker_sync_focus = ?
             {where}
             """,
             (
@@ -198,6 +199,7 @@ def update_account(payload, user_id=None):
                 payload.get("interest_payment_day", 0),
                 1 if payload.get("include_in_budget", True) else 0,
                 1 if payload.get("pre_salary", False) else 0,
+                payload.get("broker_sync_focus", "all"),
                 *params_tail,
             ),
         )
@@ -256,9 +258,9 @@ def create_account(payload, user_id):
                 growth_rate_override, owner, linked_broker_connection_id, is_active, notes, last_updated,
                 employer_contribution, contribution_method, annual_fee_pct,
                 platform_fee_pct, platform_fee_flat, platform_fee_cap, fund_fee_pct,
-                contribution_fee_pct, uninvested_cash, cash_interest_rate, interest_payment_day
+                contribution_fee_pct, uninvested_cash, cash_interest_rate, interest_payment_day, broker_sync_focus
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
@@ -290,6 +292,7 @@ def create_account(payload, user_id):
                 payload.get("uninvested_cash", 0),
                 payload.get("cash_interest_rate", 0),
                 payload.get("interest_payment_day", 0),
+                payload.get("broker_sync_focus", "all"),
             ),
         )
         conn.commit()
