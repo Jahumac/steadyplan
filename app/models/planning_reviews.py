@@ -1,5 +1,6 @@
 """Monthly reviews: fetch, create, update, review items, contribution flags."""
 from app.calculations import (
+    to_decimal,
     select_best_matching_override,
 )
 from ._conn import get_connection
@@ -20,8 +21,8 @@ def _expected_contribution_for_month(conn, account_id, month_key, fallback_month
     ).fetchall()
     selected = select_best_matching_override(overrides, month_key)
     if selected is not None:
-        return float(selected["override_amount"] or 0)
-    return float(fallback_monthly_contribution or 0)
+        return to_decimal(selected["override_amount"])
+    return to_decimal(fallback_monthly_contribution)
 
 
 def fetch_or_create_monthly_review(month_key, user_id):
@@ -88,7 +89,7 @@ def ensure_monthly_review_items(review_id, user_id):
             "SELECT account_id, expected_contribution FROM monthly_review_items WHERE review_id = ?",
             (review_id,),
         ).fetchall()
-        existing_map = {row["account_id"]: float(row["expected_contribution"] or 0) for row in existing_rows}
+        existing_map = {row["account_id"]: to_decimal(row["expected_contribution"]) for row in existing_rows}
 
         for account in accounts:
             expected = _expected_contribution_for_month(

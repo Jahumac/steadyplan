@@ -2,6 +2,7 @@
 from collections import defaultdict
 from datetime import datetime, timezone
 from app.calculations import (
+    to_decimal,
     add_months_to_key,
     select_best_matching_override,
 )
@@ -336,7 +337,7 @@ def create_temporary_contribution_plan(user_id, plan_name, rows):
     for row in rows or []:
         try:
             account_id = int(row["account_id"])
-            override_amount = float(row["override_amount"] or 0)
+            override_amount = to_decimal(row["override_amount"])
         except (KeyError, TypeError, ValueError):
             continue
         component = "total"
@@ -483,7 +484,7 @@ def fetch_temporary_contribution_plans(user_id):
             "wrapper_type": row["wrapper_type"],
             "from_month": row["from_month"],
             "to_month": row["to_month"],
-            "override_amount": float(row["override_amount"] or 0),
+            "override_amount": to_decimal(row["override_amount"]),
             "created_at": row["created_at"],
         })
 
@@ -605,7 +606,7 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
     calendar_accounts = []
     for account in accounts:
         account_id = int(account["id"])
-        default_amount = float(account["monthly_contribution"] or 0)
+        default_amount = to_decimal(account["monthly_contribution"])
         month_cells = []
         for month_key in month_keys:
             active_rows = [
@@ -621,7 +622,7 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
                 "month_key": month_key,
                 "default_amount": default_amount,
                 "has_override": selected is not None,
-                "override_amount": float(selected["override_amount"] or 0) if selected is not None else None,
+                "override_amount": to_decimal(selected["override_amount"]) if selected is not None else None,
                 "reason": selected_reason,
                 "plan_name": _plan_name_from_reason(selected_reason) if selected_reason.startswith(TEMPORARY_PLAN_PREFIX) else "",
                 "source_label": (
@@ -633,7 +634,7 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
                 "active_override_count": len(active_rows),
                 "overlap": len(active_rows) > 1,
                 "overlap_reasons": [row["reason"] or "Override" for row in active_rows],
-                "overlap_amounts": [float(row["override_amount"] or 0) for row in active_rows],
+                "overlap_amounts": [to_decimal(row["override_amount"]) for row in active_rows],
             })
 
         calendar_accounts.append({
@@ -644,9 +645,9 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
             "base_account_name": account["name"],
             "wrapper_type": account["wrapper_type"],
             "category": account["category"],
-            "current_value": float(account["current_value"] or 0),
+            "current_value": to_decimal(account["current_value"]),
             "monthly_contribution": default_amount,
-            "employer_contribution": float(account["employer_contribution"] or 0),
+            "employer_contribution": to_decimal(account["employer_contribution"]),
             "contribution_method": account["contribution_method"] or "standard",
             "valuation_mode": account["valuation_mode"] or "manual",
             "months": month_cells,
@@ -697,8 +698,8 @@ def _effective_override_amount_for_month(conn, account_id, month_key, fallback_a
     ).fetchall()
     selected = select_best_matching_override(rows, month_key)
     if selected is not None:
-        return float(selected["override_amount"] or 0)
-    return float(fallback_amount or 0)
+        return to_decimal(selected["override_amount"])
+    return to_decimal(fallback_amount)
 
 
 def _recalculate_review_items_for_account_month_range(conn, account_id, user_id, from_month, to_month):
@@ -721,7 +722,7 @@ def _recalculate_review_items_for_account_month_range(conn, account_id, user_id,
         """,
         (user_id, account_id, from_month, to_month),
     ).fetchall()
-    fallback_amount = float(account["monthly_contribution"] or 0)
+    fallback_amount = to_decimal(account["monthly_contribution"])
     for review in review_rows:
         expected = _effective_override_amount_for_month(
             conn,
@@ -790,7 +791,7 @@ def fetch_all_active_overrides(month_key, user_id):
         if selected is not None:
             aggregated[account_id] = {
                 **dict(selected),
-                "override_amount": float(selected["override_amount"] or 0),
+                "override_amount": to_decimal(selected["override_amount"]),
                 "component": "total",
             }
     return aggregated
@@ -1029,7 +1030,7 @@ def add_cash_flow_event(payload, user_id):
                 user_id,
                 account_id,
                 payload["event_date"],
-                float(payload["amount"] or 0),
+                to_decimal(payload["amount"]),
                 payload.get("kind") or "transfer",
                 counterparty,
                 payload.get("note") or "",
@@ -1046,7 +1047,7 @@ def add_account_transfer_events(payload, user_id):
     to_account_id = int(payload.get("to_account_id") or 0)
     if from_account_id == to_account_id:
         return None
-    amount = abs(float(payload.get("amount") or 0))
+    amount = abs(to_decimal(payload.get("amount")))
     if amount <= 0:
         return None
     event_date = payload.get("event_date")
