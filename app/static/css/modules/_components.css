@@ -1231,4 +1231,152 @@
   border-color: rgba(56, 189, 248, 0.4);
 }
 
+/* ── Simplified Sync Summary Card ─────────────────────────────────────────── */
+
+.sync-summary-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.55) 0%, rgba(15, 23, 42, 0.75) 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+}
+
+.sync-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sync-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-white);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.status-dot.success { background: var(--success); box-shadow: 0 0 8px var(--success); }
+.status-dot.warning { background: var(--accent-3); box-shadow: 0 0 8px var(--accent-3); }
+
+.sync-meta-text {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.sync-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.sync-comparison-col h4 {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.sync-val-row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.sync-val-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.sync-val-item .label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sync-val-item .val {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-white);
+}
+
+.sync-val-divider {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+  opacity: 0.5;
+}
+
+.sync-diff-status {
+  font-size: 0.9rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.sync-diff-status.diff-warning {
+  border-color: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.04);
+  color: #fef3c7;
+}
+
+.sync-diff-status.diff-ok {
+  border-color: rgba(34, 197, 94, 0.2);
+  background: rgba(34, 197, 94, 0.04);
+  color: #dcfce7;
+}
+
+.diff-subtext {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+
+/* ── Inline Action Forms ───────────────────────────────────────────────────── */
+
+.sync-action-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.sync-action-info {
+  flex: 1;
+  min-width: 280px;
+}
+
+.sync-action-control {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.sync-action-control .checkbox-row {
+  margin: 0;
+}
+
+.sync-action-control .btn {
+  margin: 0;
+}
 
