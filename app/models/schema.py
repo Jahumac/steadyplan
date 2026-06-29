@@ -1152,6 +1152,13 @@ def _run_migrations(conn):
     except Exception as e:
         _log_migration_error(e)
 
+    try:
+        conn.execute(
+            "ALTER TABLE accounts ADD COLUMN broker_sync_focus TEXT DEFAULT 'all'"
+        )
+    except Exception as e:
+        _log_migration_error(e)
+
     # ── v8: purge legacy soft-deleted accounts ──────────────────────────
     # Delete now means really-delete (see app/models/accounts.py). Old
     # soft-deleted accounts (is_active = 0) were still leaking their

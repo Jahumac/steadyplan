@@ -480,12 +480,34 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
     }
     apply_plan = None
     if linked_account:
+        sync_focus = linked_account.get("broker_sync_focus") or "all"
+
+        if sync_focus == "cash_only":
+            matched = []
+            matched_updates = []
+            broker_only = []
+            db_only = []
+            stats["matched_count"] = 0
+            stats["broker_only_count"] = 0
+            stats["db_only_count"] = 0
+            stats["matched_value"] = 0.0
+            stats["broker_only_value"] = 0.0
+            stats["db_only_value"] = 0.0
+
         tracked_value_total = sum(float((row or {}).get("value") or 0) for row in existing_holdings)
         value_gap = stats["position_value_total"] - tracked_value_total
         broker_cash_total = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
         tracked_cash = float(linked_account.get("uninvested_cash") or 0)
         cash_difference = broker_cash_total - tracked_cash
-        can_apply_cash = abs(cash_difference) >= 0.01
+        can_apply_cash = abs(cash_difference) >= 0.01 if sync_focus in ["all", "cash_only"] else False
+        
+        needs_changes = False
+        if sync_focus in ["all", "holdings_only"]:
+            if matched_updates or broker_only or db_only or abs(value_gap) >= 0.005:
+                needs_changes = True
+        if can_apply_cash:
+            needs_changes = True
+
         apply_plan = {
             "matched_updates_count": len(matched_updates),
             "broker_add_count": len(broker_only),
@@ -497,12 +519,13 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
             "tracked_cash": tracked_cash,
             "cash_difference": cash_difference,
             "can_apply_cash": can_apply_cash,
-            "needs_changes": bool(matched_updates or broker_only or db_only or abs(value_gap) >= 0.005 or can_apply_cash),
-            "can_apply_matched_changes": bool(matched_updates),
+            "needs_changes": needs_changes,
+            "sync_focus": sync_focus,
+            "can_apply_matched_changes": bool(matched_updates) if sync_focus in ["all", "holdings_only"] else False,
             "addable_broker_count": len([row for row in broker_only if not (row.get("possible_matches") or [])]),
-            "can_apply_broker_additions": bool([row for row in broker_only if not (row.get("possible_matches") or [])]),
+            "can_apply_broker_additions": bool([row for row in broker_only if not (row.get("possible_matches") or [])]) if sync_focus in ["all", "holdings_only"] else False,
             "resolvable_possible_match_count": len([row for row in broker_only if (row.get("possible_matches") or [])]),
-            "can_resolve_possible_matches": bool([row for row in broker_only if (row.get("possible_matches") or [])]),
+            "can_resolve_possible_matches": bool([row for row in broker_only if (row.get("possible_matches") or [])]) if sync_focus in ["all", "holdings_only"] else False,
         }
     return {
         "connection": dict(connection),

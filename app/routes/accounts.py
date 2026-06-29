@@ -147,6 +147,7 @@ def _account_payload_from_form(form):
         "interest_payment_day": max(0, min(31, optional_int(form.get("interest_payment_day"), default=0))),
         "include_in_budget": "1" in form.getlist("include_in_budget"),
         "pre_salary": "1" in form.getlist("pre_salary"),
+        "broker_sync_focus": form.get("broker_sync_focus", "all"),
     }
 
 
@@ -193,6 +194,7 @@ _TRADING212_SUPPORTED_WRAPPER_TYPES = {
     "general investment account",
     "stocks & shares isa",
     "stocks and shares isa",
+    "cash isa",
 }
 
 
@@ -204,7 +206,7 @@ def _trading212_wrapper_support_hint(wrapper_type):
     if _supports_trading212_public_api(wrapper_type):
         return None
     return (
-        "Trading 212 Public API currently supports Invest and Stocks ISA only. "
+        "Trading 212 Public API currently supports Invest, Stocks ISA, and Cash ISA only. "
         "Keep this account manual/CSV-tracked for now."
     )
 

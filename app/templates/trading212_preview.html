@@ -120,6 +120,7 @@
       </div>
     </div>
     <div class="metrics-grid">
+      {% if preview.apply_plan.sync_focus in ["all", "holdings_only"] %}
       <div class="metric-card">
         <div class="metric-label">Matched holdings to update</div>
         <div class="metric-value">{{ preview.apply_plan.matched_updates_count }}</div>
@@ -140,14 +141,19 @@
         <div class="metric-label">Broker vs tracked value gap</div>
         <div class="metric-value">{% if preview.apply_plan.value_gap > 0 %}+{% endif %}{{ '%.2f'|format(preview.apply_plan.value_gap) }} {{ summary.currency or connection.external_account_currency or '' }}</div>
       </div>
+      {% endif %}
+      {% if preview.apply_plan.sync_focus in ["all", "cash_only"] %}
       <div class="metric-card">
         <div class="metric-label">Broker cash vs tracked cash</div>
         <div class="metric-value">{% if preview.apply_plan.cash_difference > 0 %}+{% endif %}{{ '%.2f'|format(preview.apply_plan.cash_difference) }} {{ summary.currency or connection.external_account_currency or '' }}</div>
       </div>
+      {% endif %}
     </div>
+    {% if preview.apply_plan.sync_focus in ["all", "holdings_only"] %}
     <p class="helper-text trading212-apply-summary" style="margin:0.9rem 0 0;">
       Compare <strong>{{ '%.2f'|format(preview.apply_plan.broker_value_total) }} {{ summary.currency or connection.external_account_currency or '' }}</strong> from this broker snapshot against <strong>{{ '%.2f'|format(preview.apply_plan.tracked_value_total) }} GBP</strong> tracked in SteadyPlan. Review any units or value difference before writing, and keep broker-only and tracked-only items explicit.
     </p>
+    {% endif %}
 
     {% if preview.apply_plan.can_apply_cash %}
     <form method="post" action="{{ url_for('settings.apply_trading212_cash', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-apply-form">
@@ -225,6 +231,7 @@
   </div>
 </section>
 
+{% if not preview.apply_plan or preview.apply_plan.sync_focus in ["all", "holdings_only"] %}
 <section class="panel mt-1">
   <div class="section-header">
     <div>
@@ -486,4 +493,5 @@
   <p class="helper-text m-0" >No extra tracked holdings were left unmatched.</p>
   {% endif %}
 </section>
+{% endif %}
 {% endblock %}
