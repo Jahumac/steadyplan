@@ -45,7 +45,8 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert '<p class="eyebrow">This month</p>' not in html
     assert "Keep budget editing simple" not in html
 
-    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+    css_files = list(STATIC_ROOT.joinpath("css/modules").glob("*.css"))
+    css = "".join(f.read_text() for f in css_files)
     assert ".budget-hero-actions {" in css
     assert "flex-direction: column;" in css
     assert ".subnav-mobile-family {" in css

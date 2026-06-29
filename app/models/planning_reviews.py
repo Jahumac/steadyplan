@@ -7,22 +7,30 @@ from ._conn import get_connection
 from .accounts import fetch_all_accounts
 
 
-def _expected_contribution_for_month(conn, account_id, month_key, fallback_monthly_contribution):
-    overrides = conn.execute(
+def _fetch_all_overrides_for_user(conn, user_id, month_key):
+    rows = conn.execute(
         """
-        SELECT *
-        FROM contribution_overrides
-        WHERE account_id = ?
-          AND from_month <= ?
-          AND to_month >= ?
-        ORDER BY id DESC
+        SELECT o.*
+        FROM contribution_overrides o
+        JOIN accounts a ON a.id = o.account_id
+        WHERE a.user_id = ?
+          AND o.from_month <= ?
+          AND o.to_month >= ?
+        ORDER BY o.account_id, o.id DESC
         """,
-        (account_id, month_key, month_key),
+        (user_id, month_key, month_key)
     ).fetchall()
+    overrides_by_acc = {}
+    for r in rows:
+        overrides_by_acc.setdefault(int(r["account_id"]), []).append(dict(r))
+    return overrides_by_acc
+
+def _expected_contribution_from_bulk(account_id, overrides_by_acc, month_key, fallback_val):
+    overrides = overrides_by_acc.get(int(account_id), [])
     selected = select_best_matching_override(overrides, month_key)
     if selected is not None:
         return to_decimal(selected["override_amount"])
-    return to_decimal(fallback_monthly_contribution)
+    return to_decimal(fallback_val)
 
 
 def fetch_or_create_monthly_review(month_key, user_id):
@@ -91,10 +99,12 @@ def ensure_monthly_review_items(review_id, user_id):
         ).fetchall()
         existing_map = {row["account_id"]: to_decimal(row["expected_contribution"]) for row in existing_rows}
 
+        overrides_by_acc = _fetch_all_overrides_for_user(conn, user_id, month_key)
+
         for account in accounts:
-            expected = _expected_contribution_for_month(
-                conn,
+            expected = _expected_contribution_from_bulk(
                 account["id"],
+                overrides_by_acc,
                 month_key,
                 account["monthly_contribution"],
             )
@@ -139,10 +149,12 @@ def preview_monthly_review_items(review, user_id):
         existing_map = {row["account_id"]: row for row in existing_rows}
         preview = []
 
+        overrides_by_acc = _fetch_all_overrides_for_user(conn, user_id, month_key)
+
         for account in accounts:
-            expected = _expected_contribution_for_month(
-                conn,
+            expected = _expected_contribution_from_bulk(
                 account["id"],
+                overrides_by_acc,
                 month_key,
                 account_monthly_personal_total(account),
             )

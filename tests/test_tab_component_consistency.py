@@ -28,7 +28,8 @@ MAIN_HERO_PATHS = [
 
 
 def test_tab_css_uses_one_consistent_mobile_safe_component():
-    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+    css_files = list(STATIC_ROOT.joinpath("css/modules").glob("*.css"))
+    css = "".join(f.read_text() for f in css_files)
 
     assert ".subnav-page {" in css
     assert ".subnav-history," in css
@@ -245,7 +246,8 @@ def test_account_wizard_scripts_are_deferred_until_the_wizard_markup_exists():
 
 def test_account_wizard_template_selection_updates_visible_state_and_continue_copy():
     js = STATIC_ROOT.joinpath("js/app.js").read_text()
-    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+    css_files = list(STATIC_ROOT.joinpath("css/modules").glob("*.css"))
+    css = "".join(f.read_text() for f in css_files)
 
     assert "function updateTemplateSelection(selectedBtn, tpl)" in js
     assert "other.setAttribute('aria-pressed', isSelected ? 'true' : 'false');" in js

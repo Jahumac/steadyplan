@@ -168,7 +168,8 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     assert '£1,300/mo' not in html
     assert '<div class="row-end">' not in html
 
-    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+    css_files = list(STATIC_ROOT.joinpath("css/modules").glob("*.css"))
+    css = "".join(f.read_text() for f in css_files)
     assert ".accounts-hero-actions {" in css
     assert "flex: 1 0 100%;" in css
     assert "display: grid;" in css
