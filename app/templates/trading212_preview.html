@@ -60,55 +60,53 @@
 </section>
 
 {% if preview.sync_history and preview.sync_history.events %}
-<section class="panel mt-1">
-  <div class="section-header">
-    <div>
-      <h3>Recent broker snapshot preview and write history</h3>
-      <p class="helper-text m-0" >Keep a visible record of the latest broker snapshot preview and the latest reviewed write you confirmed on this linked account.</p>
+<details class="preview-details-disclosure mt-1">
+  <summary class="preview-details-summary">Recent broker snapshot preview and write history</summary>
+  <div class="details-content">
+    <p class="helper-text mt-05" >Keep a visible record of the latest broker snapshot preview and the latest reviewed write you confirmed on this linked account.</p>
+    <div class="metrics-grid mt-1">
+      <div class="metric-card">
+        <div class="metric-label">Latest broker snapshot preview</div>
+        <div class="metric-value text-base" >{{ preview.sync_history.last_preview.created_label if preview.sync_history.last_preview else '—' }}</div>
+        <div class="helper-text">{{ preview.sync_history.last_preview.action_label if preview.sync_history.last_preview else 'No broker snapshot preview saved yet' }}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Latest reviewed write</div>
+        <div class="metric-value text-base" >{{ preview.sync_history.last_apply.created_label if preview.sync_history.last_apply else '—' }}</div>
+        <div class="helper-text">{{ preview.sync_history.last_apply.action_label if preview.sync_history.last_apply else 'No reviewed write saved yet' }}</div>
+      </div>
+    </div>
+    <div class="table-scroll mt-1">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>When</th>
+            <th class="num">Matched updates</th>
+            <th class="num">Broker-only added</th>
+            <th class="num">Held back for review</th>
+            <th class="num">Tracked-only untouched</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in preview.sync_history.events %}
+          <tr>
+            <td>{{ event.action_label }}</td>
+            <td>
+              {{ event.created_label }}
+              {% if event.snapshot_at %}<div class="helper-text mt-02" >Snapshot {{ event.snapshot_label }}</div>{% endif %}
+            </td>
+            <td class="num">{{ event.matched_updates_count }}</td>
+            <td class="num">{{ event.broker_add_count }}</td>
+            <td class="num">{{ event.held_back_broker_count }}</td>
+            <td class="num">{{ event.tracked_only_count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
-  <div class="metrics-grid">
-    <div class="metric-card">
-      <div class="metric-label">Latest broker snapshot preview</div>
-      <div class="metric-value text-base" >{{ preview.sync_history.last_preview.created_label if preview.sync_history.last_preview else '—' }}</div>
-      <div class="helper-text">{{ preview.sync_history.last_preview.action_label if preview.sync_history.last_preview else 'No broker snapshot preview saved yet' }}</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Latest reviewed write</div>
-      <div class="metric-value text-base" >{{ preview.sync_history.last_apply.created_label if preview.sync_history.last_apply else '—' }}</div>
-      <div class="helper-text">{{ preview.sync_history.last_apply.action_label if preview.sync_history.last_apply else 'No reviewed write saved yet' }}</div>
-    </div>
-  </div>
-  <div class="table-scroll mt-1">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Action</th>
-          <th>When</th>
-          <th class="num">Matched updates</th>
-          <th class="num">Broker-only added</th>
-          <th class="num">Held back for review</th>
-          <th class="num">Tracked-only untouched</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for event in preview.sync_history.events %}
-        <tr>
-          <td>{{ event.action_label }}</td>
-          <td>
-            {{ event.created_label }}
-            {% if event.snapshot_at %}<div class="helper-text mt-02" >Snapshot {{ event.snapshot_label }}</div>{% endif %}
-          </td>
-          <td class="num">{{ event.matched_updates_count }}</td>
-          <td class="num">{{ event.broker_add_count }}</td>
-          <td class="num">{{ event.held_back_broker_count }}</td>
-          <td class="num">{{ event.tracked_only_count }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
+</details>
 {% endif %}
 
   {% if preview.linked_account and preview.apply_plan %}
@@ -211,25 +209,23 @@
   </section>
   {% endif %}
 
-<section class="panel mt-1">
-  <div class="section-header">
-    <div>
-      <h3>Broker snapshot summary</h3>
+<details class="preview-details-disclosure mt-1">
+  <summary class="preview-details-summary">Broker snapshot summary</summary>
+  <div class="details-content">
+    <div class="table-scroll mt-05">
+      <table class="data-table">
+        <tbody>
+          <tr><th>Total value</th><td class="num">{{ '%.2f'|format(summary.total_value or 0) }} {{ summary.currency or '' }}</td></tr>
+          <tr><th>Available to trade</th><td class="num">{{ '%.2f'|format(summary.available_to_trade or 0) }} {{ summary.currency or '' }}</td></tr>
+          <tr><th>Cash in pies</th><td class="num">{{ '%.2f'|format(summary.cash_in_pies or 0) }} {{ summary.currency or '' }}</td></tr>
+          <tr><th>Reserved for orders</th><td class="num">{{ '%.2f'|format(summary.cash_reserved_for_orders or 0) }} {{ summary.currency or '' }}</td></tr>
+          <tr><th>Investments current value</th><td class="num">{{ '%.2f'|format(summary.investments_current_value or 0) }} {{ summary.currency or '' }}</td></tr>
+          <tr><th>Investments unrealised P/L</th><td class="num">{{ '%.2f'|format(summary.investments_unrealized_profit_loss or 0) }} {{ summary.currency or '' }}</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
-  <div class="table-scroll">
-    <table class="data-table">
-      <tbody>
-        <tr><th>Total value</th><td class="num">{{ '%.2f'|format(summary.total_value or 0) }} {{ summary.currency or '' }}</td></tr>
-        <tr><th>Available to trade</th><td class="num">{{ '%.2f'|format(summary.available_to_trade or 0) }} {{ summary.currency or '' }}</td></tr>
-        <tr><th>Cash in pies</th><td class="num">{{ '%.2f'|format(summary.cash_in_pies or 0) }} {{ summary.currency or '' }}</td></tr>
-        <tr><th>Reserved for orders</th><td class="num">{{ '%.2f'|format(summary.cash_reserved_for_orders or 0) }} {{ summary.currency or '' }}</td></tr>
-        <tr><th>Investments current value</th><td class="num">{{ '%.2f'|format(summary.investments_current_value or 0) }} {{ summary.currency or '' }}</td></tr>
-        <tr><th>Investments unrealised P/L</th><td class="num">{{ '%.2f'|format(summary.investments_unrealized_profit_loss or 0) }} {{ summary.currency or '' }}</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
+</details>
 
 {% if not preview.apply_plan or preview.apply_plan.sync_focus in ["all", "holdings_only"] %}
 <section class="panel mt-1">

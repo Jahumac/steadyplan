@@ -783,7 +783,7 @@ def test_accounts_edit_form_hides_trading212_picker_for_unsupported_wrapper(app,
             {
                 "name": "Trading 212 Cash ISA",
                 "provider": "Trading 212",
-                "wrapper_type": "Cash ISA",
+                "wrapper_type": "Lifetime ISA",
                 "category": "Cash",
                 "tags": "",
                 "current_value": 7000.0,
@@ -816,7 +816,7 @@ def test_accounts_edit_form_hides_trading212_picker_for_unsupported_wrapper(app,
     assert "Linked broker snapshot connection" in body
     assert "Linked read-only broker connection" not in body
     assert "Saved read-only broker connection" not in body
-    assert "Trading 212 Public API currently supports Invest and Stocks ISA only. Keep this account manual/CSV-tracked for now." in body
+    assert "Trading 212 Public API currently supports Invest, Stocks ISA, and Cash ISA only. Keep this account manual/CSV-tracked for now." in body
     assert "Trading 212 Cash ISA live · CASH-111 · GBP" not in body
     assert 'name="linked_broker_connection_id" value="%s"' % connection["id"] in body
 
@@ -846,7 +846,7 @@ def test_api_create_account_rejects_trading212_link_for_unsupported_wrapper(app,
         data={
             "name": "Trading 212 Cash ISA",
             "provider": "Trading 212",
-            "wrapper_type": "Cash ISA",
+            "wrapper_type": "Lifetime ISA",
             "category": "Cash",
             "current_value": "6500",
             "monthly_contribution": "100",
@@ -1064,7 +1064,7 @@ def test_account_detail_hides_broker_primary_status_for_unsupported_wrapper(app,
             {
                 "name": "Trading 212 Cash ISA",
                 "provider": "Trading 212",
-                "wrapper_type": "Cash ISA",
+                "wrapper_type": "Lifetime ISA",
                 "category": "Cash",
                 "tags": "",
                 "current_value": 7000.0,
@@ -1091,7 +1091,7 @@ def test_account_detail_hides_broker_primary_status_for_unsupported_wrapper(app,
     assert "Linked read-only broker connection:" not in body
     assert "Linked read-only Trading 212 connection:" not in body
     assert "Linked Trading 212 connection:" not in body
-    assert "Trading 212 Public API currently supports Invest and Stocks ISA only. Keep this account manual/CSV-tracked for now." in body
+    assert "Trading 212 Public API currently supports Invest, Stocks ISA, and Cash ISA only. Keep this account manual/CSV-tracked for now." in body
     assert "Account source" not in body
     assert "Broker status" not in body
     assert "Broker primary" not in body
@@ -3233,3 +3233,208 @@ def test_fetch_trading212_account_summary_surfaces_friendly_403(app, monkeypatch
 
     assert "limits the Public API to Invest and Stocks ISA accounts" in message
     assert "API key IP mismatch" in message
+
+
+def test_trading212_sync_focus_cash_only(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="t212-focus-cash")
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 Live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("live-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("live-secret"),
+            status="connected",
+            last_tested_at="2026-06-08T10:00:00+00:00",
+            external_account_id="ACC-123",
+            external_account_currency="GBP",
+            external_total_value=3100.0,
+        )
+        # Create Cash ISA account with broker_sync_focus = 'cash_only'
+        account_id = create_account(
+            {
+                "name": "Trading 212 Cash ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "Cash ISA",
+                "category": "Cash",
+                "tags": "",
+                "current_value": 0.0,
+                "monthly_contribution": 0.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-08T10:00:00+00:00",
+                "uninvested_cash": 50.0,
+                "broker_sync_focus": "cash_only",
+            },
+            uid,
+        )
+
+    def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
+        return {
+            "environment": "live",
+            "fetched_at": "2026-06-08T09:30:00+00:00",
+            "summary": {
+                "environment": "live",
+                "account_id": "ACC-123",
+                "currency": "GBP",
+                "available_to_trade": 150.0,
+                "cash_in_pies": 25.0,
+                "cash_reserved_for_orders": 5.0,
+                "investments_current_value": 2950.0,
+                "investments_total_cost": 2500.0,
+                "investments_unrealized_profit_loss": 450.0,
+                "investments_realized_profit_loss": 0.0,
+                "total_value": 3120.0,
+                "fetched_at": "2026-06-08T09:30:00+00:00",
+            },
+            "positions": [
+                {
+                    "ticker": "AAPL_US_EQ",
+                    "name": "Apple Inc",
+                    "units": 10.0,
+                    "price": 245.0,
+                    "value": 2450.0,
+                    "currency": "GBP",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.routes.settings.fetch_trading212_portfolio_snapshot",
+        fake_fetch_trading212_portfolio_snapshot,
+    )
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    
+    # Preview Cash ISA
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/preview",
+        data={"account_id": str(account_id)},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    
+    # It should show 0 matched/broker-only/tracked-only because of cash_only focus
+    assert "Matched to tracked holdings</div>\n      <div class=\"metric-value\">0</div>" in body
+    assert "Broker-only positions</div>\n      <div class=\"metric-value\">0</div>" in body
+    # It should show the cash details (broker cash = 150 + 25 + 5 = 180)
+    assert "180.00" in body
+    
+    # Apply cash update
+    resp2 = client.post(
+        f"/settings/trading212/{connection['id']}/apply-cash",
+        data={"account_id": str(account_id), "confirm_apply_cash": "yes"},
+        follow_redirects=True,
+    )
+    assert resp2.status_code == 200
+    
+    # Verify DB has updated cash balance
+    with app.app_context():
+        acc = fetch_account(account_id, uid)
+        assert acc["uninvested_cash"] == 180.0
+
+
+def test_trading212_sync_focus_holdings_only(app, client, make_user, monkeypatch):
+    uid, username, password = make_user(username="t212-focus-holdings")
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="live",
+            label="Trading 212 Live",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("live-key"),
+            api_secret_ciphertext=encrypt_trading212_credential("live-secret"),
+            status="connected",
+            last_tested_at="2026-06-08T10:00:00+00:00",
+            external_account_id="ACC-123",
+            external_account_currency="GBP",
+            external_total_value=3100.0,
+        )
+        # Create Stocks & Shares ISA account with broker_sync_focus = 'holdings_only'
+        account_id = create_account(
+            {
+                "name": "Trading 212 Stocks & Shares ISA",
+                "provider": "Trading 212",
+                "wrapper_type": "Stocks & Shares ISA",
+                "category": "Investment",
+                "tags": "",
+                "current_value": 0.0,
+                "monthly_contribution": 0.0,
+                "pension_contribution_day": 0,
+                "goal_value": None,
+                "valuation_mode": "manual",
+                "growth_mode": "default",
+                "growth_rate_override": None,
+                "owner": "",
+                "linked_broker_connection_id": connection["id"],
+                "is_active": 1,
+                "notes": "",
+                "last_updated": "2026-06-08T10:00:00+00:00",
+                "uninvested_cash": 50.0,
+                "broker_sync_focus": "holdings_only",
+            },
+            uid,
+        )
+
+    def fake_fetch_trading212_portfolio_snapshot(*, api_key, api_secret, environment):
+        return {
+            "environment": "live",
+            "fetched_at": "2026-06-08T09:30:00+00:00",
+            "summary": {
+                "environment": "live",
+                "account_id": "ACC-123",
+                "currency": "GBP",
+                "available_to_trade": 150.0,
+                "cash_in_pies": 25.0,
+                "cash_reserved_for_orders": 5.0,
+                "investments_current_value": 2950.0,
+                "investments_total_cost": 2500.0,
+                "investments_unrealized_profit_loss": 450.0,
+                "investments_realized_profit_loss": 0.0,
+                "total_value": 3120.0,
+                "fetched_at": "2026-06-08T09:30:00+00:00",
+            },
+            "positions": [
+                {
+                    "ticker": "AAPL_US_EQ",
+                    "name": "Apple Inc",
+                    "units": 10.0,
+                    "price": 245.0,
+                    "value": 2450.0,
+                    "currency": "GBP",
+                }
+            ],
+        }
+
+    monkeypatch.setattr(
+        "app.routes.settings.fetch_trading212_portfolio_snapshot",
+        fake_fetch_trading212_portfolio_snapshot,
+    )
+
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+    
+    # Preview Stocks & Shares ISA
+    resp = client.post(
+        f"/settings/trading212/{connection['id']}/preview",
+        data={"account_id": str(account_id)},
+        follow_redirects=True,
+    )
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    
+    # It should show broker-only positions because of holdings_only focus
+    assert "Broker-only positions</div>\n      <div class=\"metric-value\">1</div>" in body
+    # It should NOT show the cash sync form because can_apply_cash is False
+    assert "Sync broker cash balance" not in body
+
