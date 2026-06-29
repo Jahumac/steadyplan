@@ -1,0 +1,300 @@
+/* ── Utility classes (replacing inline styles) ────────────────────────── */
+
+/* Margins — scale: 025/05/075/1/125/15 = 0.25/0.5/0.75/1/1.25/1.5rem */
+.m-0     { margin: 0; }
+.mt-0    { margin-top: 0; }
+.mt-025  { margin-top: 0.25rem; }
+.mt-05   { margin-top: 0.5rem; }
+.mt-075  { margin-top: 0.75rem; }
+.mt-1    { margin-top: 1rem; }
+.mt-125  { margin-top: 1.25rem; }
+
+.mb-025  { margin-bottom: 0.25rem; }
+.mb-05   { margin-bottom: 0.5rem; }
+.mb-075  { margin-bottom: 0.75rem; }
+.mb-1    { margin-bottom: 1rem; }
+.ml-025  { margin-left: 0.25rem; }
+
+/* Padding — same scale */
+
+/* Widths */
+.w-full  { width: 100%; }
+
+/* Forms */
+.form-reset    { margin: 0; }
+.form-contents { display: contents; }
+.form-full-col { grid-column: 1 / -1; }
+
+/* Text */
+.text-muted    { color: var(--muted); }
+
+.text-accent-2 { color: var(--accent-2); }
+.text-danger   { color: var(--danger); }
+.text-success  { color: #86efac; }
+.text-gain     { color: #86efac; }
+.text-loss     { color: var(--danger); }
+.text-sm      { font-size: 0.8rem; }
+.text-sm-2    { font-size: 0.875rem; }
+.text-xs      { font-size: 0.75rem; }
+.text-right   { text-align: right; }
+.text-center  { text-align: center; }
+
+.text-bold    { font-weight: 600; }
+.text-nowrap  { white-space: nowrap; }
+
+/* Cursor */
+.cursor-pointer { cursor: pointer; }
+
+/* Period selector buttons (overview chart, potentially others) */
+.period-btn,
+.overview-toggle-btn {
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.period-btn.active,
+.overview-toggle-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.25);
+}
+
+.period-btn:hover:not(.active),
+.overview-toggle-btn:hover:not(.active) {
+  border-color: rgba(56, 189, 248, 0.45);
+  color: var(--text);
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.period-btn:active,
+.overview-toggle-btn:active {
+  transform: translateY(1px);
+}
+
+.overview-position-toggle {
+  align-self: flex-start;
+}
+
+@media (max-width: 480px) {
+  .period-selector {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .overview-position-toggle {
+    width: 100%;
+  }
+  .period-btn {
+    padding: 0.25rem 0.55rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Eyebrow (tiny uppercase label) */
+
+/* Layout */
+.flex          { display: flex; }
+
+.flex-wrap     { flex-wrap: wrap; }
+.flex-center   { align-items: center; }
+
+.flex-between  { justify-content: space-between; }
+.flex-start    { align-items: flex-start; }
+
+.gap-05        { gap: 0.5rem; }
+.gap-06        { gap: 0.6rem; }
+.gap-075       { gap: 0.75rem; }
+
+/* Display */
+.hidden       { display: none; }
+
+.inline       { display: inline; }
+
+.block        { display: block; }
+
+/* Panel variants */
+.panel-compact   { padding: 1rem; }
+.panel-spacious  { padding: 2rem; }
+
+/* Chart */
+.chart-wrap-sm   { height: 160px; }
+.chart-wrap-md   { height: 280px; }
+
+.chart-range-pills {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.6rem;
+}
+.chart-range-pill {
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.chart-range-pill:hover { background: var(--surface-2); color: var(--text); }
+.chart-range-pill-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Total money chart label */
+.chart-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.5rem;
+}
+
+/* Links (unstyled accent link) */
+a.link-accent {
+  color: var(--accent);
+  text-decoration: none;
+}
+a.link-accent:hover {
+  text-decoration: underline;
+}
+
+/* Inline link button (looks like text link) */
+.btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-decoration: underline;
+}
+.btn-link:hover {
+  color: var(--text);
+}
+
+/* Error text (for search results, validation) */
+
+/* Danger card/panel border */
+.border-danger {
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+/* Section title (used in panels) */
+.section-title {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+}
+
+.section-title-sm {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Allowance denominator */
+.allowance-denom {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.95rem;
+}
+
+/* Badge row end-aligned */
+.badge-row-end {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* Allocation dot */
+.alloc-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+  transition: box-shadow 0.18s ease;
+}
+
+/* Override list */
+.override-list {
+  margin-top: 0.75rem;
+}
+
+/* Ticker subtitle */
+.ticker-sub {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.875rem;
+}
+
+/* Performance legend dot */
+.perf-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Hero month nav container */
+.hero-actions-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+/* Right column: turtle + actions stacked — two-child hero-top layout */
+
+/* Monthly review: badge + month nav sit below the hero text */
+
+/* Hero actions row */
+
+/* Budget save indicator default cursor on badges */
+.badge { cursor: pointer; }
+
+/* Form input standard (for JS-generated forms) */
+.input-standard {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 0.35rem 0.6rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+}
+
+/* Add holding field sizing */
+.input-narrow { width: 7rem; }
+.input-medium { width: 9rem; }
+.input-full   { width: 100%; }
+
+/* Disabled/muted row */
+.row-disabled { opacity: 0.5; }
+
+/* Total row in tables */
+.table-total-row {
+  border-top: 2px solid var(--border);
+}
+
+.table-total-label {
+  text-align: right;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding-right: 0.75rem;
+}
+
