@@ -7,11 +7,7 @@ from flask_login import current_user, login_required
 from app.calculations import (
     add_months_to_key,
     age_from_dob,
-    account_supports_cash_park,
-    contribution_override_components_for_month,
-    OVERRIDE_COMPONENT_CASH_PARK,
-    OVERRIDE_COMPONENT_INVESTED,
-    OVERRIDE_COMPONENT_TOTAL,
+    select_best_matching_override,
     contribution_override_for_month,
     current_age_from_assumptions,
     effective_account_value,
@@ -250,7 +246,7 @@ def api_account_series():
             mk = add_months_to_key(start_month, contrib_idx)
             label = mk
             override = contribution_override_for_month(a, mk)
-            personal = override if override is not None else to_float(a.get("monthly_contribution", 0)) + to_float(a.get("monthly_cash_park", 0))
+            personal = override if override is not None else to_float(a.get("monthly_contribution", 0))
             applied_personal = 0.0 if (is_lisa and (current_age + contrib_idx / 12.0) >= 50) else personal
             points.append({
                 "label": label,
@@ -264,7 +260,7 @@ def api_account_series():
             val = projected_account_value(a, assumptions)
             mk = add_months_to_key(start_month, months_total)
             override = contribution_override_for_month(a, mk)
-            personal = override if override is not None else to_float(a.get("monthly_contribution", 0)) + to_float(a.get("monthly_cash_park", 0))
+            personal = override if override is not None else to_float(a.get("monthly_contribution", 0))
             applied_personal = 0.0 if (is_lisa and (current_age + months_total / 12.0) >= 50) else personal
             points.append({
                 "label": mk,
@@ -279,7 +275,7 @@ def api_account_series():
             mk = add_months_to_key(start_month, idx)
             val = projected_account_value_at_month(a, assumptions, idx)
             override = contribution_override_for_month(a, mk)
-            personal = override if override is not None else to_float(a.get("monthly_contribution", 0)) + to_float(a.get("monthly_cash_park", 0))
+            personal = override if override is not None else to_float(a.get("monthly_contribution", 0))
             applied_personal = 0.0 if (is_lisa and (current_age + idx / 12.0) >= 50) else personal
             points.append({
                 "label": mk,
@@ -310,7 +306,6 @@ def api_account_schedule():
         account = fetch_account(account_id, uid)
         if not account:
             return jsonify({"ok": False, "error": "account not found"}), 404
-        cash_park_enabled = account_supports_cash_park(account)
         overrides = fetch_contribution_overrides_for_reason(account_id, uid, "schedule")
         grouped = {}
         for ov in overrides:
@@ -320,23 +315,16 @@ def api_account_schedule():
             grouped.setdefault(mk, []).append(ov)
         rules = []
         for mk in sorted(grouped.keys()):
-            parts = contribution_override_components_for_month(
-                grouped[mk],
-                mk,
-                default_invested=float(account.get("monthly_contribution") or 0),
-                default_cash_park=float(account.get("monthly_cash_park") or 0),
-            )
+            selected = select_best_matching_override(grouped[mk], mk)
+            amount = float(selected["override_amount"] or 0) if selected is not None else float(account.get("monthly_contribution") or 0)
             rule = {
                 "from_month": mk,
                 "start_month": mk,
                 "start_age": int(_age_at_month_key(dob, mk)) if dob else None,
-                "amount": float(parts["total"] or 0),
+                "amount": amount,
             }
-            if cash_park_enabled:
-                rule["invested_amount"] = float(parts["invested"] or 0)
-                rule["cash_park_amount"] = float(parts["cash_park"] or 0)
             rules.append(rule)
-        return jsonify({"ok": True, "rules": rules, "has_dob": bool(dob), "cash_park_enabled": cash_park_enabled})
+        return jsonify({"ok": True, "rules": rules, "has_dob": bool(dob), "cash_park_enabled": False})
 
     data = request.get_json(silent=True) or {}
     account_id_raw = data.get("account_id")
@@ -349,7 +337,6 @@ def api_account_schedule():
     account = fetch_account(account_id, uid)
     if not account:
         return jsonify({"ok": False, "error": "account not found"}), 404
-    cash_park_enabled = account_supports_cash_park(account)
 
     if "rules" not in data or not isinstance(data.get("rules"), list):
         return jsonify({"ok": False, "error": "rules must be a list"}), 400
@@ -363,21 +350,8 @@ def api_account_schedule():
             amount = float(r.get("amount") or 0)
         except (TypeError, ValueError):
             amount = 0.0
-        invested_raw = r.get("invested_amount")
-        cash_park_raw = r.get("cash_park_amount")
-        split_provided = invested_raw is not None or cash_park_raw is not None
-        try:
-            invested_amount = float(invested_raw or 0)
-        except (TypeError, ValueError):
-            invested_amount = 0.0
-        try:
-            cash_park_amount = float(cash_park_raw or 0)
-        except (TypeError, ValueError):
-            cash_park_amount = 0.0
-        if split_provided:
-            amount = invested_amount + cash_park_amount
         if start_month:
-            cleaned.append((start_month, amount, invested_amount, cash_park_amount, split_provided))
+            cleaned.append((start_month, amount))
             continue
         if not dob:
             continue
@@ -393,22 +367,22 @@ def api_account_schedule():
         d = _date_at_age(dob, start_age)
         mk = _month_key_from_date(d) if d else None
         if mk:
-            cleaned.append((mk, amount, invested_amount, cash_park_amount, split_provided))
+            cleaned.append((mk, amount))
 
     start_month = projection_start_month_key(assumptions)
     normalised = []
-    for mk, amount, invested_amount, cash_park_amount, split_provided in cleaned:
+    for mk, amount in cleaned:
         if mk < start_month:
             mk = start_month
-        normalised.append((mk, amount, invested_amount, cash_park_amount, split_provided))
+        normalised.append((mk, amount))
     normalised.sort(key=lambda x: x[0])
     uniq = []
     seen = set()
-    for mk, amount, invested_amount, cash_park_amount, split_provided in normalised:
+    for mk, amount in normalised:
         if mk in seen:
             continue
         seen.add(mk)
-        uniq.append((mk, amount, invested_amount, cash_park_amount, split_provided))
+        uniq.append((mk, amount))
 
     if rules_in and not uniq:
         return jsonify({"ok": False, "error": "at least one valid schedule row is required"}), 400
@@ -418,46 +392,22 @@ def api_account_schedule():
 
     delete_contribution_overrides_for_reason(account_id, uid, "schedule")
 
-    for i, (from_m, amount, invested_amount, cash_park_amount, split_provided) in enumerate(uniq):
+    for i, (from_m, amount) in enumerate(uniq):
         next_m = uniq[i + 1][0] if i + 1 < len(uniq) else None
         to_m = add_months_to_key(next_m, -1) if next_m else "9999-12"
         if to_m < from_m:
             continue
-        if cash_park_enabled and split_provided:
-            create_contribution_override(
-                {
-                    "account_id": account_id,
-                    "from_month": from_m,
-                    "to_month": to_m,
-                    "override_amount": invested_amount,
-                    "component": OVERRIDE_COMPONENT_INVESTED,
-                    "reason": "schedule",
-                },
-                user_id=uid,
-            )
-            create_contribution_override(
-                {
-                    "account_id": account_id,
-                    "from_month": from_m,
-                    "to_month": to_m,
-                    "override_amount": cash_park_amount,
-                    "component": OVERRIDE_COMPONENT_CASH_PARK,
-                    "reason": "schedule",
-                },
-                user_id=uid,
-            )
-        else:
-            create_contribution_override(
-                {
-                    "account_id": account_id,
-                    "from_month": from_m,
-                    "to_month": to_m,
-                    "override_amount": amount,
-                    "component": OVERRIDE_COMPONENT_TOTAL if cash_park_enabled and not split_provided else OVERRIDE_COMPONENT_INVESTED,
-                    "reason": "schedule",
-                },
-                user_id=uid,
-            )
+        create_contribution_override(
+            {
+                "account_id": account_id,
+                "from_month": from_m,
+                "to_month": to_m,
+                "override_amount": amount,
+                "component": "total",
+                "reason": "schedule",
+            },
+            user_id=uid,
+        )
 
     return jsonify({"ok": True})
 
