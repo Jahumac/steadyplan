@@ -79,29 +79,41 @@ def _ensure_account_contribution_items(conn, user_id):
             (user_id, ex["id"]),
         )
 
+    # Fetch all existing linked budget items for the user's active accounts in one go
+    existing_items = conn.execute(
+        """
+        SELECT id, name, section, default_amount, notes, sort_order, is_active, linked_account_id
+        FROM budget_items
+        WHERE user_id = ?
+          AND COALESCE(linked_account_component, 'invested') = 'invested'
+          AND linked_account_id IS NOT NULL
+        ORDER BY is_active DESC, id ASC
+        """,
+        (user_id,),
+    ).fetchall()
+
+    existing_by_account = {}
+    for item in existing_items:
+        aid = item["linked_account_id"]
+        if aid not in existing_by_account:
+            existing_by_account[aid] = item
+
+    # Get the starting sort order for any new items we need to insert
+    max_sort_row = conn.execute(
+        "SELECT COALESCE(MAX(sort_order), -1) AS max_sort FROM budget_items WHERE user_id = ? AND section = ?",
+        (user_id, section_key),
+    ).fetchone()
+    current_max_sort = max_sort_row["max_sort"] if (max_sort_row and max_sort_row["max_sort"] is not None) else -1
+
     for account in accounts:
-        existing = conn.execute(
-            """
-            SELECT id, name, section, default_amount, notes, sort_order, is_active
-            FROM budget_items
-            WHERE user_id = ?
-              AND linked_account_id = ?
-              AND COALESCE(linked_account_component, 'invested') = 'invested'
-            ORDER BY is_active DESC, id ASC
-            LIMIT 1
-            """,
-            (user_id, account["id"]),
-        ).fetchone()
+        existing = existing_by_account.get(account["id"])
 
         amount = float(account["monthly_contribution"] or 0)
         name = (str(account["name"] or "Account")).strip() or "Account"
         note = "Auto-created from account contribution."
 
         if not existing:
-            sort_row = conn.execute(
-                "SELECT COALESCE(MAX(sort_order), -1) AS max_sort FROM budget_items WHERE user_id = ? AND section = ?",
-                (user_id, section_key),
-            ).fetchone()
+            current_max_sort += 1
             conn.execute(
                 """
                 INSERT INTO budget_items (
@@ -117,7 +129,7 @@ def _ensure_account_contribution_items(conn, user_id):
                     amount,
                     account["id"],
                     note,
-                    (sort_row["max_sort"] or -1) + 1,
+                    current_max_sort,
                 ),
             )
         else:
