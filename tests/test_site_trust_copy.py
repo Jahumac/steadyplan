@@ -60,7 +60,7 @@ def test_tour_trust_copy_matches_restore_safety_story():
     assert "SteadyPlan stores your data locally in a SQLite database on your own server/NAS/desktop. There is no hosted account and no public signup, and the safest hands-on evaluation path is still your own local install." in html
     assert "Optional external price lookups can contact providers for ticker data. Everything else stays local unless you choose otherwise." in html
     assert "<h2 class=\"section-title\">Data ownership</h2>" in html
-    assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in html
+    assert "Liquidity Profile" in html
     assert "Long-term planning is easier when you separate cash you could reach now, invested money you could sell, money with conditions, and money reserved for later." in html
     assert "Settings keeps safety and recovery links visible" in html
     assert "Settings groups data ownership, JSON export, restore checks, backup health, assistant scope, and read-only Trading 212 broker snapshot review so trust is inspectable without digging through one long admin page." in html
@@ -236,13 +236,13 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "Public website with Tour, Roadmap, docs hub, and optional read-only demo path" in readme
     assert "taxable accounts (GIAs)" in readme
     assert "taxable account (GIA)" in readme
-    assert "│   ├── planning.py        # Cash-accessible, invested-accessible, restricted, and locked-for-later money view and insights" in readme
+    assert "│   ├── planning.py        # Liquidity Profile view and insights" in readme
     assert "workplace pensions, GIAs" not in readme
     assert "Workplace Pension, GIA, and more" not in readme
     assert "│   ├── planning.py        # Accessible, restricted, and locked money view and insights" not in readme
     assert "│   ├── planning.py        # Accessible vs locked money view and insights" not in readme
-    assert "understand cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap
-    assert "see cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap
+    assert "understand Liquidity Profile" in roadmap
+    assert "see Liquidity Profile" in roadmap
     assert "clear scenario-estimate caveats" in roadmap
     assert "clear projection caveats" not in roadmap
     assert "## Current standing (June 2026)" in roadmap
@@ -253,7 +253,7 @@ def test_repo_docs_match_current_monthly_update_assistant_and_roadmap_story():
     assert "The read-only demo path and sample data now exist, so the remaining work is to keep the evaluation story honest and easy to follow." in roadmap
     assert "### Options to explore\n- demo mode" not in roadmap
     assert "- decision on demo approach" not in roadmap
-    assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in roadmap_execution
+    assert "Liquidity Profile" in roadmap_execution
     assert "trust surfaces such as Diagnostics, backup/restore boundaries, assistant access, and safe demo guidance are now shipped" in roadmap_execution
     assert "Accessible vs locked money" not in roadmap_execution
     assert "accessible vs locked money" not in roadmap
@@ -422,8 +422,8 @@ def test_public_site_projection_copy_uses_scenario_estimate_language():
     assert "Assumptions, scenario estimates, and confirmed numbers should not blur together." in product_truth
     assert "Total money, key balances, and what needs attention should be obvious." in product_truth
     assert "Net worth, key balances, and what needs attention should be obvious." not in product_truth
-    assert "understand cash-accessible, invested-accessible, restricted, and locked-for-later money" in product_truth
-    assert "See cash-accessible, invested-accessible, restricted, and locked-for-later money" in product_truth
+    assert "understand Liquidity Profile" in product_truth
+    assert "See Liquidity Profile" in product_truth
     assert "Users should understand what cash they can use now, what invested money is still reachable, what has penalties/restrictions, and what is for later retirement." in product_truth
     assert "intimidated by financial admin, projections, and long-term planning." not in product_truth
     assert "Assumptions, estimates, projections, and confirmed numbers should not blur together." not in product_truth

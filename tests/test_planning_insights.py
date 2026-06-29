@@ -152,7 +152,7 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
 
     assert response.status_code == 200
     assert b'budget-year-strip month-strip-global month-strip-mobile-hidden' in response.data
-    assert b"Cash-accessible, invested-accessible, restricted, and locked-for-later money" in response.data
+    assert b"Liquidity Profile" in response.data
     assert b"Accessible now, restricted, and locked" not in response.data
     assert b"Accessible vs locked" not in response.data
     assert b"See what is cash-accessible now, what invested money is still reachable, what comes with conditions, what stays locked for later, and what your current plan might support." in response.data
@@ -208,7 +208,8 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"Estimate at 55:" not in response.data
     assert b"Projected at 55:" not in response.data
 
-    css = STATIC_ROOT.joinpath("css/styles.css").read_text()
+    css_files = list(STATIC_ROOT.joinpath("css/modules").glob("*.css"))
+    css = "".join(f.read_text() for f in css_files)
     assert ".planning-hero-strip {" in css
     assert css.count("grid-template-columns: repeat(2, minmax(0, 1fr));") >= 3
     assert "@media (max-width: 520px) {" in css

@@ -43,7 +43,7 @@ A good default mental model:
 
 SteadyPlan should help users:
 1. see where they stand
-2. understand cash-accessible, invested-accessible, restricted, and locked-for-later money
+2. understand Liquidity Profile
 3. connect monthly life with long-term plans
 4. build financial steadiness without salesy pressure or false certainty
 
@@ -55,7 +55,7 @@ These jobs should outrank lower-value feature work:
 
 1. **Understand current position**
    - Total money, key balances, and what needs attention should be obvious.
-2. **See cash-accessible, invested-accessible, restricted, and locked-for-later money**
+2. **See Liquidity Profile**
    - Users should understand what cash they can use now, what invested money is still reachable, what has penalties/restrictions, and what is for later retirement.
 3. **Track whether they are on course**
    - Goals, retirement estimates, and monthly update state should feel understandable rather than overwhelming.
