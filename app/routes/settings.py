@@ -1288,6 +1288,8 @@ def retest_trading212(connection_id):
             environment=connection.get("environment") or "live",
         )
         summary = probe["summary"]
+        cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+        holdings_val = float(summary.get("investments_current_value") or 0)
         update_broker_connection_status(
             connection_id,
             current_user.id,
@@ -1297,6 +1299,8 @@ def retest_trading212(connection_id):
             external_account_id=summary["account_id"],
             external_account_currency=summary["currency"],
             external_total_value=summary["total_value"],
+            external_cash_value=cash_val,
+            external_holdings_value=holdings_val,
         )
         flash(
             f"Broker snapshot {trading212_environment_label(summary['environment']).lower()} connection retested successfully.",
@@ -1331,6 +1335,8 @@ def preview_trading212(connection_id):
             environment=connection.get("environment") or "live",
         )
         summary = snapshot["summary"]
+        cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+        holdings_val = float(summary.get("investments_current_value") or 0)
         update_broker_connection_status(
             connection_id,
             current_user.id,
@@ -1340,6 +1346,8 @@ def preview_trading212(connection_id):
             external_account_id=summary["account_id"],
             external_account_currency=summary["currency"],
             external_total_value=summary["total_value"],
+            external_cash_value=cash_val,
+            external_holdings_value=holdings_val,
         )
     except (Trading212ConnectionError, Trading212CredentialError) as exc:
         update_broker_connection_status(
@@ -1409,6 +1417,8 @@ def apply_trading212_reviewed_changes(connection_id):
             environment=connection.get("environment") or "live",
         )
         summary = snapshot["summary"]
+        cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+        holdings_val = float(summary.get("investments_current_value") or 0)
         update_broker_connection_status(
             connection_id,
             current_user.id,
@@ -1418,6 +1428,8 @@ def apply_trading212_reviewed_changes(connection_id):
             external_account_id=summary["account_id"],
             external_account_currency=summary["currency"],
             external_total_value=summary["total_value"],
+            external_cash_value=cash_val,
+            external_holdings_value=holdings_val,
         )
     except (Trading212ConnectionError, Trading212CredentialError) as exc:
         update_broker_connection_status(
@@ -1527,6 +1539,8 @@ def apply_trading212_cash(connection_id):
             environment=connection.get("environment") or "live",
         )
         summary = snapshot["summary"]
+        cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+        holdings_val = float(summary.get("investments_current_value") or 0)
         update_broker_connection_status(
             connection_id,
             current_user.id,
@@ -1536,6 +1550,8 @@ def apply_trading212_cash(connection_id):
             external_account_id=summary["account_id"],
             external_account_currency=summary["currency"],
             external_total_value=summary["total_value"],
+            external_cash_value=cash_val,
+            external_holdings_value=holdings_val,
         )
     except (Trading212ConnectionError, Trading212CredentialError) as exc:
         update_broker_connection_status(
@@ -1614,6 +1630,8 @@ def apply_trading212_reviewed_broker_additions(connection_id):
             environment=connection.get("environment") or "live",
         )
         summary = snapshot["summary"]
+        cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+        holdings_val = float(summary.get("investments_current_value") or 0)
         update_broker_connection_status(
             connection_id,
             current_user.id,
@@ -1623,6 +1641,8 @@ def apply_trading212_reviewed_broker_additions(connection_id):
             external_account_id=summary["account_id"],
             external_account_currency=summary["currency"],
             external_total_value=summary["total_value"],
+            external_cash_value=cash_val,
+            external_holdings_value=holdings_val,
         )
     except (Trading212ConnectionError, Trading212CredentialError) as exc:
         update_broker_connection_status(
@@ -1710,6 +1730,8 @@ def resolve_trading212_possible_match(connection_id):
             environment=connection.get("environment") or "live",
         )
         summary = snapshot["summary"]
+        cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+        holdings_val = float(summary.get("investments_current_value") or 0)
         update_broker_connection_status(
             connection_id,
             current_user.id,
@@ -1719,6 +1741,8 @@ def resolve_trading212_possible_match(connection_id):
             external_account_id=summary["account_id"],
             external_account_currency=summary["currency"],
             external_total_value=summary["total_value"],
+            external_cash_value=cash_val,
+            external_holdings_value=holdings_val,
         )
     except (Trading212ConnectionError, Trading212CredentialError) as exc:
         update_broker_connection_status(

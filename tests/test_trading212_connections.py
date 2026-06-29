@@ -3407,3 +3407,56 @@ def test_trading212_sync_focus_holdings_only(app, client, make_user, monkeypatch
     # It should NOT show the cash sync form because can_apply_cash is False
     assert "Sync broker cash balance" not in body
 
+
+def test_trading212_health_summary_focus_filtering(app, make_user):
+    from app.routes.accounts import _linked_trading212_health_summary
+
+    uid, username, password = make_user()
+    
+    # Fake connection with split values
+    connection = {
+        "id": 1,
+        "provider": "trading212",
+        "status": "connected",
+        "last_tested_at": "2026-06-08T10:00:00+00:00",
+        "external_account_currency": "GBP",
+        "external_total_value": 10828.55,
+        "external_cash_value": 2649.62,
+        "external_holdings_value": 8178.93,
+    }
+    
+    # 1. holdings_only focus
+    account_holdings = {
+        "id": 10,
+        "wrapper_type": "Stocks & Shares ISA",
+        "broker_sync_focus": "holdings_only",
+    }
+    summary_holdings = _linked_trading212_health_summary(account_holdings, connection, 8178.93)
+    assert summary_holdings["broker_total"] == 8178.93
+    assert summary_holdings["tracked_value"] == 8178.93
+    assert summary_holdings["difference_value"] == 0.0
+    assert summary_holdings["difference_direction"] == "Broker total currently matches tracked value"
+    
+    # 2. cash_only focus
+    account_cash = {
+        "id": 11,
+        "wrapper_type": "Cash ISA",
+        "broker_sync_focus": "cash_only",
+    }
+    summary_cash = _linked_trading212_health_summary(account_cash, connection, 2649.62)
+    assert summary_cash["broker_total"] == 2649.62
+    assert summary_cash["tracked_value"] == 2649.62
+    assert summary_cash["difference_value"] == 0.0
+    assert summary_cash["difference_direction"] == "Broker total currently matches tracked value"
+
+    # 3. all focus (default)
+    account_all = {
+        "id": 12,
+        "wrapper_type": "Stocks & Shares ISA",
+        "broker_sync_focus": "all",
+    }
+    summary_all = _linked_trading212_health_summary(account_all, connection, 8178.93)
+    assert summary_all["broker_total"] == 10828.55
+    assert summary_all["tracked_value"] == 8178.93
+    assert abs(summary_all["difference_value"] - (10828.55 - 8178.93)) < 0.001
+
