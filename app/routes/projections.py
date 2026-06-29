@@ -326,14 +326,16 @@ def api_account_schedule():
                 default_invested=float(account.get("monthly_contribution") or 0),
                 default_cash_park=float(account.get("monthly_cash_park") or 0),
             )
-            rules.append({
+            rule = {
                 "from_month": mk,
                 "start_month": mk,
-                "start_age": _age_at_month_key(dob, mk),
+                "start_age": int(_age_at_month_key(dob, mk)) if dob else None,
                 "amount": float(parts["total"] or 0),
-                "invested_amount": float(parts["invested"] or 0),
-                "cash_park_amount": float(parts["cash_park"] or 0),
-            })
+            }
+            if cash_park_enabled:
+                rule["invested_amount"] = float(parts["invested"] or 0)
+                rule["cash_park_amount"] = float(parts["cash_park"] or 0)
+            rules.append(rule)
         return jsonify({"ok": True, "rules": rules, "has_dob": bool(dob), "cash_park_enabled": cash_park_enabled})
 
     data = request.get_json(silent=True) or {}

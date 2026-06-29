@@ -182,7 +182,13 @@ def _ensure_account_contribution_items(conn, user_id):
                 is_active = 1
             WHERE id = ?
             """,
-            (name, section_key, amount, note, existing["id"]),
+            (
+                name if str(_row_value(existing, "notes", "") or "").strip() == note else str(_row_value(existing, "name", name) or name),
+                section_key,
+                amount,
+                note if str(_row_value(existing, "notes", "") or "").strip() == note else str(_row_value(existing, "notes", "") or ""),
+                existing["id"],
+            ),
         )
 
     for account in accounts:

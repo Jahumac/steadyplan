@@ -25,6 +25,7 @@ from app.models import (
     delete_budget_section,
     delete_temporary_contribution_plan,
     delete_debt,
+    fetch_account,
     fetch_all_accounts,
     fetch_all_debts,
     fetch_budget_entries,
@@ -40,6 +41,7 @@ from app.models import (
     fetch_months_with_budget_entries,
     fetch_pension_carry_forward,
     fetch_prior_month_budget_entries,
+    update_account,
     update_budget_item,
     update_budget_section,
     update_debt,
@@ -604,7 +606,7 @@ def contribution_calendar():
 
         if form_name == "create_annual_pot_fill_plan":
             plan_name = (request.form.get("plan_name") or "").strip()
-            account_key = request.form.get("pattern_account_key")
+            account_key = request.form.get("pattern_account_key") or request.form.get("pattern_account_id")
             account_id, component = _parse_calendar_entry_key(account_key)
             start_month = valid_month_key(request.form.get("pattern_start_month"))
             months_per_year = optional_int(request.form.get("pattern_months_per_year"), 0) or 0

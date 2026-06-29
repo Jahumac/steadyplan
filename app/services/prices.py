@@ -58,6 +58,24 @@ _FALLBACK_FX = {"USD": 1.27, "EUR": 1.17}
 logger = logging.getLogger(__name__)
 _TWELVE_SYMBOL_CACHE = {}
 
+
+def _log_api_error(source_name: str, symbol: str, exc: Exception):
+    """Log external API errors with appropriate severity."""
+    import urllib.error
+    if isinstance(exc, urllib.error.HTTPError):
+        # HTTP errors like 429 (rate limit) or 403 (forbidden) are operational warnings
+        if exc.code in (403, 429):
+            logger.warning(f"{source_name} failed for {symbol}: HTTP {exc.code} {exc.reason}")
+        else:
+            logger.info(f"{source_name} failed for {symbol}: HTTP {exc.code} {exc.reason}")
+    elif isinstance(exc, urllib.error.URLError):
+        # Network/connectivity issues
+        logger.warning(f"{source_name} failed for {symbol}: Network error ({exc.reason})")
+    else:
+        # Other unexpected errors
+        logger.debug(f"{source_name} failed for {symbol}: {exc}", exc_info=True)
+
+
 # Cap response size from upstream APIs. Real responses are <100KB; this guard
 # stops a misbehaving/hostile upstream from streaming us out of memory.
 _MAX_RESPONSE_BYTES = 5 * 1024 * 1024  # 5 MB
@@ -89,8 +107,8 @@ def _twelve_request_json(url: str):
         },
     )
     try:
-        resp = urllib.request.urlopen(req, timeout=10)
-        return json.loads(_read_capped(resp))
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return json.loads(_read_capped(resp))
     except urllib.error.HTTPError as e:
         body = ""
         try:
@@ -214,7 +232,8 @@ def _try_ticker(symbol: str):
             "name": name,
             "quote_type": quote_type,
         }
-    except Exception:
+    except Exception as e:
+        _log_api_error("yfinance", symbol, e)
         return None
 
 
@@ -231,8 +250,8 @@ def _try_yahoo_http(symbol: str):
         req = urllib.request.Request(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
         })
-        resp = urllib.request.urlopen(req, timeout=10)
-        data = json.loads(_read_capped(resp))
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(_read_capped(resp))
 
         result = data.get("chart", {}).get("result")
         if not result:
@@ -269,7 +288,7 @@ def _try_yahoo_http(symbol: str):
         }
         return res
     except Exception as e:
-        logger.debug(f"Source A (chart) failed for {symbol}: {e}")
+        _log_api_error("Yahoo Chart API", symbol, e)
         return None
 
 
@@ -281,8 +300,8 @@ def _try_yahoo_quote(symbol: str):
         req = urllib.request.Request(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
         })
-        resp = urllib.request.urlopen(req, timeout=10)
-        data = json.loads(_read_capped(resp))
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(_read_capped(resp))
 
         result = data.get("quoteResponse", {}).get("result")
         if not result or len(result) == 0:
@@ -301,7 +320,7 @@ def _try_yahoo_quote(symbol: str):
             "quote_type": q.get("quoteType"),
         }
     except Exception as e:
-        logger.debug(f"Source B (quote) failed for {symbol}: {e}")
+        _log_api_error("Yahoo Quote API", symbol, e)
         return None
 
 
@@ -359,7 +378,7 @@ def _try_twelve_data(symbol: str):
             logger.info(f"Twelve Data returned no price for {symbol} (tried: {', '.join(symbols_to_try)})")
         return None
     except Exception as e:
-        logger.info(f"Source C (Twelve Data) failed for {symbol}: {e}")
+        _log_api_error("Twelve Data API", symbol, e)
         return None
 
 
@@ -375,8 +394,8 @@ def _search_yahoo(query: str):
         encoded = urllib.parse.quote(query)
         url = f"https://query2.finance.yahoo.com/v1/finance/search?q={encoded}&quotesCount=6&newsCount=0"
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        resp = urllib.request.urlopen(req, timeout=10)
-        data = json.loads(_read_capped(resp))
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(_read_capped(resp))
         quotes = data.get("quotes", [])
 
         # Prefer London-listed results
@@ -389,9 +408,9 @@ def _search_yahoo(query: str):
         for q in quotes:
             if q.get("quoteType") in ("ETF", "EQUITY", "MUTUALFUND"):
                 return q.get("symbol")
-    except Exception:
-        pass
-    return None
+    except Exception as e:
+        _log_api_error("Yahoo Search API", query, e)
+        return None
 
 
 def fetch_history(ticker: str, period: str = "1y"):
@@ -420,8 +439,8 @@ def fetch_history(ticker: str, period: str = "1y"):
             encoded = urllib.parse.quote(sym)
             url = f"https://query1.finance.yahoo.com/v8/finance/chart/{encoded}?range={http_range}&interval={http_interval}"
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            resp = urllib.request.urlopen(req, timeout=10)
-            data = json.loads(_read_capped(resp))
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(_read_capped(resp))
             result = data.get("chart", {}).get("result")
             if not result:
                 return None
@@ -452,7 +471,8 @@ def fetch_history(ticker: str, period: str = "1y"):
                 })
 
             return history_data or None
-        except Exception:
+        except Exception as e:
+            _log_api_error("Yahoo Chart History API", sym, e)
             return None
 
     try:
