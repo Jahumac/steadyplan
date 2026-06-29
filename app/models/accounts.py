@@ -144,7 +144,6 @@ def update_account(payload, user_id=None):
                 tags = ?,
                 current_value = ?,
                 monthly_contribution = ?,
-                monthly_cash_park = ?,
                 pension_contribution_day = ?,
                 goal_value = ?,
                 valuation_mode = ?,
@@ -177,7 +176,6 @@ def update_account(payload, user_id=None):
                 payload["tags"],
                 payload["current_value"],
                 payload["monthly_contribution"],
-                payload.get("monthly_cash_park", 0),
                 payload.get("pension_contribution_day", 0),
                 payload["goal_value"],
                 payload["valuation_mode"],
@@ -254,13 +252,13 @@ def create_account(payload, user_id):
             """
             INSERT INTO accounts (
                 user_id, name, provider, wrapper_type, category, tags, current_value,
-                monthly_contribution, monthly_cash_park, pension_contribution_day, goal_value, valuation_mode, growth_mode,
+                monthly_contribution, pension_contribution_day, goal_value, valuation_mode, growth_mode,
                 growth_rate_override, owner, linked_broker_connection_id, is_active, notes, last_updated,
                 employer_contribution, contribution_method, annual_fee_pct,
                 platform_fee_pct, platform_fee_flat, platform_fee_cap, fund_fee_pct,
                 contribution_fee_pct, uninvested_cash, cash_interest_rate, interest_payment_day
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
@@ -271,7 +269,6 @@ def create_account(payload, user_id):
                 payload["tags"],
                 payload["current_value"],
                 payload["monthly_contribution"],
-                payload.get("monthly_cash_park", 0),
                 payload.get("pension_contribution_day", 0),
                 payload["goal_value"],
                 payload["valuation_mode"],

@@ -58,10 +58,6 @@ from app.services.import_staging import (
 
 budget_bp = Blueprint("budget", __name__)
 
-LINKED_ACCOUNT_COMPONENT_INVESTED = "invested"
-LINKED_ACCOUNT_COMPONENT_CASH_PARK = "cash_park"
-
-
 def _default_month_key():
     today = date.today()
     return f"{today.year}-{today.month:02d}"
@@ -75,29 +71,17 @@ def _row_value(row, key, default=None):
     return default if value is None else value
 
 
-def _linked_account_component(item):
-    component = str(_row_value(item, "linked_account_component", LINKED_ACCOUNT_COMPONENT_INVESTED)).strip().lower()
-    if component not in {LINKED_ACCOUNT_COMPONENT_INVESTED, LINKED_ACCOUNT_COMPONENT_CASH_PARK}:
-        return LINKED_ACCOUNT_COMPONENT_INVESTED
-    return component
-
-
 def _linked_account_default_amount(item, account):
-    if _linked_account_component(item) == LINKED_ACCOUNT_COMPONENT_CASH_PARK:
-        return float(_row_value(account, "monthly_cash_park", 0) or 0)
     return float(_row_value(account, "monthly_contribution", 0) or 0)
 
 
 def _parse_calendar_entry_key(raw_key):
-    account_text, _, component = str(raw_key or "").partition(":")
+    account_text, _, _ = str(raw_key or "").partition(":")
     try:
         account_id = int(account_text)
     except (TypeError, ValueError):
         return None, None
-    component = (component or LINKED_ACCOUNT_COMPONENT_INVESTED).strip().lower()
-    if component not in {LINKED_ACCOUNT_COMPONENT_INVESTED, LINKED_ACCOUNT_COMPONENT_CASH_PARK}:
-        component = LINKED_ACCOUNT_COMPONENT_INVESTED
-    return account_id, component
+    return account_id, "invested"
 
 
 def _linked_account_budget_total(month_key, user_id, account_id, account=None, entry_overrides=None):
@@ -174,17 +158,15 @@ def _sync_linked_override(item_id, month_key, amount, user_id):
     if month_key < today_key:
         return
 
-    component = _linked_account_component(item)
-    field_name = "monthly_cash_park" if component == LINKED_ACCOUNT_COMPONENT_CASH_PARK else "monthly_contribution"
     try:
-        current = float(account.get(field_name) or 0)
+        current = float(account.get("monthly_contribution") or 0)
     except (TypeError, ValueError):
         current = 0.0
     if abs(current - desired) < 0.005:
         return
 
     updated = dict(account)
-    updated[field_name] = desired
+    updated["monthly_contribution"] = desired
     update_account(updated, user_id)
 
 def _month_label(month_key):
@@ -315,12 +297,6 @@ def _build_monthly_data(month_key, user_id):
     active_overrides = fetch_all_active_overrides(month_key, user_id)
     accounts = fetch_all_accounts(user_id)
     account_map = {a["id"]: a for a in accounts}
-    cash_park_accounts = {
-        item["linked_account_id"]
-        for item in items
-        if _row_value(item, "linked_account_id")
-        and _linked_account_component(item) == LINKED_ACCOUNT_COMPONENT_CASH_PARK
-    }
     debts = fetch_all_debts(user_id)
     debt_map = {d["id"]: d for d in debts}
 
@@ -352,9 +328,6 @@ def _build_monthly_data(month_key, user_id):
             linked_account = account_map.get(item["linked_account_id"]) if item["linked_account_id"] else None
             is_linked_account = linked_account is not None
             is_linked_debt = linked_debt is not None
-            linked_component = _linked_account_component(item)
-            override_reason = ""
-            linked_component = _linked_account_component(item)
             override_reason = ""
 
             if item["id"] in entry_map:
@@ -362,18 +335,13 @@ def _build_monthly_data(month_key, user_id):
                 source = "manual_override"
             elif (
                 is_linked_account
-                and linked_component == LINKED_ACCOUNT_COMPONENT_INVESTED
                 and linked_account["id"] in active_overrides
-                and linked_account["id"] not in cash_park_accounts
             ):
                 amount = float(active_overrides[linked_account["id"]]["override_amount"] or 0)
                 override_reason = (active_overrides[linked_account["id"]]["reason"] or "").strip()
                 source = "manual_override"
             elif is_linked_account:
-                if linked_component == LINKED_ACCOUNT_COMPONENT_CASH_PARK:
-                    amount = float(linked_account.get("monthly_cash_park") or 0)
-                else:
-                    amount = float(linked_account["monthly_contribution"] or 0)
+                amount = float(linked_account["monthly_contribution"] or 0)
                 source = "linked_account"
             elif is_linked_debt:
                 amount = float(linked_debt.get("monthly_payment") or 0)
@@ -405,12 +373,8 @@ def _build_monthly_data(month_key, user_id):
                     source_title = "Saved for this month (linked debt)"
             elif source == "linked_account":
                 ln = (linked_account.get("name") or "—").strip()
-                if linked_component == LINKED_ACCOUNT_COMPONENT_CASH_PARK:
-                    source_label = f"cash park · {ln}"
-                    source_title = "Pulled from your linked account's monthly cash park setting"
-                else:
-                    source_label = f"linked account · {ln}"
-                    source_title = "Pulled from your linked account's monthly payment"
+                source_label = f"linked account · {ln}"
+                source_title = "Pulled from your linked account's monthly payment"
             else:  # linked_debt
                 source_label = "linked debt"
                 source_title = "Pulled from your Debts page — update the monthly payment there to change this amount"

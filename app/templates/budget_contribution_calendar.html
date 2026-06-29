@@ -184,7 +184,6 @@
         <thead>
           <tr>
             <th>Account</th>
-            <th>Type</th>
             <th>Wrapper</th>
             <th class="text-right">Default</th>
             <th class="text-right">Temporary amount</th>
@@ -194,13 +193,6 @@
           {% for account in calendar.accounts %}
           <tr>
             <td data-label="Account">{{ account.name }}</td>
-            <td data-label="Type">
-              {% if account.component == 'cash_park' %}
-              Cash park
-              {% else %}
-              Invested
-              {% endif %}
-            </td>
             <td data-label="Account type">{{ account.wrapper_type or 'Other' }}</td>
             <td data-label="Default" class="text-right">£{{ '{:,.2f}'.format(account.monthly_contribution) }}</td>
             <td data-label="Temporary amount" class="text-right">
@@ -239,7 +231,6 @@
             <thead>
               <tr>
                 <th>Account</th>
-                <th>Type</th>
                 <th>Wrapper</th>
                 <th>Range</th>
                 <th class="text-right">Amount</th>
@@ -249,7 +240,6 @@
               {% for row in plan.rows %}
               <tr>
                 <td>{{ row.account_name }}</td>
-                <td>{% if row.component == 'cash_park' %}Cash park{% else %}Invested{% endif %}</td>
                 <td>{{ row.wrapper_type or 'Other' }}</td>
                 <td>{{ row.from_month }} to {{ row.to_month }}</td>
                 <td class="text-right">£{{ '{:,.2f}'.format(row.override_amount) }}</td>

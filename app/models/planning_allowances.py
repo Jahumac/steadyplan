@@ -2,13 +2,7 @@
 from collections import defaultdict
 from datetime import datetime, timezone
 from app.calculations import (
-    account_monthly_personal_total,
     add_months_to_key,
-    contribution_override_component,
-    contribution_override_components_for_month,
-    OVERRIDE_COMPONENT_CASH_PARK,
-    OVERRIDE_COMPONENT_INVESTED,
-    OVERRIDE_COMPONENT_TOTAL,
     select_best_matching_override,
 )
 from ._conn import get_connection
@@ -79,20 +73,7 @@ def _plan_name_from_reason(reason):
     return reason
 
 
-def _cash_park_override_enabled(account):
-    wrapper = str(account["wrapper_type"] or "").lower()
-    category = str(account["category"] or "").lower()
-    valuation_mode = str(account["valuation_mode"] or "").lower()
-    return (
-        valuation_mode == "holdings"
-        and "pension" not in wrapper
-        and "sipp" not in wrapper
-        and category != "pension"
-    )
 
-
-def _component_entry_key(account_id, component):
-    return f"{int(account_id)}:{component}"
 
 
 def add_isa_contribution(user_id, account_id, amount, contribution_date, note=None):
@@ -358,9 +339,7 @@ def create_temporary_contribution_plan(user_id, plan_name, rows):
             override_amount = float(row["override_amount"] or 0)
         except (KeyError, TypeError, ValueError):
             continue
-        component = str(row.get("component") or OVERRIDE_COMPONENT_TOTAL).strip().lower()
-        if component not in {OVERRIDE_COMPONENT_TOTAL, OVERRIDE_COMPONENT_INVESTED, OVERRIDE_COMPONENT_CASH_PARK}:
-            component = OVERRIDE_COMPONENT_TOTAL
+        component = "total"
         from_month = str(row.get("from_month") or "").strip()
         to_month = str(row.get("to_month") or "").strip()
         if not from_month or not to_month:
@@ -500,7 +479,7 @@ def fetch_temporary_contribution_plans(user_id):
             "id": row["id"],
             "account_id": row["account_id"],
             "account_name": row["account_name"],
-            "component": contribution_override_component(row),
+            "component": row["component"] or "invested",
             "wrapper_type": row["wrapper_type"],
             "from_month": row["from_month"],
             "to_month": row["to_month"],
@@ -574,13 +553,12 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
     with get_connection() as conn:
         accounts = conn.execute(
             """
-            SELECT id, name, wrapper_type, category, monthly_contribution, monthly_cash_park, employer_contribution, contribution_method, current_value, valuation_mode
+            SELECT id, name, wrapper_type, category, monthly_contribution, employer_contribution, contribution_method, current_value, valuation_mode
             FROM accounts
             WHERE user_id = ?
               AND is_active = 1
               AND (
                     COALESCE(monthly_contribution, 0) > 0
-                 OR COALESCE(monthly_cash_park, 0) > 0
                  OR LOWER(COALESCE(wrapper_type, '')) LIKE '%isa%'
                  OR LOWER(COALESCE(wrapper_type, '')) LIKE '%lisa%'
                  OR LOWER(COALESCE(wrapper_type, '')) LIKE '%sipp%'
@@ -627,87 +605,52 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
     calendar_accounts = []
     for account in accounts:
         account_id = int(account["id"])
-        component_rows = [{
-            "component": OVERRIDE_COMPONENT_INVESTED,
+        default_amount = float(account["monthly_contribution"] or 0)
+        month_cells = []
+        for month_key in month_keys:
+            active_rows = [
+                row
+                for row in overrides_by_account.get(account_id, [])
+                if row["from_month"] <= month_key <= row["to_month"]
+            ]
+            selected = select_best_matching_override(active_rows, month_key)
+            if len(active_rows) > 1:
+                overlap_count += 1
+            selected_reason = selected["reason"] if selected is not None else ""
+            month_cells.append({
+                "month_key": month_key,
+                "default_amount": default_amount,
+                "has_override": selected is not None,
+                "override_amount": float(selected["override_amount"] or 0) if selected is not None else None,
+                "reason": selected_reason,
+                "plan_name": _plan_name_from_reason(selected_reason) if selected_reason.startswith(TEMPORARY_PLAN_PREFIX) else "",
+                "source_label": (
+                    "Temporary override"
+                    if selected_reason.startswith(TEMPORARY_PLAN_PREFIX)
+                    else (selected_reason or "Override")
+                ) if selected is not None else "Default",
+                "is_temporary": bool(selected_reason.startswith(TEMPORARY_PLAN_PREFIX)),
+                "active_override_count": len(active_rows),
+                "overlap": len(active_rows) > 1,
+                "overlap_reasons": [row["reason"] or "Override" for row in active_rows],
+                "overlap_amounts": [float(row["override_amount"] or 0) for row in active_rows],
+            })
+
+        calendar_accounts.append({
+            "id": account_id,
+            "calendar_entry_key": str(account_id),
+            "component": "invested",
             "name": account["name"],
-            "default_amount": float(account["monthly_contribution"] or 0),
-        }]
-        if _cash_park_override_enabled(account):
-            component_rows.append({
-                "component": OVERRIDE_COMPONENT_CASH_PARK,
-                "name": f"{account['name']} cash park",
-                "default_amount": float(account["monthly_cash_park"] or 0),
-            })
-
-        for component_row in component_rows:
-            component = component_row["component"]
-            default_amount = float(component_row["default_amount"] or 0)
-            month_cells = []
-            for month_key in month_keys:
-                active_rows = [
-                    row
-                    for row in overrides_by_account.get(account_id, [])
-                    if row["from_month"] <= month_key <= row["to_month"]
-                ]
-                component_rows = [
-                    row for row in active_rows
-                    if contribution_override_component(row) == component
-                ]
-                selected = select_best_matching_override(component_rows, month_key)
-                if selected is None:
-                    total_row = select_best_matching_override(
-                        [
-                            row for row in active_rows
-                            if contribution_override_component(row) == OVERRIDE_COMPONENT_TOTAL
-                        ],
-                        month_key,
-                    )
-                    if total_row is not None:
-                        parts = contribution_override_components_for_month(
-                            active_rows,
-                            month_key,
-                            default_invested=float(account["monthly_contribution"] or 0),
-                            default_cash_park=float(account["monthly_cash_park"] or 0),
-                        )
-                        selected = dict(total_row)
-                        selected["override_amount"] = float(parts[component] or 0)
-                if len(component_rows) > 1:
-                    overlap_count += 1
-                selected_reason = selected["reason"] if selected is not None else ""
-                month_cells.append({
-                    "month_key": month_key,
-                    "default_amount": default_amount,
-                    "has_override": selected is not None,
-                    "override_amount": float(selected["override_amount"] or 0) if selected is not None else None,
-                    "reason": selected_reason,
-                    "plan_name": _plan_name_from_reason(selected_reason) if selected_reason.startswith(TEMPORARY_PLAN_PREFIX) else "",
-                    "source_label": (
-                        "Temporary override"
-                        if selected_reason.startswith(TEMPORARY_PLAN_PREFIX)
-                        else (selected_reason or "Override")
-                    ) if selected is not None else "Default",
-                    "is_temporary": bool(selected_reason.startswith(TEMPORARY_PLAN_PREFIX)),
-                    "active_override_count": len(component_rows),
-                    "overlap": len(component_rows) > 1,
-                    "overlap_reasons": [row["reason"] or "Override" for row in component_rows],
-                    "overlap_amounts": [float(row["override_amount"] or 0) for row in component_rows],
-                })
-
-            calendar_accounts.append({
-                "id": account_id,
-                "calendar_entry_key": _component_entry_key(account_id, component),
-                "component": component,
-                "name": component_row["name"],
-                "base_account_name": account["name"],
-                "wrapper_type": account["wrapper_type"],
-                "category": account["category"],
-                "current_value": float(account["current_value"] or 0) if component == OVERRIDE_COMPONENT_INVESTED else 0.0,
-                "monthly_contribution": default_amount,
-                "employer_contribution": float(account["employer_contribution"] or 0),
-                "contribution_method": account["contribution_method"] or "standard",
-                "valuation_mode": account["valuation_mode"] or "manual",
-                "months": month_cells,
-            })
+            "base_account_name": account["name"],
+            "wrapper_type": account["wrapper_type"],
+            "category": account["category"],
+            "current_value": float(account["current_value"] or 0),
+            "monthly_contribution": default_amount,
+            "employer_contribution": float(account["employer_contribution"] or 0),
+            "contribution_method": account["contribution_method"] or "standard",
+            "valuation_mode": account["valuation_mode"] or "manual",
+            "months": month_cells,
+        })
 
     return {
         "months": month_keys,
@@ -752,15 +695,15 @@ def _effective_override_amount_for_month(conn, account_id, month_key, fallback_a
         """,
         (account_id, month_key, month_key),
     ).fetchall()
-    parts = contribution_override_components_for_month(rows, month_key, default_invested=fallback_amount, default_cash_park=0.0)
-    if parts["has_component_overrides"] or parts["total_override"] is not None:
-        return float(parts["total"] or 0)
+    selected = select_best_matching_override(rows, month_key)
+    if selected is not None:
+        return float(selected["override_amount"] or 0)
     return float(fallback_amount or 0)
 
 
 def _recalculate_review_items_for_account_month_range(conn, account_id, user_id, from_month, to_month):
     account = conn.execute(
-            "SELECT monthly_contribution, monthly_cash_park FROM accounts WHERE id = ? AND user_id = ?",
+        "SELECT monthly_contribution FROM accounts WHERE id = ? AND user_id = ?",
         (account_id, user_id),
     ).fetchone()
     if not account:
@@ -778,7 +721,7 @@ def _recalculate_review_items_for_account_month_range(conn, account_id, user_id,
         """,
         (user_id, account_id, from_month, to_month),
     ).fetchall()
-    fallback_amount = account_monthly_personal_total(account)
+    fallback_amount = float(account["monthly_contribution"] or 0)
     for review in review_rows:
         expected = _effective_override_amount_for_month(
             conn,
@@ -843,17 +786,13 @@ def fetch_all_active_overrides(month_key, user_id):
 
     aggregated = {}
     for account_id, account_rows in rows_by_account.items():
-        parts = contribution_override_components_for_month(account_rows, month_key, default_invested=0.0, default_cash_park=0.0)
-        if not parts["has_component_overrides"] and parts["total_override"] is None:
-            continue
-        source_row = parts["total_override"] or parts["invested_override"] or parts["cash_park_override"]
-        if source_row is None:
-            continue
-        aggregated[account_id] = {
-            **dict(source_row),
-            "override_amount": float(parts["total"] or 0),
-            "component": OVERRIDE_COMPONENT_TOTAL,
-        }
+        selected = select_best_matching_override(account_rows, month_key)
+        if selected is not None:
+            aggregated[account_id] = {
+                **dict(selected),
+                "override_amount": float(selected["override_amount"] or 0),
+                "component": "total",
+            }
     return aggregated
 
 
@@ -937,9 +876,9 @@ def create_contribution_override(payload, user_id=None):
     with get_connection() as conn:
         if user_id is not None and not _account_belongs_to_user(conn, payload["account_id"], user_id):
             return None
-        component = str(payload.get("component") or OVERRIDE_COMPONENT_TOTAL).strip().lower()
-        if component not in {OVERRIDE_COMPONENT_TOTAL, OVERRIDE_COMPONENT_INVESTED, OVERRIDE_COMPONENT_CASH_PARK}:
-            component = OVERRIDE_COMPONENT_TOTAL
+        component = str(payload.get("component") or "total").strip().lower()
+        if component not in {"total", "invested", "cash_park"}:
+            component = "total"
         cursor = conn.execute(
             """
             INSERT INTO contribution_overrides (account_id, from_month, to_month, override_amount, component, reason, created_at)
@@ -1013,7 +952,7 @@ def upsert_single_month_contribution_override(account_id, month_key, amount, use
             """INSERT INTO contribution_overrides
                (account_id, from_month, to_month, override_amount, component, reason, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (account_id, month_key, month_key, amount, OVERRIDE_COMPONENT_TOTAL, reason, datetime.now(timezone.utc).isoformat()),
+             (account_id, month_key, month_key, amount, "total", reason, datetime.now(timezone.utc).isoformat()),
         )
         _recalculate_review_items_for_account_month_range(
             conn,

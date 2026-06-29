@@ -156,28 +156,6 @@ def test_isa_usage_accepts_stocks_and_shares_label_variant():
     assert usage["breakdown"][0]["wrapper_type"] == "Stocks and Shares ISA"
 
 
-def test_isa_usage_counts_monthly_cash_park_toward_subscription_totals():
-    accounts = [
-        {
-            "id": 1,
-            "name": "ISA",
-            "wrapper_type": "Stocks & Shares ISA",
-            "monthly_contribution": 100,
-            "monthly_cash_park": 25,
-        }
-    ]
-
-    usage = calculate_isa_usage(
-        accounts,
-        ad_hoc_contributions=[],
-        today=date(2026, 6, 30),
-        salary_day=28,
-    )
-
-    assert usage["monthly_isa"] == 375
-    assert usage["projected_isa"] == 1500
-    assert usage["breakdown"][0]["monthly_contribution"] == 125
-
 
 def test_isa_usage_excludes_regular_lisa_contributions_after_age_50():
     accounts = [
