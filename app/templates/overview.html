@@ -180,7 +180,7 @@
 {% if payday_banner and not review_nudge %}
 <section class="card payday-banner mb-1">
   <div class="flex flex-center flex-wrap gap-075">
-    <div style="flex:1; min-width:200px;">
+    <div class="flex-1-min-200" >
       <strong>It's your investment day</strong>
       <p class="helper-text" style="margin:0.15rem 0 0;">Time to move your payments — check the budget now, then expect your Monthly Update nudge once this month's money has settled.</p>
     </div>
@@ -193,7 +193,7 @@
 {% if review_nudge %}
 <section class="card review-nudge mb-1">
   <div class="flex flex-center flex-wrap gap-075">
-    <div style="flex:1; min-width:200px;">
+    <div class="flex-1-min-200" >
       <p class="eyebrow m-0">What to do next</p>
       <strong>Monthly update ready</strong>
       <p class="helper-text" style="margin:0.15rem 0 0;">
@@ -210,7 +210,7 @@
 {% for alert in alerts %}
 <section class="card alert-banner alert-{{ alert.kind }} mb-1">
   <div class="flex flex-center flex-wrap gap-075">
-    <div style="flex:1; min-width:200px;">
+    <div class="flex-1-min-200" >
       <p class="m-0">{{ alert.message }}</p>
     </div>
     {% if alert.cta_form_action %}
@@ -229,7 +229,7 @@
 {% if overview_warning.first and not has_accounts %}
 <section class="card alert-banner alert-warning mb-1">
   <div class="flex flex-center flex-wrap gap-075">
-    <div style="flex:1; min-width:200px;">
+    <div class="flex-1-min-200" >
       <p class="eyebrow m-0">Data health</p>
       <strong>Needs attention</strong>
       <p class="helper-text m-0">
@@ -365,7 +365,7 @@
 {% if data_health_warnings %}
 <section class="card alert-banner alert-warning mb-1">
   <div class="flex flex-center flex-wrap gap-075">
-    <div style="flex:1; min-width:200px;">
+    <div class="flex-1-min-200" >
       <p class="eyebrow m-0">Data health</p>
       <strong>Needs attention</strong>
       <p class="helper-text m-0">

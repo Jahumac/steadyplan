@@ -96,7 +96,7 @@
           <summary>Can wait until later</summary>
           <div class="form-grid mt-075">
             <label>
-              <span>Account holder <span style="color:var(--muted);font-weight:400;">(optional)</span></span>
+              <span>Account holder <span class="text-muted fw-normal" >(optional)</span></span>
               <input type="text" name="owner" placeholder="e.g. Samuel, Me, Joint">
               <small class="form-hint">Useful for household accounts so you know whose account this is.</small>
             </label>
@@ -140,17 +140,17 @@
           <div data-manual-fields class="form-contents">
             <label><span>Current balance</span><input type="number" step="0.01" name="current_value" placeholder="0.00"></label>
           </div>
-          <label data-custom-rate-field style="display:none;">
+          <label class="hidden" data-custom-rate-field >
             <span id="cw-custom-rate-label">Custom growth rate (%)</span>
             <input type="number" step="0.1" name="growth_rate_override" placeholder="e.g. 4.5">
             <small class="form-hint" id="cw-custom-rate-hint">Enter a percentage — 4.5 means 4.5%.</small>
           </label>
-          <label data-cash-rate-field style="display:none;">
+          <label class="hidden" data-cash-rate-field >
             <span>Cash interest rate (%)</span>
             <input type="number" step="0.1" name="cash_interest_rate" placeholder="e.g. 3.6">
             <small class="form-hint">Used for Cash ISA or savings reports. Leave blank if you do not want SteadyPlan to estimate interest.</small>
           </label>
-          <label data-cash-rate-field style="display:none;">
+          <label class="hidden" data-cash-rate-field >
             <span>Interest paid on day of month</span>
             <input type="number" name="interest_payment_day" min="0" max="31" value="0">
             <small class="form-hint">Optional. Use 0 if unknown.</small>
@@ -220,7 +220,7 @@
             </div>
             <button type="button" class="badge badge-accent add-holding-submit" id="cw-h-add">Add</button>
           </div>
-          <p id="cw-h-status" class="text-sm" style="margin:0.4rem 0 0.2rem;min-height:1.25rem;"></p>
+          <p id="cw-h-status" class="text-sm my-04-02 min-h-125" ></p>
           <button type="button" id="cw-h-switch-manual" class="btn-link text-sm text-muted">
             No ticker / pension fund? Add manually →
           </button>
@@ -228,7 +228,7 @@
 
         <div class="cw-holding-form hidden" id="cw-manual-form">
           <div class="add-holding-fields flex-wrap gap-06">
-            <div class="add-holding-field" style="flex:1;min-width:12rem;">
+            <div class="add-holding-field flex-1-min-12" >
               <label>Fund / holding name</label>
               <input type="text" id="cw-m-name" class="input-full" placeholder="e.g. Nest Higher Risk Fund">
             </div>
@@ -258,8 +258,8 @@
             </div>
             <button type="button" class="badge badge-accent add-holding-submit" id="cw-m-add">Add</button>
           </div>
-          <p id="cw-m-status" class="text-sm" style="margin:0.4rem 0 0.2rem;min-height:1.25rem;"></p>
-          <button type="button" id="cw-h-switch-ticker" class="btn-link text-sm text-muted" style="margin-top:0.5rem;">
+          <p id="cw-m-status" class="text-sm my-04-02 min-h-125" ></p>
+          <button type="button" id="cw-h-switch-ticker" class="btn-link text-sm text-muted mt-05" >
             ← Search by ticker instead
           </button>
         </div>
@@ -275,7 +275,7 @@
         <h3 class="cw-title">Monthly payments</h3>
         <p class="cw-hint" id="cw-hint-contrib">How much normally goes into this account each month? This helps SteadyPlan estimate the future. You can change it later.</p>
 
-        <label id="cw-method-field" style="display:none;">
+        <label class="hidden" id="cw-method-field" >
           <span>How pension payments are handled</span>
           <select name="contribution_method" id="cw-method-select">
             <option value="standard">My own payments</option>
@@ -285,43 +285,43 @@
           <small class="form-hint" id="cw-method-hint"></small>
         </label>
 
-        <div class="form-grid" style="margin-top:0.75rem;">
+        <div class="form-grid mt-075" >
           <label>
             <span id="cw-personal-label">Your monthly payment</span>
             <input type="number" step="0.01" name="monthly_contribution" id="cw-personal" placeholder="0.00">
           </label>
-          <label id="cw-employer-field" style="display:none;">
+          <label class="hidden" id="cw-employer-field" >
             <span>Employer payment</span>
             <input type="number" step="0.01" name="employer_contribution" id="cw-employer" placeholder="0.00">
           </label>
-          <label id="cw-posting-field" style="display:none;">
+          <label class="hidden" id="cw-posting-field" >
             <span>Pension payment landing day</span>
             <input type="number" name="pension_contribution_day" id="cw-posting-day" min="0" max="31" value="0">
             <small class="form-hint">Optional. Use the day the pension money actually lands or gets invested. Set 0 to use the investment day from Settings.</small>
           </label>
         </div>
 
-        <div id="cw-contrib-preview" class="cw-preview" style="display:none;">
-          <div class="cw-preview-row" id="cw-prev-personal" style="display:none;">
+        <div id="cw-contrib-preview" class="cw-preview hidden" >
+          <div class="cw-preview-row hidden" id="cw-prev-personal" >
             <span>You pay</span><strong id="cw-prev-personal-val"></strong>
           </div>
-          <div class="cw-preview-row cw-preview-bonus" id="cw-prev-relief" style="display:none;">
+          <div class="cw-preview-row cw-preview-bonus hidden" id="cw-prev-relief" >
             <span id="cw-prev-relief-label">Pension tax top-up</span><strong id="cw-prev-relief-val"></strong>
           </div>
-          <div class="cw-preview-row cw-preview-bonus" id="cw-prev-employer" style="display:none;">
+          <div class="cw-preview-row cw-preview-bonus hidden" id="cw-prev-employer" >
             <span>Employer adds</span><strong id="cw-prev-employer-val"></strong>
           </div>
           <div class="cw-preview-total">
             <span>Total added to account</span><strong id="cw-prev-total"></strong>
           </div>
-          <div class="cw-preview-row cw-preview-selfassess" id="cw-prev-selfassess" style="display:none;">
+          <div class="cw-preview-row cw-preview-selfassess hidden" id="cw-prev-selfassess" >
             <span id="cw-prev-selfassess-label">Possible extra tax claim</span>
             <strong id="cw-prev-selfassess-val"></strong>
           </div>
           <p class="text-sm text-muted" id="cw-prev-selfassess-note" style="display:none;margin-top:0.4rem;"></p>
         </div>
 
-        <div class="acct-budget-flags" style="margin-top:0.75rem;">
+        <div class="acct-budget-flags mt-075" >
           <p class="acct-flag-heading">Budget behaviour</p>
           <label class="acct-flag-row">
             <input type="hidden" name="include_in_budget" value="0">
@@ -354,7 +354,7 @@
         <div class="form-grid">
           <label class="form-full-col">
             <span>Tags</span>
-            <small class="form-hint" style="margin-bottom:0.35rem;">Tags connect accounts to goals — pick the ones that match what this money is for.</small>
+            <small class="form-hint mb-035" >Tags connect accounts to goals — pick the ones that match what this money is for.</small>
             <div class="tag-picker tag-picker-highlight" data-tag-picker>
               {% for tag in tag_options %}
               <label class="tag-chip">

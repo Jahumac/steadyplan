@@ -270,7 +270,7 @@
               {% endif %}
               <div class="form-full-col">
                 <span>Linked broker snapshot connection</span>
-                <p class="text-sm text-muted mt-05" style="margin-bottom:0;">{{ selected_trading212_support_hint }}</p>
+                <p class="text-sm text-muted mt-05 mb-0" >{{ selected_trading212_support_hint }}</p>
               </div>
               {% endif %}
             </div>
@@ -635,7 +635,7 @@
           {% endif %}
         </div>
         {% if not selected_supports_trading212_public_api %}
-        <p class="text-sm text-muted mt-075" style="margin-bottom:0;">{{ selected_trading212_support_hint }}</p>
+        <p class="text-sm text-muted mt-075 mb-0" >{{ selected_trading212_support_hint }}</p>
         {% endif %}
         {% if linked_trading212_summary %}
         <div class="linked-broker-grid mt-075">
@@ -660,11 +660,11 @@
             <strong>£{{ '{:,.2f}'.format(linked_trading212_summary.tracked_value or 0) }}</strong>
           </div>
         </div>
-        <p class="text-sm text-muted mt-075" style="margin-bottom:0;">{{ linked_trading212_summary.source_mode_hint }}</p>
+        <p class="text-sm text-muted mt-075 mb-0" >{{ linked_trading212_summary.source_mode_hint }}</p>
         {% if linked_trading212_summary.last_error %}
-        <p class="text-sm perf-negative mt-05" style="margin-bottom:0;">Last broker snapshot error: {{ linked_trading212_summary.last_error }}</p>
+        <p class="text-sm perf-negative mt-05 mb-0" >Last broker snapshot error: {{ linked_trading212_summary.last_error }}</p>
         {% else %}
-        <p class="text-sm text-muted mt-05" style="margin-bottom:0;">Use the linked broker snapshot preview before changing holdings or manually adjusting this account.</p>
+        <p class="text-sm text-muted mt-05 mb-0" >Use the linked broker snapshot preview before changing holdings or manually adjusting this account.</p>
         {% endif %}
         {% endif %}
       </section>
@@ -715,7 +715,7 @@
       {% endif %}
 
       {% if (selected.wrapper_type or '') | lower == 'premium bonds' and selected.valuation_mode not in ('premium_bonds',) %}
-      <p class="helper-text mt-075" style="color: var(--accent-3);">
+      <p class="helper-text mt-075 text-accent-3" >
         ⚠ This account uses the "Premium Bonds" wrapper but Balance Method is still set to <em>Manual</em>. Switch it to <em>Premium Bonds</em> in Edit to unlock the prize draw tracker in Monthly Update.
       </p>
       {% endif %}
@@ -726,8 +726,8 @@
             <p class="eyebrow">Performance</p>
             <h3>Monthly history</h3>
             <div class="perf-legend mt-025">
-              <span class="perf-legend-dot" style="background:var(--accent-2)"></span><span>Actual</span>
-              <span class="perf-legend-dot" style="background:var(--muted);opacity:0.6"></span><span>Plan (7%)</span>
+              <span class="perf-legend-dot bg-accent-2" ></span><span>Actual</span>
+              <span class="perf-legend-dot bg-muted-60" ></span><span>Plan (7%)</span>
               <span class="perf-legend-dot" style="background:var(--accent-5);opacity:0.75"></span><span>Plan ({{ '{:.1f}'.format(global_growth_rate * 100) }}%)</span>
             </div>
           </div>
@@ -1136,7 +1136,7 @@
                 <span class="pb-prize-nil">No win</span>
               {% endif %}
             </div>
-            <form method="post" class="form-reset" style="display:inline;">
+            <form method="post" class="form-reset inline" >
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="form_name" value="delete_prize">
               <input type="hidden" name="prize_id" value="{{ prize.id }}">

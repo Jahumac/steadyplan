@@ -298,3 +298,35 @@ a.link-accent:hover {
   padding-right: 0.75rem;
 }
 
+
+/* New Utilities Generated for Inline Styles Cleanup */
+.mt-02 { margin-top: 0.2rem; }
+.mt-04 { margin-top: 0.4rem; }
+.mt-045 { margin-top: 0.45rem; }
+.mt-085 { margin-top: 0.85rem; }
+.mt-neg-025 { margin-top: -0.25rem; }
+.mb-035 { margin-bottom: 0.35rem; }
+.mb-04 { margin-bottom: 0.4rem; }
+.mb-045 { margin-bottom: 0.45rem; }
+.fw-normal { font-weight: 400; }
+.fw-bold { font-weight: 700; }
+.text-accent-3 { color: var(--accent-3); }
+.text-base { font-size: 1rem; }
+.text-sm-3 { font-size: 0.95rem; }
+.text-sm-alt { font-size: 0.82rem; }
+.flex-1-min-200 { flex: 1; min-width: 200px; }
+.flex-1-min-12 { flex: 1; min-width: 12rem; }
+.flex-end { justify-content: flex-end; }
+.gap-055 { gap: 0.55rem; }
+.gap-15 { gap: 1.5rem; }
+.p-0 { padding: 0; }
+.border-none { border: none; }
+.min-h-125 { min-height: 1.25rem; }
+.my-04-02 { margin: 0.4rem 0 0.2rem; }
+.m-custom-1 { margin: 0.35rem 0 0 1.15rem; }
+.max-w-12 { max-width: 12rem; }
+.uppercase { text-transform: uppercase; }
+.bg-accent-2 { background: var(--accent-2); }
+.bg-muted-60 { background: var(--muted); opacity: 0.6; }
+.border-t { border-top: 1px solid var(--border); }
+.pt-075 { padding-top: 0.75rem; }

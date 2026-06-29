@@ -127,7 +127,7 @@
     <button type="button" id="instrument-search-btn" class="badge badge-primary-action">Look up</button>
   </div>
 
-  <div id="instrument-search-result" class="mt-1" style="display:none;"
+  <div id="instrument-search-result" class="mt-1 hidden" 
     data-accounts='{% for a in all_accounts %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}'></div>
 </section>
 {% else %}
