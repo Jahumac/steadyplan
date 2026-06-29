@@ -506,6 +506,16 @@ def effective_account_value(account, holdings_totals=None):
     """Return the value of the account based on its valuation mode and uninvested cash."""
     holdings_totals = holdings_totals or {}
     uninvested = to_float(_safe_get(account, "uninvested_cash", 0))
+    
+    # Cash accounts and Cash ISAs only hold cash, represented by current_value.
+    # Ignore uninvested_cash to prevent doubling of the balance.
+    is_cash_type = (
+        (account.get("wrapper_type") or "").lower() == "cash isa"
+        or account.get("category") == "Cash"
+    )
+    if is_cash_type:
+        return to_float(account["current_value"])
+        
     if account["valuation_mode"] == "holdings":
         return to_float(holdings_totals.get(account["id"], 0)) + uninvested
     return to_float(account["current_value"]) + uninvested

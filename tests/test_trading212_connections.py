@@ -3309,7 +3309,8 @@ def test_trading212_sync_focus_cash_only(app, client, make_user, monkeypatch):
     # Verify DB has updated cash balance
     with app.app_context():
         acc = fetch_account(account_id, uid)
-        assert acc["uninvested_cash"] == 180.0
+        assert acc["current_value"] == 180.0
+        assert acc["uninvested_cash"] == 0.0
 
 
 def test_trading212_sync_focus_holdings_only(app, client, make_user, monkeypatch):
