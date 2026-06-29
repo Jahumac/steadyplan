@@ -482,6 +482,10 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
     if linked_account:
         tracked_value_total = sum(float((row or {}).get("value") or 0) for row in existing_holdings)
         value_gap = stats["position_value_total"] - tracked_value_total
+        broker_cash_total = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+        tracked_cash = float(linked_account.get("uninvested_cash") or 0)
+        cash_difference = broker_cash_total - tracked_cash
+        can_apply_cash = abs(cash_difference) >= 0.01
         apply_plan = {
             "matched_updates_count": len(matched_updates),
             "broker_add_count": len(broker_only),
@@ -489,7 +493,11 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
             "broker_value_total": stats["position_value_total"],
             "tracked_value_total": tracked_value_total,
             "value_gap": value_gap,
-            "needs_changes": bool(matched_updates or broker_only or db_only or abs(value_gap) >= 0.005),
+            "broker_cash_total": broker_cash_total,
+            "tracked_cash": tracked_cash,
+            "cash_difference": cash_difference,
+            "can_apply_cash": can_apply_cash,
+            "needs_changes": bool(matched_updates or broker_only or db_only or abs(value_gap) >= 0.005 or can_apply_cash),
             "can_apply_matched_changes": bool(matched_updates),
             "addable_broker_count": len([row for row in broker_only if not (row.get("possible_matches") or [])]),
             "can_apply_broker_additions": bool([row for row in broker_only if not (row.get("possible_matches") or [])]),
@@ -1454,6 +1462,85 @@ def apply_trading212_reviewed_changes(connection_id):
         )
     if skipped:
         flash(f"{skipped} matched holding{'s' if skipped != 1 else ''} could not be applied.", "info")
+    return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+
+@settings_bp.route("/trading212/<int:connection_id>/apply-cash", methods=["POST"])
+@login_required
+def apply_trading212_cash(connection_id):
+    connection = fetch_broker_connection(connection_id, current_user.id)
+    if connection is None or connection.get("provider") != PROVIDER_TRADING212:
+        flash(trading212_connection_not_found_message(), "error")
+        return _settings_trading212_redirect()
+
+    account_id = optional_int(request.form.get("account_id"), default=None)
+    if not account_id:
+        flash("Choose the linked account before applying cash updates.", "error")
+        return _settings_trading212_redirect()
+
+    linked_account = fetch_account(account_id, current_user.id)
+    if linked_account is None:
+        flash("Linked account not found.", "error")
+        return _settings_trading212_redirect()
+    if linked_account.get("linked_broker_connection_id") != connection_id:
+        flash(trading212_account_not_linked_message(), "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+    try:
+        api_key = decrypt_trading212_credential(connection.get("api_key_ciphertext"))
+        api_secret = decrypt_trading212_credential(connection.get("api_secret_ciphertext"))
+        snapshot = fetch_trading212_portfolio_snapshot(
+            api_key=api_key,
+            api_secret=api_secret,
+            environment=connection.get("environment") or "live",
+        )
+        summary = snapshot["summary"]
+        update_broker_connection_status(
+            connection_id,
+            current_user.id,
+            status="connected",
+            last_error=None,
+            last_tested_at=summary["fetched_at"],
+            external_account_id=summary["account_id"],
+            external_account_currency=summary["currency"],
+            external_total_value=summary["total_value"],
+        )
+    except (Trading212ConnectionError, Trading212CredentialError) as exc:
+        update_broker_connection_status(
+            connection_id,
+            current_user.id,
+            status="error",
+            last_error=str(exc),
+            last_tested_at=datetime.now(timezone.utc).isoformat(),
+        )
+        flash(str(exc), "error")
+        return redirect(url_for("accounts.account_detail", account_id=account_id))
+
+    refreshed_connection = fetch_broker_connection(connection_id, current_user.id) or connection
+    preview = _build_trading212_preview(current_user.id, refreshed_connection, snapshot, linked_account=linked_account)
+
+    if request.form.get("confirm_apply_cash") != "yes":
+        flash("Tick the confirmation box before applying the cash update.", "error")
+        return _render_trading212_preview(preview)
+
+    broker_cash_total = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+    
+    linked_account["uninvested_cash"] = broker_cash_total
+    update_account(linked_account, current_user.id)
+
+    flash(f"Updated account cash balance to {broker_cash_total:.2f}.", "success")
+    
+    _log_trading212_sync_event(
+        user_id=current_user.id,
+        connection_id=connection_id,
+        account_id=account_id,
+        action_type="apply_cash",
+        snapshot_at=summary.get("fetched_at"),
+        matched_updates_count=0,
+        broker_add_count=0,
+        held_back_broker_count=0,
+        tracked_only_count=0,
+    )
     return redirect(url_for("accounts.account_detail", account_id=account_id))
 
 
