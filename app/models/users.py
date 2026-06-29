@@ -87,13 +87,25 @@ def update_user(user_id, username=None, password=None, is_admin=None):
             if admin_count <= 1:
                 return False, "Cannot remove admin rights from the only admin account."
         # Build update
+        updates = []
+        params = []
         if username:
-            conn.execute("UPDATE users SET username = ? WHERE id = ?", (username, user_id))
+            updates.append("username = ?")
+            params.append(username)
         if password:
             pw_hash = generate_password_hash(password)
-            conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (pw_hash, user_id))
+            updates.append("password_hash = ?")
+            params.append(pw_hash)
         if is_admin is not None:
-            conn.execute("UPDATE users SET is_admin = ? WHERE id = ?", (int(is_admin), user_id))
+            updates.append("is_admin = ?")
+            params.append(1 if is_admin else 0)
+
+        if updates:
+            params.append(user_id)
+            conn.execute(
+                f"UPDATE users SET {', '.join(updates)} WHERE id = ?",
+                tuple(params),
+            )
         conn.commit()
     return True, None
 

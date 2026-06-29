@@ -1,5 +1,6 @@
 from calendar import monthrange
 from datetime import date, datetime, timedelta, timezone
+from decimal import Decimal
 
 PRICE_STALE_AFTER_HOURS = 36     # >36h since last successful fetch ⇒ stale badge on holdings
 SCHEDULER_STALE_AFTER_HOURS = 24  # >24h since last scheduler run ⇒ alert on overview
@@ -26,6 +27,21 @@ def is_price_stale(price_updated_at, now=None):
         except (ValueError, TypeError):
             continue
     return True  # unparseable ⇒ assume stale so users notice
+
+
+def to_decimal(val, default="0.0"):
+    """Parse a Decimal from a float, int, or string safely, avoiding representation errors."""
+    if val is None:
+        return Decimal(str(default))
+    try:
+        if isinstance(val, float):
+            return Decimal(f"{val:.12g}")
+        return Decimal(str(val))
+    except (ValueError, TypeError, ArithmeticError):
+        try:
+            return Decimal(str(default))
+        except (ValueError, TypeError, ArithmeticError):
+            return Decimal("0.0")
 
 
 
@@ -74,8 +90,8 @@ def contribution_breakdown(account, assumptions=None):
         self_assessment — additional relief reclaimable by higher/additional-rate taxpayers
         method_label    — human-readable description of the method
     """
-    personal = account_monthly_personal_total(account)
-    employer = to_float(_safe_get(account, "employer_contribution", 0))
+    personal = to_decimal(account_monthly_personal_total(account))
+    employer = to_decimal(_safe_get(account, "employer_contribution", 0))
     wrapper = (_safe_get(account, "wrapper_type") or "")
     method = (_safe_get(account, "contribution_method") or "standard")
 
@@ -83,70 +99,69 @@ def contribution_breakdown(account, assumptions=None):
     if assumptions:
         tax_band = (_safe_get(assumptions, "tax_band") or "basic")
 
-    tax_relief = 0.0
-    government_bonus = 0.0
-    self_assessment = 0.0
+    tax_relief = Decimal("0.0")
+    government_bonus = Decimal("0.0")
+    self_assessment = Decimal("0.0")
     method_label = ""
 
     is_sipp = "SIPP" in wrapper
     is_workplace = "Workplace" in wrapper or "workplace" in wrapper
     is_lisa = "Lifetime" in wrapper or "LISA" in wrapper
-    is_pension = is_sipp or is_workplace
 
     if is_sipp:
         # SIPP: always relief at source. You pay net, provider claims basic rate.
         # Gross = personal / 0.80 = personal * 1.25
-        tax_relief = personal * 0.25  # 25% of your net payment
+        tax_relief = personal * Decimal("0.25")  # 25% of your net payment
         method_label = "Relief at source"
         # Higher/additional-rate taxpayers can reclaim the difference via self-assessment
-        band_rate = TAX_BAND_RATES.get(tax_band, 0.20)
-        if band_rate > 0.20:
+        band_rate = Decimal(str(TAX_BAND_RATES.get(tax_band, 0.20)))
+        if band_rate > Decimal("0.20"):
             gross = personal + tax_relief  # what's in the pension
-            self_assessment = gross * (band_rate - 0.20)  # goes to YOU, not the pension
+            self_assessment = gross * (band_rate - Decimal("0.20"))  # goes to YOU, not the pension
 
     elif is_workplace:
         if method == "salary_sacrifice":
             # Salary sacrifice: contributions are pre-tax, no relief needed
             # personal = your gross contribution, employer = their contribution
-            tax_relief = 0
+            tax_relief = Decimal("0.0")
             method_label = "Salary sacrifice"
         else:
             # Relief at source (NEST-style): you pay net, provider claims 20%
-            tax_relief = personal * 0.25
+            tax_relief = personal * Decimal("0.25")
             method_label = "Relief at source"
-            band_rate = TAX_BAND_RATES.get(tax_band, 0.20)
-            if band_rate > 0.20:
+            band_rate = Decimal(str(TAX_BAND_RATES.get(tax_band, 0.20)))
+            if band_rate > Decimal("0.20"):
                 gross = personal + tax_relief
-                self_assessment = gross * (band_rate - 0.20)
+                self_assessment = gross * (band_rate - Decimal("0.20"))
 
     elif is_lisa:
         if current_age_from_assumptions(assumptions) >= 50:
             # Lifetime ISA contributions and government bonuses stop from age 50.
-            personal = 0.0
-            government_bonus = 0.0
+            personal = Decimal("0.0")
+            government_bonus = Decimal("0.0")
             method_label = "Lifetime ISA contributions stop at age 50"
         else:
             # 25% government bonus, capped at £4,000/year personal contributions
-            annual_personal = personal * 12
-            eligible = min(annual_personal, LISA_ANNUAL_CAP)
-            government_bonus = (eligible * LISA_BONUS_RATE) / 12  # monthly equivalent
+            annual_personal = personal * Decimal("12.0")
+            eligible = min(annual_personal, Decimal(str(LISA_ANNUAL_CAP)))
+            government_bonus = (eligible * Decimal(str(LISA_BONUS_RATE))) / Decimal("12.0")  # monthly equivalent
             method_label = "Lifetime ISA bonus (25%)"
 
     gross_into_pot = personal + tax_relief + government_bonus + employer
 
     # Contribution fee (e.g. Nest's 1.8%) — taken from each contribution before it's invested
-    contribution_fee_pct = to_float(_safe_get(account, "contribution_fee_pct", 0))
-    contribution_fee = gross_into_pot * (contribution_fee_pct / 100.0)
+    contribution_fee_pct = to_decimal(_safe_get(account, "contribution_fee_pct", 0))
+    contribution_fee = gross_into_pot * (contribution_fee_pct / Decimal("100.0"))
     total_into_pot = gross_into_pot - contribution_fee
 
     return {
-        "personal": personal,
-        "tax_relief": tax_relief,
-        "government_bonus": government_bonus,
-        "employer": employer,
-        "contribution_fee": contribution_fee,
-        "total_into_pot": total_into_pot,
-        "self_assessment": self_assessment,
+        "personal": float(personal),
+        "tax_relief": float(tax_relief),
+        "government_bonus": float(government_bonus),
+        "employer": float(employer),
+        "contribution_fee": float(contribution_fee),
+        "total_into_pot": float(total_into_pot),
+        "self_assessment": float(self_assessment),
         "method_label": method_label,
     }
 
@@ -252,17 +267,21 @@ def projected_cash_park_contribution(account, month_key):
         default_cash_park=account_monthly_cash_park(account),
     )["cash_park"]
 def future_value(current_value, monthly_contribution, annual_growth_rate, years):
-    monthly_rate = annual_growth_rate / 12
+    c_val = to_decimal(current_value)
+    m_contrib = to_decimal(monthly_contribution)
+    g_rate = to_decimal(annual_growth_rate)
+
+    monthly_rate = g_rate / Decimal("12.0")
     months = int(years * 12)
 
-    future_current = current_value * ((1 + monthly_rate) ** months)
+    future_current = c_val * ((Decimal("1.0") + monthly_rate) ** months)
 
-    if monthly_rate == 0:
-        future_contrib = monthly_contribution * months
+    if monthly_rate == Decimal("0.0"):
+        future_contrib = m_contrib * Decimal(str(months))
     else:
-        future_contrib = monthly_contribution * (((1 + monthly_rate) ** months - 1) / monthly_rate)
+        future_contrib = m_contrib * (((Decimal("1.0") + monthly_rate) ** months - Decimal("1.0")) / monthly_rate)
 
-    return future_current + future_contrib
+    return float(future_current + future_contrib)
 
 
 
@@ -493,20 +512,26 @@ def convert_to_gbp(amount, from_currency, fx_rates=None):
     if not amount or not from_currency:
         return to_float(amount)
 
+    amt_dec = to_decimal(amount)
+
     if from_currency == "GBp":  # Pence to Pounds (must check before upper-casing)
-        return to_float(amount) / 100.0
+        return float(amt_dec / Decimal("100.0"))
 
     if from_currency.upper() == "GBP":
-        return to_float(amount)
+        return float(amt_dec)
 
     currency = from_currency.upper()
 
     if not fx_rates or currency not in fx_rates:
-        return to_float(amount)
+        return float(amt_dec)
+
+    rate_dec = to_decimal(fx_rates[currency])
+    if rate_dec <= Decimal("0.0"):
+        return float(amt_dec)
 
     # Conversion: GBP = Amount / Rate
     # e.g. $100 / 1.25 = £80
-    return to_float(amount) / to_float(fx_rates[currency])
+    return float(amt_dec / rate_dec)
 
 
 def to_float(val, default=0.0):
@@ -627,35 +652,35 @@ def effective_fee_pct(account):
 
     Returns fee as a percentage value (e.g. 0.37 means 0.37%).
     """
-    platform_pct = to_float(_safe_get(account, "platform_fee_pct", 0))
-    platform_flat = to_float(_safe_get(account, "platform_fee_flat", 0))
-    platform_cap = to_float(_safe_get(account, "platform_fee_cap", 0))
-    fund_pct = to_float(_safe_get(account, "fund_fee_pct", 0))
+    platform_pct = to_decimal(_safe_get(account, "platform_fee_pct", 0))
+    platform_flat = to_decimal(_safe_get(account, "platform_fee_flat", 0))
+    platform_cap = to_decimal(_safe_get(account, "platform_fee_cap", 0))
+    fund_pct = to_decimal(_safe_get(account, "fund_fee_pct", 0))
 
     # If no granular fees are set, fall back to legacy annual_fee_pct
-    if platform_pct == 0 and platform_flat == 0 and fund_pct == 0:
+    if platform_pct == Decimal("0.0") and platform_flat == Decimal("0.0") and fund_pct == Decimal("0.0"):
         return to_float(_safe_get(account, "annual_fee_pct", 0))
 
-    current_value = to_float(_safe_get(account, "current_value", 0))
+    current_value = to_decimal(_safe_get(account, "current_value", 0))
 
     # Platform fee: percentage-based, possibly capped
-    if platform_pct > 0 and platform_cap > 0 and current_value > 0:
+    if platform_pct > Decimal("0.0") and platform_cap > Decimal("0.0") and current_value > Decimal("0.0"):
         # The cap limits the £ amount charged; convert cap to equivalent %
-        pct_cost = current_value * (platform_pct / 100.0)
+        pct_cost = current_value * (platform_pct / Decimal("100.0"))
         actual_cost = min(pct_cost, platform_cap)
-        effective_platform_pct = (actual_cost / current_value) * 100.0
+        effective_platform_pct = (actual_cost / current_value) * Decimal("100.0")
     else:
         effective_platform_pct = platform_pct
 
     # Platform fee: flat annual amount converted to approximate %
     # When current_value is 0, flat fees can't be expressed as a %; they're
     # ignored until the account has a balance (avoids division by zero).
-    if platform_flat > 0 and current_value > 0:
-        effective_platform_pct += (platform_flat / current_value) * 100.0
+    if platform_flat > Decimal("0.0") and current_value > Decimal("0.0"):
+        effective_platform_pct += (platform_flat / current_value) * Decimal("100.0")
 
     # Cap at a reasonable maximum to avoid nonsensical projections
-    total = min(effective_platform_pct + fund_pct, 25.0)
-    return total
+    total = min(effective_platform_pct + fund_pct, Decimal("25.0"))
+    return float(total)
 
 
 def account_growth_rate(account, assumptions):

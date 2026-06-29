@@ -35,13 +35,21 @@ def test_dockerfile_expands_forwarded_allow_ips_default_before_gunicorn_parses_i
 
 
 def test_dockerfile_check_config_accepts_default_forwarded_allow_ips_value():
+    import sys
+    import os
     shell_command = _extract_shell_command().replace("gunicorn ", "gunicorn --check-config ", 1)
+
+    env = os.environ.copy()
+    bindir = os.path.dirname(sys.executable)
+    env["PATH"] = f"{bindir}{os.path.pathsep}{env.get('PATH', '')}"
 
     result = subprocess.run(
         ["/bin/sh", "-c", shell_command],
         cwd=REPO_ROOT,
+        env=env,
         capture_output=True,
         text=True,
     )
 
     assert result.returncode == 0, result.stderr
+
