@@ -441,6 +441,24 @@ def _lisa_projected_prior_personal_in_tax_year(account, assumptions, month_index
     return total
 
 
+def _lisa_projected_prior_invested_in_tax_year(account, assumptions, month_index):
+    start_month = _safe_get(account, "_projection_start_month")
+    if not start_month or month_index <= 0:
+        return 0.0
+
+    month_key = add_months_to_key(start_month, month_index)
+    tax_year_start = _tax_year_start_for_month_key(month_key, assumptions)
+    if tax_year_start is None:
+        return 0.0
+
+    total = 0.0
+    for idx in range(month_index):
+        prior_key = add_months_to_key(start_month, idx)
+        if _tax_year_start_for_month_key(prior_key, assumptions) == tax_year_start:
+            total += projected_invested_personal_contribution(account, prior_key)
+    return total
+
+
 def projected_contribution_breakdown(account, assumptions=None, month_index=0):
     """Projected contribution breakdown for one month, including overrides.
 
@@ -477,6 +495,47 @@ def projected_contribution_breakdown(account, assumptions=None, month_index=0):
     contribution_fee = gross_into_pot * (contribution_fee_pct / 100.0)
 
     breakdown["personal"] = personal
+    breakdown["tax_relief"] = 0.0
+    breakdown["government_bonus"] = government_bonus
+    breakdown["contribution_fee"] = contribution_fee
+    breakdown["total_into_pot"] = gross_into_pot - contribution_fee
+    breakdown["method_label"] = "Lifetime ISA bonus (25%)"
+    return breakdown
+
+
+def projected_invested_contribution_breakdown(account, assumptions=None, month_index=0):
+    start_month = _safe_get(account, "_projection_start_month")
+    month_key = add_months_to_key(start_month, month_index) if start_month else None
+    adjusted = dict(account)
+    invested_personal = (
+        projected_invested_personal_contribution(account, month_key)
+        if month_key
+        else to_float(_safe_get(account, "monthly_contribution", 0))
+    )
+    adjusted["monthly_contribution"] = invested_personal
+    adjusted["monthly_cash_park"] = 0.0
+
+    breakdown = contribution_breakdown(adjusted, assumptions)
+    wrapper = (_safe_get(account, "wrapper_type") or "")
+    is_lisa = "Lifetime" in wrapper or "LISA" in wrapper
+    if not is_lisa:
+        return breakdown
+
+    if current_age_from_assumptions(assumptions) + month_index / 12.0 >= 50:
+        breakdown["personal"] = 0.0
+        breakdown["government_bonus"] = 0.0
+        breakdown["total_into_pot"] = 0.0
+        breakdown["method_label"] = "Lifetime ISA contributions stop at age 50"
+        return breakdown
+
+    prior_personal = _lisa_projected_prior_invested_in_tax_year(account, assumptions, month_index)
+    eligible = max(min(invested_personal, LISA_ANNUAL_CAP - prior_personal), 0.0)
+    government_bonus = eligible * LISA_BONUS_RATE
+    contribution_fee_pct = to_float(_safe_get(account, "contribution_fee_pct", 0))
+    gross_into_pot = invested_personal + government_bonus + to_float(_safe_get(account, "employer_contribution", 0))
+    contribution_fee = gross_into_pot * (contribution_fee_pct / 100.0)
+
+    breakdown["personal"] = invested_personal
     breakdown["tax_relief"] = 0.0
     breakdown["government_bonus"] = government_bonus
     breakdown["contribution_fee"] = contribution_fee
@@ -730,10 +789,7 @@ def _project_account_month_by_month(account, assumptions, month_count, rate):
                 else to_float(_safe_get(account, "monthly_contribution", 0))
             )
             if invested_personal > 0:
-                invested_account = dict(account)
-                invested_account["monthly_contribution"] = invested_personal
-                invested_account["monthly_cash_park"] = 0.0
-                invested_value += contribution_breakdown(invested_account, assumptions)["total_into_pot"]
+                invested_value += projected_invested_contribution_breakdown(account, assumptions, idx)["total_into_pot"]
             cash_value += (
                 projected_cash_park_contribution(account, month_key)
                 if month_key
