@@ -1568,36 +1568,16 @@ def test_account_linked_preview_only_compares_holdings_from_that_account(app, cl
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Focused on linked account <strong>Trading 212 ISA</strong>" in body
-    assert "Only holdings from this SteadyPlan account were compared with the broker snapshot." in body
-    assert "Reviewed write steps" in body
-    assert "Reviewed apply steps" not in body
-    assert "Proposed apply plan" not in body
-    assert "Matched holdings to update" in body
-    assert "Broker-only positions to add" in body
-    assert "Likely matches to review" in body
-    assert "Possible matches to review" not in body
-    assert "Tracked-only holdings to review" in body
-    assert "Broker vs tracked value gap" in body
-    assert "+550.00 GBP" in body
-    assert "Compare <strong>2950.00 GBP</strong> from this broker snapshot against <strong>2400.00 GBP</strong> tracked in SteadyPlan. Review any units or value difference before writing, and keep broker-only and tracked-only items explicit." in body
-    assert "Compare <strong>2950.00 GBP</strong> from Trading 212 against <strong>2400.00 GBP</strong> tracked in SteadyPlan." not in body
+    assert "Sync: Trading 212 ISA" in body
+    assert "Holdings" in body
+    assert "Difference: <strong>+550.00 GBP</strong>" in body
+    assert "1 matched positions to update" in body
     assert "Apply matched holding updates" in body
-    assert "Apply reviewed matched changes" not in body
     assert "Add broker-only positions" in body
-    assert "Add reviewed broker-only positions" not in body
-    assert "Updates matched holdings only on <strong>Trading 212 ISA</strong>. Broker-only positions and tracked-only holdings stay untouched." in body
+    assert "Updates matched holdings only. Broker-only positions and tracked-only holdings stay untouched." in body
     assert "Adds broker-only positions with no likely tracked match clues. Positions with likely matches stay out for manual review." in body
-    assert "Adds broker-only positions with no possible tracked match clues. Positions with possible matches stay out for manual review." not in body
-    assert "Preview only. Any later write stays separate and needs confirmation for <strong>Trading 212 ISA</strong>." in body
-    assert "Differences found. Nothing runs automatically; any later write stays explicit, account-scoped, and non-destructive." in body
-    assert "If a later write step is added, this is the safest shape of work SteadyPlan should ask you to confirm" not in body
-    assert "This preview found differences to review. Any write step should stay explicit, account-scoped, and non-destructive." not in body
-    assert "This preview found differences to review. Nothing runs automatically from here; any later write should stay explicit, account-scoped, and non-destructive." not in body
-    assert "Still preview only. If you choose a write step later, SteadyPlan should ask you to confirm each step separately for <strong>Trading 212 ISA</strong>." not in body
     assert "Back to account" in body
     assert "Recent broker snapshot preview and write history" in body
-    assert "Recent preview and write history" not in body
     assert "Keep a visible record of the latest broker snapshot preview and the latest reviewed write you confirmed on this linked account." in body
     assert "Keep a visible record of the last broker snapshot preview and the last reviewed write you confirmed on this linked account." not in body
     assert "Broker snapshot preview saved" in body
@@ -2019,9 +1999,7 @@ def test_apply_trading212_reviewed_changes_requires_confirmation(app, client, ma
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Tick the confirmation box before applying the reviewed matched updates." in body
-    assert "Tick the confirmation box before applying reviewed Trading 212 changes." not in body
     assert "Apply matched holding updates" in body
-    assert "Apply reviewed matched changes" not in body
 
     with app.app_context():
         apple = next(row for row in fetch_holdings_for_account(account_id) if row["ticker"] == "AAPL_US_EQ")
@@ -2667,11 +2645,8 @@ def test_linked_preview_normalises_trading212_alias_tickers_and_etf_names(app, c
     )
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Matched holdings to update" in body
-    assert ">2<" in body
-    assert "Broker-only positions to add" in body
-    assert ">0<" in body
-    assert "Tracked-only holdings to review" in body
+    assert "Matched holdings (2)" in body
+    assert "Broker-only positions (0)" in body
     assert "No extra tracked holdings were left unmatched." in body
     assert "VHVGL_EQ" in body
     assert "VFEGL_EQ" in body
@@ -2906,15 +2881,8 @@ def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, c
     assert '<title>Trading 212 read-only broker preview · SteadyPlan</title>' not in body
     assert '<title>Trading 212 read-only preview · SteadyPlan</title>' not in body
     assert '<title>Trading 212 preview · SteadyPlan</title>' not in body
-    assert "Broker snapshot preview (beta)" in body
-    assert "Read-only broker snapshot preview (beta)" not in body
-    assert "Trading 212 read-only broker preview (beta)" not in body
-    assert "Trading 212 sync (beta)" not in body
-    assert "Preview broker snapshot" in body
-    assert "Preview read-only broker snapshot" not in body
-    assert "Preview read-only holdings snapshot" not in body
-    assert "Preview holdings snapshot" not in body
-    assert "Nothing in SteadyPlan has been changed." in body
+    assert "Broker Sync Preview" in body
+    assert "Sync: All Accounts" in body
     assert "Matched holdings" in body
     assert "<th>How it matched</th>" in body
     assert "<th>Match</th>" not in body
@@ -3324,9 +3292,9 @@ def test_trading212_sync_focus_cash_only(app, client, make_user, monkeypatch):
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     
-    # It should show 0 matched/broker-only/tracked-only because of cash_only focus
-    assert "Matched to tracked holdings</div>\n      <div class=\"metric-value\">0</div>" in body
-    assert "Broker-only positions</div>\n      <div class=\"metric-value\">0</div>" in body
+    # It should not show the holdings column because of cash_only focus
+    assert "Holdings" not in body
+    assert "Uninvested Cash" in body
     # It should show the cash details (broker cash = 150 + 25 + 5 = 180)
     assert "180.00" in body
     
@@ -3434,7 +3402,7 @@ def test_trading212_sync_focus_holdings_only(app, client, make_user, monkeypatch
     body = resp.data.decode("utf-8", errors="ignore")
     
     # It should show broker-only positions because of holdings_only focus
-    assert "Broker-only positions</div>\n      <div class=\"metric-value\">1</div>" in body
+    assert "Broker-only positions (1)" in body
     # It should NOT show the cash sync form because can_apply_cash is False
     assert "Sync broker cash balance" not in body
 

@@ -267,7 +267,7 @@ def _broker_summary_refresh_due(connection, *, now=None):
     last_checked = _parse_iso_datetime_utc(connection.get("last_tested_at"))
     if last_checked is None:
         return True
-    return (now - last_checked).total_seconds() >= 15 * 60
+    return (now - last_checked).total_seconds() >= 2 * 60 * 60
 
 
 def _refresh_linked_trading212_summaries(user_id, rows, trading212_connections):
