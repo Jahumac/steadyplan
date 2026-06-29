@@ -86,7 +86,7 @@ def test_projections_export_explains_assumptions_schedule_and_access(app, client
         "Account", "Current Value", "You pay monthly", "Into account monthly", "Estimated total at retirement"
     ]
     summary_values = [cell.value for row in summary.iter_rows() for cell in row]
-    assert "Cash-accessible, invested-accessible, restricted, and locked-for-later money" in summary_values
+    assert "Liquidity Profile" in summary_values
     assert "Accessible now vs locked" not in summary_values
     assert "Accessible vs locked" not in summary_values
     assert "Cash accessible" in summary_values

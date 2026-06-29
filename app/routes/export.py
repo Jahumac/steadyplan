@@ -344,7 +344,7 @@ def export_projections():
         ws.cell(row=r, column=2, value=val).font = _DATA_FONT
 
     r += 2
-    ws.cell(row=r, column=1, value="Cash-accessible, invested-accessible, restricted, and locked-for-later money").font = _ACCENT_FONT
+    ws.cell(row=r, column=1, value="Liquidity Profile").font = _ACCENT_FONT
     _header_row(ws, r + 1, ["Type", "Current value", "Estimated total at retirement", "Account count"])
     access_rows = {
         "Cash accessible": [0.0, 0.0, 0],

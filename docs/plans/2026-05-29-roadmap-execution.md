@@ -145,7 +145,7 @@ Make first use feel guided rather than like a wall of finance.
 **Priority flows:**
 1. Overview / where do I stand
 2. Monthly position / budget
-3. Cash-accessible, invested-accessible, restricted, and locked-for-later money
+3. Liquidity Profile
 4. Goals / progress
 5. Important next action or monthly review prompt
 

@@ -62,14 +62,14 @@ SteadyPlan is for people like earlier-me:
 ### Core promise
 SteadyPlan should help users:
 - see where they stand
-- understand cash-accessible, invested-accessible, restricted, and locked-for-later money
+- understand Liquidity Profile
 - connect monthly life with long-term plans
 - build financial steadiness
 
 ### Core user jobs
 The app should prioritise helping users:
 1. understand their current position
-2. see cash-accessible, invested-accessible, restricted, and locked-for-later money
+2. see Liquidity Profile
 3. track whether they are on course
 4. connect short-term actions to long-term goals
 5. stop avoiding the overall picture
@@ -154,7 +154,7 @@ If the phone web experience is weak, wrapping it as an app will not solve the un
 Phone users probably mainly need:
 - overall dashboard / where do I stand
 - monthly position
-- cash-accessible, invested-accessible, restricted, and locked-for-later money
+- Liquidity Profile
 - key goals / progress
 - important next actions
 - possibly quick affordability/context views
