@@ -210,10 +210,14 @@ def build_accessible_security_summary(accounts, assumptions):
             cash_val = uninvested_cash
             
         rate = account.get("cash_interest_rate")
-        if rate is not None:
+        if rate is not None and to_float(rate) > 0:
             rate = to_float(rate)
         else:
-            rate = 0.0
+            # Fallback to custom growth/interest rate if Growth Mode is "custom"
+            if account.get("growth_mode") == "custom":
+                rate = to_float(account.get("growth_rate_override", 0))
+            else:
+                rate = 0.0
             
         if cash_val > 0 and rate > 0:
             total_earning_cash += cash_val
