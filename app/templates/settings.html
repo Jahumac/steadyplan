@@ -1095,30 +1095,34 @@
 <script>
   function switchTab(tabId) {
     // Hide all tab content sections
-    document.querySelectorAll('.settings-tab-content').forEach(el => {
-      el.classList.remove('active');
-      el.style.display = 'none';
-    });
+    var contents = document.querySelectorAll('.settings-tab-content');
+    for (var i = 0; i < contents.length; i++) {
+      contents[i].classList.remove('active');
+      contents[i].style.display = 'none';
+    }
+    
     // Remove active class from all tab links
-    document.querySelectorAll('.settings-tab-bar .tab-link').forEach(el => {
-      el.classList.remove('subnav-active');
-    });
+    var links = document.querySelectorAll('.settings-tab-bar .tab-link');
+    for (var j = 0; j < links.length; j++) {
+      links[j].classList.remove('subnav-active');
+    }
     
     // Show the active tab content
-    const activeContent = document.getElementById('tab-' + tabId);
+    var activeContent = document.getElementById('tab-' + tabId);
     if (activeContent) {
       activeContent.classList.add('active');
       activeContent.style.display = 'block';
     }
     
     // Also show any extra sections marked for this tab
-    document.querySelectorAll('.tab-' + tabId + '-extra').forEach(el => {
-      el.classList.add('active');
-      el.style.display = 'block';
-    });
+    var extraContents = document.querySelectorAll('.tab-' + tabId + '-extra');
+    for (var k = 0; k < extraContents.length; k++) {
+      extraContents[k].classList.add('active');
+      extraContents[k].style.display = 'block';
+    }
     
     // Add active class to the clicked tab link
-    const activeLink = document.querySelector(`.settings-tab-bar a[href*="${tabId}"]`);
+    var activeLink = document.querySelector('.settings-tab-bar a[href*="' + tabId + '"]');
     if (activeLink) {
       activeLink.classList.add('subnav-active');
     }
@@ -1130,8 +1134,16 @@
   }
 
   function initTabs() {
-    let hash = window.location.hash.replace('#', '');
-    if (!['plan', 'integrations', 'backup'].includes(hash)) {
+    var hash = window.location.hash.replace('#', '');
+    var validTabs = ['plan', 'integrations', 'backup'];
+    var isValid = false;
+    for (var i = 0; i < validTabs.length; i++) {
+      if (validTabs[i] === hash) {
+        isValid = true;
+        break;
+      }
+    }
+    if (!isValid) {
       if ('{{ page_mode }}' === 'diagnostics') {
         hash = 'diagnostics';
       } else {
