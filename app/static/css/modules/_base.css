@@ -3005,3 +3005,14 @@ button.button-danger:focus {
   margin: 0.5rem 0 0 1.25rem;
 }
 
+/* ── Accounts Page Utility Classes ────────────────────────────────── */
+.badge-inline {
+  font-size: 0.7rem !important;
+  margin-left: 6px !important;
+}
+
+.bg-accent-5-75 {
+  background: var(--accent-5) !important;
+  opacity: 0.75 !important;
+}
+
