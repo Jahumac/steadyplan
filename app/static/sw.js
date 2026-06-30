@@ -12,7 +12,7 @@
  * CSS/JS instead of running stale shell assets indefinitely.
  */
 
-const CACHE_NAME = 'steadyplan-cache-v3';
+const CACHE_NAME = 'steadyplan-cache-v4';
 
 /* App shell files to pre-cache on install */
 const APP_SHELL = [
