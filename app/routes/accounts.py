@@ -1081,7 +1081,7 @@ def accounts():
             uid,
             wrapper_type=payload.get("wrapper_type"),
         ):
-            flash("Trading 212 linking is currently limited to Invest and Stocks ISA accounts.", "error")
+            flash("Trading 212 linking is currently limited to Invest, Stocks ISA, and Cash ISA accounts.", "error")
             return redirect(url_for("accounts.accounts", mode="create"))
         new_id = create_account(payload, uid)
         return redirect(url_for("accounts.accounts"))
@@ -1141,7 +1141,7 @@ def api_create_account():
         uid,
         wrapper_type=payload.get("wrapper_type"),
     ):
-        return jsonify({"ok": False, "error": "Trading 212 linking is currently limited to Invest and Stocks ISA accounts"}), 400
+        return jsonify({"ok": False, "error": "Trading 212 linking is currently limited to Invest, Stocks ISA, and Cash ISA accounts"}), 400
     new_id = create_account(payload, uid)
     return jsonify({"ok": True, "account_id": new_id})
 
@@ -1340,7 +1340,7 @@ def account_detail(account_id):
             wrapper_type=payload.get("wrapper_type"),
             existing_connection_id=(selected or {}).get("linked_broker_connection_id"),
         ):
-            flash("Trading 212 linking is currently limited to Invest and Stocks ISA accounts.", "error")
+            flash("Trading 212 linking is currently limited to Invest, Stocks ISA, and Cash ISA accounts.", "error")
             return redirect(url_for("accounts.account_detail", account_id=account_id, mode="edit"))
         # preserve fields managed by separate forms, not the main edit form
         if payload.get("cash_interest_rate") is None:
