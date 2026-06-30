@@ -1317,3 +1317,97 @@ details.planning-responsive-details {
   }
 }
 
+/* ── Overview Dashboard Hero ─────────────────────────────────────────────── */
+.overview-hero-card {
+  padding: 1.5rem !important;
+}
+
+.overview-hero-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.overview-hero-value {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0.25rem 0 0.15rem;
+  color: var(--text);
+}
+
+.overview-hero-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.overview-hero-helper {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 0;
+}
+
+.overview-hero-stats-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.overview-hero-stat-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: block;
+}
+
+.overview-hero-stat-value {
+  font-size: 1.1rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.overview-hero-stat-block {
+  margin-top: 0.25rem;
+}
+
+.overview-hero-stat-title-large {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0.25rem 0 0.15rem;
+}
+
+.overview-hero-stat-title-large.accent-color {
+  color: var(--month-color, var(--accent));
+}
+
+.overview-hero-stat-title-large.normal-color {
+  color: var(--text);
+}
+
+.overview-hero-stat-label-normal {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.overview-hero-empty-state {
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.overview-hero-description {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+

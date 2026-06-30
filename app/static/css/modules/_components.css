@@ -1231,6 +1231,12 @@
   border-color: rgba(56, 189, 248, 0.4);
 }
 
+.btn-sm {
+  min-height: 36px;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+}
+
 /* ── Simplified Sync Summary Card ─────────────────────────────────────────── */
 
 .sync-summary-card {
