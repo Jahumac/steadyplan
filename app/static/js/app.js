@@ -123,6 +123,23 @@
       btn.addEventListener('click', function() { btn.parentElement.remove(); });
     });
 
+    // 0a. Auto-open responsive details on desktop, and handle resize
+    function initResponsiveDetails() {
+      var isDesktop = window.innerWidth > 768;
+      document.querySelectorAll('details.planning-responsive-details').forEach(function(el) {
+        if (isDesktop) {
+          el.setAttribute('open', '');
+        } else {
+          // Only remove if it was not explicitly opened/requested by the server
+          if (!el.hasAttribute('data-keep-open')) {
+            el.removeAttribute('open');
+          }
+        }
+      });
+    }
+    initResponsiveDetails();
+    window.addEventListener('resize', initResponsiveDetails);
+
     // 0b. Generic data-allowance-toggle — show/hide a collapsible log panel
     document.querySelectorAll('[data-allowance-toggle]').forEach(function(btn) {
       btn.addEventListener('click', function() {
