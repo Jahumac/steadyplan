@@ -739,8 +739,8 @@ def test_contribution_calendar_page_loads(app, client, make_user, monkeypatch):
     assert "Based on salary" in html
     assert 'data-label="Temporary amount"' in html
     assert "contribution-calendar-details" in html
-    assert "Show month-by-month calendar" in html
-    assert "Open only when you want to inspect month-by-month defaults and overrides." in html
+    assert "Show month-by-month list" in html
+    assert "Inspect the exact plan names, defaults, and overrides for every month." in html
     assert "contribution-calendar-scroll" in html
     assert "contribution-month-card" in html
     assert "Default vs temporary override calendar, vertically scrollable" in html
