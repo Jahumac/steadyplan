@@ -176,6 +176,8 @@ def update_broker_connection_status(
     external_account_id=None,
     external_account_currency=None,
     external_total_value=None,
+    external_cash_value=None,
+    external_holdings_value=None,
 ):
     now = datetime.now(timezone.utc).isoformat()
     tested_at = last_tested_at or now
@@ -189,6 +191,8 @@ def update_broker_connection_status(
                 external_account_id = ?,
                 external_account_currency = ?,
                 external_total_value = ?,
+                external_cash_value = ?,
+                external_holdings_value = ?,
                 updated_at = ?
             WHERE id = ? AND user_id = ?
             """,
@@ -199,6 +203,8 @@ def update_broker_connection_status(
                 external_account_id,
                 external_account_currency,
                 external_total_value,
+                external_cash_value,
+                external_holdings_value,
                 now,
                 connection_id,
                 user_id,

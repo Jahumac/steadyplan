@@ -8,401 +8,367 @@
 <section class="panel">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Broker snapshot preview (beta)</p>
-      <h2>Preview broker snapshot</h2>
+      <p class="eyebrow">Broker Sync Preview</p>
+      {% if preview.linked_account %}
+      <h2>Sync: {{ preview.linked_account.name }}</h2>
+      {% else %}
+      <h2>Sync: All Accounts</h2>
+      {% endif %}
     </div>
     <div>
-      <a class="badge" href="{{ preview_back_href or '/settings/#trading212-access' }}">{{ preview_back_label or 'Back to settings' }}</a>
+      <a class="btn btn-secondary" style="min-height:36px; padding:0.4rem 1rem;" href="{{ preview_back_href or '/settings/#trading212-access' }}">{{ preview_back_label or 'Back to account' }}</a>
     </div>
   </div>
-  <p class="helper-text" style="margin-top:0;">
-    This is a preview only. SteadyPlan fetched a broker snapshot using read-only broker access and compared it with your current tracked holdings. Nothing in SteadyPlan has been changed.
-  </p>
-  <p class="helper-text mt-045" >
-    {{ trading212_sync_support_note() }}
-  </p>
-  {% if preview.linked_account %}
-  <p class="helper-text mt-045" >
-    Focused on linked account <strong>{{ preview.linked_account.name }}</strong>. Only holdings from this SteadyPlan account were compared with the broker snapshot.
-  </p>
+
+  <!-- A single, beautiful, high-level summary panel -->
+  <div class="sync-summary-card">
+    <div class="sync-summary-header">
+      <div class="sync-status-badge">
+        {% if preview.apply_plan.needs_changes %}
+          <span class="status-dot warning"></span> {{ preview.apply_plan.matched_updates_count + preview.apply_plan.broker_add_count }} changes pending
+        {% else %}
+          <span class="status-dot success"></span> Up to date
+        {% endif %}
+      </div>
+      <div class="sync-meta-text">
+        {{ connection.label }} • {{ trading212_environment_label(connection.environment) }} • {{ preview.fetched_at }}
+      </div>
+    </div>
+
+    <div class="sync-comparison-grid">
+      {% if preview.apply_plan.sync_focus in ["all", "holdings_only"] %}
+      <div class="sync-comparison-col">
+        <h4>Holdings</h4>
+        <div class="sync-val-row">
+          <div class="sync-val-item">
+            <span class="label">Broker Value</span>
+            <span class="val">{{ '%.2f'|format(preview.apply_plan.broker_value_total) }} {{ summary.currency or connection.external_account_currency or '' }}</span>
+          </div>
+          <div class="sync-val-divider">vs</div>
+          <div class="sync-val-item">
+            <span class="label">Tracked Value</span>
+            <span class="val">{{ '%.2f'|format(preview.apply_plan.tracked_value_total) }} GBP</span>
+          </div>
+        </div>
+        <div class="sync-diff-status {% if preview.apply_plan.value_gap|abs > 0.01 %}diff-warning{% else %}diff-ok{% endif %}">
+          {% if preview.apply_plan.value_gap|abs > 0.01 %}
+            Difference: <strong>{% if preview.apply_plan.value_gap > 0 %}+{% endif %}{{ '%.2f'|format(preview.apply_plan.value_gap) }} {{ summary.currency or connection.external_account_currency or '' }}</strong>
+            <div class="diff-subtext">
+              • {{ preview.apply_plan.matched_updates_count }} matched positions to update
+              {% if preview.apply_plan.broker_add_count > 0 %}• {{ preview.apply_plan.broker_add_count }} new positions to add{% endif %}
+            </div>
+          {% else %}
+            Holdings are in sync
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if preview.apply_plan.sync_focus in ["all", "cash_only"] %}
+      <div class="sync-comparison-col">
+        <h4>Uninvested Cash</h4>
+        <div class="sync-val-row">
+          <div class="sync-val-item">
+            <span class="label">Broker Cash</span>
+            <span class="val">{{ '%.2f'|format(preview.apply_plan.broker_cash_total) }} {{ summary.currency or connection.external_account_currency or '' }}</span>
+          </div>
+          <div class="sync-val-divider">vs</div>
+          <div class="sync-val-item">
+            <span class="label">Tracked Cash</span>
+            <span class="val">{{ '%.2f'|format(preview.apply_plan.tracked_cash) }} GBP</span>
+          </div>
+        </div>
+        <div class="sync-diff-status {% if preview.apply_plan.cash_difference|abs > 0.01 %}diff-warning{% else %}diff-ok{% endif %}">
+          {% if preview.apply_plan.cash_difference|abs > 0.01 %}
+            Difference: <strong>{% if preview.apply_plan.cash_difference > 0 %}+{% endif %}{{ '%.2f'|format(preview.apply_plan.cash_difference) }} {{ summary.currency or connection.external_account_currency or '' }}</strong>
+          {% else %}
+            Cash is in sync
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Action Forms -->
+  {% if preview.apply_plan.can_apply_cash %}
+  <form method="post" action="{{ url_for('settings.apply_trading212_cash', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-apply-form">
+    <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
+    <div class="sync-action-body">
+      <div class="sync-action-info">
+        <h4 class="m-0">Sync broker cash balance</h4>
+        <p class="helper-text mt-02 mb-0">Updates tracked cash to match the broker's total cash (<strong>{{ '%.2f'|format(preview.apply_plan.broker_cash_total) }} {{ summary.currency or connection.external_account_currency or '' }}</strong>).</p>
+      </div>
+      <div class="sync-action-control">
+        <label class="checkbox-row flex-start gap-055">
+          <input type="checkbox" name="confirm_apply_cash" value="yes">
+          <span>I reviewed this and want to sync cash.</span>
+        </label>
+        <button type="submit" class="btn btn-primary">Sync cash balance</button>
+      </div>
+    </div>
+  </form>
   {% endif %}
 
-  <div class="metrics-grid mt-1" >
-    <div class="metric-card">
-      <div class="metric-label">Broker positions</div>
-      <div class="metric-value">{{ preview.stats.positions_count }}</div>
-      <div class="helper-text">{{ '%.2f'|format(preview.stats.position_value_total) }} {{ summary.currency or connection.external_account_currency or '' }}</div>
+  {% if preview.apply_plan.can_apply_matched_changes %}
+  <form method="post" action="{{ url_for('settings.apply_trading212_reviewed_changes', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-apply-form">
+    <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
+    <div class="sync-action-body">
+      <div class="sync-action-info">
+        <h4 class="m-0">Apply matched holding updates</h4>
+        <p class="helper-text mt-02 mb-0">Updates matched holdings only. Broker-only positions and tracked-only holdings stay untouched.</p>
+      </div>
+      <div class="sync-action-control">
+        <label class="checkbox-row flex-start gap-055">
+          <input type="checkbox" name="confirm_apply_matched" value="yes">
+          <span>I reviewed this and want to update matched holdings.</span>
+        </label>
+        <button type="submit" class="btn btn-primary">Apply matched updates</button>
+      </div>
     </div>
-    <div class="metric-card">
-      <div class="metric-label">Matched to tracked holdings</div>
-      <div class="metric-value">{{ preview.stats.matched_count }}</div>
-      <div class="helper-text">{{ '%.2f'|format(preview.stats.matched_value) }} {{ summary.currency or connection.external_account_currency or '' }}</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Broker-only positions</div>
-      <div class="metric-value">{{ preview.stats.broker_only_count }}</div>
-      <div class="helper-text">{{ '%.2f'|format(preview.stats.broker_only_value) }} {{ summary.currency or connection.external_account_currency or '' }}</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Tracked-only holdings</div>
-      <div class="metric-value">{{ preview.stats.db_only_count }}</div>
-      <div class="helper-text">{{ '%.2f'|format(preview.stats.db_only_value) }} GBP tracked</div>
-    </div>
-  </div>
+  </form>
+  {% endif %}
 
-  <div class="badge-row mt-1">
-    <span class="badge badge-meta">{{ connection.label }}</span>
-    <span class="badge">{{ trading212_environment_label(connection.environment) }}</span>
-    {% if summary.account_id %}<span class="badge badge-meta">Account {{ summary.account_id }}</span>{% endif %}
-    {% if summary.currency %}<span class="badge badge-meta">{{ summary.currency }}</span>{% endif %}
-    {% if preview.fetched_at %}<span class="badge badge-meta">Fetched {{ preview.fetched_at }}</span>{% endif %}
-  </div>
+  {% if preview.apply_plan.can_apply_broker_additions %}
+  <form method="post" action="{{ url_for('settings.apply_trading212_reviewed_broker_additions', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-apply-form trading212-apply-additions-form">
+    <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
+    <div class="sync-action-body">
+      <div class="sync-action-info">
+        <h4 class="m-0">Add broker-only positions</h4>
+        <p class="helper-text mt-02 mb-0">Adds broker-only positions with no likely tracked match clues. Positions with likely matches stay out for manual review.</p>
+      </div>
+      <div class="sync-action-control">
+        <label class="checkbox-row flex-start gap-055">
+          <input type="checkbox" name="confirm_apply_broker_additions" value="yes">
+          <span>I reviewed this and want to add new positions.</span>
+        </label>
+        <button type="submit" class="btn btn-secondary">Add positions</button>
+      </div>
+    </div>
+  </form>
+  {% endif %}
+
+  {% if preview.apply_plan.needs_changes %}
+  <p class="helper-text mt-1 mb-0">Differences found. Nothing runs automatically; any later write stays explicit, account-scoped, and non-destructive.</p>
+  {% else %}
+  <p class="helper-text mt-1 mb-0">This preview already lines up cleanly. No write step is needed unless you explicitly choose one later.</p>
+  {% endif %}
 </section>
 
 {% if preview.sync_history and preview.sync_history.events %}
-<section class="panel mt-1">
-  <div class="section-header">
-    <div>
-      <h3>Recent broker snapshot preview and write history</h3>
-      <p class="helper-text m-0" >Keep a visible record of the latest broker snapshot preview and the latest reviewed write you confirmed on this linked account.</p>
+<details class="preview-details-disclosure mt-1">
+  <summary class="preview-details-summary">Recent broker snapshot preview and write history</summary>
+  <div class="details-content">
+    <p class="helper-text mt-05">Keep a visible record of the latest broker snapshot preview and the latest reviewed write you confirmed on this linked account.</p>
+    <div class="metrics-grid mt-1">
+      <div class="metric-card">
+        <div class="metric-label">Latest broker snapshot preview</div>
+        <div class="metric-value text-base">{{ preview.sync_history.last_preview.created_label if preview.sync_history.last_preview else '—' }}</div>
+        <div class="helper-text">{{ preview.sync_history.last_preview.action_label if preview.sync_history.last_preview else 'No broker snapshot preview saved yet' }}</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Latest reviewed write</div>
+        <div class="metric-value text-base">{{ preview.sync_history.last_apply.created_label if preview.sync_history.last_apply else '—' }}</div>
+        <div class="helper-text">{{ preview.sync_history.last_apply.action_label if preview.sync_history.last_apply else 'No reviewed write saved yet' }}</div>
+      </div>
+    </div>
+    <div class="table-scroll mt-1">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Action</th>
+            <th>When</th>
+            <th class="num">Matched updates</th>
+            <th class="num">Broker-only added</th>
+            <th class="num">Held back for review</th>
+            <th class="num">Tracked-only untouched</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in preview.sync_history.events %}
+          <tr>
+            <td>{{ event.action_label }}</td>
+            <td>
+              {{ event.created_label }}
+              {% if event.snapshot_at %}<div class="helper-text mt-02">Snapshot {{ event.snapshot_label }}</div>{% endif %}
+            </td>
+            <td class="num">{{ event.matched_updates_count }}</td>
+            <td class="num">{{ event.broker_add_count }}</td>
+            <td class="num">{{ event.held_back_broker_count }}</td>
+            <td class="num">{{ event.tracked_only_count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
-  <div class="metrics-grid">
-    <div class="metric-card">
-      <div class="metric-label">Latest broker snapshot preview</div>
-      <div class="metric-value text-base" >{{ preview.sync_history.last_preview.created_label if preview.sync_history.last_preview else '—' }}</div>
-      <div class="helper-text">{{ preview.sync_history.last_preview.action_label if preview.sync_history.last_preview else 'No broker snapshot preview saved yet' }}</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Latest reviewed write</div>
-      <div class="metric-value text-base" >{{ preview.sync_history.last_apply.created_label if preview.sync_history.last_apply else '—' }}</div>
-      <div class="helper-text">{{ preview.sync_history.last_apply.action_label if preview.sync_history.last_apply else 'No reviewed write saved yet' }}</div>
-    </div>
-  </div>
-  <div class="table-scroll mt-1">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Action</th>
-          <th>When</th>
-          <th class="num">Matched updates</th>
-          <th class="num">Broker-only added</th>
-          <th class="num">Held back for review</th>
-          <th class="num">Tracked-only untouched</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for event in preview.sync_history.events %}
-        <tr>
-          <td>{{ event.action_label }}</td>
-          <td>
-            {{ event.created_label }}
-            {% if event.snapshot_at %}<div class="helper-text mt-02" >Snapshot {{ event.snapshot_label }}</div>{% endif %}
-          </td>
-          <td class="num">{{ event.matched_updates_count }}</td>
-          <td class="num">{{ event.broker_add_count }}</td>
-          <td class="num">{{ event.held_back_broker_count }}</td>
-          <td class="num">{{ event.tracked_only_count }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
+</details>
 {% endif %}
 
-  {% if preview.linked_account and preview.apply_plan %}
-  <section class="panel mt-1">
-    <div class="section-header">
-      <div>
-        <h3>Reviewed write steps</h3>
-        <p class="helper-text m-0" >Preview only. Any later write stays separate and needs confirmation for <strong>{{ preview.linked_account.name }}</strong>.</p>
-      </div>
-    </div>
-    <div class="metrics-grid">
-      {% if preview.apply_plan.sync_focus in ["all", "holdings_only"] %}
-      <div class="metric-card">
-        <div class="metric-label">Matched holdings to update</div>
-        <div class="metric-value">{{ preview.apply_plan.matched_updates_count }}</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Broker-only positions to add</div>
-        <div class="metric-value">{{ preview.apply_plan.broker_add_count }}</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Likely matches to review</div>
-        <div class="metric-value">{{ preview.apply_plan.resolvable_possible_match_count }}</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Tracked-only holdings to review</div>
-        <div class="metric-value">{{ preview.apply_plan.tracked_review_count }}</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Broker vs tracked value gap</div>
-        <div class="metric-value">{% if preview.apply_plan.value_gap > 0 %}+{% endif %}{{ '%.2f'|format(preview.apply_plan.value_gap) }} {{ summary.currency or connection.external_account_currency or '' }}</div>
-      </div>
-      {% endif %}
-      {% if preview.apply_plan.sync_focus in ["all", "cash_only"] %}
-      <div class="metric-card">
-        <div class="metric-label">Broker cash vs tracked cash</div>
-        <div class="metric-value">{% if preview.apply_plan.cash_difference > 0 %}+{% endif %}{{ '%.2f'|format(preview.apply_plan.cash_difference) }} {{ summary.currency or connection.external_account_currency or '' }}</div>
-      </div>
-      {% endif %}
-    </div>
-    {% if preview.apply_plan.sync_focus in ["all", "holdings_only"] %}
-    <p class="helper-text trading212-apply-summary" style="margin:0.9rem 0 0;">
-      Compare <strong>{{ '%.2f'|format(preview.apply_plan.broker_value_total) }} {{ summary.currency or connection.external_account_currency or '' }}</strong> from this broker snapshot against <strong>{{ '%.2f'|format(preview.apply_plan.tracked_value_total) }} GBP</strong> tracked in SteadyPlan. Review any units or value difference before writing, and keep broker-only and tracked-only items explicit.
-    </p>
-    {% endif %}
-
-    {% if preview.apply_plan.can_apply_cash %}
-    <form method="post" action="{{ url_for('settings.apply_trading212_cash', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-apply-form">
-      <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
-      <h4 class="m-0" >Sync broker cash balance</h4>
-      <p class="helper-text mt-045" >Updates the uninvested cash on <strong>{{ preview.linked_account.name }}</strong> to match the broker's total cash (<strong>{{ '%.2f'|format(preview.apply_plan.broker_cash_total) }} {{ summary.currency or connection.external_account_currency or '' }}</strong>).</p>
-      <label class="checkbox-row mt-075 flex-start gap-055" >
-        <input type="checkbox" name="confirm_apply_cash" value="yes">
-        <span>I reviewed this and want to sync the broker cash balance to this account.</span>
-      </label>
-      <div class="button-row mt-1">
-        <button type="submit" class="btn btn-primary">Sync cash balance</button>
-      </div>
-    </form>
-    {% endif %}
-    {% if preview.apply_plan.can_apply_matched_changes %}
-    <form method="post" action="{{ url_for('settings.apply_trading212_reviewed_changes', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-apply-form">
-      <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
-      <h4 class="m-0" >Apply matched holding updates</h4>
-      <p class="helper-text mt-045" >Updates matched holdings only on <strong>{{ preview.linked_account.name }}</strong>. Broker-only positions and tracked-only holdings stay untouched.</p>
-      <label class="checkbox-row mt-075 flex-start gap-055" >
-        <input type="checkbox" name="confirm_apply_matched" value="yes">
-        <span>I reviewed this and want to update matched holdings only.</span>
-      </label>
-      <div class="button-row mt-1">
-        <button type="submit" class="btn btn-primary">Apply matched updates</button>
-      </div>
-    </form>
-    {% endif %}
-    {% if preview.apply_plan.can_resolve_possible_matches %}
-    <div class="panel inset-panel mt-1 trading212-apply-form trading212-possible-match-note">
-      <h4 class="m-0" >Review likely tracked matches</h4>
-      <p class="helper-text mt-045" >Use the broker-only cards below to compare one likely tracked match at a time when the name clues look right. SteadyPlan will only update the holding you explicitly choose.</p>
-    </div>
-    {% endif %}
-    {% if preview.apply_plan.can_apply_broker_additions %}
-    <form method="post" action="{{ url_for('settings.apply_trading212_reviewed_broker_additions', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-apply-form trading212-apply-additions-form">
-      <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
-      <h4 class="m-0" >Add broker-only positions</h4>
-      <p class="helper-text mt-045" >Adds broker-only positions with no likely tracked match clues. Positions with likely matches stay out for manual review.</p>
-      <label class="checkbox-row mt-075 flex-start gap-055" >
-        <input type="checkbox" name="confirm_apply_broker_additions" value="yes">
-        <span>I reviewed the broker-only positions and want SteadyPlan to add the {{ preview.apply_plan.addable_broker_count }} position{{ '' if preview.apply_plan.addable_broker_count == 1 else 's' }} with no likely tracked matches.</span>
-      </label>
-      <div class="button-row mt-1">
-        <button type="submit" class="btn btn-secondary">Add broker-only positions</button>
-      </div>
-    </form>
-    {% endif %}
-    {% if preview.apply_plan.needs_changes %}
-    <p class="helper-text trading212-apply-footer mt-075 mb-0" >Differences found. Nothing runs automatically; any later write stays explicit, account-scoped, and non-destructive.</p>
-    {% else %}
-    <p class="helper-text mt-075 mb-0" >This preview already lines up cleanly. No write step is needed unless you explicitly choose one later.</p>
-    {% endif %}
-  </section>
-  {% endif %}
-
-<section class="panel mt-1">
-  <div class="section-header">
-    <div>
-      <h3>Broker snapshot summary</h3>
+<details class="preview-details-disclosure mt-1">
+  <summary class="preview-details-summary">Broker snapshot summary</summary>
+  <div class="details-content">
+    <div class="table-scroll mt-05">
+      <table class="data-table">
+        <tbody>
+          <tr><th>Total value</th><td class="num">{{ '%.2f'|format(summary.total_value or 0) }} {{ summary.currency or '' }}</td></tr>
+          <tr><th>Available to trade</th><td class="num">{{ '%.2f'|format(summary.available_to_trade or 0) }} {{ summary.currency or '' }}</td></tr>
+          <tr><th>Cash in pies</th><td class="num">{{ '%.2f'|format(summary.cash_in_pies or 0) }} {{ summary.currency or '' }}</td></tr>
+          <tr><th>Reserved for orders</th><td class="num">{{ '%.2f'|format(summary.cash_reserved_for_orders or 0) }} {{ summary.currency or '' }}</td></tr>
+          <tr><th>Investments current value</th><td class="num">{{ '%.2f'|format(summary.investments_current_value or 0) }} {{ summary.currency or '' }}</td></tr>
+          <tr><th>Investments unrealised P/L</th><td class="num">{{ '%.2f'|format(summary.investments_unrealized_profit_loss or 0) }} {{ summary.currency or '' }}</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
-  <div class="table-scroll">
-    <table class="data-table">
-      <tbody>
-        <tr><th>Total value</th><td class="num">{{ '%.2f'|format(summary.total_value or 0) }} {{ summary.currency or '' }}</td></tr>
-        <tr><th>Available to trade</th><td class="num">{{ '%.2f'|format(summary.available_to_trade or 0) }} {{ summary.currency or '' }}</td></tr>
-        <tr><th>Cash in pies</th><td class="num">{{ '%.2f'|format(summary.cash_in_pies or 0) }} {{ summary.currency or '' }}</td></tr>
-        <tr><th>Reserved for orders</th><td class="num">{{ '%.2f'|format(summary.cash_reserved_for_orders or 0) }} {{ summary.currency or '' }}</td></tr>
-        <tr><th>Investments current value</th><td class="num">{{ '%.2f'|format(summary.investments_current_value or 0) }} {{ summary.currency or '' }}</td></tr>
-        <tr><th>Investments unrealised P/L</th><td class="num">{{ '%.2f'|format(summary.investments_unrealized_profit_loss or 0) }} {{ summary.currency or '' }}</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
+</details>
 
 {% if not preview.apply_plan or preview.apply_plan.sync_focus in ["all", "holdings_only"] %}
-<section class="panel mt-1">
-  <div class="section-header">
-    <div>
-      <h3>Matched holdings</h3>
-      <p class="helper-text m-0" >Ticker matches are used first, then a cautious name fallback.</p>
+<details class="preview-details-disclosure mt-1">
+  <summary class="preview-details-summary">Matched holdings ({{ preview.matched|length if preview.matched else 0 }})</summary>
+  <div class="details-content">
+    <p class="helper-text mt-05">Ticker matches are used first, then a cautious name fallback.</p>
+    {% if preview.matched %}
+    <div class="table-scroll mt-1">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Broker position</th>
+            <th>Tracked holding</th>
+            <th>How it matched</th>
+            <th class="num">Units</th>
+            <th class="num">Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pair in preview.matched %}
+          <tr>
+            <td>
+              {{ pair.csv.name }}
+              {% if pair.csv.ticker %}<div class="helper-text mt-02">{{ pair.csv.ticker }}</div>{% endif %}
+            </td>
+            <td>
+              {{ pair.holding.holding_name }}
+              <div class="helper-text mt-02">{{ pair.holding.account_name }}</div>
+            </td>
+            <td>{{ trading212_match_type_label(pair.match_type) }}</td>
+            <td class="num">
+              {{ '%.4f'|format(pair.csv.units or 0) }} broker
+              <div class="helper-text mt-02">{{ '%.4f'|format(pair.holding.units or 0) }} tracked{% if pair.units_difference is not none %} · diff {{ '%+.4f'|format(pair.units_difference) }}{% endif %}</div>
+            </td>
+            <td class="num">
+              {{ '%.2f'|format(pair.csv.value or 0) }} {{ summary.currency or '' }}
+              <div class="helper-text mt-02">{{ '%.2f'|format(pair.holding.value or 0) }} tracked{% if pair.value_difference is not none %} · diff {{ '%+.2f'|format(pair.value_difference) }}{% endif %}</div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+    {% else %}
+    <p class="helper-text mt-1 mb-0">No existing tracked holdings matched this broker snapshot yet.</p>
+    {% endif %}
   </div>
-  {% if preview.matched %}
-  <div class="table-scroll">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Broker position</th>
-          <th>Tracked holding</th>
-          <th>How it matched</th>
-          <th class="num">Units</th>
-          <th class="num">Value</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for pair in preview.matched %}
-        <tr>
-          <td>
-            {{ pair.csv.name }}
-            {% if pair.csv.ticker %}<div class="helper-text mt-02" >{{ pair.csv.ticker }}</div>{% endif %}
-          </td>
-          <td>
-            {{ pair.holding.holding_name }}
-            <div class="helper-text mt-02" >{{ pair.holding.account_name }}</div>
-          </td>
-          <td>{{ trading212_match_type_label(pair.match_type) }}</td>
-          <td class="num">
-            {{ '%.4f'|format(pair.csv.units or 0) }} broker
-            <div class="helper-text mt-02" >{{ '%.4f'|format(pair.holding.units or 0) }} tracked{% if pair.units_difference is not none %} · diff {{ '%+.4f'|format(pair.units_difference) }}{% endif %}</div>
-          </td>
-          <td class="num">
-            {{ '%.2f'|format(pair.csv.value or 0) }} {{ summary.currency or '' }}
-            <div class="helper-text mt-02" >{{ '%.2f'|format(pair.holding.value or 0) }} tracked{% if pair.value_difference is not none %} · diff {{ '%+.2f'|format(pair.value_difference) }}{% endif %}</div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <p class="helper-text m-0" >No existing tracked holdings matched this broker snapshot yet.</p>
-  {% endif %}
-</section>
+</details>
 
-<section class="panel mt-1">
-  <div class="section-header">
-    <div>
-      <h3>Broker-only positions</h3>
-      <p class="helper-text m-0" >These came from this broker snapshot but do not currently match a tracked holding. When SteadyPlan sees a close name clue, it shows likely tracked matches without updating anything automatically.</p>
-    </div>
-  </div>
-  {% if preview.broker_only %}
-  <div class="table-scroll trading212-desktop-only">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Ticker</th>
-          <th class="num">Units</th>
-          <th class="num">Current price</th>
-          <th class="num">Value</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in preview.broker_only %}
-        <tr>
-          <td>
-            <div class="trading212-position-name">{{ row.name }}</div>
-            {% if row.possible_matches %}
-            <div class="trading212-candidate-heading">Likely tracked matches</div>
-            <div class="trading212-candidate-list">
-              {% for candidate in row.possible_matches %}
-              <div class="trading212-candidate-card">
-                <div class="trading212-candidate-title">{{ candidate.holding.holding_name }}</div>
-                <div class="trading212-candidate-account">{{ candidate.holding.account_name }}</div>
-                {% if candidate.overlap_tokens %}
-                <div class="badge-row trading212-candidate-clues">
-                  <span class="badge badge-meta badge-sm">Name clues</span>
-                  {% for token in candidate.overlap_tokens %}
-                  <span class="badge badge-tag badge-sm">{{ token }}</span>
-                  {% endfor %}
+<details class="preview-details-disclosure mt-1">
+  <summary class="preview-details-summary">Broker-only positions ({{ preview.broker_only|length if preview.broker_only else 0 }})</summary>
+  <div class="details-content">
+    <p class="helper-text mt-05">These came from this broker snapshot but do not currently match a tracked holding. When SteadyPlan sees a close name clue, it shows likely tracked matches without updating anything automatically.</p>
+    {% if preview.broker_only %}
+    <div class="table-scroll trading212-desktop-only mt-1">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Ticker</th>
+            <th class="num">Units</th>
+            <th class="num">Current price</th>
+            <th class="num">Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in preview.broker_only %}
+          <tr>
+            <td>
+              <div class="trading212-position-name">{{ row.name }}</div>
+              {% if row.possible_matches %}
+              <div class="trading212-candidate-heading">Likely tracked matches</div>
+              <div class="trading212-candidate-list">
+                {% for candidate in row.possible_matches %}
+                <div class="trading212-candidate-card">
+                  <div class="trading212-candidate-title">{{ candidate.holding.holding_name }}</div>
+                  <div class="trading212-candidate-account">{{ candidate.holding.account_name }}</div>
+                  {% if candidate.overlap_tokens %}
+                  <div class="badge-row trading212-candidate-clues">
+                    <span class="badge badge-meta badge-sm">Name clues</span>
+                    {% for token in candidate.overlap_tokens %}
+                    <span class="badge badge-tag badge-sm">{{ token }}</span>
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+>>>>>>> main
                 </div>
-                {% endif %}
+                {% endfor %}
               </div>
-              {% endfor %}
+              <form method="post" action="{{ url_for('settings.resolve_trading212_possible_match', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-possible-match-form">
+                <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
+                <input type="hidden" name="preview_key" value="{{ row.preview_key }}">
+                <div class="helper-text mb-05">Choose the tracked holding that should receive this broker snapshot update.</div>
+                {% for candidate in row.possible_matches %}
+                <label class="checkbox-row flex-start gap-055 mt-04">
+                  <input type="radio" name="selected_holding_id" value="{{ candidate.holding.id }}">
+                  <span><strong>{{ candidate.holding.holding_name }}</strong> on {{ candidate.holding.account_name }}</span>
+                </label>
+                {% endfor %}
+                <label class="checkbox-row mt-075 flex-start gap-055">
+                  <input type="checkbox" name="confirm_resolve_possible_match" value="yes">
+                  <span>I reviewed this likely match and want SteadyPlan to update only the tracked holding I selected.</span>
+                </label>
+                <div class="button-row mt-1">
+                  <button type="submit" class="btn btn-secondary">Confirm reviewed likely match</button>
+                </div>
+              </form>
+              {% endif %}
+            </td>
+            <td>{{ row.ticker or '—' }}</td>
+            <td class="num">{{ '%.4f'|format(row.units or 0) }}</td>
+            <td class="num">{{ '%.4f'|format(row.price or 0) }}</td>
+            <td class="num">{{ '%.2f'|format(row.value or 0) }} {{ row.currency or summary.currency or '' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="trading212-mobile-position-list trading212-mobile-only mt-1">
+      {% for row in preview.broker_only %}
+      <article class="trading212-mobile-position-card">
+        <div class="trading212-mobile-position-top">
+          <div>
+            <div class="trading212-position-name">{{ row.name }}</div>
+            <div class="badge-row mt-05">
+              <span class="badge badge-meta badge-sm">{{ row.ticker or 'No ticker' }}</span>
+              <span class="badge badge-meta badge-sm">{{ row.currency or summary.currency or '—' }}</span>
             </div>
-            <form method="post" action="{{ url_for('settings.resolve_trading212_possible_match', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-possible-match-form">
-              <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
-              <input type="hidden" name="preview_key" value="{{ row.preview_key }}">
-              <div class="helper-text mb-05" >Choose the tracked holding that should receive this broker snapshot update.</div>
-              {% for candidate in row.possible_matches %}
-              <label class="checkbox-row flex-start gap-055 mt-04" >
-                <input type="radio" name="selected_holding_id" value="{{ candidate.holding.id }}">
-                <span><strong>{{ candidate.holding.holding_name }}</strong> on {{ candidate.holding.account_name }}</span>
-              </label>
-              {% endfor %}
-              <label class="checkbox-row mt-075 flex-start gap-055" >
-                <input type="checkbox" name="confirm_resolve_possible_match" value="yes">
-                <span>I reviewed this likely match and want SteadyPlan to update only the tracked holding I selected.</span>
-              </label>
-              <div class="button-row mt-1">
-                <button type="submit" class="btn btn-secondary">Confirm reviewed likely match</button>
-              </div>
-            </form>
-            {% endif %}
-          </td>
-          <td>{{ row.ticker or '—' }}</td>
-          <td class="num">{{ '%.4f'|format(row.units or 0) }}</td>
-          <td class="num">{{ '%.4f'|format(row.price or 0) }}</td>
-          <td class="num">{{ '%.2f'|format(row.value or 0) }} {{ row.currency or summary.currency or '' }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  <div class="trading212-mobile-position-list trading212-mobile-only">
-    {% for row in preview.broker_only %}
-    <article class="trading212-mobile-position-card">
-      <div class="trading212-mobile-position-top">
-        <div>
-          <div class="trading212-position-name">{{ row.name }}</div>
-          <div class="badge-row mt-05">
-            <span class="badge badge-meta badge-sm">{{ row.ticker or 'No ticker' }}</span>
-            <span class="badge badge-meta badge-sm">{{ row.currency or summary.currency or '—' }}</span>
           </div>
+          <div class="trading212-mobile-position-value">{{ '%.2f'|format(row.value or 0) }} {{ row.currency or summary.currency or '' }}</div>
         </div>
-        <div class="trading212-mobile-position-value">{{ '%.2f'|format(row.value or 0) }} {{ row.currency or summary.currency or '' }}</div>
-      </div>
-      <dl class="trading212-position-facts">
-        <div>
-          <dt>Units</dt>
-          <dd>{{ '%.4f'|format(row.units or 0) }}</dd>
-        </div>
-        <div>
-          <dt>Current price</dt>
-          <dd>{{ '%.4f'|format(row.price or 0) }}</dd>
-        </div>
-      </dl>
-      {% if row.possible_matches %}
-      {% set mobile_matches = row.possible_matches[:2] %}
-      {% set mobile_overflow_matches = row.possible_matches[2:] %}
-      <div class="trading212-candidate-heading">Likely tracked matches</div>
-      <div class="trading212-candidate-list">
-        {% for candidate in mobile_matches %}
-        <div class="trading212-candidate-card">
-          <div class="trading212-candidate-title">{{ candidate.holding.holding_name }}</div>
-          <div class="trading212-candidate-account">{{ candidate.holding.account_name }}</div>
-          {% if candidate.overlap_tokens %}
-          <div class="badge-row trading212-candidate-clues">
-            <span class="badge badge-meta badge-sm">Name clues</span>
-            {% for token in candidate.overlap_tokens[:3] %}
-            <span class="badge badge-tag badge-sm">{{ token }}</span>
-            {% endfor %}
-            {% if candidate.overlap_tokens|length > 3 %}
-            <span class="badge badge-meta badge-sm">+{{ candidate.overlap_tokens|length - 3 }} more</span>
-            {% endif %}
+        <dl class="trading212-position-facts">
+          <div>
+            <dt>Units</dt>
+            <dd>{{ '%.4f'|format(row.units or 0) }}</dd>
           </div>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      {% if mobile_overflow_matches %}
-      <details class="trading212-mobile-candidate-overflow">
-        <summary>Show {{ mobile_overflow_matches|length }} more likely {{ 'match' if mobile_overflow_matches|length == 1 else 'matches' }}</summary>
-        <div class="trading212-candidate-list trading212-candidate-list-overflow">
-          {% for candidate in mobile_overflow_matches %}
+          <div>
+            <dt>Current price</dt>
+            <dd>{{ '%.4f'|format(row.price or 0) }}</dd>
+          </div>
+        </dl>
+        {% if row.possible_matches %}
+        {% set mobile_matches = row.possible_matches[:2] %}
+        {% set mobile_overflow_matches = row.possible_matches[2:] %}
+        <div class="trading212-candidate-heading">Likely tracked matches</div>
+        <div class="trading212-candidate-list">
+          {% for candidate in mobile_matches %}
           <div class="trading212-candidate-card">
             <div class="trading212-candidate-title">{{ candidate.holding.holding_name }}</div>
             <div class="trading212-candidate-account">{{ candidate.holding.account_name }}</div>
@@ -420,78 +386,99 @@
           </div>
           {% endfor %}
         </div>
-      </details>
-      {% endif %}
-      <form method="post" action="{{ url_for('settings.resolve_trading212_possible_match', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-possible-match-form">
-        <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
-        <input type="hidden" name="preview_key" value="{{ row.preview_key }}">
-        <div class="helper-text mb-05" >Choose the tracked holding that should receive this broker snapshot update.</div>
-        {% for candidate in row.possible_matches %}
-        <label class="checkbox-row flex-start gap-055 mt-04" >
-          <input type="radio" name="selected_holding_id" value="{{ candidate.holding.id }}">
-          <span><strong>{{ candidate.holding.holding_name }}</strong> on {{ candidate.holding.account_name }}</span>
-        </label>
-        {% endfor %}
-        <label class="checkbox-row mt-075 flex-start gap-055" >
-          <input type="checkbox" name="confirm_resolve_possible_match" value="yes">
-          <span>I reviewed this likely match and want SteadyPlan to update only the tracked holding I selected.</span>
-        </label>
-        <div class="button-row mt-1">
-          <button type="submit" class="btn btn-secondary">Confirm reviewed likely match</button>
-        </div>
-      </form>
-      {% endif %}
-    </article>
-    {% endfor %}
-  </div>
-  {% else %}
-  <p class="helper-text m-0" >Every broker position found a likely tracked holding.</p>
-  {% endif %}
-</section>
-
-<section class="panel mt-1">
-  <div class="section-header">
-    <div>
-      <h3>Tracked holdings not seen in this snapshot</h3>
-      <p class="helper-text m-0" >Useful for spotting holdings that are probably stale/manual versus ones that still need a careful rematch on this linked account.</p>
-    </div>
-  </div>
-  {% if preview.db_only %}
-  <div class="table-scroll">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Holding</th>
-          <th>Account</th>
-          <th>Ticker</th>
-          <th class="num">Tracked value</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in preview.db_only %}
-        <tr>
-          <td>
-            <div><strong>{{ row.holding_name }}</strong></div>
-            <div class="helper-text mt-025" >{{ row.review_hint }}</div>
-            <div class="helper-text mt-025" >{{ row.next_step_hint }}</div>
-            <div class="badge-row mt-1">
-              <span class="badge badge-meta">{{ row.review_label }}</span>
-              {% for candidate in row.possible_broker_matches %}
-              <span class="badge">{{ candidate.broker_row.name or candidate.broker_row.ticker or 'Broker clue' }}</span>
-              {% endfor %}
+        {% if mobile_overflow_matches %}
+        <details class="trading212-mobile-candidate-overflow">
+          <summary>Show {{ mobile_overflow_matches|length }} more likely {{ 'match' if mobile_overflow_matches|length == 1 else 'matches' }}</summary>
+          <div class="trading212-candidate-list trading212-candidate-list-overflow">
+            {% for candidate in mobile_overflow_matches %}
+            <div class="trading212-candidate-card">
+              <div class="trading212-candidate-title">{{ candidate.holding.holding_name }}</div>
+              <div class="trading212-candidate-account">{{ candidate.holding.account_name }}</div>
+              {% if candidate.overlap_tokens %}
+              <div class="badge-row trading212-candidate-clues">
+                <span class="badge badge-meta badge-sm">Name clues</span>
+                {% for token in candidate.overlap_tokens[:3] %}
+                <span class="badge badge-tag badge-sm">{{ token }}</span>
+                {% endfor %}
+                {% if candidate.overlap_tokens|length > 3 %}
+                <span class="badge badge-meta badge-sm">+{{ candidate.overlap_tokens|length - 3 }} more</span>
+                {% endif %}
+              </div>
+              {% endif %}
             </div>
-          </td>
-          <td>{{ row.account_name }}</td>
-          <td>{{ row.ticker or '—' }}</td>
-          <td class="num">{{ '%.2f'|format(row.value or 0) }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+            {% endfor %}
+          </div>
+        </details>
+        {% endif %}
+        <form method="post" action="{{ url_for('settings.resolve_trading212_possible_match', connection_id=connection.id) }}" class="panel inset-panel mt-1 trading212-possible-match-form">
+          <input type="hidden" name="account_id" value="{{ preview.linked_account.id }}">
+          <input type="hidden" name="preview_key" value="{{ row.preview_key }}">
+          <div class="helper-text mb-05">Choose the tracked holding that should receive this broker snapshot update.</div>
+          {% for candidate in row.possible_matches %}
+          <label class="checkbox-row flex-start gap-055 mt-04">
+            <input type="radio" name="selected_holding_id" value="{{ candidate.holding.id }}">
+            <span><strong>{{ candidate.holding.holding_name }}</strong> on {{ candidate.holding.account_name }}</span>
+          </label>
+          {% endfor %}
+          <label class="checkbox-row mt-075 flex-start gap-055">
+            <input type="checkbox" name="confirm_resolve_possible_match" value="yes">
+            <span>I reviewed this likely match and want SteadyPlan to update only the tracked holding I selected.</span>
+          </label>
+          <div class="button-row mt-1">
+            <button type="submit" class="btn btn-secondary">Confirm reviewed likely match</button>
+          </div>
+        </form>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="helper-text mt-1 mb-0">Every broker position found a likely tracked holding.</p>
+    {% endif %}
   </div>
-  {% else %}
-  <p class="helper-text m-0" >No extra tracked holdings were left unmatched.</p>
-  {% endif %}
-</section>
+</details>
+
+<details class="preview-details-disclosure mt-1">
+  <summary class="preview-details-summary">Tracked holdings not seen in this snapshot ({{ preview.db_only|length if preview.db_only else 0 }})</summary>
+  <div class="details-content">
+    <p class="helper-text mt-05">Useful for spotting holdings that are probably stale/manual versus ones that still need a careful rematch on this linked account.</p>
+    {% if preview.db_only %}
+    <div class="table-scroll mt-1">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Holding</th>
+            <th>Account</th>
+            <th>Ticker</th>
+            <th class="num">Tracked value</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in preview.db_only %}
+          <tr>
+            <td>
+              <div><strong>{{ row.holding_name }}</strong></div>
+              <div class="helper-text mt-025">{{ row.review_hint }}</div>
+              <div class="helper-text mt-025">{{ row.next_step_hint }}</div>
+              <div class="badge-row mt-1">
+                <span class="badge badge-meta">{{ row.review_label }}</span>
+                {% for candidate in row.possible_broker_matches %}
+                <span class="badge">{{ candidate.broker_row.name or candidate.broker_row.ticker or 'Broker clue' }}</span>
+                {% endfor %}
+              </div>
+            </td>
+            <td>{{ row.account_name }}</td>
+            <td>{{ row.ticker or '—' }}</td>
+            <td class="num">{{ '%.2f'|format(row.value or 0) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="helper-text mt-1 mb-0">No extra tracked holdings were left unmatched.</p>
+    {% endif %}
+  </div>
+</details>
 {% endif %}
 {% endblock %}

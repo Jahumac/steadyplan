@@ -352,6 +352,8 @@ CREATE TABLE IF NOT EXISTS broker_connections (
     external_account_id TEXT,
     external_account_currency TEXT,
     external_total_value REAL,
+    external_cash_value REAL,
+    external_holdings_value REAL,
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -1212,6 +1214,16 @@ def _run_migrations(conn):
                 "INSERT OR IGNORE INTO schema_migrations (name) VALUES ('v8_purge_soft_deleted_accounts')"
             )
             conn.commit()
+        except Exception as e:
+            _log_migration_error(e)
+
+    # ── broker_connections: add split cash and holdings columns ──────────
+    for col in [
+        "external_cash_value REAL",
+        "external_holdings_value REAL",
+    ]:
+        try:
+            conn.execute(f"ALTER TABLE broker_connections ADD COLUMN {col}")
         except Exception as e:
             _log_migration_error(e)
 

@@ -267,7 +267,7 @@ def _broker_summary_refresh_due(connection, *, now=None):
     last_checked = _parse_iso_datetime_utc(connection.get("last_tested_at"))
     if last_checked is None:
         return True
-    return (now - last_checked).total_seconds() >= 15 * 60
+    return (now - last_checked).total_seconds() >= 2 * 60 * 60
 
 
 def _refresh_linked_trading212_summaries(user_id, rows, trading212_connections):
@@ -299,6 +299,8 @@ def _refresh_linked_trading212_summaries(user_id, rows, trading212_connections):
                 api_secret=api_secret,
                 environment=connection.get("environment") or "live",
             )
+            cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+            holdings_val = float(summary.get("investments_current_value") or 0)
             updated = update_broker_connection_status(
                 connection_id,
                 user_id,
@@ -308,6 +310,8 @@ def _refresh_linked_trading212_summaries(user_id, rows, trading212_connections):
                 external_account_id=summary.get("account_id"),
                 external_account_currency=summary.get("currency"),
                 external_total_value=summary.get("total_value"),
+                external_cash_value=cash_val,
+                external_holdings_value=holdings_val,
             )
         except (Trading212ConnectionError, Trading212CredentialError) as exc:
             updated = update_broker_connection_status(
@@ -346,8 +350,16 @@ def _linked_trading212_health_summary(selected, linked_connection, effective_val
         "error": "Needs attention",
     }.get(status, "Not checked")
 
+    sync_focus = (selected or {}).get("broker_sync_focus") or "all"
     try:
-        broker_total = float(linked_connection.get("external_total_value")) if linked_connection.get("external_total_value") is not None else None
+        if sync_focus == "cash_only":
+            val = linked_connection.get("external_cash_value")
+            broker_total = float(val) if val is not None else None
+        elif sync_focus == "holdings_only":
+            val = linked_connection.get("external_holdings_value")
+            broker_total = float(val) if val is not None else None
+        else:
+            broker_total = float(linked_connection.get("external_total_value")) if linked_connection.get("external_total_value") is not None else None
     except (TypeError, ValueError):
         broker_total = None
     tracked_value = float(effective_value or 0)

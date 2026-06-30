@@ -58,6 +58,7 @@ from app.models import (
     fetch_api_tokens,
     fetch_assistant_audit_events,
     fetch_account,
+    fetch_all_accounts,
     fetch_assumptions,
     fetch_broker_connection,
     fetch_broker_connections,
@@ -69,6 +70,7 @@ from app.models import (
     log_broker_sync_event,
     reset_all_user_data,
     revoke_api_token,
+    update_account,
     update_assumptions,
     update_broker_connection_status,
     update_holding,
@@ -497,7 +499,14 @@ def _build_trading212_preview(user_id, connection, snapshot, *, linked_account=N
         tracked_value_total = sum(float((row or {}).get("value") or 0) for row in existing_holdings)
         value_gap = stats["position_value_total"] - tracked_value_total
         broker_cash_total = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
-        tracked_cash = float(linked_account.get("uninvested_cash") or 0)
+        if (
+            linked_account.get("broker_sync_focus") == "cash_only"
+            or linked_account.get("category") == "Cash"
+            or (linked_account.get("wrapper_type") or "").lower() == "cash isa"
+        ):
+            tracked_cash = float(linked_account.get("current_value") or 0)
+        else:
+            tracked_cash = float(linked_account.get("uninvested_cash") or 0)
         cash_difference = broker_cash_total - tracked_cash
         can_apply_cash = abs(cash_difference) >= 0.01 if sync_focus in ["all", "cash_only"] else False
         
@@ -1279,6 +1288,8 @@ def retest_trading212(connection_id):
             environment=connection.get("environment") or "live",
         )
         summary = probe["summary"]
+        cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+        holdings_val = float(summary.get("investments_current_value") or 0)
         update_broker_connection_status(
             connection_id,
             current_user.id,
@@ -1288,6 +1299,8 @@ def retest_trading212(connection_id):
             external_account_id=summary["account_id"],
             external_account_currency=summary["currency"],
             external_total_value=summary["total_value"],
+            external_cash_value=cash_val,
+            external_holdings_value=holdings_val,
         )
         flash(
             f"Broker snapshot {trading212_environment_label(summary['environment']).lower()} connection retested successfully.",
@@ -1322,6 +1335,8 @@ def preview_trading212(connection_id):
             environment=connection.get("environment") or "live",
         )
         summary = snapshot["summary"]
+        cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+        holdings_val = float(summary.get("investments_current_value") or 0)
         update_broker_connection_status(
             connection_id,
             current_user.id,
@@ -1331,6 +1346,8 @@ def preview_trading212(connection_id):
             external_account_id=summary["account_id"],
             external_account_currency=summary["currency"],
             external_total_value=summary["total_value"],
+            external_cash_value=cash_val,
+            external_holdings_value=holdings_val,
         )
     except (Trading212ConnectionError, Trading212CredentialError) as exc:
         update_broker_connection_status(
@@ -1400,6 +1417,8 @@ def apply_trading212_reviewed_changes(connection_id):
             environment=connection.get("environment") or "live",
         )
         summary = snapshot["summary"]
+        cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+        holdings_val = float(summary.get("investments_current_value") or 0)
         update_broker_connection_status(
             connection_id,
             current_user.id,
@@ -1409,6 +1428,8 @@ def apply_trading212_reviewed_changes(connection_id):
             external_account_id=summary["account_id"],
             external_account_currency=summary["currency"],
             external_total_value=summary["total_value"],
+            external_cash_value=cash_val,
+            external_holdings_value=holdings_val,
         )
     except (Trading212ConnectionError, Trading212CredentialError) as exc:
         update_broker_connection_status(
@@ -1518,6 +1539,8 @@ def apply_trading212_cash(connection_id):
             environment=connection.get("environment") or "live",
         )
         summary = snapshot["summary"]
+        cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+        holdings_val = float(summary.get("investments_current_value") or 0)
         update_broker_connection_status(
             connection_id,
             current_user.id,
@@ -1527,6 +1550,8 @@ def apply_trading212_cash(connection_id):
             external_account_id=summary["account_id"],
             external_account_currency=summary["currency"],
             external_total_value=summary["total_value"],
+            external_cash_value=cash_val,
+            external_holdings_value=holdings_val,
         )
     except (Trading212ConnectionError, Trading212CredentialError) as exc:
         update_broker_connection_status(
@@ -1548,7 +1573,15 @@ def apply_trading212_cash(connection_id):
 
     broker_cash_total = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
     
-    linked_account["uninvested_cash"] = broker_cash_total
+    if (
+        linked_account.get("broker_sync_focus") == "cash_only"
+        or linked_account.get("category") == "Cash"
+        or (linked_account.get("wrapper_type") or "").lower() == "cash isa"
+    ):
+        linked_account["current_value"] = broker_cash_total
+        linked_account["uninvested_cash"] = 0.0
+    else:
+        linked_account["uninvested_cash"] = broker_cash_total
     update_account(linked_account, current_user.id)
 
     flash(f"Updated account cash balance to {broker_cash_total:.2f}.", "success")
@@ -1597,6 +1630,8 @@ def apply_trading212_reviewed_broker_additions(connection_id):
             environment=connection.get("environment") or "live",
         )
         summary = snapshot["summary"]
+        cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+        holdings_val = float(summary.get("investments_current_value") or 0)
         update_broker_connection_status(
             connection_id,
             current_user.id,
@@ -1606,6 +1641,8 @@ def apply_trading212_reviewed_broker_additions(connection_id):
             external_account_id=summary["account_id"],
             external_account_currency=summary["currency"],
             external_total_value=summary["total_value"],
+            external_cash_value=cash_val,
+            external_holdings_value=holdings_val,
         )
     except (Trading212ConnectionError, Trading212CredentialError) as exc:
         update_broker_connection_status(
@@ -1693,6 +1730,8 @@ def resolve_trading212_possible_match(connection_id):
             environment=connection.get("environment") or "live",
         )
         summary = snapshot["summary"]
+        cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
+        holdings_val = float(summary.get("investments_current_value") or 0)
         update_broker_connection_status(
             connection_id,
             current_user.id,
@@ -1702,6 +1741,8 @@ def resolve_trading212_possible_match(connection_id):
             external_account_id=summary["account_id"],
             external_account_currency=summary["currency"],
             external_total_value=summary["total_value"],
+            external_cash_value=cash_val,
+            external_holdings_value=holdings_val,
         )
     except (Trading212ConnectionError, Trading212CredentialError) as exc:
         update_broker_connection_status(
