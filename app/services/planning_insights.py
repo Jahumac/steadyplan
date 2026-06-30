@@ -195,6 +195,33 @@ def build_accessible_security_summary(accounts, assumptions):
     accessible_current = groups[ACCESSIBLE]["current"]
     accessible_accounts = groups[ACCESSIBLE]["accounts"]
 
+    # Calculate overall cash yield metrics
+    total_earning_cash = 0.0
+    total_annual_interest = 0.0
+    for account in accounts:
+        category = (account.get("category") or "").strip().lower()
+        current_val = to_float(account.get("current_value", 0))
+        uninvested_cash = to_float(account.get("uninvested_cash", 0))
+        
+        # Cash value is either the entire value (for cash accounts) or uninvested_cash (for others)
+        if category == "cash":
+            cash_val = current_val
+        else:
+            cash_val = uninvested_cash
+            
+        rate = account.get("cash_interest_rate")
+        if rate is not None:
+            rate = to_float(rate)
+        else:
+            rate = 0.0
+            
+        if cash_val > 0 and rate > 0:
+            total_earning_cash += cash_val
+            total_annual_interest += cash_val * rate
+
+    weighted_rate = (total_annual_interest / total_earning_cash) if total_earning_cash > 0 else 0.0
+    monthly_interest = total_annual_interest / 12.0
+
     milestones = []
     for target in DEFAULT_ACCESSIBLE_MILESTONES:
         months = _months_to_target(
@@ -229,6 +256,10 @@ def build_accessible_security_summary(accounts, assumptions):
         "accessible_breakdown": accessible_breakdown,
         "accessible_cash_current": accessible_breakdown[ACCESSIBLE_CASH]["current"],
         "accessible_invested_current": accessible_breakdown[ACCESSIBLE_INVESTED]["current"],
+        "cash_yield_total_earning": total_earning_cash,
+        "cash_yield_weighted_rate": weighted_rate * 100.0,
+        "cash_yield_annual_interest": total_annual_interest,
+        "cash_yield_monthly_interest": monthly_interest,
         "accessible_cash_projected": accessible_breakdown[ACCESSIBLE_CASH]["projected"],
         "accessible_invested_projected": accessible_breakdown[ACCESSIBLE_INVESTED]["projected"],
     }

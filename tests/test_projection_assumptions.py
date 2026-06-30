@@ -457,14 +457,14 @@ def test_planning_page_uses_scenario_estimate_copy_for_retirement_outputs(app, c
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
 
-    assert "Private pension/investment estimate at retirement" in body
+    assert "Retirement Estimate" in body
     assert "Private pot estimate at retirement" not in body
     assert "Locked for later" in body
     assert "Locked later" not in body
-    assert "Current totals use saved balances. Future estimates use the planning numbers in Settings. They are not guarantees." in body
+    assert "Uses your planning numbers in Settings and is not a guarantee." in body
     assert "Scenario estimate at age 60 under current balances, contributions and growth assumptions. For planning only, not a guarantee." not in body
     assert "Estimate at age 60 under current balances, contributions and growth assumptions." not in body
-    assert "Private pension/investment estimate at age 60:" in body
+    assert "Projected private pension and investment pot at age 60" in body
     assert "Private pot estimate at age 60:" not in body
     assert body.count("Future estimate at 60:") == 2
     assert "Scenario estimate at 60:" not in body
