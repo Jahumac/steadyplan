@@ -12,10 +12,61 @@
       <p class="eyebrow">Planning</p>
       <h2 class="hero-value">Liquidity Profile</h2>
       <p class="hero-subtitle">See what is cash-accessible now, what invested money is still reachable, what comes with conditions, what stays locked for later, and what your current plan might support.</p>
-      <p class="helper-text m-0 planning-hero-caveat">Planning-number analyser, not advice. Useful signal first; detail when you need it.</p>
+      </div>
     </div>
-  </div>
-  <div class="hero-strip planning-hero-strip">
+
+    {% set total = access_summary.total_current %}
+    {% if total > 0 %}
+      {% set cash_pct = (access_summary.accessible_cash_current / total * 100) %}
+      {% set invested_pct = (access_summary.accessible_invested_current / total * 100) %}
+      {% set restricted_pct = access_summary.restricted_pct %}
+      {% set locked_pct = access_summary.locked_pct %}
+
+      <div class="liquidity-stack-container">
+        <div class="liquidity-stack-bar">
+          {% if cash_pct > 0 %}
+            <div class="liquidity-segment segment-cash" style="width: {{ cash_pct }}%;" title="Cash Accessible: {{ '{:.1f}'.format(cash_pct) }}%"></div>
+          {% endif %}
+          {% if invested_pct > 0 %}
+            <div class="liquidity-segment segment-invested" style="width: {{ invested_pct }}%;" title="Invested Accessible: {{ '{:.1f}'.format(invested_pct) }}%"></div>
+          {% endif %}
+          {% if restricted_pct > 0 %}
+            <div class="liquidity-segment segment-restricted" style="width: {{ restricted_pct }}%;" title="Restricted: {{ '{:.1f}'.format(restricted_pct) }}%"></div>
+          {% endif %}
+          {% if locked_pct > 0 %}
+            <div class="liquidity-segment segment-locked" style="width: {{ locked_pct }}%;" title="Locked: {{ '{:.1f}'.format(locked_pct) }}%"></div>
+          {% endif %}
+        </div>
+        <div class="liquidity-stack-legend">
+          {% if access_summary.accessible_cash_current > 0 %}
+          <div class="liquidity-legend-item">
+            <span class="liquidity-legend-dot dot-cash"></span>
+            <span>Cash: <strong>£{{ '{:,.0f}'.format(access_summary.accessible_cash_current) }}</strong> ({{ '{:.0f}'.format(cash_pct) }}%)</span>
+          </div>
+          {% endif %}
+          {% if access_summary.accessible_invested_current > 0 %}
+          <div class="liquidity-legend-item">
+            <span class="liquidity-legend-dot dot-invested"></span>
+            <span>Invested: <strong>£{{ '{:,.0f}'.format(access_summary.accessible_invested_current) }}</strong> ({{ '{:.0f}'.format(invested_pct) }}%)</span>
+          </div>
+          {% endif %}
+          {% if access_summary.restricted_current > 0 %}
+          <div class="liquidity-legend-item">
+            <span class="liquidity-legend-dot dot-restricted"></span>
+            <span>Restricted: <strong>£{{ '{:,.0f}'.format(access_summary.restricted_current) }}</strong> ({{ '{:.0f}'.format(restricted_pct) }}%)</span>
+          </div>
+          {% endif %}
+          {% if access_summary.locked_current > 0 %}
+          <div class="liquidity-legend-item">
+            <span class="liquidity-legend-dot dot-locked"></span>
+            <span>Locked: <strong>£{{ '{:,.0f}'.format(access_summary.locked_current) }}</strong> ({{ '{:.0f}'.format(locked_pct) }}%)</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="hero-strip planning-hero-strip">
     {% call hero_stat('Accessible now') %}<strong>£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</strong>{% endcall %}
     {% call hero_stat('Locked for later') %}<strong>£{{ '{:,.0f}'.format(access_summary.locked_current) }}</strong>{% endcall %}
     {% call hero_stat('Restricted') %}<strong>£{{ '{:,.0f}'.format(access_summary.restricted_current) }}</strong>{% endcall %}
@@ -23,77 +74,29 @@
   </div>
 </section>
 
-<section class="card-grid mb-1 planning-stat-grid planning-desktop-only">
-  <div class="card stat-card">
-    <h2>Accessible now</h2>
-    <p>£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</p>
-    <small>Money normally usable before pension age: ISA, cash, taxable accounts, Premium Bonds and similar accounts.</small>
-    <small>Cash accessible: £{{ '{:,.0f}'.format(access_summary.accessible_cash_current) }} · Invested accessible: £{{ '{:,.0f}'.format(access_summary.accessible_invested_current) }}</small>
-  </div>
-  <div class="card stat-card">
-    <h2>Locked for later</h2>
-    <p>£{{ '{:,.0f}'.format(access_summary.locked_current) }}</p>
-    <small>Pension-style money that is doing long-term retirement work.</small>
-  </div>
-  <div class="card stat-card">
-    <h2>Restricted</h2>
-    <p>£{{ '{:,.0f}'.format(access_summary.restricted_current) }}</p>
-    <small>Money with rules, penalties or special access conditions.</small>
-  </div>
-  <div class="card stat-card">
-    <h2>Private pension/investment estimate at retirement</h2>
-    <p>£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</p>
-    <small>Current totals use saved balances. Future estimates use the planning numbers in Settings. They are not guarantees.</small>
-  </div>
-</section>
-
-<section class="card mb-1 planning-compact-only planning-signal-card">
-  <p class="eyebrow">Current signal</p>
-  <h2>{{ income_summary.limiting_factor }}</h2>
-  <p class="helper-text m-0">Private pension/investment estimate at age {{ '{:.0f}'.format(income_summary.retirement_age) }}: <strong>£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</strong>. Uses the planning numbers in Settings and is not a guarantee.</p>
-</section>
-
-<section class="card mb-1">
-  <div class="section-header planning-section-header">
-    <div>
-      <p class="eyebrow">Accessible now</p>
-      <h2>Accessible now milestones</h2>
-    </div>
-    <a class="badge badge-sm" href="/accounts/">Review accounts</a>
-  </div>
-  <p class="helper-text">Track when accessible money starts giving you more breathing room. Pension totals are deliberately kept out so the signal stays honest.</p>
-  <p class="helper-text">Accessible now currently splits into <strong>cash accessible £{{ '{:,.0f}'.format(access_summary.accessible_cash_current) }}</strong> and <strong>invested accessible £{{ '{:,.0f}'.format(access_summary.accessible_invested_current) }}</strong>.</p>
-
-  {% if access_summary.next_milestone %}
-  <div class="card planning-mini-card planning-compact-only planning-next-card">
-    <p class="eyebrow">Next milestone</p>
-    <h2>£{{ '{:,.0f}'.format(access_summary.next_milestone.target) }} accessible</h2>
-    <p class="planning-big-number">£{{ '{:,.0f}'.format(access_summary.next_milestone.remaining) }} to go</p>
-    <p class="helper-text">Timing estimate: <strong>{{ access_summary.next_milestone.duration }}</strong> · {{ '{:.0f}'.format(access_summary.next_milestone.progress) }}% complete.</p>
-    <div class="planning-progress" aria-hidden="true"><span style="width: {{ '{:.1f}'.format(access_summary.next_milestone.progress) }}%"></span></div>
-  </div>
-  {% endif %}
-
-  <div class="card-grid planning-milestone-grid planning-desktop-detail">
-    {% for milestone in access_summary.milestones %}
-    <div class="card planning-mini-card">
-      <div class="budget-row p-0 border-none" >
-        <div class="budget-row-left">
-          <span class="budget-row-name">£{{ '{:,.0f}'.format(milestone.target) }} accessible</span>
-          <span class="budget-row-note">{{ '{:.0f}'.format(milestone.progress) }}% complete · £{{ '{:,.0f}'.format(milestone.remaining) }} to go</span>
-        </div>
-        <div class="budget-row-right">
-          <strong>{{ milestone.duration }}</strong>
-        </div>
+<div class="card-grid mb-1 planning-main-layout">
+  <!-- Column 1: Accessible Now Milestones -->
+  <section class="card">
+    <div class="section-header planning-section-header">
+      <div>
+        <p class="eyebrow">Accessible now</p>
+        <h2>Accessible now milestones</h2>
       </div>
-      <div class="planning-progress" aria-hidden="true"><span style="width: {{ '{:.1f}'.format(milestone.progress) }}%"></span></div>
+      <a class="badge badge-sm" href="/accounts/">Review accounts</a>
     </div>
-    {% endfor %}
-  </div>
+    <p class="helper-text">Track when accessible money starts giving you more breathing room. Pension totals are deliberately kept out so the signal stays honest.</p>
 
-  <details class="planning-compact-details planning-compact-only">
-    <summary>Show all milestones</summary>
-    <div class="card-grid planning-milestone-grid mt-075">
+    {% if access_summary.next_milestone %}
+    <div class="card planning-mini-card planning-compact-only planning-next-card">
+      <p class="eyebrow">Next milestone</p>
+      <h2>£{{ '{:,.0f}'.format(access_summary.next_milestone.target) }} accessible</h2>
+      <p class="planning-big-number">£{{ '{:,.0f}'.format(access_summary.next_milestone.remaining) }} to go</p>
+      <p class="helper-text">Timing estimate: <strong>{{ access_summary.next_milestone.duration }}</strong> · {{ '{:.0f}'.format(access_summary.next_milestone.progress) }}% complete.</p>
+      <div class="planning-progress" aria-hidden="true"><span style="width: {{ '{:.1f}'.format(access_summary.next_milestone.progress) }}%"></span></div>
+    </div>
+    {% endif %}
+
+    <div class="card-grid planning-milestone-grid planning-desktop-detail">
       {% for milestone in access_summary.milestones %}
       <div class="card planning-mini-card">
         <div class="budget-row p-0 border-none" >
@@ -101,14 +104,64 @@
             <span class="budget-row-name">£{{ '{:,.0f}'.format(milestone.target) }} accessible</span>
             <span class="budget-row-note">{{ '{:.0f}'.format(milestone.progress) }}% complete · £{{ '{:,.0f}'.format(milestone.remaining) }} to go</span>
           </div>
-          <div class="budget-row-right"><strong>{{ milestone.duration }}</strong></div>
+          <div class="budget-row-right">
+            <strong>{{ milestone.duration }}</strong>
+          </div>
         </div>
         <div class="planning-progress" aria-hidden="true"><span style="width: {{ '{:.1f}'.format(milestone.progress) }}%"></span></div>
       </div>
       {% endfor %}
     </div>
-  </details>
-</section>
+
+    <details class="planning-compact-details planning-compact-only">
+      <summary>Show all milestones</summary>
+      <div class="card-grid planning-milestone-grid mt-075">
+        {% for milestone in access_summary.milestones %}
+        <div class="card planning-mini-card">
+          <div class="budget-row p-0 border-none" >
+            <div class="budget-row-left">
+              <span class="budget-row-name">£{{ '{:,.0f}'.format(milestone.target) }} accessible</span>
+              <span class="budget-row-note">{{ '{:.0f}'.format(milestone.progress) }}% complete · £{{ '{:,.0f}'.format(milestone.remaining) }} to go</span>
+            </div>
+            <div class="budget-row-right"><strong>{{ milestone.duration }}</strong></div>
+          </div>
+          <div class="planning-progress" aria-hidden="true"><span style="width: {{ '{:.1f}'.format(milestone.progress) }}%"></span></div>
+        </div>
+        {% endfor %}
+      </div>
+    </details>
+  </section>
+
+  <!-- Column 2: Retirement Estimate & Current Signal -->
+  <section class="card flex-col justify-between">
+    <div class="mb-15">
+      <p class="eyebrow">Retirement Estimate</p>
+      <h2 class="planning-big-number-large" style="font-size: 2.2rem; margin: 0.25rem 0 0.5rem; font-weight: 800; color: var(--text-normal, #f8fafc);">£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</h2>
+      <p class="helper-text m-0">Projected private pension and investment pot at age {{ '{:.0f}'.format(income_summary.retirement_age) }}. Uses your planning numbers in Settings and is not a guarantee.</p>
+    </div>
+    {% if access_summary.cash_yield_total_earning > 0 %}
+    <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.25rem; margin-top: 1.25rem;">
+      <p class="eyebrow" style="margin-bottom: 0.5rem;">Cash Yield</p>
+      <div class="cash-yield-badge" style="background: rgba(52, 211, 153, 0.06); border: 1px solid rgba(52, 211, 153, 0.15); border-radius: 8px; padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+        <div>
+          <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted, #94a3b8); display: block; margin-bottom: 0.15rem;">Weighted Rate</span>
+          <strong style="font-size: 1.5rem; font-weight: 800; color: #34d399; line-height: 1.2;">{{ '{:.2f}'.format(access_summary.cash_yield_weighted_rate) }}%</strong>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted, #94a3b8); display: block; margin-bottom: 0.15rem;">Est. Earnings</span>
+          <strong style="font-size: 1.1rem; font-weight: 700; color: var(--text-normal, #f8fafc); display: block; line-height: 1.2;">£{{ '{:,.0f}'.format(access_summary.cash_yield_monthly_interest) }}/mo</strong>
+          <span style="font-size: 0.7rem; color: var(--text-muted, #94a3b8); display: block; margin-top: 0.15rem;">£{{ '{:,.0f}'.format(access_summary.cash_yield_annual_interest) }}/yr on £{{ '{:,.0f}'.format(access_summary.cash_yield_total_earning) }}</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.25rem; margin-top: 1.25rem;">
+      <p class="eyebrow">Current Signal</p>
+      <h3 style="font-size: 1.25rem; margin: 0.25rem 0 0.5rem; font-weight: 700; color: var(--text-normal, #f8fafc);">{{ income_summary.limiting_factor }}</h3>
+      <p class="helper-text m-0">This indicates whether your next saving contribution should focus on building short-term accessible cash, long-term pension pot, or is currently balanced.</p>
+    </div>
+  </section>
+</div>
 
 <section class="card mb-1">
   <div class="section-header planning-section-header">

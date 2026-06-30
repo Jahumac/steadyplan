@@ -5,3 +5,159 @@
 @import "modules/_components.css";
 @import "modules/_utilities.css";
 @import "modules/_flows.css";
+
+/* Global Hover Glow effect for all tiles/panels/cards (excluding highlight/hero tiles) */
+.card:not(.highlight):not(.alert-banner), 
+.panel:not(.highlight):not(.alert-banner):not(.inset-panel):not(.panel-compact),
+.acct-card,
+.allowance-card,
+.edit-card,
+.acct-detail-stat,
+.allocation-item {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:not(.highlight):not(.alert-banner):hover, 
+.panel:not(.highlight):not(.alert-banner):not(.inset-panel):not(.panel-compact):hover,
+.acct-card:hover,
+.allowance-card:hover,
+.edit-card:hover,
+.acct-detail-stat:hover,
+.allocation-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 15px color-mix(in srgb, var(--accent) 22%, transparent) !important;
+}
+
+/* Contribution Table Redesign - Chip/Badge Style Grid */
+.contrib-table {
+  border-collapse: separate !important;
+  border-spacing: 0.35rem 0.35rem !important;
+  margin-top: 0.5rem;
+}
+
+.contrib-table th {
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.contrib-table td {
+  padding: 0.6rem 0.8rem !important;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  border: none !important;
+}
+
+.contrib-table tr > td:first-child {
+  background: var(--panel-2);
+  border-left: 3px solid var(--border) !important;
+  font-weight: 500;
+}
+
+.contrib-row-confirmed > td:first-child {
+  border-left: 3px solid #4ade80 !important;
+}
+.contrib-row-pending > td:first-child {
+  border-left: 3px solid #fbbf24 !important;
+}
+.contrib-row-skipped > td:first-child {
+  border-left: 3px solid var(--text-muted) !important;
+}
+
+.contrib-confirmed {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #4ade80 !important;
+  border: 1px solid rgba(34, 197, 94, 0.2) !important;
+}
+
+.contrib-pending {
+  background: rgba(251, 191, 36, 0.08) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(251, 191, 36, 0.15) !important;
+}
+
+.contrib-skipped {
+  background: rgba(148, 163, 184, 0.06) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid rgba(148, 163, 184, 0.12) !important;
+}
+
+.contrib-none {
+  background: rgba(255, 255, 255, 0.02) !important;
+  color: var(--text-muted) !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+.contrib-totals td {
+  background: transparent !important;
+  border-top: 2px solid var(--border) !important;
+  border-radius: 0 !important;
+}
+
+/* Modern, Spacious Data Tables for Performance and Lists */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.data-table td {
+  padding: 0.85rem 1rem;
+  font-size: 0.88rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr[data-href] {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.data-table tr[data-href]:hover {
+  background-color: var(--panel-2);
+}
+
+/* Overview Hero Grid Layout */
+.overview-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.hero-col-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .hero-col-panel:not(:last-child) {
+    border-right: 1px solid var(--border);
+    padding-right: 1.5rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-col-panel:not(:last-child) {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+  }
+}

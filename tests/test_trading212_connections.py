@@ -781,10 +781,10 @@ def test_accounts_edit_form_hides_trading212_picker_for_unsupported_wrapper(app,
         assert connection is not None
         account_id = create_account(
             {
-                "name": "Trading 212 Cash ISA",
+                "name": "Trading 212 Lifetime ISA",
                 "provider": "Trading 212",
                 "wrapper_type": "Lifetime ISA",
-                "category": "Cash",
+                "category": "ISA",
                 "tags": "",
                 "current_value": 7000.0,
                 "monthly_contribution": 100.0,
@@ -844,10 +844,10 @@ def test_api_create_account_rejects_trading212_link_for_unsupported_wrapper(app,
     response = client.post(
         "/accounts/api/create",
         data={
-            "name": "Trading 212 Cash ISA",
+            "name": "Trading 212 Lifetime ISA",
             "provider": "Trading 212",
             "wrapper_type": "Lifetime ISA",
-            "category": "Cash",
+            "category": "ISA",
             "current_value": "6500",
             "monthly_contribution": "100",
             "valuation_mode": "manual",
@@ -859,7 +859,7 @@ def test_api_create_account_rejects_trading212_link_for_unsupported_wrapper(app,
     payload = response.get_json()
     assert payload == {
         "ok": False,
-        "error": "Trading 212 linking is currently limited to Invest and Stocks ISA accounts",
+        "error": "Trading 212 linking is currently limited to Invest, Stocks ISA, and Cash ISA accounts",
     }
 
 
@@ -1062,10 +1062,10 @@ def test_account_detail_hides_broker_primary_status_for_unsupported_wrapper(app,
         assert connection is not None
         account_id = create_account(
             {
-                "name": "Trading 212 Cash ISA",
+                "name": "Trading 212 Lifetime ISA",
                 "provider": "Trading 212",
                 "wrapper_type": "Lifetime ISA",
-                "category": "Cash",
+                "category": "ISA",
                 "tags": "",
                 "current_value": 7000.0,
                 "monthly_contribution": 100.0,

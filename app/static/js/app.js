@@ -533,12 +533,17 @@
       function setWhatIfMode(enabled) {
         whatIfMode = enabled;
         container.classList.toggle('budget-what-if-active', whatIfMode);
+        // Also toggle active class on the what-if card for visual feedback
+        var whatIfCard = document.querySelector('.budget-what-if-card');
+        if (whatIfCard) {
+          whatIfCard.classList.toggle('budget-what-if-active', whatIfMode);
+        }
         if (whatIfToggle) whatIfToggle.textContent = whatIfMode ? 'Exit simulation' : 'Start simulation';
         if (whatIfReset) whatIfReset.hidden = !whatIfMode;
         if (whatIfStatus) {
           whatIfStatus.textContent = whatIfMode
-            ? 'Simulation mode is on. Edits update the page only and are not saved.'
-            : 'Nothing is written to the database unless you leave simulation mode and edit normally.';
+            ? 'Simulation mode is active. Changes are temporary and will not be saved.'
+            : 'Simulation mode is off. Changes are saved automatically as you type.';
         }
         if (!whatIfMode) resetWhatIfValues();
         updateWhatIfSummary();
@@ -613,6 +618,14 @@
         var linkedNotified = false;
         var sourceBadge = row.querySelector('.budget-row-source');
 
+        // Save immediately when user presses Enter or clicks away (blur)
+        input.addEventListener('change', function() {
+          if (whatIfMode) return;
+          clearTimeout(debounceTimer);
+          saveEntry(input.dataset.itemId, input.value, ind);
+          recalcSummary();
+        });
+
         input.addEventListener('input', function() {
           var rowAnnual = document.getElementById('annual-item-' + input.dataset.itemId);
           if (rowAnnual) rowAnnual.textContent = fmtAnnualRow(parseFloat(input.value) || 0);
@@ -645,6 +658,11 @@
       // Sync hero stats immediately on load (server-rendered values may differ
       // from JS calculation in edge cases like inherited/overridden months)
       recalcSummary();
+
+      // Clear the confusing default HTML text immediately on load
+      if (whatIfStatus) {
+        whatIfStatus.textContent = 'Simulation mode is off. Changes are saved automatically as you type.';
+      }
 
       // Prev/next month navigation arrows
       var prevMonthBtn = document.getElementById('prev-month');
@@ -2919,3 +2937,107 @@
   }
 
 })();
+
+/* ── Settings Tab Switcher (CSP-compliant) ──────────────────────── */
+function switchTab(tabId) {
+  // Hide all tab content sections
+  var contents = document.querySelectorAll('.settings-tab-content');
+  for (var i = 0; i < contents.length; i++) {
+    contents[i].classList.remove('active');
+    contents[i].style.display = 'none';
+  }
+  
+  // Remove active class from all tab links
+  var links = document.querySelectorAll('.settings-tab-bar .tab-link');
+  for (var j = 0; j < links.length; j++) {
+    links[j].classList.remove('subnav-active');
+  }
+  
+  // Show the active tab content
+  var activeContent = document.getElementById('tab-' + tabId);
+  if (activeContent) {
+    activeContent.classList.add('active');
+    activeContent.style.display = 'block';
+  }
+  
+  // Also show any extra sections marked for this tab
+  var extraContents = document.querySelectorAll('.tab-' + tabId + '-extra');
+  for (var k = 0; k < extraContents.length; k++) {
+    extraContents[k].classList.add('active');
+    extraContents[k].style.display = 'block';
+  }
+  
+  // Add active class to the clicked tab link
+  var activeLink = document.querySelector('.settings-tab-bar a[href*="' + tabId + '"]');
+  if (activeLink) {
+    activeLink.classList.add('subnav-active');
+  }
+  
+  // Update hash in URL without jumping
+  if (history.replaceState) {
+    history.replaceState(null, null, '#' + tabId);
+  }
+}
+
+function initSettingsTabs() {
+  var hash = window.location.hash.replace('#', '');
+  var validTabs = ['plan', 'integrations', 'backup'];
+  var isValid = false;
+  for (var i = 0; i < validTabs.length; i++) {
+    if (validTabs[i] === hash) {
+      isValid = true;
+      break;
+    }
+  }
+  
+  // Check page mode via element existence
+  var tabNav = document.querySelector('.settings-tab-bar');
+  if (!tabNav) return; // Not on settings page
+  
+  var isDiagnostics = tabNav.querySelector('a[href*="diagnostics"].subnav-active');
+  
+  if (!isValid) {
+    if (isDiagnostics) {
+      hash = 'diagnostics';
+    } else {
+      hash = 'plan';
+    }
+  }
+  if (hash !== 'diagnostics') {
+    switchTab(hash);
+  }
+
+  // Attach CSP-compliant click listeners for tab switches
+  var tabTargets = document.querySelectorAll('[data-tab-target]');
+  for (var j = 0; j < tabTargets.length; j++) {
+    tabTargets[j].addEventListener('click', function(e) {
+      // If an anchor was clicked (or we are an anchor), stop the browser from jumping/navigating natively
+      if (e.target.tagName === 'A' || e.target.closest('a')) {
+        e.preventDefault();
+      }
+      var targetTab = this.getAttribute('data-tab-target');
+      if (targetTab) {
+        switchTab(targetTab);
+      }
+    });
+  }
+
+  // Attach CSP-compliant click listeners for non-tab links in the settings map
+  var hrefTargets = document.querySelectorAll('div[data-href]');
+  for (var k = 0; k < hrefTargets.length; k++) {
+    hrefTargets[k].addEventListener('click', function() {
+      window.location.href = this.getAttribute('data-href');
+    });
+  }
+}
+
+// Expose globally for HTML onclick attributes
+window.switchTab = switchTab;
+
+// Run immediately if DOM is already parsed, otherwise wait for event
+if (document.readyState !== 'loading') {
+  initSettingsTabs();
+} else {
+  document.addEventListener('DOMContentLoaded', initSettingsTabs);
+}
+
