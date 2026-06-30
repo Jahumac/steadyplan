@@ -133,3 +133,31 @@
 .data-table tr[data-href]:hover {
   background-color: var(--panel-2);
 }
+
+/* Overview Hero Grid Layout */
+.overview-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.hero-col-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .hero-col-panel:not(:last-child) {
+    border-right: 1px solid var(--border);
+    padding-right: 1.5rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .hero-col-panel:not(:last-child) {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+  }
+}
