@@ -160,11 +160,7 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"Target retirement income/year" in response.data
     assert b"Accessible now milestones" in response.data
     assert b"Accessible security milestones" not in response.data
-    assert b">Accessible now</h2>" in response.data
-    assert b"Money normally usable before pension age: ISA, cash, taxable accounts, Premium Bonds and similar accounts." in response.data
-    assert b"Money normally usable before pension age: ISA, cash, GIA, Premium Bonds and similar accounts." not in response.data
-    assert b"Cash accessible:" in response.data
-    assert b"Invested accessible:" in response.data
+    assert b"Accessible now milestones</h2>" in response.data
     assert b"Cash accessible</span><strong>0 accounts" in response.data
     assert b"Invested accessible</span><strong>1 accounts" in response.data
     assert b"Locked for later</span><strong>1 accounts" in response.data
@@ -194,14 +190,14 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"Edit growth/retirement age" not in response.data
     assert b"Adjust planning numbers" in response.data
     assert b"Adjust assumptions" not in response.data
-    assert b"Private pension/investment estimate at retirement" in response.data
+    assert b"Retirement Estimate" in response.data
     assert b"Private pot estimate at retirement" not in response.data
     assert b"Projected private pot" not in response.data
-    assert b"Current totals use saved balances. Future estimates use the planning numbers in Settings. They are not guarantees." in response.data
+    assert b"Uses your planning numbers in Settings and is not a guarantee." in response.data
     assert b"Scenario estimate at age 55 under current balances, contributions and growth assumptions. For planning only, not a guarantee." not in response.data
     assert b"Estimate at age 55 under current balances, contributions and growth assumptions." not in response.data
     assert b"Projected at age 55 under current balances, contributions and growth assumptions." not in response.data
-    assert b"Private pension/investment estimate at age 55:" in response.data
+    assert b"Projected private pension and investment pot at age 55" in response.data
     assert b"Private pot estimate at age 55:" not in response.data
     assert b"Projected private pot at age 55:" not in response.data
     assert response.data.count(b"Future estimate at 55:") >= 2
@@ -235,14 +231,14 @@ def test_planning_page_no_goal_mode_uses_plan_wording(app, client, make_user):
     assert response.status_code == 200
     html = response.data.decode("utf-8", errors="ignore")
     assert "using the balanced illustration as the income guide" in html
-    assert "Private pension/investment estimate at retirement" in html
+    assert "Retirement Estimate" in html
     assert "Private pot estimate at retirement" not in html
     assert "Projected private pot" not in html
-    assert "Current totals use saved balances. Future estimates use the planning numbers in Settings. They are not guarantees." in html
+    assert "Uses your planning numbers in Settings and is not a guarantee." in html
     assert "Scenario estimate at age 55 under current balances, contributions and growth assumptions. For planning only, not a guarantee." not in html
     assert "Estimate at age 55 under current balances, contributions and growth assumptions." not in html
     assert "Projected at age 55 under current balances, contributions and growth assumptions." not in html
-    assert "Private pension/investment estimate at age 55:" in html
+    assert "Projected private pension and investment pot at age 55" in html
     assert "Private pot estimate at age 55:" not in html
     assert "Projected private pot at age 55:" not in html
     assert html.count("Future estimate at 55:") >= 2

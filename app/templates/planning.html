@@ -139,6 +139,13 @@
       <h2 class="planning-big-number-large" style="font-size: 2.2rem; margin: 0.25rem 0 0.5rem; font-weight: 800; color: var(--text-normal, #f8fafc);">£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</h2>
       <p class="helper-text m-0">Projected private pension and investment pot at age {{ '{:.0f}'.format(income_summary.retirement_age) }}. Uses your planning numbers in Settings and is not a guarantee.</p>
     </div>
+    {% if access_summary.cash_yield_total_earning > 0 %}
+    <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.25rem; margin-top: 1.25rem;">
+      <p class="eyebrow">Cash Yield</p>
+      <h3 style="font-size: 1.25rem; margin: 0.25rem 0 0.5rem; font-weight: 700; color: var(--text-normal, #f8fafc);">Earning {{ '{:.2f}'.format(access_summary.cash_yield_weighted_rate) }}% average</h3>
+      <p class="helper-text m-0">Earning cash: <strong>£{{ '{:,.0f}'.format(access_summary.cash_yield_total_earning) }}</strong> · Est: <strong>£{{ '{:,.0f}'.format(access_summary.cash_yield_monthly_interest) }}/mo</strong> (£{{ '{:,.0f}'.format(access_summary.cash_yield_annual_interest) }}/yr)</p>
+    </div>
+    {% endif %}
     <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.25rem; margin-top: 1.25rem;">
       <p class="eyebrow">Current Signal</p>
       <h3 style="font-size: 1.25rem; margin: 0.25rem 0 0.5rem; font-weight: 700; color: var(--text-normal, #f8fafc);">{{ income_summary.limiting_factor }}</h3>
