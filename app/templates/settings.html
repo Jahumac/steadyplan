@@ -78,22 +78,29 @@
     color: var(--text);
     font-weight: 600;
   }
-  /* Style panels inside the grid as premium cards */
-  .plan-dashboard-grid .panel {
+  /* Consistent premium card styles for both plan cards and section panels */
+  .plan-card, section.panel {
     display: flex;
     flex-direction: column;
     padding: 1.25rem;
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 12px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    margin-top: 0 !important; /* override mt-1 inside the grid */
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     box-sizing: border-box;
   }
-  .plan-dashboard-grid .panel:hover {
+  
+  /* Accent light-up glow on hover for all tiles */
+  .plan-card:hover, section.panel:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 15px color-mix(in srgb, var(--accent) 22%, transparent) !important;
   }
+
+  .plan-dashboard-grid .panel {
+    margin-top: 0 !important; /* override mt-1 inside the grid */
+  }
+
   .plan-dashboard-grid .panel .section-header {
     border-bottom: 1px solid var(--border);
     padding-bottom: 0.75rem;
@@ -102,7 +109,8 @@
     justify-content: space-between;
     align-items: center;
   }
-  .plan-dashboard-grid .panel h3 {
+  
+  section.panel h3, .plan-card h4 {
     margin: 0;
     font-size: 0.95rem;
     font-weight: 600;
@@ -313,44 +321,70 @@
   </div>
 </section>
 
-<section class="panel">
-  <div class="section-header">
-    <div>
-      <p class="eyebrow">Runtime checks</p>
-      <h3>Instance overview</h3>
+<div class="plan-dashboard-grid mt-1">
+  <!-- Instance Overview -->
+  <section class="panel" id="diagnostics-overview">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Runtime checks</p>
+        <h3>Instance overview</h3>
+      </div>
     </div>
-  </div>
-  <div class="table-scroll">
-    <table class="data-table">
-      <tbody>
-        <tr>
-          <td>SQLite database</td>
-          <td class="num">{% if diagnostics and diagnostics.db_ok %}Reachable{% else %}Needs attention{% endif %}</td>
-        </tr>
-        <tr>
-          <td>Latest scheduler run</td>
-          <td class="num">{{ diagnostics.scheduler_status.full if diagnostics and diagnostics.scheduler_status else 'No scheduler run yet' }}</td>
-        </tr>
-        <tr>
-          <td>Latest saved portfolio snapshot</td>
-          <td class="num">
-            {% if diagnostics and diagnostics.latest_portfolio_snapshot %}
-              {{ diagnostics.latest_portfolio_snapshot.snapshot_date }} · £{{ '{:,.2f}'.format(diagnostics.latest_portfolio_snapshot.total_value or 0) }}
-            {% else %}
-              —
-            {% endif %}
-          </td>
-        </tr>
-        <tr>
-          <td>Latest saved price update</td>
-          <td class="num">{% if diagnostics and diagnostics.latest_price_update_utc %}{{ diagnostics.latest_price_update_utc }}{% else %}—{% endif %}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <p class="helper-text mt-075" >{{ diagnostics.scheduler_status.message if diagnostics and diagnostics.scheduler_status else 'No scheduler run has been recorded yet.' }}</p>
-</section>
+    <div class="table-scroll" style="height:100%;">
+      <table class="data-table">
+        <tbody>
+          <tr>
+            <td>SQLite database</td>
+            <td class="num">{% if diagnostics and diagnostics.db_ok %}Reachable{% else %}Needs attention{% endif %}</td>
+          </tr>
+          <tr>
+            <td>Latest scheduler run</td>
+            <td class="num">{{ diagnostics.scheduler_status.full if diagnostics and diagnostics.scheduler_status else 'No scheduler run yet' }}</td>
+          </tr>
+          <tr>
+            <td>Latest saved portfolio snapshot</td>
+            <td class="num">
+              {% if diagnostics and diagnostics.latest_portfolio_snapshot %}
+                {{ diagnostics.latest_portfolio_snapshot.snapshot_date }} · £{{ '{:,.2f}'.format(diagnostics.latest_portfolio_snapshot.total_value or 0) }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td>Latest saved price update</td>
+            <td class="num">{% if diagnostics and diagnostics.latest_price_update_utc %}{{ diagnostics.latest_price_update_utc }}{% else %}—{% endif %}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="helper-text mt-075" style="margin-bottom:0;">{{ diagnostics.scheduler_status.message if diagnostics and diagnostics.scheduler_status else 'No scheduler run has been recorded yet.' }}</p>
+  </section>
 
+  <!-- Instance Counts -->
+  <section class="panel" id="diagnostics-counts">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Data in this instance</p>
+        <h3>Instance counts</h3>
+      </div>
+    </div>
+    <div class="table-scroll" style="height:100%;">
+      <table class="data-table">
+        <tbody>
+          <tr><td>Accounts</td><td class="num">{{ diagnostics.counts.accounts if diagnostics and diagnostics.counts else 0 }}</td></tr>
+          <tr><td>Holdings</td><td class="num">{{ diagnostics.counts.holdings if diagnostics and diagnostics.counts else 0 }}</td></tr>
+          <tr><td>Saved prices</td><td class="num">{{ diagnostics.counts.catalogue_active if diagnostics and diagnostics.counts else 0 }}</td></tr>
+          <tr><td>Saved prices linked to holdings</td><td class="num">{{ diagnostics.catalogue_in_use_count if diagnostics else 0 }}</td></tr>
+          <tr><td>Saved portfolio daily snapshots</td><td class="num">{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</td></tr>
+          <tr><td>Linked prices needing attention in sample (&gt;2 days old or missing)</td><td class="num">{{ diagnostics.catalogue_stale_2d_count_in_sample if diagnostics else 0 }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- Trust Posture (Full-width below the grid) -->
 <section class="panel mt-1">
   <div class="section-header">
     <div>
@@ -397,27 +431,6 @@
           <td class="num">{{ diagnostics.trust_posture['items']['rate_limits'].value if diagnostics and diagnostics.trust_posture else '—' }}</td>
           <td>{{ diagnostics.trust_posture['items']['rate_limits'].label if diagnostics and diagnostics.trust_posture else '—' }} — {{ diagnostics.trust_posture['items']['rate_limits'].message if diagnostics and diagnostics.trust_posture else '—' }}</td>
         </tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<section class="panel mt-1">
-  <div class="section-header">
-    <div>
-      <p class="eyebrow">Data in this instance</p>
-      <h3>Instance counts</h3>
-    </div>
-  </div>
-  <div class="table-scroll">
-    <table class="data-table">
-      <tbody>
-        <tr><td>Accounts</td><td class="num">{{ diagnostics.counts.accounts if diagnostics and diagnostics.counts else 0 }}</td></tr>
-        <tr><td>Holdings</td><td class="num">{{ diagnostics.counts.holdings if diagnostics and diagnostics.counts else 0 }}</td></tr>
-        <tr><td>Saved prices</td><td class="num">{{ diagnostics.counts.catalogue_active if diagnostics and diagnostics.counts else 0 }}</td></tr>
-        <tr><td>Saved prices linked to holdings</td><td class="num">{{ diagnostics.catalogue_in_use_count if diagnostics else 0 }}</td></tr>
-        <tr><td>Saved portfolio daily snapshots</td><td class="num">{{ diagnostics.counts.portfolio_daily_snapshots if diagnostics and diagnostics.counts else 0 }}</td></tr>
-        <tr><td>Linked prices needing attention in sample (&gt;2 days old or missing)</td><td class="num">{{ diagnostics.catalogue_stale_2d_count_in_sample if diagnostics else 0 }}</td></tr>
       </tbody>
     </table>
   </div>
