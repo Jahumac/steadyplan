@@ -468,7 +468,7 @@
       <p class="eyebrow m-0">Everyday setup</p>
       <p class="helper-text m-0">The basics you are most likely to adjust while using SteadyPlan.</p>
     </div>
-    <div class="simple-list-item">
+    <div class="simple-list-item" onclick="window.location.href='{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}';" style="cursor:pointer;">
       <div>
         <strong>Plan settings</strong>
         <p>Growth, ages, yearly limits, income, and monthly update timing.</p>
@@ -476,7 +476,7 @@
       <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit plan settings</a>
     </div>
     {% if current_user.is_authenticated and current_user.is_admin %}
-    <div class="simple-list-item">
+    <div class="simple-list-item" onclick="window.location.href='/users';" style="cursor:pointer;">
       <div>
         <strong>User access</strong>
         <p>Who can sign in to this SteadyPlan instance.</p>
@@ -488,28 +488,28 @@
       <p class="eyebrow m-0">Safety and recovery</p>
       <p class="helper-text m-0">Use these when you need to understand where data lives, take a safety copy, or check restore/backup posture.</p>
     </div>
-    <div class="simple-list-item">
+    <div class="simple-list-item" onclick="switchTab('backup');" style="cursor:pointer;">
       <div>
         <strong>Data ownership</strong>
         <p>Where the live database is, what leaves the machine, and which safety copy to use.</p>
       </div>
-      <a href="#data-ownership">Review data ownership</a>
+      <a href="#data-ownership" onclick="switchTab('backup'); return false;">Review data ownership</a>
     </div>
-    <div class="simple-list-item">
+    <div class="simple-list-item" onclick="switchTab('backup');" style="cursor:pointer;">
       <div>
         <strong>JSON export</strong>
         <p>Download a portable safety copy for this user before restore, delete, or larger edits.</p>
       </div>
-      <a href="#json-export">Download export</a>
+      <a href="#json-export" onclick="switchTab('backup'); return false;">Download export</a>
     </div>
-    <div class="simple-list-item">
+    <div class="simple-list-item" onclick="switchTab('backup');" style="cursor:pointer;">
       <div>
         <strong>Restore check</strong>
         <p>Validate a JSON export first. Checking does not change your data.</p>
       </div>
-      <a href="#restore-check">Check restore file</a>
+      <a href="#restore-check" onclick="switchTab('backup'); return false;">Check restore file</a>
     </div>
-    <div class="simple-list-item">
+    <div class="simple-list-item" onclick="window.location.href='/settings/?mode=diagnostics#sqlite-backups';" style="cursor:pointer;">
       <div>
         <strong>SQLite backup health</strong>
         <p>Review whole-instance backup status and create a SQLite backup if needed.</p>
@@ -520,14 +520,14 @@
       <p class="eyebrow m-0">Optional access</p>
       <p class="helper-text m-0">Assistant scope and broker review stay separate from everyday setup.</p>
     </div>
-    <div class="simple-list-item">
+    <div class="simple-list-item" onclick="switchTab('integrations');" style="cursor:pointer;">
       <div>
         <strong>Assistant and broker review</strong>
         <p>Optional assistant access and read-only Trading 212 broker snapshot review.</p>
       </div>
-      <a href="#connections-tokens">Review optional access</a>
+      <a href="#connections-tokens" onclick="switchTab('integrations'); return false;">Review optional access</a>
     </div>
-    <div class="simple-list-item">
+    <div class="simple-list-item" onclick="window.location.href='/settings/?mode=diagnostics';" style="cursor:pointer;">
       <div>
         <strong>Diagnostics and system posture</strong>
         <p>Runtime checks for backups, proxy settings, cookies, rate limits, and scheduler status.</p>
