@@ -2988,6 +2988,29 @@ function initSettingsTabs() {
   if (hash !== 'diagnostics') {
     switchTab(hash);
   }
+
+  // Attach CSP-compliant click listeners for tab switches
+  var tabTargets = document.querySelectorAll('[data-tab-target]');
+  for (var j = 0; j < tabTargets.length; j++) {
+    tabTargets[j].addEventListener('click', function(e) {
+      // If an anchor was clicked (or we are an anchor), stop the browser from jumping/navigating natively
+      if (e.target.tagName === 'A' || e.target.closest('a')) {
+        e.preventDefault();
+      }
+      var targetTab = this.getAttribute('data-tab-target');
+      if (targetTab) {
+        switchTab(targetTab);
+      }
+    });
+  }
+
+  // Attach CSP-compliant click listeners for non-tab links in the settings map
+  var hrefTargets = document.querySelectorAll('div[data-href]');
+  for (var k = 0; k < hrefTargets.length; k++) {
+    hrefTargets[k].addEventListener('click', function() {
+      window.location.href = this.getAttribute('data-href');
+    });
+  }
 }
 
 // Expose globally for HTML onclick attributes
