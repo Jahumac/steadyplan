@@ -4,10 +4,31 @@
 {% block content %}
 {% set page_mode = request.args.get('mode', 'view') %}
 
+<style>
+  .settings-tab-content {
+    display: none;
+  }
+  .settings-tab-content.active {
+    display: block;
+  }
+  .subnav-page a {
+    cursor: pointer;
+  }
+</style>
+
 {% if page_mode != 'edit' %}
-<nav class="subnav subnav-page">
-  <a href="/settings/" {% if page_mode != 'diagnostics' %}class="subnav-active"{% endif %}>Settings</a>
-  <a href="/settings/?mode=diagnostics" {% if page_mode == 'diagnostics' %}class="subnav-active"{% endif %}>Diagnostics</a>
+<nav class="subnav subnav-page settings-tab-bar">
+  {% if page_mode == 'diagnostics' %}
+    <a href="/settings/#plan" class="tab-link">Plan</a>
+    <a href="/settings/#integrations" class="tab-link">Integrations</a>
+    <a href="/settings/#backup" class="tab-link">Backup &amp; Security</a>
+    <a href="/settings/?mode=diagnostics" class="tab-link subnav-active">Diagnostics</a>
+  {% else %}
+    <a href="#plan" class="tab-link subnav-active" onclick="switchTab('plan'); return false;">Plan</a>
+    <a href="#integrations" class="tab-link" onclick="switchTab('integrations'); return false;">Integrations</a>
+    <a href="#backup" class="tab-link" onclick="switchTab('backup'); return false;">Backup &amp; Security</a>
+    <a href="/settings/?mode=diagnostics" class="tab-link">Diagnostics</a>
+  {% endif %}
 </nav>
 {% endif %}
 
@@ -407,6 +428,7 @@
 </section>
 
 {% else %}
+<div id="tab-plan" class="settings-tab-content">
 
 {# ── View mode ────────────────────────────────────────────────────────────── #}
 <section class="card highlight mb-1 month-accent-{{ current_month_num }}">
@@ -535,6 +557,9 @@
 </section>
 {% endif %}
 
+</div>
+
+<div id="tab-backup" class="settings-tab-content">
 <section class="panel mt-1" id="data-ownership">
   <div class="section-header">
     <div>
@@ -746,6 +771,9 @@
   {% endif %}
 </section>
 
+</div>
+
+<div id="tab-integrations" class="settings-tab-content">
 <section class="panel mt-1" id="connections-tokens">
   <div class="section-header">
     <div>
@@ -1011,7 +1039,9 @@
 </section>
 
 {# ── Danger Zone · Reset ─────────────────────────────────────────────────── #}
-<section class="panel mt-1 danger-zone" id="danger-zone">
+</div>
+
+<section class="panel mt-1 danger-zone settings-tab-content tab-backup-extra" id="danger-zone">
   <div class="section-header">
     <div>
       <p class="eyebrow danger-eyebrow">Danger Zone</p>
@@ -1062,6 +1092,58 @@
   </div>
 </section>
 
+<script>
+  function switchTab(tabId) {
+    // Hide all tab content sections
+    document.querySelectorAll('.settings-tab-content').forEach(el => {
+      el.classList.remove('active');
+      el.style.display = 'none';
+    });
+    // Remove active class from all tab links
+    document.querySelectorAll('.settings-tab-bar .tab-link').forEach(el => {
+      el.classList.remove('subnav-active');
+    });
+    
+    // Show the active tab content
+    const activeContent = document.getElementById('tab-' + tabId);
+    if (activeContent) {
+      activeContent.classList.add('active');
+      activeContent.style.display = 'block';
+    }
+    
+    // Also show any extra sections marked for this tab
+    document.querySelectorAll('.tab-' + tabId + '-extra').forEach(el => {
+      el.classList.add('active');
+      el.style.display = 'block';
+    });
+    
+    // Add active class to the clicked tab link
+    const activeLink = document.querySelector(`.settings-tab-bar a[href*="${tabId}"]`);
+    if (activeLink) {
+      activeLink.classList.add('subnav-active');
+    }
+    
+    // Update hash in URL without jumping
+    if (history.replaceState) {
+      history.replaceState(null, null, '#' + tabId);
+    }
+  }
+
+  // On load, check hash
+  window.addEventListener('DOMContentLoaded', () => {
+    let hash = window.location.hash.replace('#', '');
+    if (!['plan', 'integrations', 'backup'].includes(hash)) {
+      if ('{{ page_mode }}' === 'diagnostics') {
+        hash = 'diagnostics';
+      } else {
+        hash = 'plan';
+      }
+    }
+    if (hash !== 'diagnostics') {
+      switchTab(hash);
+    }
+  });
+</script>
 {% endif %}
 
 {% endblock %}
