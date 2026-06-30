@@ -141,9 +141,18 @@
     </div>
     {% if access_summary.cash_yield_total_earning > 0 %}
     <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.25rem; margin-top: 1.25rem;">
-      <p class="eyebrow">Cash Yield</p>
-      <h3 style="font-size: 1.25rem; margin: 0.25rem 0 0.5rem; font-weight: 700; color: var(--text-normal, #f8fafc);">Earning {{ '{:.2f}'.format(access_summary.cash_yield_weighted_rate) }}% average</h3>
-      <p class="helper-text m-0">Earning cash: <strong>£{{ '{:,.0f}'.format(access_summary.cash_yield_total_earning) }}</strong> · Est: <strong>£{{ '{:,.0f}'.format(access_summary.cash_yield_monthly_interest) }}/mo</strong> (£{{ '{:,.0f}'.format(access_summary.cash_yield_annual_interest) }}/yr)</p>
+      <p class="eyebrow" style="margin-bottom: 0.5rem;">Cash Yield</p>
+      <div class="cash-yield-badge" style="background: rgba(52, 211, 153, 0.06); border: 1px solid rgba(52, 211, 153, 0.15); border-radius: 8px; padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+        <div>
+          <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted, #94a3b8); display: block; margin-bottom: 0.15rem;">Weighted Rate</span>
+          <strong style="font-size: 1.5rem; font-weight: 800; color: #34d399; line-height: 1.2;">{{ '{:.2f}'.format(access_summary.cash_yield_weighted_rate) }}%</strong>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted, #94a3b8); display: block; margin-bottom: 0.15rem;">Est. Earnings</span>
+          <strong style="font-size: 1.1rem; font-weight: 700; color: var(--text-normal, #f8fafc); display: block; line-height: 1.2;">£{{ '{:,.0f}'.format(access_summary.cash_yield_monthly_interest) }}/mo</strong>
+          <span style="font-size: 0.7rem; color: var(--text-muted, #94a3b8); display: block; margin-top: 0.15rem;">£{{ '{:,.0f}'.format(access_summary.cash_yield_annual_interest) }}/yr on £{{ '{:,.0f}'.format(access_summary.cash_yield_total_earning) }}</span>
+        </div>
+      </div>
     </div>
     {% endif %}
     <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.25rem; margin-top: 1.25rem;">
