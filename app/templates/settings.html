@@ -14,6 +14,70 @@
   .subnav-page a {
     cursor: pointer;
   }
+
+  /* Plan Dashboard Grid */
+  .plan-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .plan-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .plan-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  }
+  .plan-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.75rem;
+  }
+  .plan-card-icon {
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+    border-radius: 8px;
+  }
+  .plan-card-header h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .plan-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .plan-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.88rem;
+  }
+  .plan-stat-row span {
+    color: var(--text-muted);
+  }
+  .plan-stat-row strong {
+    color: var(--text);
+    font-weight: 600;
+  }
 </style>
 
 {% if page_mode != 'edit' %}
@@ -429,29 +493,102 @@
 
 {% else %}
 <div id="tab-plan" class="settings-tab-content active" style="display: block;">
+<div style="display: none;">
+  <p class="eyebrow">Plan settings</p>
+  The simple settings behind your estimates, dates, and limits.
+</div>
 
-{# ── View mode ────────────────────────────────────────────────────────────── #}
-<section class="card highlight mb-1 month-accent-{{ current_month_num }}">
-  <div class="hero-top">
-    <div>
-      <p class="eyebrow">Plan settings</p>
-      <h2 class="hero-value" style="font-size:2rem;">{{ assumptions.dashboard_name if assumptions and assumptions.dashboard_name else 'SteadyPlan' }}</h2>
-      <p class="hero-subtitle">The simple settings behind your estimates, dates, and limits.</p>
+{# ── New Plan Dashboard Layout ────────────────────────────────────────────── #}
+<div class="plan-dashboard-grid">
+  <!-- Timeline & Growth Card -->
+  <div class="card plan-card">
+    <div class="plan-card-header">
+      <div class="plan-card-icon">⏳</div>
+      <div>
+        <h4>Timeline &amp; Growth</h4>
+        <p class="helper-text m-0 text-xs">Milestones and expected return rates</p>
+      </div>
+    </div>
+    <div class="plan-card-body">
+      <div class="plan-stat-row">
+        <span>Current Age</span>
+        <strong>{{ computed_age if computed_age else 'Not set' }}</strong>
+      </div>
+      <div class="plan-stat-row">
+        <span>Retirement Age</span>
+        <strong>{{ assumptions.retirement_age if assumptions else 60 }} years</strong>
+      </div>
+      <div class="plan-stat-row">
+        <span>Expected Growth</span>
+        <strong>{{ '{:.1f}'.format((assumptions.annual_growth_rate if assumptions else 0.07) * 100) }}%</strong>
+      </div>
+      <div class="plan-stat-row">
+        <span>Investment Day</span>
+        <strong>{{ (assumptions.salary_day ~ ('st' if assumptions.salary_day in [1,21,31] else ('nd' if assumptions.salary_day in [2,22] else ('rd' if assumptions.salary_day in [3,23] else 'th')))) if assumptions and assumptions.salary_day else 'Not set' }}</strong>
+      </div>
     </div>
   </div>
-  <div class="hero-strip">
-    {% call hero_stat('Expected yearly growth') %}<strong>{{ '{:.1f}'.format((assumptions.annual_growth_rate if assumptions else 0.07) * 100) }}%</strong>{% endcall %}
-    {% call hero_stat('Age') %}<strong>{{ computed_age if computed_age else 'Not set' }}</strong>{% endcall %}
-    {% call hero_stat('Retirement age') %}<strong>{{ assumptions.retirement_age if assumptions else 60 }}</strong>{% endcall %}
-    {% call hero_stat('ISA allowance') %}<strong>£{{ '{:,.0f}'.format(assumptions.isa_allowance if assumptions else 20000) }}</strong>{% endcall %}
-    {% call hero_stat('Lifetime ISA allowance') %}<strong>£{{ '{:,.0f}'.format(assumptions.lisa_allowance if assumptions else 4000) }}</strong>{% endcall %}
-    {% call hero_stat('Pension allowance') %}<strong>£{{ '{:,.0f}'.format(assumptions.pension_annual_allowance if assumptions and assumptions.pension_annual_allowance is not none else 60000) }}</strong>{% endcall %}
-    {% call hero_stat('Annual income') %}<strong>£{{ '{:,.0f}'.format(assumptions.annual_income if assumptions and assumptions.annual_income is not none else 0) }}</strong>{% endcall %}
-    {% call hero_stat('Investment day') %}<strong>{{ (assumptions.salary_day ~ ('st' if assumptions.salary_day in [1,21,31] else ('nd' if assumptions.salary_day in [2,22] else ('rd' if assumptions.salary_day in [3,23] else 'th')))) if assumptions and assumptions.salary_day else 'Not set' }}</strong>{% endcall %}
-  </div>
-</section>
 
-<div class="row-end">
+  <!-- Tax-Free Allowances Card -->
+  <div class="card plan-card">
+    <div class="plan-card-header">
+      <div class="plan-card-icon">🛡️</div>
+      <div>
+        <h4>Tax-Free Allowances</h4>
+        <p class="helper-text m-0 text-xs">UK yearly contribution limits</p>
+      </div>
+    </div>
+    <div class="plan-card-body">
+      <div class="plan-stat-row">
+        <span>ISA Allowance</span>
+        <strong>£{{ '{:,.0f}'.format(assumptions.isa_allowance if assumptions else 20000) }}</strong>
+      </div>
+      <div class="plan-stat-row">
+        <span>Lifetime ISA allowance</span>
+        <strong>£{{ '{:,.0f}'.format(assumptions.lisa_allowance if assumptions else 4000) }}</strong>
+      </div>
+      <div class="plan-stat-row">
+        <span>Pension Allowance</span>
+        <strong>£{{ '{:,.0f}'.format(assumptions.pension_annual_allowance if assumptions and assumptions.pension_annual_allowance is not none else 60000) }}</strong>
+      </div>
+      <div class="plan-stat-row">
+        <span>Dividend Allowance</span>
+        <strong>£{{ '{:,.0f}'.format(assumptions.dividend_allowance if assumptions and assumptions.dividend_allowance is not none else 500) }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Income & Setup Card -->
+  <div class="card plan-card">
+    <div class="plan-card-header">
+      <div class="plan-card-icon">💼</div>
+      <div>
+        <h4>Income &amp; Setup</h4>
+        <p class="helper-text m-0 text-xs">Personal income and configuration</p>
+      </div>
+    </div>
+    <div class="plan-card-body">
+      <div class="plan-stat-row">
+        <span>Annual Income</span>
+        <strong>£{{ '{:,.0f}'.format(assumptions.annual_income if assumptions and assumptions.annual_income is not none else 0) }}</strong>
+      </div>
+      <div class="plan-stat-row">
+        <span>Income Tax Band</span>
+        <strong class="capitalize">{{ assumptions.tax_band if assumptions and assumptions.tax_band else 'Basic' }} rate</strong>
+      </div>
+      <div class="plan-stat-row">
+        <span>Dashboard Name</span>
+        <strong>{{ assumptions.dashboard_name if assumptions and assumptions.dashboard_name else 'SteadyPlan' }}</strong>
+      </div>
+      <div class="plan-stat-row">
+        <span>Auto-Update Prices</span>
+        <strong>{{ 'Enabled' if not assumptions or assumptions.auto_update_prices != 0 else 'Disabled' }}</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row-end mb-1">
   <a class="badge badge-primary-action" href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}">Edit plan settings</a>
 </div>
 
