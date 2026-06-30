@@ -2955,12 +2955,13 @@ button.button-danger:focus {
   border-radius: 16px;
   padding: 1.25rem 1.5rem;
   box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .panel:hover {
-  border-color: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 0 15px color-mix(in srgb, var(--accent) 22%, transparent), 0 14px 36px rgba(0, 0, 0, 0.28);
 }
 
 /* Give focus-panel targets breathing room so scrollIntoView clears the sticky header */
