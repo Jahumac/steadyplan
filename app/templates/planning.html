@@ -163,7 +163,10 @@
     <p class="helper-text">Balanced illustration: <strong>£{{ '{:,.0f}'.format(income_summary.balanced_income) }}/yr</strong>. For planning only, not guaranteed income.</p>
   </div>
 
-  <details class="planning-responsive-details">
+  <details class="planning-responsive-details"
+           {% if request.args.get('desired_income') or request.args.get('pension_access_age') or request.args.get('state_pension_age') or request.args.get('state_pension_annual') %}
+             open data-keep-open="true"
+           {% endif %}>
     <summary>Adjust planning numbers</summary>
     <form method="get" class="planning-assumptions-form">
       <label>
