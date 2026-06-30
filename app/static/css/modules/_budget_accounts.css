@@ -1967,3 +1967,36 @@
   margin-left: 0.25rem;
 }
 
+/* Calendar Tooltip */
+.calendar-tooltip {
+  position: absolute;
+  z-index: 9999;
+  background: #1e293b; /* Slate 800 */
+  color: #f8fafc; /* Slate 50 */
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+  max-width: 240px;
+  white-space: normal;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+}
+
+.calendar-tooltip.visible {
+  opacity: 1;
+  transform: translate(-50%, -100%) translateY(-6px);
+}
+
+.calendar-tooltip.hidden {
+  display: none;
+}
+
+.calendar-matrix-cell[data-tooltip] {
+  cursor: help;
+}

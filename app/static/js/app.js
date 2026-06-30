@@ -140,6 +140,53 @@
     initResponsiveDetails();
     window.addEventListener('resize', initResponsiveDetails);
 
+    // 0a_tooltip. Calendar Matrix Tooltip Handler
+    var tooltip = document.getElementById('calendar-tooltip');
+    if (tooltip) {
+      document.querySelectorAll('.calendar-matrix-cell[data-tooltip]').forEach(function(cell) {
+        cell.addEventListener('mouseenter', function() {
+          var text = cell.getAttribute('data-tooltip');
+          if (!text) return;
+          tooltip.textContent = text;
+          tooltip.classList.remove('hidden');
+          
+          var rect = cell.getBoundingClientRect();
+          tooltip.style.left = (rect.left + window.pageXOffset + rect.width / 2) + 'px';
+          tooltip.style.top = (rect.top + window.pageYOffset - 6) + 'px';
+          
+          // Trigger transition
+          setTimeout(function() {
+            tooltip.classList.add('visible');
+          }, 10);
+        });
+        
+        cell.addEventListener('mouseleave', function() {
+          tooltip.classList.remove('visible');
+          tooltip.classList.add('hidden');
+        });
+        
+        // Mobile touch support
+        cell.addEventListener('click', function(e) {
+          e.stopPropagation();
+          var text = cell.getAttribute('data-tooltip');
+          if (!text) return;
+          tooltip.textContent = text;
+          tooltip.classList.remove('hidden');
+          
+          var rect = cell.getBoundingClientRect();
+          tooltip.style.left = (rect.left + window.pageXOffset + rect.width / 2) + 'px';
+          tooltip.style.top = (rect.top + window.pageYOffset - 6) + 'px';
+          tooltip.classList.add('visible');
+        });
+      });
+      
+      // Hide tooltip when clicking anywhere else
+      document.addEventListener('click', function() {
+        tooltip.classList.remove('visible');
+        tooltip.classList.add('hidden');
+      });
+    }
+
     // 0b. Generic data-allowance-toggle — show/hide a collapsible log panel
     document.querySelectorAll('[data-allowance-toggle]').forEach(function(btn) {
       btn.addEventListener('click', function() {
