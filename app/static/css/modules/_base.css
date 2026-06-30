@@ -608,7 +608,21 @@ body.is-back-online .site-header {
 }
 
 .allowance-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.allowance-warning-text {
+  color: var(--accent-3) !important;
+}
+
+.allowance-disclaimer {
+  font-size: 0.78rem !important;
+}
+
+.allowance-history-title {
+  margin: 0.75rem 0 0.4rem !important;
 }
 
 @media (max-width: 480px) {
