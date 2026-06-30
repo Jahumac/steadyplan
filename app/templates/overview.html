@@ -243,17 +243,17 @@
 
 {% if has_accounts %}
 {# ── Hero: Total money + Key Stats ──────────────────────────────────────── #}
-<section class="card highlight mb-1 month-accent-{{ current_month_num }}" style="padding: 1.5rem;">
+<section class="card highlight mb-1 month-accent-{{ current_month_num }} overview-hero-card">
   <div class="overview-hero-grid">
     
     <!-- Column 1: Net Worth & Liquidity -->
     <div class="hero-col-panel">
       <div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div class="overview-hero-header">
           <div>
             <p class="eyebrow">{{ hero_label }}</p>
-            <h2 class="hero-value hero-value-xl" style="font-size: 2rem; font-weight: 800; margin: 0.25rem 0 0.15rem; color: var(--text);">£{{ '{:,.2f}'.format(hero_value) }}</h2>
-            <p class="hero-subtitle" style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">{{ metrics.current_date }} · {{ metrics.current_time }}</p>
+            <h2 class="hero-value hero-value-xl overview-hero-value">£{{ '{:,.2f}'.format(hero_value) }}</h2>
+            <p class="hero-subtitle overview-hero-subtitle">{{ metrics.current_date }} · {{ metrics.current_time }}</p>
           </div>
           {% if has_debts %}
           <div class="period-selector flex gap-05 overview-position-toggle" aria-label="Overview headline view">
@@ -263,25 +263,25 @@
           {% endif %}
         </div>
         {% if hero_helper %}
-        <p class="hero-helper" style="font-size: 0.8rem; color: var(--text-muted); margin: 0.5rem 0 0;">{{ hero_helper }}</p>
+        <p class="hero-helper overview-hero-helper">{{ hero_helper }}</p>
         {% endif %}
       </div>
       
-      <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05);">
+      <div class="overview-hero-stats-row">
         <div class="hero-strip-stat">
-          <span class="hero-stat-label" style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Accessible now</span>
-          <strong style="font-size: 1.1rem; color: var(--text); font-weight: 600;">£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</strong>
+          <span class="hero-stat-label overview-hero-stat-label">Accessible now</span>
+          <strong class="overview-hero-stat-value">£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</strong>
         </div>
         {% if access_summary.locked_current > 0 %}
         <div class="hero-strip-stat">
-          <span class="hero-stat-label" style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Locked for later</span>
-          <strong style="font-size: 1.1rem; color: var(--text); font-weight: 600;">£{{ '{:,.0f}'.format(access_summary.locked_current) }}</strong>
+          <span class="hero-stat-label overview-hero-stat-label">Locked for later</span>
+          <strong class="overview-hero-stat-value">£{{ '{:,.0f}'.format(access_summary.locked_current) }}</strong>
         </div>
         {% endif %}
         {% if has_debts %}
         <div class="hero-strip-stat">
-          <span class="hero-stat-label" style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Active debts</span>
-          <strong style="font-size: 1.1rem; color: var(--text); font-weight: 600;">£{{ '{:,.0f}'.format(metrics.total_debt_balance) }}</strong>
+          <span class="hero-stat-label overview-hero-stat-label">Active debts</span>
+          <strong class="overview-hero-stat-value">£{{ '{:,.0f}'.format(metrics.total_debt_balance) }}</strong>
         </div>
         {% endif %}
       </div>
@@ -292,17 +292,17 @@
       <div>
         <p class="eyebrow">Monthly Plan</p>
         {% if metrics.monthly_total > 0 %}
-        <div class="hero-strip-stat" style="margin-top: 0.25rem;">
-          <h2 style="font-size: 2rem; font-weight: 800; margin: 0.25rem 0 0.15rem; color: var(--month-color, var(--accent));">£{{ '{:,.0f}'.format(metrics.monthly_total) }}</h2>
-          <span class="hero-stat-label" style="font-size: 0.75rem; color: var(--text-muted); text-transform: none; letter-spacing: 0; display: block; margin-top: 0.25rem;">Monthly payments in</span>
+        <div class="hero-strip-stat overview-hero-stat-block">
+          <h2 class="overview-hero-stat-title-large accent-color">£{{ '{:,.0f}'.format(metrics.monthly_total) }}</h2>
+          <span class="hero-stat-label overview-hero-stat-label-normal">Monthly payments in</span>
         </div>
         {% else %}
-        <div style="margin-top: 0.5rem; color: var(--text-muted); font-size: 0.85rem; font-style: italic;">
+        <div class="overview-hero-empty-state">
           No monthly payments configured.
         </div>
         {% endif %}
       </div>
-      <p class="helper-text" style="font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
+      <p class="helper-text overview-hero-description">
         Active savings and investment contributions going into your accounts this month.
       </p>
     </div>
@@ -312,21 +312,21 @@
       <div>
         <p class="eyebrow">Retirement Forecast</p>
         {% if has_profile %}
-        <div class="hero-strip-stat" style="margin-top: 0.25rem;">
-          <h2 style="font-size: 2rem; font-weight: 800; margin: 0.25rem 0 0.15rem; color: var(--text);" title="Future estimate based on your current balances, regular payments, and planning numbers in Settings. It is not a guarantee.">
+        <div class="hero-strip-stat overview-hero-stat-block">
+          <h2 class="overview-hero-stat-title-large normal-color" title="Future estimate based on your current balances, regular payments, and planning numbers in Settings. It is not a guarantee.">
             £{{ '{:,.0f}'.format(metrics.projected_total) }}
           </h2>
-          <span class="hero-stat-label" style="font-size: 0.75rem; color: var(--text-muted); text-transform: none; letter-spacing: 0; display: block; margin-top: 0.25rem;">Estimated total at retirement</span>
+          <span class="hero-stat-label overview-hero-stat-label-normal">Estimated total at retirement</span>
         </div>
         {% else %}
-        <div style="margin-top: 0.5rem; color: var(--text-muted); font-size: 0.85rem; font-style: italic;">
+        <div class="overview-hero-empty-state">
           Setup your planning profile in Settings to see your retirement forecast.
         </div>
         {% endif %}
       </div>
       <div>
         {% if has_profile %}
-        <p class="helper-text" style="font-size: 0.8rem; color: var(--text-muted); margin: 0; line-height: 1.4;">
+        <p class="helper-text overview-hero-description">
           Current totals use your saved balances. Future estimates use the planning numbers in Settings. They are not guarantees.
         </p>
         {% endif %}
