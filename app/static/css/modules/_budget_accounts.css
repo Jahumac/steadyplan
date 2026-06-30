@@ -378,6 +378,18 @@
 .budget-what-if-card {
   border-color: rgba(56, 189, 248, 0.22);
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.68));
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.budget-what-if-card.budget-what-if-active {
+  border-color: var(--accent-3);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent-3) 15%, transparent), 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.budget-what-if-card.budget-what-if-active #budget-what-if-toggle {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: var(--accent-3);
 }
 
 .budget-what-if-header {
@@ -430,12 +442,12 @@
 }
 
 .budget-container.budget-what-if-active .budget-amount-input {
-  border-color: rgba(56, 189, 248, 0.48);
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.14);
+  border-color: rgba(245, 158, 11, 0.48);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.14);
 }
 
 .budget-container.budget-what-if-active .budget-save-indicator {
-  color: var(--accent);
+  color: var(--accent-3);
 }
 
 @media (max-width: 760px) {
