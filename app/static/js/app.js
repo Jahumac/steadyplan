@@ -533,12 +533,17 @@
       function setWhatIfMode(enabled) {
         whatIfMode = enabled;
         container.classList.toggle('budget-what-if-active', whatIfMode);
+        // Also toggle active class on the what-if card for visual feedback
+        var whatIfCard = document.querySelector('.budget-what-if-card');
+        if (whatIfCard) {
+          whatIfCard.classList.toggle('budget-what-if-active', whatIfMode);
+        }
         if (whatIfToggle) whatIfToggle.textContent = whatIfMode ? 'Exit simulation' : 'Start simulation';
         if (whatIfReset) whatIfReset.hidden = !whatIfMode;
         if (whatIfStatus) {
           whatIfStatus.textContent = whatIfMode
-            ? 'Simulation mode is on. Edits update the page only and are not saved.'
-            : 'Nothing is written to the database unless you leave simulation mode and edit normally.';
+            ? 'Simulation mode is active. Changes are temporary and will not be saved.'
+            : 'Simulation mode is off. Changes are saved automatically as you type.';
         }
         if (!whatIfMode) resetWhatIfValues();
         updateWhatIfSummary();
@@ -613,6 +618,14 @@
         var linkedNotified = false;
         var sourceBadge = row.querySelector('.budget-row-source');
 
+        // Save immediately when user presses Enter or clicks away (blur)
+        input.addEventListener('change', function() {
+          if (whatIfMode) return;
+          clearTimeout(debounceTimer);
+          saveEntry(input.dataset.itemId, input.value, ind);
+          recalcSummary();
+        });
+
         input.addEventListener('input', function() {
           var rowAnnual = document.getElementById('annual-item-' + input.dataset.itemId);
           if (rowAnnual) rowAnnual.textContent = fmtAnnualRow(parseFloat(input.value) || 0);
@@ -645,6 +658,11 @@
       // Sync hero stats immediately on load (server-rendered values may differ
       // from JS calculation in edge cases like inherited/overridden months)
       recalcSummary();
+
+      // Clear the confusing default HTML text immediately on load
+      if (whatIfStatus) {
+        whatIfStatus.textContent = 'Simulation mode is off. Changes are saved automatically as you type.';
+      }
 
       // Prev/next month navigation arrows
       var prevMonthBtn = document.getElementById('prev-month');
