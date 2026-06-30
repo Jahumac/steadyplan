@@ -181,11 +181,11 @@ def test_planning_page_renders_for_logged_in_user(app, client, make_user):
     assert b"planning scenarios, not guaranteed safe withdrawal advice." not in response.data
     assert b"Balanced estimate:" not in response.data
     assert b"Scenario estimate, not guaranteed income." not in response.data
-    assert response.data.count(b"State Pension/year (illustrative)") == 2
+    assert response.data.count(b"State Pension/year (illustrative)") == 1
     assert b"State Pension/year estimate" not in response.data
     assert b"State Pension assumption" in response.data
-    assert response.data.count(b"Edit planning numbers") == 2
-    assert response.data.count(b'/settings/?mode=edit&amp;focus=scenario_estimate_assumptions') == 2
+    assert response.data.count(b"Edit planning numbers") == 1
+    assert response.data.count(b'/settings/?mode=edit&amp;focus=scenario_estimate_assumptions') == 1
     assert b'href="/settings/?mode=edit"' not in response.data
     assert b"Edit growth/retirement age" not in response.data
     assert b"Adjust planning numbers" in response.data
@@ -244,7 +244,7 @@ def test_planning_page_no_goal_mode_uses_plan_wording(app, client, make_user):
     assert html.count("Future estimate at 55:") >= 2
     assert "Estimate at 55:" not in html
     assert "Projected at 55:" not in html
-    assert html.count("Accessible money estimate at retirement") == 2
+    assert html.count("Accessible money estimate at retirement") == 1
     assert "Accessible pot estimate at retirement" not in html
     assert "State Pension assumption" in html
     assert "illustrative State Pension" not in html

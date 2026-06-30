@@ -1380,3 +1380,52 @@
   margin: 0;
 }
 
+/* ── Cash Yield Card ──────────────────────────────────────────────────────── */
+.planning-card-divider {
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.cash-yield-card {
+  background: color-mix(in srgb, var(--success) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 15%, transparent);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cash-yield-stat-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.15rem;
+}
+
+.cash-yield-rate-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--success);
+  line-height: 1.2;
+}
+
+.cash-yield-earning-val {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-normal, #f8fafc);
+  display: block;
+  line-height: 1.2;
+}
+
+.cash-yield-subtext {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 0.15rem;
+}
+
