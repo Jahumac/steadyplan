@@ -78,8 +78,7 @@
           {% set cell = account.months[loop.index0] %}
           <td class="text-center calendar-matrix-cell {% if cell.has_override %}cell-override{% endif %} {% if cell.overlap %}cell-overlap{% endif %}"
               {% if cell.has_override %}
-                title="{{ cell.source_label }}{% if cell.plan_name %} · {{ cell.plan_name }}{% elif cell.reason %} · {{ cell.reason }}{% endif %}{% if cell.overlap %} (Overlap: {{ cell.active_override_count }} rules){% endif %}"
-                style="cursor: help;"
+                data-tooltip="{{ cell.source_label }}{% if cell.plan_name %} · {{ cell.plan_name }}{% elif cell.reason %} · {{ cell.reason }}{% endif %}{% if cell.overlap %} (Overlap: {{ cell.active_override_count }} rules){% endif %}"
               {% endif %}>
             {% if cell.has_override %}
               <strong>£{{ '{:,.0f}'.format(cell.override_amount) }}</strong>
@@ -394,5 +393,7 @@
   <p class="helper-text">No eligible active contribution accounts are active yet.</p>
   {% endif %}
 </section>
+
+<div id="calendar-tooltip" class="calendar-tooltip hidden" aria-hidden="true"></div>
 
 {% endblock %}
