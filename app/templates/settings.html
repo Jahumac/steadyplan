@@ -78,6 +78,37 @@
     color: var(--text);
     font-weight: 600;
   }
+
+  /* Style panels inside the grid as premium cards */
+  .plan-dashboard-grid .panel {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-top: 0 !important; /* override mt-1 inside the grid */
+    box-sizing: border-box;
+  }
+  .plan-dashboard-grid .panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  }
+  .plan-dashboard-grid .panel .section-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .plan-dashboard-grid .panel h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
 </style>
 
 {% if page_mode != 'edit' %}
@@ -697,483 +728,501 @@
 </div>
 
 <div id="tab-backup" class="settings-tab-content">
-<section class="panel mt-1" id="data-ownership">
+<div class="plan-dashboard-grid">
+  <!-- Data Ownership Panel -->
+  <section class="panel mt-1" id="data-ownership">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Data &amp; privacy</p>
+        <h3>Data ownership</h3>
+      </div>
+    </div>
+    <p class="helper-text text-xs">
+      SteadyPlan stores your financial data locally in a SQLite database. There is no cloud sync.
+    </p>
+    <p class="helper-text text-xs mt-02" style="font-size:0.75rem; line-height:1.3;">
+      In Docker, the live database is <code>/app/data/finance.db</code> inside the mounted <code>/app/data</code> volume. On Unraid, that usually maps to a host path such as <code>/mnt/user/appdata/steadyplan</code>.
+    </p>
+    <p class="helper-text text-xs mt-02" style="font-size:0.75rem; line-height:1.3;">
+      SteadyPlan keeps balances, budgets, goals, and history local. Optional live price lookup may still send ticker symbols/identifiers to external price sources.
+    </p>
+    <p class="helper-text text-xs mt-02" style="font-size:0.75rem; line-height:1.3;">
+      When you only need a safety copy for one user, start with a JSON export. Whole-instance recovery still depends on backing up the full app data directory.
+    </p>
+    
+    <details class="mt-04" style="border:1px solid var(--border);border-radius:8px;padding:0.4rem 0.6rem;background:var(--panel-2);">
+      <summary class="text-xs font-semibold" style="cursor:pointer; outline:none; user-select:none;">What each safety copy is for</summary>
+      <ul class="helper-text text-xxs m-0 mt-02 pl-1" style="font-size:0.7rem;list-style-type:disc;padding-left:1.2rem;line-height:1.3;">
+        <li><strong>Local SQLite database:</strong> the live SteadyPlan data store for this instance.</li>
+        <li><strong>Per-user JSON export:</strong> portable safety copy for one user before restore, delete, or larger edits.</li>
+        <li><strong>Whole-instance SQLite backup:</strong> copy of <code>finance.db</code> for all users, stored under <code>data/backups</code>.</li>
+        <li><strong>Whole app data directory backup:</strong> the real disaster-recovery copy, including <code>finance.db</code>, <code>secret_key.txt</code>, and <code>backups/</code>.</li>
+        <li><strong>Restore check:</strong> validates a JSON file without changing data.</li>
+        <li><strong>Restore overwrite:</strong> replaces this user’s data only after confirmation.</li>
+        <li><strong>Delete this user’s finance data:</strong> removes finance data for this user only, not the login account.</li>
+      </ul>
+    </details>
+
+    <div style="display:none;">
+      <p class="helper-text">Only set <code>TRUST_PROXY_HEADERS=1</code> when SteadyPlan is behind a trusted reverse proxy that sets <code>X-Forwarded-*</code> headers.</p>
+      <p class="helper-text">This is guidance, not an automated security audit.</p>
+    </div>
+  </section>
+
+  <!-- Export Panel -->
+  <section class="panel mt-1" id="json-export">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Export</p>
+        <h3>Download a per-user JSON export</h3>
+      </div>
+    </div>
+    <p class="helper-text text-xs">
+      Downloads a portable JSON export for this user only. Useful before restore, delete, or larger edits.
+    </p>
+    <p class="helper-text text-xs mt-02" style="font-size:0.75rem; line-height:1.3;">
+      It does not include other users, server-level secrets, or whole-instance app data. Keep the file private — it contains financial data.
+    </p>
+    <p class="helper-text text-xs mt-02" style="font-size:0.75rem; line-height:1.3;">
+      This export does not include your login password, and it is not a full disaster-recovery backup.
+    </p>
+    <div class="mt-auto pt-04">
+      <a class="badge badge-primary-action w-100 text-center" href="/settings/export.json" style="display:block;text-align:center;padding:0.5rem 0;">Download this user's JSON export</a>
+    </div>
+  </section>
+
+  <!-- Restore Panel -->
+  <section class="panel mt-1" id="restore-check">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Restore</p>
+        <h3>Check a JSON export before overwrite</h3>
+      </div>
+    </div>
+    <p class="helper-text text-xs">
+      Upload a JSON export file to validate it before overwrite. Checking does not change your data.
+    </p>
+    <p class="helper-text text-xs mt-02" style="font-size:0.75rem; line-height:1.3;">
+      If you later confirm restore, SteadyPlan replaces this user's data only. It does not change your username or password.
+    </p>
+    <form class="m-0 mt-04" method="post" action="/settings/restore/validate" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="display:flex;flex-direction:column;gap:0.4rem;">
+        <input type="file" name="backup_file" accept=".json,application/json" class="input-standard w-100 text-xs" style="padding:0.3rem;">
+        <button type="submit" class="badge badge-primary-action w-100" style="padding:0.5rem 0;">Check JSON export</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<!-- Restore check results (Full-width below the grid) -->
+{% if restore_check_result %}
+<section class="panel mt-1">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Data &amp; privacy</p>
-      <h3>Data ownership</h3>
+      <p class="eyebrow">Validation results</p>
+      <h3>Restore Check Summary</h3>
     </div>
   </div>
-  <p class="helper-text">
-    SteadyPlan stores your financial data locally in a SQLite database. There is no cloud sync.
-  </p>
-  <p class="helper-text mt-05" >
-    In Docker, the live database is <code>/app/data/finance.db</code> inside the mounted <code>/app/data</code> volume. On Unraid, that usually maps to a host path such as <code>/mnt/user/appdata/steadyplan</code>.
-  </p>
-  <p class="helper-text mt-05" >
-    SteadyPlan keeps balances, budgets, goals, and history local. Optional live price lookup may still send ticker symbols/identifiers to external price sources.
-  </p>
-  <p class="helper-text mt-05" >
-    When you only need a safety copy for one user, start with a JSON export. Whole-instance recovery still depends on backing up the full app data directory.
-  </p>
-  <div class="callout-box mt-085" >
-    <div style="font-weight:600;margin-bottom:0.35rem;">What each safety copy is for</div>
-    <ul class="helper-text m-custom-1" >
-      <li><strong>Local SQLite database:</strong> the live SteadyPlan data store for this instance.</li>
-      <li><strong>Per-user JSON export:</strong> portable safety copy for one user before restore, delete, or larger edits.</li>
-      <li><strong>Whole-instance SQLite backup:</strong> copy of <code>finance.db</code> for all users, stored under <code>data/backups</code>.</li>
-      <li><strong>Whole app data directory backup:</strong> the real disaster-recovery copy, including <code>finance.db</code>, <code>secret_key.txt</code>, and <code>backups/</code>.</li>
-      <li><strong>Restore check:</strong> validates a JSON file without changing data.</li>
-      <li><strong>Restore overwrite:</strong> replaces this user’s data only after confirmation.</li>
-      <li><strong>Delete this user’s finance data:</strong> removes finance data for this user only, not the login account.</li>
-    </ul>
+  
+  {% if restore_check_result.valid %}
+    <div class="flash-msg flash-success"><span>Restore file looks valid. Checking did not change your data.</span><span></span></div>
+  {% else %}
+    <div class="flash-msg flash-error"><span>Restore file is not valid. Checking did not change your data.</span><span></span></div>
+  {% endif %}
+
+  <table class="data-table mt-075" >
+    <tbody>
+      <tr>
+        <td>Export schema version</td>
+        <td class="num">{{ restore_check_result.export_schema_version if restore_check_result.export_schema_version is not none else '—' }}</td>
+      </tr>
+      <tr>
+        <td>Exported at</td>
+        <td class="num">{{ restore_check_result.exported_at if restore_check_result.exported_at else '—' }}</td>
+      </tr>
+      <tr>
+        <td>Export app</td>
+        <td class="num">{{ restore_check_result.app if restore_check_result.app else '—' }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% if restore_check_result.counts %}
+  <table class="data-table mt-075" >
+    <tbody>
+      <tr><td>Accounts</td><td class="num">{{ restore_check_result.counts.accounts }}</td></tr>
+      <tr><td>Holdings</td><td class="num">{{ restore_check_result.counts.holdings }}</td></tr>
+      <tr><td>Holding catalogue</td><td class="num">{{ restore_check_result.counts.holding_catalogue }}</td></tr>
+      <tr><td>Goals</td><td class="num">{{ restore_check_result.counts.goals }}</td></tr>
+      <tr><td>Debts</td><td class="num">{{ restore_check_result.counts.debts }}</td></tr>
+      <tr><td>Budget sections</td><td class="num">{{ restore_check_result.counts.budget.sections }}</td></tr>
+      <tr><td>Budget items</td><td class="num">{{ restore_check_result.counts.budget.items }}</td></tr>
+      <tr><td>Budget entries</td><td class="num">{{ restore_check_result.counts.budget.entries }}</td></tr>
+      <tr><td>Monthly snapshots</td><td class="num">{{ restore_check_result.counts.history.monthly_snapshots }}</td></tr>
+      <tr><td>Portfolio daily snapshots</td><td class="num">{{ restore_check_result.counts.history.portfolio_daily_snapshots }}</td></tr>
+      <tr><td>Account daily snapshots</td><td class="num">{{ restore_check_result.counts.history.account_daily_snapshots }}</td></tr>
+      <tr><td>Monthly updates</td><td class="num">{{ restore_check_result.counts.history.monthly_reviews }}</td></tr>
+      <tr><td>Monthly update items</td><td class="num">{{ restore_check_result.counts.history.monthly_review_items }}</td></tr>
+      <tr><td>Contribution overrides</td><td class="num">{{ restore_check_result.counts.planning.contribution_overrides }}</td></tr>
+      <tr><td>Cash flow events</td><td class="num">{{ restore_check_result.counts.planning.cash_flow_events }}</td></tr>
+      <tr><td>ISA contributions</td><td class="num">{{ restore_check_result.counts.planning.isa_contributions }}</td></tr>
+      <tr><td>Pension contributions</td><td class="num">{{ restore_check_result.counts.planning.pension_contributions }}</td></tr>
+      <tr><td>Dividend records</td><td class="num">{{ restore_check_result.counts.planning.dividend_records }}</td></tr>
+      <tr><td>CGT disposals</td><td class="num">{{ restore_check_result.counts.planning.cgt_disposals }}</td></tr>
+      <tr><td>Pension carry forward</td><td class="num">{{ restore_check_result.counts.planning.pension_carry_forward }}</td></tr>
+      <tr><td>Allowance tracking</td><td class="num">{{ restore_check_result.counts.planning.allowance_tracking }}</td></tr>
+      <tr><td>Premium Bonds prizes</td><td class="num">{{ restore_check_result.counts.planning.premium_bonds_prizes }}</td></tr>
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if restore_check_result.valid and restore_token %}
+    <div style="margin-top:0.75rem;padding:0.9rem;border:1px solid var(--border);border-radius:12px;background:var(--panel);">
+      <div style="font-weight:600;margin-bottom:0.25rem;">Overwrite this user's finance data from this export</div>
+      <p class="helper-text" style="margin:0.25rem 0 0.75rem 0;">
+        Restoring replaces all data for this user with the contents of this export file. Any changes made since this export was created will be lost. Other users are not affected.
+      </p>
+      <div class="settings-section-divider mb-075" >
+        <strong>Safety backup before overwrite</strong>
+        <p class="helper-text m-0">SteadyPlan will create a fresh whole-instance SQLite backup first. If that safety backup cannot be created, restore stops and leaves your data unchanged.</p>
+      </div>
+      <p class="helper-text mb-075" >
+        You can still download a fresh per-user JSON export as an extra safety copy. Restore does not change your username or password.
+      </p>
+      <form class="m-0" method="post" action="/settings/restore/commit" >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="restore_token" value="{{ restore_token }}">
+        <label class="text-sm" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+          <input type="checkbox" name="confirm_replace" value="1" required>
+          <span>I understand this will overwrite this user's finance data</span>
+        </label>
+        <div style="margin-top:0.6rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+          <input type="text" name="confirm_phrase" class="input-standard max-w-12 uppercase" placeholder="Type RESTORE" autocomplete="off" required >
+          <button type="submit" class="badge badge-danger">Overwrite this user's finance data from this export</button>
+        </div>
+      </form>
+    </div>
+  {% endif %}
+
+  {% if restore_check_result.errors %}
+    <div class="mt-075" >
+      <div class="text-sm text-bold" >Errors</div>
+      <ul class="m-custom-1" >
+        {% for e in restore_check_result.errors %}
+          <li class="text-sm">{{ e }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  {% if restore_check_result.warnings %}
+    <div class="mt-075" >
+      <div class="text-sm text-bold" >Warnings</div>
+      <ul class="m-custom-1" >
+        {% for w in restore_check_result.warnings %}
+          <li class="text-sm">{{ w }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  {% if restore_commit_result %}
+    <div class="mt-075" >
+      <div class="text-sm text-bold" >Restore summary</div>
+      <table class="data-table" style="margin-top:0.35rem;">
+        <tbody>
+          <tr><td>Inserted accounts</td><td class="num">{{ restore_commit_result.inserted.accounts if restore_commit_result and restore_commit_result.inserted else 0 }}</td></tr>
+          <tr><td>Inserted holdings</td><td class="num">{{ restore_commit_result.inserted.holdings if restore_commit_result and restore_commit_result.inserted else 0 }}</td></tr>
+          <tr><td>Inserted goals</td><td class="num">{{ restore_commit_result.inserted.goals if restore_commit_result and restore_commit_result.inserted else 0 }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</section>
+{% endif %}
+</div>
+
+<div id="tab-integrations" class="settings-tab-content">
+<div class="plan-dashboard-grid">
+  <!-- Assistant Access Panel -->
+  <section class="panel mt-1" id="connections-tokens">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Personal Pip access</p>
+        <h3>Create a scoped token only if you run your own Pip setup</h3>
+      </div>
+    </div>
+    <div class="plan-card-body m-0 p-0" style="display:flex;flex-direction:column;gap:0.5rem;height:100%;">
+      <p class="helper-text text-xs">
+        Most people can ignore this section. It is for Janusz-style personal Pip setups that need a separate assistant token you can replace or revoke here.
+      </p>
+      <p class="helper-text text-xs mt-02" style="font-size:0.75rem; line-height:1.3;">
+        Read-only access answers portfolio, budget, and affordability questions without changing your data. Budget write adds one narrow action today: updating a single month's amount on an existing manual, unlinked budget item.
+      </p>
+
+      {% if assistant_token_secret %}
+      <div style="margin-top:0.3rem;padding:0.6rem;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);">
+        <strong class="text-xs">{{ assistant_token_secret_heading(assistant_token_secret.action) }}</strong>
+        <p class="helper-text text-xs m-0 mt-01 mb-02">Copy this now. SteadyPlan only shows this token once.</p>
+        <div class="text-sm mb-04" >Label: <strong>{{ assistant_token_label(assistant_token_secret.label) }}</strong></div>
+        <div class="text-sm mb-04" >Permissions: {{ assistant_scope_labels(assistant_token_secret.scopes)|join(', ') }}</div>
+        <code data-assistant-token-value="{{ assistant_token_secret.value }}" style="display:block;overflow:auto;padding:0.4rem;font-size:0.75rem;border-radius:6px;background:rgba(0,0,0,0.2);">{{ assistant_token_secret.value }}</code>
+      </div>
+      {% endif %}
+
+      <form method="post" action="/settings/assistant-access/create" class="settings-form m-0 mt-auto" >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div style="display:flex; flex-direction:column; gap:0.4rem;">
+          <label class="m-0">
+            <span>Local token label</span>
+            <input type="text" name="label" value="Pip" class="input-standard text-xs w-100" style="padding:0.4rem 0.6rem;" maxlength="64">
+            <small class="form-hint text-xxs" style="font-size:0.7rem;">Optional local label so you can recognise this saved token later.</small>
+          </label>
+          
+          <span class="text-xs font-semibold mt-01">Permissions</span>
+          <div style="display:grid;gap:0.3rem;">
+            {% for scope in assistant_scope_options %}
+            <label class="m-0" style="display:block;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);">
+              <div style="display:flex;gap:0.4rem;align-items:flex-start;">
+                <input type="checkbox" name="scopes" value="{{ scope.key }}" {{ 'checked' if scope.key == 'assistant:read' else '' }}>
+                <span class="text-xs">
+                  <strong>{{ scope.label }}</strong><br>
+                  <small class="form-hint text-xxs" style="font-size:0.65rem;line-height:1.1;">{{ scope.hint }}</small>
+                </span>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+          
+          <button type="submit" class="badge badge-primary-action w-100 mt-02">Create assistant token</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Trading 212 Connection Panel -->
+  <section class="panel mt-1" id="trading212-access">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Trading 212 broker snapshot access (beta)</p>
+        <h3>Save a broker snapshot connection</h3>
+      </div>
+    </div>
+    <div class="plan-card-body m-0 p-0" style="display:flex;flex-direction:column;gap:0.5rem;">
+      <p class="helper-text text-xs">
+        Start by saving a broker snapshot connection. SteadyPlan only tests read-only broker snapshot access here and stores the key pair encrypted on this server using this app's secret key.
+      </p>
+      <p class="helper-text text-xs mt-02" style="font-size:0.75rem; line-height:1.3;">
+        SteadyPlan's own price service and manual/CSV imports stay in place. This connection is for broker snapshot sync groundwork, not order placement or money-moving.
+      </p>
+      <p class="helper-text text-xs mt-02" style="font-size:0.75rem; line-height:1.3;">
+        SteadyPlan can keep more than one broker snapshot connection, so separate Invest and Stocks ISA accounts can be saved side by side.
+      </p>
+      <p class="helper-text text-xs mt-02" style="font-size:0.75rem; line-height:1.3;">
+        Public API currently supports Invest and Stocks ISA only. Cash ISA and SIPP accounts should stay manual/CSV-tracked for now.
+      </p>
+
+      <form method="post" action="/settings/trading212/connect" class="settings-form m-0 mt-02" >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div style="display:flex; flex-direction:column; gap:0.4rem;">
+          <label class="m-0">
+            <span>Saved broker snapshot label</span>
+            <input type="text" name="label" value="Trading 212" class="input-standard text-xs w-100" style="padding:0.4rem 0.6rem;" maxlength="64">
+            <small class="form-hint text-xxs" style="font-size:0.7rem;">A local label so you can recognise this saved connection later.</small>
+          </label>
+          <label class="m-0">
+            <span>Broker environment</span>
+            <select name="environment" class="input-standard text-xs w-100" style="padding:0.4rem 0.6rem;">
+              {% for option in trading212_environment_options %}
+              <option value="{{ option.key }}">{{ option.label }}</option>
+              {% endfor %}
+            </select>
+            <small class="form-hint text-xxs" style="font-size:0.7rem;">Start with Demo if you want a no-risk broker snapshot check first.</small>
+          </label>
+          <label class="m-0">
+            <span>Public API key</span>
+            <input type="password" name="api_key" class="input-standard text-xs w-100" style="padding:0.4rem 0.6rem;" autocomplete="off" placeholder="••••••••">
+            <small class="form-hint text-xxs" style="font-size:0.7rem;">Paste the Trading 212 Public API key for this broker account.</small>
+          </label>
+          <label class="m-0">
+            <span>Public API secret</span>
+            <input type="password" name="api_secret" class="input-standard text-xs w-100" style="padding:0.4rem 0.6rem;" autocomplete="off" placeholder="••••••••">
+            <small class="form-hint text-xxs" style="font-size:0.7rem;">Paste the Trading 212 Public API secret for this broker account.</small>
+          </label>
+          <button type="submit" class="badge badge-primary-action w-100 mt-02">Save and test broker snapshot connection</button>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
+
+<!-- Saved Connections and Tokens tables (Full-width below the grid) -->
+{% if assistant_tokens %}
+<section class="panel mt-1">
+  <div class="section-header">
+    <div>
+      <h3>Saved assistant tokens</h3>
+    </div>
+  </div>
+  <p class="helper-text mb-045" >Replace token issues a new raw token value once and disables the old one. Revoke token disables it immediately.</p>
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Token label</th>
+          <th>Permissions</th>
+          <th>Created on</th>
+          <th>Last used</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for token in assistant_tokens %}
+        <tr>
+          <td>{{ assistant_token_label(token.label) }}</td>
+          <td>{{ assistant_scope_labels(token.scopes)|join(', ') }}</td>
+          <td>{{ token.created_at or '—' }}</td>
+          <td>{{ assistant_token_last_used_label(token.last_used_at) }}</td>
+          <td class="num">
+            <div class="flex flex-end gap-05 flex-wrap" >
+              <form class="m-0" method="post" action="/settings/assistant-access/{{ token.id }}/regenerate" >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="badge">Replace token now</button>
+              </form>
+              <form class="m-0" method="post" action="/settings/assistant-access/{{ token.id }}/revoke" >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="badge badge-danger">Revoke token</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </section>
+{% endif %}
+
+{% if assistant_audit_events %}
+<section class="panel mt-1">
+  <div class="section-header">
+    <div>
+      <h3>Recent assistant activity</h3>
+    </div>
+  </div>
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Token</th>
+          <th>Action</th>
+          <th>Target</th>
+          <th>Change</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in assistant_audit_events %}
+        <tr>
+          <td>{{ event.created_at or '—' }}</td>
+          <td>{{ assistant_token_label(event.token_label) }}</td>
+          <td>{{ assistant_action_label(event.action_type) }}</td>
+          <td>
+            {{ assistant_target_label(event.target_label, event.target_type) }}
+            {% if event.month_key %}<div class="helper-text mt-02" >{{ event.month_key }}</div>{% endif %}
+          </td>
+          <td>
+            {% set before_amount = event.before_state.get('amount') %}
+            {% set after_amount = event.after_state.get('amount') %}
+            {% if before_amount is not none and after_amount is not none %}
+              {{ assistant_amount_change_label(before_amount, after_amount) }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% if not assistant_tokens and not assistant_audit_events %}
+<p class="helper-text mt-1">No assistant token set up here. SteadyPlan works normally if you leave this section unused.</p>
+{% endif %}
 
 <section class="panel mt-1">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Network exposure</p>
-      <h3>LAN/VPN by default</h3>
+      <h3>Saved broker snapshot connections</h3>
     </div>
   </div>
-  <p class="helper-text">
-    Safest default is LAN/VPN-only. If you expose SteadyPlan publicly, use HTTPS via a trusted reverse proxy or tunnel, use strong passwords, and consider adding an extra auth layer at the proxy/tunnel.
-  </p>
-  <p class="helper-text mt-05" >
-    Only set <code>TRUST_PROXY_HEADERS=1</code> when SteadyPlan is behind a trusted reverse proxy that sets <code>X-Forwarded-*</code> headers.
-  </p>
-  <p class="helper-text mt-05" >
-    This is guidance, not an automated security audit.
-  </p>
-</section>
-
-<section class="panel mt-1" id="json-export">
-  <div class="section-header">
-    <div>
-      <p class="eyebrow">Export</p>
-      <h3>Download a per-user JSON export</h3>
-    </div>
-    <a class="badge badge-primary-action" href="/settings/export.json">Download this user's JSON export</a>
-  </div>
-  <p class="helper-text">
-    Downloads a portable JSON export for this user only. Useful before restore, delete, or larger edits.
-  </p>
-  <p class="helper-text mt-05" >
-    It does not include other users, server-level secrets, or whole-instance app data. Keep the file private — it contains financial data.
-  </p>
-  <p class="helper-text mt-05" >
-    This export does not include your login password, and it is not a full disaster-recovery backup.
-  </p>
-</section>
-
-<section class="panel mt-1" id="restore-check">
-  <div class="section-header">
-    <div>
-      <p class="eyebrow">Restore</p>
-      <h3>Check a JSON export before overwrite</h3>
-    </div>
-  </div>
-  <p class="helper-text">
-    Upload a JSON export file to validate it before overwrite. Checking does not change your data.
-  </p>
-  <p class="helper-text mt-05" >
-    If you later confirm restore, SteadyPlan replaces this user's data only. It does not change your username or password.
-  </p>
-  <form class="mt-075" method="post" action="/settings/restore/validate" enctype="multipart/form-data" >
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="flex flex-center gap-075 flex-wrap" >
-      <input type="file" name="backup_file" accept=".json,application/json" class="input-standard" style="max-width:22rem;">
-      <button type="submit" class="badge badge-primary-action">Check JSON export</button>
-    </div>
-  </form>
-
-  {% if restore_check_result %}
-    <div class="mt-075" >
-      {% if restore_check_result.valid %}
-        <div class="flash-msg flash-success"><span>Restore file looks valid. Checking did not change your data.</span><span></span></div>
-      {% else %}
-        <div class="flash-msg flash-error"><span>Restore file is not valid. Checking did not change your data.</span><span></span></div>
-      {% endif %}
-
-      <table class="data-table mt-075" >
-        <tbody>
-          <tr>
-            <td>Export schema version</td>
-            <td class="num">{{ restore_check_result.export_schema_version if restore_check_result.export_schema_version is not none else '—' }}</td>
-          </tr>
-          <tr>
-            <td>Exported at</td>
-            <td class="num">{{ restore_check_result.exported_at if restore_check_result.exported_at else '—' }}</td>
-          </tr>
-          <tr>
-            <td>Export app</td>
-            <td class="num">{{ restore_check_result.app if restore_check_result.app else '—' }}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      {% if restore_check_result.counts %}
-      <table class="data-table mt-075" >
-        <tbody>
-          <tr><td>Accounts</td><td class="num">{{ restore_check_result.counts.accounts }}</td></tr>
-          <tr><td>Holdings</td><td class="num">{{ restore_check_result.counts.holdings }}</td></tr>
-          <tr><td>Holding catalogue</td><td class="num">{{ restore_check_result.counts.holding_catalogue }}</td></tr>
-          <tr><td>Goals</td><td class="num">{{ restore_check_result.counts.goals }}</td></tr>
-          <tr><td>Debts</td><td class="num">{{ restore_check_result.counts.debts }}</td></tr>
-          <tr><td>Budget sections</td><td class="num">{{ restore_check_result.counts.budget.sections }}</td></tr>
-          <tr><td>Budget items</td><td class="num">{{ restore_check_result.counts.budget.items }}</td></tr>
-          <tr><td>Budget entries</td><td class="num">{{ restore_check_result.counts.budget.entries }}</td></tr>
-          <tr><td>Monthly snapshots</td><td class="num">{{ restore_check_result.counts.history.monthly_snapshots }}</td></tr>
-          <tr><td>Portfolio daily snapshots</td><td class="num">{{ restore_check_result.counts.history.portfolio_daily_snapshots }}</td></tr>
-          <tr><td>Account daily snapshots</td><td class="num">{{ restore_check_result.counts.history.account_daily_snapshots }}</td></tr>
-          <tr><td>Monthly updates</td><td class="num">{{ restore_check_result.counts.history.monthly_reviews }}</td></tr>
-          <tr><td>Monthly update items</td><td class="num">{{ restore_check_result.counts.history.monthly_review_items }}</td></tr>
-          <tr><td>Contribution overrides</td><td class="num">{{ restore_check_result.counts.planning.contribution_overrides }}</td></tr>
-          <tr><td>Cash flow events</td><td class="num">{{ restore_check_result.counts.planning.cash_flow_events }}</td></tr>
-          <tr><td>ISA contributions</td><td class="num">{{ restore_check_result.counts.planning.isa_contributions }}</td></tr>
-          <tr><td>Pension contributions</td><td class="num">{{ restore_check_result.counts.planning.pension_contributions }}</td></tr>
-          <tr><td>Dividend records</td><td class="num">{{ restore_check_result.counts.planning.dividend_records }}</td></tr>
-          <tr><td>CGT disposals</td><td class="num">{{ restore_check_result.counts.planning.cgt_disposals }}</td></tr>
-          <tr><td>Pension carry forward</td><td class="num">{{ restore_check_result.counts.planning.pension_carry_forward }}</td></tr>
-          <tr><td>Allowance tracking</td><td class="num">{{ restore_check_result.counts.planning.allowance_tracking }}</td></tr>
-          <tr><td>Premium Bonds prizes</td><td class="num">{{ restore_check_result.counts.planning.premium_bonds_prizes }}</td></tr>
-        </tbody>
-      </table>
-      {% endif %}
-
-      {% if restore_check_result.valid and restore_token %}
-        <div style="margin-top:0.75rem;padding:0.9rem;border:1px solid var(--border);border-radius:12px;background:var(--panel);">
-          <div style="font-weight:600;margin-bottom:0.25rem;">Overwrite this user's finance data from this export</div>
-          <p class="helper-text" style="margin:0.25rem 0 0.75rem 0;">
-            Restoring replaces all data for this user with the contents of this export file. Any changes made since this export was created will be lost. Other users are not affected.
-          </p>
-          <div class="settings-section-divider mb-075" >
-            <strong>Safety backup before overwrite</strong>
-            <p class="helper-text m-0">SteadyPlan will create a fresh whole-instance SQLite backup first. If that safety backup cannot be created, restore stops and leaves your data unchanged.</p>
-          </div>
-          <p class="helper-text mb-075" >
-            You can still download a fresh per-user JSON export as an extra safety copy. Restore does not change your username or password.
-          </p>
-          <form class="m-0" method="post" action="/settings/restore/commit" >
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="restore_token" value="{{ restore_token }}">
-            <label class="text-sm" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-              <input type="checkbox" name="confirm_replace" value="1" required>
-              <span>I understand this will overwrite this user's finance data</span>
-            </label>
-            <div style="margin-top:0.6rem;display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
-              <input type="text" name="confirm_phrase" class="input-standard max-w-12 uppercase" placeholder="Type RESTORE" autocomplete="off" required >
-              <button type="submit" class="badge badge-danger">Overwrite this user's finance data from this export</button>
+  <p class="helper-text mb-045" >Each saved broker snapshot connection stays read-only. Preview broker snapshot checks the latest broker snapshot summary without changing SteadyPlan data. Retest broker snapshot connection refreshes the latest broker snapshot check. Remove saved broker snapshot connection deletes the stored encrypted key pair from SteadyPlan.</p>
+  {% if trading212_connections %}
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Saved broker snapshot label</th>
+          <th>Broker environment</th>
+          <th>Broker snapshot check status</th>
+          <th>Masked API key</th>
+          <th>Broker account</th>
+          <th>Last broker snapshot check</th>
+          <th>Saved broker snapshot actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for connection in trading212_connections %}
+        <tr>
+          <td>
+            {{ connection.label }}
+            <div class="helper-text mt-02" >{{ trading212_access_mode_label(connection.access_mode) }}</div>
+          </td>
+          <td>{{ trading212_environment_label(connection.environment) }}</td>
+          <td>
+            {{ trading212_status_label(connection) }}
+            {% if connection.last_error %}
+            <div class="helper-text text-danger mt-02" >Last broker snapshot check error: {{ connection.last_error }}</div>
+            {% endif %}
+          </td>
+          <td>{{ connection.masked_api_key }}</td>
+          <td>
+            {% if connection.external_account_id %}
+              {{ connection.external_account_id }}{% if connection.external_account_currency %}<div class="helper-text mt-02" >{{ connection.external_account_currency }}</div>{% endif %}
+            {% else %}
+              No broker snapshot summary yet
+            {% endif %}
+          </td>
+          <td>{{ broker_connection_last_tested_label(connection.last_tested_at) }}</td>
+          <td class="num">
+            <div class="flex flex-end gap-05 flex-wrap" >
+              <form class="m-0" method="post" action="/settings/trading212/{{ connection.id }}/preview" >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="badge">Preview broker snapshot</button>
+              </form>
+              <form class="m-0" method="post" action="/settings/trading212/{{ connection.id }}/retest" >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="badge">Retest broker snapshot connection</button>
+              </form>
+              <form class="m-0" method="post" action="/settings/trading212/{{ connection.id }}/disconnect" >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="badge badge-danger">Remove saved broker snapshot connection</button>
+              </form>
             </div>
-          </form>
-        </div>
-      {% endif %}
-
-      {% if restore_check_result.errors %}
-        <div class="mt-075" >
-          <div class="text-sm text-bold" >Errors</div>
-          <ul class="m-custom-1" >
-            {% for e in restore_check_result.errors %}
-              <li class="text-sm">{{ e }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-      {% endif %}
-
-      {% if restore_check_result.warnings %}
-        <div class="mt-075" >
-          <div class="text-sm text-bold" >Warnings</div>
-          <ul class="m-custom-1" >
-            {% for w in restore_check_result.warnings %}
-              <li class="text-sm">{{ w }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-      {% endif %}
-
-      {% if restore_commit_result %}
-        <div class="mt-075" >
-          <div class="text-sm text-bold" >Restore summary</div>
-          <table class="data-table" style="margin-top:0.35rem;">
-            <tbody>
-              <tr><td>Inserted accounts</td><td class="num">{{ restore_commit_result.inserted.accounts if restore_commit_result and restore_commit_result.inserted else 0 }}</td></tr>
-              <tr><td>Inserted holdings</td><td class="num">{{ restore_commit_result.inserted.holdings if restore_commit_result and restore_commit_result.inserted else 0 }}</td></tr>
-              <tr><td>Inserted goals</td><td class="num">{{ restore_commit_result.inserted.goals if restore_commit_result and restore_commit_result.inserted else 0 }}</td></tr>
-            </tbody>
-          </table>
-        </div>
-      {% endif %}
-    </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="helper-text m-0" >No saved broker snapshot connections yet. Manual/CSV tracking stays available until you add one here.</p>
   {% endif %}
 </section>
-
 </div>
-
-<div id="tab-integrations" class="settings-tab-content">
-<section class="panel mt-1" id="connections-tokens">
-  <div class="section-header">
-    <div>
-      <p class="eyebrow">Personal Pip access</p>
-      <h3>Create a scoped token only if you run your own Pip setup</h3>
-    </div>
-  </div>
-  <p class="helper-text">
-    Most people can ignore this section. It is for Janusz-style personal Pip setups that need a separate assistant token you can replace or revoke here.
-  </p>
-  <p class="helper-text mt-045" >
-    Read-only access answers portfolio, budget, and affordability questions without changing your data. Budget write adds one narrow action today: updating a single month's amount on an existing manual, unlinked budget item.
-  </p>
-
-  {% if assistant_token_secret %}
-  <div style="margin-top:0.85rem;padding:0.95rem;border:1px solid var(--border);border-radius:12px;background:var(--panel-2);">
-    <div class="text-bold" >{{ assistant_token_secret_heading(assistant_token_secret.action) }}</div>
-    <p class="helper-text" style="margin:0.35rem 0 0.75rem 0;">
-      Copy this now. For safety, SteadyPlan will only show the raw token once.
-    </p>
-    <div class="text-sm mb-04" >Label: <strong>{{ assistant_token_label(assistant_token_secret.label) }}</strong></div>
-    <div class="text-sm mb-04" >Permissions: {{ assistant_scope_labels(assistant_token_secret.scopes)|join(', ') }}</div>
-    <code data-assistant-token-value="{{ assistant_token_secret.value }}" style="display:block;overflow:auto;padding:0.75rem;border-radius:10px;background:rgba(0,0,0,0.2);">{{ assistant_token_secret.value }}</code>
-  </div>
-  {% endif %}
-
-  <form method="post" action="/settings/assistant-access/create" class="settings-form mt-1" >
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="form-grid">
-      <label>
-        <span>Local token label</span>
-        <input type="text" name="label" value="Pip" maxlength="64">
-        <small class="form-hint">Optional local label so you can recognise this saved token later.</small>
-      </label>
-      <div class="form-full-col">
-        <span style="display:block;font-weight:600;margin-bottom:0.55rem;">Permissions</span>
-        <div style="display:grid;gap:0.75rem;">
-          {% for scope in assistant_scope_options %}
-          <label style="display:block;padding:0.8rem 0.95rem;border:1px solid var(--border);border-radius:12px;background:var(--panel);">
-            <div style="display:flex;gap:0.75rem;align-items:flex-start;">
-              <input type="checkbox" name="scopes" value="{{ scope.key }}" {{ 'checked' if scope.key == 'assistant:read' else '' }}>
-              <span>
-                <strong>{{ scope.label }}</strong><br>
-                <small class="form-hint">{{ scope.hint }}</small>
-              </span>
-            </div>
-          </label>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-    <div class="badge-row mt-1">
-      <button type="submit">Create assistant token</button>
-    </div>
-  </form>
-
-  {% if assistant_tokens %}
-  <div class="mt-1" >
-    <div class="text-sm text-bold mb-045" >Saved assistant tokens</div>
-    <p class="helper-text mb-045" >Replace token issues a new raw token value once and disables the old one. Revoke token disables it immediately.</p>
-    <div class="table-scroll">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Token label</th>
-            <th>Permissions</th>
-            <th>Created on</th>
-            <th>Last used</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for token in assistant_tokens %}
-          <tr>
-            <td>{{ assistant_token_label(token.label) }}</td>
-            <td>{{ assistant_scope_labels(token.scopes)|join(', ') }}</td>
-            <td>{{ token.created_at or '—' }}</td>
-            <td>{{ assistant_token_last_used_label(token.last_used_at) }}</td>
-            <td class="num">
-              <div class="flex flex-end gap-05 flex-wrap" >
-                <form class="m-0" method="post" action="/settings/assistant-access/{{ token.id }}/regenerate" >
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="badge">Replace token now</button>
-                </form>
-                <form class="m-0" method="post" action="/settings/assistant-access/{{ token.id }}/revoke" >
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="badge badge-danger">Revoke token</button>
-                </form>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if assistant_audit_events %}
-  <div class="mt-1" >
-    <div class="text-sm text-bold mb-045" >Recent assistant activity</div>
-    <div class="table-scroll">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>When</th>
-            <th>Token</th>
-            <th>Action</th>
-            <th>Target</th>
-            <th>Change</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for event in assistant_audit_events %}
-          <tr>
-            <td>{{ event.created_at or '—' }}</td>
-            <td>{{ assistant_token_label(event.token_label) }}</td>
-            <td>{{ assistant_action_label(event.action_type) }}</td>
-            <td>
-              {{ assistant_target_label(event.target_label, event.target_type) }}
-              {% if event.month_key %}<div class="helper-text mt-02" >{{ event.month_key }}</div>{% endif %}
-            </td>
-            <td>
-              {% set before_amount = event.before_state.get('amount') %}
-              {% set after_amount = event.after_state.get('amount') %}
-              {% if before_amount is not none and after_amount is not none %}
-                {{ assistant_amount_change_label(before_amount, after_amount) }}
-              {% else %}
-                —
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-  {% endif %}
-
-  {% if not assistant_tokens and not assistant_audit_events %}
-  <p class="helper-text" style="margin:1rem 0 0 0;">No assistant token set up here. SteadyPlan works normally if you leave this section unused.</p>
-  {% endif %}
-</section>
-
-<section class="panel mt-1" id="trading212-access">
-  <div class="section-header">
-    <div>
-      <p class="eyebrow">Trading 212 broker snapshot access (beta)</p>
-      <h3>Save a broker snapshot connection</h3>
-    </div>
-  </div>
-  <p class="helper-text">
-    Start by saving a broker snapshot connection. SteadyPlan only tests read-only broker snapshot access here and stores the key pair encrypted on this server using this app's secret key.
-  </p>
-  <p class="helper-text mt-045" >
-    {{ trading212_sync_support_note() }}
-  </p>
-  <p class="helper-text mt-045" >
-    SteadyPlan's own price service and manual/CSV imports stay in place. This connection is for broker snapshot sync groundwork, not order placement or money-moving.
-  </p>
-  <p class="helper-text mt-045" >
-    SteadyPlan can keep more than one broker snapshot connection, so separate Invest and Stocks ISA accounts can be saved side by side.
-  </p>
-
-  <form method="post" action="/settings/trading212/connect" class="settings-form mt-1" >
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <div class="form-grid">
-      <label>
-        <span>Saved broker snapshot label</span>
-        <input type="text" name="label" value="Trading 212" maxlength="64">
-        <small class="form-hint">A local label so you can recognise this saved connection later.</small>
-      </label>
-      <label>
-        <span>Broker environment</span>
-        <select name="environment">
-          {% for option in trading212_environment_options %}
-          <option value="{{ option.key }}">{{ option.label }}</option>
-          {% endfor %}
-        </select>
-        <small class="form-hint">Start with Demo if you want a no-risk broker snapshot check first.</small>
-      </label>
-      <label>
-        <span>Public API key</span>
-        <input type="password" name="api_key" autocomplete="off" spellcheck="false">
-        <small class="form-hint">Paste the Trading 212 Public API key for this broker account.</small>
-      </label>
-      <label>
-        <span>Public API secret</span>
-        <input type="password" name="api_secret" autocomplete="off" spellcheck="false">
-        <small class="form-hint">Paste the Trading 212 Public API secret for this broker account.</small>
-      </label>
-    </div>
-    <div class="badge-row mt-1">
-      <button type="submit">Save and test broker snapshot connection</button>
-    </div>
-  </form>
-
-  <div class="mt-1" >
-    <div class="text-sm text-bold mb-045" >Saved broker snapshot connections</div>
-    <p class="helper-text mb-045" >Each saved broker snapshot connection stays read-only. Preview broker snapshot checks the latest broker snapshot summary without changing SteadyPlan data. Retest broker snapshot connection refreshes the latest broker snapshot check. Remove saved broker snapshot connection deletes the stored encrypted key pair from SteadyPlan.</p>
-    {% if trading212_connections %}
-    <div class="table-scroll">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Saved broker snapshot label</th>
-            <th>Broker environment</th>
-            <th>Broker snapshot check status</th>
-            <th>Masked API key</th>
-            <th>Broker account</th>
-            <th>Last broker snapshot check</th>
-            <th>Saved broker snapshot actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for connection in trading212_connections %}
-          <tr>
-            <td>
-              {{ connection.label }}
-              <div class="helper-text mt-02" >{{ trading212_access_mode_label(connection.access_mode) }}</div>
-            </td>
-            <td>{{ trading212_environment_label(connection.environment) }}</td>
-            <td>
-              {{ trading212_status_label(connection) }}
-              {% if connection.last_error %}
-              <div class="helper-text text-danger mt-02" >Last broker snapshot check error: {{ connection.last_error }}</div>
-              {% endif %}
-            </td>
-            <td>{{ connection.masked_api_key }}</td>
-            <td>
-              {% if connection.external_account_id %}
-                {{ connection.external_account_id }}{% if connection.external_account_currency %}<div class="helper-text mt-02" >{{ connection.external_account_currency }}</div>{% endif %}
-              {% else %}
-                No broker snapshot summary yet
-              {% endif %}
-            </td>
-            <td>{{ broker_connection_last_tested_label(connection.last_tested_at) }}</td>
-            <td class="num">
-              <div class="flex flex-end gap-05 flex-wrap" >
-                <form class="m-0" method="post" action="/settings/trading212/{{ connection.id }}/preview" >
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="badge">Preview broker snapshot</button>
-                </form>
-                <form class="m-0" method="post" action="/settings/trading212/{{ connection.id }}/retest" >
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="badge">Retest broker snapshot connection</button>
-                </form>
-                <form class="m-0" method="post" action="/settings/trading212/{{ connection.id }}/disconnect" >
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="badge badge-danger">Remove saved broker snapshot connection</button>
-                </form>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <p class="helper-text m-0" >No saved broker snapshot connections yet. Manual/CSV tracking stays available until you add one here.</p>
-    {% endif %}
-  </div>
-</section>
 
 {# ── Danger Zone · Reset ─────────────────────────────────────────────────── #}
 </div>
