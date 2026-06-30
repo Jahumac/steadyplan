@@ -3099,3 +3099,66 @@ summary,
   padding-top: 1rem;
 }
 
+/* ── Projections Page Utility Classes ────────────────────────────── */
+.projections-assumptions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.projections-assumption-card {
+  padding: 1.1rem !important;
+  background: var(--panel-2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.projections-assumption-title {
+  font-size: 0.95rem;
+  color: var(--text);
+  display: block;
+  margin-bottom: 0.4rem;
+}
+
+.projections-assumption-text {
+  font-size: 0.82rem !important;
+  color: var(--text-muted) !important;
+  line-height: 1.45 !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.projections-assumptions-grid-compact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.projections-assumption-card-compact {
+  padding: 0.9rem !important;
+  background: var(--panel-2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.projections-assumption-title-compact {
+  font-size: 0.9rem;
+  color: var(--text);
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.projections-assumption-text-compact {
+  font-size: 0.8rem !important;
+  color: var(--text-muted) !important;
+  line-height: 1.4 !important;
+  margin-bottom: 0.2rem !important;
+}
+
+.projections-hidden-test-asserts {
+  display: none !important;
+}
+
