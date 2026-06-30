@@ -5,3 +5,16 @@
 @import "modules/_components.css";
 @import "modules/_utilities.css";
 @import "modules/_flows.css";
+
+/* Global Hover Glow effect for all tiles/panels/cards (excluding highlight/hero tiles) */
+.card:not(.highlight):not(.alert-banner), 
+.panel:not(.highlight):not(.alert-banner):not(.inset-panel):not(.panel-compact) {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:not(.highlight):not(.alert-banner):hover, 
+.panel:not(.highlight):not(.alert-banner):not(.inset-panel):not(.panel-compact):hover {
+  transform: translateY(-2px);
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 15px color-mix(in srgb, var(--accent) 22%, transparent) !important;
+}
