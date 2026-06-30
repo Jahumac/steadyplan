@@ -80,13 +80,13 @@
   {# Progress bar #}
   {% if selected_debt.original_amount > 0 %}
   <div class="progress mb-05" role="progressbar">
-    <div class="progress-bar" data-pct="{{ selected_debt.paid_off_pct | round(1) }}" style="background: var(--accent-3);"></div>
+  <div class="progress-bar progress-bar-warning" data-pct="{{ selected_debt.paid_off_pct | round(1) }}"></div>
   </div>
   <p class="helper-text mb-1">{{ '{:.1f}'.format(selected_debt.paid_off_pct) }}% paid off · £{{ '{:,.0f}'.format(selected_debt.original_amount - selected_debt.current_balance) }} cleared of £{{ '{:,.0f}'.format(selected_debt.original_amount) }}</p>
   {% endif %}
 
   {# Key stats #}
-  <div class="hero-strip" style="margin-bottom:1rem;">
+  <div class="hero-strip mb-1">
     <div class="hero-stat">
       <span class="hero-stat-label">Balance now</span>
       <span class="hero-stat-value"><strong>£{{ '{:,.2f}'.format(selected_debt.current_balance) }}</strong></span>
@@ -133,13 +133,13 @@
   </div>
   <p class="helper-text mb-075">See how much time and interest you'd save with a one-off overpayment, a recurring monthly overpayment, or both.</p>
   {% if selected_debt.overpayment_examples %}
-  <div class="badge-row mb-075" style="gap:0.4rem;flex-wrap:wrap;">
+  <div class="badge-row mb-075">
     {% for ex in selected_debt.overpayment_examples %}
       <span class="badge badge-soft">+£{{ '{:,.0f}'.format(ex.extra_monthly) }} per month saves {{ ex.months_saved }} month{{ '' if ex.months_saved == 1 else 's' }} · £{{ '{:,.0f}'.format(ex.interest_saved) }}</span>
     {% endfor %}
   </div>
   {% endif %}
-  <div class="settings-form" style="max-width:420px;">
+  <div class="settings-form settings-form-sm">
     <div class="form-grid">
       <label>
         <span>Extra monthly payment (£)</span>
@@ -344,7 +344,7 @@
     </div>
   </div>
   <p class="helper-text mb-075">Got a 0% credit card or buy-now-pay-later deal? Enter the balance and how many months you have to see what to pay each month to clear it before interest kicks in.</p>
-  <div class="settings-form" style="max-width:420px;">
+  <div class="settings-form settings-form-sm">
     <div class="form-grid">
       <label>
         <span>Balance (£)</span>
@@ -358,7 +358,7 @@
   </div>
   <div class="hidden" id="zero-result"  class="mt-075">
     <p class="helper-text">
-      Pay <strong id="zero-monthly" style="color:var(--accent-3);font-size:1.1rem;"></strong> per month to clear it in time.
+      Pay <strong id="zero-monthly" class="debts-highlight-value"></strong> per month to clear it in time.
       <span id="zero-note" class="text-muted"></span>
     </p>
     <p class="helper-text mt-025">Use that number as the monthly payment below — set APR to 0.</p>
@@ -432,7 +432,7 @@
     </div>
   </div>
 
-  <form method="get" class="settings-form" style="margin-bottom:1rem;">
+  <form method="get" class="settings-form mb-1">
     <div class="form-grid">
       <label>
         <span>Payoff strategy</span>
@@ -492,7 +492,7 @@
   {% if payoff_guidance and payoff_guidance.excluded_debts %}
   <div class="mt-1">
     <p class="helper-text"><strong>Some debts are not ready for the payoff order yet.</strong></p>
-    <ul class="helper-text" style="margin:0.5rem 0 0 1rem;">
+    <ul class="helper-text debts-excluded-list">
       {% for debt in payoff_guidance.excluded_debts %}
       <li><strong>{{ debt.name }}</strong> — {{ debt.reason }}</li>
       {% endfor %}
@@ -509,14 +509,14 @@
         <h2 class="goal-card-title">{{ d.name }}</h2>
         <p class="goal-card-meta">
           £{{ '{:,.0f}'.format(d.monthly_payment) }} per month · {% if d.apr > 0 %}{{ '{:.1f}'.format(d.apr) }}% APR{% else %}0% interest{% endif %}
-          {% if d.auto_tracked %}<span class="budget-pill" style="font-size:0.65rem;">auto-tracked</span>{% endif %}
+          {% if d.auto_tracked %}<span class="budget-pill">auto-tracked</span>{% endif %}
         </p>
       </div>
     </div>
 
     {% if d.original_amount > 0 and d.paid_off_pct > 0 %}
     <div class="progress mb-025" role="progressbar">
-      <div class="progress-bar" data-pct="{{ d.paid_off_pct | round(1) }}" style="background: var(--accent-3);"></div>
+      <div class="progress-bar progress-bar-warning" data-pct="{{ d.paid_off_pct | round(1) }}"></div>
     </div>
     <small>{{ '{:.1f}'.format(d.paid_off_pct) }}% paid off · £{{ '{:,.0f}'.format(d.current_balance) }} left</small>
     {% else %}

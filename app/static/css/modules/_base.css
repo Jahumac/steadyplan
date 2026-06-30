@@ -731,6 +731,10 @@ body.is-back-online .site-header {
   background: linear-gradient(90deg, var(--danger), var(--accent-6));
 }
 
+.progress-bar.progress-bar-warning {
+  background: var(--accent-3);
+}
+
 /* ─────────────────────────────────────────────────────────────────────
    Badge variants — pick by semantic role, not by colour:
      .badge                 default pill (neutral secondary action)
@@ -2986,4 +2990,18 @@ button.button-danger:focus {
 /* ── stat text colours (for hero-stat strong values) ─────────────── */
 .stat-positive-text { color: var(--accent-2); }
 .stat-negative-text { color: var(--error); }
+
+/* ── Debts & Forms Utility Classes ───────────────────────────────── */
+.settings-form-sm {
+  max-width: 420px;
+}
+
+.debts-highlight-value {
+  color: var(--accent-3);
+  font-size: 1.1rem;
+}
+
+.debts-excluded-list {
+  margin: 0.5rem 0 0 1.25rem;
+}
 
