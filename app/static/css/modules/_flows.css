@@ -1042,3 +1042,82 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Liquidity Stack Bar ──────────────────────────────────────────────────── */
+.liquidity-stack-container {
+  margin: 1.5rem 0 1.25rem;
+}
+
+.liquidity-stack-bar {
+  display: flex;
+  height: 12px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.liquidity-segment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.liquidity-segment.segment-cash {
+  background: hsl(160, 80%, 45%); /* Vibrant mint */
+}
+
+.liquidity-segment.segment-invested {
+  background: hsl(160, 40%, 55%); /* Softer sage-green */
+}
+
+.liquidity-segment.segment-restricted {
+  background: hsl(35, 90%, 55%); /* Warm amber/orange */
+}
+
+.liquidity-segment.segment-locked {
+  background: hsl(220, 80%, 60%); /* Dusk blue */
+}
+
+.liquidity-stack-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.liquidity-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+.liquidity-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.liquidity-legend-dot.dot-cash {
+  background: hsl(160, 80%, 45%);
+}
+
+.liquidity-legend-dot.dot-invested {
+  background: hsl(160, 40%, 55%);
+}
+
+.liquidity-legend-dot.dot-restricted {
+  background: hsl(35, 90%, 55%);
+}
+
+.liquidity-legend-dot.dot-locked {
+  background: hsl(220, 80%, 60%);
+}
+
+.liquidity-legend-item strong {
+  color: var(--text-normal, #f8fafc);
+}
+

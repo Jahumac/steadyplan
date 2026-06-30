@@ -12,10 +12,61 @@
       <p class="eyebrow">Planning</p>
       <h2 class="hero-value">Liquidity Profile</h2>
       <p class="hero-subtitle">See what is cash-accessible now, what invested money is still reachable, what comes with conditions, what stays locked for later, and what your current plan might support.</p>
-      <p class="helper-text m-0 planning-hero-caveat">Planning-number analyser, not advice. Useful signal first; detail when you need it.</p>
+      </div>
     </div>
-  </div>
-  <div class="hero-strip planning-hero-strip">
+
+    {% set total = access_summary.total_current %}
+    {% if total > 0 %}
+      {% set cash_pct = (access_summary.accessible_cash_current / total * 100) %}
+      {% set invested_pct = (access_summary.accessible_invested_current / total * 100) %}
+      {% set restricted_pct = access_summary.restricted_pct %}
+      {% set locked_pct = access_summary.locked_pct %}
+
+      <div class="liquidity-stack-container">
+        <div class="liquidity-stack-bar">
+          {% if cash_pct > 0 %}
+            <div class="liquidity-segment segment-cash" style="width: {{ cash_pct }}%;" title="Cash Accessible: {{ '{:.1f}'.format(cash_pct) }}%"></div>
+          {% endif %}
+          {% if invested_pct > 0 %}
+            <div class="liquidity-segment segment-invested" style="width: {{ invested_pct }}%;" title="Invested Accessible: {{ '{:.1f}'.format(invested_pct) }}%"></div>
+          {% endif %}
+          {% if restricted_pct > 0 %}
+            <div class="liquidity-segment segment-restricted" style="width: {{ restricted_pct }}%;" title="Restricted: {{ '{:.1f}'.format(restricted_pct) }}%"></div>
+          {% endif %}
+          {% if locked_pct > 0 %}
+            <div class="liquidity-segment segment-locked" style="width: {{ locked_pct }}%;" title="Locked: {{ '{:.1f}'.format(locked_pct) }}%"></div>
+          {% endif %}
+        </div>
+        <div class="liquidity-stack-legend">
+          {% if access_summary.accessible_cash_current > 0 %}
+          <div class="liquidity-legend-item">
+            <span class="liquidity-legend-dot dot-cash"></span>
+            <span>Cash: <strong>£{{ '{:,.0f}'.format(access_summary.accessible_cash_current) }}</strong> ({{ '{:.0f}'.format(cash_pct) }}%)</span>
+          </div>
+          {% endif %}
+          {% if access_summary.accessible_invested_current > 0 %}
+          <div class="liquidity-legend-item">
+            <span class="liquidity-legend-dot dot-invested"></span>
+            <span>Invested: <strong>£{{ '{:,.0f}'.format(access_summary.accessible_invested_current) }}</strong> ({{ '{:.0f}'.format(invested_pct) }}%)</span>
+          </div>
+          {% endif %}
+          {% if access_summary.restricted_current > 0 %}
+          <div class="liquidity-legend-item">
+            <span class="liquidity-legend-dot dot-restricted"></span>
+            <span>Restricted: <strong>£{{ '{:,.0f}'.format(access_summary.restricted_current) }}</strong> ({{ '{:.0f}'.format(restricted_pct) }}%)</span>
+          </div>
+          {% endif %}
+          {% if access_summary.locked_current > 0 %}
+          <div class="liquidity-legend-item">
+            <span class="liquidity-legend-dot dot-locked"></span>
+            <span>Locked: <strong>£{{ '{:,.0f}'.format(access_summary.locked_current) }}</strong> ({{ '{:.0f}'.format(locked_pct) }}%)</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="hero-strip planning-hero-strip">
     {% call hero_stat('Accessible now') %}<strong>£{{ '{:,.0f}'.format(access_summary.accessible_current) }}</strong>{% endcall %}
     {% call hero_stat('Locked for later') %}<strong>£{{ '{:,.0f}'.format(access_summary.locked_current) }}</strong>{% endcall %}
     {% call hero_stat('Restricted') %}<strong>£{{ '{:,.0f}'.format(access_summary.restricted_current) }}</strong>{% endcall %}
