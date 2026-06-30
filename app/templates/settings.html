@@ -428,7 +428,7 @@
 </section>
 
 {% else %}
-<div id="tab-plan" class="settings-tab-content">
+<div id="tab-plan" class="settings-tab-content active" style="display: block;">
 
 {# ── View mode ────────────────────────────────────────────────────────────── #}
 <section class="card highlight mb-1 month-accent-{{ current_month_num }}">
@@ -1129,8 +1129,7 @@
     }
   }
 
-  // On load, check hash
-  window.addEventListener('DOMContentLoaded', () => {
+  function initTabs() {
     let hash = window.location.hash.replace('#', '');
     if (!['plan', 'integrations', 'backup'].includes(hash)) {
       if ('{{ page_mode }}' === 'diagnostics') {
@@ -1142,7 +1141,14 @@
     if (hash !== 'diagnostics') {
       switchTab(hash);
     }
-  });
+  }
+
+  // Run immediately if DOM is already parsed, otherwise wait for event
+  if (document.readyState !== 'loading') {
+    initTabs();
+  } else {
+    document.addEventListener('DOMContentLoaded', initTabs);
+  }
 </script>
 {% endif %}
 
