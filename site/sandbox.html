@@ -948,86 +948,89 @@
                 </div>
               )}
 
-              {/* VIEW 3: ALLOWANCES (NEW SCREEN) */}
+              {/* VIEW 3: ACCOUNTS SCREEN */}
               {appView === "allowances" && (
-                <div className="space-y-6">
-                  <div className="text-center max-w-xl mx-auto py-2">
-                    <h3 className="text-xl font-extrabold text-white">UK Tax Year Allowances</h3>
-                    <p className="text-xs text-earth-muted mt-1">Track progress towards key annual limits. Demo values based on active monthly budget contributions.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* ISA Allowance Card */}
-                    <div className="card mb-1 space-y-5 sandbox-tile flex flex-col justify-between">
-                      <div>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="text-base font-bold text-white">Individual Savings Account (ISA)</h4>
-                            <p className="text-xs text-earth-muted mt-0.5">Annual tax-free growth container limit</p>
-                          </div>
-                          <span className="text-[10px] uppercase font-mono font-bold text-earth-sage bg-[var(--accent-wash)] border border-[var(--border)] px-2 py-0.5 rounded">
-                            {(12350 / 20000 * 100).toFixed(1)}% Used
-                          </span>
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  {/* Hero Header */}
+                  <section className="card highlight mb-1 month-accent-7" style={{ padding: '1.5rem' }}>
+                    <div className="overview-hero-grid">
+                      <div className="hero-actions-col accounts-hero-actions">
+                        <div>
+                          <p className="eyebrow">Accounts</p>
+                          <h2 className="hero-value" style={{ fontSize: '2rem', fontWeight: '800', margin: '0.25rem 0 0.15rem', color: 'var(--text)' }}>
+                            {accounts.length} account{accounts.length !== 1 ? 's' : ''}
+                          </h2>
                         </div>
-                        
-                        <div className="space-y-2 mt-6">
-                          <div className="flex justify-between text-xs font-mono">
-                            <span className="text-white font-bold">£12,350.00 Contributed</span>
-                            <span className="text-earth-muted">/ £20,000.00 Limit</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+                          <div className="badge-row accounts-hero-badges" style={{ margin: 0, display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <button className="badge badge-primary-action">+ Add account</button>
+                            <button className="badge badge-meta">Update balances</button>
                           </div>
-                          <div className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-full h-3 overflow-hidden">
-                            <div className="bg-earth-sage h-full" style={{ width: `${(12350 / 20000 * 100)}%` }}></div>
+                        </div>
+                      </div>
+                      
+                      <div className="hero-col-panel">
+                        <div>
+                          <p className="eyebrow">Asset Rollup</p>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '0.5rem' }}>
+                            <div className="hero-strip-stat">
+                              <span>Total value</span>
+                              <strong style={{ fontSize: '1.1rem', color: 'var(--text)', fontWeight: '600' }}>
+                                £{totalAssets.toLocaleString(undefined, {maximumFractionDigits:0})}
+                              </strong>
+                            </div>
+                            <div className="hero-strip-stat">
+                              <span>Into accounts monthly</span>
+                              <strong style={{ fontSize: '1.1rem', color: 'var(--text)', fontWeight: '600' }}>
+                                £{investmentsSavings.toLocaleString(undefined, {maximumFractionDigits:0})}
+                              </strong>
+                            </div>
+                            <div className="hero-strip-stat">
+                              <span>Active accounts</span>
+                              <strong style={{ fontSize: '1.1rem', color: 'var(--text)', fontWeight: '600' }}>
+                                {accounts.length}
+                              </strong>
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      <div className="border-t border-[var(--border)] pt-4 text-xs space-y-2 font-sans">
-                        <div className="flex justify-between text-earth-muted">
-                          <span>Remaining Allowance:</span>
-                          <span className="font-mono text-white font-bold">£7,650.00</span>
-                        </div>
-                        <div className="flex justify-between text-earth-muted">
-                          <span>Projected Monthly Contribution:</span>
-                          <span className="font-mono text-earth-sage font-bold">£{simulationInputs.stocksMonthly.toLocaleString()} / mo</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Pension Allowance Card */}
-                    <div className="card mb-1 space-y-5 sandbox-tile flex flex-col justify-between">
-                      <div>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="text-base font-bold text-white">Pension Annual Allowance</h4>
-                            <p className="text-xs text-earth-muted mt-0.5">Annual tax-relieved retirement contribution limit</p>
-                          </div>
-                          <span className="text-[10px] uppercase font-mono font-bold text-earth-gold bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
-                            {(32950 / 60000 * 100).toFixed(1)}% Used
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-2 mt-6">
-                          <div className="flex justify-between text-xs font-mono">
-                            <span className="text-white font-bold">£32,950.00 Contributed</span>
-                            <span className="text-earth-muted">/ £60,000.00 Limit</span>
-                          </div>
-                          <div className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-full h-3 overflow-hidden">
-                            <div className="bg-earth-gold h-full" style={{ width: `${(32950 / 60000 * 100)}%` }}></div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-[var(--border)] pt-4 text-xs space-y-2 font-sans">
-                        <div className="flex justify-between text-earth-muted">
-                          <span>Remaining Allowance:</span>
-                          <span className="font-mono text-white font-bold">£27,050.00</span>
-                        </div>
-                        <div className="flex justify-between text-earth-muted">
-                          <span>Projected Monthly Contribution:</span>
-                          <span className="font-mono text-earth-gold font-bold">£{simulationInputs.t212Monthly.toLocaleString()} / mo</span>
+                      <div className="hero-col-panel">
+                        <div>
+                          <p className="eyebrow">Help & Context</p>
+                          <p className="hero-subtitle" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0.25rem 0 0', lineHeight: '1.4' }}>
+                            Everything you're tracking — tap any account for the full picture. Data shown here is powered by local Showcase state.
+                          </p>
                         </div>
                       </div>
                     </div>
+                  </section>
+
+                  {/* Accounts Grid */}
+                  <div className="acct-grid">
+                    {accounts.map(account => {
+                      let pillType = "isa";
+                      if (account.name.toLowerCase().includes("pension")) pillType = "sipp";
+                      if (account.name.toLowerCase().includes("lisa")) pillType = "lisa";
+                      if (account.type === "Accessible" && !account.name.toLowerCase().includes("isa")) pillType = "gia";
+                      
+                      return (
+                        <a key={account.id} href="#" className="acct-card" onClick={(e) => e.preventDefault()}>
+                          <div className="acct-card-top">
+                            <div className="acct-type-pill" data-type={pillType}>{account.type}</div>
+                          </div>
+                          <div className="acct-card-mid">
+                            <div className="acct-balance">£{account.balance.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
+                            <div className="acct-name">{account.name}</div>
+                            <div className="acct-provider">{account.code}</div>
+                          </div>
+                          <div className="acct-card-foot">
+                            <span>Showcase static account</span>
+                            <span className="acct-mode-dot dot-manual" title="Manual"></span>
+                          </div>
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               )}
