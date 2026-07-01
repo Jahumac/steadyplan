@@ -278,18 +278,35 @@
         return parseFloat(((next.stocksMonthly || 0) + (next.lisaMonthly || 0) + (next.investEngineMonthly || 0) + (next.bondsMonthly || 0) + (next.t212Monthly || 0) + (next.cashParkMonthly || 0)).toFixed(2));
       }, [simulationInputs]);
 
-      // Connected Financial Assumptions
-      const [currentAge, setCurrentAge] = useState(() => Number(localStorage.getItem('sp_v2_curr_age')) || 32);
-      const [retirementAge, setRetirementAge] = useState(() => Number(localStorage.getItem('sp_v2_ret_age')) || 60);
-      const [yearlyGrowth, setYearlyGrowth] = useState(() => Number(localStorage.getItem('sp_v2_growth')) || 6.5);
+      // Connected Financial Assumptions (Safely clamped against local storage corruption)
+      const [currentAge, setCurrentAge] = useState(() => {
+        const val = Number(localStorage.getItem('sp_v2_curr_age'));
+        return (!isNaN(val) && val > 0 && val < 120) ? val : 32;
+      });
+      const [retirementAge, setRetirementAge] = useState(() => {
+        const val = Number(localStorage.getItem('sp_v2_ret_age'));
+        return (!isNaN(val) && val > 0 && val < 120) ? val : 60;
+      });
+      const [yearlyGrowth, setYearlyGrowth] = useState(() => {
+        const val = Number(localStorage.getItem('sp_v2_growth'));
+        return (!isNaN(val) && val >= -100 && val <= 100) ? val : 6.5;
+      });
 
-      // Fictitious Debt Planner State
+      // Fictitious Debt Planner State (Protected from massive array injection)
       const [debts, setDebts] = useState(() => {
-        const cached = localStorage.getItem('sp_v2_debts');
-        return cached ? JSON.parse(cached) : [
-          { id: 'd1', name: "Sainsbury's Credit Card", balance: 1450.00, rate: 18.9, payoffPayment: 70.00 },
-          { id: 'd2', name: "Barclaycard Purchase", balance: 2200.00, rate: 0.0, payoffPayment: 80.00 }
-        ];
+        try {
+          const cached = localStorage.getItem('sp_v2_debts');
+          const parsed = cached ? JSON.parse(cached) : null;
+          return Array.isArray(parsed) ? parsed.slice(0, 50) : [
+            { id: 'd1', name: "Sainsbury's Credit Card", balance: 1450.00, rate: 18.9, payoffPayment: 70.00 },
+            { id: 'd2', name: "Barclaycard Purchase", balance: 2200.00, rate: 0.0, payoffPayment: 80.00 }
+          ];
+        } catch {
+          return [
+            { id: 'd1', name: "Sainsbury's Credit Card", balance: 1450.00, rate: 18.9, payoffPayment: 70.00 },
+            { id: 'd2', name: "Barclaycard Purchase", balance: 2200.00, rate: 0.0, payoffPayment: 80.00 }
+          ];
+        }
       });
 
       // Detailed Simulation Input Object
@@ -314,16 +331,27 @@
         };
       });
 
-      // Asset Accounts Model
+      // Asset Accounts Model (Protected from massive array injection)
       const [accounts, setAccounts] = useState(() => {
-        const cached = localStorage.getItem('sp_v2_accounts');
-        return cached ? JSON.parse(cached) : [
-          { id: 'sip1', name: "SIPP Pension Fund", balance: 24500.00, type: 'Locked', code: 'Generic SIPP Provider' },
-          { id: 'isa1', name: "Stocks & Shares ISA", balance: 12350.00, type: 'Accessible', code: 'Trading 212 ISA' },
-          { id: 'pension1', name: "Workplace Pension", balance: 8450.00, type: 'Locked', code: 'Standard Life Workplace' },
-          { id: 'isa2', name: "Emergency Savings Pot", balance: 5000.00, type: 'Accessible', code: 'High-Yield Savings' },
-          { id: 'lisa1', name: "Lifetime ISA (LISA)", balance: 4200.00, type: 'Restricted', code: 'Dodl LISA' }
-        ];
+        try {
+          const cached = localStorage.getItem('sp_v2_accounts');
+          const parsed = cached ? JSON.parse(cached) : null;
+          return Array.isArray(parsed) ? parsed.slice(0, 50) : [
+            { id: 'sip1', name: "SIPP Pension Fund", balance: 24500.00, type: 'Locked', code: 'Generic SIPP Provider' },
+            { id: 'isa1', name: "Stocks & Shares ISA", balance: 12350.00, type: 'Accessible', code: 'Trading 212 ISA' },
+            { id: 'pension1', name: "Workplace Pension", balance: 8450.00, type: 'Locked', code: 'Standard Life Workplace' },
+            { id: 'isa2', name: "Emergency Savings Pot", balance: 5000.00, type: 'Accessible', code: 'High-Yield Savings' },
+            { id: 'lisa1', name: "Lifetime ISA (LISA)", balance: 4200.00, type: 'Restricted', code: 'Dodl LISA' }
+          ];
+        } catch {
+          return [
+            { id: 'sip1', name: "SIPP Pension Fund", balance: 24500.00, type: 'Locked', code: 'Generic SIPP Provider' },
+            { id: 'isa1', name: "Stocks & Shares ISA", balance: 12350.00, type: 'Accessible', code: 'Trading 212 ISA' },
+            { id: 'pension1', name: "Workplace Pension", balance: 8450.00, type: 'Locked', code: 'Standard Life Workplace' },
+            { id: 'isa2', name: "Emergency Savings Pot", balance: 5000.00, type: 'Accessible', code: 'High-Yield Savings' },
+            { id: 'lisa1', name: "Lifetime ISA (LISA)", balance: 4200.00, type: 'Restricted', code: 'Dodl LISA' }
+          ];
+        }
       });
 
       // Hover metrics states for Charts
@@ -373,12 +401,13 @@
       const discretionary = Math.max(0, monthlyIncome - (fixedExpenses + debtRepayment + investmentsSavings));
 
       // Projection Compound Logic
-      const yearsToRetirement = Math.max(1, retirementAge - currentAge);
+      // Constrain calculations to prevent infinite loops from corrupted localStorage values
+      const yearsToRetirement = Math.min(100, Math.max(1, retirementAge - currentAge || 1));
       const futureEstimateTotal = useMemo(() => {
         let currentPrincipal = totalAssets;
         let monthlyAddition = investmentsSavings;
         let monthlyRate = (yearlyGrowth / 100) / 12;
-        let totalMonths = yearsToRetirement * 12;
+        let totalMonths = Math.min(1200, yearsToRetirement * 12);
         let compoundingTotal = currentPrincipal;
 
         for (let i = 0; i < totalMonths; i++) {
@@ -395,7 +424,8 @@
 
         points.push({ age: currentAge, amount: Math.round(currentVal) });
 
-        for (let year = 1; year <= yearsToRetirement; year++) {
+        const maxYears = Math.min(100, yearsToRetirement);
+        for (let year = 1; year <= maxYears; year++) {
           for (let m = 0; m < 12; m++) {
             currentVal = currentVal * (1 + monthlyRate) + monthlyAddition;
           }
