@@ -725,7 +725,7 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                       {accounts.map(acc => (
-                        <div key={acc.id} class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl flex flex-col justify-between space-y-4 sandbox-tile">
+                        <div key={acc.id} class="card mb-1">
                           <div>
                             <div class="flex justify-between items-start">
                               <h5 class="font-bold text-white text-base leading-tight">{acc.name}</h5>
@@ -759,7 +759,7 @@
                   <div class="space-y-4 pt-4 border-t border-[var(--border)]">
                     <h4 class="text-sm font-bold uppercase tracking-wider text-white font-mono">Active Target Goals</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl flex flex-col justify-between space-y-4 sandbox-tile">
+                      <div class="card mb-1">
                         <div>
                           <div class="flex justify-between items-start">
                             <h5 class="font-bold text-white text-sm">Retirement Goal</h5>
@@ -778,7 +778,7 @@
                         </div>
                       </div>
 
-                      <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl flex flex-col justify-between space-y-4 sandbox-tile">
+                      <div class="card mb-1">
                         <div>
                           <div class="flex justify-between items-start">
                             <h5 class="font-bold text-white text-sm">Emergency Fund</h5>
@@ -797,7 +797,7 @@
                         </div>
                       </div>
 
-                      <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl flex flex-col justify-between space-y-4 sandbox-tile">
+                      <div class="card mb-1">
                         <div>
                           <div class="flex justify-between items-start">
                             <h5 class="font-bold text-white text-sm">ISA Target</h5>
@@ -824,7 +824,7 @@
               {appView === "performance" && (
                 <div class="space-y-6">
                   {/* Historical Asset Chart Card */}
-                  <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                  <div class="card mb-1 space-y-4 sandbox-tile">
                     <div class="flex justify-between items-center text-xs uppercase tracking-wider font-mono text-earth-muted">
                       <span>Historical Net Worth History (12 Months)</span>
                       <span class="text-earth-sage font-bold">Current Net Worth: £{netWorth.toLocaleString()}</span>
@@ -914,7 +914,7 @@
                   </div>
 
                   {/* Asset Allocation Breakdown */}
-                  <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                  <div class="card mb-1 space-y-4 sandbox-tile">
                     <h4 class="text-sm font-bold uppercase tracking-wider text-white font-mono">Portfolio Allocations</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div class="bg-[var(--bg-soft)] p-4 rounded-xl space-y-1">
@@ -956,7 +956,7 @@
 
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* ISA Allowance Card */}
-                    <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-5 sandbox-tile flex flex-col justify-between">
+                    <div class="card mb-1 space-y-5 sandbox-tile flex flex-col justify-between">
                       <div>
                         <div class="flex justify-between items-start">
                           <div>
@@ -992,7 +992,7 @@
                     </div>
 
                     {/* Pension Allowance Card */}
-                    <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-5 sandbox-tile flex flex-col justify-between">
+                    <div class="card mb-1 space-y-5 sandbox-tile flex flex-col justify-between">
                       <div>
                         <div class="flex justify-between items-start">
                           <div>
@@ -1034,7 +1034,7 @@
               {appView === "projections" && (
                 <div class="space-y-6">
                   {/* Parameter adjustment controls */}
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl text-center sandbox-tile">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 card mb-1 text-center sandbox-tile">
                     <div>
                       <span class="text-[10px] text-earth-muted font-mono uppercase">Target Retirement Age</span>
                       <div class="flex items-center justify-center space-x-2 mt-2">
@@ -1078,7 +1078,7 @@
                   </div>
 
                   {/* Curve estimation */}
-                  <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                  <div class="card mb-1 space-y-4 sandbox-tile">
                     <div class="flex justify-between items-center text-xs uppercase tracking-wider font-mono text-earth-muted">
                       <span>Future Retirement Forecast Over Time</span>
                       <span class="text-earth-sage font-bold">Projected Total: £{futureEstimateTotal.toLocaleString()}</span>
@@ -1157,7 +1157,7 @@
               {appView === "budget" && (
                 <div class="space-y-6">
                   {/* Budget dashboard */}
-                  <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                  <div class="card mb-1 space-y-4 sandbox-tile">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                       <div>
                         <span class="text-[10px] font-mono uppercase text-earth-rust tracking-widest block font-bold">What-If Allocations</span>
@@ -1198,7 +1198,7 @@
 
                   {/* Parameters */}
                   <div class="space-y-4">
-                    <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl sandbox-tile">
+                    <div class="card mb-1">
                       <div class="flex justify-between items-center mb-3">
                         <span class="text-xs font-mono uppercase text-earth-sage font-bold">Monthly Take-Home Pay</span>
                         <span class="text-xs text-white font-mono">£{monthlyIncome.toLocaleString()}</span>
@@ -1214,7 +1214,7 @@
                       />
                     </div>
 
-                    <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl space-y-4 sandbox-tile">
+                    <div class="card mb-1 space-y-4 sandbox-tile">
                       <div class="flex justify-between items-center border-b border-[var(--border)] pb-2">
                         <span class="text-xs font-mono uppercase text-white font-bold">Fixed Expenses Breakdown</span>
                         <span class="text-xs text-earth-muted font-mono">£{fixedExpenses.toLocaleString()} / mo</span>
@@ -1235,7 +1235,7 @@
                       </div>
                     </div>
 
-                    <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl space-y-4 sandbox-tile">
+                    <div class="card mb-1 space-y-4 sandbox-tile">
                       <div class="flex justify-between items-center border-b border-[var(--border)] pb-2">
                         <span class="text-xs font-mono uppercase text-earth-sage font-bold">Savings & Investments Breakdown</span>
                         <span class="text-xs text-earth-muted font-mono">£{investmentsSavings.toLocaleString()} / mo</span>
@@ -1262,7 +1262,7 @@
               {/* VIEW 6: DEBTS SCREEN (NEW SCREEN) */}
               {appView === "debts" && (
                 <div class="space-y-6">
-                  <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                  <div class="card mb-1 space-y-4 sandbox-tile">
                     <div>
                       <span class="text-xs font-semibold uppercase text-earth-rust tracking-wider font-mono">Active Debts</span>
                       <h3 class="text-lg font-bold text-white mt-1">Debt Payoff Timeline</h3>
@@ -1284,7 +1284,7 @@
                     <h4 class="text-sm font-bold uppercase tracking-wider text-white font-mono">Manage Sandbox Debts</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {debts.map(d => (
-                        <div key={d.id} class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl flex flex-col justify-between space-y-4 sandbox-tile">
+                        <div key={d.id} class="card mb-1">
                           <div class="flex justify-between items-start">
                             <div>
                               <h5 class="font-bold text-white text-base leading-tight">{d.name}</h5>
@@ -1315,7 +1315,7 @@
                 <div class="space-y-6">
                   {/* Settings overview */}
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                    <div class="card mb-1 space-y-4 sandbox-tile">
                       <h4 class="text-base font-bold text-white font-mono">
                         <svg class="w-4 h-4 inline mr-2 text-earth-sage" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 0 1-3-3V3.75a3 3 0 0 1 3-3h13.5a3 3 0 0 1 3 3v7.5a3 3 0 0 1-3 3m-13.5 0a3 3 0 0 0-3 3v3.75a3 3 0 0 0 3 3h13.5a3 3 0 0 0 3-3v-3.75a3 3 0 0 0-3-3M6 3.75h.008v.008H6V3.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM6 17.25h.008v.008H6v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"></path></svg>
                         Self-Hosted Safety Checklist
@@ -1336,7 +1336,7 @@
                       </ul>
                     </div>
 
-                    <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                    <div class="card mb-1 space-y-4 sandbox-tile">
                       <h4 class="text-base font-bold text-white font-mono">
                         <svg class="w-4 h-4 inline mr-2 text-earth-gold" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M11.5 5.5v3.5m0-3.5h-2m2 0h2m-6 3.5v3.5a3.5 3.5 0 0 0 7 0v-3.5m-7 0h7"></path></svg>
                         API Integrations (Simulated)
@@ -1361,7 +1361,7 @@
                   </div>
 
                   {/* Backup / Export Options */}
-                  <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                  <div class="card mb-1 space-y-4 sandbox-tile">
                     <h4 class="text-base font-bold text-white font-mono">
                       <svg class="w-4 h-4 inline mr-2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3Z"></path></svg>
                       Backup Restore & Import
