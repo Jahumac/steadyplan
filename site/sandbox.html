@@ -450,6 +450,7 @@
 
       // Discretionary calculation
       const discretionary = Math.max(0, monthlyIncome - (fixedExpenses + debtRepayment + investmentsSavings));
+      const surplus = monthlyIncome - (fixedExpenses + debtRepayment + investmentsSavings);
 
       // Projection Compound Logic
       // Constrain calculations to prevent infinite loops from corrupted localStorage values
