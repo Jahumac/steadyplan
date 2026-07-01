@@ -1,8 +1,36 @@
 from io import BytesIO
 
 from openpyxl import load_workbook
+import pytest
+from datetime import date
+import app.routes.export
+import app.calculations
 
 from app.models import create_account, get_connection
+
+
+@pytest.fixture(autouse=True)
+def mock_export_date(monkeypatch):
+    from datetime import date, datetime
+    import app.models.planning_snapshots
+    import app.routes.export
+    import app.calculations
+
+    class MockDate(date):
+        @classmethod
+        def today(cls):
+            return date(2026, 6, 30)
+
+    class MockDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 6, 30, 12, 0)
+
+    monkeypatch.setattr(app.models.planning_snapshots, "datetime", MockDatetime)
+    monkeypatch.setattr(app.routes.export, "date", MockDate)
+    monkeypatch.setattr(app.calculations, "date", MockDate)
+
+
 
 
 def _account_payload(name="ISA", wrapper_type="Stocks & Shares ISA", value=1000.0, monthly=0.0):
