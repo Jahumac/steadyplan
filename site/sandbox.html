@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SteadyPlan · Interactive Sandbox App</title>
-  <meta name="description" content="A pristine, local-first interactive financial sandbox planner for SteadyPlan. Understand your cash flow and compound long-term retirement forecasts.">
+  <title>SteadyPlan · Interactive Demo Showcase</title>
+  <meta name="description" content="A pristine, local-first interactive financial sandbox planner for SteadyPlan. Experience the self-hosted interface with mock historical datasets.">
   <meta name="color-scheme" content="light dark">
 
   <script>
@@ -19,7 +19,7 @@
   </script>
 
   <!-- Global Site Stylesheet -->
-  <link rel="stylesheet" href="./assets/site.css?v=20260608a">
+  <link rel="stylesheet" href="./assets/site.css?v=2">
 
   <!-- React & ReactDOM CDN -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
@@ -68,7 +68,128 @@
       margin: 0 auto !important;
       padding: 0 1.25rem !important;
     }
+
+    /* Floating Showcase Demo Banner */
+    .demo-banner {
+      background: var(--text) !important;
+      color: var(--bg) !important;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 0.45rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      z-index: 1001;
+      position: sticky;
+      top: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .demo-banner-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    .demo-banner-actions a {
+      color: var(--accent) !important;
+      text-transform: none;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+    .demo-banner-actions a:hover {
+      color: var(--accent-2) !important;
+    }
+    .demo-install-btn {
+      background: var(--bg) !important;
+      color: var(--text) !important;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      text-decoration: none !important;
+      font-size: 0.6rem;
+    }
+    .demo-install-btn:hover {
+      background: var(--border) !important;
+      color: var(--text) !important;
+    }
     
+    /* App header bar matching self-hosted layout */
+    .app-header {
+      background: rgba(15, 23, 42, 0.96) !important;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 1.9rem; /* immediately below demo banner */
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+    
+    /* Navigation inside header */
+    .app-header nav button {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.45rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+    .app-header nav button:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.05);
+    }
+    .app-header nav button.active {
+      color: var(--accent) !important;
+      background: rgba(56, 189, 248, 0.10) !important;
+    }
+    
+    /* Bottom Navigation for mobile screens */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 62px;
+      background: rgba(15, 23, 42, 0.98);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 1000;
+      padding: 0 0.5rem;
+      backdrop-filter: blur(10px);
+    }
+    @media (min-width: 768px) {
+      .bottom-nav {
+        display: none;
+      }
+    }
+    @media (max-width: 767px) {
+      .app-header nav {
+        display: none; /* Hide top nav on mobile, use bottom nav */
+      }
+    }
+    
+    .bottom-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.6rem;
+      font-weight: 600;
+      cursor: pointer;
+      gap: 0.2rem;
+    }
+    .bottom-nav-item svg {
+      width: 18px;
+      height: 18px;
+    }
+    .bottom-nav-item.active {
+      color: var(--accent) !important;
+    }
+
     .month-active::after {
       content: '';
       position: absolute;
@@ -79,24 +200,6 @@
       height: 3px;
       background-color: var(--accent);
       border-radius: 9999px;
-    }
-    
-    /* Explicitly restore site.css component styles from Tailwind preflight resets */
-    button.theme-toggle {
-      background: var(--panel) !important;
-      border: 1px solid var(--border) !important;
-      color: var(--muted-strong) !important;
-      padding: 0.45rem 0.8rem !important;
-      line-height: inherit !important;
-    }
-    button.theme-toggle:hover {
-      border-color: var(--border-strong) !important;
-      color: var(--text) !important;
-    }
-    button.theme-toggle[aria-pressed="true"] {
-      background: var(--text) !important;
-      border-color: transparent !important;
-      color: var(--bg) !important;
     }
     
     /* Fix potential Tailwind override issues on inputs in light/dark modes */
@@ -120,83 +223,46 @@
     }
   </style>
 </head>
-<body>
+<body class="bg-earth-cream text-earth-charcoal min-h-screen pb-20 md:pb-6">
 
-  <!-- Unified Navigation Header -->
-  <header class="site-header">
-    <div class="container">
-      <div class="site-header-inner">
-        <a class="brand" href="./index.html">
-          <img class="brand-icon" src="./assets/brand/steadyplan-app-icon-1024.png?v=2" alt="SteadyPlan icon">
-          <span>SteadyPlan</span>
-        </a>
-        <nav class="nav" aria-label="Primary">
-          <a href="./index.html">Home</a>
-          <a href="./sandbox.html" aria-current="page">Sandbox</a>
-          <a href="./tour.html">Tour</a>
-          <a href="./roadmap.html">Roadmap</a>
-          <a href="./docs/index.html">Docs</a>
-          <a href="./about.html">About</a>
-          <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
-          <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="Switch to dark mode">Dark mode</button>
-        </nav>
-      </div>
+  <!-- Interactive Demo Mode Top Banner -->
+  <div class="demo-banner">
+    <div class="flex items-center space-x-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span>Showcase Mode (Sandbox)</span>
     </div>
-  </header>
+    <div class="demo-banner-actions">
+      <a href="./index.html">&larr; Back to Website</a>
+      <a href="./docs/install.html" class="demo-install-btn">Self-Host with Docker</a>
+    </div>
+  </div>
 
-  <!-- Sandbox Canvas Container (min-h-[75vh] prevents footer jumping) -->
-  <main class="container page-tight min-h-[75vh] flex flex-col justify-start">
-    <div id="app" class="w-full">
-      <!-- Loading Skeleton rendered instantly before React/Babel boots up -->
-      <div id="sandbox-loader" class="animate-pulse space-y-6 py-4 w-full">
-        <div class="h-16 bg-[var(--panel-2)] border border-[var(--border)] rounded-xl flex items-center justify-between px-4">
-          <div class="h-4 w-48 bg-[var(--border)] rounded"></div>
-          <div class="h-8 w-40 bg-[var(--border)] rounded-lg"></div>
-        </div>
-        <div class="h-24 bg-[var(--bg-soft)] rounded-2xl flex flex-col justify-center items-center space-y-2">
-          <div class="h-6 w-32 bg-[var(--border)] rounded"></div>
-          <div class="h-4 w-64 bg-[var(--border)] rounded"></div>
-        </div>
-        <div class="h-12 bg-[var(--panel-2)] border border-[var(--border)] rounded-xl max-w-md"></div>
+  <!-- React mounting Node -->
+  <div id="app">
+    <!-- Instant Pulse skeleton loader -->
+    <div class="container page-tight py-6">
+      <div class="animate-pulse space-y-6 w-full">
+        <div class="h-16 bg-[var(--panel-2)] border border-[var(--border)] rounded-xl"></div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="h-32 bg-[var(--panel-2)] border border-[var(--border)] rounded-xl"></div>
-          <div class="h-32 bg-[var(--panel-2)] border border-[var(--border)] rounded-xl"></div>
-          <div class="h-32 bg-[var(--panel-2)] border border-[var(--border)] rounded-xl"></div>
+          <div class="h-28 bg-[var(--panel-2)] border border-[var(--border)] rounded-xl"></div>
+          <div class="h-28 bg-[var(--panel-2)] border border-[var(--border)] rounded-xl"></div>
+          <div class="h-28 bg-[var(--panel-2)] border border-[var(--border)] rounded-xl"></div>
         </div>
         <div class="h-64 bg-[var(--panel-2)] border border-[var(--border)] rounded-2xl"></div>
       </div>
     </div>
-  </main>
-
-  <!-- Unified Footer -->
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-row">
-        <div class="footer-links small">
-          <a href="./docs/index.html">Documentation</a><span class="dot-sep">·</span>
-          <a href="./tour.html">Tour</a><span class="dot-sep">·</span>
-          <a href="./roadmap.html">Roadmap</a><span class="dot-sep">·</span>
-          <a href="./about.html">About</a><span class="dot-sep">·</span>
-          <a href="https://github.com/Jahumac/steadyplan" target="_blank" rel="noopener noreferrer">GitHub</a>
-        </div>
-        <div class="small muted">Not financial advice.</div>
-      </div>
-    </div>
-  </footer>
-
-  <!-- Theme toggle utility -->
-  <script src="./assets/theme-toggle.js?v=20260607a"></script>
+  </div>
 
   <!-- React Sandbox App -->
   <script type="text/babel">
     const { useState, useEffect, useMemo, useRef } = React;
 
     function App() {
-      // Time Machine & Tab States
+      // Top Shell View tab selector: overview, performance, allowances, projections, budget, debts, settings
+      const [appView, setAppView] = useState("overview");
       const [selectedMonth, setSelectedMonth] = useState("Jul");
-      const [activeTab, setActiveTab] = useState("overview"); // overview, budget, future
 
-      // Financial Planning State Variables (Initialized with fake demo data)
+      // Financial Planning State Variables (Fictitious demo data)
       const [monthlyIncome, setIncome] = useState(() => Number(localStorage.getItem('sp_v2_income')) || 3500.00);
       const [fixedExpenses, setFixedExpenses] = useState(() => Number(localStorage.getItem('sp_v2_fixed')) || 1200.00);
       const [debtRepayment, setDebtRepayment] = useState(() => Number(localStorage.getItem('sp_v2_debt')) || 150.00);
@@ -207,7 +273,16 @@
       const [retirementAge, setRetirementAge] = useState(() => Number(localStorage.getItem('sp_v2_ret_age')) || 60);
       const [yearlyGrowth, setYearlyGrowth] = useState(() => Number(localStorage.getItem('sp_v2_growth')) || 6.5);
 
-      // Detailed Simulation Input Object (Fictitious Data)
+      // Fictitious Debt Planner State
+      const [debts, setDebts] = useState(() => {
+        const cached = localStorage.getItem('sp_v2_debts');
+        return cached ? JSON.parse(cached) : [
+          { id: 'd1', name: "Sainsbury's Credit Card", balance: 1450.00, rate: 18.9, payoffPayment: 70.00 },
+          { id: 'd2', name: "Barclaycard Purchase", balance: 2200.00, rate: 0.0, payoffPayment: 80.00 }
+        ];
+      });
+
+      // Detailed Simulation Input Object
       const [simulationInputs, setSimulationInputs] = useState(() => {
         const cached = localStorage.getItem('sp_v2_sim_inputs');
         return cached ? JSON.parse(cached) : {
@@ -229,7 +304,7 @@
         };
       });
 
-      // Asset Accounts Model (Fictitious Data)
+      // Asset Accounts Model
       const [accounts, setAccounts] = useState(() => {
         const cached = localStorage.getItem('sp_v2_accounts');
         return cached ? JSON.parse(cached) : [
@@ -241,7 +316,7 @@
         ];
       });
 
-      // Interactive mouse hover mechanics on compound charts
+      // Hover metrics states for Charts
       const svgRef = useRef(null);
       const [hoveredPoint, setHoveredPoint] = useState(null);
 
@@ -256,14 +331,14 @@
         localStorage.setItem('sp_v2_growth', yearlyGrowth);
         localStorage.setItem('sp_v2_sim_inputs', JSON.stringify(simulationInputs));
         localStorage.setItem('sp_v2_accounts', JSON.stringify(accounts));
-      }, [monthlyIncome, fixedExpenses, debtRepayment, investmentsSavings, currentAge, retirementAge, yearlyGrowth, simulationInputs, accounts]);
+        localStorage.setItem('sp_v2_debts', JSON.stringify(debts));
+      }, [monthlyIncome, fixedExpenses, debtRepayment, investmentsSavings, currentAge, retirementAge, yearlyGrowth, simulationInputs, accounts, debts]);
 
       // Synchronize allocations dynamically on parameter updates
       const handleSimChange = (field, val) => {
         const numericVal = parseFloat(val) || 0;
         setSimulationInputs(prev => {
           const next = { ...prev, [field]: numericVal };
-          
           const totalFixed = next.rent + next.mobile + next.internet + next.travel + next.cloud + next.subscriptions + next.ai;
           const totalDebt = next.netwestCC;
           const totalInvestments = next.stocksMonthly + next.lisaMonthly + next.investEngineMonthly + next.bondsMonthly + next.t212Monthly + next.cashParkMonthly;
@@ -281,18 +356,25 @@
         setAccounts(prev => prev.map(a => a.id === accountId ? { ...a, balance: numericVal } : a));
       };
 
-      // Calculated Discretionary cash flow
-      const discretionary = Math.max(0, monthlyIncome - (fixedExpenses + debtRepayment + investmentsSavings));
+      const handleDebtBalanceChange = (debtId, val) => {
+        const numericVal = parseFloat(val) || 0;
+        setDebts(prev => prev.map(d => d.id === debtId ? { ...d, balance: numericVal } : d));
+      };
 
-      // Dynamic computations for account pools and total portfolios
+      // Combined Asset pools
       const totalAssets = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+      const totalDebts = debts.reduce((sum, d) => sum + d.balance, 0);
+      const netWorth = totalAssets - totalDebts;
+
       const accessibleNow = accounts.filter(a => a.type === 'Accessible').reduce((sum, a) => sum + a.balance, 0);
       const lockedForLater = accounts.filter(a => a.type === 'Locked').reduce((sum, a) => sum + a.balance, 0);
       const restricted = accounts.filter(a => a.type === 'Restricted').reduce((sum, a) => sum + a.balance, 0);
 
-      // Compound Projection Mathematics
-      const yearsToRetirement = Math.max(1, retirementAge - currentAge);
+      // Discretionary calculation
+      const discretionary = Math.max(0, monthlyIncome - (fixedExpenses + debtRepayment + investmentsSavings));
 
+      // Projection Compound Logic
+      const yearsToRetirement = Math.max(1, retirementAge - currentAge);
       const futureEstimateTotal = useMemo(() => {
         let currentPrincipal = totalAssets;
         let monthlyAddition = investmentsSavings;
@@ -318,26 +400,54 @@
           for (let m = 0; m < 12; m++) {
             currentVal = currentVal * (1 + monthlyRate) + monthlyAddition;
           }
-          points.push({
-            age: currentAge + year,
-            amount: Math.round(currentVal)
-          });
+          points.push({ age: currentAge + year, amount: Math.round(currentVal) });
         }
         return points;
       }, [totalAssets, investmentsSavings, yearlyGrowth, yearsToRetirement, currentAge]);
 
-      // Interactive mouse hover event mappings for SVG Projection Coordinates
-      const handleMouseMove = (e) => {
+      // Mock Performance Historical Data (12 Months back)
+      const performanceHistory = useMemo(() => {
+        return [
+          { month: "Jul", value: 41200 },
+          { month: "Aug", value: 42150 },
+          { month: "Sep", value: 43400 },
+          { month: "Oct", value: 44920 },
+          { month: "Nov", value: 45780 },
+          { month: "Dec", value: 47210 },
+          { month: "Jan", value: 48900 },
+          { month: "Feb", value: 49500 },
+          { month: "Mar", value: 50850 },
+          { month: "Apr", value: 52100 },
+          { month: "May", value: 53950 },
+          { month: "Jun", value: totalAssets }
+        ];
+      }, [totalAssets]);
+
+      // SVG mouse hover logic for historical chart
+      const handleHistMouseMove = (e) => {
+        if (!svgRef.current) return;
+        const rect = svgRef.current.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const percentX = Math.max(0, Math.min(1, mouseX / rect.width));
+        const index = Math.min(performanceHistory.length - 1, Math.max(0, Math.round(percentX * (performanceHistory.length - 1))));
+        const point = performanceHistory[index];
+        if (point) {
+          const x = (index / (performanceHistory.length - 1)) * 500;
+          const maxVal = Math.max(...performanceHistory.map(p => p.value));
+          const minVal = Math.min(...performanceHistory.map(p => p.value)) * 0.95;
+          const ratio = (point.value - minVal) / ((maxVal - minVal) || 1);
+          const y = 150 - (ratio * 100) - 20;
+          setHoveredPoint({ ...point, x, y, pctX: (index / (performanceHistory.length - 1)) * 100 });
+        }
+      };
+
+      // SVG mouse hover logic for projections chart
+      const handleProjMouseMove = (e) => {
         if (!svgRef.current || projectionPoints.length === 0) return;
         const rect = svgRef.current.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const percentX = Math.max(0, Math.min(1, mouseX / rect.width));
-        
-        const index = Math.min(
-          projectionPoints.length - 1,
-          Math.max(0, Math.round(percentX * (projectionPoints.length - 1)))
-        );
-        
+        const index = Math.min(projectionPoints.length - 1, Math.max(0, Math.round(percentX * (projectionPoints.length - 1))));
         const point = projectionPoints[index];
         if (point) {
           const x = (index / (projectionPoints.length - 1)) * 500;
@@ -347,21 +457,17 @@
         }
       };
 
-      const handleMouseLeave = () => {
-        setHoveredPoint(null);
-      };
-
-      // --- Backup Import/Export Logic ---
+      // Backup Download/Upload simulation
       const handleExport = () => {
         const dataStr = JSON.stringify({
           monthlyIncome, fixedExpenses, debtRepayment, investmentsSavings,
-          currentAge, retirementAge, yearlyGrowth, simulationInputs, accounts
+          currentAge, retirementAge, yearlyGrowth, simulationInputs, accounts, debts
         }, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `steadyplan_sandbox_workspace_${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `steadyplan_sandbox_workspace.json`;
         link.click();
       };
 
@@ -381,7 +487,8 @@
             if (data.yearlyGrowth) setYearlyGrowth(data.yearlyGrowth);
             if (data.simulationInputs) setSimulationInputs(data.simulationInputs);
             if (data.accounts) setAccounts(data.accounts);
-            alert("Backup imported successfully!");
+            if (data.debts) setDebts(data.debts);
+            alert("Sandbox dataset imported successfully!");
           } catch (err) {
             alert("Failed to parse JSON file.");
           }
@@ -390,99 +497,47 @@
       };
 
       return (
-        <div class="flex flex-col text-earth-charcoal w-full space-y-6">
-          
-          {/* Sandbox Top Tools Bar */}
-          <div class="flex flex-col sm:flex-row justify-between items-center bg-[var(--panel)] border border-[var(--border)] rounded-xl p-4 gap-3 text-xs">
-            <div class="flex items-center space-x-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>
-              <span class="font-bold uppercase tracking-wider font-mono text-[var(--muted-strong)]">Integrated Client-Side Workspace</span>
-            </div>
-            
-            <div class="flex items-center space-x-2">
-              <button 
-                onClick={handleExport}
-                class="flex items-center space-x-1.5 bg-[var(--bg)] hover:bg-[var(--border)] text-earth-charcoal font-semibold px-3.5 py-2 rounded-lg transition border border-[var(--border)] cursor-pointer"
-              >
-                <i class="fa-solid fa-download"></i>
-                <span>Export JSON</span>
-              </button>
-              <label class="flex items-center space-x-1.5 bg-[var(--bg)] hover:bg-[var(--border)] text-earth-charcoal font-semibold px-3.5 py-2 rounded-lg transition border border-[var(--border)] cursor-pointer">
-                <i class="fa-solid fa-upload"></i>
-                <span>Import JSON</span>
-                <input type="file" accept=".json" onChange={handleImport} class="hidden" />
-              </label>
-            </div>
-          </div>
+        <div class="flex flex-col min-h-screen bg-[var(--bg)]">
 
-          <div class="text-center space-y-2 max-w-3xl mx-auto pt-2">
-            <span class="text-xs font-mono uppercase text-earth-sage bg-[var(--accent-wash)] border border-[var(--border)] px-3 py-1 rounded-md">Interactive Playground</span>
-            <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight text-[var(--muted-strong)]">The Authentic Sandbox Workspace</h2>
-            <p class="text-sm text-earth-muted">
-              Experience how cashflow, accounts, and compound estimates coordinate. Customize any input below.
-            </p>
-          </div>
-
-          {/* Main App Canvas */}
-          <div class="bg-[var(--panel-2)] border border-[var(--border)] rounded-2xl shadow-xl overflow-hidden flex flex-col">
-            
-            {/* App Header Tab Selector */}
-            <div class="bg-[var(--bg-soft)] px-4 py-3 border-b border-[var(--border)] flex flex-wrap items-center justify-between gap-3 text-xs">
-              
-              {/* Tabs */}
-              <div class="flex bg-[var(--bg)] border border-[var(--border)] p-1 rounded-lg">
-                <button 
-                  onClick={() => setActiveTab("overview")}
-                  class={`px-3.5 py-2 rounded-md font-bold transition ${activeTab === "overview" ? 'bg-earth-sage text-white shadow-sm' : 'text-earth-muted hover:text-earth-charcoal'}`}
-                >
-                  Goals & Overview
-                </button>
-                <button 
-                  onClick={() => setActiveTab("budget")}
-                  class={`px-3.5 py-2 rounded-md font-bold transition ${activeTab === "budget" ? 'bg-earth-sage text-white shadow-sm' : 'text-earth-muted hover:text-earth-charcoal'}`}
-                >
-                  Budget Plan
-                </button>
-                <button 
-                  onClick={() => setActiveTab("future")}
-                  class={`px-3.5 py-2 rounded-md font-bold transition ${activeTab === "future" ? 'bg-earth-sage text-white shadow-sm' : 'text-earth-muted hover:text-earth-charcoal'}`}
-                >
-                  Future Estimates
-                </button>
+          {/* Real App Header Bar */}
+          <header class="app-header py-4 px-6">
+            <div class="max-w-[1120px] mx-auto flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <img class="w-8 h-8 rounded" src="./assets/brand/steadyplan-app-icon-1024.png?v=2" alt="SteadyPlan logo">
+                <span class="font-extrabold tracking-tight text-white text-lg">SteadyPlan</span>
               </div>
-
-              {/* Months Strip */}
-              <div class="flex items-center space-x-1 font-mono text-[11px] overflow-x-auto pb-1 sm:pb-0">
-                {["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"].map(m => (
-                  <button 
-                    key={m}
-                    onClick={() => setSelectedMonth(m)}
-                    class={`relative px-2.5 py-1 transition hover:text-earth-charcoal ${selectedMonth === m ? 'text-earth-charcoal font-bold month-active' : 'text-earth-muted'}`}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Active Tab Panels */}
-            <div class="p-6 md:p-8 space-y-6">
               
-              {/* TAB 1: OVERVIEW SCREEN */}
-              {activeTab === "overview" && (
+              {/* Desktop Nav Links */}
+              <nav class="flex items-center space-x-2">
+                <button onClick={() => { setAppView('overview'); setHoveredPoint(null); }} class={appView === 'overview' ? 'active' : ''}>Overview</button>
+                <button onClick={() => { setAppView('performance'); setHoveredPoint(null); }} class={appView === 'performance' ? 'active' : ''}>Performance</button>
+                <button onClick={() => { setAppView('allowances'); setHoveredPoint(null); }} class={appView === 'allowances' ? 'active' : ''}>Allowances</button>
+                <button onClick={() => { setAppView('projections'); setHoveredPoint(null); }} class={appView === 'projections' ? 'active' : ''}>Projections</button>
+                <button onClick={() => { setAppView('budget'); setHoveredPoint(null); }} class={appView === 'budget' ? 'active' : ''}>Budget</button>
+                <button onClick={() => { setAppView('debts'); setHoveredPoint(null); }} class={appView === 'debts' ? 'active' : ''}>Debts</button>
+                <button onClick={() => { setAppView('settings'); setHoveredPoint(null); }} class={appView === 'settings' ? 'active' : ''}>Settings</button>
+              </nav>
+            </div>
+          </header>
+
+          {/* Main App Content Area */}
+          <main class="container max-w-[1120px] mx-auto py-8 px-4 flex-1">
+            <div class="w-full">
+              
+              {/* VIEW 1: OVERVIEW SCREEN */}
+              {appView === "overview" && (
                 <div class="space-y-6">
-                  
-                  {/* Key Metric Blocks */}
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Top Stats Cards */}
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl space-y-1 sandbox-tile">
                       <span class="text-[10px] uppercase font-mono text-earth-muted tracking-wider">Total Combined Assets</span>
-                      <div class="text-3xl font-bold font-mono text-earth-charcoal">£{totalAssets.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                      <p class="text-[11px] text-emerald-700 font-semibold"><i class="fa-solid fa-arrow-up"></i> +£3,882.00 above comparison target</p>
+                      <div class="text-3xl font-bold font-mono text-white">£{totalAssets.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                      <p class="text-[11px] text-emerald-500 font-semibold"><i class="fa-solid fa-arrow-up"></i> +£3,882.00 above comparison target</p>
                     </div>
                     <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl space-y-1 sandbox-tile">
                       <span class="text-[10px] uppercase font-mono text-earth-muted tracking-wider">Monthly Investments Plan</span>
-                      <div class="text-3xl font-bold font-mono text-earth-sage">£{investmentsSavings.toLocaleString()}</div>
-                      <p class="text-[11px] text-earth-muted">Total savings allocation this month</p>
+                      <div class="text-3xl font-bold font-mono text-earth-sage">£{investmentsSavings.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                      <p class="text-[11px] text-earth-muted">Regular automated savings this month</p>
                     </div>
                     <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl space-y-1 sandbox-tile">
                       <span class="text-[10px] uppercase font-mono text-earth-muted tracking-wider">Retirement Forecast</span>
@@ -495,30 +550,28 @@
                   <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
                     <div>
                       <span class="text-xs font-semibold uppercase text-earth-sage tracking-wider font-mono">Liquidity Profile</span>
-                      <h3 class="text-lg font-bold text-earth-charcoal mt-1">Where your money stands right now</h3>
+                      <h3 class="text-lg font-bold text-white mt-1">Where your money stands right now</h3>
                       <p class="text-xs text-earth-muted mt-1 font-sans">See what is cash-accessible now, what invested money is reachable, and what is locked for later.</p>
                     </div>
 
-                    {/* Triple-color Segmented Progress Bar */}
                     <div class="w-full h-3.5 rounded-full bg-[var(--bg-soft)] overflow-hidden flex">
                       <div class="h-full bg-earth-sage" style={{ width: `${(accessibleNow / (totalAssets || 1)) * 100}%` }} title="Accessible"></div>
                       <div class="h-full bg-earth-gold" style={{ width: `${(restricted / (totalAssets || 1)) * 100}%` }} title="Restricted"></div>
-                      <div class="h-full bg-earth-charcoal" style={{ width: `${(lockedForLater / (totalAssets || 1)) * 100}%` }} title="Locked"></div>
+                      <div class="h-full bg-slate-500" style={{ width: `${(lockedForLater / (totalAssets || 1)) * 100}%` }} title="Locked"></div>
                     </div>
 
-                    {/* Legend block matching overview layout */}
                     <div class="grid grid-cols-3 gap-4 text-center border-t border-[var(--border)] pt-4">
                       <div>
                         <span class="text-[10px] font-mono uppercase text-earth-sage block">Accessible Now</span>
-                        <span class="text-sm font-bold font-mono text-earth-charcoal">£{accessibleNow.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+                        <span class="text-sm font-bold font-mono text-white">£{accessibleNow.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
                       </div>
                       <div>
                         <span class="text-[10px] font-mono uppercase text-earth-gold block">Restricted</span>
-                        <span class="text-sm font-bold font-mono text-earth-charcoal">£{restricted.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+                        <span class="text-sm font-bold font-mono text-white">£{restricted.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
                       </div>
                       <div>
-                        <span class="text-[10px] font-mono uppercase text-earth-muted block">Locked For Later</span>
-                        <span class="text-sm font-bold font-mono text-earth-charcoal">£{lockedForLater.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+                        <span class="text-[10px] font-mono uppercase text-slate-400 block">Locked For Later</span>
+                        <span class="text-sm font-bold font-mono text-white">£{lockedForLater.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
                       </div>
                     </div>
                   </div>
@@ -526,18 +579,18 @@
                   {/* Account Balance Editor Cards */}
                   <div class="space-y-4">
                     <div class="flex items-center justify-between">
-                      <h4 class="text-sm font-bold uppercase tracking-wider text-earth-charcoal font-mono">Dynamic Account Balances</h4>
-                      <span class="text-xs text-earth-muted font-mono">{accounts.length} accounts</span>
+                      <h4 class="text-sm font-bold uppercase tracking-wider text-white font-mono">Dynamic Account Balances</h4>
+                      <span class="text-xs text-earth-muted font-mono">{accounts.length} active accounts</span>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                       {accounts.map(acc => (
                         <div key={acc.id} class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl flex flex-col justify-between space-y-4 sandbox-tile">
                           <div>
                             <div class="flex justify-between items-start">
-                              <h5 class="font-bold text-earth-charcoal text-base leading-tight">{acc.name}</h5>
+                              <h5 class="font-bold text-white text-base leading-tight">{acc.name}</h5>
                               <span class={`text-[10px] px-2.5 py-0.5 rounded font-mono ${
                                 acc.type === 'Accessible' ? 'bg-[var(--accent-wash)] text-earth-sage' :
-                                acc.type === 'Restricted' ? 'bg-amber-500/10 text-amber-600' : 'bg-slate-500/10 text-slate-600'
+                                acc.type === 'Restricted' ? 'bg-amber-500/10 text-amber-500' : 'bg-slate-500/10 text-slate-400'
                               }`}>
                                 {acc.type}
                               </span>
@@ -552,7 +605,7 @@
                                 type="number" 
                                 value={acc.balance} 
                                 onChange={(e) => handleAccountBalanceChange(acc.id, e.target.value)}
-                                class="w-full pl-7 pr-3 py-1.5 rounded-lg text-sm font-bold focus:outline-none font-mono text-earth-charcoal"
+                                class="w-full pl-7 pr-3 py-1.5 rounded-lg text-sm font-bold focus:outline-none font-mono text-white"
                               />
                             </div>
                           </div>
@@ -563,20 +616,19 @@
 
                   {/* Target Goals */}
                   <div class="space-y-4 pt-4 border-t border-[var(--border)]">
-                    <h4 class="text-sm font-bold uppercase tracking-wider text-earth-charcoal font-mono">Active Targets</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      
+                    <h4 class="text-sm font-bold uppercase tracking-wider text-white font-mono">Active Target Goals</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl flex flex-col justify-between space-y-4 sandbox-tile">
                         <div>
                           <div class="flex justify-between items-start">
-                            <h5 class="font-bold text-earth-charcoal text-sm">Retirement Goal</h5>
+                            <h5 class="font-bold text-white text-sm">Retirement Goal</h5>
                             <span class="text-xs text-earth-muted bg-[var(--bg)] border border-[var(--border)] px-2 py-0.5 rounded font-mono">{(totalAssets / 1000000 * 100).toFixed(1)}%</span>
                           </div>
                           <p class="text-[11px] text-earth-muted mt-1">SIPP/ISAs included</p>
                         </div>
                         <div class="space-y-2">
                           <div class="flex justify-between text-xs font-mono">
-                            <span class="text-earth-charcoal font-bold">£{Math.round(totalAssets).toLocaleString()}</span>
+                            <span class="text-white font-bold">£{Math.round(totalAssets).toLocaleString()}</span>
                             <span class="text-earth-muted">/ £1,000,000</span>
                           </div>
                           <div class="w-full bg-[var(--bg)] border border-[var(--border)] rounded-full h-2 overflow-hidden">
@@ -588,14 +640,14 @@
                       <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl flex flex-col justify-between space-y-4 sandbox-tile">
                         <div>
                           <div class="flex justify-between items-start">
-                            <h5 class="font-bold text-earth-charcoal text-sm">Emergency Fund</h5>
+                            <h5 class="font-bold text-white text-sm">Emergency Fund</h5>
                             <span class="text-xs text-earth-muted bg-[var(--bg)] border border-[var(--border)] px-2 py-0.5 rounded font-mono">{(accessibleNow / 20000 * 100).toFixed(1)}%</span>
                           </div>
-                          <p class="text-[11px] text-earth-muted mt-1">Accessible accounts included</p>
+                          <p class="text-[11px] text-earth-muted mt-1">Accessible savings</p>
                         </div>
                         <div class="space-y-2">
                           <div class="flex justify-between text-xs font-mono">
-                            <span class="text-earth-charcoal font-bold">£{Math.round(accessibleNow).toLocaleString()}</span>
+                            <span class="text-white font-bold">£{Math.round(accessibleNow).toLocaleString()}</span>
                             <span class="text-earth-muted">/ £20,000</span>
                           </div>
                           <div class="w-full bg-[var(--bg)] border border-[var(--border)] rounded-full h-2 overflow-hidden">
@@ -607,194 +659,254 @@
                       <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl flex flex-col justify-between space-y-4 sandbox-tile">
                         <div>
                           <div class="flex justify-between items-start">
-                            <h5 class="font-bold text-earth-charcoal text-sm">100k Club</h5>
-                            <span class="text-xs text-earth-muted bg-[var(--bg)] border border-[var(--border)] px-2 py-0.5 rounded font-mono">{(totalAssets / 100000 * 100).toFixed(1)}%</span>
+                            <h5 class="font-bold text-white text-sm">ISA Target</h5>
+                            <span class="text-xs text-earth-muted bg-[var(--bg)] border border-[var(--border)] px-2 py-0.5 rounded font-mono">{(accessibleNow / 100000 * 100).toFixed(1)}%</span>
                           </div>
-                          <p class="text-[11px] text-earth-muted mt-1">ISA accounts included</p>
+                          <p class="text-[11px] text-earth-muted mt-1">100k Club tracker</p>
                         </div>
                         <div class="space-y-2">
                           <div class="flex justify-between text-xs font-mono">
-                            <span class="text-earth-charcoal font-bold">£{Math.round(totalAssets).toLocaleString()}</span>
+                            <span class="text-white font-bold">£{Math.round(accessibleNow).toLocaleString()}</span>
                             <span class="text-earth-muted">/ £100,000</span>
                           </div>
                           <div class="w-full bg-[var(--bg)] border border-[var(--border)] rounded-full h-2 overflow-hidden">
-                            <div class="bg-earth-sage h-full" style={{ width: `${Math.min(100, (totalAssets / 100000 * 100))}%` }}></div>
+                            <div class="bg-earth-sage h-full" style={{ width: `${Math.min(100, (accessibleNow / 100000 * 100))}%` }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* VIEW 2: PERFORMANCE (NEW SCREEN) */}
+              {appView === "performance" && (
+                <div class="space-y-6">
+                  {/* Historical Asset Chart Card */}
+                  <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                    <div class="flex justify-between items-center text-xs uppercase tracking-wider font-mono text-earth-muted">
+                      <span>Historical Net Worth History (12 Months)</span>
+                      <span class="text-earth-sage font-bold">Current Net Worth: £{netWorth.toLocaleString()}</span>
+                    </div>
+
+                    <div class="h-64 w-full relative pt-2 select-none">
+                      <svg 
+                        ref={svgRef}
+                        onMouseMove={handleHistMouseMove}
+                        onMouseLeave={() => setHoveredPoint(null)}
+                        class="w-full h-full overflow-visible cursor-crosshair" 
+                        viewBox="0 0 500 150" 
+                        preserveAspectRatio="none"
+                      >
+                        <defs>
+                          <linearGradient id="perfCurveGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.35" />
+                            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.0" />
+                          </linearGradient>
+                        </defs>
+
+                        {/* Guidelines */}
+                        <line x1="0" y1="30" x2="500" y2="30" stroke="var(--border)" stroke-dasharray="3,3" />
+                        <line x1="0" y1="70" x2="500" y2="70" stroke="var(--border)" stroke-dasharray="3,3" />
+                        <line x1="0" y1="110" x2="500" y2="110" stroke="var(--border)" stroke-dasharray="3,3" />
+
+                        {performanceHistory.length > 0 && (
+                          <>
+                            {/* Area Fill */}
+                            <path
+                              d={`
+                                M 0,150
+                                ${performanceHistory.map((p, index) => {
+                                  const x = (index / (performanceHistory.length - 1)) * 500;
+                                  const maxVal = Math.max(...performanceHistory.map(p => p.value));
+                                  const minVal = Math.min(...performanceHistory.map(p => p.value)) * 0.95;
+                                  const ratio = (p.value - minVal) / ((maxVal - minVal) || 1);
+                                  const y = 150 - (ratio * 100) - 20;
+                                  return `L ${x},${y}`;
+                                }).join(" ")}
+                                L 500,150 Z
+                              `}
+                              fill="url(#perfCurveGrad)"
+                            />
+
+                            {/* Line Stroke */}
+                            <path
+                              d={performanceHistory.map((p, index) => {
+                                const x = (index / (performanceHistory.length - 1)) * 500;
+                                const maxVal = Math.max(...performanceHistory.map(p => p.value));
+                                const minVal = Math.min(...performanceHistory.map(p => p.value)) * 0.95;
+                                const ratio = (p.value - minVal) / ((maxVal - minVal) || 1);
+                                const y = 150 - (ratio * 100) - 20;
+                                return `${index === 0 ? 'M' : 'L'} ${x},${y}`;
+                              }).join(" ")}
+                              fill="none"
+                              stroke="var(--accent)"
+                              stroke-width="2.5"
+                            />
+                          </>
+                        )}
+                      </svg>
+
+                      {/* Tooltip */}
+                      {hoveredPoint ? (
+                        <div 
+                          class="absolute bg-[var(--bg-soft)] text-white p-3 rounded-xl shadow-lg border border-[var(--border)] pointer-events-none text-xs space-y-1 z-10"
+                          style={{
+                            left: `${Math.min(80, Math.max(5, hoveredPoint.pctX - 10))}%`,
+                            top: `10px`
+                          }}
+                        >
+                          <div class="text-[9px] uppercase font-bold text-earth-muted font-mono tracking-wider">{hoveredPoint.month} Net Worth</div>
+                          <div class="text-sm font-black">£{hoveredPoint.value.toLocaleString()}</div>
+                        </div>
+                      ) : (
+                        <div class="absolute top-2 right-2 text-[10px] text-earth-muted font-bold font-mono">
+                          Hover to inspect month-by-month net worth
+                        </div>
+                      )}
+                    </div>
+
+                    {/* X-axis labels */}
+                    <div class="flex justify-between text-[10px] font-mono text-earth-muted px-2 pt-2 border-t border-[var(--border)]">
+                      {performanceHistory.map(p => <span key={p.month}>{p.month}</span>)}
+                    </div>
+                  </div>
+
+                  {/* Asset Allocation Breakdown */}
+                  <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                    <h4 class="text-sm font-bold uppercase tracking-wider text-white font-mono">Portfolio Allocations</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div class="bg-[var(--bg-soft)] p-4 rounded-xl space-y-1">
+                        <span class="text-[10px] text-earth-muted font-mono uppercase block">Equities / ETFs</span>
+                        <div class="text-lg font-bold text-white">£{(totalAssets * 0.70).toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+                        <div class="w-full bg-[var(--border)] h-1.5 rounded-full overflow-hidden mt-2">
+                          <div class="h-full bg-earth-sage" style={{ width: '70%' }}></div>
+                        </div>
+                        <span class="text-[9px] text-earth-muted block mt-1">70% Target Exposure</span>
+                      </div>
+                      <div class="bg-[var(--bg-soft)] p-4 rounded-xl space-y-1">
+                        <span class="text-[10px] text-earth-muted font-mono uppercase block">Cash Pot / HYS</span>
+                        <div class="text-lg font-bold text-white">£{(totalAssets * 0.20).toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+                        <div class="w-full bg-[var(--border)] h-1.5 rounded-full overflow-hidden mt-2">
+                          <div class="h-full bg-earth-gold" style={{ width: '20%' }}></div>
+                        </div>
+                        <span class="text-[9px] text-earth-muted block mt-1">20% Target Exposure</span>
+                      </div>
+                      <div class="bg-[var(--bg-soft)] p-4 rounded-xl space-y-1">
+                        <span class="text-[10px] text-earth-muted font-mono uppercase block">Bonds & Gilts</span>
+                        <div class="text-lg font-bold text-white">£{(totalAssets * 0.10).toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+                        <div class="w-full bg-[var(--border)] h-1.5 rounded-full overflow-hidden mt-2">
+                          <div class="h-full bg-slate-500" style={{ width: '10%' }}></div>
+                        </div>
+                        <span class="text-[9px] text-earth-muted block mt-1">10% Target Exposure</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* VIEW 3: ALLOWANCES (NEW SCREEN) */}
+              {appView === "allowances" && (
+                <div class="space-y-6">
+                  <div class="text-center max-w-xl mx-auto py-2">
+                    <h3 class="text-xl font-extrabold text-white">UK Tax Year Allowances</h3>
+                    <p class="text-xs text-earth-muted mt-1">Track progress towards key annual limits. Demo values based on active monthly budget contributions.</p>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* ISA Allowance Card */}
+                    <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-5 sandbox-tile flex flex-col justify-between">
+                      <div>
+                        <div class="flex justify-between items-start">
+                          <div>
+                            <h4 class="text-base font-bold text-white">Individual Savings Account (ISA)</h4>
+                            <p class="text-xs text-earth-muted mt-0.5">Annual tax-free growth container limit</p>
+                          </div>
+                          <span class="text-[10px] uppercase font-mono font-bold text-earth-sage bg-[var(--accent-wash)] border border-[var(--border)] px-2 py-0.5 rounded">
+                            {(12350 / 20000 * 100).toFixed(1)}% Used
+                          </span>
+                        </div>
+                        
+                        <div class="space-y-2 mt-6">
+                          <div class="flex justify-between text-xs font-mono">
+                            <span class="text-white font-bold">£12,350.00 Contributed</span>
+                            <span class="text-earth-muted">/ £20,000.00 Limit</span>
+                          </div>
+                          <div class="w-full bg-[var(--bg)] border border-[var(--border)] rounded-full h-3 overflow-hidden">
+                            <div class="bg-earth-sage h-full" style={{ width: `${(12350 / 20000 * 100)}%` }}></div>
                           </div>
                         </div>
                       </div>
 
+                      <div class="border-t border-[var(--border)] pt-4 text-xs space-y-2 font-sans">
+                        <div class="flex justify-between text-earth-muted">
+                          <span>Remaining Allowance:</span>
+                          <span class="font-mono text-white font-bold">£7,650.00</span>
+                        </div>
+                        <div class="flex justify-between text-earth-muted">
+                          <span>Projected Monthly Contribution:</span>
+                          <span class="font-mono text-earth-sage font-bold">£{simulationInputs.stocksMonthly.toLocaleString()} / mo</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pension Allowance Card */}
+                    <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-5 sandbox-tile flex flex-col justify-between">
+                      <div>
+                        <div class="flex justify-between items-start">
+                          <div>
+                            <h4 class="text-base font-bold text-white">Pension Annual Allowance</h4>
+                            <p class="text-xs text-earth-muted mt-0.5">Annual tax-relieved retirement contribution limit</p>
+                          </div>
+                          <span class="text-[10px] uppercase font-mono font-bold text-earth-gold bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
+                            {(32950 / 60000 * 100).toFixed(1)}% Used
+                          </span>
+                        </div>
+                        
+                        <div class="space-y-2 mt-6">
+                          <div class="flex justify-between text-xs font-mono">
+                            <span class="text-white font-bold">£32,950.00 Contributed</span>
+                            <span class="text-earth-muted">/ £60,000.00 Limit</span>
+                          </div>
+                          <div class="w-full bg-[var(--bg)] border border-[var(--border)] rounded-full h-3 overflow-hidden">
+                            <div class="bg-earth-gold h-full" style={{ width: `${(32950 / 60000 * 100)}%` }}></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="border-t border-[var(--border)] pt-4 text-xs space-y-2 font-sans">
+                        <div class="flex justify-between text-earth-muted">
+                          <span>Remaining Allowance:</span>
+                          <span class="font-mono text-white font-bold">£27,050.00</span>
+                        </div>
+                        <div class="flex justify-between text-earth-muted">
+                          <span>Projected Monthly Contribution:</span>
+                          <span class="font-mono text-earth-gold font-bold">£{simulationInputs.t212Monthly.toLocaleString()} / mo</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-
                 </div>
               )}
 
-              {/* TAB 2: BUDGET PLAN */}
-              {activeTab === "budget" && (
+              {/* VIEW 4: PROJECTIONS SCREEN */}
+              {appView === "projections" && (
                 <div class="space-y-6">
-                  
-                  {/* What-If Simulation Module */}
-                  <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                      <div>
-                        <span class="text-[10px] font-mono uppercase text-earth-rust tracking-widest block">Simulation Mode Only</span>
-                        <h3 class="text-lg font-bold text-earth-charcoal mt-1">Budget What-If Analysis</h3>
-                        <p class="text-xs text-earth-muted">Play with parameters without writing directly to your permanent local databases.</p>
-                      </div>
-                      <button onClick={() => {
-                        setSimulationInputs({
-                          rent: 850.00, mobile: 15.00, internet: 35.00, travel: 120.00, cloud: 10.00, subscriptions: 20.00, ai: 25.00,
-                          netwestCC: 150.00, stocksMonthly: 400.00, lisaMonthly: 100.00, investEngineMonthly: 200.00, bondsMonthly: 100.00,
-                          t212Monthly: 300.00, cashParkMonthly: 0.00, goingOut: 250.00
-                        });
-                        setIncome(3500.00);
-                        setFixedExpenses(1200.00);
-                        setDebtRepayment(150.00);
-                        setInvestmentsSavings(1100.00);
-                      }} class="text-xs font-mono font-bold bg-[var(--bg)] hover:bg-[var(--border)] text-earth-charcoal border border-[var(--border)] px-3 py-1.5 rounded transition cursor-pointer">
-                        Reset Scenario
-                      </button>
-                    </div>
-
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-4 border-t border-[var(--border)] text-center font-mono">
-                      <div>
-                        <span class="text-[10px] text-earth-muted uppercase">Take-Home Income</span>
-                        <p class="text-base font-bold text-earth-sage mt-0.5">£{monthlyIncome.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <span class="text-[10px] text-earth-muted uppercase">Fixed Expenses</span>
-                        <p class="text-base font-bold text-earth-charcoal mt-0.5">£{fixedExpenses.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <span class="text-[10px] text-earth-muted uppercase">Savings / Growth</span>
-                        <p class="text-base font-bold text-earth-sage mt-0.5">£{investmentsSavings.toLocaleString()}</p>
-                      </div>
-                      <div>
-                        <span class="text-[10px] text-earth-muted uppercase">Discretionary</span>
-                        <p class="text-base font-bold text-earth-gold mt-0.5">£{discretionary.toLocaleString()}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Interactive Parameter Blocks */}
-                  <div class="space-y-4">
-                    
-                    {/* Income Block */}
-                    <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl sandbox-tile">
-                      <div class="flex justify-between items-center mb-3">
-                        <span class="text-xs font-mono uppercase text-earth-sage font-bold">Income</span>
-                        <span class="text-xs text-earth-muted font-mono">£{monthlyIncome.toLocaleString()} / mo</span>
-                      </div>
-                      <label class="block text-xs text-earth-charcoal font-medium mb-1.5">Monthly Take-Home Pay</label>
-                      <input 
-                        type="range"
-                        min="1000"
-                        max="8000"
-                        step="50"
-                        value={monthlyIncome}
-                        onChange={(e) => setIncome(parseFloat(e.target.value))}
-                        class="w-full accent-earth-sage rounded-lg appearance-none h-1.5 cursor-pointer bg-[var(--border)]"
-                      />
-                    </div>
-
-                    {/* Fixed Expenses Group */}
-                    <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl space-y-4 sandbox-tile">
-                      <div class="flex justify-between items-center border-b border-[var(--border)] pb-2">
-                        <span class="text-xs font-mono uppercase text-earth-charcoal font-bold">Fixed Expenses</span>
-                        <span class="text-xs text-earth-muted font-mono">£{fixedExpenses.toLocaleString()} / mo</span>
-                      </div>
-                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label class="block text-[11px] text-earth-muted mb-1">Rent / Housing</label>
-                          <input 
-                            type="number" 
-                            value={simulationInputs.rent}
-                            onChange={(e) => handleSimChange('rent', e.target.value)}
-                            class="w-full rounded p-2 text-sm text-earth-charcoal font-mono focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label class="block text-[11px] text-earth-muted mb-1">Work Travel</label>
-                          <input 
-                            type="number" 
-                            value={simulationInputs.travel}
-                            onChange={(e) => handleSimChange('travel', e.target.value)}
-                            class="w-full rounded p-2 text-sm text-earth-charcoal font-mono focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label class="block text-[11px] text-earth-muted mb-1">AI Subscriptions</label>
-                          <input 
-                            type="number" 
-                            value={simulationInputs.ai}
-                            onChange={(e) => handleSimChange('ai', e.target.value)}
-                            class="w-full rounded p-2 text-sm text-earth-charcoal font-mono focus:outline-none"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Investment Allocation Group */}
-                    <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl space-y-4 sandbox-tile">
-                      <div class="flex justify-between items-center border-b border-[var(--border)] pb-2">
-                        <span class="text-xs font-mono uppercase text-earth-sage font-bold">Investments & Savings</span>
-                        <span class="text-xs text-earth-muted font-mono">£{investmentsSavings.toLocaleString()} / mo</span>
-                      </div>
-                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <label class="block text-[11px] text-earth-muted mb-1">Stocks & Shares ISA</label>
-                          <input 
-                            type="number" 
-                            value={simulationInputs.stocksMonthly}
-                            onChange={(e) => handleSimChange('stocksMonthly', e.target.value)}
-                            class="w-full rounded p-2 text-sm text-earth-charcoal font-mono focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label class="block text-[11px] text-earth-muted mb-1">Trading 212 SIPP</label>
-                          <input 
-                            type="number" 
-                            value={simulationInputs.t212Monthly}
-                            onChange={(e) => handleSimChange('t212Monthly', e.target.value)}
-                            class="w-full rounded p-2 text-sm text-earth-charcoal font-mono focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label class="block text-[11px] text-earth-muted mb-1">Cash-Park ISA</label>
-                          <input 
-                            type="number" 
-                            value={simulationInputs.cashParkMonthly}
-                            onChange={(e) => handleSimChange('cashParkMonthly', e.target.value)}
-                            class="w-full rounded p-2 text-sm text-earth-charcoal font-mono focus:outline-none"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-
-                </div>
-              )}
-
-              {/* TAB 3: FUTURE ESTIMATES SCREEN */}
-              {activeTab === "future" && (
-                <div class="space-y-6">
-                  
-                  {/* Key parameter adjustments */}
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl text-center sandbox-tile">
+                  {/* Parameter adjustment controls */}
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl text-center sandbox-tile">
                     <div>
                       <span class="text-[10px] text-earth-muted font-mono uppercase">Target Retirement Age</span>
                       <div class="flex items-center justify-center space-x-2 mt-2">
                         <button 
                           onClick={() => setRetirementAge(prev => Math.max(currentAge + 1, prev - 1))}
-                          class="w-7 h-7 rounded text-sm text-earth-charcoal font-bold transition border cursor-pointer"
+                          class="w-8 h-8 rounded text-sm text-white font-bold transition border border-[var(--border)] hover:bg-[var(--bg-soft)] cursor-pointer"
                         >
                           -
                         </button>
-                        <span class="font-mono text-lg font-bold text-earth-charcoal">{retirementAge}</span>
+                        <span class="font-mono text-lg font-bold text-white">{retirementAge}</span>
                         <button 
                           onClick={() => setRetirementAge(prev => prev + 1)}
-                          class="w-7 h-7 rounded text-sm text-earth-charcoal font-bold transition border cursor-pointer"
+                          class="w-8 h-8 rounded text-sm text-white font-bold transition border border-[var(--border)] hover:bg-[var(--bg-soft)] cursor-pointer"
                         >
                           +
                         </button>
@@ -805,14 +917,14 @@
                       <div class="flex items-center justify-center space-x-2 mt-2">
                         <button 
                           onClick={() => setYearlyGrowth(prev => Math.max(1, prev - 0.5))}
-                          class="w-7 h-7 rounded text-sm text-earth-charcoal font-bold transition border cursor-pointer"
+                          class="w-8 h-8 rounded text-sm text-white font-bold transition border border-[var(--border)] hover:bg-[var(--bg-soft)] cursor-pointer"
                         >
                           -
                         </button>
-                        <span class="font-mono text-lg font-bold text-earth-charcoal">{yearlyGrowth.toFixed(1)}%</span>
+                        <span class="font-mono text-lg font-bold text-white">{yearlyGrowth.toFixed(1)}%</span>
                         <button 
                           onClick={() => setYearlyGrowth(prev => prev + 0.5)}
-                          class="w-7 h-7 rounded text-sm text-earth-charcoal font-bold transition border cursor-pointer"
+                          class="w-8 h-8 rounded text-sm text-white font-bold transition border border-[var(--border)] hover:bg-[var(--bg-soft)] cursor-pointer"
                         >
                           +
                         </button>
@@ -820,33 +932,26 @@
                     </div>
                     <div>
                       <span class="text-[10px] text-earth-muted font-mono uppercase">Years To Compound</span>
-                      <div class="text-lg font-bold font-mono text-earth-charcoal mt-3">{yearsToRetirement} Years</div>
+                      <div class="text-lg font-bold font-mono text-white mt-3">{yearsToRetirement} Years</div>
                     </div>
                   </div>
 
-                  {/* Chart Container */}
+                  {/* Curve estimation */}
                   <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
                     <div class="flex justify-between items-center text-xs uppercase tracking-wider font-mono text-earth-muted">
-                      <span>Future Projections Over Time</span>
-                      <span class="text-earth-sage font-bold">Target Value: £{futureEstimateTotal.toLocaleString()}</span>
+                      <span>Future Retirement Forecast Over Time</span>
+                      <span class="text-earth-sage font-bold">Projected Total: £{futureEstimateTotal.toLocaleString()}</span>
                     </div>
 
                     <div class="h-64 w-full relative pt-2 select-none">
                       <svg 
                         ref={svgRef}
-                        onMouseMove={handleMouseMove}
-                        onMouseLeave={handleMouseLeave}
+                        onMouseMove={handleProjMouseMove}
+                        onMouseLeave={() => setHoveredPoint(null)}
                         class="w-full h-full overflow-visible cursor-crosshair" 
                         viewBox="0 0 500 150" 
                         preserveAspectRatio="none"
                       >
-                        <defs>
-                          <linearGradient id="futureCurveGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.35" />
-                            <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.0" />
-                          </linearGradient>
-                        </defs>
-
                         {/* Guidelines */}
                         <line x1="0" y1="37" x2="500" y2="37" stroke="var(--border)" stroke-dasharray="3,3" />
                         <line x1="0" y1="75" x2="500" y2="75" stroke="var(--border)" stroke-dasharray="3,3" />
@@ -854,7 +959,7 @@
 
                         {projectionPoints.length > 0 && (
                           <>
-                            {/* Gradient Area Fill */}
+                            {/* Area fill */}
                             <path
                               d={`
                                 M 0,150
@@ -866,42 +971,40 @@
                                 }).join(" ")}
                                 L 500,150 Z
                               `}
-                              fill="url(#futureCurveGrad)"
-                              class="transition-all duration-300 ease-out"
+                              fill="url(#perfCurveGrad)"
                             />
 
-                            {/* Curve Stroke */}
+                            {/* Curve line */}
                             <path
                               d={projectionPoints.map((p, index) => {
                                 const x = (index / (projectionPoints.length - 1)) * 500;
-                                  const ratio = p.amount / (futureEstimateTotal || 1);
+                                const ratio = p.amount / (futureEstimateTotal || 1);
                                 const y = 150 - (ratio * 120) - 10;
                                 return `${index === 0 ? 'M' : 'L'} ${x},${y}`;
                               }).join(" ")}
                               fill="none"
                               stroke="var(--accent)"
                               stroke-width="2.5"
-                              class="transition-all duration-300 ease-out"
                             />
                           </>
                         )}
                       </svg>
 
-                      {/* Hover Tooltip Details */}
+                      {/* Projections Tooltip */}
                       {hoveredPoint ? (
                         <div 
-                          class="absolute bg-[var(--bg-soft)] text-earth-charcoal p-3 rounded-xl shadow-lg border border-[var(--border)] pointer-events-none text-xs space-y-1 z-10"
+                          class="absolute bg-[var(--bg-soft)] text-white p-3 rounded-xl shadow-lg border border-[var(--border)] pointer-events-none text-xs space-y-1 z-10"
                           style={{
                             left: `${Math.min(80, Math.max(5, hoveredPoint.pctX - 10))}%`,
                             top: `10px`
                           }}
                         >
-                          <div class="text-[9px] uppercase font-bold text-earth-muted tracking-wider">Age {hoveredPoint.age} Forecast</div>
+                          <div class="text-[9px] uppercase font-bold text-earth-muted tracking-wider">Age {hoveredPoint.age} Projected</div>
                           <div class="text-sm font-black">£{hoveredPoint.amount.toLocaleString()}</div>
                         </div>
                       ) : (
                         <div class="absolute top-2 right-2 text-[10px] text-earth-muted font-bold font-mono">
-                          Hover over the graph to inspect years
+                          Hover to inspect future years
                         </div>
                       )}
                     </div>
@@ -909,9 +1012,254 @@
                 </div>
               )}
 
-            </div>
+              {/* VIEW 5: BUDGET SCREEN */}
+              {appView === "budget" && (
+                <div class="space-y-6">
+                  {/* Budget dashboard */}
+                  <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div>
+                        <span class="text-[10px] font-mono uppercase text-earth-rust tracking-widest block font-bold">What-If Allocations</span>
+                        <h3 class="text-lg font-bold text-white mt-1">Budget Planner Sandbox</h3>
+                        <p class="text-xs text-earth-muted">Model income distribution. Changes reflect instantly in Overview projections.</p>
+                      </div>
+                      <button onClick={() => {
+                        setSimulationInputs({
+                          rent: 850.00, mobile: 15.00, internet: 35.00, travel: 120.00, cloud: 10.00, subscriptions: 20.00, ai: 25.00,
+                          netwestCC: 150.00, stocksMonthly: 400.00, lisaMonthly: 100.00, investEngineMonthly: 200.00, bondsMonthly: 100.00,
+                          t212Monthly: 300.00, cashParkMonthly: 0.00, goingOut: 250.00
+                        });
+                        setIncome(3500.00);
+                        setFixedExpenses(1200.00);
+                        setDebtRepayment(150.00);
+                        setInvestmentsSavings(1100.00);
+                      }} class="text-xs font-mono font-bold bg-[var(--bg)] hover:bg-[var(--border)] text-white border border-[var(--border)] px-3 py-1.5 rounded transition cursor-pointer">
+                        Reset Scenario
+                      </button>
+                    </div>
 
-          </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-4 border-t border-[var(--border)] text-center font-mono">
+                      <div>
+                        <span class="text-[10px] text-earth-muted uppercase block">Income</span>
+                        <span class="text-base font-bold text-earth-sage mt-1 block">£{monthlyIncome.toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <span class="text-[10px] text-earth-muted uppercase block">Fixed Bills</span>
+                        <span class="text-base font-bold text-white mt-1 block">£{fixedExpenses.toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <span class="text-[10px] text-earth-muted uppercase block">Monthly Savings</span>
+                        <span class="text-base font-bold text-earth-sage mt-1 block">£{investmentsSavings.toLocaleString()}</span>
+                      </div>
+                      <div>
+                        <span class="text-[10px] text-earth-muted uppercase block">Discretionary</span>
+                        <span class="text-base font-bold text-earth-gold mt-1 block">£{discretionary.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Parameters */}
+                  <div class="space-y-4">
+                    <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl sandbox-tile">
+                      <div class="flex justify-between items-center mb-3">
+                        <span class="text-xs font-mono uppercase text-earth-sage font-bold">Monthly Take-Home Pay</span>
+                        <span class="text-xs text-white font-mono">£{monthlyIncome.toLocaleString()}</span>
+                      </div>
+                      <input 
+                        type="range"
+                        min="1000"
+                        max="8000"
+                        step="50"
+                        value={monthlyIncome}
+                        onChange={(e) => setIncome(parseFloat(e.target.value))}
+                        class="w-full accent-earth-sage rounded-lg appearance-none h-1.5 cursor-pointer bg-[var(--border)]"
+                      />
+                    </div>
+
+                    <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl space-y-4 sandbox-tile">
+                      <div class="flex justify-between items-center border-b border-[var(--border)] pb-2">
+                        <span class="text-xs font-mono uppercase text-white font-bold">Fixed Expenses Breakdown</span>
+                        <span class="text-xs text-earth-muted font-mono">£{fixedExpenses.toLocaleString()} / mo</span>
+                      </div>
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label class="block text-[11px] text-earth-muted mb-1">Rent / Mortgage</label>
+                          <input type="number" value={simulationInputs.rent} onChange={(e) => handleSimChange('rent', e.target.value)} class="w-full rounded p-2 text-sm text-white font-mono focus:outline-none" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] text-earth-muted mb-1">Travel / Commute</label>
+                          <input type="number" value={simulationInputs.travel} onChange={(e) => handleSimChange('travel', e.target.value)} class="w-full rounded p-2 text-sm text-white font-mono focus:outline-none" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] text-earth-muted mb-1">AI & Cloud Subs</label>
+                          <input type="number" value={simulationInputs.ai} onChange={(e) => handleSimChange('ai', e.target.value)} class="w-full rounded p-2 text-sm text-white font-mono focus:outline-none" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl space-y-4 sandbox-tile">
+                      <div class="flex justify-between items-center border-b border-[var(--border)] pb-2">
+                        <span class="text-xs font-mono uppercase text-earth-sage font-bold">Savings & Investments Breakdown</span>
+                        <span class="text-xs text-earth-muted font-mono">£{investmentsSavings.toLocaleString()} / mo</span>
+                      </div>
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label class="block text-[11px] text-earth-muted mb-1">Stocks & Shares ISA</label>
+                          <input type="number" value={simulationInputs.stocksMonthly} onChange={(e) => handleSimChange('stocksMonthly', e.target.value)} class="w-full rounded p-2 text-sm text-white font-mono focus:outline-none" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] text-earth-muted mb-1">Pension Contributions</label>
+                          <input type="number" value={simulationInputs.t212Monthly} onChange={(e) => handleSimChange('t212Monthly', e.target.value)} class="w-full rounded p-2 text-sm text-white font-mono focus:outline-none" />
+                        </div>
+                        <div>
+                          <label class="block text-[11px] text-earth-muted mb-1">Emergency Fund Pot</label>
+                          <input type="number" value={simulationInputs.investEngineMonthly} onChange={(e) => handleSimChange('investEngineMonthly', e.target.value)} class="w-full rounded p-2 text-sm text-white font-mono focus:outline-none" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* VIEW 6: DEBTS SCREEN (NEW SCREEN) */}
+              {appView === "debts" && (
+                <div class="space-y-6">
+                  <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                    <div>
+                      <span class="text-xs font-semibold uppercase text-earth-rust tracking-wider font-mono">Active Debts</span>
+                      <h3 class="text-lg font-bold text-white mt-1">Debt Payoff Timeline</h3>
+                      <p class="text-xs text-earth-muted mt-1">Track outstanding balances and interest rates to calculate clear payoff timelines.</p>
+                    </div>
+
+                    <div class="w-full h-3 rounded-full bg-[var(--bg-soft)] overflow-hidden">
+                      <div class="h-full bg-earth-rust" style={{ width: `${(totalDebts / 10000 * 100)}%` }} title="Total Debts"></div>
+                    </div>
+
+                    <div class="flex justify-between text-xs font-mono text-earth-muted pt-2 border-t border-[var(--border)]">
+                      <span>Total Debt: £{totalDebts.toLocaleString()}</span>
+                      <span>Target Zero: {(totalDebts / (debtRepayment || 1)).toFixed(0)} Months</span>
+                    </div>
+                  </div>
+
+                  {/* Debts list */}
+                  <div class="space-y-4">
+                    <h4 class="text-sm font-bold uppercase tracking-wider text-white font-mono">Manage Sandbox Debts</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {debts.map(d => (
+                        <div key={d.id} class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl flex flex-col justify-between space-y-4 sandbox-tile">
+                          <div class="flex justify-between items-start">
+                            <div>
+                              <h5 class="font-bold text-white text-base leading-tight">{d.name}</h5>
+                              <p class="text-xs text-earth-muted mt-1 font-mono">{d.rate}% APR</p>
+                            </div>
+                          </div>
+                          <div>
+                            <label class="block text-[10px] uppercase font-bold text-earth-muted mb-1.5">Remaining Balance</label>
+                            <div class="relative">
+                              <span class="absolute left-3 top-2 text-sm text-earth-muted font-bold">£</span>
+                              <input 
+                                type="number" 
+                                value={d.balance} 
+                                onChange={(e) => handleDebtBalanceChange(d.id, e.target.value)}
+                                class="w-full pl-7 pr-3 py-1.5 rounded-lg text-sm font-bold focus:outline-none font-mono text-white"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* VIEW 7: SETTINGS SCREEN */}
+              {appView === "settings" && (
+                <div class="space-y-6">
+                  {/* Settings overview */}
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                      <h4 class="text-base font-bold text-white font-mono"><i class="fa-solid fa-server mr-2 text-earth-sage"></i>Self-Hosted Safety Checklist</h4>
+                      <ul class="space-y-2 text-xs text-earth-muted font-sans mt-2">
+                        <li class="flex items-center space-x-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> <span>SQLite database storage active</span></li>
+                        <li class="flex items-center space-x-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> <span>HTTPS and Reverse Proxy connection secure</span></li>
+                        <li class="flex items-center space-x-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> <span>Auto-backup commit scheduler active</span></li>
+                      </ul>
+                    </div>
+
+                    <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                      <h4 class="text-base font-bold text-white font-mono"><i class="fa-solid fa-plug mr-2 text-earth-gold"></i>API Integrations (Simulated)</h4>
+                      <div class="space-y-3 text-xs">
+                        <div class="flex justify-between items-center bg-[var(--bg-soft)] p-3 rounded-lg border border-[var(--border)]">
+                          <div>
+                            <p class="font-bold text-white">Trading 212 Sync</p>
+                            <p class="text-[10px] text-earth-muted mt-0.5">Automated cash/holdings retrieve</p>
+                          </div>
+                          <span class="text-[9px] uppercase font-mono text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">CONNECTED</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-[var(--bg-soft)] p-3 rounded-lg border border-[var(--border)]">
+                          <div>
+                            <p class="font-bold text-white">InvestEngine Sync</p>
+                            <p class="text-[10px] text-earth-muted mt-0.5">ISA & SIPP allocations</p>
+                          </div>
+                          <span class="text-[9px] uppercase font-mono text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded">CONNECTED</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Backup / Export Options */}
+                  <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                    <h4 class="text-base font-bold text-white font-mono"><i class="fa-solid fa-file-export mr-2 text-slate-400"></i>Backup Restore & Import</h4>
+                    <p class="text-xs text-earth-muted font-sans">Download your Sandbox workspace configurations or load a previously exported session.</p>
+                    <div class="flex items-center space-x-3 pt-2">
+                      <button 
+                        onClick={handleExport}
+                        class="flex items-center space-x-1.5 bg-[var(--bg)] hover:bg-[var(--border)] text-white font-semibold px-4 py-2 rounded-lg transition border border-[var(--border)] cursor-pointer text-xs"
+                      >
+                        <i class="fa-solid fa-download"></i>
+                        <span>Download JSON</span>
+                      </button>
+                      <label class="flex items-center space-x-1.5 bg-[var(--bg)] hover:bg-[var(--border)] text-white font-semibold px-4 py-2 rounded-lg transition border border-[var(--border)] cursor-pointer text-xs">
+                        <i class="fa-solid fa-upload"></i>
+                        <span>Upload JSON</span>
+                        <input type="file" accept=".json" onChange={handleImport} class="hidden" />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </main>
+
+          {/* Real App Mobile Bottom Nav */}
+          <nav class="bottom-nav" aria-label="Main navigation">
+            <button onClick={() => { setAppView('overview'); setHoveredPoint(null); }} class={`bottom-nav-item ${appView === 'overview' ? 'active' : ''}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+              <span>Overview</span>
+            </button>
+            <button onClick={() => { setAppView('performance'); setHoveredPoint(null); }} class={`bottom-nav-item ${appView === 'performance' ? 'active' : ''}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 16l3-4 3 2 4-7"/></svg>
+              <span>History</span>
+            </button>
+            <button onClick={() => { setAppView('allowances'); setHoveredPoint(null); }} class={`bottom-nav-item ${appView === 'allowances' ? 'active' : ''}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              <span>Allowances</span>
+            </button>
+            <button onClick={() => { setAppView('projections'); setHoveredPoint(null); }} class={`bottom-nav-item ${appView === 'projections' ? 'active' : ''}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              <span>Forecast</span>
+            </button>
+            <button onClick={() => { setAppView('budget'); setHoveredPoint(null); }} class={`bottom-nav-item ${appView === 'budget' ? 'active' : ''}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+              <span>Budget</span>
+            </button>
+            <button onClick={() => { setAppView('settings'); setHoveredPoint(null); }} class={`bottom-nav-item ${appView === 'settings' ? 'active' : ''}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              <span>Settings</span>
+            </button>
+          </nav>
+
         </div>
       );
     }
