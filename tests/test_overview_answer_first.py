@@ -941,7 +941,21 @@ def test_overview_after_debts_view_updates_headline_value_and_helper(app, client
 
 
 
-def test_overview_after_debts_uses_auto_tracked_debt_balance(app, client, make_user):
+def test_overview_after_debts_uses_auto_tracked_debt_balance(app, client, make_user, monkeypatch):
+    from datetime import date
+    import app.models.debts as am_debts
+    import app.routes.overview as ar_overview
+    import app.calculations as a_calc
+
+    class MockDate(date):
+        @classmethod
+        def today(cls):
+            return date(2026, 6, 30)
+
+    monkeypatch.setattr(am_debts, "date", MockDate)
+    monkeypatch.setattr(ar_overview, "date", MockDate)
+    monkeypatch.setattr(a_calc, "date", MockDate)
+
     uid, username, password = make_user(username="overview-auto-tracked-debt", password="password123")
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
