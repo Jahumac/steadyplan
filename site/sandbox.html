@@ -566,84 +566,156 @@
       };
 
       return (
-        <div class="flex flex-col min-h-screen bg-[var(--bg)]">
-
+        <>
           {/* Real App Header Bar */}
-          <header class="app-header py-4 px-6">
-            <div class="max-w-[1120px] mx-auto flex items-center justify-between">
-              <div class="flex items-center space-x-3">
-                <img class="w-8 h-8 rounded" src="./assets/brand/steadyplan-app-icon-1024.png?v=2" alt="SteadyPlan logo" />
-                <span class="font-extrabold tracking-tight text-white text-lg">SteadyPlan</span>
-              </div>
-              
-              {/* Desktop Nav Links */}
-              <nav class="flex items-center space-x-2">
-                <button onClick={() => { setAppView('overview'); setHoveredPoint(null); }} class={appView === 'overview' ? 'active' : ''}>Overview</button>
-                <button onClick={() => { setAppView('performance'); setHoveredPoint(null); }} class={appView === 'performance' ? 'active' : ''}>Performance</button>
-                <button onClick={() => { setAppView('allowances'); setHoveredPoint(null); }} class={appView === 'allowances' ? 'active' : ''}>Allowances</button>
-                <button onClick={() => { setAppView('projections'); setHoveredPoint(null); }} class={appView === 'projections' ? 'active' : ''}>Projections</button>
-                <button onClick={() => { setAppView('budget'); setHoveredPoint(null); }} class={appView === 'budget' ? 'active' : ''}>Budget</button>
-                <button onClick={() => { setAppView('debts'); setHoveredPoint(null); }} class={appView === 'debts' ? 'active' : ''}>Debts</button>
-                <button onClick={() => { setAppView('settings'); setHoveredPoint(null); }} class={appView === 'settings' ? 'active' : ''}>Settings</button>
-              </nav>
+          <header class="site-header">
+            <div class="site-header-row">
+              <h1 class="site-logo">
+                <img src="./assets/brand/steadyplan-mark.png" alt="" class="site-logo-mark" aria-hidden="true" />
+                <span>SteadyPlan</span>
+              </h1>
             </div>
+            <nav>
+              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('overview'); setHoveredPoint(null); }} class={appView === 'overview' ? 'active' : ''}>Overview</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('performance'); setHoveredPoint(null); }} class={appView === 'performance' ? 'active' : ''}>Performance</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('allowances'); setHoveredPoint(null); }} class={appView === 'allowances' ? 'active' : ''}>Allowances</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('projections'); setHoveredPoint(null); }} class={appView === 'projections' ? 'active' : ''}>Projections</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('budget'); setHoveredPoint(null); }} class={appView === 'budget' ? 'active' : ''}>Budget</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('debts'); setHoveredPoint(null); }} class={appView === 'debts' ? 'active' : ''}>Debts</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('settings'); setHoveredPoint(null); }} class={appView === 'settings' ? 'active' : ''}>Settings</a>
+            </nav>
           </header>
 
           {/* Main App Content Area */}
-          <main class="container max-w-[1120px] mx-auto py-8 px-4 flex-1">
-            <div class="w-full">
-              
-              {/* VIEW 1: OVERVIEW SCREEN */}
-              {appView === "overview" && (
-                <div class="space-y-6">
-                  {/* Top Stats Cards */}
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl space-y-1 sandbox-tile">
-                      <span class="text-[10px] uppercase font-mono text-earth-muted tracking-wider">Total Combined Assets</span>
-                      <div class="text-3xl font-bold font-mono text-white">£{totalAssets.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                      <p class="text-[11px] text-emerald-500 font-semibold"><svg class="w-3 h-3 inline mr-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25"></path></svg> +£3,882.00 above comparison target</p>
-                    </div>
-                    <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl space-y-1 sandbox-tile">
-                      <span class="text-[10px] uppercase font-mono text-earth-muted tracking-wider">Monthly Investments Plan</span>
-                      <div class="text-3xl font-bold font-mono text-earth-sage">£{investmentsSavings.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
-                      <p class="text-[11px] text-earth-muted">Regular automated savings this month</p>
-                    </div>
-                    <div class="bg-[var(--panel)] border border-[var(--border)] p-5 rounded-xl space-y-1 sandbox-tile">
-                      <span class="text-[10px] uppercase font-mono text-earth-muted tracking-wider">Retirement Forecast</span>
-                      <div class="text-3xl font-bold font-mono text-earth-gold">£{futureEstimateTotal.toLocaleString()}</div>
-                      <p class="text-[11px] text-earth-muted">At age {retirementAge} under assumptions</p>
-                    </div>
+          <main class="page-shell">
+            {/* VIEW 1: OVERVIEW SCREEN */}
+            {appView === "overview" && (
+              <>
+                <section class="budget-year-strip month-strip-global month-accent-7">
+                  <div class="budget-year-strip-inner">
+                    <span class="budget-month-pill month-accent-4"><span class="budget-month-pill-label">Apr</span></span>
+                    <span class="budget-month-pill month-accent-5"><span class="budget-month-pill-label">May</span></span>
+                    <span class="budget-month-pill month-accent-6"><span class="budget-month-pill-label">Jun</span></span>
+                    <span class="budget-month-pill month-accent-7 budget-month-active" title="Jul">
+                      <span class="budget-month-pill-label">Jul</span>
+                      <span class="budget-month-dot"></span>
+                    </span>
+                    <span class="budget-month-pill month-accent-8"><span class="budget-month-pill-label">Aug</span></span>
+                    <span class="budget-month-pill month-accent-9"><span class="budget-month-pill-label">Sep</span></span>
+                    <span class="budget-month-pill month-accent-10"><span class="budget-month-pill-label">Oct</span></span>
+                    <span class="budget-month-pill month-accent-11"><span class="budget-month-pill-label">Nov</span></span>
+                    <span class="budget-month-pill month-accent-12"><span class="budget-month-pill-label">Dec</span></span>
+                    <span class="budget-month-pill month-accent-1"><span class="budget-month-pill-label">Jan</span></span>
+                    <span class="budget-month-pill month-accent-2"><span class="budget-month-pill-label">Feb</span></span>
+                    <span class="budget-month-pill month-accent-3"><span class="budget-month-pill-label">Mar</span></span>
                   </div>
+                </section>
+                
+                <section class="card highlight mb-1 month-accent-7 overview-hero-card">
+                  <div class="overview-hero-grid">
+                    
+                    <div class="hero-col-panel">
+                      <div>
+                        <div class="overview-hero-header">
+                          <div>
+                            <p class="eyebrow">ASSETS</p>
+                            <h2 class="hero-value hero-value-xl overview-hero-value">£{totalAssets.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</h2>
+                            <p class="hero-subtitle overview-hero-subtitle">Today · Showcase Mode</p>
+                          </div>
+                          <div class="period-selector flex gap-05 overview-position-toggle" aria-label="Overview headline view">
+                            <a href="#" class="overview-toggle-btn active" onClick={(e) => e.preventDefault()}>Assets</a>
+                            <a href="#" class="overview-toggle-btn" onClick={(e) => e.preventDefault()}>After debts</a>
+                          </div>
+                        </div>
+                        <p class="hero-helper overview-hero-helper">Active debts kept separate: £{debts.reduce((acc, d) => acc + (d.balance || 0), 0).toLocaleString(undefined, {minimumFractionDigits:2})}.</p>
+                      </div>
+                      
+                      <div class="overview-hero-stats-row">
+                        <div class="hero-strip-stat">
+                          <span class="hero-stat-label overview-hero-stat-label">Accessible now</span>
+                          <strong class="overview-hero-stat-value text-red-400">£{accessibleNow.toLocaleString(undefined, {maximumFractionDigits:0})}</strong>
+                        </div>
+                        <div class="hero-strip-stat">
+                          <span class="hero-stat-label overview-hero-stat-label">Locked for later</span>
+                          <strong class="overview-hero-stat-value text-red-400">£{lockedForLater.toLocaleString(undefined, {maximumFractionDigits:0})}</strong>
+                        </div>
+                        <div class="hero-strip-stat">
+                          <span class="hero-stat-label overview-hero-stat-label">Active debts</span>
+                          <strong class="overview-hero-stat-value text-red-400">£{debts.reduce((acc, d) => acc + (d.balance || 0), 0).toLocaleString(undefined, {maximumFractionDigits:0})}</strong>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="hero-col-panel">
+                      <div>
+                        <p class="eyebrow">MONTHLY PLAN</p>
+                        <div class="hero-strip-stat overview-hero-stat-block">
+                          <h2 class="overview-hero-stat-title-large accent-color">£{investmentsSavings.toLocaleString(undefined, {maximumFractionDigits:0})}</h2>
+                          <span class="hero-stat-label overview-hero-stat-label-normal">MONTHLY PAYMENTS IN</span>
+                        </div>
+                      </div>
+                      <p class="helper-text overview-hero-description">
+                        Active savings and investment contributions going into your accounts this month.
+                      </p>
+                    </div>
+                    
+                    <div class="hero-col-panel">
+                      <div>
+                        <p class="eyebrow">RETIREMENT FORECAST</p>
+                        <div class="hero-strip-stat overview-hero-stat-block">
+                          <h2 class="overview-hero-stat-title-large normal-color" title="Future estimate based on your current balances, regular payments, and planning numbers in Settings. It is not a guarantee.">
+                            £{futureEstimateTotal.toLocaleString(undefined, {maximumFractionDigits:0})}
+                          </h2>
+                          <span class="hero-stat-label overview-hero-stat-label-normal">ESTIMATED TOTAL AT RETIREMENT</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p class="helper-text overview-hero-description">
+                          Current totals use your saved balances. Future estimates use the planning numbers in Settings. They are not guarantees.
+                        </p>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </section>
 
-                  {/* Liquidity Profile */}
-                  <div class="bg-[var(--panel)] border border-[var(--border)] p-6 rounded-xl space-y-4 sandbox-tile">
+                <section class="card mb-1 overview-access-card overview-desktop-detail">
+                  <div class="section-header mb-05 overview-access-header">
                     <div>
-                      <span class="text-xs font-semibold uppercase text-earth-sage tracking-wider font-mono">Liquidity Profile</span>
-                      <h3 class="text-lg font-bold text-white mt-1">Where your money stands right now</h3>
-                      <p class="text-xs text-earth-muted mt-1 font-sans">See what is cash-accessible now, what invested money is reachable, and what is locked for later.</p>
+                      <p class="eyebrow">WHERE YOU STAND NOW</p>
+                      <h2>Where you stand now</h2>
                     </div>
-
-                    <div class="w-full h-3.5 rounded-full bg-[var(--bg-soft)] overflow-hidden flex">
-                      <div class="h-full bg-earth-sage" style={{ width: `${(accessibleNow / (totalAssets || 1)) * 100}%` }} title="Accessible"></div>
-                      <div class="h-full bg-earth-gold" style={{ width: `${(restricted / (totalAssets || 1)) * 100}%` }} title="Restricted"></div>
-                      <div class="h-full bg-slate-500" style={{ width: `${(lockedForLater / (totalAssets || 1)) * 100}%` }} title="Locked"></div>
+                    <a href="#" onClick={(e) => { e.preventDefault(); setAppView('planning'); }} class="link-accent text-sm">Review planning</a>
+                  </div>
+                  <p class="helper-text">Use this as the quick summary: what you can usually reach before pension age, what has conditions, and what is doing longer-term retirement work.</p>
+                  <div class="card-grid overview-access-grid">
+                    <div class="card overview-access-mini-card">
+                      <p class="eyebrow">ACCESSIBLE NOW</p>
+                      <p class="helper-text m-0">{Math.round((accessibleNow / (totalAssets || 1)) * 100)}% of your current total is usually reachable before pension age. ISA, cash, taxable accounts, Premium Bonds and similar accounts sit here.</p>
+                      <p class="overview-access-value">£{accessibleNow.toLocaleString(undefined, {maximumFractionDigits:0})}</p>
+                      <p class="helper-text m-0">Cash accessible — money you can usually reach without selling investments first.</p>
+                      <p class="overview-access-value">£0</p>
+                      <p class="helper-text m-0">Invested accessible — still reachable, but usually by selling invested holdings.</p>
                     </div>
-
-                    <div class="grid grid-cols-3 gap-4 text-center border-t border-[var(--border)] pt-4">
-                      <div>
-                        <span class="text-[10px] font-mono uppercase text-earth-sage block">Accessible Now</span>
-                        <span class="text-sm font-bold font-mono text-white">£{accessibleNow.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+                    {restricted > 0 && (
+                      <div class="card overview-access-mini-card">
+                        <p class="eyebrow">RESTRICTED</p>
+                        <p class="overview-access-value">£{restricted.toLocaleString(undefined, {maximumFractionDigits:0})}</p>
+                        <p class="helper-text m-0">Money with rules, penalties, or special conditions such as a Lifetime ISA.</p>
                       </div>
-                      <div>
-                        <span class="text-[10px] font-mono uppercase text-earth-gold block">Restricted</span>
-                        <span class="text-sm font-bold font-mono text-white">£{restricted.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
-                      </div>
-                      <div>
-                        <span class="text-[10px] font-mono uppercase text-slate-400 block">Locked For Later</span>
-                        <span class="text-sm font-bold font-mono text-white">£{lockedForLater.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
-                      </div>
+                    )}
+                    <div class="card overview-access-mini-card">
+                      <p class="eyebrow">LOCKED FOR LATER</p>
+                      {lockedForLater > 0 ? (
+                        <p class="helper-text m-0">Pension-style money that is building for later rather than near-term flexibility. When you have locked money, the top summary keeps the headline amount visible.</p>
+                      ) : (
+                        <p class="helper-text m-0">Pension-style money will appear here once you start building it.</p>
+                      )}
                     </div>
                   </div>
+                </section>
+              </>
+            )}
 
                   {/* Account Balance Editor Cards */}
                   <div class="space-y-4">
