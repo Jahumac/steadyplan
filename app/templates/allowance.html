@@ -60,7 +60,7 @@
       {% if lisa_age_warning %}
       <small class="block mt-025 text-danger">⚠ Lifetime ISA contributions stop at age 50. ~{{ lisa_months_remaining }} month{{ 's' if lisa_months_remaining != 1 }} left.</small>
       {% elif usage.lisa_used > 0 %}
-      <small class="block mt-025" style="color:var(--accent-3)">⚠ Early withdrawal penalty: 25% — you'd lose more than the Lifetime ISA bonus.</small>
+      <small class="block mt-025 allowance-warning-text">⚠ Early withdrawal penalty: 25% — you'd lose more than the Lifetime ISA bonus.</small>
       {% endif %}
     </div>
     {% endif %}
@@ -152,7 +152,7 @@
       </tfoot>
     </table>
   </div>
-  <p class="helper-text" style="font-size:0.78rem;">Monthly uses each account’s regular payment setting. Regular to date is that monthly amount multiplied by the months elapsed. Cash-flow adjustments only count when you label a movement as using ISA allowance. If an amount looks wrong, check the account’s <a href="/accounts/" class="link-accent">monthly payment setting</a>.</p>
+  <p class="helper-text allowance-disclaimer">Monthly uses each account’s regular payment setting. Regular to date is that monthly amount multiplied by the months elapsed. Cash-flow adjustments only count when you label a movement as using ISA allowance. If an amount looks wrong, check the account’s <a href="/accounts/" class="link-accent">monthly payment setting</a>.</p>
   {% else %}
   <p class="helper-text">No ISA accounts yet. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Add a Stocks &amp; Shares ISA, Cash ISA, or Lifetime ISA</a> to start tracking.</p>
   {% endif %}
@@ -201,7 +201,7 @@
   {# ── Contribution history ── #}
   {% if contributions %}
   <div class="allowance-history-table">
-    <p class="eyebrow" style="margin:0.75rem 0 0.4rem;">Recorded Top-ups ({{ tax_year }})</p>
+    <p class="eyebrow allowance-history-title">Recorded Top-ups ({{ tax_year }})</p>
     <table class="mini-table">
       <thead>
         <tr><th>Date</th><th>Account</th><th class="text-right">Amount</th><th>Note</th><th></th></tr>
@@ -244,7 +244,7 @@
   <p class="helper-text">Money in a pension can grow without CGT or income tax while it stays there. Pension tax top-up can be added when money goes in; income tax can apply when money comes out in retirement.</p>
 
   {# ── Progress card ── #}
-  <div class="allowance-grid mb-1" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+  <div class="allowance-grid mb-1">
     <div class="card allowance-card">
       <h2>Annual Allowance</h2>
       <p>£{{ '{:,.0f}'.format(pension_usage.pension_used) }} <span class="allowance-denom">/ £{{ '{:,.0f}'.format(pension_limits.effective_allowance) }}</span></p>
@@ -264,7 +264,7 @@
       <p>£{{ '{:,.0f}'.format(basic_relief) }} <span class="allowance-denom">basic rate</span></p>
       {% if tax_band in ('higher', 'additional') %}
       <p class="mt-025">£{{ '{:,.0f}'.format(extra_relief) }} <span class="allowance-denom">extra ({{ '20%' if tax_band == 'higher' else '25%' }})</span></p>
-      <small style="color:var(--accent-3)">Claim the extra relief through Self Assessment.</small>
+      <small class="allowance-warning-text">Claim the extra relief through Self Assessment.</small>
       {% else %}
       <small class="text-muted">Your provider adds a 20% basic-rate pension tax top-up.</small>
       {% endif %}
@@ -413,7 +413,7 @@
   {# ── Pension history ── #}
   {% if pension_contributions %}
   <div class="allowance-history-table">
-    <p class="eyebrow" style="margin:0.75rem 0 0.4rem;">Recorded Contributions ({{ tax_year }})</p>
+    <p class="eyebrow allowance-history-title">Recorded Contributions ({{ tax_year }})</p>
     <table class="mini-table">
       <thead>
         <tr><th>Date</th><th>Account</th><th>Type</th><th class="text-right">Amount</th><th>Note</th><th></th></tr>
@@ -517,7 +517,7 @@
       <p class="helper-text">No taxable investment accounts found. <a href="{{ url_for('accounts.accounts', mode='create', focus='first_account') }}" class="link-accent">Create one</a> first.</p>
       {% endif %}
       {% if dividend_records %}
-      <p class="eyebrow" style="margin:1rem 0 0.4rem;">Recorded Dividends ({{ tax_year }})</p>
+      <p class="eyebrow allowance-history-title">Recorded Dividends ({{ tax_year }})</p>
       <table class="mini-table">
         <thead>
           <tr><th>Date</th><th>Account</th><th class="text-right">Amount</th><th>Note</th><th></th></tr>

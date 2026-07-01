@@ -466,7 +466,7 @@ def test_planning_page_uses_scenario_estimate_copy_for_retirement_outputs(app, c
     assert "Estimate at age 60 under current balances, contributions and growth assumptions." not in body
     assert "Projected private pension and investment pot at age 60" in body
     assert "Private pot estimate at age 60:" not in body
-    assert body.count("Future estimate at 60:") == 2
+    assert body.count("Future estimate at 60:") == 1
     assert "Scenario estimate at 60:" not in body
 
 

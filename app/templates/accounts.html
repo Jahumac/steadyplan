@@ -77,8 +77,8 @@
             <tr>
               <td>
                 <span>{{ account.name }}</span>
-                {% if account.pre_salary %}<span class="badge badge-meta" style="font-size:0.7rem;margin-left:6px">outside take-home</span>{% endif %}
-                {% if source.label %}<span class="badge badge-meta" style="font-size:0.7rem;margin-left:6px" title="{{ source.title }}">{{ source.label }}</span>{% endif %}
+                {% if account.pre_salary %}<span class="badge badge-meta badge-inline">outside take-home</span>{% endif %}
+                {% if source.label %}<span class="badge badge-meta badge-inline" title="{{ source.title }}">{{ source.label }}</span>{% endif %}
               </td>
               <td class="num">£{{ '{:,.0f}'.format(personal) }}</td>
               <td class="num">{% if uplift > 0 %}+£{{ '{:,.0f}'.format(uplift) }}{% else %}—{% endif %}</td>
@@ -583,7 +583,7 @@
             {% set _hero_total_paid = selected.monthly_contribution or 0 %}
             {% if _hero_scb.get('total_into_pot', 0) != _hero_total_paid and _hero_scb.get('total_into_pot', 0) > 0 %}
               <span class="acct-hero-label">Into account monthly</span>
-              <strong style="color:var(--accent-2)">£{{ '{:,.2f}'.format(_hero_scb.total_into_pot) }}</strong>
+              <strong class="stat-positive-text">£{{ '{:,.2f}'.format(_hero_scb.total_into_pot) }}</strong>
               <small class="text-muted">you pay £{{ '{:,.2f}'.format(_hero_total_paid) }}</small>
             {% else %}
               <span class="acct-hero-label">You pay monthly</span>
@@ -738,7 +738,7 @@
             <div class="perf-legend mt-025">
               <span class="perf-legend-dot bg-accent-2" ></span><span>Actual</span>
               <span class="perf-legend-dot bg-muted-60" ></span><span>Plan (7%)</span>
-              <span class="perf-legend-dot" style="background:var(--accent-5);opacity:0.75"></span><span>Plan ({{ '{:.1f}'.format(global_growth_rate * 100) }}%)</span>
+              <span class="perf-legend-dot bg-accent-5-75"></span><span>Plan ({{ '{:.1f}'.format(global_growth_rate * 100) }}%)</span>
             </div>
           </div>
           <a class="badge badge-meta" href="/performance/export.xlsx?account_id={{ selected.id }}">Download report</a>
@@ -1101,7 +1101,7 @@
             <h3>Prize History</h3>
           </div>
           {% if pb_prizes_ty_total > 0 %}
-          <div class="acct-detail-stat" style="text-align:right;">
+          <div class="acct-detail-stat text-right">
             <span>{{ tax_year_label }}</span>
             <strong class="pb-prize-won">£{{ '{:,.2f}'.format(pb_prizes_ty_total) }}</strong>
           </div>

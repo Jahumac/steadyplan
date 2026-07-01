@@ -37,6 +37,69 @@
   </div>
 </section>
 
+{% if calendar.overlap_count %}
+<div class="flash-msg flash-warning">
+  <span>Some months have overlapping overrides. SteadyPlan still uses the narrowest, newest override for calculations, but the calendar flags those cells so you can clean them up.</span>
+</div>
+{% endif %}
+
+{# ── The Payment Calendar Matrix Grid (Main View) ── #}
+<section class="panel mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Calendar Grid</p>
+      <h3>Monthly payments at a glance</h3>
+    </div>
+    <div class="badge-row">
+      <span class="badge badge-meta">ℹ️ Hover cells to see plan details</span>
+    </div>
+  </div>
+  
+  {% if calendar.accounts %}
+  <div class="table-scroll contribution-calendar-matrix-scroll">
+    <table class="contribution-calendar-matrix">
+      <thead>
+        <tr>
+          <th>Account</th>
+          <th>Wrapper</th>
+          <th class="text-right">Default</th>
+          {% for month in month_columns %}
+          <th class="text-center">{{ month.label }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for account in calendar.accounts %}
+        <tr>
+          <td><strong>{{ account.name }}</strong></td>
+          <td><span class="text-xs text-muted">{{ account.wrapper_type or 'Other' }}</span></td>
+          <td class="text-right text-muted">£{{ '{:,.0f}'.format(account.monthly_contribution) }}</td>
+          {% for month in month_columns %}
+          {% set cell = account.months[loop.index0] %}
+          <td class="text-center calendar-matrix-cell {% if cell.has_override %}cell-override{% endif %} {% if cell.overlap %}cell-overlap{% endif %}"
+              {% if cell.has_override %}
+                data-tooltip="{{ cell.source_label }}{% if cell.plan_name %} · {{ cell.plan_name }}{% elif cell.reason %} · {{ cell.reason }}{% endif %}{% if cell.overlap %} (Overlap: {{ cell.active_override_count }} rules){% endif %}"
+              {% endif %}>
+            {% if cell.has_override %}
+              <strong>£{{ '{:,.0f}'.format(cell.override_amount) }}</strong>
+            {% else %}
+              <span class="text-muted">£{{ '{:,.0f}'.format(cell.default_amount) }}</span>
+            {% endif %}
+            {% if cell.overlap %}
+              <span class="matrix-overlap-warning" title="Overlap: {{ cell.active_override_count }} active rules">⚠️</span>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="helper-text">No eligible active contribution accounts are available yet.</p>
+  {% endif %}
+</section>
+
 {% if allowance_frame %}
 <section class="panel mb-1">
   <div class="section-header">
@@ -86,131 +149,6 @@
   </div>
 </section>
 {% endif %}
-
-{% if calendar.overlap_count %}
-<div class="flash-msg flash-warning">
-  <span>Some months have overlapping overrides. SteadyPlan still uses the narrowest, newest override for calculations, but the calendar flags those cells so you can clean them up.</span>
-</div>
-{% endif %}
-
-<section class="panel mb-1">
-  <div class="section-header">
-    <div>
-      <p class="eyebrow">Fast setup</p>
-      <h3>Yearly account-filling pattern</h3>
-    </div>
-  </div>
-  <p class="helper-text">Use this for things like Lifetime ISA: “put £1,000 in for 4 months every year”. It creates one yearly block per year, instead of making you type every month by hand.</p>
-  <form method="post" class="settings-form contribution-calendar-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <input type="hidden" name="form_name" value="create_annual_pot_fill_plan">
-    <input type="hidden" name="from_month" value="{{ from_month }}">
-    <input type="hidden" name="to_month" value="{{ to_month }}">
-    <div class="form-grid mb-1">
-      <label>
-        Plan name / reason
-        <input type="text" name="plan_name" value="Yearly LISA fill" required>
-      </label>
-      <label>
-        Account
-        <select name="pattern_account_key" required>
-          <option value="">Choose account…</option>
-          {% for account in calendar.accounts %}
-          <option value="{{ account.calendar_entry_key }}">{{ account.name }}{% if account.wrapper_type %} · {{ account.wrapper_type }}{% endif %}</option>
-          {% endfor %}
-        </select>
-      </label>
-      <label>
-        First start month
-        <input type="month" name="pattern_start_month" value="{{ from_month }}" required>
-      </label>
-      <label>
-        Monthly amount
-        <input type="number" step="0.01" min="0" name="pattern_monthly_amount" value="1000" required>
-      </label>
-      <label>
-        Optional month-by-month amounts
-        <input type="text" name="pattern_monthly_amounts" placeholder="e.g. 1500, 1500, 1000">
-      </label>
-      <label>
-        Months each year
-        <input type="number" step="1" min="1" max="12" name="pattern_months_per_year" value="4" required>
-      </label>
-      <label>
-        Number of years
-        <input type="number" step="1" min="1" max="10" name="pattern_years" value="2" required>
-      </label>
-    </div>
-    <div class="badge-row">
-      <button type="submit" class="badge badge-primary-action">Create yearly pattern</button>
-      <span class="helper-text">Example: £1,000 × 4 months each year fills a £4,000 LISA allowance. For an uneven run, enter comma amounts like 1500, 1500, 1000.</span>
-    </div>
-  </form>
-</section>
-
-<section class="panel mb-1">
-  <div class="section-header">
-    <div>
-      <p class="eyebrow">Create plan</p>
-      <h3>Temporary payment plan</h3>
-    </div>
-  </div>
-  <p class="helper-text">Enter only the accounts you want to override. Blank fields keep using the account default. Enter <strong>0</strong> to pause an account temporarily.</p>
-
-  <form method="post" class="settings-form contribution-calendar-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <input type="hidden" name="form_name" value="create_temporary_plan">
-    <input type="hidden" name="from_month" value="{{ from_month }}">
-    <input type="hidden" name="to_month" value="{{ to_month }}">
-
-    <div class="form-grid mb-1">
-      <label>
-        Plan name / reason
-        <input type="text" name="plan_name" placeholder="Cash buffer build-up" required>
-      </label>
-      <label>
-        Start month
-        <input type="month" name="start_month" value="{{ from_month }}" required>
-      </label>
-      <label>
-        End month
-        <input type="month" name="end_month" value="{{ to_month }}" required>
-      </label>
-    </div>
-
-    {% if calendar.accounts %}
-    <div class="table-scroll contribution-plan-scroll">
-      <table class="mini-table contribution-plan-table">
-        <thead>
-          <tr>
-            <th>Account</th>
-            <th>Wrapper</th>
-            <th class="text-right">Default</th>
-            <th class="text-right">Temporary amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for account in calendar.accounts %}
-          <tr>
-            <td data-label="Account">{{ account.name }}</td>
-            <td data-label="Account type">{{ account.wrapper_type or 'Other' }}</td>
-            <td data-label="Default" class="text-right">£{{ '{:,.2f}'.format(account.monthly_contribution) }}</td>
-            <td data-label="Temporary amount" class="text-right">
-              <input type="number" step="0.01" min="0" name="amount_{{ account.calendar_entry_key }}" placeholder="Leave blank">
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <div class="badge-row">
-      <button type="submit" class="badge badge-primary-action">Save temporary plan</button>
-    </div>
-    {% else %}
-    <p class="helper-text">No eligible active contribution accounts are available yet.</p>
-    {% endif %}
-  </form>
-</section>
 
 <section class="panel mb-1">
   <div class="section-header">
@@ -264,23 +202,145 @@
   {% endif %}
 </section>
 
+{# ── Actions Grid: Create Plan and Fast Setup side-by-side ── #}
+<div class="card-grid mb-1">
+  <section class="panel">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Create plan</p>
+        <h3>Temporary payment plan</h3>
+      </div>
+    </div>
+    <p class="helper-text">Enter only the accounts you want to override. Blank fields keep using the account default. Enter <strong>0</strong> to pause an account temporarily.</p>
+
+    <form method="post" class="settings-form contribution-calendar-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="form_name" value="create_temporary_plan">
+      <input type="hidden" name="from_month" value="{{ from_month }}">
+      <input type="hidden" name="to_month" value="{{ to_month }}">
+
+      <div class="form-grid mb-1">
+        <label>
+          Plan name / reason
+          <input type="text" name="plan_name" placeholder="Cash buffer build-up" required>
+        </label>
+        <label>
+          Start month
+          <input type="month" name="start_month" value="{{ from_month }}" required>
+        </label>
+        <label>
+          End month
+          <input type="month" name="end_month" value="{{ to_month }}" required>
+        </label>
+      </div>
+
+      {% if calendar.accounts %}
+      <div class="table-scroll contribution-plan-scroll">
+        <table class="mini-table contribution-plan-table">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Wrapper</th>
+              <th class="text-right">Default</th>
+              <th class="text-right">Temporary amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for account in calendar.accounts %}
+            <tr>
+              <td data-label="Account">{{ account.name }}</td>
+              <td data-label="Account type">{{ account.wrapper_type or 'Other' }}</td>
+              <td data-label="Default" class="text-right">£{{ '{:,.2f}'.format(account.monthly_contribution) }}</td>
+              <td data-label="Temporary amount" class="text-right">
+                <input type="number" step="0.01" min="0" name="amount_{{ account.calendar_entry_key }}" placeholder="Leave blank">
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="badge-row mt-1">
+        <button type="submit" class="badge badge-primary-action">Save temporary plan</button>
+      </div>
+      {% else %}
+      <p class="helper-text">No eligible active contribution accounts are available yet.</p>
+      {% endif %}
+    </form>
+  </section>
+
+  <section class="panel">
+    <div class="section-header">
+      <div>
+        <p class="eyebrow">Fast setup</p>
+        <h3>Yearly account-filling pattern</h3>
+      </div>
+    </div>
+    <p class="helper-text">Use this for things like Lifetime ISA: “put £1,000 in for 4 months every year”. It creates one yearly block per year, instead of making you type every month by hand.</p>
+    <form method="post" class="settings-form contribution-calendar-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="form_name" value="create_annual_pot_fill_plan">
+      <input type="hidden" name="from_month" value="{{ from_month }}">
+      <input type="hidden" name="to_month" value="{{ to_month }}">
+      <div class="form-grid mb-1">
+        <label>
+          Plan name / reason
+          <input type="text" name="plan_name" value="Yearly LISA fill" required>
+        </label>
+        <label>
+          Account
+          <select name="pattern_account_key" required>
+            <option value="">Choose account…</option>
+            {% for account in calendar.accounts %}
+            <option value="{{ account.calendar_entry_key }}">{{ account.name }}{% if account.wrapper_type %} · {{ account.wrapper_type }}{% endif %}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          First start month
+          <input type="month" name="pattern_start_month" value="{{ from_month }}" required>
+        </label>
+        <label>
+          Monthly amount
+          <input type="number" step="0.01" min="0" name="pattern_monthly_amount" value="1000" required>
+        </label>
+        <label>
+          Optional month-by-month amounts
+          <input type="text" name="pattern_monthly_amounts" placeholder="e.g. 1500, 1500, 1000">
+        </label>
+        <label>
+          Months each year
+          <input type="number" step="1" min="1" max="12" name="pattern_months_per_year" value="4" required>
+        </label>
+        <label>
+          Number of years
+          <input type="number" step="1" min="1" max="10" name="pattern_years" value="2" required>
+        </label>
+      </div>
+      <div class="badge-row mt-1">
+        <button type="submit" class="badge badge-primary-action">Create yearly pattern</button>
+      </div>
+      <p class="helper-text mt-1 m-0">Example: £1,000 × 4 months each year fills a £4,000 LISA allowance. For an uneven run, enter comma amounts like 1500, 1500, 1000.</p>
+    </form>
+  </section>
+</div>
+
 <section class="panel mb-1">
   <div class="section-header">
     <div>
-      <p class="eyebrow">Calendar</p>
-      <h3>Default vs temporary override</h3>
+      <p class="eyebrow">Audit Trail</p>
+      <h3>Detailed list view</h3>
     </div>
   </div>
   {% if calendar.accounts %}
   <details class="contribution-calendar-details">
     <summary class="contribution-calendar-summary">
       <span>
-        <strong>Show month-by-month calendar</strong>
-        <span class="helper-text">Open only when you want to inspect month-by-month defaults and overrides.</span>
+        <strong>Show month-by-month list</strong>
+        <span class="helper-text">Inspect the exact plan names, defaults, and overrides for every month.</span>
       </span>
       <span class="badge badge-meta">{{ month_columns|length }} months</span>
     </summary>
-    <p class="helper-text">Month-by-month view. Move your mouse over this calendar, or touch it on mobile, then scroll down through the months.</p>
+    <p class="helper-text mt-05">Month-by-month view. Scroll down through the months to see details.</p>
     <div class="contribution-calendar-scroll" tabindex="0" aria-label="Default vs temporary override calendar, vertically scrollable">
       <div class="contribution-calendar-stack">
         {% for month in month_columns %}
@@ -330,8 +390,10 @@
     </div>
   </details>
   {% else %}
-  <p class="helper-text">No eligible contribution accounts are active yet.</p>
+  <p class="helper-text">No eligible active contribution accounts are active yet.</p>
   {% endif %}
 </section>
+
+<div id="calendar-tooltip" class="calendar-tooltip hidden" aria-hidden="true"></div>
 
 {% endblock %}

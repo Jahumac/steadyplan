@@ -849,6 +849,21 @@
   color: var(--text);
 }
 
+.planning-big-number-large {
+  font-size: 2.2rem;
+  margin: 0.25rem 0 0.5rem;
+  font-weight: 800;
+  color: var(--text-normal, #f8fafc);
+  letter-spacing: -0.03em;
+}
+
+.planning-signal-value {
+  font-size: 1.25rem;
+  margin: 0.25rem 0 0.5rem;
+  font-weight: 700;
+  color: var(--text-normal, #f8fafc);
+}
+
 .planning-account-values {
   gap: 0.25rem;
 }
@@ -1119,5 +1134,280 @@
 
 .liquidity-legend-item strong {
   color: var(--text-normal, #f8fafc);
+}
+
+/* ── Settings tab ─────────────────────────────────────────────────────────── */
+.settings-tab-content {
+  display: none;
+}
+
+.settings-tab-content.active {
+  display: block;
+}
+
+.subnav-page a {
+  cursor: pointer;
+}
+
+/* Plan Dashboard Grid */
+.plan-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.plan-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1.5rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.plan-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 0 15px color-mix(in srgb, var(--accent) 22%, transparent), 0 14px 36px rgba(0, 0, 0, 0.2);
+}
+
+.plan-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+.plan-card-icon {
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  border-radius: 8px;
+}
+
+.plan-card-header h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.plan-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.plan-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.88rem;
+}
+
+.plan-stat-row span {
+  color: var(--text-muted);
+}
+
+.plan-stat-row strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.plan-dashboard-grid .panel {
+  margin-top: 0 !important; /* override mt-1 inside the grid */
+}
+
+.plan-dashboard-grid .panel .section-header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+section.panel h3, .plan-card h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ── Responsive Details (Collapsible on mobile, block on desktop) ─────────── */
+details.planning-responsive-details {
+  box-sizing: border-box;
+}
+
+@media (min-width: 769px) {
+  details.planning-responsive-details {
+    display: block !important;
+  }
+  details.planning-responsive-details > summary {
+    display: none !important;
+  }
+  details.planning-responsive-details > :not(summary) {
+    display: block !important;
+  }
+  details.planning-responsive-details > .card-grid {
+    display: grid !important;
+  }
+  details.planning-responsive-details > .planning-assumptions-form {
+    display: grid !important;
+  }
+}
+
+@media (max-width: 768px) {
+  details.planning-responsive-details {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0.85rem 1.15rem;
+    background: rgba(255, 255, 255, 0.01);
+    transition: background 0.2s ease;
+  }
+  details.planning-responsive-details[open] {
+    background: rgba(255, 255, 255, 0.02);
+  }
+  details.planning-responsive-details summary {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--accent);
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  details.planning-responsive-details summary::-webkit-details-marker {
+    display: none;
+  }
+  details.planning-responsive-details summary::after {
+    content: "↓";
+    font-size: 0.85rem;
+    opacity: 0.7;
+    transition: transform 0.2s ease;
+  }
+  details.planning-responsive-details[open] summary::after {
+    transform: rotate(180deg);
+  }
+  details.planning-responsive-details > :not(summary) {
+    margin-top: 0.75rem;
+    display: block;
+  }
+  details.planning-responsive-details > .card-grid {
+    display: grid;
+  }
+  details.planning-responsive-details > .planning-assumptions-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+
+/* ── Overview Dashboard Hero ─────────────────────────────────────────────── */
+.overview-hero-card {
+  padding: 1.5rem !important;
+}
+
+.overview-hero-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.overview-hero-value {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0.25rem 0 0.15rem;
+  color: var(--text);
+}
+
+.overview-hero-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.overview-hero-helper {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 0;
+}
+
+.overview-hero-stats-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.overview-hero-stat-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: block;
+}
+
+.overview-hero-stat-value {
+  font-size: 1.1rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.overview-hero-stat-block {
+  margin-top: 0.25rem;
+}
+
+.overview-hero-stat-title-large {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0.25rem 0 0.15rem;
+}
+
+.overview-hero-stat-title-large.accent-color {
+  color: var(--month-color, var(--accent));
+}
+
+.overview-hero-stat-title-large.normal-color {
+  color: var(--text);
+}
+
+.overview-hero-stat-label-normal {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.overview-hero-empty-state {
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.overview-hero-description {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
 }
 

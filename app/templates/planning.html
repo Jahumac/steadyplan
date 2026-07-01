@@ -96,26 +96,9 @@
     </div>
     {% endif %}
 
-    <div class="card-grid planning-milestone-grid planning-desktop-detail">
-      {% for milestone in access_summary.milestones %}
-      <div class="card planning-mini-card">
-        <div class="budget-row p-0 border-none" >
-          <div class="budget-row-left">
-            <span class="budget-row-name">£{{ '{:,.0f}'.format(milestone.target) }} accessible</span>
-            <span class="budget-row-note">{{ '{:.0f}'.format(milestone.progress) }}% complete · £{{ '{:,.0f}'.format(milestone.remaining) }} to go</span>
-          </div>
-          <div class="budget-row-right">
-            <strong>{{ milestone.duration }}</strong>
-          </div>
-        </div>
-        <div class="planning-progress" aria-hidden="true"><span style="width: {{ '{:.1f}'.format(milestone.progress) }}%"></span></div>
-      </div>
-      {% endfor %}
-    </div>
-
-    <details class="planning-compact-details planning-compact-only">
+    <details class="planning-responsive-details">
       <summary>Show all milestones</summary>
-      <div class="card-grid planning-milestone-grid mt-075">
+      <div class="card-grid planning-milestone-grid">
         {% for milestone in access_summary.milestones %}
         <div class="card planning-mini-card">
           <div class="budget-row p-0 border-none" >
@@ -123,7 +106,9 @@
               <span class="budget-row-name">£{{ '{:,.0f}'.format(milestone.target) }} accessible</span>
               <span class="budget-row-note">{{ '{:.0f}'.format(milestone.progress) }}% complete · £{{ '{:,.0f}'.format(milestone.remaining) }} to go</span>
             </div>
-            <div class="budget-row-right"><strong>{{ milestone.duration }}</strong></div>
+            <div class="budget-row-right">
+              <strong>{{ milestone.duration }}</strong>
+            </div>
           </div>
           <div class="planning-progress" aria-hidden="true"><span style="width: {{ '{:.1f}'.format(milestone.progress) }}%"></span></div>
         </div>
@@ -136,28 +121,28 @@
   <section class="card flex-col justify-between">
     <div class="mb-15">
       <p class="eyebrow">Retirement Estimate</p>
-      <h2 class="planning-big-number-large" style="font-size: 2.2rem; margin: 0.25rem 0 0.5rem; font-weight: 800; color: var(--text-normal, #f8fafc);">£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</h2>
+      <h2 class="planning-big-number-large">£{{ '{:,.0f}'.format(income_summary.private_pot_at_retirement) }}</h2>
       <p class="helper-text m-0">Projected private pension and investment pot at age {{ '{:.0f}'.format(income_summary.retirement_age) }}. Uses your planning numbers in Settings and is not a guarantee.</p>
     </div>
     {% if access_summary.cash_yield_total_earning > 0 %}
-    <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.25rem; margin-top: 1.25rem;">
-      <p class="eyebrow" style="margin-bottom: 0.5rem;">Cash Yield</p>
-      <div class="cash-yield-badge" style="background: rgba(52, 211, 153, 0.06); border: 1px solid rgba(52, 211, 153, 0.15); border-radius: 8px; padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+    <div class="planning-card-divider">
+      <p class="eyebrow mb-05">Cash Yield</p>
+      <div class="cash-yield-card">
         <div>
-          <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted, #94a3b8); display: block; margin-bottom: 0.15rem;">Weighted Rate</span>
-          <strong style="font-size: 1.5rem; font-weight: 800; color: #34d399; line-height: 1.2;">{{ '{:.2f}'.format(access_summary.cash_yield_weighted_rate) }}%</strong>
+          <span class="cash-yield-stat-title">Weighted Rate</span>
+          <strong class="cash-yield-rate-val">{{ '{:.2f}'.format(access_summary.cash_yield_weighted_rate) }}%</strong>
         </div>
         <div style="text-align: right;">
-          <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted, #94a3b8); display: block; margin-bottom: 0.15rem;">Est. Earnings</span>
-          <strong style="font-size: 1.1rem; font-weight: 700; color: var(--text-normal, #f8fafc); display: block; line-height: 1.2;">£{{ '{:,.0f}'.format(access_summary.cash_yield_monthly_interest) }}/mo</strong>
-          <span style="font-size: 0.7rem; color: var(--text-muted, #94a3b8); display: block; margin-top: 0.15rem;">£{{ '{:,.0f}'.format(access_summary.cash_yield_annual_interest) }}/yr on £{{ '{:,.0f}'.format(access_summary.cash_yield_total_earning) }}</span>
+          <span class="cash-yield-stat-title">Est. Earnings</span>
+          <strong class="cash-yield-earning-val">£{{ '{:,.0f}'.format(access_summary.cash_yield_monthly_interest) }}/mo</strong>
+          <span class="cash-yield-subtext">£{{ '{:,.0f}'.format(access_summary.cash_yield_annual_interest) }}/yr on £{{ '{:,.0f}'.format(access_summary.cash_yield_total_earning) }}</span>
         </div>
       </div>
     </div>
     {% endif %}
-    <div style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.25rem; margin-top: 1.25rem;">
+    <div class="planning-card-divider">
       <p class="eyebrow">Current Signal</p>
-      <h3 style="font-size: 1.25rem; margin: 0.25rem 0 0.5rem; font-weight: 700; color: var(--text-normal, #f8fafc);">{{ income_summary.limiting_factor }}</h3>
+      <h3 class="planning-signal-value">{{ income_summary.limiting_factor }}</h3>
       <p class="helper-text m-0">This indicates whether your next saving contribution should focus on building short-term accessible cash, long-term pension pot, or is currently balanced.</p>
     </div>
   </section>
@@ -178,32 +163,12 @@
     <p class="helper-text">Balanced illustration: <strong>£{{ '{:,.0f}'.format(income_summary.balanced_income) }}/yr</strong>. For planning only, not guaranteed income.</p>
   </div>
 
-  <form method="get" class="planning-assumptions-form mb-1 planning-desktop-detail">
-    <label>
-      <span>Target retirement income/year (optional)</span>
-      <input type="number" step="100" min="0" name="desired_income" value="{{ '{:.0f}'.format(income_summary.desired_income) if income_summary.desired_income else '' }}" placeholder="e.g. 24000">
-    </label>
-    <label>
-      <span>Pension access age</span>
-      <input type="number" step="1" min="0" name="pension_access_age" value="{{ '{:.0f}'.format(income_summary.pension_access_age) }}">
-    </label>
-    <label>
-      <span>State Pension age</span>
-      <input type="number" step="1" min="0" name="state_pension_age" value="{{ '{:.0f}'.format(income_summary.state_pension_age) }}">
-    </label>
-    <label>
-      <span>State Pension/year (illustrative)</span>
-      <input type="number" step="100" min="0" name="state_pension_annual" value="{{ '{:.0f}'.format(income_summary.state_pension_annual) }}">
-    </label>
-    <div class="planning-form-actions">
-      <button type="submit" class="badge badge-primary-action">Update analyser</button>
-      <a href="{{ url_for('settings.settings', mode='edit', focus='scenario_estimate_assumptions') }}" class="badge badge-meta">Edit planning numbers</a>
-    </div>
-  </form>
-
-  <details class="planning-compact-details planning-compact-only">
+  <details class="planning-responsive-details"
+           {% if request.args.get('desired_income') or request.args.get('pension_access_age') or request.args.get('state_pension_age') or request.args.get('state_pension_annual') %}
+             open data-keep-open="true"
+           {% endif %}>
     <summary>Adjust planning numbers</summary>
-    <form method="get" class="planning-assumptions-form mt-075">
+    <form method="get" class="planning-assumptions-form">
       <label>
         <span>Target retirement income/year (optional)</span>
         <input type="number" step="100" min="0" name="desired_income" value="{{ '{:.0f}'.format(income_summary.desired_income) if income_summary.desired_income else '' }}" placeholder="e.g. 24000">
@@ -227,67 +192,45 @@
     </form>
   </details>
 
-  <div class="card-grid mb-1 planning-desktop-detail">
-    {% for row in income_summary.withdrawal_ranges %}
-    <div class="card stat-card planning-mini-card">
-      <h2>{{ row.label }} · {{ '{:.1f}'.format(row.rate * 100) }}%</h2>
-      <p>£{{ '{:,.0f}'.format(row.annual_income) }}/yr</p>
-      <small>About £{{ '{:,.0f}'.format(row.monthly_income) }} per month. For planning only, not guaranteed income. {{ row.note }}</small>
-    </div>
-    {% endfor %}
-  </div>
-
-  <div class="card-grid mb-1 planning-desktop-detail">
-    <div class="card planning-mini-card">
-      <h2>Bridge before pension access</h2>
-      {% if income_summary.bridge_years > 0 %}
-        <p class="planning-big-number">{{ '{:.0f}'.format(income_summary.bridge_years) }} years</p>
-        <p class="helper-text">From age {{ '{:.0f}'.format(income_summary.retirement_age) }} to {{ '{:.0f}'.format(income_summary.pension_access_age) }}. Accessible money estimate at retirement: £{{ '{:,.0f}'.format(income_summary.accessible_at_retirement) }}.</p>
-        {% if income_summary.uses_goal_mode %}
-          <p class="helper-text">At your entered income, simple bridge need is £{{ '{:,.0f}'.format(income_summary.bridge_need) }}. Surplus/gap: <strong class="{% if income_summary.bridge_surplus >= 0 %}text-gain{% else %}text-loss{% endif %}">£{{ '{:,.0f}'.format(income_summary.bridge_surplus) }}</strong>.</p>
-        {% else %}
-          <p class="helper-text">Without a target income entered, that accessible money could cover about £{{ '{:,.0f}'.format(income_summary.bridge_income_capacity) }}/yr for the bridge period before growth/tax detail.</p>
-        {% endif %}
-      {% else %}
-        <p class="planning-big-number">No bridge gap</p>
-        <p class="helper-text">Your selected retirement age is at or after pension access age with this plan.</p>
-      {% endif %}
-    </div>
-    <div class="card planning-mini-card">
-      <h2>After State Pension starts</h2>
-      <p class="planning-big-number">£{{ '{:,.0f}'.format(income_summary.private_after_state_needed) }}/yr</p>
-      <p class="helper-text">Private income needed after a State Pension assumption of £{{ '{:,.0f}'.format(income_summary.state_pension_annual) }}/yr{% if income_summary.uses_goal_mode %} against your desired £{{ '{:,.0f}'.format(income_summary.desired_income) }}/yr{% else %}, using the balanced illustration as the income guide{% endif %}.</p>
-    </div>
-    <div class="card planning-mini-card">
-      <h2>Weakest link</h2>
-      <p class="planning-big-number">{{ income_summary.limiting_factor }}</p>
-      <p class="helper-text">This is a simple signal to help decide whether the next £1 should mainly build accessible security, locked pension income, or neither.</p>
-    </div>
-  </div>
-
-  <details class="planning-compact-details planning-compact-only">
+  <details class="planning-responsive-details">
     <summary>Show income details</summary>
-    <div class="card-grid mt-075 mb-1">
-      {% for row in income_summary.withdrawal_ranges %}
-      <div class="card stat-card planning-mini-card">
-        <h2>{{ row.label }} · {{ '{:.1f}'.format(row.rate * 100) }}%</h2>
-        <p>£{{ '{:,.0f}'.format(row.annual_income) }}/yr</p>
-        <small>About £{{ '{:,.0f}'.format(row.monthly_income) }} per month. For planning only, not guaranteed income.</small>
+    <div>
+      <div class="card-grid mb-1">
+        {% for row in income_summary.withdrawal_ranges %}
+        <div class="card stat-card planning-mini-card">
+          <h2>{{ row.label }} · {{ '{:.1f}'.format(row.rate * 100) }}%</h2>
+          <p>£{{ '{:,.0f}'.format(row.annual_income) }}/yr</p>
+          <small>About £{{ '{:,.0f}'.format(row.monthly_income) }} per month. For planning only, not guaranteed income. <span class="planning-desktop-detail">{{ row.note }}</span></small>
+        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
-      <div class="card planning-mini-card">
-        <h2>Bridge before pension access</h2>
-        {% if income_summary.bridge_years > 0 %}
-          <p class="planning-big-number">{{ '{:.0f}'.format(income_summary.bridge_years) }} years</p>
-          <p class="helper-text">Accessible money estimate at retirement: £{{ '{:,.0f}'.format(income_summary.accessible_at_retirement) }}.</p>
-        {% else %}
-          <p class="planning-big-number">No bridge gap</p>
-        {% endif %}
-      </div>
-      <div class="card planning-mini-card">
-        <h2>After State Pension starts</h2>
-        <p class="planning-big-number">£{{ '{:,.0f}'.format(income_summary.private_after_state_needed) }}/yr</p>
-        <p class="helper-text">Private income needed after a State Pension assumption.</p>
+
+      <div class="card-grid mb-1">
+        <div class="card planning-mini-card">
+          <h2>Bridge before pension access</h2>
+          {% if income_summary.bridge_years > 0 %}
+            <p class="planning-big-number">{{ '{:.0f}'.format(income_summary.bridge_years) }} years</p>
+            <p class="helper-text">From age {{ '{:.0f}'.format(income_summary.retirement_age) }} to {{ '{:.0f}'.format(income_summary.pension_access_age) }}. Accessible money estimate at retirement: £{{ '{:,.0f}'.format(income_summary.accessible_at_retirement) }}.</p>
+            {% if income_summary.uses_goal_mode %}
+              <p class="helper-text">At your entered income, simple bridge need is £{{ '{:,.0f}'.format(income_summary.bridge_need) }}. Surplus/gap: <strong class="{% if income_summary.bridge_surplus >= 0 %}text-gain{% else %}text-loss{% endif %}">£{{ '{:,.0f}'.format(income_summary.bridge_surplus) }}</strong>.</p>
+            {% else %}
+              <p class="helper-text">Without a target income entered, that accessible money could cover about £{{ '{:,.0f}'.format(income_summary.bridge_income_capacity) }}/yr for the bridge period before growth/tax detail.</p>
+            {% endif %}
+          {% else %}
+            <p class="planning-big-number">No bridge gap</p>
+            <p class="helper-text">Your selected retirement age is at or after pension access age with this plan.</p>
+          {% endif %}
+        </div>
+        <div class="card planning-mini-card">
+          <h2>After State Pension starts</h2>
+          <p class="planning-big-number">£{{ '{:,.0f}'.format(income_summary.private_after_state_needed) }}/yr</p>
+          <p class="helper-text">Private income needed after a State Pension assumption of £{{ '{:,.0f}'.format(income_summary.state_pension_annual) }}/yr{% if income_summary.uses_goal_mode %} against your desired £{{ '{:,.0f}'.format(income_summary.desired_income) }}/yr{% else %}, using the balanced illustration as the income guide{% endif %}.</p>
+        </div>
+        <div class="card planning-mini-card planning-desktop-detail">
+          <h2>Weakest link</h2>
+          <p class="planning-big-number">{{ income_summary.limiting_factor }}</p>
+          <p class="helper-text">This is a simple signal to help decide whether the next £1 should mainly build accessible security, locked pension income, or neither.</p>
+        </div>
       </div>
     </div>
   </details>
@@ -313,33 +256,15 @@
     <div><span>Locked for later</span><strong>{{ access_summary.groups.locked.accounts|length }} accounts</strong></div>
   </div>
 
-  <div class="budget-rows planning-desktop-detail">
-    {% for key, group in access_summary.groups.items() %}
-      {% for account in group.accounts %}
-      <div class="budget-row planning-account-row">
-        <div class="budget-row-left">
-          <span class="budget-row-name">{{ account.name }}</span>
-          <span class="budget-row-note">{{ account.wrapper_type or 'No wrapper type' }} · {{ account.access_label }}</span>
-          <span class="budget-row-note">{{ account.access_reason }}</span>
-        </div>
-        <div class="budget-row-right planning-account-values">
-          <span class="muted-cell">Now: £{{ '{:,.0f}'.format(account.current) }}</span>
-          <strong>Future estimate at {{ '{:.0f}'.format(income_summary.retirement_age) }}: £{{ '{:,.0f}'.format(account.projected) }}</strong>
-        </div>
-      </div>
-      {% endfor %}
-    {% endfor %}
-  </div>
-
-  <details class="planning-compact-details planning-compact-only">
+  <details class="planning-responsive-details">
     <summary>View account details</summary>
-    <div class="budget-rows mt-075">
+    <div class="budget-rows">
       {% for key, group in access_summary.groups.items() %}
         {% for account in group.accounts %}
         <div class="budget-row planning-account-row">
           <div class="budget-row-left">
             <span class="budget-row-name">{{ account.name }}</span>
-            <span class="budget-row-note">{{ account.access_label }}</span>
+            <span class="budget-row-note">{{ account.wrapper_type or 'No wrapper type' }} · {{ account.access_label }}</span>
             <span class="budget-row-note">{{ account.access_reason }}</span>
           </div>
           <div class="budget-row-right planning-account-values">
