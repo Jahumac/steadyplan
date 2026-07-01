@@ -261,9 +261,22 @@
 
       // Financial Planning State Variables (Fictitious demo data)
       const [monthlyIncome, setIncome] = useState(() => Number(localStorage.getItem('sp_v2_income')) || 3500.00);
-      const [fixedExpenses, setFixedExpenses] = useState(() => Number(localStorage.getItem('sp_v2_fixed')) || 1200.00);
-      const [debtRepayment, setDebtRepayment] = useState(() => Number(localStorage.getItem('sp_v2_debt')) || 150.00);
-      const [investmentsSavings, setInvestmentsSavings] = useState(() => Number(localStorage.getItem('sp_v2_savings')) || 1100.00);
+
+      // Derived States via useMemo to prevent side-effects and infinite rendering loops
+      const fixedExpenses = useMemo(() => {
+        const next = simulationInputs || {};
+        return parseFloat(((next.rent || 0) + (next.mobile || 0) + (next.internet || 0) + (next.travel || 0) + (next.cloud || 0) + (next.subscriptions || 0) + (next.ai || 0)).toFixed(2));
+      }, [simulationInputs]);
+
+      const debtRepayment = useMemo(() => {
+        const next = simulationInputs || {};
+        return parseFloat((next.netwestCC || 0).toFixed(2));
+      }, [simulationInputs]);
+
+      const investmentsSavings = useMemo(() => {
+        const next = simulationInputs || {};
+        return parseFloat(((next.stocksMonthly || 0) + (next.lisaMonthly || 0) + (next.investEngineMonthly || 0) + (next.bondsMonthly || 0) + (next.t212Monthly || 0) + (next.cashParkMonthly || 0)).toFixed(2));
+      }, [simulationInputs]);
 
       // Connected Financial Assumptions
       const [currentAge, setCurrentAge] = useState(() => Number(localStorage.getItem('sp_v2_curr_age')) || 32);
@@ -334,18 +347,7 @@
       // Synchronize allocations dynamically on parameter updates
       const handleSimChange = (field, val) => {
         const numericVal = parseFloat(val) || 0;
-        setSimulationInputs(prev => {
-          const next = { ...prev, [field]: numericVal };
-          const totalFixed = next.rent + next.mobile + next.internet + next.travel + next.cloud + next.subscriptions + next.ai;
-          const totalDebt = next.netwestCC;
-          const totalInvestments = next.stocksMonthly + next.lisaMonthly + next.investEngineMonthly + next.bondsMonthly + next.t212Monthly + next.cashParkMonthly;
-          
-          setFixedExpenses(parseFloat(totalFixed.toFixed(2)));
-          setDebtRepayment(parseFloat(totalDebt.toFixed(2)));
-          setInvestmentsSavings(parseFloat(totalInvestments.toFixed(2)));
-          
-          return next;
-        });
+        setSimulationInputs(prev => ({ ...prev, [field]: numericVal }));
       };
 
       const handleAccountBalanceChange = (accountId, val) => {
@@ -476,9 +478,6 @@
           try {
             const data = JSON.parse(event.target.result);
             if (data.monthlyIncome) setIncome(data.monthlyIncome);
-            if (data.fixedExpenses) setFixedExpenses(data.fixedExpenses);
-            if (data.debtRepayment) setDebtRepayment(data.debtRepayment);
-            if (data.investmentsSavings) setInvestmentsSavings(data.investmentsSavings);
             if (data.currentAge) setCurrentAge(data.currentAge);
             if (data.retirementAge) setRetirementAge(data.retirementAge);
             if (data.yearlyGrowth) setYearlyGrowth(data.yearlyGrowth);
@@ -1027,9 +1026,6 @@
                           t212Monthly: 300.00, cashParkMonthly: 0.00, goingOut: 250.00
                         });
                         setIncome(3500.00);
-                        setFixedExpenses(1200.00);
-                        setDebtRepayment(150.00);
-                        setInvestmentsSavings(1100.00);
                       }} class="text-xs font-mono font-bold bg-[var(--bg)] hover:bg-[var(--border)] text-white border border-[var(--border)] px-3 py-1.5 rounded transition cursor-pointer">
                         Reset Scenario
                       </button>
