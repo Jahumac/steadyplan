@@ -26,6 +26,9 @@
   <!-- Babel Standalone (JSX compiler) -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
+  <!-- Font Awesome Icons for premium high-fidelity visuals -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <!-- Tailwind CSS CDN with Earthy Palette -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -41,7 +44,8 @@
               charcoal: '#2e332f',
               sage: '#4c5e50',
               sageHover: '#3d4d40',
-              gold: '#cba358'
+              gold: '#cba358',
+              rust: '#c86a5a'
             }
           }
         }
@@ -55,6 +59,17 @@
       background-color: #fdfcfa;
       color: #2e332f;
     }
+    .month-active::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 14px;
+      height: 3px;
+      background-color: #4c5e50;
+      border-radius: 9999px;
+    }
   </style>
 </head>
 <body class="h-full flex flex-col bg-[#fdfcfa]">
@@ -64,99 +79,181 @@
 
   <!-- React SPA Code -->
   <script type="text/babel">
-    const { useState, useEffect, useMemo } = React;
+    const { useState, useEffect, useMemo, useRef } = React;
 
     function App() {
-      const [activeTab, setActiveTab] = useState('all'); // 'all' | 'planner' | 'compounder'
+      // Time Machine & Tab States
+      const [selectedMonth, setSelectedMonth] = useState("Jul");
+      const [activeTab, setActiveTab] = useState("overview"); // overview, budget, future
 
-      // --- Everyday Cash Flow Planner State ---
-      const [income, setIncome] = useState(() => Number(localStorage.getItem('sp_income')) || 5000);
-      const [needs, setNeeds] = useState(() => Number(localStorage.getItem('sp_needs')) || 2500);
-      const [wants, setWants] = useState(() => Number(localStorage.getItem('sp_wants')) || 1500);
-      const [savings, setSavings] = useState(() => Number(localStorage.getItem('sp_savings')) || 1000);
+      // Financial Planning State Variables (Initialized from screenshots)
+      const [monthlyIncome, setIncome] = useState(() => Number(localStorage.getItem('sp_income')) || 2560.17);
+      const [fixedExpenses, setFixedExpenses] = useState(() => Number(localStorage.getItem('sp_fixed')) || 626.54);
+      const [debtRepayment, setDebtRepayment] = useState(() => Number(localStorage.getItem('sp_debt')) || 70.00);
+      const [investmentsSavings, setInvestmentsSavings] = useState(() => Number(localStorage.getItem('sp_savings')) || 1750.00);
 
-      // --- Long-Term Retirement Compounder State ---
-      const [currentAge, setCurrentAge] = useState(() => Number(localStorage.getItem('sp_curr_age')) || 30);
-      const [retirementAge, setRetirementAge] = useState(() => Number(localStorage.getItem('sp_ret_age')) || 65);
-      const [startBalance, setStartBalance] = useState(() => Number(localStorage.getItem('sp_start_bal')) || 25000);
-      const [growthRate, setGrowthRate] = useState(() => Number(localStorage.getItem('sp_growth')) || 7.0);
-      const [employerMatch, setEmployerMatch] = useState(() => Number(localStorage.getItem('sp_match')) || 5.0); // % of income
+      // Connected Financial Assumptions
+      const [currentAge, setCurrentAge] = useState(() => Number(localStorage.getItem('sp_curr_age')) || 41);
+      const [retirementAge, setRetirementAge] = useState(() => Number(localStorage.getItem('sp_ret_age')) || 59);
+      const [yearlyGrowth, setYearlyGrowth] = useState(() => Number(localStorage.getItem('sp_growth')) || 7.0);
 
-      // Tooltip State for SVG Chart
+      // Detailed Simulation Input Object
+      const [simulationInputs, setSimulationInputs] = useState(() => {
+        const cached = localStorage.getItem('sp_sim_inputs');
+        return cached ? JSON.parse(cached) : {
+          rent: 300.00,
+          mobile: 5.00,
+          internet: 29.74,
+          travel: 100.00,
+          cloud: 22.80,
+          subscriptions: 14.00,
+          ai: 80.00,
+          netwestCC: 70.00,
+          stocksMonthly: 330.00,
+          lisaMonthly: 0.00,
+          investEngineMonthly: 0.00,
+          bondsMonthly: 0.00,
+          t212Monthly: 200.00,
+          cashParkMonthly: 1000.00,
+          goingOut: 150.00
+        };
+      });
+
+      // Asset Accounts Model parsed directly from actual database structure
+      const [accounts, setAccounts] = useState(() => {
+        const cached = localStorage.getItem('sp_accounts');
+        return cached ? JSON.parse(cached) : [
+          { id: 'sip1', name: "InvestEngine SIPP", balance: 55492.74, type: 'Locked', code: 'InvestEngine SIPP' },
+          { id: 'isa1', name: "Stocks & Shares ISA", balance: 8267.24, type: 'Accessible', code: 'Trading 212 - Stocks & Shares ISA' },
+          { id: 'pension1', name: "Workplace Pension", balance: 3405.27, type: 'Locked', code: 'Standard Life (Workplace)' },
+          { id: 'isa2', name: "Cash-Park ISA", balance: 2848.80, type: 'Accessible', code: 'Trading 212 - Cash ISA' },
+          { id: 'bonds1', name: "Premium Bonds", balance: 800.00, type: 'Accessible', code: 'NS&I' },
+          { id: 'sipp2', name: "Trading 212 SIPP", balance: 407.08, type: 'Locked', code: 'Trading 212' },
+          { id: 'lisa1', name: "Lifetime ISA", balance: 274.45, type: 'Restricted', code: 'Dodl by AJ Bell' }
+        ];
+      });
+
+      // Interactive mouse hover mechanics on compound charts
+      const svgRef = useRef(null);
       const [hoveredPoint, setHoveredPoint] = useState(null);
 
       // --- Auto-Save to LocalStorage ---
       useEffect(() => {
-        localStorage.setItem('sp_income', income);
-        localStorage.setItem('sp_needs', needs);
-        localStorage.setItem('sp_wants', wants);
-        localStorage.setItem('sp_savings', savings);
+        localStorage.setItem('sp_income', monthlyIncome);
+        localStorage.setItem('sp_fixed', fixedExpenses);
+        localStorage.setItem('sp_debt', debtRepayment);
+        localStorage.setItem('sp_savings', investmentsSavings);
         localStorage.setItem('sp_curr_age', currentAge);
         localStorage.setItem('sp_ret_age', retirementAge);
-        localStorage.setItem('sp_start_bal', startBalance);
-        localStorage.setItem('sp_growth', growthRate);
-        localStorage.setItem('sp_match', employerMatch);
-      }, [income, needs, wants, savings, currentAge, retirementAge, startBalance, growthRate, employerMatch]);
+        localStorage.setItem('sp_growth', yearlyGrowth);
+        localStorage.setItem('sp_sim_inputs', JSON.stringify(simulationInputs));
+        localStorage.setItem('sp_accounts', JSON.stringify(accounts));
+      }, [monthlyIncome, fixedExpenses, debtRepayment, investmentsSavings, currentAge, retirementAge, yearlyGrowth, simulationInputs, accounts]);
 
-      // --- Sync budget limits dynamically ---
-      const handleIncomeChange = (val) => {
-        setIncome(val);
-        setNeeds(Math.round(val * 0.5));
-        setWants(Math.round(val * 0.3));
-        setSavings(Math.round(val * 0.2));
+      // Synchronize allocations dynamically on parameter updates
+      const handleSimChange = (field, val) => {
+        const numericVal = parseFloat(val) || 0;
+        setSimulationInputs(prev => {
+          const next = { ...prev, [field]: numericVal };
+          
+          const totalFixed = next.rent + next.mobile + next.internet + next.travel + next.cloud + next.subscriptions + next.ai;
+          const totalDebt = next.netwestCC;
+          const totalInvestments = next.stocksMonthly + next.lisaMonthly + next.investEngineMonthly + next.bondsMonthly + next.t212Monthly + next.cashParkMonthly;
+          
+          setFixedExpenses(parseFloat(totalFixed.toFixed(2)));
+          setDebtRepayment(parseFloat(totalDebt.toFixed(2)));
+          setInvestmentsSavings(parseFloat(totalInvestments.toFixed(2)));
+          
+          return next;
+        });
       };
 
-      const needsPct = Math.round((needs / income) * 100) || 0;
-      const wantsPct = Math.round((wants / income) * 100) || 0;
-      const savingsPct = Math.round((savings / income) * 100) || 0;
-      const leftover = income - (needs + wants + savings);
+      const handleAccountBalanceChange = (accountId, val) => {
+        const numericVal = parseFloat(val) || 0;
+        setAccounts(prev => prev.map(a => a.id === accountId ? { ...a, balance: numericVal } : a));
+      };
 
-      const projections = useMemo(() => {
-        const years = Math.max(1, retirementAge - currentAge);
-        const months = years * 12;
-        const monthlyRate = (growthRate / 100) / 12;
-        const monthlySavings = savings;
-        const monthlyEmployer = (income * (employerMatch / 100)) / 12;
-        const monthlyContrib = monthlySavings + monthlyEmployer;
+      // Calculated Discretionary cash flow
+      const discretionary = Math.max(0, monthlyIncome - (fixedExpenses + debtRepayment + investmentsSavings));
 
-        let balance = startBalance;
-        let totalContrib = 0;
-        const series = [];
+      // Dynamic computations for account pools and total portfolios
+      const totalAssets = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+      const accessibleNow = accounts.filter(a => a.type === 'Accessible').reduce((sum, a) => sum + a.balance, 0);
+      const lockedForLater = accounts.filter(a => a.type === 'Locked').reduce((sum, a) => sum + a.balance, 0);
+      const restricted = accounts.filter(a => a.type === 'Restricted').reduce((sum, a) => sum + a.balance, 0);
 
-        series.push({
-          year: 0,
-          age: currentAge,
-          balance: Math.round(balance),
-          contributions: 0
-        });
+      // Compound Projection Mathematics
+      const yearsToRetirement = Math.max(1, retirementAge - currentAge);
 
-        for (let m = 1; m <= months; m++) {
-          balance = balance * (1 + monthlyRate) + monthlyContrib;
-          totalContrib += monthlyContrib;
+      const futureEstimateTotal = useMemo(() => {
+        let currentPrincipal = totalAssets;
+        let monthlyAddition = investmentsSavings;
+        let monthlyRate = (yearlyGrowth / 100) / 12;
+        let totalMonths = yearsToRetirement * 12;
+        let compoundingTotal = currentPrincipal;
 
-          if (m % 12 === 0) {
-            series.push({
-              year: m / 12,
-              age: currentAge + (m / 12),
-              balance: Math.round(balance),
-              contributions: Math.round(totalContrib)
-            });
-          }
+        for (let i = 0; i < totalMonths; i++) {
+          compoundingTotal = compoundingTotal * (1 + monthlyRate) + monthlyAddition;
         }
-        return { series, finalBalance: Math.round(balance), totalContrib: Math.round(totalContrib) };
-      }, [income, savings, currentAge, retirementAge, startBalance, growthRate, employerMatch]);
+        return Math.round(compoundingTotal);
+      }, [totalAssets, investmentsSavings, yearlyGrowth, yearsToRetirement]);
+
+      const projectionPoints = useMemo(() => {
+        const points = [];
+        let currentVal = totalAssets;
+        let monthlyAddition = investmentsSavings;
+        let monthlyRate = (yearlyGrowth / 100) / 12;
+
+        points.push({ age: currentAge, amount: Math.round(currentVal) });
+
+        for (let year = 1; year <= yearsToRetirement; year++) {
+          for (let m = 0; m < 12; m++) {
+            currentVal = currentVal * (1 + monthlyRate) + monthlyAddition;
+          }
+          points.push({
+            age: currentAge + year,
+            amount: Math.round(currentVal)
+          });
+        }
+        return points;
+      }, [totalAssets, investmentsSavings, yearlyGrowth, yearsToRetirement, currentAge]);
+
+      // Interactive mouse hover event mappings for SVG Projection Coordinates
+      const handleMouseMove = (e) => {
+        if (!svgRef.current || projectionPoints.length === 0) return;
+        const rect = svgRef.current.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const percentX = Math.max(0, Math.min(1, mouseX / rect.width));
+        
+        const index = Math.min(
+          projectionPoints.length - 1,
+          Math.max(0, Math.round(percentX * (projectionPoints.length - 1)))
+        );
+        
+        const point = projectionPoints[index];
+        if (point) {
+          const x = (index / (projectionPoints.length - 1)) * 500;
+          const ratio = point.amount / (futureEstimateTotal || 1);
+          const y = 150 - (ratio * 120) - 10;
+          setHoveredPoint({ ...point, x, y, pctX: (index / (projectionPoints.length - 1)) * 100 });
+        }
+      };
+
+      const handleMouseLeave = () => {
+        setHoveredPoint(null);
+      };
 
       // --- Backup Import/Export Logic ---
       const handleExport = () => {
         const dataStr = JSON.stringify({
-          income, needs, wants, savings,
-          currentAge, retirementAge, startBalance, growthRate, employerMatch
+          monthlyIncome, fixedExpenses, debtRepayment, investmentsSavings,
+          currentAge, retirementAge, yearlyGrowth, simulationInputs, accounts
         }, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `steadyplan_sandbox_backup_${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `steadyplan_sandbox_hybrid_${new Date().toISOString().split('T')[0]}.json`;
         link.click();
       };
 
@@ -167,15 +264,15 @@
         reader.onload = (event) => {
           try {
             const data = JSON.parse(event.target.result);
-            if (data.income) setIncome(data.income);
-            if (data.needs) setNeeds(data.needs);
-            if (data.wants) setWants(data.wants);
-            if (data.savings) setSavings(data.savings);
+            if (data.monthlyIncome) setIncome(data.monthlyIncome);
+            if (data.fixedExpenses) setFixedExpenses(data.fixedExpenses);
+            if (data.debtRepayment) setDebtRepayment(data.debtRepayment);
+            if (data.investmentsSavings) setInvestmentsSavings(data.investmentsSavings);
             if (data.currentAge) setCurrentAge(data.currentAge);
             if (data.retirementAge) setRetirementAge(data.retirementAge);
-            if (data.startBalance) setStartBalance(data.startBalance);
-            if (data.growthRate) setGrowthRate(data.growthRate);
-            if (data.employerMatch) setEmployerMatch(data.employerMatch);
+            if (data.yearlyGrowth) setYearlyGrowth(data.yearlyGrowth);
+            if (data.simulationInputs) setSimulationInputs(data.simulationInputs);
+            if (data.accounts) setAccounts(data.accounts);
             alert("Backup imported successfully!");
           } catch (err) {
             alert("Failed to parse JSON file.");
@@ -184,310 +281,561 @@
         reader.readAsText(file);
       };
 
-      const chartWidth = 500;
-      const chartHeight = 220;
-      const maxBalance = Math.max(...projections.series.map(d => d.balance), 1);
-      const minBalance = Math.min(...projections.series.map(d => d.balance), 0);
-
-      const chartPoints = projections.series.map((d, i) => {
-        const x = (i / (projections.series.length - 1)) * chartWidth;
-        const y = chartHeight - ((d.balance - minBalance) / (maxBalance - minBalance || 1)) * chartHeight;
-        return { x, y, age: d.age, balance: d.balance, contributions: d.contributions };
-      });
-
-      const linePath = chartPoints.reduce((acc, p, i) => {
-        return i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`;
-      }, "");
-
-      const areaPath = chartPoints.length > 0 
-        ? `${linePath} L ${chartPoints[chartPoints.length - 1].x} ${chartHeight} L ${chartPoints[0].x} ${chartHeight} Z`
-        : "";
-
       return (
-        <div class="min-h-full flex flex-col bg-[#fdfcfa] text-earth-charcoal">
-          {/* Header */}
-          <header class="bg-earth-cream border-b border-earth-border">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                  <a href="./index.html" class="flex items-center gap-2 cursor-pointer">
-                    <img class="h-8 w-8" src="./assets/brand/steadyplan-app-icon-1024.png" alt="SteadyPlan logo" />
-                    <span class="text-xl font-extrabold text-earth-charcoal tracking-tight">SteadyPlan</span>
-                  </a>
-                  <span class="ml-4 text-xs bg-earth-sage/10 text-earth-sage px-2 py-0.5 rounded font-bold uppercase tracking-wider">Sandbox</span>
-                  <nav class="hidden md:flex ml-10 space-x-6">
-                    <a href="./index.html" class="text-sm font-semibold text-earth-muted hover:text-earth-charcoal">Landing Home</a>
-                    <a href="./tour.html" class="text-sm font-semibold text-earth-muted hover:text-earth-charcoal">Tour</a>
-                  </nav>
-                </div>
-                <div class="flex items-center gap-3">
-                  <button onClick={handleExport} class="border border-earth-border text-earth-charcoal hover:bg-earth-light px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
-                    Export JSON
-                  </button>
-                  <label class="border border-earth-border text-earth-muted hover:text-earth-charcoal hover:bg-earth-light px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition">
-                    Import JSON <input type="file" accept=".json" onChange={handleImport} class="hidden" />
-                  </label>
-                </div>
-              </div>
+        <div class="min-h-full flex flex-col bg-earth-cream text-earth-charcoal font-sans antialiased">
+          
+          {/* Security Banner */}
+          <div class="bg-earth-light border-b border-earth-border px-4 py-2.5 text-xs text-earth-muted flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div class="flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+              <span class="font-medium font-mono">Sovereign Client-Side Interactive Sandbox</span>
             </div>
-          </header>
-
-          {/* Subnav Panel */}
-          <div class="bg-earth-light/60 border-b border-earth-border py-3">
-            <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4">
-              <div class="flex items-center gap-1">
-                <button 
-                  onClick={() => setActiveTab('all')} 
-                  class={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'all' ? 'bg-earth-sage text-white' : 'text-earth-muted hover:text-earth-charcoal hover:bg-earth-light'}`}>
-                  Full Workspace
-                </button>
-                <button 
-                  onClick={() => setActiveTab('planner')} 
-                  class={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'planner' ? 'bg-earth-sage text-white' : 'text-earth-muted hover:text-earth-charcoal hover:bg-earth-light'}`}>
-                  Cash Flow Planner
-                </button>
-                <button 
-                  onClick={() => setActiveTab('compounder')} 
-                  class={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'compounder' ? 'bg-earth-sage text-white' : 'text-earth-muted hover:text-earth-charcoal hover:bg-earth-light'}`}>
-                  Compounder Forecast
-                </button>
-              </div>
-              <div class="text-[10px] text-earth-muted font-bold">
-                Data persists automatically in LocalStorage
-              </div>
+            <div class="text-[11px] text-earth-muted text-center sm:text-right">
+              <i class="fa-solid fa-shield-halved text-earth-sage mr-1"></i>
+              Mathematical Modeling Utility. 100% private. No trackers.
             </div>
           </div>
 
-          {/* Main Content */}
-          <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Navigation Header */}
+          <header class="bg-earth-cream border-b border-earth-border py-4 px-6 md:px-12 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3.5">
+              <a href="./index.html" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-earth-sage to-earth-sage/80 flex items-center justify-center text-white font-black text-xl shadow-md shadow-earth-sage/20">
+                S
+              </a>
+              <div class="flex flex-col">
+                <span class="text-xl font-bold tracking-tight text-earth-charcoal leading-none">SteadyPlan</span>
+                <span class="text-[10px] text-earth-sage font-mono uppercase tracking-widest mt-1">Sovereign Financial Planning</span>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-3 text-xs">
+              <button 
+                onClick={handleExport}
+                class="flex items-center space-x-2 bg-earth-light hover:bg-earth-border text-earth-charcoal font-medium px-4 py-2 rounded-lg transition border border-earth-border"
+              >
+                <i class="fa-solid fa-download"></i>
+                <span>Export JSON</span>
+              </button>
+              <label class="flex items-center space-x-2 bg-earth-light hover:bg-earth-border text-earth-charcoal font-medium px-4 py-2 rounded-lg transition border border-earth-border cursor-pointer">
+                <i class="fa-solid fa-upload"></i>
+                <span>Import JSON</span>
+                <input type="file" accept=".json" onChange={handleImport} class="hidden" />
+              </label>
+              <a 
+                href="./index.html" 
+                class="bg-earth-sage hover:bg-earth-sageHover text-white font-semibold px-4 py-2 rounded-lg transition shadow-md shadow-earth-sage/10 flex items-center space-x-1.5"
+              >
+                <i class="fa-solid fa-house"></i>
+                <span>Home Page</span>
+              </a>
+            </div>
+          </header>
+
+          {/* Main App Workspace */}
+          <main class="flex-grow py-12 px-4 md:px-8 max-w-7xl mx-auto w-full space-y-8">
+            <div class="text-center space-y-3 max-w-3xl mx-auto">
+              <span class="text-xs font-mono uppercase text-earth-sage bg-earth-sage/10 border border-earth-sage/20 px-3 py-1 rounded-md">Interactive Web Sandbox</span>
+              <h2 class="text-2xl md:text-3xl font-bold tracking-tight">The Authentic SteadyPlan Workspace</h2>
+              <p class="text-sm text-earth-muted">
+                Experience how your cashflow, account categories, goals, and retirement estimates coordinate in real time. Customize any number below.
+              </p>
+            </div>
+
+            {/* Main App Canvas */}
+            <div class="bg-white border border-earth-border rounded-2xl shadow-xl overflow-hidden flex flex-col">
               
-              {/* Left Pane: Sliders & Controls */}
-              <div class={`space-y-6 lg:col-span-6 ${(activeTab === 'all' || activeTab === 'planner') ? 'block' : 'hidden lg:block'}`}>
+              {/* App Header Tab Selector */}
+              <div class="bg-earth-light/60 px-4 py-3 border-b border-earth-border flex flex-wrap items-center justify-between gap-3 text-xs">
                 
-                {/* Cash Flow Card */}
-                <div class="bg-white border border-earth-border rounded-2xl p-6 shadow-sm">
-                  <div class="flex items-center justify-between border-b border-earth-border pb-4 mb-6">
-                    <div>
-                      <span class="text-[10px] text-earth-muted font-bold tracking-wider uppercase block">Everyday</span>
-                      <h2 class="text-lg font-black text-earth-charcoal">Cash Flow Allocation</h2>
-                    </div>
-                    <span class="text-xs bg-earth-sage/10 text-earth-sage font-bold px-2.5 py-1 rounded-full">
-                      50/30/20 Target
-                    </span>
-                  </div>
-
-                  <div class="space-y-6">
-                    {/* Income Slider */}
-                    <div>
-                      <div class="flex justify-between text-xs font-bold text-earth-charcoal mb-2">
-                        <span>Monthly Take-Home Pay</span>
-                        <span class="text-earth-sage font-extrabold text-sm">£{income.toLocaleString()}</span>
-                      </div>
-                      <input 
-                        type="range" min="1000" max="20000" step="100"
-                        value={income} onChange={(e) => handleIncomeChange(Number(e.target.value))}
-                        class="w-full h-2 bg-earth-light rounded-lg appearance-none cursor-pointer accent-earth-sage"
-                      />
-                    </div>
-
-                    {/* Needs Slider */}
-                    <div class="pt-4 border-t border-earth-light">
-                      <div class="flex justify-between text-xs font-bold text-earth-charcoal mb-1">
-                        <span>Needs (Rent, Bills, Food)</span>
-                        <span class="font-extrabold">£{needs.toLocaleString()}</span>
-                      </div>
-                      <div class="flex items-center justify-between text-[10px] text-earth-muted mb-2">
-                        <span>Guideline: 50% (£{(income * 0.5).toLocaleString()})</span>
-                        <span class={`font-bold px-1.5 py-0.5 rounded ${needsPct > 50 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                          {needsPct}% Allocated
-                        </span>
-                      </div>
-                      <input 
-                        type="range" min="0" max={income} step="50"
-                        value={needs} onChange={(e) => setNeeds(Number(e.target.value))}
-                        class="w-full h-2 bg-earth-light rounded-lg appearance-none cursor-pointer accent-earth-charcoal"
-                      />
-                    </div>
-
-                    {/* Wants Slider */}
-                    <div class="pt-4 border-t border-earth-light">
-                      <div class="flex justify-between text-xs font-bold text-earth-charcoal mb-1">
-                        <span>Wants (Leisure, Subs)</span>
-                        <span class="font-extrabold">£{wants.toLocaleString()}</span>
-                      </div>
-                      <div class="flex items-center justify-between text-[10px] text-earth-muted mb-2">
-                        <span>Guideline: 30% (£{(income * 0.3).toLocaleString()})</span>
-                        <span class={`font-bold px-1.5 py-0.5 rounded ${wantsPct > 30 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                          {wantsPct}% Allocated
-                        </span>
-                      </div>
-                      <input 
-                        type="range" min="0" max={income - needs} step="50"
-                        value={wants} onChange={(e) => setWants(Number(e.target.value))}
-                        class="w-full h-2 bg-earth-light rounded-lg appearance-none cursor-pointer accent-earth-charcoal"
-                      />
-                    </div>
-
-                    {/* Savings Slider */}
-                    <div class="pt-4 border-t border-earth-light">
-                      <div class="flex justify-between text-xs font-bold text-earth-charcoal mb-1">
-                        <span>Savings (ISAs, Cash Pot, Pension)</span>
-                        <span class="text-earth-sage font-extrabold">£{savings.toLocaleString()}</span>
-                      </div>
-                      <div class="flex items-center justify-between text-[10px] text-earth-muted mb-2">
-                        <span>Guideline: 20% (£{(income * 0.2).toLocaleString()})</span>
-                        <span class={`font-bold px-1.5 py-0.5 rounded ${savingsPct < 20 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
-                          {savingsPct}% Allocated
-                        </span>
-                      </div>
-                      <input 
-                        type="range" min="0" max={income - needs - wants} step="50"
-                        value={savings} onChange={(e) => setSavings(Number(e.target.value))}
-                        class="w-full h-2 bg-earth-light rounded-lg appearance-none cursor-pointer accent-earth-sage"
-                      />
-                    </div>
-
-                    {leftover > 0 && (
-                      <div class="p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-between text-xs text-amber-800">
-                        <span>Unallocated cash leftover:</span>
-                        <strong class="font-extrabold">£{leftover.toLocaleString()}</strong>
-                      </div>
-                    )}
-                  </div>
+                {/* Tabs */}
+                <div class="flex bg-earth-cream border border-earth-border p-1 rounded-lg">
+                  <button 
+                    onClick={() => setActiveTab("overview")}
+                    class={`px-3 py-1.5 rounded-md font-semibold transition ${activeTab === "overview" ? 'bg-earth-sage text-white shadow-sm' : 'text-earth-muted hover:text-earth-charcoal'}`}
+                  >
+                    Goals & Overview
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab("budget")}
+                    class={`px-3 py-1.5 rounded-md font-semibold transition ${activeTab === "budget" ? 'bg-earth-sage text-white shadow-sm' : 'text-earth-muted hover:text-earth-charcoal'}`}
+                  >
+                    Budget Plan
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab("future")}
+                    class={`px-3 py-1.5 rounded-md font-semibold transition ${activeTab === "future" ? 'bg-earth-sage text-white shadow-sm' : 'text-earth-muted hover:text-earth-charcoal'}`}
+                  >
+                    Future Estimates
+                  </button>
                 </div>
 
-                {/* Match Card */}
-                <div class="bg-white border border-earth-border rounded-2xl p-6 shadow-sm">
-                  <h3 class="text-sm font-bold text-earth-charcoal mb-4">Optional Match Uplift</h3>
-                  <div class="space-y-4">
-                    <div>
-                      <div class="flex justify-between text-xs font-bold text-earth-charcoal mb-1">
-                        <span>Employer Matching Rate</span>
-                        <span class="font-bold">{employerMatch}% of income</span>
-                      </div>
-                      <input 
-                        type="range" min="0" max="15" step="0.5"
-                        value={employerMatch} onChange={(e) => setEmployerMatch(Number(e.target.value))}
-                        class="w-full h-2 bg-earth-light rounded-lg appearance-none cursor-pointer accent-earth-charcoal"
-                      />
-                    </div>
-                  </div>
+                {/* Months Strip */}
+                <div class="flex items-center space-x-1 font-mono text-[11px] overflow-x-auto pb-1 sm:pb-0">
+                  {["Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"].map(m => (
+                    <button 
+                      key={m}
+                      onClick={() => setSelectedMonth(m)}
+                      class={`relative px-2.5 py-1 transition hover:text-earth-charcoal ${selectedMonth === m ? 'text-earth-charcoal font-bold month-active' : 'text-earth-muted'}`}
+                    >
+                      {m}
+                    </button>
+                  ))}
                 </div>
-
               </div>
 
-              {/* Right Pane: SVG Chart & Forecast */}
-              <div class={`space-y-6 lg:col-span-6 ${(activeTab === 'all' || activeTab === 'compounder') ? 'block' : 'hidden lg:block'}`}>
+              {/* Active Tab Rendering Panels */}
+              <div class="p-6 md:p-8 space-y-6">
                 
-                {/* Compounder Card */}
-                <div class="bg-white border border-earth-border rounded-2xl p-6 shadow-sm">
-                  <div class="flex items-center justify-between border-b border-earth-border pb-4 mb-6">
-                    <div>
-                      <span class="text-[10px] text-earth-muted font-bold tracking-wider uppercase block">Compounder</span>
-                      <h2 class="text-lg font-black text-earth-charcoal">Scenario Projection</h2>
+                {/* TAB 1: OVERVIEW SCREEN */}
+                {activeTab === "overview" && (
+                  <div class="space-y-6">
+                    
+                    {/* Key Metric Blocks */}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div class="bg-earth-light/40 border border-earth-border p-5 rounded-xl space-y-1">
+                        <span class="text-[10px] uppercase font-mono text-earth-muted tracking-wider">Total Combined Assets</span>
+                        <div class="text-3xl font-bold font-mono text-earth-charcoal">£{totalAssets.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                        <p class="text-[11px] text-emerald-700 font-semibold"><i class="fa-solid fa-arrow-up"></i> +£3,882.00 above comparison target</p>
+                      </div>
+                      <div class="bg-earth-light/40 border border-earth-border p-5 rounded-xl space-y-1">
+                        <span class="text-[10px] uppercase font-mono text-earth-muted tracking-wider">Monthly Investments Plan</span>
+                        <div class="text-3xl font-bold font-mono text-earth-sage">£{investmentsSavings.toLocaleString()}</div>
+                        <p class="text-[11px] text-earth-muted">Total recurring savings allocation this month</p>
+                      </div>
+                      <div class="bg-earth-light/40 border border-earth-border p-5 rounded-xl space-y-1">
+                        <span class="text-[10px] uppercase font-mono text-earth-muted tracking-wider">Retirement Forecast</span>
+                        <div class="text-3xl font-bold font-mono text-earth-gold">£{futureEstimateTotal.toLocaleString()}</div>
+                        <p class="text-[11px] text-earth-muted">At age {retirementAge} under current assumptions</p>
+                      </div>
                     </div>
-                    <div class="text-right">
-                      <span class="text-[10px] text-earth-muted font-bold block">Years Compounding</span>
-                      <span class="text-sm font-black text-earth-sage">{retirementAge - currentAge} years</span>
-                    </div>
-                  </div>
 
-                  <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div>
-                      <label class="block text-[10px] font-bold text-earth-muted uppercase mb-1">Starting Balance</label>
-                      <div class="relative">
-                        <span class="absolute left-3 top-2.5 text-xs text-earth-muted font-bold">£</span>
+                    {/* Liquidity Profile */}
+                    <div class="bg-earth-light/40 border border-earth-border p-6 rounded-xl space-y-4">
+                      <div>
+                        <span class="text-xs font-semibold uppercase text-earth-sage tracking-wider font-mono">Liquidity Profile</span>
+                        <h3 class="text-lg font-bold text-earth-charcoal mt-1">Where your money stands right now</h3>
+                        <p class="text-xs text-earth-muted mt-1 font-sans">See what is cash-accessible now, what invested money is reachable, and what is locked for later.</p>
+                      </div>
+
+                      {/* Triple-color Segmented Progress Bar */}
+                      <div class="w-full h-3.5 rounded-full bg-earth-border/40 overflow-hidden flex">
+                        <div class="h-full bg-earth-sage" style={{ width: `${(accessibleNow / (totalAssets || 1)) * 100}%` }} title="Accessible"></div>
+                        <div class="h-full bg-earth-gold" style={{ width: `${(restricted / (totalAssets || 1)) * 100}%` }} title="Restricted"></div>
+                        <div class="h-full bg-earth-charcoal" style={{ width: `${(lockedForLater / (totalAssets || 1)) * 100}%` }} title="Locked"></div>
+                      </div>
+
+                      {/* Legend block matching overview layout */}
+                      <div class="grid grid-cols-3 gap-4 text-center border-t border-earth-border/50 pt-4">
+                        <div>
+                          <span class="text-[10px] font-mono uppercase text-earth-sage block">Accessible Now</span>
+                          <span class="text-sm font-bold font-mono text-earth-charcoal">£{accessibleNow.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+                        </div>
+                        <div>
+                          <span class="text-[10px] font-mono uppercase text-earth-gold block">Restricted</span>
+                          <span class="text-sm font-bold font-mono text-earth-charcoal">£{restricted.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+                        </div>
+                        <div>
+                          <span class="text-[10px] font-mono uppercase text-earth-muted block">Locked For Later</span>
+                          <span class="text-sm font-bold font-mono text-earth-charcoal">£{lockedForLater.toLocaleString(undefined, {maximumFractionDigits:0})}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Account Balance Editor Cards */}
+                    <div class="space-y-4">
+                      <div class="flex items-center justify-between">
+                        <h4 class="text-sm font-bold uppercase tracking-wider text-earth-charcoal font-mono">Dynamic Account Balances</h4>
+                        <span class="text-xs text-earth-muted font-mono">{accounts.length} linked accounts</span>
+                      </div>
+                      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {accounts.map(acc => (
+                          <div key={acc.id} class="bg-earth-light/20 border border-earth-border p-4 rounded-xl flex flex-col justify-between space-y-3">
+                            <div>
+                              <div class="flex justify-between items-start">
+                                <h5 class="font-bold text-earth-charcoal text-sm leading-tight">{acc.name}</h5>
+                                <span class={`text-[9px] px-1.5 py-0.5 rounded font-mono ${
+                                  acc.type === 'Accessible' ? 'bg-earth-sage/10 text-earth-sage' :
+                                  acc.type === 'Restricted' ? 'bg-earth-gold/15 text-earth-gold' : 'bg-earth-charcoal/10 text-earth-charcoal'
+                                }`}>
+                                  {acc.type}
+                                </span>
+                              </div>
+                              <p class="text-[10px] text-earth-muted mt-0.5">{acc.code}</p>
+                            </div>
+                            <div>
+                              <label class="block text-[9px] uppercase font-bold text-earth-muted mb-1">Balance</label>
+                              <div class="relative">
+                                <span class="absolute left-2.5 top-1.5 text-xs text-earth-muted font-bold">£</span>
+                                <input 
+                                  type="number" 
+                                  value={acc.balance} 
+                                  onChange={(e) => handleAccountBalanceChange(acc.id, e.target.value)}
+                                  class="w-full pl-6 pr-2 py-1 bg-white border border-earth-border rounded-lg text-xs font-semibold focus:outline-none focus:border-earth-sage font-mono text-earth-charcoal"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Target Goals Targets */}
+                    <div class="space-y-4 pt-4 border-t border-earth-border/50">
+                      <h4 class="text-sm font-bold uppercase tracking-wider text-earth-charcoal font-mono">Active Target Goals</h4>
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        
+                        {/* Retirement Goal */}
+                        <div class="bg-earth-light/40 border border-earth-border p-5 rounded-xl flex flex-col justify-between space-y-4">
+                          <div>
+                            <div class="flex justify-between items-start">
+                              <h5 class="font-bold text-earth-charcoal text-sm">Retirement Goal</h5>
+                              <span class="text-xs text-earth-muted bg-white border border-earth-border px-2 py-0.5 rounded font-mono">{(totalAssets / 1000000 * 100).toFixed(1)}%</span>
+                            </div>
+                            <p class="text-[11px] text-earth-muted mt-1">SIPP/ISAs included</p>
+                          </div>
+                          <div class="space-y-2">
+                            <div class="flex justify-between text-xs font-mono">
+                              <span class="text-earth-charcoal font-bold">£{Math.round(totalAssets).toLocaleString()}</span>
+                              <span class="text-earth-muted">/ £1,000,000</span>
+                            </div>
+                            <div class="w-full bg-white border border-earth-border rounded-full h-2 overflow-hidden">
+                              <div class="bg-earth-sage h-full" style={{ width: `${Math.min(100, (totalAssets / 1000000 * 100))}%` }}></div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Emergency Fund */}
+                        <div class="bg-earth-light/40 border border-earth-border p-5 rounded-xl flex flex-col justify-between space-y-4">
+                          <div>
+                            <div class="flex justify-between items-start">
+                              <h5 class="font-bold text-earth-charcoal text-sm">Emergency Fund</h5>
+                              <span class="text-xs text-earth-muted bg-white border border-earth-border px-2 py-0.5 rounded font-mono">{(accessibleNow / 20000 * 100).toFixed(1)}%</span>
+                            </div>
+                            <p class="text-[11px] text-earth-muted mt-1">Accessible accounts included</p>
+                          </div>
+                          <div class="space-y-2">
+                            <div class="flex justify-between text-xs font-mono">
+                              <span class="text-earth-charcoal font-bold">£{Math.round(accessibleNow).toLocaleString()}</span>
+                              <span class="text-earth-muted">/ £20,000</span>
+                            </div>
+                            <div class="w-full bg-white border border-earth-border rounded-full h-2 overflow-hidden">
+                              <div class="bg-earth-sage h-full" style={{ width: `${Math.min(100, (accessibleNow / 20000 * 100))}%` }}></div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 100k Club */}
+                        <div class="bg-earth-light/40 border border-earth-border p-5 rounded-xl flex flex-col justify-between space-y-4">
+                          <div>
+                            <div class="flex justify-between items-start">
+                              <h5 class="font-bold text-earth-charcoal text-sm">100k Club</h5>
+                              <span class="text-xs text-earth-muted bg-white border border-earth-border px-2 py-0.5 rounded font-mono">{(totalAssets / 100000 * 100).toFixed(1)}%</span>
+                            </div>
+                            <p class="text-[11px] text-earth-muted mt-1">ISA accounts included</p>
+                          </div>
+                          <div class="space-y-2">
+                            <div class="flex justify-between text-xs font-mono">
+                              <span class="text-earth-charcoal font-bold">£{Math.round(totalAssets).toLocaleString()}</span>
+                              <span class="text-earth-muted">/ £100,000</span>
+                            </div>
+                            <div class="w-full bg-white border border-earth-border rounded-full h-2 overflow-hidden">
+                              <div class="bg-earth-sage h-full" style={{ width: `${Math.min(100, (totalAssets / 100000 * 100))}%` }}></div>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+
+                {/* TAB 2: BUDGET PLAN */}
+                {activeTab === "budget" && (
+                  <div class="space-y-6">
+                    
+                    {/* What-If Simulation Module */}
+                    <div class="bg-earth-light/40 border border-earth-border p-6 rounded-xl space-y-4">
+                      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div>
+                          <span class="text-[10px] font-mono uppercase text-earth-rust tracking-widest block">Simulation Mode Only</span>
+                          <h3 class="text-lg font-bold text-earth-charcoal mt-1">Budget What-If Analysis</h3>
+                          <p class="text-xs text-earth-muted">Play with parameters without writing directly to your permanent local databases.</p>
+                        </div>
+                        <button onClick={() => {
+                          setSimulationInputs({
+                            rent: 300.00, mobile: 5.00, internet: 29.74, travel: 100.00, cloud: 22.80, subscriptions: 14.00, ai: 80.00,
+                            netwestCC: 70.00, stocksMonthly: 330.00, lisaMonthly: 0.00, investEngineMonthly: 0.00, bondsMonthly: 0.00,
+                            t212Monthly: 200.00, cashParkMonthly: 1000.00, goingOut: 150.00
+                          });
+                          setIncome(2560.17);
+                          setFixedExpenses(626.54);
+                          setDebtRepayment(70.00);
+                          setInvestmentsSavings(1750.00);
+                        }} class="text-xs font-mono font-bold bg-white hover:bg-earth-light text-earth-charcoal border border-earth-border px-3 py-1.5 rounded transition">
+                          Reset Scenario
+                        </button>
+                      </div>
+
+                      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-4 border-t border-earth-border/40 text-center font-mono">
+                        <div>
+                          <span class="text-[10px] text-earth-muted uppercase">Take-Home Income</span>
+                          <p class="text-base font-bold text-earth-sage mt-0.5">£{monthlyIncome.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <span class="text-[10px] text-earth-muted uppercase">Fixed Expenses</span>
+                          <p class="text-base font-bold text-earth-charcoal mt-0.5">£{fixedExpenses.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <span class="text-[10px] text-earth-muted uppercase">Savings / Growth</span>
+                          <p class="text-base font-bold text-earth-sage mt-0.5">£{investmentsSavings.toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <span class="text-[10px] text-earth-muted uppercase">Discretionary</span>
+                          <p class="text-base font-bold text-earth-gold mt-0.5">£{discretionary.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Interactive Parameter Blocks */}
+                    <div class="space-y-4">
+                      
+                      {/* Income Block */}
+                      <div class="bg-earth-light/20 border border-earth-border p-5 rounded-xl">
+                        <div class="flex justify-between items-center mb-3">
+                          <span class="text-xs font-mono uppercase text-earth-sage font-bold">Income</span>
+                          <span class="text-xs text-earth-muted font-mono">£{monthlyIncome.toLocaleString()} / mo</span>
+                        </div>
+                        <label class="block text-xs text-earth-charcoal font-medium mb-1.5">Monthly Take-Home Pay</label>
                         <input 
-                          type="number" value={startBalance} onChange={(e) => setStartBalance(Number(e.target.value))}
-                          class="w-full pl-6 pr-3 py-2 border border-earth-border rounded-xl text-sm font-semibold focus:outline-none focus:border-earth-sage"
+                          type="range"
+                          min="1000"
+                          max="8000"
+                          step="50"
+                          value={monthlyIncome}
+                          onChange={(e) => setIncome(parseFloat(e.target.value))}
+                          class="w-full accent-earth-sage bg-earth-light rounded-lg appearance-none h-1.5 cursor-pointer"
                         />
                       </div>
+
+                      {/* Fixed Expenses Group */}
+                      <div class="bg-earth-light/20 border border-earth-border p-5 rounded-xl space-y-4">
+                        <div class="flex justify-between items-center border-b border-earth-border pb-2">
+                          <span class="text-xs font-mono uppercase text-earth-charcoal font-bold">Fixed Expenses</span>
+                          <span class="text-xs text-earth-muted font-mono">£{fixedExpenses.toLocaleString()} / mo</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label class="block text-[11px] text-earth-muted mb-1">Rent / Housing</label>
+                            <input 
+                              type="number" 
+                              value={simulationInputs.rent}
+                              onChange={(e) => handleSimChange('rent', e.target.value)}
+                              class="w-full bg-white border border-earth-border rounded p-2 text-sm text-earth-charcoal font-mono focus:outline-none focus:border-earth-sage"
+                            />
+                          </div>
+                          <div>
+                            <label class="block text-[11px] text-earth-muted mb-1">Work Travel</label>
+                            <input 
+                              type="number" 
+                              value={simulationInputs.travel}
+                              onChange={(e) => handleSimChange('travel', e.target.value)}
+                              class="w-full bg-white border border-earth-border rounded p-2 text-sm text-earth-charcoal font-mono focus:outline-none focus:border-earth-sage"
+                            />
+                          </div>
+                          <div>
+                            <label class="block text-[11px] text-earth-muted mb-1">AI Subscriptions</label>
+                            <input 
+                              type="number" 
+                              value={simulationInputs.ai}
+                              onChange={(e) => handleSimChange('ai', e.target.value)}
+                              class="w-full bg-white border border-earth-border rounded p-2 text-sm text-earth-charcoal font-mono focus:outline-none focus:border-earth-sage"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Investment Allocation Group */}
+                      <div class="bg-earth-light/20 border border-earth-border p-5 rounded-xl space-y-4">
+                        <div class="flex justify-between items-center border-b border-earth-border pb-2">
+                          <span class="text-xs font-mono uppercase text-earth-sage font-bold">Investments & Savings</span>
+                          <span class="text-xs text-earth-muted font-mono">£{investmentsSavings.toLocaleString()} / mo</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label class="block text-[11px] text-earth-muted mb-1">Stocks & Shares ISA</label>
+                            <input 
+                              type="number" 
+                              value={simulationInputs.stocksMonthly}
+                              onChange={(e) => handleSimChange('stocksMonthly', e.target.value)}
+                              class="w-full bg-white border border-earth-border rounded p-2 text-sm text-earth-charcoal font-mono focus:outline-none focus:border-earth-sage"
+                            />
+                          </div>
+                          <div>
+                            <label class="block text-[11px] text-earth-muted mb-1">Trading 212 SIPP</label>
+                            <input 
+                              type="number" 
+                              value={simulationInputs.t212Monthly}
+                              onChange={(e) => handleSimChange('t212Monthly', e.target.value)}
+                              class="w-full bg-white border border-earth-border rounded p-2 text-sm text-earth-charcoal font-mono focus:outline-none focus:border-earth-sage"
+                            />
+                          </div>
+                          <div>
+                            <label class="block text-[11px] text-earth-muted mb-1">Cash-Park ISA</label>
+                            <input 
+                              type="number" 
+                              value={simulationInputs.cashParkMonthly}
+                              onChange={(e) => handleSimChange('cashParkMonthly', e.target.value)}
+                              class="w-full bg-white border border-earth-border rounded p-2 text-sm text-earth-charcoal font-mono focus:outline-none focus:border-earth-sage"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
                     </div>
-                    <div>
-                      <label class="block text-[10px] font-bold text-earth-muted uppercase mb-1">Assumed Annual Return</label>
-                      <div class="relative">
-                        <input 
-                          type="number" step="0.1" value={growthRate} onChange={(e) => setGrowthRate(Number(e.target.value))}
-                          class="w-full px-3 py-2 border border-earth-border rounded-xl text-sm font-semibold focus:outline-none focus:border-earth-sage"
-                        />
-                        <span class="absolute right-3 top-2.5 text-xs text-earth-muted font-bold">%</span>
+
+                  </div>
+                )}
+
+                {/* TAB 3: FUTURE ESTIMATES SCREEN */}
+                {activeTab === "future" && (
+                  <div class="space-y-6">
+                    
+                    {/* Key parameter adjustments */}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-earth-light/40 border border-earth-border p-5 rounded-xl text-center">
+                      <div>
+                        <span class="text-[10px] text-earth-muted font-mono uppercase">Target Retirement Age</span>
+                        <div class="flex items-center justify-center space-x-2 mt-2">
+                          <button 
+                            onClick={() => setRetirementAge(prev => Math.max(currentAge + 1, prev - 1))}
+                            class="w-7 h-7 bg-white hover:bg-earth-light rounded text-sm text-earth-charcoal font-bold transition border border-earth-border"
+                          >
+                            -
+                          </button>
+                          <span class="font-mono text-lg font-bold text-earth-charcoal">{retirementAge}</span>
+                          <button 
+                            onClick={() => setRetirementAge(prev => prev + 1)}
+                            class="w-7 h-7 bg-white hover:bg-earth-light rounded text-sm text-earth-charcoal font-bold transition border border-earth-border"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <span class="text-[10px] text-earth-muted font-mono uppercase">Assumed Market Growth</span>
+                        <div class="flex items-center justify-center space-x-2 mt-2">
+                          <button 
+                            onClick={() => setYearlyGrowth(prev => Math.max(1, prev - 0.5))}
+                            class="w-7 h-7 bg-white hover:bg-earth-light rounded text-sm text-earth-charcoal font-bold transition border border-earth-border"
+                          >
+                            -
+                          </button>
+                          <span class="font-mono text-lg font-bold text-earth-charcoal">{yearlyGrowth.toFixed(1)}%</span>
+                          <button 
+                            onClick={() => setYearlyGrowth(prev => prev + 0.5)}
+                            class="w-7 h-7 bg-white hover:bg-earth-light rounded text-sm text-earth-charcoal font-bold transition border border-earth-border"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <span class="text-[10px] text-earth-muted font-mono uppercase">Years To Compound</span>
+                        <div class="text-lg font-bold font-mono text-earth-charcoal mt-3">{yearsToRetirement} Years</div>
                       </div>
                     </div>
-                    <div>
-                      <label class="block text-[10px] font-bold text-earth-muted uppercase mb-1">Current Age</label>
-                      <input 
-                        type="number" value={currentAge} onChange={(e) => setCurrentAge(Number(e.target.value))}
-                        class="w-full px-3 py-2 border border-earth-border rounded-xl text-sm font-semibold focus:outline-none focus:border-earth-sage"
-                      />
-                    </div>
-                    <div>
-                      <label class="block text-[10px] font-bold text-earth-muted uppercase mb-1">Retirement Target Age</label>
-                      <input 
-                        type="number" value={retirementAge} onChange={(e) => setRetirementAge(Number(e.target.value))}
-                        class="w-full px-3 py-2 border border-earth-border rounded-xl text-sm font-semibold focus:outline-none focus:border-earth-sage"
-                      />
-                    </div>
-                  </div>
 
-                  {/* SVG Chart */}
-                  <div class="relative bg-earth-light/30 border border-earth-border rounded-2xl p-4 overflow-hidden mb-6">
-                    <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} class="w-full h-auto overflow-visible">
-                      <defs>
-                        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stop-color="#4c5e50" stop-opacity="0.3"/>
-                          <stop offset="100%" stop-color="#4c5e50" stop-opacity="0"/>
-                        </linearGradient>
-                      </defs>
-
-                      <path d={areaPath} fill="url(#areaGradient)" />
-                      <path d={linePath} fill="none" stroke="#4c5e50" stroke-width="2.5" stroke-linecap="round" />
-
-                      {chartPoints.map((pt, i) => (
-                        <circle 
-                          key={i} cx={pt.x} cy={pt.y} r="4" 
-                          fill="#4c5e50" stroke="#fdfcfa" stroke-width="1.5"
-                          class="opacity-0 hover:opacity-100 cursor-pointer transition-opacity duration-100"
-                          onMouseEnter={() => setHoveredPoint(pt)}
-                          onMouseLeave={() => setHoveredPoint(null)}
-                        />
-                      ))}
-                    </svg>
-
-                    {hoveredPoint ? (
-                      <div class="absolute bottom-4 left-4 bg-earth-charcoal text-white p-2.5 rounded-xl text-xs shadow-md border border-earth-sage/30 pointer-events-none">
-                        <p class="font-bold text-[10px] text-earth-muted uppercase">Age {hoveredPoint.age}</p>
-                        <p class="font-black text-sm">£{hoveredPoint.balance.toLocaleString()}</p>
-                        <p class="text-[9px] text-earth-muted mt-0.5">Contributions: £{hoveredPoint.contributions.toLocaleString()}</p>
+                    {/* Chart Container */}
+                    <div class="bg-earth-light/40 border border-earth-border p-6 rounded-xl space-y-4">
+                      <div class="flex justify-between items-center text-xs uppercase tracking-wider font-mono text-earth-muted">
+                        <span>Future Projections Over Time</span>
+                        <span class="text-earth-sage font-bold">Target Value: £{futureEstimateTotal.toLocaleString()}</span>
                       </div>
-                    ) : (
-                      <div class="absolute bottom-3 right-3 text-[10px] text-earth-muted font-bold pointer-events-none">
-                        Hover chart to view checkpoints
-                      </div>
-                    )}
-                  </div>
 
-                  <div class="grid grid-cols-2 gap-4">
-                    <div class="p-4 bg-earth-light/60 border border-earth-border rounded-xl">
-                      <span class="text-[10px] font-bold text-earth-muted block uppercase">Projected Net Worth</span>
-                      <strong class="text-2xl font-black text-earth-charcoal leading-none block mt-1">
-                        £{projections.finalBalance.toLocaleString()}
-                      </strong>
-                    </div>
-                    <div class="p-4 bg-earth-light/60 border border-earth-border rounded-xl">
-                      <span class="text-[10px] font-bold text-earth-muted block uppercase">Your Contributions</span>
-                      <strong class="text-2xl font-black text-earth-charcoal leading-none block mt-1">
-                        £{projections.totalContrib.toLocaleString()}
-                      </strong>
+                      <div class="h-64 w-full relative pt-2 select-none">
+                        <svg 
+                          ref={svgRef}
+                          onMouseMove={handleMouseMove}
+                          onMouseLeave={handleMouseLeave}
+                          class="w-full h-full overflow-visible cursor-crosshair" 
+                          viewBox="0 0 500 150" 
+                          preserveAspectRatio="none"
+                        >
+                          <defs>
+                            <linearGradient id="futureCurveGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stop-color="#4c5e50" stop-opacity="0.35" />
+                              <stop offset="100%" stop-color="#4c5e50" stop-opacity="0.0" />
+                            </linearGradient>
+                          </defs>
+
+                          {/* Guidelines */}
+                          <line x1="0" y1="37" x2="500" y2="37" stroke="#e6e1d5" stroke-dasharray="3,3" />
+                          <line x1="0" y1="75" x2="500" y2="75" stroke="#e6e1d5" stroke-dasharray="3,3" />
+                          <line x1="0" y1="112" x2="500" y2="112" stroke="#e6e1d5" stroke-dasharray="3,3" />
+
+                          {projectionPoints.length > 0 && (
+                            <>
+                              {/* Gradient Area Fill */}
+                              <path
+                                d={`
+                                  M 0,150
+                                  ${projectionPoints.map((p, index) => {
+                                    const x = (index / (projectionPoints.length - 1)) * 500;
+                                    const ratio = p.amount / (futureEstimateTotal || 1);
+                                    const y = 150 - (ratio * 120) - 10;
+                                    return `L ${x},${y}`;
+                                  }).join(" ")}
+                                  L 500,150 Z
+                                `}
+                                fill="url(#futureCurveGrad)"
+                                class="transition-all duration-300 ease-out"
+                              />
+
+                              {/* Curve Stroke */}
+                              <path
+                                d={projectionPoints.map((p, index) => {
+                                  const x = (index / (projectionPoints.length - 1)) * 500;
+                                  const ratio = p.amount / (futureEstimateTotal || 1);
+                                  const y = 150 - (ratio * 120) - 10;
+                                  return `${index === 0 ? 'M' : 'L'} ${x},${y}`;
+                                }).join(" ")}
+                                fill="none"
+                                stroke="#4c5e50"
+                                stroke-width="2.5"
+                                class="transition-all duration-300 ease-out"
+                              />
+                            </>
+                          )}
+                        </svg>
+
+                        {/* Hover Tooltip Details */}
+                        {hoveredPoint ? (
+                          <div 
+                            class="absolute bg-earth-charcoal text-white p-3 rounded-xl shadow-lg border border-earth-sage/20 pointer-events-none text-xs space-y-1 z-10"
+                            style={{
+                              left: `${Math.min(80, Math.max(5, hoveredPoint.pctX - 10))}%`,
+                              top: `10px`
+                            }}
+                          >
+                            <div class="text-[9px] uppercase font-bold text-earth-muted tracking-wider">Age {hoveredPoint.age} Forecast</div>
+                            <div class="text-sm font-black">£{hoveredPoint.amount.toLocaleString()}</div>
+                          </div>
+                        ) : (
+                          <div class="absolute top-2 right-2 text-[10px] text-earth-muted font-bold font-mono">
+                            Hover over the graph to inspect years
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
 
               </div>
 
             </div>
           </main>
 
+          {/* Footer */}
           <footer class="bg-earth-light border-t border-earth-border mt-auto py-8">
             <div class="max-w-7xl mx-auto px-4 text-center">
               <p class="text-xs text-earth-muted">
