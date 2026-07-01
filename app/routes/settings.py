@@ -1530,6 +1530,9 @@ def apply_trading212_cash(connection_id):
         flash(trading212_account_not_linked_message(), "error")
         return redirect(url_for("accounts.account_detail", account_id=account_id))
 
+    using_cache = False
+    snapshot = None
+    summary = None
     try:
         api_key = decrypt_trading212_credential(connection.get("api_key_ciphertext"))
         api_secret = decrypt_trading212_credential(connection.get("api_secret_ciphertext"))
@@ -1553,18 +1556,65 @@ def apply_trading212_cash(connection_id):
             external_cash_value=cash_val,
             external_holdings_value=holdings_val,
         )
+        broker_cash_total = cash_val
     except (Trading212ConnectionError, Trading212CredentialError) as exc:
-        update_broker_connection_status(
-            connection_id,
-            current_user.id,
-            status="error",
-            last_error=str(exc),
-            last_tested_at=datetime.now(timezone.utc).isoformat(),
-        )
-        flash(str(exc), "error")
-        return redirect(url_for("accounts.account_detail", account_id=account_id))
+        last_tested_str = connection.get("last_tested_at")
+        last_tested = None
+        if last_tested_str:
+            try:
+                dt_str = last_tested_str.replace("Z", "+00:00")
+                last_tested = datetime.fromisoformat(dt_str)
+            except Exception:
+                last_tested = None
+        
+        is_recent = False
+        if last_tested:
+            diff = (datetime.now(timezone.utc) - last_tested.astimezone(timezone.utc)).total_seconds()
+            if diff < 15 * 60:  # 15 minutes
+                is_recent = True
+
+        if (
+            is_recent
+            and connection.get("external_cash_value") is not None
+            and isinstance(exc, Trading212ConnectionError)
+        ):
+            broker_cash_total = float(connection.get("external_cash_value"))
+            update_broker_connection_status(
+                connection_id,
+                current_user.id,
+                status="connected",
+                last_error=None,
+                last_tested_at=connection.get("last_tested_at"),
+            )
+            using_cache = True
+        else:
+            update_broker_connection_status(
+                connection_id,
+                current_user.id,
+                status="error",
+                last_error=str(exc),
+                last_tested_at=datetime.now(timezone.utc).isoformat(),
+            )
+            flash(str(exc), "error")
+            return redirect(url_for("accounts.account_detail", account_id=account_id))
 
     refreshed_connection = fetch_broker_connection(connection_id, current_user.id) or connection
+    if using_cache:
+        snapshot = {
+            "environment": refreshed_connection.get("environment") or "live",
+            "summary": {
+                "fetched_at": refreshed_connection.get("last_tested_at"),
+                "account_id": refreshed_connection.get("external_account_id"),
+                "currency": refreshed_connection.get("external_account_currency"),
+                "total_value": refreshed_connection.get("external_total_value"),
+                "available_to_trade": broker_cash_total,
+                "cash_in_pies": 0.0,
+                "cash_reserved_for_orders": 0.0,
+            },
+            "positions": [],
+        }
+        summary = snapshot["summary"]
+
     preview = _build_trading212_preview(current_user.id, refreshed_connection, snapshot, linked_account=linked_account)
 
     if request.form.get("confirm_apply_cash") != "yes":
