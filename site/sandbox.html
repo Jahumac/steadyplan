@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en-GB" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SteadyPlan · Interactive Sandbox App</title>
+  <meta name="description" content="A pristine, local-first interactive financial sandbox planner for SteadyPlan. Manage your cash flow and compound long-term retirement forecasts.">
+  <meta name="color-scheme" content="light">
+  
+  <!-- Web App Manifest & Service Worker Registration -->
+  <link rel="manifest" href="./manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+          .catch(err => console.log('Service Worker registration failed:', err));
+      });
+    }
+  </script>
+
+  <!-- React & ReactDOM CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Babel Standalone (JSX compiler) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Tailwind CSS CDN with Earthy Palette -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            earth: {
+              cream: '#fdfcfa',
+              light: '#f5f2eb',
+              border: '#e6e1d5',
+              muted: '#7e796e',
+              charcoal: '#2e332f',
+              sage: '#4c5e50',
+              sageHover: '#3d4d40',
+              gold: '#cba358'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #fdfcfa;
+      color: #2e332f;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col bg-[#fdfcfa]">
+
+  <!-- React root container -->
+  <div id="app" class="flex-grow flex flex-col"></div>
+
+  <!-- React SPA Code -->
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('all'); // 'all' | 'planner' | 'compounder'
+
+      // --- Everyday Cash Flow Planner State ---
+      const [income, setIncome] = useState(() => Number(localStorage.getItem('sp_income')) || 5000);
+      const [needs, setNeeds] = useState(() => Number(localStorage.getItem('sp_needs')) || 2500);
+      const [wants, setWants] = useState(() => Number(localStorage.getItem('sp_wants')) || 1500);
+      const [savings, setSavings] = useState(() => Number(localStorage.getItem('sp_savings')) || 1000);
+
+      // --- Long-Term Retirement Compounder State ---
+      const [currentAge, setCurrentAge] = useState(() => Number(localStorage.getItem('sp_curr_age')) || 30);
+      const [retirementAge, setRetirementAge] = useState(() => Number(localStorage.getItem('sp_ret_age')) || 65);
+      const [startBalance, setStartBalance] = useState(() => Number(localStorage.getItem('sp_start_bal')) || 25000);
+      const [growthRate, setGrowthRate] = useState(() => Number(localStorage.getItem('sp_growth')) || 7.0);
+      const [employerMatch, setEmployerMatch] = useState(() => Number(localStorage.getItem('sp_match')) || 5.0); // % of income
+
+      // Tooltip State for SVG Chart
+      const [hoveredPoint, setHoveredPoint] = useState(null);
+
+      // --- Auto-Save to LocalStorage ---
+      useEffect(() => {
+        localStorage.setItem('sp_income', income);
+        localStorage.setItem('sp_needs', needs);
+        localStorage.setItem('sp_wants', wants);
+        localStorage.setItem('sp_savings', savings);
+        localStorage.setItem('sp_curr_age', currentAge);
+        localStorage.setItem('sp_ret_age', retirementAge);
+        localStorage.setItem('sp_start_bal', startBalance);
+        localStorage.setItem('sp_growth', growthRate);
+        localStorage.setItem('sp_match', employerMatch);
+      }, [income, needs, wants, savings, currentAge, retirementAge, startBalance, growthRate, employerMatch]);
+
+      // --- Sync budget limits dynamically ---
+      const handleIncomeChange = (val) => {
+        setIncome(val);
+        setNeeds(Math.round(val * 0.5));
+        setWants(Math.round(val * 0.3));
+        setSavings(Math.round(val * 0.2));
+      };
+
+      const needsPct = Math.round((needs / income) * 100) || 0;
+      const wantsPct = Math.round((wants / income) * 100) || 0;
+      const savingsPct = Math.round((savings / income) * 100) || 0;
+      const leftover = income - (needs + wants + savings);
+
+      const projections = useMemo(() => {
+        const years = Math.max(1, retirementAge - currentAge);
+        const months = years * 12;
+        const monthlyRate = (growthRate / 100) / 12;
+        const monthlySavings = savings;
+        const monthlyEmployer = (income * (employerMatch / 100)) / 12;
+        const monthlyContrib = monthlySavings + monthlyEmployer;
+
+        let balance = startBalance;
+        let totalContrib = 0;
+        const series = [];
+
+        series.push({
+          year: 0,
+          age: currentAge,
+          balance: Math.round(balance),
+          contributions: 0
+        });
+
+        for (let m = 1; m <= months; m++) {
+          balance = balance * (1 + monthlyRate) + monthlyContrib;
+          totalContrib += monthlyContrib;
+
+          if (m % 12 === 0) {
+            series.push({
+              year: m / 12,
+              age: currentAge + (m / 12),
+              balance: Math.round(balance),
+              contributions: Math.round(totalContrib)
+            });
+          }
+        }
+        return { series, finalBalance: Math.round(balance), totalContrib: Math.round(totalContrib) };
+      }, [income, savings, currentAge, retirementAge, startBalance, growthRate, employerMatch]);
+
+      // --- Backup Import/Export Logic ---
+      const handleExport = () => {
+        const dataStr = JSON.stringify({
+          income, needs, wants, savings,
+          currentAge, retirementAge, startBalance, growthRate, employerMatch
+        }, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `steadyplan_sandbox_backup_${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+      };
+
+      const handleImport = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const data = JSON.parse(event.target.result);
+            if (data.income) setIncome(data.income);
+            if (data.needs) setNeeds(data.needs);
+            if (data.wants) setWants(data.wants);
+            if (data.savings) setSavings(data.savings);
+            if (data.currentAge) setCurrentAge(data.currentAge);
+            if (data.retirementAge) setRetirementAge(data.retirementAge);
+            if (data.startBalance) setStartBalance(data.startBalance);
+            if (data.growthRate) setGrowthRate(data.growthRate);
+            if (data.employerMatch) setEmployerMatch(data.employerMatch);
+            alert("Backup imported successfully!");
+          } catch (err) {
+            alert("Failed to parse JSON file.");
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      const chartWidth = 500;
+      const chartHeight = 220;
+      const maxBalance = Math.max(...projections.series.map(d => d.balance), 1);
+      const minBalance = Math.min(...projections.series.map(d => d.balance), 0);
+
+      const chartPoints = projections.series.map((d, i) => {
+        const x = (i / (projections.series.length - 1)) * chartWidth;
+        const y = chartHeight - ((d.balance - minBalance) / (maxBalance - minBalance || 1)) * chartHeight;
+        return { x, y, age: d.age, balance: d.balance, contributions: d.contributions };
+      });
+
+      const linePath = chartPoints.reduce((acc, p, i) => {
+        return i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`;
+      }, "");
+
+      const areaPath = chartPoints.length > 0 
+        ? `${linePath} L ${chartPoints[chartPoints.length - 1].x} ${chartHeight} L ${chartPoints[0].x} ${chartHeight} Z`
+        : "";
+
+      return (
+        <div class="min-h-full flex flex-col bg-[#fdfcfa] text-earth-charcoal">
+          {/* Header */}
+          <header class="bg-earth-cream border-b border-earth-border">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                  <a href="./index.html" class="flex items-center gap-2 cursor-pointer">
+                    <img class="h-8 w-8" src="./assets/brand/steadyplan-app-icon-1024.png" alt="SteadyPlan logo" />
+                    <span class="text-xl font-extrabold text-earth-charcoal tracking-tight">SteadyPlan</span>
+                  </a>
+                  <span class="ml-4 text-xs bg-earth-sage/10 text-earth-sage px-2 py-0.5 rounded font-bold uppercase tracking-wider">Sandbox</span>
+                  <nav class="hidden md:flex ml-10 space-x-6">
+                    <a href="./index.html" class="text-sm font-semibold text-earth-muted hover:text-earth-charcoal">Landing Home</a>
+                    <a href="./tour.html" class="text-sm font-semibold text-earth-muted hover:text-earth-charcoal">Tour</a>
+                  </nav>
+                </div>
+                <div class="flex items-center gap-3">
+                  <button onClick={handleExport} class="border border-earth-border text-earth-charcoal hover:bg-earth-light px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+                    Export JSON
+                  </button>
+                  <label class="border border-earth-border text-earth-muted hover:text-earth-charcoal hover:bg-earth-light px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition">
+                    Import JSON <input type="file" accept=".json" onChange={handleImport} class="hidden" />
+                  </label>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Subnav Panel */}
+          <div class="bg-earth-light/60 border-b border-earth-border py-3">
+            <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4">
+              <div class="flex items-center gap-1">
+                <button 
+                  onClick={() => setActiveTab('all')} 
+                  class={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'all' ? 'bg-earth-sage text-white' : 'text-earth-muted hover:text-earth-charcoal hover:bg-earth-light'}`}>
+                  Full Workspace
+                </button>
+                <button 
+                  onClick={() => setActiveTab('planner')} 
+                  class={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'planner' ? 'bg-earth-sage text-white' : 'text-earth-muted hover:text-earth-charcoal hover:bg-earth-light'}`}>
+                  Cash Flow Planner
+                </button>
+                <button 
+                  onClick={() => setActiveTab('compounder')} 
+                  class={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${activeTab === 'compounder' ? 'bg-earth-sage text-white' : 'text-earth-muted hover:text-earth-charcoal hover:bg-earth-light'}`}>
+                  Compounder Forecast
+                </button>
+              </div>
+              <div class="text-[10px] text-earth-muted font-bold">
+                Data persists automatically in LocalStorage
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* Left Pane: Sliders & Controls */}
+              <div class={`space-y-6 lg:col-span-6 ${(activeTab === 'all' || activeTab === 'planner') ? 'block' : 'hidden lg:block'}`}>
+                
+                {/* Cash Flow Card */}
+                <div class="bg-white border border-earth-border rounded-2xl p-6 shadow-sm">
+                  <div class="flex items-center justify-between border-b border-earth-border pb-4 mb-6">
+                    <div>
+                      <span class="text-[10px] text-earth-muted font-bold tracking-wider uppercase block">Everyday</span>
+                      <h2 class="text-lg font-black text-earth-charcoal">Cash Flow Allocation</h2>
+                    </div>
+                    <span class="text-xs bg-earth-sage/10 text-earth-sage font-bold px-2.5 py-1 rounded-full">
+                      50/30/20 Target
+                    </span>
+                  </div>
+
+                  <div class="space-y-6">
+                    {/* Income Slider */}
+                    <div>
+                      <div class="flex justify-between text-xs font-bold text-earth-charcoal mb-2">
+                        <span>Monthly Take-Home Pay</span>
+                        <span class="text-earth-sage font-extrabold text-sm">£{income.toLocaleString()}</span>
+                      </div>
+                      <input 
+                        type="range" min="1000" max="20000" step="100"
+                        value={income} onChange={(e) => handleIncomeChange(Number(e.target.value))}
+                        class="w-full h-2 bg-earth-light rounded-lg appearance-none cursor-pointer accent-earth-sage"
+                      />
+                    </div>
+
+                    {/* Needs Slider */}
+                    <div class="pt-4 border-t border-earth-light">
+                      <div class="flex justify-between text-xs font-bold text-earth-charcoal mb-1">
+                        <span>Needs (Rent, Bills, Food)</span>
+                        <span class="font-extrabold">£{needs.toLocaleString()}</span>
+                      </div>
+                      <div class="flex items-center justify-between text-[10px] text-earth-muted mb-2">
+                        <span>Guideline: 50% (£{(income * 0.5).toLocaleString()})</span>
+                        <span class={`font-bold px-1.5 py-0.5 rounded ${needsPct > 50 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                          {needsPct}% Allocated
+                        </span>
+                      </div>
+                      <input 
+                        type="range" min="0" max={income} step="50"
+                        value={needs} onChange={(e) => setNeeds(Number(e.target.value))}
+                        class="w-full h-2 bg-earth-light rounded-lg appearance-none cursor-pointer accent-earth-charcoal"
+                      />
+                    </div>
+
+                    {/* Wants Slider */}
+                    <div class="pt-4 border-t border-earth-light">
+                      <div class="flex justify-between text-xs font-bold text-earth-charcoal mb-1">
+                        <span>Wants (Leisure, Subs)</span>
+                        <span class="font-extrabold">£{wants.toLocaleString()}</span>
+                      </div>
+                      <div class="flex items-center justify-between text-[10px] text-earth-muted mb-2">
+                        <span>Guideline: 30% (£{(income * 0.3).toLocaleString()})</span>
+                        <span class={`font-bold px-1.5 py-0.5 rounded ${wantsPct > 30 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                          {wantsPct}% Allocated
+                        </span>
+                      </div>
+                      <input 
+                        type="range" min="0" max={income - needs} step="50"
+                        value={wants} onChange={(e) => setWants(Number(e.target.value))}
+                        class="w-full h-2 bg-earth-light rounded-lg appearance-none cursor-pointer accent-earth-charcoal"
+                      />
+                    </div>
+
+                    {/* Savings Slider */}
+                    <div class="pt-4 border-t border-earth-light">
+                      <div class="flex justify-between text-xs font-bold text-earth-charcoal mb-1">
+                        <span>Savings (ISAs, Cash Pot, Pension)</span>
+                        <span class="text-earth-sage font-extrabold">£{savings.toLocaleString()}</span>
+                      </div>
+                      <div class="flex items-center justify-between text-[10px] text-earth-muted mb-2">
+                        <span>Guideline: 20% (£{(income * 0.2).toLocaleString()})</span>
+                        <span class={`font-bold px-1.5 py-0.5 rounded ${savingsPct < 20 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
+                          {savingsPct}% Allocated
+                        </span>
+                      </div>
+                      <input 
+                        type="range" min="0" max={income - needs - wants} step="50"
+                        value={savings} onChange={(e) => setSavings(Number(e.target.value))}
+                        class="w-full h-2 bg-earth-light rounded-lg appearance-none cursor-pointer accent-earth-sage"
+                      />
+                    </div>
+
+                    {leftover > 0 && (
+                      <div class="p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-between text-xs text-amber-800">
+                        <span>Unallocated cash leftover:</span>
+                        <strong class="font-extrabold">£{leftover.toLocaleString()}</strong>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Match Card */}
+                <div class="bg-white border border-earth-border rounded-2xl p-6 shadow-sm">
+                  <h3 class="text-sm font-bold text-earth-charcoal mb-4">Optional Match Uplift</h3>
+                  <div class="space-y-4">
+                    <div>
+                      <div class="flex justify-between text-xs font-bold text-earth-charcoal mb-1">
+                        <span>Employer Matching Rate</span>
+                        <span class="font-bold">{employerMatch}% of income</span>
+                      </div>
+                      <input 
+                        type="range" min="0" max="15" step="0.5"
+                        value={employerMatch} onChange={(e) => setEmployerMatch(Number(e.target.value))}
+                        class="w-full h-2 bg-earth-light rounded-lg appearance-none cursor-pointer accent-earth-charcoal"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Pane: SVG Chart & Forecast */}
+              <div class={`space-y-6 lg:col-span-6 ${(activeTab === 'all' || activeTab === 'compounder') ? 'block' : 'hidden lg:block'}`}>
+                
+                {/* Compounder Card */}
+                <div class="bg-white border border-earth-border rounded-2xl p-6 shadow-sm">
+                  <div class="flex items-center justify-between border-b border-earth-border pb-4 mb-6">
+                    <div>
+                      <span class="text-[10px] text-earth-muted font-bold tracking-wider uppercase block">Compounder</span>
+                      <h2 class="text-lg font-black text-earth-charcoal">Scenario Projection</h2>
+                    </div>
+                    <div class="text-right">
+                      <span class="text-[10px] text-earth-muted font-bold block">Years Compounding</span>
+                      <span class="text-sm font-black text-earth-sage">{retirementAge - currentAge} years</span>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                      <label class="block text-[10px] font-bold text-earth-muted uppercase mb-1">Starting Balance</label>
+                      <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-xs text-earth-muted font-bold">£</span>
+                        <input 
+                          type="number" value={startBalance} onChange={(e) => setStartBalance(Number(e.target.value))}
+                          class="w-full pl-6 pr-3 py-2 border border-earth-border rounded-xl text-sm font-semibold focus:outline-none focus:border-earth-sage"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-bold text-earth-muted uppercase mb-1">Assumed Annual Return</label>
+                      <div class="relative">
+                        <input 
+                          type="number" step="0.1" value={growthRate} onChange={(e) => setGrowthRate(Number(e.target.value))}
+                          class="w-full px-3 py-2 border border-earth-border rounded-xl text-sm font-semibold focus:outline-none focus:border-earth-sage"
+                        />
+                        <span class="absolute right-3 top-2.5 text-xs text-earth-muted font-bold">%</span>
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-bold text-earth-muted uppercase mb-1">Current Age</label>
+                      <input 
+                        type="number" value={currentAge} onChange={(e) => setCurrentAge(Number(e.target.value))}
+                        class="w-full px-3 py-2 border border-earth-border rounded-xl text-sm font-semibold focus:outline-none focus:border-earth-sage"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-[10px] font-bold text-earth-muted uppercase mb-1">Retirement Target Age</label>
+                      <input 
+                        type="number" value={retirementAge} onChange={(e) => setRetirementAge(Number(e.target.value))}
+                        class="w-full px-3 py-2 border border-earth-border rounded-xl text-sm font-semibold focus:outline-none focus:border-earth-sage"
+                      />
+                    </div>
+                  </div>
+
+                  {/* SVG Chart */}
+                  <div class="relative bg-earth-light/30 border border-earth-border rounded-2xl p-4 overflow-hidden mb-6">
+                    <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} class="w-full h-auto overflow-visible">
+                      <defs>
+                        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#4c5e50" stop-opacity="0.3"/>
+                          <stop offset="100%" stop-color="#4c5e50" stop-opacity="0"/>
+                        </linearGradient>
+                      </defs>
+
+                      <path d={areaPath} fill="url(#areaGradient)" />
+                      <path d={linePath} fill="none" stroke="#4c5e50" stroke-width="2.5" stroke-linecap="round" />
+
+                      {chartPoints.map((pt, i) => (
+                        <circle 
+                          key={i} cx={pt.x} cy={pt.y} r="4" 
+                          fill="#4c5e50" stroke="#fdfcfa" stroke-width="1.5"
+                          class="opacity-0 hover:opacity-100 cursor-pointer transition-opacity duration-100"
+                          onMouseEnter={() => setHoveredPoint(pt)}
+                          onMouseLeave={() => setHoveredPoint(null)}
+                        />
+                      ))}
+                    </svg>
+
+                    {hoveredPoint ? (
+                      <div class="absolute bottom-4 left-4 bg-earth-charcoal text-white p-2.5 rounded-xl text-xs shadow-md border border-earth-sage/30 pointer-events-none">
+                        <p class="font-bold text-[10px] text-earth-muted uppercase">Age {hoveredPoint.age}</p>
+                        <p class="font-black text-sm">£{hoveredPoint.balance.toLocaleString()}</p>
+                        <p class="text-[9px] text-earth-muted mt-0.5">Contributions: £{hoveredPoint.contributions.toLocaleString()}</p>
+                      </div>
+                    ) : (
+                      <div class="absolute bottom-3 right-3 text-[10px] text-earth-muted font-bold pointer-events-none">
+                        Hover chart to view checkpoints
+                      </div>
+                    )}
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-earth-light/60 border border-earth-border rounded-xl">
+                      <span class="text-[10px] font-bold text-earth-muted block uppercase">Projected Net Worth</span>
+                      <strong class="text-2xl font-black text-earth-charcoal leading-none block mt-1">
+                        £{projections.finalBalance.toLocaleString()}
+                      </strong>
+                    </div>
+                    <div class="p-4 bg-earth-light/60 border border-earth-border rounded-xl">
+                      <span class="text-[10px] font-bold text-earth-muted block uppercase">Your Contributions</span>
+                      <strong class="text-2xl font-black text-earth-charcoal leading-none block mt-1">
+                        £{projections.totalContrib.toLocaleString()}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </main>
+
+          <footer class="bg-earth-light border-t border-earth-border mt-auto py-8">
+            <div class="max-w-7xl mx-auto px-4 text-center">
+              <p class="text-xs text-earth-muted">
+                SteadyPlan Sandbox &copy; 2026. Standalone client-side financial helper. For server-sync capabilities, deploy the full SteadyPlan stack.
+              </p>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('app'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
