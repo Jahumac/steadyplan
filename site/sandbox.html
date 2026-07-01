@@ -60,6 +60,15 @@
     html {
       overflow-y: scroll;
     }
+    
+    /* Lock container width to match site.css exactly, overriding Tailwind's container utility */
+    .container {
+      max-width: var(--max) !important;
+      width: 100% !important;
+      margin: 0 auto !important;
+      padding: 0 1.25rem !important;
+    }
+    
     .month-active::after {
       content: '';
       position: absolute;
