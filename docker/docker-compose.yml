@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  steadyplan-static:
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+    container_name: steadyplan-static
+    ports:
+      - "8080:80"
+    restart: unless-stopped
