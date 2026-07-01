@@ -2409,21 +2409,6 @@
                   {calendarTooltip.text}
                 </div>
               )}
-              {calendarTooltip.visible && (
-                <div 
-                  className="calendar-tooltip visible font-bold"
-                  style={{
-                    position: 'absolute',
-                    left: `${calendarTooltip.x}px`,
-                    top: `${calendarTooltip.y}px`,
-                    transform: 'translate(-50%, -100%)',
-                    pointerEvents: 'none',
-                    zIndex: 1050
-                  }}
-                >
-                  {calendarTooltip.text}
-                </div>
-              )}
               <div 
                 className={`calendar-tooltip font-bold ${calendarTooltip.visible ? 'visible' : ''}`}
                 style={{
