@@ -52,21 +52,21 @@
         <p class="eyebrow">Monthly Rollup</p>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem; padding-top: 0.5rem;">
           <div class="hero-strip-stat">
-            <span class="hero-stat-label" style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Income</span>
+            <span>Income</span>
             <strong id="stat-income" style="font-size: 1.1rem; color: var(--text); font-weight: 600;">£{{ '{:,.0f}'.format(summary.total_income) }}</strong>
           </div>
           <div class="hero-strip-stat">
-            <span class="hero-stat-label" style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Expenses</span>
+            <span>Expenses</span>
             <strong id="stat-expenses" style="font-size: 1.1rem; color: var(--text); font-weight: 600;">£{{ '{:,.0f}'.format(summary.total_expenses) }}</strong>
           </div>
           <div class="hero-strip-stat" id="stat-surplus-container">
-            <span class="hero-stat-label" style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Left over</span>
+            <span>Left over</span>
             <strong id="stat-surplus" class="{% if summary.surplus >= 0 %}stat-positive-text{% else %}stat-negative-text{% endif %}" style="font-size: 1.1rem; font-weight: 600;">
               {% if summary.surplus >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(summary.surplus) }}
             </strong>
           </div>
           <div class="hero-strip-stat">
-            <span class="hero-stat-label" style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; display: block;">Savings Rate</span>
+            <span>Savings Rate</span>
             <strong id="stat-savings" title="Based on amounts in your Investment / Savings sections" style="font-size: 1.1rem; color: var(--text); font-weight: 600;">{{ '{:.1f}'.format(summary.savings_rate) }}%</strong>
           </div>
         </div>
