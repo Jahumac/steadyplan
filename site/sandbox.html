@@ -117,7 +117,7 @@
     <div class="container">
       <div class="site-header-inner">
         <a class="brand" href="./index.html">
-          <img class="brand-icon" src="./assets/brand/steadyplan-app-icon-1024.png" alt="SteadyPlan icon">
+          <img class="brand-icon" src="./assets/brand/steadyplan-app-icon-1024.png?v=2" alt="SteadyPlan icon">
           <span>SteadyPlan</span>
         </a>
         <nav class="nav" aria-label="Primary">
@@ -186,50 +186,48 @@
       const [selectedMonth, setSelectedMonth] = useState("Jul");
       const [activeTab, setActiveTab] = useState("overview"); // overview, budget, future
 
-      // Financial Planning State Variables (Initialized from screenshots)
-      const [monthlyIncome, setIncome] = useState(() => Number(localStorage.getItem('sp_income')) || 2560.17);
-      const [fixedExpenses, setFixedExpenses] = useState(() => Number(localStorage.getItem('sp_fixed')) || 626.54);
-      const [debtRepayment, setDebtRepayment] = useState(() => Number(localStorage.getItem('sp_debt')) || 70.00);
-      const [investmentsSavings, setInvestmentsSavings] = useState(() => Number(localStorage.getItem('sp_savings')) || 1750.00);
+      // Financial Planning State Variables (Initialized with fake demo data)
+      const [monthlyIncome, setIncome] = useState(() => Number(localStorage.getItem('sp_v2_income')) || 3500.00);
+      const [fixedExpenses, setFixedExpenses] = useState(() => Number(localStorage.getItem('sp_v2_fixed')) || 1200.00);
+      const [debtRepayment, setDebtRepayment] = useState(() => Number(localStorage.getItem('sp_v2_debt')) || 150.00);
+      const [investmentsSavings, setInvestmentsSavings] = useState(() => Number(localStorage.getItem('sp_v2_savings')) || 1100.00);
 
       // Connected Financial Assumptions
-      const [currentAge, setCurrentAge] = useState(() => Number(localStorage.getItem('sp_curr_age')) || 41);
-      const [retirementAge, setRetirementAge] = useState(() => Number(localStorage.getItem('sp_ret_age')) || 59);
-      const [yearlyGrowth, setYearlyGrowth] = useState(() => Number(localStorage.getItem('sp_growth')) || 7.0);
+      const [currentAge, setCurrentAge] = useState(() => Number(localStorage.getItem('sp_v2_curr_age')) || 32);
+      const [retirementAge, setRetirementAge] = useState(() => Number(localStorage.getItem('sp_v2_ret_age')) || 60);
+      const [yearlyGrowth, setYearlyGrowth] = useState(() => Number(localStorage.getItem('sp_v2_growth')) || 6.5);
 
-      // Detailed Simulation Input Object
+      // Detailed Simulation Input Object (Fictitious Data)
       const [simulationInputs, setSimulationInputs] = useState(() => {
-        const cached = localStorage.getItem('sp_sim_inputs');
+        const cached = localStorage.getItem('sp_v2_sim_inputs');
         return cached ? JSON.parse(cached) : {
-          rent: 300.00,
-          mobile: 5.00,
-          internet: 29.74,
-          travel: 100.00,
-          cloud: 22.80,
-          subscriptions: 14.00,
-          ai: 80.00,
-          netwestCC: 70.00,
-          stocksMonthly: 330.00,
-          lisaMonthly: 0.00,
-          investEngineMonthly: 0.00,
-          bondsMonthly: 0.00,
-          t212Monthly: 200.00,
-          cashParkMonthly: 1000.00,
-          goingOut: 150.00
+          rent: 850.00,
+          mobile: 15.00,
+          internet: 35.00,
+          travel: 120.00,
+          cloud: 10.00,
+          subscriptions: 20.00,
+          ai: 25.00,
+          netwestCC: 150.00,
+          stocksMonthly: 400.00,
+          lisaMonthly: 100.00,
+          investEngineMonthly: 200.00,
+          bondsMonthly: 100.00,
+          t212Monthly: 300.00,
+          cashParkMonthly: 0.00,
+          goingOut: 250.00
         };
       });
 
-      // Asset Accounts Model parsed directly from actual database structure
+      // Asset Accounts Model (Fictitious Data)
       const [accounts, setAccounts] = useState(() => {
-        const cached = localStorage.getItem('sp_accounts');
+        const cached = localStorage.getItem('sp_v2_accounts');
         return cached ? JSON.parse(cached) : [
-          { id: 'sip1', name: "InvestEngine SIPP", balance: 55492.74, type: 'Locked', code: 'InvestEngine SIPP' },
-          { id: 'isa1', name: "Stocks & Shares ISA", balance: 8267.24, type: 'Accessible', code: 'Trading 212 - Stocks & Shares ISA' },
-          { id: 'pension1', name: "Workplace Pension", balance: 3405.27, type: 'Locked', code: 'Standard Life (Workplace)' },
-          { id: 'isa2', name: "Cash-Park ISA", balance: 2848.80, type: 'Accessible', code: 'Trading 212 - Cash ISA' },
-          { id: 'bonds1', name: "Premium Bonds", balance: 800.00, type: 'Accessible', code: 'NS&I' },
-          { id: 'sipp2', name: "Trading 212 SIPP", balance: 407.08, type: 'Locked', code: 'Trading 212' },
-          { id: 'lisa1', name: "Lifetime ISA", balance: 274.45, type: 'Restricted', code: 'Dodl by AJ Bell' }
+          { id: 'sip1', name: "SIPP Pension Fund", balance: 24500.00, type: 'Locked', code: 'Generic SIPP Provider' },
+          { id: 'isa1', name: "Stocks & Shares ISA", balance: 12350.00, type: 'Accessible', code: 'Trading 212 ISA' },
+          { id: 'pension1', name: "Workplace Pension", balance: 8450.00, type: 'Locked', code: 'Standard Life Workplace' },
+          { id: 'isa2', name: "Emergency Savings Pot", balance: 5000.00, type: 'Accessible', code: 'High-Yield Savings' },
+          { id: 'lisa1', name: "Lifetime ISA (LISA)", balance: 4200.00, type: 'Restricted', code: 'Dodl LISA' }
         ];
       });
 
@@ -239,15 +237,15 @@
 
       // --- Auto-Save to LocalStorage ---
       useEffect(() => {
-        localStorage.setItem('sp_income', monthlyIncome);
-        localStorage.setItem('sp_fixed', fixedExpenses);
-        localStorage.setItem('sp_debt', debtRepayment);
-        localStorage.setItem('sp_savings', investmentsSavings);
-        localStorage.setItem('sp_curr_age', currentAge);
-        localStorage.setItem('sp_ret_age', retirementAge);
-        localStorage.setItem('sp_growth', yearlyGrowth);
-        localStorage.setItem('sp_sim_inputs', JSON.stringify(simulationInputs));
-        localStorage.setItem('sp_accounts', JSON.stringify(accounts));
+        localStorage.setItem('sp_v2_income', monthlyIncome);
+        localStorage.setItem('sp_v2_fixed', fixedExpenses);
+        localStorage.setItem('sp_v2_debt', debtRepayment);
+        localStorage.setItem('sp_v2_savings', investmentsSavings);
+        localStorage.setItem('sp_v2_curr_age', currentAge);
+        localStorage.setItem('sp_v2_ret_age', retirementAge);
+        localStorage.setItem('sp_v2_growth', yearlyGrowth);
+        localStorage.setItem('sp_v2_sim_inputs', JSON.stringify(simulationInputs));
+        localStorage.setItem('sp_v2_accounts', JSON.stringify(accounts));
       }, [monthlyIncome, fixedExpenses, debtRepayment, investmentsSavings, currentAge, retirementAge, yearlyGrowth, simulationInputs, accounts]);
 
       // Synchronize allocations dynamically on parameter updates
@@ -635,14 +633,14 @@
                       </div>
                       <button onClick={() => {
                         setSimulationInputs({
-                          rent: 300.00, mobile: 5.00, internet: 29.74, travel: 100.00, cloud: 22.80, subscriptions: 14.00, ai: 80.00,
-                          netwestCC: 70.00, stocksMonthly: 330.00, lisaMonthly: 0.00, investEngineMonthly: 0.00, bondsMonthly: 0.00,
-                          t212Monthly: 200.00, cashParkMonthly: 1000.00, goingOut: 150.00
+                          rent: 850.00, mobile: 15.00, internet: 35.00, travel: 120.00, cloud: 10.00, subscriptions: 20.00, ai: 25.00,
+                          netwestCC: 150.00, stocksMonthly: 400.00, lisaMonthly: 100.00, investEngineMonthly: 200.00, bondsMonthly: 100.00,
+                          t212Monthly: 300.00, cashParkMonthly: 0.00, goingOut: 250.00
                         });
-                        setIncome(2560.17);
-                        setFixedExpenses(626.54);
-                        setDebtRepayment(70.00);
-                        setInvestmentsSavings(1750.00);
+                        setIncome(3500.00);
+                        setFixedExpenses(1200.00);
+                        setDebtRepayment(150.00);
+                        setInvestmentsSavings(1100.00);
                       }} class="text-xs font-mono font-bold bg-[var(--bg)] hover:bg-[var(--border)] text-earth-charcoal border border-[var(--border)] px-3 py-1.5 rounded transition cursor-pointer">
                         Reset Scenario
                       </button>
