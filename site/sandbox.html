@@ -575,15 +575,14 @@
                 <span>SteadyPlan</span>
               </h1>
             </div>
-            <nav>
-              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('overview'); setHoveredPoint(null); }} class={appView === 'overview' ? 'active' : ''}>Overview</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('performance'); setHoveredPoint(null); }} class={appView === 'performance' ? 'active' : ''}>Performance</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('allowances'); setHoveredPoint(null); }} class={appView === 'allowances' ? 'active' : ''}>Allowances</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('projections'); setHoveredPoint(null); }} class={appView === 'projections' ? 'active' : ''}>Projections</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('budget'); setHoveredPoint(null); }} class={appView === 'budget' ? 'active' : ''}>Budget</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('debts'); setHoveredPoint(null); }} class={appView === 'debts' ? 'active' : ''}>Debts</a>
-              <a href="#" onClick={(e) => { e.preventDefault(); setAppView('settings'); setHoveredPoint(null); }} class={appView === 'settings' ? 'active' : ''}>Settings</a>
-            </nav>
+              <nav>
+                <a href="#" onClick={(e) => { e.preventDefault(); setAppView('overview'); setHoveredPoint(null); }} class={appView === 'overview' ? 'active' : ''}>Overview</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); setAppView('allowances'); setHoveredPoint(null); }} class={appView === 'allowances' ? 'active' : ''}>Accounts</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); setAppView('budget'); setHoveredPoint(null); }} class={appView === 'budget' ? 'active' : ''}>Budget</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); setAppView('performance'); setHoveredPoint(null); }} class={appView === 'performance' ? 'active' : ''}>Progress</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); setAppView('projections'); setHoveredPoint(null); }} class={appView === 'projections' ? 'active' : ''}>Planning</a>
+                <a href="#" onClick={(e) => { e.preventDefault(); setAppView('settings'); setHoveredPoint(null); }} class={appView === 'settings' ? 'active' : ''}>Settings</a>
+              </nav>
           </header>
 
           {/* Main App Content Area */}
