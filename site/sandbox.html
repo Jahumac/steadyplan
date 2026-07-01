@@ -309,10 +309,9 @@
         }
       });
 
-      // Detailed Simulation Input Object
+      // Detailed Simulation Input Object (Protected from JSON parse errors)
       const [simulationInputs, setSimulationInputs] = useState(() => {
-        const cached = localStorage.getItem('sp_v2_sim_inputs');
-        return cached ? JSON.parse(cached) : {
+        const defaultInputs = {
           rent: 850.00,
           mobile: 15.00,
           internet: 35.00,
@@ -329,6 +328,12 @@
           cashParkMonthly: 0.00,
           goingOut: 250.00
         };
+        try {
+          const cached = localStorage.getItem('sp_v2_sim_inputs');
+          return cached ? JSON.parse(cached) : defaultInputs;
+        } catch {
+          return defaultInputs;
+        }
       });
 
       // Asset Accounts Model (Protected from massive array injection)
