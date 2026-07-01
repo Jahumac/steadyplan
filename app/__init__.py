@@ -262,6 +262,19 @@ def create_app():
             "img-src 'self' data:; "
             "connect-src 'self';"
         )
+
+        # The Sandbox uses Babel standalone for client-side React transpilation, 
+        # which fundamentally requires 'unsafe-inline' and 'unsafe-eval'.
+        if request.path.endswith("sandbox.html"):
+            csp = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "font-src 'self' https://fonts.gstatic.com; "
+                "img-src 'self' data:; "
+                "connect-src 'self';"
+            )
+
         response.headers["Content-Security-Policy"] = csp
 
         return response
