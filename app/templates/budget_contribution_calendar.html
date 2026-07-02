@@ -37,14 +37,8 @@
   </div>
 </section>
 
-{% if calendar.overlap_count %}
-<div class="flash-msg flash-warning">
-  <span>Some months have overlapping overrides. SteadyPlan still uses the narrowest, newest override for calculations, but the calendar flags those cells so you can clean them up.</span>
-</div>
-{% endif %}
-
 {# ── The Payment Calendar Matrix Grid (Main View) ── #}
-<section class="panel mb-1">
+<div class="panel mb-1" style="max-width:100%;overflow:hidden;">
   <div class="section-header">
     <div>
       <p class="eyebrow">Calendar Grid</p>
@@ -56,14 +50,14 @@
   </div>
   
   {% if calendar.accounts %}
-  <div class="table-scroll contribution-calendar-matrix-scroll">
-    <table class="contribution-calendar-matrix">
+  <div class="table-scroll">
+    <table class="data-table contrib-table">
       <thead>
         <tr>
           <th>Account</th>
-          <th class="text-right">Default</th>
+          <th class="num text-muted">Default</th>
           {% for month in month_columns %}
-          <th class="text-center">{{ month.label }}</th>
+          <th class="num">{{ month.label }}</th>
           {% endfor %}
         </tr>
       </thead>
@@ -71,15 +65,15 @@
         {% for account in calendar.accounts %}
         <tr>
           <td>
-            <strong>{{ account.name }}</strong>
+            <span class="contrib-account-name">{{ account.name }}</span>
             <div class="text-xs text-muted">{{ account.wrapper_type or 'Other' }}</div>
           </td>
-          <td class="text-right text-muted" style="vertical-align: middle;">£{{ '{:,.0f}'.format(account.monthly_contribution) }}</td>
+          <td class="num text-muted" style="vertical-align: middle;">£{{ '{:,.0f}'.format(account.monthly_contribution) }}</td>
           {% for month in month_columns %}
           {% set cell = account.months[loop.index0] %}
-          <td class="text-center calendar-matrix-cell {% if cell.has_override %}cell-override{% endif %} {% if cell.overlap %}cell-overlap{% endif %}"
+          <td class="num calendar-matrix-cell"
               {% if cell.has_override %}
-                data-tooltip="{{ cell.source_label }}{% if cell.plan_name %} · {{ cell.plan_name }}{% elif cell.reason %} · {{ cell.reason }}{% endif %}{% if cell.overlap %} (Overlap: {{ cell.active_override_count }} rules){% endif %}"
+                data-tooltip="{{ cell.source_label }}{% if cell.plan_name %} · {{ cell.plan_name }}{% elif cell.reason %} · {{ cell.reason }}{% endif %}"
               {% endif %}>
             <div class="calendar-edit-wrapper" style="position: relative; display: inline-block;">
               <span class="currency-prefix text-muted" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.85rem;">£</span>
@@ -94,9 +88,6 @@
               />
               <span class="save-indicator" id="ind-cal-{{ account.id }}-{{ month.key }}" style="position: absolute; right: -15px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; opacity: 0; transition: opacity 0.3s;"></span>
             </div>
-            {% if cell.overlap %}
-              <div class="matrix-overlap-warning" title="Overlap: {{ cell.active_override_count }} active rules" style="position: absolute; top: -5px; right: -5px; font-size: 0.7rem;">⚠️</div>
-            {% endif %}
           </td>
           {% endfor %}
         </tr>
@@ -107,7 +98,7 @@
   {% else %}
   <p class="helper-text">No eligible active contribution accounts are available yet.</p>
   {% endif %}
-</section>
+</div>
 
 {% if allowance_frame %}
 <section class="panel mb-1">
