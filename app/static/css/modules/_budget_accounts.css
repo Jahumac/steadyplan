@@ -1956,12 +1956,12 @@
 
 /* Override Cell Styling */
 .calendar-matrix-cell.cell-override {
-  background: rgba(56, 189, 248, 0.08);
-  color: var(--accent);
+  color: #fff;
+  font-weight: 600;
 }
 
 .calendar-matrix-cell.cell-override:hover {
-  background: rgba(56, 189, 248, 0.14) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
 }
 
 /* Overlap Cell Styling */

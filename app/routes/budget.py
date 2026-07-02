@@ -705,15 +705,22 @@ def budget_save_entry():
 @budget_bp.route("/api/contribution-override", methods=["POST"])
 @login_required
 def budget_save_contribution_override():
-    """AJAX endpoint — save a single month contribution override, return JSON."""
+    """AJAX endpoint — save or delete a single month contribution override, return JSON."""
     uid = current_user.id
     month_key = valid_month_key(request.form.get("month"))
     account_id = request.form.get("account_id", type=int)
-    amount = optional_float(request.form.get("amount"), 0.0)
+    
+    amount_raw = request.form.get("amount")
+    
     if month_key and account_id:
-        upsert_single_month_contribution_override(
-            account_id, month_key, amount, uid, reason="Calendar edit"
-        )
+        if amount_raw is None or str(amount_raw).strip() == "":
+            from app.models.planning_allowances import delete_single_month_contribution_override
+            delete_single_month_contribution_override(account_id, month_key, uid)
+        else:
+            amount = optional_float(amount_raw, 0.0)
+            upsert_single_month_contribution_override(
+                account_id, month_key, amount, uid, reason="Calendar edit"
+            )
     return jsonify({"ok": True})
 
 
