@@ -33,7 +33,7 @@
         </div>
       {% endif %}
     </div>
-    <div class="hero-actions-col">
+    <div class="badge-row align-start">
       {% if review.status == 'complete' %}
         <span class="badge badge-complete">✓ Complete</span>
         <form method="post" class="form-reset inline" >
@@ -44,31 +44,24 @@
                   data-confirm="Reopen {{ month_label }}?"
                   data-confirm-title="Reopen Monthly Update?"
                   data-confirm-ok="Yes, reopen monthly update"
-                  data-confirm-cancel="Keep Monthly Update complete">Reopen Monthly Update</button>
+                  data-confirm-cancel="Keep Monthly Update complete">Reopen</button>
         </form>
       {% else %}
-        <a href="#monthly-note" class="badge badge-primary-action">Finish monthly update</a>
+        <a href="#monthly-note" class="badge badge-primary-action">Finish update</a>
       {% endif %}
-      <div class="budget-month-nav">
-        <button type="button" class="badge badge-meta review-prev-month" title="Previous month">◀</button>
-        <span class="budget-month-nav-label">{{ month_label }}</span>
-        <button type="button" class="badge badge-meta review-next-month" title="Next month">▶</button>
+      <div class="budget-month-nav flex gap-05">
+        <button type="button" class="badge badge-meta review-prev-month px-05" title="Previous month">◀</button>
+        <button type="button" class="badge badge-meta review-next-month px-05" title="Next month">▶</button>
       </div>
     </div>
   </div>
-  <div class="hero-strip">
-    <div class="hero-strip-stat">
-      <span>Monthly update status</span>
-      <strong>{{ 'Complete' if review.status == 'complete' else 'In progress' if review.status == 'in_progress' else 'Not started' }}</strong>
-    </div>
-    <div class="hero-strip-stat">
-      <span>Accounts to update</span>
-      <strong>{{ (holdings_items | length) + (manual_items | length) + (premium_bonds_items | length) }}</strong>
-    </div>
-    <div class="hero-strip-stat">
-      <span>From you</span>
-      <strong>£{{ '{:,.0f}'.format(total_personal) }}</strong>
-    </div>
+  <div class="hero-strip mt-1">
+    {% call hero_stat('Monthly update status') %}<strong>{{ 'Complete' if review.status == 'complete' else 'In progress' if review.status == 'in_progress' else 'Not started' }}</strong>{% endcall %}
+    {% call hero_stat('Accounts to update') %}<strong>{{ (holdings_items | length) + (manual_items | length) + (premium_bonds_items | length) }}</strong>{% endcall %}
+    {% call hero_stat('From you') %}<strong>£{{ '{:,.0f}'.format(total_personal) }}</strong>{% endcall %}
+    {% if total_into_pot > total_personal %}
+    {% call hero_stat('Added to accounts') %}<strong>£{{ '{:,.0f}'.format(total_into_pot) }}</strong>{% endcall %}
+    {% endif %}
   </div>
   {% if contribution_items and total_uplift > 0 %}
   <div class="change-breakdown">

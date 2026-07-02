@@ -11,60 +11,31 @@
 {% include '_month_strip.html' %}
 
 {# ── Hero header ──────────────────────────────────────────────────────────── #}
-<section class="card highlight mb-1 month-accent-{{ current_month_num }}" style="padding: 1.5rem;">
-  <div class="overview-hero-grid">
-    
-    <!-- Column 1: Navigation & Actions -->
-    <div class="hero-actions-col accounts-hero-actions">
-      <div>
-        <p class="eyebrow">Accounts</p>
-        <h2 class="hero-value" style="font-size: 2rem; font-weight: 800; margin: 0.25rem 0 0.15rem; color: var(--text);">{{ accounts | length }} account{{ 's' if accounts | length != 1 }}</h2>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
-        {% if accounts | length > 0 and page_mode != 'create' and not selected %}
-        <div class="badge-row accounts-hero-badges" style="margin: 0; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-          <a class="badge badge-primary-action" href="/accounts/?mode=create">+ Add account</a>
-          <a class="badge badge-meta" href="/accounts/balances/bulk?month_key={{ current_month_key }}">Update balances</a>
-        </div>
+<section class="card highlight mb-1 month-accent-{{ current_month_num }}">
+  <div class="hero-top">
+    <div>
+      <p class="eyebrow">Accounts</p>
+      <h2 class="hero-value">{{ accounts | length }} account{{ 's' if accounts | length != 1 }}</h2>
+      <p class="hero-subtitle">
+        {% if accounts | length == 0 and page_mode != 'create' and not selected %}
+          Start with one real account to get your picture started and give Monthly Update somewhere real to work from.
+        {% else %}
+          Manage balances, track performance, and link institutions.
         {% endif %}
-      </div>
+      </p>
     </div>
-    
-    <!-- Column 2: Asset Rollup -->
-    <div class="hero-col-panel">
-      <div>
-        <p class="eyebrow">Asset Rollup</p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem; padding-top: 0.5rem;">
-          <div class="hero-strip-stat">
-            <span>Total value</span>
-            <strong style="font-size: 1.1rem; color: var(--text); font-weight: 600;">£{{ '{:,.0f}'.format(total_value) }}</strong>
-          </div>
-          <div class="hero-strip-stat" id="accounts-monthly-in">
-            <span>Into accounts monthly</span>
-            <strong title="Total landing in your accounts each month — what you pay plus any pension tax top-up, Lifetime ISA bonus and employer top-ups" style="font-size: 1.1rem; color: var(--text); font-weight: 600;">£{{ '{:,.0f}'.format(total_into_pot_monthly) }}</strong>
-          </div>
-          <div class="hero-strip-stat">
-            <span>Holdings tracked</span>
-            <strong style="font-size: 1.1rem; color: var(--text); font-weight: 600;">{{ accounts | selectattr('valuation_mode', 'equalto', 'holdings') | list | length }}</strong>
-          </div>
-        </div>
-      </div>
+    {% if accounts | length > 0 and page_mode != 'create' and not selected %}
+    <div class="badge-row">
+      <a class="badge badge-primary-action" href="/accounts/?mode=create">+ Add account</a>
+      <a class="badge badge-meta" href="/accounts/balances/bulk?month_key={{ current_month_key }}">Update balances</a>
     </div>
-    
-    <!-- Column 3: Help & Context -->
-    <div class="hero-col-panel">
-      <div>
-        <p class="eyebrow">Help &amp; Context</p>
-        <p class="hero-subtitle" style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0; line-height: 1.4;">
-          {% if accounts | length == 0 and page_mode != 'create' and not selected %}
-            Start with one real account to get your picture started and give Monthly Update somewhere real to work from.
-          {% else %}
-            Everything you're tracking — tap any account for the full picture.
-          {% endif %}
-        </p>
-      </div>
-    </div>
-    
+    {% endif %}
+  </div>
+  
+  <div class="hero-strip mt-1">
+    {% call hero_stat('Total value') %}<strong>£{{ '{:,.0f}'.format(total_value) }}</strong>{% endcall %}
+    {% call hero_stat('Into accounts monthly', stat_id='accounts-monthly-in') %}<strong title="Total landing in your accounts each month — what you pay plus any pension tax top-up, Lifetime ISA bonus and employer top-ups">£{{ '{:,.0f}'.format(total_into_pot_monthly) }}</strong>{% endcall %}
+    {% call hero_stat('Holdings tracked') %}<strong>{{ accounts | selectattr('valuation_mode', 'equalto', 'holdings') | list | length }}</strong>{% endcall %}
   </div>
   
   {# Bottom breakdown area (if applicable) #}

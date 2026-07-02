@@ -24,72 +24,40 @@
 </section>
 
 {# ── Hero ────────────────────────────────────────────────────────────────── #}
-<section class="card highlight mb-1 month-accent-{{ _mk_month }}" style="padding: 1.5rem;">
-  <div class="overview-hero-grid">
-    
-    <!-- Column 1: Navigation & Actions -->
-    <div class="hero-actions-col budget-hero-actions">
-      <div>
-        <p class="eyebrow">Budget</p>
-        <h2 class="hero-value" style="font-size: 2rem; font-weight: 800; margin: 0.25rem 0 0.15rem; color: var(--text);">{{ month_label }}</h2>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
-        <div class="badge-row budget-hero-badges" style="margin: 0; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-          <a class="badge" href="#{{ income_key | replace('_', '-') }}">Jump to budget</a>
-          <a class="badge badge-meta" href="{{ budget_setup_href }}">Budget Setup</a>
-        </div>
-        <div class="budget-month-nav budget-hero-month-nav" style="display: flex; align-items: center; gap: 0.5rem;">
-          <button type="button" class="badge badge-meta budget-prev-month" title="Previous month" style="padding: 0.25rem 0.5rem;">◀</button>
-          <span class="budget-month-nav-label" style="font-size: 0.85rem; color: var(--text-muted);">{{ month_label }}</span>
-          <button type="button" class="badge badge-meta budget-next-month" title="Next month" style="padding: 0.25rem 0.5rem;">▶</button>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Column 2: Rollup Metrics -->
-    <div class="hero-col-panel">
-      <div>
-        <p class="eyebrow">Monthly Rollup</p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem; padding-top: 0.5rem;">
-          <div class="hero-strip-stat">
-            <span>Income</span>
-            <strong id="stat-income" style="font-size: 1.1rem; color: var(--text); font-weight: 600;">£{{ '{:,.0f}'.format(summary.total_income) }}</strong>
-          </div>
-          <div class="hero-strip-stat">
-            <span>Expenses</span>
-            <strong id="stat-expenses" style="font-size: 1.1rem; color: var(--text); font-weight: 600;">£{{ '{:,.0f}'.format(summary.total_expenses) }}</strong>
-          </div>
-          <div class="hero-strip-stat" id="stat-surplus-container">
-            <span>Left over</span>
-            <strong id="stat-surplus" class="{% if summary.surplus >= 0 %}stat-positive-text{% else %}stat-negative-text{% endif %}" style="font-size: 1.1rem; font-weight: 600;">
-              {% if summary.surplus >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(summary.surplus) }}
-            </strong>
-          </div>
-          <div class="hero-strip-stat">
-            <span>Savings Rate</span>
-            <strong id="stat-savings" title="Based on amounts in your Investment / Savings sections" style="font-size: 1.1rem; color: var(--text); font-weight: 600;">{{ '{:.1f}'.format(summary.savings_rate) }}%</strong>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Column 3: Status & Context -->
-    <div class="hero-col-panel">
-      <div>
-        <p class="eyebrow">Status &amp; Context</p>
+<section class="card highlight mb-1 month-accent-{{ _mk_month }}">
+  <div class="hero-top">
+    <div>
+      <p class="eyebrow">Budget</p>
+      <h2 class="hero-value">{{ month_label }}</h2>
+      <p class="hero-subtitle">
         {% if is_inherited %}
-        <p class="hero-subtitle" style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0; line-height: 1.4;">Carried forward from your last saved month — tweak any number to make this month your own.</p>
+          Carried forward from your last saved month — tweak any number to make this month your own.
         {% elif sections | length == 0 %}
-        <p class="hero-subtitle" style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0; line-height: 1.4;">Your budget is a blank canvas. Hit <a href="{{ budget_setup_href }}" class="link-accent">Edit Budget</a> to add items to track.</p>
+          Your budget is a blank canvas. Hit Budget Setup to add items to track.
         {% else %}
-        <p class="hero-subtitle" style="font-size: 0.8rem; color: var(--text-muted); margin: 0.25rem 0 0; line-height: 1.4;">Here's where the money goes — this view keeps score so you don't have to.</p>
+          Plan where your money goes before the month begins.
         {% endif %}
-      </div>
-      <div>
-        <p class="helper-text m-0 budget-hero-mobile-hint">Edit numbers below to shape this month.</p>
-      </div>
+      </p>
     </div>
-    
+    <div class="badge-row align-start">
+      <div class="budget-month-nav flex gap-05 mr-05">
+        <button type="button" class="badge badge-meta budget-prev-month px-05" title="Previous month">◀</button>
+        <button type="button" class="badge badge-meta budget-next-month px-05" title="Next month">▶</button>
+      </div>
+      <a class="badge badge-meta" href="#{{ income_key | replace('_', '-') }}">Jump to budget</a>
+      <a class="badge badge-primary-action" href="{{ budget_setup_href }}">Budget Setup</a>
+    </div>
+  </div>
+  
+  <div class="hero-strip mt-1">
+    {% call hero_stat('Income') %}<strong id="stat-income">£{{ '{:,.0f}'.format(summary.total_income) }}</strong>{% endcall %}
+    {% call hero_stat('Expenses') %}<strong id="stat-expenses">£{{ '{:,.0f}'.format(summary.total_expenses) }}</strong>{% endcall %}
+    {% call hero_stat('Left over', stat_id='stat-surplus-container') %}
+      <strong id="stat-surplus" class="{% if summary.surplus >= 0 %}stat-positive-text{% else %}stat-negative-text{% endif %}">
+        {% if summary.surplus >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(summary.surplus) }}
+      </strong>
+    {% endcall %}
+    {% call hero_stat('Savings Rate') %}<strong id="stat-savings" title="Based on amounts in your Investment / Savings sections">{{ '{:.1f}'.format(summary.savings_rate) }}%</strong>{% endcall %}
   </div>
 </section>
 
