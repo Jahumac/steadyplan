@@ -1815,7 +1815,6 @@
                               <thead>
                                 <tr className="border-b border-[var(--border)]">
                                   <th className="text-left py-2">Account</th>
-                                  <th className="text-left py-2">Wrapper</th>
                                   <th className="text-right py-2">Default</th>
                                   {monthCols.map(m => (
                                     <th key={m.key} className="text-center py-2">{m.label}</th>
@@ -1833,9 +1832,11 @@
 
                                   return (
                                     <tr key={acc.id} className="border-t border-[var(--border)]">
-                                      <td className="py-2.5 font-bold text-white">{acc.name}</td>
-                                      <td className="py-2.5 text-earth-muted">{acc.code}</td>
-                                      <td className="py-2.5 text-right text-earth-muted">£{defaultContribution.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                                      <td className="py-2.5">
+                                        <strong className="font-bold text-white">{acc.name}</strong>
+                                        <div className="text-earth-muted">{acc.code}</div>
+                                      </td>
+                                      <td className="py-2.5 text-right text-earth-muted" style={{ verticalAlign: 'middle' }}>£{defaultContribution.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
                                       {monthCols.map(m => {
                                         const cell = getCellData(acc.id, m.key);
                                         const tooltipText = cell.hasOverride 
@@ -1844,13 +1845,22 @@
                                         return (
                                           <td 
                                             key={m.key} 
-                                            className={`text-center py-2.5 calendar-matrix-cell cursor-pointer transition ${cell.hasOverride ? 'cell-override text-earth-sage font-bold bg-earth-sage/10' : 'text-white/60'} ${cell.overlap ? 'cell-overlap border border-earth-rust' : ''}`}
+                                            className={`text-center py-2.5 calendar-matrix-cell transition ${cell.hasOverride ? 'cell-override text-earth-sage bg-earth-sage/10' : 'text-white/60'} ${cell.overlap ? 'cell-overlap border border-earth-rust' : ''}`}
                                             onMouseEnter={(e) => cell.hasOverride && showCellTooltip(e, tooltipText)}
                                             onMouseLeave={hideCellTooltip}
-                                            onClick={(e) => cell.hasOverride ? showCellTooltip(e, tooltipText) : hideCellTooltip()}
                                           >
-                                            £{cell.amount.toLocaleString(undefined, {maximumFractionDigits:0})}
-                                            {cell.overlap && <span className="text-earth-rust ml-1" title="Overlapping rules">⚠️</span>}
+                                            <div className="calendar-edit-wrapper relative inline-block">
+                                              <span className="currency-prefix text-earth-muted absolute left-2 top-1/2 -translate-y-1/2 text-xs">£</span>
+                                              <input type="number" 
+                                                     step="0.01" min="0"
+                                                     className={`budget-amount-input calendar-amount-input w-[80px] pl-5 text-right bg-transparent border border-transparent rounded transition focus:border-earth-gold ${cell.hasOverride ? 'font-bold text-earth-sage' : ''}`}
+                                                     data-account-id={acc.id} 
+                                                     data-month-key={m.key}
+                                                     defaultValue={cell.amount.toFixed(2)}
+                                                     placeholder={defaultContribution.toFixed(2)}
+                                              />
+                                            </div>
+                                            {cell.overlap && <div className="matrix-overlap-warning absolute -top-1 -right-1 text-[10px] text-earth-rust" title="Overlapping rules">⚠️</div>}
                                           </td>
                                         );
                                       })}
