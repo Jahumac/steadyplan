@@ -66,10 +66,12 @@
       </thead>
       <tbody>
         {% for account in calendar.accounts %}
+        {% set _wt = (account.wrapper_type or '') | lower %}
+        {% set pill_type = 'isa' if 'stocks' in _wt else ('cash-isa' if 'cash' in _wt else ('lisa' if 'lifetime' in _wt else ('premium-bonds' if 'premium bonds' in _wt else ('sipp' if 'sipp' in _wt else ('pension' if 'pension' in _wt else ('gia' if 'general' in _wt else '')))))) %}
         <tr>
           <td>
             <span class="contrib-account-name">{{ account.name }}</span>
-            <div class="text-xs text-muted">{{ account.wrapper_type or 'Other' }}</div>
+            <div style="margin-top: 4px;"><span class="acct-type-pill" data-type="{{ pill_type }}">{{ account.wrapper_type or 'Other' }}</span></div>
           </td>
           <td class="num text-muted" style="vertical-align: middle;">£{{ '{:,.0f}'.format(account.monthly_contribution) }}</td>
           {% for month in month_columns %}
@@ -250,9 +252,11 @@
           </thead>
           <tbody>
             {% for account in calendar.accounts %}
+            {% set _wt = (account.wrapper_type or '') | lower %}
+            {% set pill_type = 'isa' if 'stocks' in _wt else ('cash-isa' if 'cash' in _wt else ('lisa' if 'lifetime' in _wt else ('premium-bonds' if 'premium bonds' in _wt else ('sipp' if 'sipp' in _wt else ('pension' if 'pension' in _wt else ('gia' if 'general' in _wt else '')))))) %}
             <tr>
               <td data-label="Account">{{ account.name }}</td>
-              <td data-label="Account type">{{ account.wrapper_type or 'Other' }}</td>
+              <td data-label="Account type"><span class="acct-type-pill" data-type="{{ pill_type }}">{{ account.wrapper_type or 'Other' }}</span></td>
               <td data-label="Default" class="text-right">£{{ '{:,.2f}'.format(account.monthly_contribution) }}</td>
               <td data-label="Temporary amount" class="text-right">
                 <input type="number" step="0.01" min="0" name="amount_{{ account.calendar_entry_key }}" placeholder="Leave blank">
@@ -355,11 +359,13 @@
           </div>
           <div class="contribution-month-account-list">
             {% for account in calendar.accounts %}
+            {% set _wt = (account.wrapper_type or '') | lower %}
+            {% set pill_type = 'isa' if 'stocks' in _wt else ('cash-isa' if 'cash' in _wt else ('lisa' if 'lifetime' in _wt else ('premium-bonds' if 'premium bonds' in _wt else ('sipp' if 'sipp' in _wt else ('pension' if 'pension' in _wt else ('gia' if 'general' in _wt else '')))))) %}
             {% set cell = account.months[month_loop] %}
             <div class="contribution-month-account-row{% if cell.has_override %} has-override{% endif %}{% if cell.overlap %} has-overlap{% endif %}">
               <div class="contribution-month-account-main">
                 <strong>{{ account.name }}</strong>
-                <span>{{ account.wrapper_type or 'Other' }}</span>
+                <span class="acct-type-pill" data-type="{{ pill_type }}">{{ account.wrapper_type or 'Other' }}</span>
               </div>
               <div class="contribution-month-amounts">
                 <span><span class="badge badge-meta badge-sm">Default</span> £{{ '{:,.2f}'.format(cell.default_amount) }}</span>

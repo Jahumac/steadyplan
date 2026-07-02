@@ -1833,8 +1833,15 @@
                                   return (
                                     <tr key={acc.id} className="border-t border-[var(--border)]">
                                       <td className="py-2.5">
-                                        <span className="contrib-account-name font-bold text-white">{acc.name}</span>
-                                        <div className="text-earth-muted">{acc.code}</div>
+                                        <div className="contrib-account-name font-bold text-white">{acc.code}</div>
+                                        <div className="mt-1">
+                                          <span className="acct-type-pill" data-type={(() => {
+                                            const wt = (acc.name || '').toLowerCase();
+                                            return wt.includes('stocks') ? 'isa' : (wt.includes('cash') ? 'cash-isa' : (wt.includes('lifetime') ? 'lisa' : (wt.includes('premium bonds') ? 'premium-bonds' : (wt.includes('sipp') ? 'sipp' : (wt.includes('pension') ? 'pension' : (wt.includes('general') ? 'gia' : ''))))));
+                                          })()}>
+                                            {acc.name || 'Other'}
+                                          </span>
+                                        </div>
                                       </td>
                                       <td className="num py-2.5 text-earth-muted" style={{ verticalAlign: 'middle' }}>£{defaultContribution.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
                                       {monthCols.map(m => {
