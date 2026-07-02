@@ -1850,10 +1850,10 @@
                                             onMouseLeave={hideCellTooltip}
                                           >
                                             <div className="calendar-edit-wrapper relative inline-block">
-                                              <span className="currency-prefix text-earth-muted absolute left-2 top-1/2 -translate-y-1/2 text-xs">£</span>
+                                              <span className="currency-prefix text-earth-muted absolute left-3 top-1/2 -translate-y-1/2 text-xs">£</span>
                                               <input type="number" 
                                                      step="0.01" min="0"
-                                                     className={`budget-amount-input calendar-amount-input w-[80px] pl-5 text-right bg-transparent border border-transparent rounded transition focus:border-earth-gold ${cell.hasOverride ? 'font-bold text-earth-sage' : ''}`}
+                                                     className={`budget-amount-input calendar-amount-input w-[100px] pl-6 text-right bg-transparent border border-transparent rounded transition focus:border-earth-gold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${cell.hasOverride ? 'font-bold text-earth-sage' : ''}`}
                                                      data-account-id={acc.id} 
                                                      data-month-key={m.key}
                                                      defaultValue={cell.amount.toFixed(2)}
