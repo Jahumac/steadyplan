@@ -1810,14 +1810,14 @@
                             </div>
                           </div>
 
-                          <div className="table-scroll contribution-calendar-matrix-scroll">
-                            <table className="contribution-calendar-matrix text-xs w-100">
+                          <div className="table-scroll">
+                            <table className="data-table contrib-table text-xs w-100">
                               <thead>
                                 <tr className="border-b border-[var(--border)]">
                                   <th className="text-left py-2">Account</th>
-                                  <th className="text-right py-2">Default</th>
+                                  <th className="num py-2 text-earth-muted">Default</th>
                                   {monthCols.map(m => (
-                                    <th key={m.key} className="text-center py-2">{m.label}</th>
+                                    <th key={m.key} className="num py-2">{m.label}</th>
                                   ))}
                                 </tr>
                               </thead>
@@ -1833,19 +1833,17 @@
                                   return (
                                     <tr key={acc.id} className="border-t border-[var(--border)]">
                                       <td className="py-2.5">
-                                        <strong className="font-bold text-white">{acc.name}</strong>
+                                        <span className="contrib-account-name font-bold text-white">{acc.name}</span>
                                         <div className="text-earth-muted">{acc.code}</div>
                                       </td>
-                                      <td className="py-2.5 text-right text-earth-muted" style={{ verticalAlign: 'middle' }}>£{defaultContribution.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                                      <td className="num py-2.5 text-earth-muted" style={{ verticalAlign: 'middle' }}>£{defaultContribution.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
                                       {monthCols.map(m => {
                                         const cell = getCellData(acc.id, m.key);
-                                        const tooltipText = cell.hasOverride 
-                                          ? `${cell.planName}${cell.overlap ? ` (Overlap: ${cell.activeCount} rules)` : ""}`
-                                          : "";
+                                        const tooltipText = cell.hasOverride ? `${cell.planName}` : "";
                                         return (
                                           <td 
                                             key={m.key} 
-                                            className={`text-center py-2.5 calendar-matrix-cell transition ${cell.hasOverride ? 'cell-override text-earth-sage ' : 'text-white/60'} ${cell.overlap ? 'cell-overlap border border-earth-rust' : ''}`}
+                                            className={`num py-2.5 calendar-matrix-cell transition ${cell.hasOverride ? 'cell-override text-earth-sage ' : 'text-white/60'}`}
                                             onMouseEnter={(e) => cell.hasOverride && showCellTooltip(e, tooltipText)}
                                             onMouseLeave={hideCellTooltip}
                                           >
@@ -1860,7 +1858,6 @@
                                                      placeholder={defaultContribution.toFixed(2)}
                                               />
                                             </div>
-                                            {cell.overlap && <div className="matrix-overlap-warning absolute -top-1 -right-1 text-[10px] text-earth-rust" title="Overlapping rules">⚠️</div>}
                                           </td>
                                         );
                                       })}
