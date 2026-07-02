@@ -405,6 +405,61 @@
         }
       });
 
+      // Temporary contribution plan overrides
+      const [temporaryPlans, setTemporaryPlans] = useState(() => {
+        try {
+          const cached = localStorage.getItem('sp_v2_temp_plans');
+          return cached ? JSON.parse(cached) : [
+            { id: 'tp1', name: "Summer ISA front-loading", accountId: 'isa1', amount: 600, startMonth: '2026-06', endMonth: '2026-08' },
+            { id: 'tp2', name: "LISA bonus fill", accountId: 'lisa1', amount: 500, startMonth: '2026-05', endMonth: '2026-07' }
+          ];
+        } catch {
+          return [
+            { id: 'tp1', name: "Summer ISA front-loading", accountId: 'isa1', amount: 600, startMonth: '2026-06', endMonth: '2026-08' },
+            { id: 'tp2', name: "LISA bonus fill", accountId: 'lisa1', amount: 500, startMonth: '2026-05', endMonth: '2026-07' }
+          ];
+        }
+      });
+
+      // Monthly update simulation states
+      const [monthlyUpdateComplete, setMonthlyUpdateComplete] = useState(() => {
+        return localStorage.getItem('sp_v2_update_complete') === 'true';
+      });
+      const [monthlyUpdateConfirmed, setMonthlyUpdateConfirmed] = useState(() => {
+        try {
+          const cached = localStorage.getItem('sp_v2_update_confirmed');
+          return cached ? JSON.parse(cached) : {};
+        } catch {
+          return {};
+        }
+      });
+      const [monthlyUpdateNote, setMonthlyUpdateNote] = useState(() => {
+        return localStorage.getItem('sp_v2_update_note') || "";
+      });
+      const [monthlyUpdateHistory, setMonthlyUpdateHistory] = useState(() => {
+        try {
+          const cached = localStorage.getItem('sp_v2_update_history');
+          return cached ? JSON.parse(cached) : [
+            { month: "June 2026", note: "Stock market up, Workplace pension value updated.", status: "complete" },
+            { month: "May 2026", note: "Baseline snapshot created.", status: "complete" }
+          ];
+        } catch {
+          return [
+            { month: "June 2026", note: "Stock market up, Workplace pension value updated.", status: "complete" },
+            { month: "May 2026", note: "Baseline snapshot created.", status: "complete" }
+          ];
+        }
+      });
+
+      // Temporary Plan Form states
+      const [newPlanName, setNewPlanName] = useState("Cash buffer build-up");
+      const [newPlanStartMonth, setNewPlanStartMonth] = useState("2026-05");
+      const [newPlanEndMonth, setNewPlanEndMonth] = useState("2026-10");
+      const [newPlanAmounts, setNewPlanAmounts] = useState({});
+
+      // Viewport-positioned calendar matrix tooltip state
+      const [calendarTooltip, setCalendarTooltip] = useState({ text: "", x: 0, y: 0, visible: false });
+
       // Hover metrics states for Charts
       const svgRef = useRef(null);
       const [hoveredPoint, setHoveredPoint] = useState(null);
@@ -421,7 +476,12 @@
         localStorage.setItem('sp_v2_sim_inputs', JSON.stringify(simulationInputs));
         localStorage.setItem('sp_v2_accounts', JSON.stringify(accounts));
         localStorage.setItem('sp_v2_debts', JSON.stringify(debts));
-      }, [monthlyIncome, fixedExpenses, debtRepayment, investmentsSavings, currentAge, retirementAge, yearlyGrowth, simulationInputs, accounts, debts]);
+        localStorage.setItem('sp_v2_temp_plans', JSON.stringify(temporaryPlans));
+        localStorage.setItem('sp_v2_update_complete', monthlyUpdateComplete);
+        localStorage.setItem('sp_v2_update_confirmed', JSON.stringify(monthlyUpdateConfirmed));
+        localStorage.setItem('sp_v2_update_note', monthlyUpdateNote);
+        localStorage.setItem('sp_v2_update_history', JSON.stringify(monthlyUpdateHistory));
+      }, [monthlyIncome, fixedExpenses, debtRepayment, investmentsSavings, currentAge, retirementAge, yearlyGrowth, simulationInputs, accounts, debts, temporaryPlans, monthlyUpdateComplete, monthlyUpdateConfirmed, monthlyUpdateNote, monthlyUpdateHistory]);
 
       // Synchronize allocations dynamically on parameter updates
       const handleSimChange = (field, val) => {
@@ -1443,13 +1503,831 @@
                     </div>
                   )}
 
-                  {/* Empty states for other tabs */}
-                  {(budgetTab === 'update' || budgetTab === 'calendar' || budgetTab === 'trend') && (
-                    <div className="card highlight mb-1" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--text)' }}>Coming Soon to Sandbox</h3>
-                      <p className="text-muted text-sm" style={{ color: 'var(--text-muted)' }}>This nested view is structurally ready. We can map data to it next!</p>
-                    </div>
-                  )}
+                  {/* SUB-TAB: Spend Trend */}
+                  {budgetTab === 'trend' && (() => {
+                    const months = ["May", "Jun", "Jul"];
+                    const trendAvgIncome = monthlyIncome;
+                    
+                    const trendItems = [
+                      {
+                        section: "Income",
+                        items: [
+                          { name: "Take-home pay", May: monthlyIncome, Jun: monthlyIncome, Jul: monthlyIncome }
+                        ]
+                      },
+                      {
+                        section: "Fixed Expenses",
+                        items: [
+                          { name: "Rent", May: 850.00, Jun: 850.00, Jul: (simulationInputs.rent || 0) },
+                          { name: "Mobile", May: 15.00, Jun: 15.00, Jul: (simulationInputs.mobile || 0) },
+                          { name: "Internet", May: 35.00, Jun: 35.00, Jul: (simulationInputs.internet || 0) },
+                          { name: "Travel", May: 140.00, Jun: 110.00, Jul: (simulationInputs.travel || 0) },
+                          { name: "Cloud & AI", May: 30.00, Jun: 35.00, Jul: ((simulationInputs.cloud || 0) + (simulationInputs.ai || 0)) },
+                          { name: "Subscriptions", May: 20.00, Jun: 20.00, Jul: (simulationInputs.subscriptions || 0) }
+                        ]
+                      },
+                      {
+                        section: "Debt Repayment",
+                        items: [
+                          { name: "Sainsbury's CC & Overpayments", May: 150.00, Jun: 150.00, Jul: (simulationInputs.netwestCC || 0) }
+                        ]
+                      },
+                      {
+                        section: "Investments & Savings",
+                        items: [
+                          { name: "Stocks & Shares ISA", May: 400.00, Jun: 450.00, Jul: (simulationInputs.stocksMonthly || 0) },
+                          { name: "Workplace Pension", May: 300.00, Jun: 300.00, Jul: (simulationInputs.t212Monthly || 0) },
+                          { name: "SIPP Pension Fund", May: 200.00, Jun: 200.00, Jul: (simulationInputs.investEngineMonthly || 0) },
+                          { name: "Emergency Savings Pot", May: 100.00, Jun: 100.00, Jul: (simulationInputs.bondsMonthly || 0) },
+                          { name: "Lifetime ISA (LISA)", May: 100.00, Jun: 100.00, Jul: (simulationInputs.lisaMonthly || 0) }
+                        ]
+                      }
+                    ];
+
+                    const getSum = (arr, key) => arr.reduce((sum, item) => sum + (item[key] || 0), 0);
+                    const allExpenseItems = trendItems.filter(s => s.section !== "Income").flatMap(s => s.items);
+                    const avgSpendMay = getSum(allExpenseItems, 'May');
+                    const avgSpendJun = getSum(allExpenseItems, 'Jun');
+                    const avgSpendJul = getSum(allExpenseItems, 'Jul');
+                    const trendAvgSpend = (avgSpendMay + avgSpendJun + avgSpendJul) / 3;
+                    const trendSurplus = trendAvgIncome - trendAvgSpend;
+
+                    return (
+                      <div className="space-y-6">
+                        <section className="card highlight mb-1 month-accent-7">
+                          <div className="hero-top">
+                            <div>
+                              <p className="eyebrow">Budget</p>
+                              <h2 className="hero-value">Spend Trend</h2>
+                              <p className="hero-subtitle">Last 3 months · average spend per category</p>
+                            </div>
+                          </div>
+                          <div className="hero-strip">
+                            <div className="hero-strip-stat">
+                              <span>Months tracked</span>
+                              <strong>3</strong>
+                            </div>
+                            <div className="hero-strip-stat">
+                              <span>Avg monthly income</span>
+                              <strong>£{trendAvgIncome.toLocaleString(undefined, {maximumFractionDigits:0})}</strong>
+                            </div>
+                            <div className="hero-strip-stat">
+                              <span>Avg monthly spend</span>
+                              <strong>£{trendAvgSpend.toLocaleString(undefined, {maximumFractionDigits:0})}</strong>
+                            </div>
+                            <div className="hero-strip-stat">
+                              <span>Avg surplus</span>
+                              <strong className={trendSurplus >= 0 ? "stat-positive-text" : "stat-negative-text"}>
+                                {trendSurplus >= 0 ? '+' : ''}£{trendSurplus.toLocaleString(undefined, {maximumFractionDigits:0})}
+                              </strong>
+                            </div>
+                          </div>
+                        </section>
+
+                        {trendItems.map(sec => (
+                          <div key={sec.section} className="panel mb-1">
+                            <h3 className="section-title-sm text-sm font-bold text-white mb-3">{sec.section}</h3>
+                            <div className="table-scroll">
+                              <table className="data-table trend-table w-100 text-xs">
+                                <thead>
+                                  <tr>
+                                    <th className="text-left py-2">Category</th>
+                                    {months.map(m => (
+                                      <th key={m} className="num text-right py-2">{m}</th>
+                                    ))}
+                                    <th className="num text-right py-2">Avg</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {sec.items.map(item => {
+                                    const avg = (item.May + item.Jun + item.Jul) / 3;
+                                    return (
+                                      <tr key={item.name} className="border-t border-[var(--border)]">
+                                        <td className="py-2.5 text-white font-medium">{item.name}</td>
+                                        <td className="num text-right py-2.5 text-earth-muted">£{item.May.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                                        <td className="num text-right py-2.5 text-earth-muted">£{item.Jun.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                                        <td className="num text-right py-2.5 text-white font-bold">£{item.Jul.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                                        <td className="num text-right py-2.5 text-earth-gold font-bold">£{avg.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+
+                  {/* SUB-TAB: Payment Calendar */}
+                  {budgetTab === 'calendar' && (() => {
+                    const monthCols = [
+                      { label: "May 2026", key: "2026-05" },
+                      { label: "Jun 2026", key: "2026-06" },
+                      { label: "Jul 2026", key: "2026-07" },
+                      { label: "Aug 2026", key: "2026-08" },
+                      { label: "Sep 2026", key: "2026-09" },
+                      { label: "Oct 2026", key: "2026-10" }
+                    ];
+
+                    const getCellData = (accId, monthKey) => {
+                      const defaultContribution = 
+                        accId === 'sip1' ? (simulationInputs.investEngineMonthly || 0) :
+                        accId === 'isa1' ? (simulationInputs.stocksMonthly || 0) :
+                        accId === 'pension1' ? (simulationInputs.t212Monthly || 0) :
+                        accId === 'isa2' ? (simulationInputs.bondsMonthly || 0) :
+                        accId === 'lisa1' ? (simulationInputs.lisaMonthly || 0) : 0;
+                      
+                      const matchingPlans = temporaryPlans.filter(p => p.accountId === accId && monthKey >= p.startMonth && monthKey <= p.endMonth);
+                      if (matchingPlans.length > 0) {
+                        const activePlan = matchingPlans[matchingPlans.length - 1];
+                        return {
+                          amount: activePlan.amount,
+                          hasOverride: true,
+                          planName: activePlan.name,
+                          overlap: matchingPlans.length > 1,
+                          activeCount: matchingPlans.length
+                        };
+                      }
+                      return {
+                        amount: defaultContribution,
+                        hasOverride: false,
+                        overlap: false,
+                        activeCount: 0
+                      };
+                    };
+
+                    const overlapCount = accounts.reduce((sum, acc) => {
+                      return sum + monthCols.filter(m => getCellData(acc.id, m.key).overlap).length;
+                    }, 0);
+
+                    const getAllowancePlanned = (accId) => {
+                      return monthCols.reduce((sum, m) => sum + getCellData(accId, m.key).amount, 0);
+                    };
+
+                    const isaPlanned = getAllowancePlanned('isa1') + getAllowancePlanned('lisa1');
+                    const lisaPlanned = getAllowancePlanned('lisa1');
+                    const pensionPlanned = getAllowancePlanned('sip1') + getAllowancePlanned('pension1');
+                    const bondsPlanned = getAllowancePlanned('isa2');
+
+                    const showCellTooltip = (e, text) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setCalendarTooltip({
+                        text: text,
+                        x: rect.left + window.pageXOffset + rect.width / 2,
+                        y: rect.top + window.pageYOffset - 6,
+                        visible: true
+                      });
+                    };
+
+                    const hideCellTooltip = () => {
+                      setCalendarTooltip(prev => ({ ...prev, visible: false }));
+                    };
+
+                    const handleSavePlan = (e) => {
+                      e.preventDefault();
+                      if (!newPlanName) return;
+                      const planId = 'tp_' + Date.now();
+                      const addedPlans = [];
+                      accounts.forEach(acc => {
+                        const amt = newPlanAmounts[acc.id];
+                        if (amt !== undefined && amt !== "") {
+                          addedPlans.push({
+                            id: `${planId}_${acc.id}`,
+                            name: newPlanName,
+                            accountId: acc.id,
+                            amount: parseFloat(amt) || 0,
+                            startMonth: newPlanStartMonth,
+                            endMonth: newPlanEndMonth
+                          });
+                        }
+                      });
+                      if (addedPlans.length > 0) {
+                        setTemporaryPlans(prev => [...prev, ...addedPlans]);
+                        setNewPlanAmounts({});
+                        alert("Temporary plan applied successfully!");
+                      } else {
+                        alert("Please enter a temporary amount for at least one account.");
+                      }
+                    };
+
+                    const handleRemovePlan = (planName) => {
+                      setTemporaryPlans(prev => prev.filter(p => p.name !== planName));
+                    };
+
+                    const handleCreateYearlyPattern = (e) => {
+                      e.preventDefault();
+                      const form = e.currentTarget;
+                      const accId = form.pattern_account.value;
+                      const name = form.pattern_name.value;
+                      const amount = parseFloat(form.pattern_amount.value) || 0;
+                      const monthsPerYear = parseInt(form.pattern_months.value) || 4;
+                      const years = parseInt(form.pattern_years.value) || 2;
+                      const start = form.pattern_start.value;
+
+                      if (!accId || !name || amount <= 0) return;
+
+                      const newPlans = [];
+                      const startYear = parseInt(start.split("-")[0]);
+                      const startMonthNum = parseInt(start.split("-")[1]);
+
+                      for (let y = 0; y < years; y++) {
+                        const yr = startYear + y;
+                        const sMonthStr = `${yr}-${String(startMonthNum).padStart(2, '0')}`;
+                        let endMonthNum = startMonthNum + monthsPerYear - 1;
+                        let endYr = yr;
+                        if (endMonthNum > 12) {
+                          endMonthNum = endMonthNum - 12;
+                          endYr = yr + 1;
+                        }
+                        const eMonthStr = `${endYr}-${String(endMonthNum).padStart(2, '0')}`;
+
+                        newPlans.push({
+                          id: `annual_${Date.now()}_${y}`,
+                          name: `${name} (Year ${y+1})`,
+                          accountId: accId,
+                          amount: amount,
+                          startMonth: sMonthStr,
+                          endMonth: eMonthStr
+                        });
+                      }
+
+                      setTemporaryPlans(prev => [...prev, ...newPlans]);
+                      alert("Yearly filling pattern generated!");
+                    };
+
+                    const uniquePlanNames = Array.from(new Set(temporaryPlans.map(p => p.name)));
+
+                    return (
+                      <div className="space-y-6">
+                        <section className="card highlight mb-1 contribution-calendar-hero">
+                          <div className="hero-top">
+                            <div>
+                              <p className="eyebrow">Budget</p>
+                              <h2 className="hero-value">Payment calendar</h2>
+                              <p className="hero-subtitle">Set short-term monthly payment plans without changing the account’s normal monthly payment.</p>
+                            </div>
+                            <div className="badge-row contribution-calendar-hero-badges text-xs">
+                              <span className="badge badge-meta">{monthCols.length} months shown</span>
+                              <span className="badge badge-meta">{accounts.length} accounts</span>
+                            </div>
+                          </div>
+                          <div className="hero-strip">
+                            <div className="hero-strip-stat">
+                              <span>From month</span>
+                              <strong>May 2026</strong>
+                            </div>
+                            <div className="hero-strip-stat">
+                              <span>To month</span>
+                              <strong>Oct 2026</strong>
+                            </div>
+                            <div className="hero-strip-stat">
+                              <span>Temporary plans</span>
+                              <strong>{uniquePlanNames.length}</strong>
+                            </div>
+                            <div className="hero-strip-stat">
+                              <span>Cells with overlaps</span>
+                              <strong>{overlapCount}</strong>
+                            </div>
+                          </div>
+                        </section>
+
+                        {overlapCount > 0 && (
+                          <div className="flash-msg flash-warning text-xs mb-3">
+                            <span>Some months have overlapping overrides. SteadyPlan still uses the narrowest, newest override for calculations, but the calendar flags those cells so you can clean them up.</span>
+                          </div>
+                        )}
+
+                        <section className="panel mb-1">
+                          <div className="section-header">
+                            <div>
+                              <p className="eyebrow">Calendar Grid</p>
+                              <h3>Monthly payments at a glance</h3>
+                            </div>
+                            <div className="badge-row text-xs">
+                              <span className="badge badge-meta">ℹ️ Hover/tap cells to see plan details</span>
+                            </div>
+                          </div>
+
+                          <div className="table-scroll contribution-calendar-matrix-scroll">
+                            <table className="contribution-calendar-matrix text-xs w-100">
+                              <thead>
+                                <tr className="border-b border-[var(--border)]">
+                                  <th className="text-left py-2">Account</th>
+                                  <th className="text-right py-2">Default</th>
+                                  {monthCols.map(m => (
+                                    <th key={m.key} className="text-center py-2">{m.label}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {accounts.map(acc => {
+                                  const defaultContribution = 
+                                    acc.id === 'sip1' ? (simulationInputs.investEngineMonthly || 0) :
+                                    acc.id === 'isa1' ? (simulationInputs.stocksMonthly || 0) :
+                                    acc.id === 'pension1' ? (simulationInputs.t212Monthly || 0) :
+                                    acc.id === 'isa2' ? (simulationInputs.bondsMonthly || 0) :
+                                    acc.id === 'lisa1' ? (simulationInputs.lisaMonthly || 0) : 0;
+
+                                  return (
+                                    <tr key={acc.id} className="border-t border-[var(--border)]">
+                                      <td className="py-2.5">
+                                        <strong className="font-bold text-white">{acc.name}</strong>
+                                        <div className="text-earth-muted">{acc.code}</div>
+                                      </td>
+                                      <td className="py-2.5 text-right text-earth-muted" style={{ verticalAlign: 'middle' }}>£{defaultContribution.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+                                      {monthCols.map(m => {
+                                        const cell = getCellData(acc.id, m.key);
+                                        const tooltipText = cell.hasOverride 
+                                          ? `${cell.planName}${cell.overlap ? ` (Overlap: ${cell.activeCount} rules)` : ""}`
+                                          : "";
+                                        return (
+                                          <td 
+                                            key={m.key} 
+                                            className={`text-center py-2.5 calendar-matrix-cell transition ${cell.hasOverride ? 'cell-override text-earth-sage bg-earth-sage/10' : 'text-white/60'} ${cell.overlap ? 'cell-overlap border border-earth-rust' : ''}`}
+                                            onMouseEnter={(e) => cell.hasOverride && showCellTooltip(e, tooltipText)}
+                                            onMouseLeave={hideCellTooltip}
+                                          >
+                                            <div className="calendar-edit-wrapper relative inline-block">
+                                              <span className="currency-prefix text-earth-muted absolute left-2 top-1/2 -translate-y-1/2 text-xs">£</span>
+                                              <input type="number" 
+                                                     step="0.01" min="0"
+                                                     className={`budget-amount-input calendar-amount-input w-[80px] pl-5 text-right bg-transparent border border-transparent rounded transition focus:border-earth-gold ${cell.hasOverride ? 'font-bold text-earth-sage' : ''}`}
+                                                     data-account-id={acc.id} 
+                                                     data-month-key={m.key}
+                                                     defaultValue={cell.amount.toFixed(2)}
+                                                     placeholder={defaultContribution.toFixed(2)}
+                                              />
+                                            </div>
+                                            {cell.overlap && <div className="matrix-overlap-warning absolute -top-1 -right-1 text-[10px] text-earth-rust" title="Overlapping rules">⚠️</div>}
+                                          </td>
+                                        );
+                                      })}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </section>
+
+                        <section className="panel mb-1">
+                          <div className="section-header">
+                            <div>
+                              <p className="eyebrow">Allowance frame</p>
+                              <h3>Planned allowances in this calendar range (Tax Year 2026/27)</h3>
+                            </div>
+                          </div>
+                          <p className="helper-text text-xs mt-2 text-earth-muted">This uses the 6-month calendar range: overrides first, then normal monthly payments. ISA planned includes Stocks &amp; Shares ISA and Lifetime ISA together against the shared £20,000 ISA frame.</p>
+                          <div className="table-scroll mt-4">
+                            <table className="mini-table allowance-frame-table w-100 text-xs text-center">
+                              <thead>
+                                <tr className="border-b border-[var(--border)]">
+                                  <th className="py-2">Tax year</th>
+                                  <th className="py-2">ISA total planned</th>
+                                  <th className="py-2">Stocks &amp; Shares ISA</th>
+                                  <th className="py-2">Lifetime ISA</th>
+                                  <th className="py-2">Premium Bonds</th>
+                                  <th className="py-2">Pension/SIPP total</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr className="border-t border-[var(--border)]">
+                                  <td className="py-2.5 font-bold text-white">2026-27</td>
+                                  <td className="py-2.5">
+                                    <div className="font-bold">£{isaPlanned.toLocaleString()} / £20,000</div>
+                                    {isaPlanned > 20000 && <div className="text-earth-rust text-[10px] mt-0.5 font-bold">ISA over limit by £{(isaPlanned - 20000).toLocaleString()}</div>}
+                                  </td>
+                                  <td className="py-2.5 text-earth-muted">£{getAllowancePlanned('isa1').toLocaleString()}</td>
+                                  <td className="py-2.5">
+                                    <div className="font-bold">£{lisaPlanned.toLocaleString()} / £4,000</div>
+                                    {lisaPlanned > 4000 && <div className="text-earth-rust text-[10px] mt-0.5 font-bold">LISA over limit by £{(lisaPlanned - 4000).toLocaleString()}</div>}
+                                  </td>
+                                  <td className="py-2.5 text-earth-muted">£{bondsPlanned.toLocaleString()} / £50,000</td>
+                                  <td className="py-2.5">
+                                    <div className="font-bold text-earth-gold">£{pensionPlanned.toLocaleString()} / £60,000</div>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </section>
+
+                        <section className="panel mb-1">
+                          <div className="section-header">
+                            <div>
+                              <p className="eyebrow">Active plans</p>
+                              <h3>Temporary payment plans</h3>
+                            </div>
+                          </div>
+                          {uniquePlanNames.length > 0 ? (
+                            <div className="badge-row mt-2 space-y-2 w-100 flex flex-col items-stretch">
+                              {uniquePlanNames.map(planName => {
+                                const rows = temporaryPlans.filter(p => p.name === planName);
+                                return (
+                                  <details key={planName} className="budget-tools-details border border-[var(--border)] p-3 rounded-lg bg-[var(--bg-soft)] w-100">
+                                    <summary className="badge badge-meta cursor-pointer font-bold text-white flex justify-between items-center w-100 select-none">
+                                      <span>{planName} ({rows.length} rule{rows.length !== 1 ? 's' : ''})</span>
+                                    </summary>
+                                    <div className="table-scroll mt-2.5">
+                                      <table className="mini-table text-xs w-100">
+                                        <thead>
+                                          <tr className="border-b border-[var(--border)]">
+                                            <th className="text-left py-1 text-earth-muted">Account</th>
+                                            <th className="text-left py-1 text-earth-muted">Range</th>
+                                            <th className="text-right py-1 text-earth-muted">Temporary amount</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {rows.map(row => {
+                                            const acc = accounts.find(a => a.id === row.accountId) || {};
+                                            return (
+                                              <tr key={row.id} className="border-t border-[var(--border)]">
+                                                <td className="py-1.5 text-white">{acc.name || row.accountId}</td>
+                                                <td className="py-1.5 text-earth-muted">{row.startMonth} to {row.endMonth}</td>
+                                                <td className="py-1.5 text-right font-mono text-earth-sage font-bold">£{row.amount.toLocaleString()}</td>
+                                              </tr>
+                                            );
+                                          })}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                    <div className="mt-3">
+                                      <button 
+                                        type="button" 
+                                        className="badge badge-danger text-xs font-semibold px-3 py-1 bg-red-500/10 border border-red-500/30 text-red-400 rounded hover:bg-red-500/20"
+                                        onClick={() => handleRemovePlan(planName)}
+                                      >
+                                        Remove plan
+                                      </button>
+                                    </div>
+                                  </details>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="helper-text text-earth-muted text-xs mt-2">No temporary plans saved yet.</p>
+                          )}
+                        </section>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <section className="panel">
+                            <div className="section-header">
+                              <div>
+                                <p className="eyebrow">Create plan</p>
+                                <h3>Temporary payment plan</h3>
+                              </div>
+                            </div>
+                            <p className="helper-text text-xs text-earth-muted mt-2">Enter only the accounts you want to override. Blank fields keep using the default amount. Enter 0 to pause an account.</p>
+
+                            <form onSubmit={handleSavePlan} className="settings-form contribution-calendar-form mt-4 space-y-4">
+                              <div className="grid grid-cols-1 gap-3">
+                                <label className="flex flex-col text-xs font-bold text-white">
+                                  Plan name / reason
+                                  <input 
+                                    type="text" 
+                                    value={newPlanName} 
+                                    onChange={e => setNewPlanName(e.target.value)} 
+                                    className="input-standard mt-1 p-2 rounded border border-[var(--border)] bg-[var(--bg)]"
+                                    required 
+                                  />
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <label className="flex flex-col text-xs font-bold text-white">
+                                    Start month
+                                    <input 
+                                      type="month" 
+                                      value={newPlanStartMonth} 
+                                      onChange={e => setNewPlanStartMonth(e.target.value)} 
+                                      className="input-standard mt-1 p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-white"
+                                      required 
+                                    />
+                                  </label>
+                                  <label className="flex flex-col text-xs font-bold text-white">
+                                    End month
+                                    <input 
+                                      type="month" 
+                                      value={newPlanEndMonth} 
+                                      onChange={e => setNewPlanEndMonth(e.target.value)} 
+                                      className="input-standard mt-1 p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-white"
+                                      required 
+                                    />
+                                  </label>
+                                </div>
+                              </div>
+
+                              <div className="table-scroll contribution-plan-scroll max-h-[220px] overflow-y-auto">
+                                <table className="mini-table contribution-plan-table w-100 text-xs">
+                                  <thead>
+                                    <tr className="border-b border-[var(--border)]">
+                                      <th className="text-left py-1 text-earth-muted">Account</th>
+                                      <th className="text-right py-1 text-earth-muted">Default</th>
+                                      <th className="text-right py-1 text-earth-muted">Temporary Amount</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {accounts.map(acc => {
+                                      const defaultAmt = 
+                                        acc.id === 'sip1' ? (simulationInputs.investEngineMonthly || 0) :
+                                        acc.id === 'isa1' ? (simulationInputs.stocksMonthly || 0) :
+                                        acc.id === 'pension1' ? (simulationInputs.t212Monthly || 0) :
+                                        acc.id === 'isa2' ? (simulationInputs.bondsMonthly || 0) :
+                                        acc.id === 'lisa1' ? (simulationInputs.lisaMonthly || 0) : 0;
+                                      return (
+                                        <tr key={acc.id} className="border-t border-[var(--border)]">
+                                          <td className="py-2 text-white font-medium">{acc.name}</td>
+                                          <td className="py-2 text-right text-earth-muted">£{defaultAmt}</td>
+                                          <td className="py-2 text-right">
+                                            <input 
+                                              type="number" 
+                                              step="0.01" 
+                                              min="0" 
+                                              placeholder="Leave blank" 
+                                              value={newPlanAmounts[acc.id] || ""}
+                                              onChange={e => setNewPlanAmounts(prev => ({ ...prev, [acc.id]: e.target.value }))}
+                                              className="w-[100px] text-right p-1 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-white font-bold"
+                                            />
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+                              <button type="submit" className="badge badge-primary-action w-100 py-2 bg-earth-sage hover:bg-earth-sageHover text-white font-bold rounded">
+                                Save temporary plan
+                              </button>
+                            </form>
+                          </section>
+
+                          <section className="panel">
+                            <div className="section-header">
+                              <div>
+                                <p className="eyebrow">Fast setup</p>
+                                <h3>Yearly account-filling pattern</h3>
+                              </div>
+                            </div>
+                            <p className="helper-text text-xs text-earth-muted mt-2">Use this for things like Lifetime ISA: “put £1,000 in for 4 months every year”. It automatically rolls year-on-year.</p>
+                            <form onSubmit={handleCreateYearlyPattern} className="settings-form contribution-calendar-form mt-4 space-y-3">
+                              <label className="flex flex-col text-xs font-bold text-white">
+                                Plan name / reason
+                                <input name="pattern_name" type="text" defaultValue="Yearly LISA fill" className="input-standard mt-1 p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-white" required />
+                              </label>
+                              <label className="flex flex-col text-xs font-bold text-white">
+                                Account
+                                <select name="pattern_account" className="input-standard mt-1 p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-white" required>
+                                  <option value="">Choose account…</option>
+                                  {accounts.map(acc => (
+                                    <option key={acc.id} value={acc.id}>{acc.name} ({acc.code})</option>
+                                  ))}
+                                </select>
+                              </label>
+                              <div className="grid grid-cols-2 gap-2">
+                                <label className="flex flex-col text-xs font-bold text-white">
+                                  First start month
+                                  <input name="pattern_start" type="month" defaultValue="2026-05" className="input-standard mt-1 p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-white" required />
+                                </label>
+                                <label className="flex flex-col text-xs font-bold text-white">
+                                  Monthly amount
+                                  <input name="pattern_amount" type="number" step="0.01" defaultValue="1000" className="input-standard mt-1 p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-white" required />
+                                </label>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <label className="flex flex-col text-xs font-bold text-white">
+                                  Months each year
+                                  <input name="pattern_months" type="number" defaultValue="4" max="12" min="1" className="input-standard mt-1 p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-white" required />
+                                </label>
+                                <label className="flex flex-col text-xs font-bold text-white">
+                                  Number of years
+                                  <input name="pattern_years" type="number" defaultValue="2" max="10" min="1" className="input-standard mt-1 p-2 rounded border border-[var(--border)] bg-[var(--bg)] text-xs text-white" required />
+                                </label>
+                              </div>
+                              <button type="submit" className="badge badge-primary-action w-100 py-2 bg-earth-sage hover:bg-earth-sageHover text-white font-bold rounded mt-2">
+                                Create yearly pattern
+                              </button>
+                            </form>
+                          </section>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* SUB-TAB: Monthly Update */}
+                  {budgetTab === 'update' && (() => {
+                    const totalPersonal = accounts.reduce((sum, acc) => {
+                      const isConfirmed = monthlyUpdateConfirmed[acc.id] !== false;
+                      if (!isConfirmed) return sum;
+                      const cell = getCellData(acc.id, "2026-07");
+                      return sum + cell.amount;
+                    }, 0);
+                    
+                    const handleConfirmToggle = (accId) => {
+                      setMonthlyUpdateConfirmed(prev => ({
+                        ...prev,
+                        [accId]: prev[accId] === false ? true : false
+                      }));
+                    };
+
+                    const handleCompleteUpdate = (e) => {
+                      e.preventDefault();
+                      setMonthlyUpdateComplete(true);
+                      setMonthlyUpdateHistory(prev => [
+                        { month: "July 2026", note: monthlyUpdateNote || "Completed July monthly update snapshot.", status: "complete" },
+                        ...prev.filter(h => h.month !== "July 2026")
+                      ]);
+                    };
+
+                    const handleReopenUpdate = () => {
+                      setMonthlyUpdateComplete(false);
+                      setMonthlyUpdateHistory(prev => prev.filter(h => h.month !== "July 2026"));
+                    };
+
+                    const getCellData = (accId, monthKey) => {
+                      const defaultContribution = 
+                        accId === 'sip1' ? (simulationInputs.investEngineMonthly || 0) :
+                        accId === 'isa1' ? (simulationInputs.stocksMonthly || 0) :
+                        accId === 'pension1' ? (simulationInputs.t212Monthly || 0) :
+                        accId === 'isa2' ? (simulationInputs.bondsMonthly || 0) :
+                        accId === 'lisa1' ? (simulationInputs.lisaMonthly || 0) : 0;
+                      
+                      const matchingPlans = temporaryPlans.filter(p => p.accountId === accId && monthKey >= p.startMonth && monthKey <= p.endMonth);
+                      if (matchingPlans.length > 0) {
+                        return { amount: matchingPlans[matchingPlans.length - 1].amount, hasOverride: true };
+                      }
+                      return { amount: defaultContribution, hasOverride: false };
+                    };
+
+                    return (
+                      <div className="space-y-6 animate-in fade-in duration-500">
+                        <section className="card highlight mb-1 month-accent-7 review-hero-card">
+                          <div className="hero-top">
+                            <div>
+                              <p className="eyebrow">Monthly Update</p>
+                              <h2 className="hero-value">July 2026 Update</h2>
+                              <p className="hero-subtitle">Confirm what happened, update any balances that changed, then finish with a quick note.</p>
+                            </div>
+                            <div className="hero-actions-col">
+                              {monthlyUpdateComplete ? (
+                                <div className="space-y-2 text-right">
+                                  <span className="badge badge-complete block font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 rounded">✓ Complete</span>
+                                  <button 
+                                    type="button" 
+                                    className="badge badge-meta text-xs cursor-pointer underline text-earth-muted hover:text-white"
+                                    onClick={handleReopenUpdate}
+                                  >
+                                    Reopen Monthly Update
+                                  </button>
+                                </div>
+                              ) : (
+                                <button 
+                                  onClick={handleCompleteUpdate} 
+                                  className="badge badge-primary-action px-4 py-2 bg-earth-sage hover:bg-earth-sageHover text-white font-bold rounded"
+                                >
+                                  Complete July update
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                          <div className="hero-strip">
+                            <div className="hero-strip-stat">
+                              <span>Status</span>
+                              <strong>{monthlyUpdateComplete ? "Complete" : "In progress"}</strong>
+                            </div>
+                            <div className="hero-strip-stat">
+                              <span>Accounts to update</span>
+                              <strong>{accounts.length}</strong>
+                            </div>
+                            <div className="hero-strip-stat">
+                              <span>Total from you</span>
+                              <strong>£{totalPersonal.toLocaleString()}</strong>
+                            </div>
+                          </div>
+                        </section>
+
+                        {!monthlyUpdateComplete ? (
+                          <>
+                            <section className="panel mb-1">
+                              <div className="section-header">
+                                <div>
+                                  <p className="eyebrow">Step 1 of 3</p>
+                                  <h3 className="text-base font-bold text-white">Confirm July contributions</h3>
+                                </div>
+                              </div>
+                              <p className="helper-text text-xs text-earth-muted mt-2">Uncheck any contribution you didn't make this month. Skipped contributions won't reduce your take-home pay.</p>
+                              <div className="review-list space-y-3 mt-4">
+                                {accounts.map(acc => {
+                                  const cell = getCellData(acc.id, "2026-07");
+                                  const isConfirmed = monthlyUpdateConfirmed[acc.id] !== false;
+                                  return (
+                                    <div key={acc.id} className="flex justify-between items-center bg-[var(--bg-soft)] p-3 rounded-lg border border-[var(--border)]">
+                                      <label className="flex items-center space-x-3 cursor-pointer">
+                                        <input 
+                                          type="checkbox" 
+                                          checked={isConfirmed} 
+                                          onChange={() => handleConfirmToggle(acc.id)} 
+                                        />
+                                        <div>
+                                          <strong className="text-sm text-white block">{acc.name}</strong>
+                                          <span className="text-[10px] text-earth-muted">{acc.code}</span>
+                                        </div>
+                                      </label>
+                                      <div className="text-right">
+                                        <span className="text-sm font-mono text-white font-bold">£{cell.amount.toLocaleString()}</span>
+                                        {!isConfirmed && <span className="text-[10px] text-earth-rust block font-bold">SKIPPED</span>}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </section>
+
+                            <section className="panel mb-1">
+                              <div className="section-header">
+                                <div>
+                                  <p className="eyebrow">Step 2 of 3</p>
+                                  <h3 className="text-base font-bold text-white">Update July account balances</h3>
+                                </div>
+                              </div>
+                              <p className="helper-text text-xs text-earth-muted mt-2">Enter the actual statement balance of each account at month-end to capture investment growth or interest.</p>
+                              <div className="space-y-3 mt-4">
+                                {accounts.map(acc => (
+                                  <div key={acc.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[var(--bg-soft)] p-3 rounded-lg border border-[var(--border)] gap-2">
+                                    <div>
+                                      <strong className="text-sm text-white block">{acc.name}</strong>
+                                      <span className="text-[10px] text-earth-muted">{acc.code}</span>
+                                    </div>
+                                    <div className="flex items-center space-x-2 w-100 sm:w-auto">
+                                      <span className="text-sm text-earth-muted font-mono">£</span>
+                                      <input 
+                                        type="number" 
+                                        value={acc.balance} 
+                                        onChange={e => handleAccountBalanceChange(acc.id, e.target.value)} 
+                                        className="input-standard p-1 text-xs w-[120px] text-right font-bold text-white border border-[var(--border)] bg-[var(--bg)] rounded"
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </section>
+
+                            <section className="panel mb-1" id="monthly-note">
+                              <div className="section-header">
+                                <div>
+                                  <p className="eyebrow">Step 3 of 3</p>
+                                  <h3 className="text-base font-bold text-white">Add a monthly update note</h3>
+                                </div>
+                              </div>
+                              <div className="mt-3">
+                                <textarea 
+                                  value={monthlyUpdateNote}
+                                  onChange={e => setMonthlyUpdateNote(e.target.value)}
+                                  placeholder="e.g. Stock market had a slight correction; SIPP contributions went through cleanly."
+                                  className="w-100 p-3 text-xs text-white border border-[var(--border)] bg-[var(--bg)] rounded-lg min-h-[80px]"
+                                />
+                              </div>
+                              <div className="mt-4">
+                                <button 
+                                  onClick={handleCompleteUpdate} 
+                                  className="w-100 py-3 bg-earth-sage hover:bg-earth-sageHover text-white font-bold rounded-lg text-sm transition"
+                                >
+                                  Complete and Save July Update Snapshot
+                                </button>
+                              </div>
+                            </section>
+                          </>
+                        ) : (
+                          <div className="card highlight p-6 text-center space-y-3">
+                            <div className="text-4xl">🎉</div>
+                            <h3 className="text-lg font-bold text-white">July 2026 Monthly Update Complete!</h3>
+                            <p className="text-xs text-earth-muted max-w-sm mx-auto">Your asset balances and net worth have been updated, and your snapshot is locked. You can view past updates below.</p>
+                            <button 
+                              type="button" 
+                              onClick={handleReopenUpdate} 
+                              className="badge badge-meta bg-earth-sage/10 text-earth-sage font-bold border border-earth-sage/20 px-4 py-2 rounded mt-2 cursor-pointer hover:bg-earth-sage/20"
+                            >
+                              Reopen to modify
+                            </button>
+                          </div>
+                        )}
+
+                        <section className="panel mb-1">
+                          <h3 className="text-sm font-bold text-white mb-3">Snapshot History</h3>
+                          <div className="space-y-2">
+                            {monthlyUpdateHistory.map(h => (
+                              <div key={h.month} className="bg-[var(--bg-soft)] p-3 rounded-lg border border-[var(--border)] text-xs flex justify-between items-start gap-4">
+                                <div>
+                                  <strong className="text-white font-bold block">{h.month}</strong>
+                                  <p className="text-earth-muted mt-1 leading-relaxed">{h.note}</p>
+                                </div>
+                                <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 px-2 py-0.5 rounded uppercase">COMPLETE</span>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -1526,7 +2404,35 @@
                     </div>
                   </div>
                 </div>
+              {calendarTooltip.visible && (
+                <div 
+                  className="calendar-tooltip visible font-bold"
+                  style={{
+                    position: 'absolute',
+                    left: `${calendarTooltip.x}px`,
+                    top: `${calendarTooltip.y}px`,
+                    transform: 'translate(-50%, -100%)',
+                    pointerEvents: 'none',
+                    zIndex: 1050
+                  }}
+                >
+                  {calendarTooltip.text}
+                </div>
               )}
+              <div 
+                className={`calendar-tooltip font-bold ${calendarTooltip.visible ? 'visible' : ''}`}
+                style={{
+                  position: 'absolute',
+                  left: `${calendarTooltip.x}px`,
+                  top: `${calendarTooltip.y}px`,
+                  transform: 'translate(-50%, -100%)',
+                  pointerEvents: 'none',
+                  zIndex: 1050,
+                  display: calendarTooltip.visible ? 'block' : 'none'
+                }}
+              >
+                {calendarTooltip.text}
+              </div>
           </main>
 
           {/* Real App Mobile Bottom Nav */}

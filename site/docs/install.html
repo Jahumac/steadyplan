@@ -104,6 +104,26 @@
           <pre>docker compose up -d</pre>
         </div>
 
+
+         <div class="prose">
+           <h2>Developer install (from source)</h2>
+           <p class="muted">If you are cloning the repo or building locally:</p>
+           <pre># 1. Clone and enter the repo
+git clone https://github.com/Jahumac/steadyplan
+cd steadyplan
+
+# 2. Create a virtual environment
+python -m venv .venv
+source .venv/bin/activate           # Windows: .venv\Scripts\activate
+
+# 3. Install dependencies (locked, with hashes)
+pip install -r requirements.txt --require-hashes
+
+# 4. Run
+python run.py</pre>
+           <p class="note small">Dependencies are locked via <code>pip-tools</code>. If you add or update a dependency, see <a href="https://github.com/Jahumac/steadyplan/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">CONTRIBUTING.md</a>.</p>
+           <p class="muted" style="margin-top:0.5rem;">Then open <code>http://localhost:8000</code>.</p>
+         </div>
         <div class="prose">
           <h2>First run</h2>
           <ul class="muted">

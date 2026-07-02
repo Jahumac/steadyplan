@@ -21,6 +21,25 @@ If you find a bug or have a feature request, please open a GitHub issue. Include
 - CSS: All styles live in `app/static/css/styles.css`. Use CSS custom properties (variables) defined at the top of the file.
 - JavaScript: Vanilla JS, no build step. Keep scripts inline in templates where they only apply to one page.
 
+## Dependencies
+
+SteadyPlan uses **pip-tools** for deterministic builds:
+
+```bash
+# 1. Once: install pip-tools
+pip install pip-tools
+
+# 2. To add/update a dependency:
+pip-compile              # updates from requirements.in
+
+# 3. To verify/install the locked deps:
+pip install -r requirements.txt --require-hashes
+```
+
+Direct dependencies live in `requirements.in`. Locked versions (with SHA256 hashes) are in `requirements.txt`. **Never edit `requirements.txt` manually** — it is auto-generated.
+
+If adding a new package, add it to `requirements.in` with a comment explaining why, then run `pip-compile`.
+
 ## Database Migrations
 
 SteadyPlan uses SQLite with auto-migrations in `app/models.py` (`init_db()`). If your change adds a column or table, add a migration block following the existing pattern — check for the column/table first, then ALTER/CREATE if it doesn't exist. This keeps the upgrade path smooth for existing users.
