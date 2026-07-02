@@ -1079,11 +1079,11 @@
 }
 
 .liquidity-segment.segment-cash {
-  background: hsl(160, 80%, 45%); /* Vibrant mint */
+  background: hsl(150, 80%, 45%); /* Mint Green */
 }
 
 .liquidity-segment.segment-invested {
-  background: hsl(160, 40%, 55%); /* Softer sage-green */
+  background: hsl(280, 80%, 65%); /* Vibrant Purple */
 }
 
 .liquidity-segment.segment-restricted {
@@ -1091,7 +1091,7 @@
 }
 
 .liquidity-segment.segment-locked {
-  background: hsl(220, 80%, 60%); /* Dusk blue */
+  background: hsl(210, 90%, 60%); /* Azure Blue */
 }
 
 .liquidity-stack-legend {
@@ -1117,11 +1117,11 @@
 }
 
 .liquidity-legend-dot.dot-cash {
-  background: hsl(160, 80%, 45%);
+  background: hsl(150, 80%, 45%);
 }
 
 .liquidity-legend-dot.dot-invested {
-  background: hsl(160, 40%, 55%);
+  background: hsl(280, 80%, 65%);
 }
 
 .liquidity-legend-dot.dot-restricted {
@@ -1129,7 +1129,7 @@
 }
 
 .liquidity-legend-dot.dot-locked {
-  background: hsl(220, 80%, 60%);
+  background: hsl(210, 90%, 60%);
 }
 
 .liquidity-legend-item strong {
