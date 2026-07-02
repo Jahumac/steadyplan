@@ -1831,7 +1831,10 @@
                                     acc.id === 'lisa1' ? (simulationInputs.lisaMonthly || 0) : 0;
 
                                   return (
-                                    <tr key={acc.id} className="border-t border-[var(--border)]">
+                                    <tr key={acc.id} className="border-t border-[var(--border)]" data-acct-type={(() => {
+                                      const wt = (acc.name || '').toLowerCase();
+                                      return wt.includes('stocks') ? 'isa' : (wt.includes('cash') ? 'cash-isa' : (wt.includes('lifetime') ? 'lisa' : (wt.includes('premium bonds') ? 'premium-bonds' : (wt.includes('sipp') ? 'sipp' : (wt.includes('pension') ? 'pension' : (wt.includes('general') ? 'gia' : ''))))));
+                                    })()}>
                                       <td className="py-2.5">
                                         <div className="contrib-account-name font-bold text-white">{acc.code}</div>
                                         <div className="mt-1">
