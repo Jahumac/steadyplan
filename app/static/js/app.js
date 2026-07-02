@@ -747,6 +747,60 @@
       if (heroNextMonthBtn) heroNextMonthBtn.addEventListener('click', function() { shiftMonth(MONTH, 1); });
     })();
 
+    // 11.5 Contribution Calendar Edit Logic
+    (function initContributionCalendar() {
+      var calendarTable = document.querySelector('.contribution-calendar-matrix');
+      if (!calendarTable) return;
+
+      function saveOverride(accountId, monthKey, amount, ind) {
+        var fd = new FormData();
+        fd.append('month', monthKey);
+        fd.append('account_id', accountId);
+        fd.append('amount', amount);
+
+        fetch('/budget/api/contribution-override', { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok && ind) {
+            ind.textContent = '✓';
+            ind.style.opacity = '1';
+            setTimeout(function() {
+              ind.style.opacity = '0';
+              setTimeout(function() { ind.textContent = ''; }, 300);
+            }, 1200);
+          }
+        })
+        .catch(function() {
+          if (ind) {
+            ind.textContent = '✗';
+            ind.style.color = 'var(--error)';
+            ind.style.opacity = '1';
+            setTimeout(function() {
+              ind.style.opacity = '0';
+              setTimeout(function() { ind.textContent = ''; ind.style.color = ''; }, 300);
+            }, 2500);
+          }
+        });
+      }
+
+      document.querySelectorAll('.calendar-amount-input').forEach(function(input) {
+        var debounceTimer = null;
+        var ind = document.getElementById('ind-cal-' + input.dataset.accountId + '-' + input.dataset.monthKey);
+
+        input.addEventListener('change', function() {
+          clearTimeout(debounceTimer);
+          saveOverride(input.dataset.accountId, input.dataset.monthKey, input.value, ind);
+        });
+
+        input.addEventListener('input', function() {
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(function() {
+            saveOverride(input.dataset.accountId, input.dataset.monthKey, input.value, ind);
+          }, 600);
+        });
+      });
+    })();
+
     // 12. Monthly Review Logic
     (function initMonthlyReview() {
       var reviewSection = document.querySelector('.monthly-review-container');

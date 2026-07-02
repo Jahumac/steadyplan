@@ -61,7 +61,6 @@
       <thead>
         <tr>
           <th>Account</th>
-          <th>Wrapper</th>
           <th class="text-right">Default</th>
           {% for month in month_columns %}
           <th class="text-center">{{ month.label }}</th>
@@ -71,22 +70,32 @@
       <tbody>
         {% for account in calendar.accounts %}
         <tr>
-          <td><strong>{{ account.name }}</strong></td>
-          <td><span class="text-xs text-muted">{{ account.wrapper_type or 'Other' }}</span></td>
-          <td class="text-right text-muted">£{{ '{:,.0f}'.format(account.monthly_contribution) }}</td>
+          <td>
+            <strong>{{ account.name }}</strong>
+            <div class="text-xs text-muted">{{ account.wrapper_type or 'Other' }}</div>
+          </td>
+          <td class="text-right text-muted" style="vertical-align: middle;">£{{ '{:,.0f}'.format(account.monthly_contribution) }}</td>
           {% for month in month_columns %}
           {% set cell = account.months[loop.index0] %}
           <td class="text-center calendar-matrix-cell {% if cell.has_override %}cell-override{% endif %} {% if cell.overlap %}cell-overlap{% endif %}"
               {% if cell.has_override %}
                 data-tooltip="{{ cell.source_label }}{% if cell.plan_name %} · {{ cell.plan_name }}{% elif cell.reason %} · {{ cell.reason }}{% endif %}{% if cell.overlap %} (Overlap: {{ cell.active_override_count }} rules){% endif %}"
               {% endif %}>
-            {% if cell.has_override %}
-              <strong>£{{ '{:,.0f}'.format(cell.override_amount) }}</strong>
-            {% else %}
-              <span class="text-muted">£{{ '{:,.0f}'.format(cell.default_amount) }}</span>
-            {% endif %}
+            <div class="calendar-edit-wrapper" style="position: relative; display: inline-block;">
+              <span class="currency-prefix text-muted" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.85rem;">£</span>
+              <input type="number" 
+                     step="0.01" min="0"
+                     class="budget-amount-input calendar-amount-input {% if cell.has_override %}has-override{% endif %}"
+                     style="width: 80px; padding-left: 20px; text-align: right; background: transparent; border: 1px solid transparent; border-radius: 4px; transition: border-color 0.2s, background-color 0.2s;"
+                     data-account-id="{{ account.id }}" 
+                     data-month-key="{{ month.key }}"
+                     value="{% if cell.has_override %}{{ '{:.2f}'.format(cell.override_amount) }}{% else %}{{ '{:.2f}'.format(cell.default_amount) }}{% endif %}"
+                     placeholder="{{ '{:.2f}'.format(cell.default_amount) }}"
+              />
+              <span class="save-indicator" id="ind-cal-{{ account.id }}-{{ month.key }}" style="position: absolute; right: -15px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; opacity: 0; transition: opacity 0.3s;"></span>
+            </div>
             {% if cell.overlap %}
-              <span class="matrix-overlap-warning" title="Overlap: {{ cell.active_override_count }} active rules">⚠️</span>
+              <div class="matrix-overlap-warning" title="Overlap: {{ cell.active_override_count }} active rules" style="position: absolute; top: -5px; right: -5px; font-size: 0.7rem;">⚠️</div>
             {% endif %}
           </td>
           {% endfor %}
