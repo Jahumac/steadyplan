@@ -5,7 +5,10 @@
 {% set active_key = 'contribution_calendar' %}
 {% include '_budget_subnav.html' %}
 
-<section class="card highlight mb-1 contribution-calendar-hero">
+{% set month_strip_class = 'month-strip-mobile-hidden' %}
+{% include '_month_strip.html' %}
+
+<section class="card highlight mb-1 contribution-calendar-hero month-accent-{{ current_month_num }}">
   <div class="hero-top">
     <div>
       <p class="eyebrow">Budget</p>
