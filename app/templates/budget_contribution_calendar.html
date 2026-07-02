@@ -68,7 +68,7 @@
         {% for account in calendar.accounts %}
         {% set _wt = (account.wrapper_type or '') | lower %}
         {% set pill_type = 'isa' if 'stocks' in _wt else ('cash-isa' if 'cash' in _wt else ('lisa' if 'lifetime' in _wt else ('premium-bonds' if 'premium bonds' in _wt else ('sipp' if 'sipp' in _wt else ('pension' if 'pension' in _wt else ('gia' if 'general' in _wt else '')))))) %}
-        <tr>
+        <tr data-acct-type="{{ pill_type }}">
           <td>
             <span class="contrib-account-name">{{ account.name }}</span>
             <div style="margin-top: 4px;"><span class="acct-type-pill" data-type="{{ pill_type }}">{{ account.wrapper_type or 'Other' }}</span></div>
@@ -254,7 +254,7 @@
             {% for account in calendar.accounts %}
             {% set _wt = (account.wrapper_type or '') | lower %}
             {% set pill_type = 'isa' if 'stocks' in _wt else ('cash-isa' if 'cash' in _wt else ('lisa' if 'lifetime' in _wt else ('premium-bonds' if 'premium bonds' in _wt else ('sipp' if 'sipp' in _wt else ('pension' if 'pension' in _wt else ('gia' if 'general' in _wt else '')))))) %}
-            <tr>
+            <tr data-acct-type="{{ pill_type }}">
               <td data-label="Account">{{ account.name }}</td>
               <td data-label="Account type"><span class="acct-type-pill" data-type="{{ pill_type }}">{{ account.wrapper_type or 'Other' }}</span></td>
               <td data-label="Default" class="text-right">£{{ '{:,.2f}'.format(account.monthly_contribution) }}</td>
@@ -362,7 +362,7 @@
             {% set _wt = (account.wrapper_type or '') | lower %}
             {% set pill_type = 'isa' if 'stocks' in _wt else ('cash-isa' if 'cash' in _wt else ('lisa' if 'lifetime' in _wt else ('premium-bonds' if 'premium bonds' in _wt else ('sipp' if 'sipp' in _wt else ('pension' if 'pension' in _wt else ('gia' if 'general' in _wt else '')))))) %}
             {% set cell = account.months[month_loop] %}
-            <div class="contribution-month-account-row{% if cell.has_override %} has-override{% endif %}{% if cell.overlap %} has-overlap{% endif %}">
+            <div class="contribution-month-account-row{% if cell.has_override %} has-override{% endif %}{% if cell.overlap %} has-overlap{% endif %}" data-acct-type="{{ pill_type }}">
               <div class="contribution-month-account-main">
                 <strong>{{ account.name }}</strong>
                 <span class="acct-type-pill" data-type="{{ pill_type }}">{{ account.wrapper_type or 'Other' }}</span>
