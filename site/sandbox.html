@@ -1845,7 +1845,7 @@
                                         return (
                                           <td 
                                             key={m.key} 
-                                            className={`text-center py-2.5 calendar-matrix-cell transition ${cell.hasOverride ? 'cell-override text-earth-sage bg-earth-sage/10' : 'text-white/60'} ${cell.overlap ? 'cell-overlap border border-earth-rust' : ''}`}
+                                            className={`text-center py-2.5 calendar-matrix-cell transition ${cell.hasOverride ? 'cell-override text-earth-sage ' : 'text-white/60'} ${cell.overlap ? 'cell-overlap border border-earth-rust' : ''}`}
                                             onMouseEnter={(e) => cell.hasOverride && showCellTooltip(e, tooltipText)}
                                             onMouseLeave={hideCellTooltip}
                                           >
@@ -2304,7 +2304,7 @@
                             <button 
                               type="button" 
                               onClick={handleReopenUpdate} 
-                              className="badge badge-meta bg-earth-sage/10 text-earth-sage font-bold border border-earth-sage/20 px-4 py-2 rounded mt-2 cursor-pointer hover:bg-earth-sage/20"
+                              className="badge badge-meta  text-earth-sage font-bold border border-earth-sage/20 px-4 py-2 rounded mt-2 cursor-pointer hover:bg-earth-sage/20"
                             >
                               Reopen to modify
                             </button>

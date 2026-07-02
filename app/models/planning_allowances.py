@@ -965,6 +965,30 @@ def upsert_single_month_contribution_override(account_id, month_key, amount, use
         conn.commit()
 
 
+def delete_single_month_contribution_override(account_id, month_key, user_id):
+    """Delete a single-month contribution override (e.g. when an input is cleared)."""
+    with get_connection() as conn:
+        owned = conn.execute(
+            "SELECT 1 FROM accounts WHERE id = ? AND user_id = ?",
+            (account_id, user_id),
+        ).fetchone()
+        if not owned:
+            return
+        conn.execute(
+            """DELETE FROM contribution_overrides
+               WHERE account_id = ? AND from_month = ? AND to_month = ?""",
+            (account_id, month_key, month_key),
+        )
+        _recalculate_review_items_for_account_month_range(
+            conn,
+            account_id,
+            user_id,
+            month_key,
+            month_key,
+        )
+        conn.commit()
+
+
 def delete_contribution_override(override_id, user_id=None):
     with get_connection() as conn:
         if user_id is not None:
