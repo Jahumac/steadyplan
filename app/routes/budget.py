@@ -123,6 +123,87 @@ def _debt_payoff_month_key(debt):
     return add_months_to_key(f"{today.year}-{today.month:02d}", months)
 
 
+def index_to_month_key(index):
+    m = index % 12
+    y = index // 12
+    if m == 0:
+        m = 12
+        y -= 1
+    return f"{y:04d}-{m:02d}"
+
+def _sync_linked_debt_payoff(item_id, month_key, amount, user_id):
+    """When a linked debt budget entry changes, if the debt has a target payoff date,
+    re-amortize the remaining balance over the subsequent months to ensure the date is met.
+    """
+    from app.models.debts import fetch_debt
+    from app.models._conn import get_connection
+
+    item = fetch_budget_item(item_id, user_id)
+    if not item:
+        return
+    debt_id = _row_value(item, "linked_debt_id")
+    if not debt_id:
+        return
+
+    debt = fetch_debt(debt_id, user_id)
+    if not debt:
+        return
+
+    target_date = debt.get("target_payoff_date")
+    if not target_date:
+        return
+
+    m_idx = month_key_to_index(month_key)
+    t_idx = month_key_to_index(target_date)
+    
+    months_remaining = t_idx - m_idx
+    if months_remaining <= 0:
+        return
+
+    today_key = date.today().strftime("%Y-%m")
+    today_idx = month_key_to_index(today_key)
+
+    with get_connection() as conn:
+        entries_rows = conn.execute(
+            "SELECT month_key, amount FROM budget_entries WHERE budget_item_id = ?",
+            (item_id,)
+        ).fetchall()
+    
+    entries_map = {row["month_key"]: float(row["amount"] or 0) for row in entries_rows}
+
+    # Simulate from today up to month_key to find the balance at end of month_key
+    # Start balance is current_balance.
+    balance = float(debt.get("current_balance") or 0)
+    apr = float(debt.get("apr") or 0)
+    r = apr / 100.0 / 12.0
+
+    start_idx = min(today_idx, m_idx)
+    for idx in range(start_idx, m_idx + 1):
+        mk = index_to_month_key(idx)
+        # Interest first
+        balance += balance * r
+        # Payment
+        pmt = entries_map.get(mk, amount if mk == month_key else float(item.get("default_amount") or 0))
+        balance -= pmt
+        if balance < 0:
+            balance = 0
+
+    if balance <= 0:
+        new_payment = 0.0
+    elif r == 0:
+        new_payment = balance / months_remaining
+    else:
+        # P = B * (r * (1 + r)^N) / ((1 + r)^N - 1)
+        factor = (1 + r) ** months_remaining
+        new_payment = balance * (r * factor) / (factor - 1)
+
+    new_payment = round(new_payment, 2)
+
+    # Stamp the new payment for all remaining months
+    for idx in range(m_idx + 1, t_idx + 1):
+        mk = index_to_month_key(idx)
+        upsert_budget_entry(mk, item_id, new_payment, user_id)
+
 def _sync_linked_override(item_id, month_key, amount, user_id):
     """When a linked budget item's entry changes, reflect it to contribution_overrides
     so projections and account views pick up the per-month edit automatically.
@@ -699,6 +780,7 @@ def budget_save_entry():
         _stamp_inherited_entries(month_key, uid)
         upsert_budget_entry(month_key, item_id, amount, uid)
         _sync_linked_override(item_id, month_key, amount, uid)
+        _sync_linked_debt_payoff(item_id, month_key, amount, uid)
     return jsonify({"ok": True})
 
 

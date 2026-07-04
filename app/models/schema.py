@@ -385,6 +385,8 @@ CREATE TABLE IF NOT EXISTS debts (
     monthly_payment REAL NOT NULL DEFAULT 0,
     apr REAL DEFAULT 0,
     notes TEXT,
+    start_date TEXT,
+    target_payoff_date TEXT,
     is_active INTEGER DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -990,6 +992,12 @@ def _run_migrations(conn):
     # ── Debts: add start_date column ─────────────────────────────────────
     try:
         conn.execute("ALTER TABLE debts ADD COLUMN start_date TEXT")
+    except Exception as e:
+        _log_migration_error(e)
+
+    # ── Debts: add target_payoff_date column ─────────────────────────────
+    try:
+        conn.execute("ALTER TABLE debts ADD COLUMN target_payoff_date TEXT")
     except Exception as e:
         _log_migration_error(e)
 

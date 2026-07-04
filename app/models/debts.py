@@ -30,8 +30,8 @@ def create_debt(payload, user_id):
         conn.execute(
             """
             INSERT INTO debts (user_id, name, original_amount, current_balance,
-                               monthly_payment, apr, notes, start_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                               monthly_payment, apr, notes, start_date, target_payoff_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
@@ -42,6 +42,7 @@ def create_debt(payload, user_id):
                 payload.get("apr", 0),
                 payload.get("notes", ""),
                 payload.get("start_date") or None,
+                payload.get("target_payoff_date") or None,
             ),
         )
         conn.commit()
@@ -53,7 +54,7 @@ def update_debt(debt_id, payload, user_id):
             """
             UPDATE debts
             SET name = ?, original_amount = ?, current_balance = ?,
-                monthly_payment = ?, apr = ?, notes = ?, start_date = ?
+                monthly_payment = ?, apr = ?, notes = ?, start_date = ?, target_payoff_date = ?
             WHERE id = ? AND user_id = ?
             """,
             (
@@ -64,6 +65,7 @@ def update_debt(debt_id, payload, user_id):
                 payload.get("apr", 0),
                 payload.get("notes", ""),
                 payload.get("start_date") or None,
+                payload.get("target_payoff_date") or None,
                 debt_id,
                 user_id,
             ),
