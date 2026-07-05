@@ -769,22 +769,23 @@ def export_contribution_calendar():
 
     calendar = fetch_contribution_calendar(uid, selected_from_month, selected_to_month)
 
-    grid_data = []
-    for account in calendar.get("accounts", []):
-        row = {
-            "Account": account["name"],
-            "Wrapper": account.get("wrapper_type", "Other"),
-            "Default Monthly": account.get("monthly_contribution", 0.0),
-        }
-        for idx, month_key in enumerate(calendar["months"]):
-            cell = account["months"][idx]
-            amt = cell["override_amount"] if cell.get("has_override") else cell.get("default_amount", 0.0)
-            row[month_key] = amt
-        grid_data.append(row)
+    def get_tax_year_label(m_key):
+        y, m = map(int, m_key.split('-'))
+        start_year = y - 1 if m < 4 else y
+        return f"{start_year}/{str(start_year + 1)[-2:]} Tax Year"
+
+    tax_years_order = []
+    tax_years_months = {}
+    for month_key in calendar.get("months", []):
+        ty_label = get_tax_year_label(month_key)
+        if ty_label not in tax_years_months:
+            tax_years_order.append(ty_label)
+            tax_years_months[ty_label] = []
+        tax_years_months[ty_label].append(month_key)
 
     list_data = []
     for account in calendar.get("accounts", []):
-        for idx, month_key in enumerate(calendar["months"]):
+        for idx, month_key in enumerate(calendar.get("months", [])):
             cell = account["months"][idx]
             amt = cell["override_amount"] if cell.get("has_override") else cell.get("default_amount", 0.0)
             source_reason = cell.get("plan_name") or cell.get("reason") or cell.get("source_label", "")
@@ -792,6 +793,7 @@ def export_contribution_calendar():
                 "Account": account["name"],
                 "Wrapper": account.get("wrapper_type", "Other"),
                 "Month": month_key,
+                "Tax Year": get_tax_year_label(month_key),
                 "Amount": amt,
                 "Is Override": cell.get("has_override", False),
                 "Source/Reason": source_reason
@@ -799,8 +801,34 @@ def export_contribution_calendar():
 
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        if grid_data:
-            pd.DataFrame(grid_data).to_excel(writer, sheet_name="Calendar Grid", index=False)
+        if tax_years_order and calendar.get("accounts"):
+            startrow = 0
+            for ty_label in tax_years_order:
+                ty_months = tax_years_months[ty_label]
+                ty_grid_data = []
+                for account in calendar["accounts"]:
+                    row = {
+                        "Account": account["name"],
+                        "Wrapper": account.get("wrapper_type", "Other"),
+                        "Default Monthly": account.get("monthly_contribution", 0.0),
+                    }
+                    for month_key in ty_months:
+                        idx = calendar["months"].index(month_key)
+                        cell = account["months"][idx]
+                        amt = cell["override_amount"] if cell.get("has_override") else cell.get("default_amount", 0.0)
+                        row[month_key] = amt
+                    ty_grid_data.append(row)
+                
+                df = pd.DataFrame(ty_grid_data)
+                
+                # Write title row
+                pd.DataFrame([[f"--- {ty_label} ---"]]).to_excel(
+                    writer, sheet_name="Calendar Grid", startrow=startrow, startcol=0, index=False, header=False
+                )
+                startrow += 1
+                # Write the table headers and data
+                df.to_excel(writer, sheet_name="Calendar Grid", startrow=startrow, index=False)
+                startrow += len(df) + 2 # Add space for next block
         else:
             pd.DataFrame([{"Message": "No data available."}]).to_excel(writer, sheet_name="Calendar Grid", index=False)
             
