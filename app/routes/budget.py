@@ -3,6 +3,7 @@ from io import BytesIO
 
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, send_file, session, url_for
 from flask_login import current_user, login_required
+import pandas as pd
 
 from app.calculations import (
     add_months_to_key,
@@ -747,6 +748,75 @@ def contribution_calendar():
         plans=plans,
         active_page="budget",
         monthly_update_href=url_for("monthly_review.monthly_review", month=selected_from_month),
+    )
+
+
+@budget_bp.route("/contribution-calendar/export", methods=["GET"])
+@login_required
+def export_contribution_calendar():
+    uid = current_user.id
+    default_from_month, default_to_month = _default_contribution_calendar_range()
+    selected_from_month = valid_month_key(request.values.get("from_month")) or default_from_month
+    raw_to_month = valid_month_key(request.values.get("to_month"))
+    if raw_to_month:
+        selected_to_month = raw_to_month
+    elif selected_from_month == default_from_month:
+        selected_to_month = default_to_month
+    else:
+        selected_to_month = add_months_to_key(selected_from_month, 23)
+    if selected_to_month < selected_from_month:
+        selected_to_month = add_months_to_key(selected_from_month, 23)
+
+    calendar = fetch_contribution_calendar(uid, selected_from_month, selected_to_month)
+
+    grid_data = []
+    for account in calendar.get("accounts", []):
+        row = {
+            "Account": account["name"],
+            "Wrapper": account.get("wrapper_type", "Other"),
+            "Default Monthly": account.get("monthly_contribution", 0.0),
+        }
+        for idx, month_key in enumerate(calendar["months"]):
+            cell = account["months"][idx]
+            amt = cell["override_amount"] if cell.get("has_override") else cell.get("default_amount", 0.0)
+            row[month_key] = amt
+        grid_data.append(row)
+
+    list_data = []
+    for account in calendar.get("accounts", []):
+        for idx, month_key in enumerate(calendar["months"]):
+            cell = account["months"][idx]
+            amt = cell["override_amount"] if cell.get("has_override") else cell.get("default_amount", 0.0)
+            source_reason = cell.get("plan_name") or cell.get("reason") or cell.get("source_label", "")
+            list_data.append({
+                "Account": account["name"],
+                "Wrapper": account.get("wrapper_type", "Other"),
+                "Month": month_key,
+                "Amount": amt,
+                "Is Override": cell.get("has_override", False),
+                "Source/Reason": source_reason
+            })
+
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        if grid_data:
+            pd.DataFrame(grid_data).to_excel(writer, sheet_name="Calendar Grid", index=False)
+        else:
+            pd.DataFrame([{"Message": "No data available."}]).to_excel(writer, sheet_name="Calendar Grid", index=False)
+            
+        if list_data:
+            pd.DataFrame(list_data).to_excel(writer, sheet_name="Raw Data", index=False)
+        else:
+            pd.DataFrame([{"Message": "No data available."}]).to_excel(writer, sheet_name="Raw Data", index=False)
+    
+    output.seek(0)
+    
+    filename = f"payment_calendar_{selected_from_month}_to_{selected_to_month}.xlsx"
+    return send_file(
+        output,
+        download_name=filename,
+        as_attachment=True,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
 

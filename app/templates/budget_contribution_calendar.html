@@ -49,6 +49,7 @@
     </div>
     <div class="badge-row">
       <span class="badge badge-meta">ℹ️ Hover cells to see plan details</span>
+      <a href="{{ url_for('budget.export_contribution_calendar', from_month=from_month, to_month=to_month) }}" class="badge badge-primary-action" style="text-decoration: none;">Download Excel</a>
     </div>
   </div>
   
