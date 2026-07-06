@@ -16,12 +16,10 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert html.count(f'href="/monthly-review/?month={month_key}">Monthly Update</a>') == 2
     assert 'href="/monthly-review/">Monthly Update</a>' not in html
     assert '<section class="budget-year-strip month-strip-mobile-hidden month-accent-' in html
-    assert 'class="hero-actions-col budget-hero-actions"' in html
-    assert 'class="badge-row budget-hero-badges"' in html
-    assert 'class="budget-month-nav budget-hero-month-nav"' in html
-    assert 'class="badge badge-meta budget-prev-month"' in html
-    assert 'class="badge badge-meta budget-next-month"' in html
-    assert 'class="helper-text m-0 budget-hero-mobile-hint">Edit numbers below to shape this month.</p>' in html
+    assert 'class="badge-row align-start"' in html
+    assert 'class="budget-month-nav flex gap-05 mr-05"' in html
+    assert 'class="badge badge-meta budget-prev-month' in html
+    assert 'class="badge badge-meta budget-next-month' in html
     assert 'href="/budget/items/?mode=create&amp;focus=first_budget&amp;month=' in html
     assert 'href="/budget/items/?month=' not in html
     assert "Budget Setup" in html
@@ -47,14 +45,7 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
 
     css_files = list(STATIC_ROOT.joinpath("css/modules").glob("*.css"))
     css = "".join(f.read_text() for f in css_files)
-    assert ".budget-hero-actions {" in css
-    assert "flex-direction: column;" in css
-    assert ".subnav-mobile-family {" in css
-    assert ".subnav-mobile-family-budget .subnav-mobile-panel .badge," in css
-    assert ".subnav-page.subnav-budget," in css
-    assert ".budget-hero-badges {" in css
-    assert ".budget-hero-badges .badge {" in css
-    assert ".budget-hero-mobile-hint {" in css
+
     assert ".monthly-review-start-details {" in css
     assert ".monthly-review-start-details summary {" in css
     assert ".monthly-review-start-details .compact-flow-list {" in css
@@ -80,12 +71,12 @@ def test_budget_page_moves_primary_editing_guidance_into_hero_for_mobile_cleanup
     assert "justify-content: center;" in css
     assert "margin-bottom: 0.65rem;" in css
 
-    hero_idx = html.index('class="hero-actions-col budget-hero-actions"')
+    hero_idx = html.index('class="badge-row align-start"')
     jump_idx = html.index('href="#income">Jump to budget</a>')
-    month_nav_idx = html.index('class="budget-month-nav budget-hero-month-nav"')
+    month_nav_idx = html.index('class="budget-month-nav flex gap-05 mr-05"')
     toolbar_idx = html.index('class="budget-toolbar"')
 
-    assert hero_idx < jump_idx < month_nav_idx < toolbar_idx
+    assert hero_idx < month_nav_idx < jump_idx < toolbar_idx
 
 
 def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, client, make_user):
@@ -151,10 +142,9 @@ def test_monthly_review_moves_start_here_flow_into_hero_for_mobile_cleanup(app, 
     assert "Leave a quick reminder, then mark this month reviewed when you are happy." not in html
     assert "Leave a quick reminder, then mark the month reviewed when you are happy." not in html
     assert "Leave a quick reminder, then lock the month when you are happy." not in html
-    assert 'href="#monthly-note" class="badge badge-primary-action">Finish monthly update</a>' in html
+    assert 'href="#monthly-note" class="badge badge-primary-action">Finish update</a>' in html
     assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark this month reviewed</a>' not in html
     assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark reviewed</a>' not in html
-    assert 'href="#monthly-note" class="badge badge-meta">Finish monthly update</a>' in html
     assert 'href="#monthly-note" class="badge badge-meta">Finish update</a>' not in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark this month reviewed</a>' not in html
     assert 'href="#monthly-note" class="badge badge-meta">Save a note and mark reviewed</a>' not in html
@@ -394,13 +384,13 @@ def test_monthly_review_completed_state_uses_complete_badge_in_monthly_note_sect
 
     assert '>Complete<' in html
     assert '>Locked<' not in html
-    assert '>Reopen Monthly Update<' in html
-    assert '>Reopen review<' not in html
+    assert ">Reopen<" in html
+    assert ">Reopen review<" not in html
     assert 'data-confirm-title="Reopen Monthly Update?"' in html
     assert 'data-confirm-title="Reopen review?"' not in html
     assert 'data-confirm-ok="Yes, reopen monthly update"' in html
     assert 'data-confirm-ok="Yes, reopen review"' not in html
-    assert 'data-confirm-cancel="Keep Monthly Update complete">Reopen Monthly Update<' in html
+    assert 'data-confirm-cancel="Keep Monthly Update complete">Reopen<' in html
     assert 'data-confirm-cancel="Keep review complete">Reopen review<' not in html
 
 

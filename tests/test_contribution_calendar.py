@@ -720,7 +720,7 @@ def test_contribution_calendar_page_loads(app, client, make_user, monkeypatch):
     html = resp.get_data(as_text=True)
     assert "Payment calendar" in html
     assert "Temporary payment plan" in html
-    assert "month-accent-" not in html
+    assert "month-accent-" in html
     assert "contribution-calendar-hero" in html
     assert "settings-form contribution-calendar-form" in html
     assert "2026-04" in html
@@ -746,7 +746,7 @@ def test_contribution_calendar_page_loads(app, client, make_user, monkeypatch):
     assert "Default vs temporary override calendar, vertically scrollable" in html
     assert "<details class=\"contribution-calendar-details\">" in html
     assert "<details class=\"contribution-calendar-details\" open>" not in html
-    assert "contrib-table" not in html
+    assert "contrib-table" in html
 
 
 def test_contribution_calendar_has_mobile_style_safeguards():

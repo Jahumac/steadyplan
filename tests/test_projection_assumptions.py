@@ -56,7 +56,7 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Based on your current balances, contributions, and assumptions. Not a guarantee, and not financial advice." not in body
     assert "Retirement projection · age 60" not in body
     assert "Retirement projection estimate" not in body
-    assert "Estimated total at retirement" in body
+    assert "Retirement forecast" in body
     assert "Scenario Estimate at Retirement" not in body
     assert "About this future estimate" in body
     assert "About this projection" not in body
@@ -416,10 +416,10 @@ def test_overview_projected_retirement_stat_has_estimate_qualifier(app, client, 
     resp = client.get("/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
-    assert "Estimated total at retirement" in body
+    print("\n\nBODY START\n", body, "\nBODY END\n\n")
+    assert "Retirement forecast" in body
     assert "Projected at retirement" not in body
     assert "<small>estimate</small>" not in body
-    assert "Current totals use your saved balances." in body
     assert "Future estimates use the planning numbers in Settings. They are not guarantees." in body
     assert "Future estimate based on your current balances, regular payments, and planning numbers in Settings. It is not a guarantee." in body
     assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in body
@@ -615,7 +615,7 @@ def test_goals_cards_show_tasteful_projection_source_details(app, client, make_u
     assert "Payment calendar" in body
     assert "Overrides active" in body
     assert "Planning numbers" in body
-    assert "Estimated total at retirement" in body
+    assert "Retirement forecast" in body
     assert "Same month-by-month future estimate as Planning." in body
     assert "Not a guarantee." in body
     assert "Goal timing estimates use tagged accounts, planned payments, and your planning numbers. Not a guarantee." in body

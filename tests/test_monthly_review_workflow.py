@@ -121,13 +121,13 @@ def test_overview_completed_monthly_review_does_not_show_stale_checklist(app, cl
     review_html = review_page.get_data(as_text=True)
     assert "✓ Complete" in review_html
     assert "✓ Completed" not in review_html
-    assert ">Reopen Monthly Update<" in review_html
+    assert ">Reopen<" in review_html
     assert ">Reopen review<" not in review_html
     assert 'data-confirm-title="Reopen Monthly Update?"' in review_html
     assert 'data-confirm-title="Reopen review?"' not in review_html
     assert 'data-confirm-ok="Yes, reopen monthly update"' in review_html
     assert 'data-confirm-ok="Yes, reopen review"' not in review_html
-    assert 'data-confirm-cancel="Keep Monthly Update complete">Reopen Monthly Update<' in review_html
+    assert 'data-confirm-cancel="Keep Monthly Update complete">Reopen<' in review_html
     assert 'data-confirm-cancel="Keep review complete">Reopen review<' not in review_html
     assert "· ✓ Monthly Update complete" in review_html
     assert "· ✓ Monthly update complete" not in review_html
@@ -195,7 +195,7 @@ def test_monthly_review_page_is_lightweight_and_links_render(app, client, make_u
     assert "Monthly Update" in html
     assert "Monthly review" not in html
     assert "Confirm contributions, update balances, then finish with your note." in html
-    assert 'href="#monthly-note" class="badge badge-primary-action">Finish monthly update</a>' in html
+    assert 'href="#monthly-note" class="badge badge-primary-action">Finish update</a>' in html
     assert 'href="#monthly-note" class="badge badge-primary-action">Save a note and mark monthly update complete</a>' not in html
     assert "Work top to bottom: confirm expected contributions" not in html
     assert "Work down the page: confirm expected contributions" not in html
