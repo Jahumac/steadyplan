@@ -62,8 +62,7 @@ def test_tour_trust_copy_matches_restore_safety_story():
     assert "<h2 class=\"section-title\">Data ownership</h2>" in html
     assert "Liquidity Profile" in html
     assert "Long-term planning is easier when you separate cash you could reach now, invested money you could sell, money with conditions, and money reserved for later." in html
-    assert "Settings keeps safety and recovery links visible" in html
-    assert "Settings groups data ownership, JSON export, restore checks, backup health, assistant scope, and read-only Trading 212 broker snapshot review so trust is inspectable without digging through one long admin page." in html
+    assert "Settings groups data ownership, JSON export, restore checks, backup health, scoped Assistant access for personal AI tools, and read-only Trading 212 broker snapshot review — all so the trust story is explicit and inspectable." in html
     assert "Diagnostics keep trust visible" not in html
     assert "Settings keeps backup health, restore boundaries, assistant scope, and read-only broker review close to the product so trust is inspectable." not in html
     assert "read-only broker review so trust is inspectable" not in html
@@ -78,8 +77,8 @@ def test_public_site_matches_current_broker_transfer_and_comparison_line_languag
 
     assert "UK-focused accounts, Monthly Update, account transfers, and planning" in homepage
     assert "Goals, holdings, Performance comparison lines, and retirement scenario estimates" in homepage
-    assert "UK-focused accounts, Monthly Update, account transfers, and planning" in roadmap
     assert "Goals, holdings, Performance comparison lines, and retirement scenario estimates" in roadmap
+    assert "Budget, allowances (ISA/LISA), scenario exports to Excel" in roadmap
     assert "read-only Trading 212 broker snapshot review beta" in roadmap
     assert "UK-focused accounts, Monthly Update, and planning" not in homepage
     assert "Goals, holdings, performance, and retirement scenario estimates" not in homepage

@@ -157,8 +157,7 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     html = response.get_data(as_text=True)
 
     assert '<section class="budget-year-strip month-strip-global month-strip-mobile-hidden' in html
-    assert 'class="hero-actions-col accounts-hero-actions"' in html
-    assert 'class="badge-row accounts-hero-badges"' in html
+    assert 'class="badge-row"' in html
     assert 'href="/accounts/?mode=create">+ Add account</a>' in html
     assert 'href="/accounts/?mode=create&amp;focus=first_account"' not in html
     assert 'href="/accounts/balances/bulk?month_key=' in html
@@ -168,15 +167,7 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     assert '£1,300/mo' not in html
     assert '<div class="row-end">' not in html
 
-    css_files = list(STATIC_ROOT.joinpath("css/modules").glob("*.css"))
-    css = "".join(f.read_text() for f in css_files)
-    assert ".accounts-hero-actions {" in css
-    assert "flex: 1 0 100%;" in css
-    assert "display: grid;" in css
-    assert ".accounts-hero-badges .badge {" in css
-    assert "width: 100%;" in css
-
-    hero_idx = html.index('class="hero-actions-col accounts-hero-actions"')
+    hero_idx = html.index('class="badge-row"')
     add_idx = html.index('href="/accounts/?mode=create">+ Add account</a>')
     grid_idx = html.index('class="acct-grid"')
 

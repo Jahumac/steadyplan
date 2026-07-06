@@ -274,10 +274,13 @@
     {% if metrics.monthly_total > 0 %}
       {% call hero_stat('Monthly plan') %}<strong class="accent-color">£{{ '{:,.0f}'.format(metrics.monthly_total) }}</strong><small class="text-muted"> / mo</small>{% endcall %}
     {% endif %}
-    {% if projections and projections|length > 0 %}
-      {% call hero_stat('Retirement forecast') %}<strong>£{{ '{:,.0f}'.format(projections[-1].nominal_balance) }}</strong><small class="text-muted"> / {{ projections[-1].age }} yo</small>{% endcall %}
+    {% if has_profile %}
+      {% call hero_stat('Retirement forecast') %}<strong title="Future estimate based on your current balances, regular payments, and planning numbers in Settings. It is not a guarantee.">£{{ '{:,.0f}'.format(metrics.projected_total) }}</strong><small class="text-muted"> / {{ assumptions.retirement_age }} yo</small>{% endcall %}
     {% endif %}
   </div>
+  {% if has_profile %}
+  <p class="helper-text mt-05 mb-0">Future estimates use the planning numbers in Settings. They are not guarantees.</p>
+  {% endif %}
 </section>
 
 <section class="card mb-1 overview-access-card overview-desktop-detail">

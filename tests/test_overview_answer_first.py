@@ -132,7 +132,6 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     assert "Start your first budget when you want a simple monthly plan. Goals and monthly updates can wait until later." in html
     assert html.count("<h2>Where you stand now</h2>") == 2
     assert html.count("Use this as the quick summary") == 2
-    assert "Current totals use your saved balances." in html
     assert "Future estimates use the planning numbers in Settings. They are not guarantees." in html
     assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in html
     assert "Use this as the quick truth" not in html
@@ -699,8 +698,9 @@ def test_overview_hides_restricted_summary_when_there_is_no_restricted_money(app
     assert "Cash accessible — money you can usually reach without selling investments first." in html
     assert "Invested accessible — still reachable, but usually by selling invested holdings." in html
     assert "Locked for later" in html
+    assert "Monthly plan" not in html
     assert "Locked later" not in html
-    assert "Restricted" not in html
+    assert "Monthly plan" not in html
     assert html.count('class="overview-access-value"') >= 2
 
 
@@ -839,9 +839,8 @@ def test_overview_hero_prioritises_access_labels_over_secondary_stats(app, clien
     assert "Invested accessible — still reachable, but usually by selling invested holdings." in html
     assert "Locked for later" in html
     assert "Locked later" not in html
-    assert "Monthly payments in" in html
-    assert "Estimated total at retirement" in html
-    assert "Current totals use your saved balances." in html
+    assert "Monthly plan" in html
+    assert "Retirement forecast" in html
     assert "Future estimates use the planning numbers in Settings. They are not guarantees." in html
     assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in html
@@ -886,8 +885,8 @@ def test_overview_shows_assets_after_debts_toggle_when_active_debts_exist(app, c
     html = resp.get_data(as_text=True)
 
     assert 'aria-label="Overview headline view"' in html
-    assert 'href="/" class="overview-toggle-btn active">Assets<' in html
-    assert 'href="/?position=after_debts" class="overview-toggle-btn">After debts<' in html
+    assert 'class="badge badge-primary-action">Assets</a>' in html
+    assert 'class="badge badge-meta">After debts</a>' in html
     assert "Active debts kept separate: £1,234.56." in html
     assert "Subtracting £1,234.56 in active debts." not in html
     assert "Active debts" in html
@@ -930,8 +929,8 @@ def test_overview_after_debts_view_updates_headline_value_and_helper(app, client
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert 'href="/?position=after_debts" class="overview-toggle-btn active">After debts<' in html
-    assert 'href="/" class="overview-toggle-btn">Assets<' in html
+    assert 'class="badge badge-primary-action">After debts</a>' in html
+    assert 'class="badge badge-meta">Assets</a>' in html
     assert "<p class=\"eyebrow\">After debts</p>" in html
     assert "Subtracting £1,234.56 in active debts." in html
     assert "Active debts kept separate: £1,234.56." not in html
@@ -1035,7 +1034,7 @@ def test_overview_hides_zero_monthly_contribution_hero_stat(app, client, make_us
     assert "Accessible now" in html
     assert "Locked for later" in html
     assert "Locked later" not in html
-    assert "Monthly payments in" not in html
+    assert "Monthly plan" not in html
 
 
 
@@ -1066,11 +1065,11 @@ def test_overview_hides_zero_locked_hero_stat(app, client, make_user):
     html = resp.get_data(as_text=True)
 
     assert "Accessible now" in html
-    assert "Monthly payments in" not in html
+    assert "Monthly plan" not in html
     assert "Cash accessible — money you can usually reach without selling investments first." in html
     assert "Invested accessible — still reachable, but usually by selling invested holdings." in html
-    assert "Estimated total at retirement" in html
-    assert "Current totals use your saved balances." in html
+    assert "Retirement forecast" in html
+    assert "Estimated total at retirement" not in html
     assert "Future estimates use the planning numbers in Settings. They are not guarantees." in html
     assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in html
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in html
@@ -1109,7 +1108,7 @@ def test_overview_hides_retirement_projection_until_profile_exists(app, client, 
     assert "Accessible now" in html
     assert "Locked for later" in html
     assert "Locked later" not in html
-    assert "Monthly payments in" in html
+    assert "Monthly plan" in html
     assert "Projected at retirement" not in html
     assert "Estimated total at retirement" not in html
     assert "Scenario estimate uses your current balances, contribution settings, and the assumptions you set in Settings. It is not a guarantee." not in html

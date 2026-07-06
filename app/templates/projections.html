@@ -116,7 +116,7 @@
 {# ── Summary cards (Hidden visually to avoid repeat content, but retained in DOM for test assertions) ── #}
 <section class="card-grid mb-1 projections-hidden-test-asserts">
   <div class="card stat-card">
-    <h2>Estimated total at retirement</h2>
+    <h2>Retirement forecast</h2>
     <p>£{{ '{:,.0f}'.format(metrics.total_projected) }}</p>
     <small>Age {{ metrics.retirement_age }} · {{ '{:.1f}'.format(metrics.growth_rate * 100) }}% yearly growth</small>
   </div>
