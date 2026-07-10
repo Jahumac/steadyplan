@@ -1,4 +1,5 @@
 from flask import Blueprint, redirect, render_template, request, url_for, current_app, abort, flash
+from urllib.parse import urlparse
 from flask_login import current_user, login_required, login_user, logout_user
 
 from app import __version__
@@ -70,7 +71,12 @@ def login():
         else:
             login_user(user, remember=True)
             next_url = request.args.get("next")
-            if next_url and next_url.startswith("/") and not next_url.startswith("//"):
+            # Reject protocol-relative URLs (//evil.com) and any URL with a netloc (https://evil.com)
+            if next_url:
+                parsed = urlparse(next_url)
+                if parsed.scheme or parsed.netloc:
+                    next_url = None
+            if next_url and next_url.startswith("/"):
                 return redirect(next_url)
             return redirect(url_for("overview.overview"))
 
