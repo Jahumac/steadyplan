@@ -1091,6 +1091,7 @@ ISA_WRAPPER_TYPES = {
     "Lifetime ISA",
 }
 LISA_WRAPPER_TYPES = {"Lifetime ISA"}
+JISA_WRAPPER_TYPES = {"Junior ISA"}
 
 
 def _contribution_month_keys(today, salary_day):
