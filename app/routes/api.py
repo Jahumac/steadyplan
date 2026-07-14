@@ -355,6 +355,26 @@ def _parse_amount(raw):
     return value if value >= 0 else None
 
 
+def _validate_and_convert_int(value, field_name):
+    """Validate and convert a value to positive integer."""
+    try:
+        int_value = int(value)
+        if int_value <= 0:
+            return None
+        return int_value
+    except (TypeError, ValueError):
+        return None
+
+
+def _validate_account_id(account_id):
+    """Validate that account_id is a positive integer."""
+    try:
+        account_id_int = int(account_id)
+        return account_id_int if account_id_int > 0 else None
+    except (TypeError, ValueError):
+        return None
+
+
 def _parse_api_month_key(raw):
     month_key = (raw or "").strip()
     parsed = valid_month_key(month_key)
@@ -365,6 +385,17 @@ def _parse_api_month_key(raw):
     except ValueError:
         return None
     return month_key
+
+
+def _validate_and_convert_account_id(account_id):
+    """Validate and convert account_id to positive integer."""
+    try:
+        account_id_int = int(account_id)
+        if account_id_int <= 0:
+            return None
+        return account_id_int
+    except (TypeError, ValueError):
+        return None
 
 
 
@@ -451,12 +482,21 @@ def update_account_balance(account_id):
     a monthly snapshot so performance history stays consistent with the
     web-based monthly review flow."""
     payload = request.get_json(silent=True) or {}
+    
+    # Validate account_id is a positive integer
+    if not isinstance(account_id, int) or account_id <= 0:
+        return _err("bad_request", "account_id must be a positive integer", 400)
+    
     balance = _parse_amount(payload.get("current_value"))
     if balance is None:
         return _err("bad_request", "current_value (number >= 0) required", 400)
 
     account = fetch_account(account_id, g.api_user.id)
     if account is None:
+        return _err("not_found", "Account not found", 404)
+    
+    # Additional validation to ensure account belongs to user
+    if int(account.get('user_id') or 0) != g.api_user.id:
         return _err("not_found", "Account not found", 404)
 
     raw_month = payload.get("month")
@@ -479,16 +519,28 @@ def update_account_balance(account_id):
 def log_isa_contribution():
     payload = request.get_json(silent=True) or {}
     account_id = payload.get("account_id")
+    
+    # Validate account_id is a positive integer
+    if not account_id or not isinstance(account_id, (int, str)) or int(account_id) <= 0:
+        return _err("bad_request", "Valid account_id required", 400)
+    
     amount = _parse_amount(payload.get("amount"))
     contribution_date = valid_date(payload.get("date"))
 
     if amount is None or not account_id or not contribution_date:
         return _err("bad_request",
                     "account_id, amount (>= 0), and date (YYYY-MM-DD) required", 400)
-    if fetch_account(int(account_id), g.api_user.id) is None:
+    
+    account_id_int = int(account_id)
+    account = fetch_account(account_id_int, g.api_user.id)
+    if account is None:
+        return _err("not_found", "Account not found", 404)
+    
+    # Additional validation to ensure account belongs to user
+    if int(account.get('user_id') or 0) != g.api_user.id:
         return _err("not_found", "Account not found", 404)
 
-    add_isa_contribution(g.api_user.id, int(account_id), amount, contribution_date,
+    add_isa_contribution(g.api_user.id, account_id_int, amount, contribution_date,
                          payload.get("note"))
     return jsonify({"ok": True}), 201
 
@@ -499,6 +551,11 @@ def log_isa_contribution():
 def log_pension_contribution():
     payload = request.get_json(silent=True) or {}
     account_id = payload.get("account_id")
+    
+    # Validate account_id is a positive integer
+    if not account_id or not isinstance(account_id, (int, str)) or int(account_id) <= 0:
+        return _err("bad_request", "Valid account_id required", 400)
+    
     amount = _parse_amount(payload.get("amount"))
     contribution_date = valid_date(payload.get("date"))
     kind = (payload.get("kind") or "personal").strip()
@@ -509,10 +566,17 @@ def log_pension_contribution():
     if kind not in ("personal", "employer", "salary_sacrifice"):
         return _err("bad_request",
                     "kind must be one of: personal, employer, salary_sacrifice", 400)
-    if fetch_account(int(account_id), g.api_user.id) is None:
+    
+    account_id_int = int(account_id)
+    account = fetch_account(account_id_int, g.api_user.id)
+    if account is None:
+        return _err("not_found", "Account not found", 404)
+    
+    # Additional validation to ensure account belongs to user
+    if int(account.get('user_id') or 0) != g.api_user.id:
         return _err("not_found", "Account not found", 404)
 
-    add_pension_contribution(g.api_user.id, int(account_id), amount, kind,
+    add_pension_contribution(g.api_user.id, account_id_int, amount, kind,
                              contribution_date, payload.get("note"))
     return jsonify({"ok": True}), 201
 
@@ -523,16 +587,28 @@ def log_pension_contribution():
 def log_dividend():
     payload = request.get_json(silent=True) or {}
     account_id = payload.get("account_id")
+    
+    # Validate account_id is a positive integer
+    if not account_id or not isinstance(account_id, (int, str)) or int(account_id) <= 0:
+        return _err("bad_request", "Valid account_id required", 400)
+    
     amount = _parse_amount(payload.get("amount"))
     dividend_date = valid_date(payload.get("date"))
 
     if amount is None or not account_id or not dividend_date:
         return _err("bad_request",
                     "account_id, amount (>= 0), and date (YYYY-MM-DD) required", 400)
-    if fetch_account(int(account_id), g.api_user.id) is None:
+    
+    account_id_int = int(account_id)
+    account = fetch_account(account_id_int, g.api_user.id)
+    if account is None:
+        return _err("not_found", "Account not found", 404)
+    
+    # Additional validation to ensure account belongs to user
+    if int(account.get('user_id') or 0) != g.api_user.id:
         return _err("not_found", "Account not found", 404)
 
-    add_dividend_record(g.api_user.id, int(account_id), amount, dividend_date,
+    add_dividend_record(g.api_user.id, account_id_int, amount, dividend_date,
                         payload.get("note"))
     return jsonify({"ok": True}), 201
 
@@ -636,5 +712,29 @@ def _405(e):
 
 @api_bp.errorhandler(500)
 def _500(e):
-    current_app.logger.exception("API 500")
+    current_app.logger.exception("API 500 error: %s", str(e))
     return _err("server_error", "Internal server error", 500)
+
+
+# ── Helper functions for validation ────────────────────────────────────────
+
+def _validate_and_convert_account_id(account_id):
+    """Validate and convert account_id to positive integer."""
+    try:
+        account_id_int = int(account_id)
+        if account_id_int <= 0:
+            return None
+        return account_id_int
+    except (TypeError, ValueError):
+        return None
+
+
+def _validate_and_convert_int(value, field_name):
+    """Validate and convert a value to positive integer."""
+    try:
+        int_value = int(value)
+        if int_value <= 0:
+            return None
+        return int_value
+    except (TypeError, ValueError):
+        return None

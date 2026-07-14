@@ -446,6 +446,14 @@ PNGs land in `tests/screenshots/<timestamp>/`, one per page × viewport. Run bef
 
 ---
 
+## Security
+
+For information about the security policy and reporting vulnerabilities, see [SECURITY.md](SECURITY.md).
+
+## Security
+
+For information about the security policy and reporting vulnerabilities, see [SECURITY.md](SECURITY.md).
+
 ## License
 
 MIT — use it, fork it, break it, fix it.
