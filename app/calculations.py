@@ -790,13 +790,92 @@ def projected_accounts(accounts, assumptions):
     return rows
 
 
-def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benchmark_rate=None):
+def _weighted_dietz_denominator(
+    opening_balance,
+    total_flow,
+    flow_events,
+):
+    """Compute the denominator for a monthly return using weighted Modified Dietz.
+
+    Each cash flow is weighted by the fraction of the month it was "at work":
+        weight = days_from_event_to_end_of_period / days_in_period
+
+    This is more accurate than the mid-month approximation (weight=0.5) used
+    when exact dates are not available.
+
+    Args:
+        opening_balance: balance at the start of the period
+        total_flow: sum of all cash flows in this period (positive = in, negative = out)
+        flow_events: list of (event_date_str "YYYY-MM-DD", amount) for this period
+                     If empty or None, falls back to mid-month approximation.
+
+    Returns:
+        The weighted denominator value used as the divisor in return calculation.
+    """
+    from datetime import date as _date
+
+    if not flow_events:
+        # Fallback: mid-month approximation (original behavior)
+        return opening_balance + 0.5 * total_flow
+
+    # Parse the first event to determine the month's boundary
+    first_event = flow_events[0]
+    try:
+        ev_date = _date.fromisoformat(first_event[0])
+    except (ValueError, TypeError, IndexError):
+        return opening_balance + 0.5 * total_flow
+
+    # The period runs from the previous snapshot date to this month's end.
+    # For the denominator we need: days in period and days each event was at work.
+    # Approximate: use calendar days of the event's month as the period length,
+    # since monthly data represents end-of-month snapshots.
+    year, month = ev_date.year, ev_date.month
+    if month == 12:
+        next_month = (year + 1, 1)
+    else:
+        next_month = (year, month + 1)
+
+    from calendar import monthrange as _monthrange
+    days_in_period = _monthrange(year, month)[1]
+    closing_day = _date(year, month, days_in_period)
+
+    weighted_sum = opening_balance
+    for event_date_str, amount in flow_events:
+        try:
+            event_date = _date.fromisoformat(event_date_str)
+        except (ValueError, TypeError):
+            continue
+        # Clamp event date to the period boundaries
+        if event_date < _date(year, month, 1):
+            event_date = _date(year, month, 1)
+        if event_date > closing_day:
+            event_date = closing_day
+
+        days_at_work = (closing_day - event_date).days + 1
+        weight = days_at_work / days_in_period if days_in_period > 0 else 0.5
+        weighted_sum += amount * weight
+
+    return weighted_sum
+
+
+def compute_performance_series(
+    monthly_data,
+    assumed_rate,
+    assumed_monthly,
+    benchmark_rate=None,
+    flow_events_by_month=None,
+):
     """Compute actual vs projected performance from monthly snapshot data.
 
     Args:
         monthly_data: list of (month_key, total_balance, total_contribution)
         assumed_rate: annual growth rate assumption (e.g. 0.07)
         assumed_monthly: current total monthly contribution
+        benchmark_rate: optional alternate rate for benchmark values
+        flow_events_by_month: Optional[dict[str, list[tuple[str, float]]]] mapping
+            month_key -> [(event_date_str, amount), ...]. When present, monthly
+            returns use weighted Modified Dietz with exact cash flow dates.
+            Falls back to mid-month approximation when absent for any period.
 
     Returns a dict ready to pass to the performance template, or None if no data.
 
@@ -822,8 +901,11 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
 
     display_labels = [_fmt(mk) for mk in month_keys]
 
-    # ── Modified Dietz monthly returns ────────────────────────────────────
-    # Assumes contributions arrive mid-month (weight = 0.5)
+    # ── Monthly returns (weighted Modified Dietz when dates available) ───
+    # When exact cash flow dates are provided, each flow is weighted by how
+    # long it was "at work" during the period. Without dates we fall back to
+    # mid-month approximation (weight=0.5), which is honest about its
+    # limitation.
     monthly_returns = []
     for i in range(1, len(monthly_data)):
         start = balances[i - 1]
@@ -833,7 +915,11 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
         total_flow = cf + imported
         fixed_gain = fixed_gains[i] if i < len(fixed_gains) else None
         gain = float(fixed_gain) if fixed_gain is not None else (end - start - total_flow)
-        denom = start + 0.5 * total_flow
+
+        # Look up flow events for this period and compute weighted denominator
+        period_mk = month_keys[i]
+        period_events = flow_events_by_month.get(period_mk, []) if flow_events_by_month else []
+        denom = _weighted_dietz_denominator(start, total_flow, period_events)
         monthly_returns.append(gain / denom if denom > 0 else 0.0)
 
     # ── Chain-linked cumulative & annualised return ────────────────────────
@@ -882,7 +968,8 @@ def compute_performance_series(monthly_data, assumed_rate, assumed_monthly, benc
         opening = max(closing - cf - imported, 0.0)
         fixed_gain = fixed_gains[0] if fixed_gains else None
         gain = float(fixed_gain) if fixed_gain is not None else (closing - opening - cf - imported)
-        denom = opening + 0.5 * (cf + imported)
+        first_period_events = flow_events_by_month.get(month_keys[0], []) if flow_events_by_month else []
+        denom = _weighted_dietz_denominator(opening, cf + imported, first_period_events)
         r = gain / denom if denom > 0 else 0.0
         rows.append({
             "month_key": display_labels[0],

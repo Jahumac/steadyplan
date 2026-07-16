@@ -97,7 +97,7 @@ Use the account detail transfer workflow for provider/account moves, including p
 Accounts support detailed fee modelling: platform fee (% with optional £ cap), flat annual platform fee (£), and fund fee / OCF (%). SteadyPlan combines these into an effective annual fee, subtracts it from your growth rate, and shows the lifetime cost of fees in both the app and Excel exports. All fee fields are optional — tucked behind an "Advanced: Fees" toggle so they don't clutter the setup for casual users. Scenario estimates show "with fees" vs "without fees" so you can see exactly what your broker and funds cost you over time.
 
 ### Performance Tracking
-Track your actual portfolio returns over time using the modified Dietz method. Compare actual performance against an assumptions-based comparison line, not a promise or target. Contribution cash flow uses the effective “into pot” amount (tax relief, LISA bonus, employer contributions, minus any contribution fee) and only treats completed monthly updates as confirmed truth. Performance reporting separates **Opening / Imported** starting balances from later **Contributed** cash flow and **Gain / Interest**, so first tracked values do not look like investment performance or regular savings. Annualised return is shown only after 12 monthly return periods; early reports use “Not enough history yet” and the XLSX export includes a “How to read” guide explaining the same terms.
+Track your actual portfolio returns over time using cash-flow-weighted returns (accurate Modified Dietz when contribution dates are known). Compare actual performance against an assumptions-based comparison line, not a promise or target. Contribution cash flow uses the effective “into pot” amount (tax relief, LISA bonus, employer contributions, minus any contribution fee) and only treats completed monthly updates as confirmed truth. Performance reporting separates **Opening / Imported** starting balances from later **Contributed** cash flow and **Gain / Interest**, so first tracked values do not look like investment performance or regular savings. Annualised return is shown only after 12 monthly return periods; early reports use “Not enough history yet” and the XLSX export includes a “How to read” guide explaining the same terms.
 
 ### Tax Year Tracking
 ISA and Lifetime ISA allowance progress bars, tax year countdown, and automatic tax year labelling (April 6 boundary).
@@ -292,7 +292,7 @@ app/
 │   ├── budget.py          # Budget CRUD, auto-save, annual import, debts, trends
 │   ├── goals.py           # Goal tracking with tag-based account linking
 │   ├── projections.py     # Scenario estimates views and account series endpoints
-│   ├── performance.py     # Modified Dietz returns tracking
+│   ├── performance.py     # Weighted Modified Dietz returns tracking
 │   ├── monthly_review.py  # Monthly Update workflow, notes, checklist, CSV import
 │   ├── allowance.py       # ISA, pension, dividend, and CGT allowance tracking
 │   ├── planning.py        # Liquidity Profile view and insights
@@ -351,7 +351,7 @@ data/
 
 ![Scenario estimates](Screenshots/demo/projections_desktop.png)
 
-**Performance** — actual returns tracked with modified Dietz, vs your plan
+**Performance** — actual returns tracked with cash-flow-weighted returns (accurate when contribution dates are known), vs your plan
 
 ![Performance](Screenshots/demo/performance_desktop.png)
 

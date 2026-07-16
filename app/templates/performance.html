@@ -92,6 +92,7 @@
   <p class="helper-text mt-05">
     Opening/imported is money already present when tracking started. Contributions are later money added to accounts; gain/interest is what changed after those flows.
     {% if performance_summary.annualised_return is none %} Annualised return appears after 12 monthly return periods, so early results do not look falsely dramatic.{% endif %}
+    Annualised returns use actual cash-flow dates when available (weighted Modified Dietz); without dated events, salary-day timing is used as a proxy.
   </p>
   <details class="mt-075">
     <summary class="link-accent">How to read Performance</summary>
