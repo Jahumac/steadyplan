@@ -465,6 +465,33 @@ def fetch_monthly_performance_data_by_account(user_id):
         for cr in cash_flow_rows:
             cash_flow_map[(int(cr["account_id"]), cr["month_key"])] = float(cr["amount"] or 0)
 
+        # Individual events with exact dates — used for weighted Dietz returns.
+        # Only includes performance-affecting events (not allowance-only).
+        # Fetches all qualifying events with their amounts (not grouped) so each
+        # event can be weighted individually.
+        flow_event_rows = conn.execute(
+            """
+            SELECT c.account_id, c.event_date, c.amount
+            FROM cash_flow_events c
+            JOIN accounts a ON a.id = c.account_id
+            WHERE c.user_id = ?
+              AND a.user_id = c.user_id
+              AND a.is_active = 1
+              AND c.allowance_effect IN ('performance_only', 'transfer_neutral')
+              AND abs(c.amount) > 0.005
+            """,
+            (user_id,),
+        ).fetchall()
+        # flow_events_by_account_month: {(account_id, month_key): [(date_str, amount), ...]}
+        flow_events_by_account_month = {}
+        for fer in flow_event_rows:
+            aid = int(fer["account_id"])
+            ev_date = str(fer["event_date"])[:10]  # YYYY-MM-DD
+            mk = fer["event_date"][:7]  # YYYY-MM
+            amount = float(fer["amount"] or 0)
+            key = (aid, mk)
+            flow_events_by_account_month.setdefault(key, []).append((ev_date, amount))
+
         prize_rows = conn.execute(
             """
             SELECT account_id, month_key, prize_amount
@@ -485,9 +512,15 @@ def fetch_monthly_performance_data_by_account(user_id):
     for r in rows:
         aid = int(r["account_id"])
         if aid not in out:
-            out[aid] = {"account_name": r["account_name"], "rows": []}
+            out[aid] = {"account_name": r["account_name"], "rows": [], "flow_events": {}}
 
         month_key = r["month_key"]
+
+        # Attach flow events for this account/month to the output dict
+        fe_key = (aid, month_key)
+        if fe_key in flow_events_by_account_month:
+            out[aid]["flow_events"][month_key] = flow_events_by_account_month[fe_key]
+
         cash_flow_key = (aid, month_key)
         has_cash_flow = cash_flow_key in cash_flow_map
         cash_flow_total = float(cash_flow_map.get(cash_flow_key, 0.0) or 0.0)

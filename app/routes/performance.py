@@ -294,7 +294,12 @@ def performance():
             rows = payload.get("rows") or []
             if not rows:
                 continue
-            perf_acc = compute_performance_series(rows, assumed_rate, 0)
+            perf_acc = compute_performance_series(
+                rows,
+                assumed_rate,
+                0,
+                flow_events_by_month=payload.get("flow_events"),
+            )
             if not perf_acc:
                 continue
             gain = float(perf_acc.get("total_market_gain") or 0)

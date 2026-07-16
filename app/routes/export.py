@@ -1717,7 +1717,7 @@ def _add_performance_export_readme_sheet(wb):
         ),
         (
             "Annualised return",
-            "Annualised return appears after 12 monthly return periods. Before that, the Summary sheet says 'Not enough history yet' to avoid dramatic early-history figures.",
+            "Returns use actual cash-flow dates when available (weighted Modified Dietz). When dated events exist for a month, each deposit or withdrawal is weighted by how long it was in the account that period; without dates, salary-day timing is used as a proxy. Annualised return appears after 12 monthly return periods. Before that, the Summary sheet says 'Not enough history yet' to avoid dramatic early-history figures.",
         ),
         (
             "Current value",
@@ -1862,7 +1862,12 @@ def export_performance():
             _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
             ctx = _performance_export_account_context(acc)
             assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-            perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
+            perf_acc = compute_performance_series(
+                rows,
+                ctx["rate"],
+                assumed_monthly,
+                flow_events_by_month=payload.get("flow_events"),
+            )
             _append_summary(payload["account_name"], perf_acc)
     else:
         payload = per_account_data.get(selected_account_id, {"account_name": account_map[selected_account_id]["name"], "rows": []})
@@ -1870,7 +1875,12 @@ def export_performance():
         _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
         ctx = _performance_export_account_context(acc)
         assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-        perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
+        perf_acc = compute_performance_series(
+            rows,
+            ctx["rate"],
+            assumed_monthly,
+            flow_events_by_month=payload.get("flow_events"),
+        )
         _append_summary(payload["account_name"], perf_acc)
 
     def _safe_sheet_title(base, used):
@@ -1980,7 +1990,12 @@ def export_performance():
             _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
             ctx = _performance_export_account_context(acc)
             assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-            perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
+            perf_acc = compute_performance_series(
+                rows,
+                ctx["rate"],
+                assumed_monthly,
+                flow_events_by_month=payload.get("flow_events"),
+            )
             _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc, subtitle=ctx["subtitle"], gain_label=ctx["gain_label"])
     else:
         payload = per_account_data.get(selected_account_id, {"account_name": account_map[selected_account_id]["name"], "rows": []})
@@ -1988,7 +2003,12 @@ def export_performance():
         _, rows = _filter_monthly_data_for_period(payload["rows"], selected_period)
         ctx = _performance_export_account_context(acc)
         assumed_monthly = to_float(acc.get("monthly_contribution", 0))
-        perf_acc = compute_performance_series(rows, ctx["rate"], assumed_monthly)
+        perf_acc = compute_performance_series(
+            rows,
+            ctx["rate"],
+            assumed_monthly,
+            flow_events_by_month=payload.get("flow_events"),
+        )
         _add_detail_sheet(f"{payload['account_name']} (Monthly)", perf_acc, ctx["subtitle"], ctx["gain_label"])
 
     buf = BytesIO()

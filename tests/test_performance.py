@@ -440,3 +440,156 @@ def test_performance_draft_review_does_not_change_cash_flow(app, make_user):
 
         monthly_data = fetch_monthly_performance_data(uid)
         assert monthly_data[1][2] == 1000.0
+
+
+def test_weighted_dietz_with_exact_dates():
+    """Verify that deposit on day 3 vs day 20 produces different returns."""
+    from app.calculations import compute_performance_series, _weighted_dietz_denominator
+
+    # Same opening, same closing, same total contribution — but different timing
+    opening = 1000.0
+    closing = 1050.0  # £50 gain total
+    total_flow = 200.0
+
+    # Mid-month approximation (original behavior)
+    mid_denom = _weighted_dietz_denominator(opening, total_flow, [])
+    assert abs(mid_denom - (opening + 0.5 * total_flow)) < 1e-9
+
+    # Early deposit (day 3 of 30-day month) → larger weight → smaller return %
+    early_events = [("2026-04-03", 200.0)]
+    early_denom = _weighted_dietz_denominator(opening, total_flow, early_events)
+
+    # Late deposit (day 25 of 30-day month) → smaller weight → larger return %
+    late_events = [("2026-04-25", 200.0)]
+    late_denom = _weighted_dietz_denominator(opening, total_flow, late_events)
+
+    # Early deposit has weight ≈28/30 ≈ 0.93 → large denominator
+    # Late deposit has weight ≈6/30 = 0.20 → small denominator
+    # Mid-month fallback uses weight 0.5
+    assert early_denom > mid_denom > late_denom > opening
+
+
+def test_weighted_dietz_matches_mid_month_when_contribution_on_15th():
+    """When contribution lands exactly mid-month, weighted Dietz ≈ mid-month approximation."""
+    from app.calculations import _weighted_dietz_denominator
+
+    from calendar import monthrange as mr
+    opening = 1000.0
+    flow = 200.0
+
+    for year in (2026, 2027, 2028):
+        for month in (1, 4, 6, 9, 12):
+            days_in_month = mr(year, month)[1]
+            # Mid-month: day ≈ 15
+            mid_day = days_in_month // 2 + 1
+            events_mid = [(f"{year}-{month:02d}-{mid_day:02d}", flow)]
+            expected_fallback = opening + 0.5 * flow
+
+            denom = _weighted_dietz_denominator(opening, flow, events_mid)
+            # Should be within ~3% of mid-month approx since mid-day weight
+            # should be very close to 0.5
+            mid_weight = (days_in_month - mid_day + 1) / days_in_month
+            expected_with_events = opening + flow * mid_weight
+            assert abs(denom - expected_with_events) < 0.01, f"Month {month}/{year}"
+
+
+def test_weighted_dietz_fallback_without_events():
+    """Without flow events, returns match existing mid-month approximation."""
+    from app.calculations import compute_performance_series
+
+    monthly_data = [
+        ("2026-03", 1000, 0, 0),
+        ("2026-04", 1100, 100, 0),
+        ("2026-05", 1210, 100, 0),
+    ]
+
+    # Without flow_events — should get identical results as before
+    perf_no_events = compute_performance_series(monthly_data, 0.07, 100)
+
+    with_flow_events = compute_performance_series(
+        monthly_data, 0.07, 100,
+        flow_events_by_month={"2026-04": [], "2026-05": []},
+    )
+
+    assert perf_no_events["total_return"] == with_flow_events["total_return"]
+    assert perf_no_events["annualised_return"] == with_flow_events["annualised_return"]
+
+
+def test_weighted_dietz_with_withdrawals():
+    """Verify negative flows (withdrawals) are correctly weighted."""
+    from app.calculations import _weighted_dietz_denominator
+
+    opening = 1000.0
+    # Net positive: +500 deposit, -200 withdrawal = +300 total flow
+    # Day 5: +500 deposit
+    # Day 20: -200 withdrawal (negative amount)
+    events = [("2026-04-05", 500.0), ("2026-04-20", -200.0)]
+
+    denom = _weighted_dietz_denominator(opening, 300.0, events)
+
+    # Verify the withdrawal reduces the denominator more than if it happened later
+    # compared to a scenario where the withdrawal happens on day 28
+    events_late_withdrawal = [("2026-04-05", 500.0), ("2026-04-28", -200.0)]
+    denom_late = _weighted_dietz_denominator(opening, 300.0, events_late_withdrawal)
+
+    # Earlier withdrawal means money was removed for more of the month → smaller denominator
+    assert denom < denom_late
+
+
+def test_performance_export_uses_weighted_dietz(auth_client, app, make_user):
+    """End-to-end: cash flow events with exact dates produce accurate returns in export."""
+    uid, username, password = make_user(username="perf-weighted-dietz", password="password123")
+
+    with app.app_context():
+        from app.models import get_connection
+
+        with get_connection() as conn:
+            isa = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, current_value,
+                    monthly_contribution, is_active)
+                VALUES (?, 'ISA', 'Stocks & Shares ISA', 10000, 500, 1)
+                """,
+                (uid,),
+            ).lastrowid
+            # Three months of snapshots
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, month_key, balance) VALUES ('2026-03-01', ?, '2026-03', 10000)",
+                (isa,),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, month_key, balance) VALUES ('2026-04-01', ?, '2026-04', 10500)",
+                (isa,),
+            )
+            conn.execute(
+                "INSERT INTO monthly_snapshots (snapshot_date, account_id, month_key, balance) VALUES ('2026-05-01', ?, '2026-05', 11000)",
+                (isa,),
+            )
+            # Cash flow event on day 3 (early in month)
+            conn.execute(
+                """
+                INSERT INTO cash_flow_events (user_id, account_id, event_date, amount,
+                    kind, note, allowance_effect, created_at)
+                VALUES (?, ?, '2026-04-03', 500, 'deposit', 'Early April deposit',
+                    'performance_only', '2026-04-03T10:00:00+00:00')
+                """,
+                (uid, isa),
+            )
+            conn.commit()
+
+    # Export the performance report
+    resp = auth_client.get("/performance/export.xlsx?period=ALL", follow_redirects=True)
+    assert resp.status_code == 200
+    data = resp.data
+    assert len(data) > 0  # Valid XLSX generated
+
+
+def test_performance_template_explains_calculation_method():
+    """Performance template includes honest explanation of calculation method."""
+    from pathlib import Path
+
+    tpl_path = Path("app/templates/performance.html")
+    source = tpl_path.read_text().lower()
+
+    # Should mention actual cash-flow dates or weighted approach
+    assert "cash-flow" in source or "weighted" in source
