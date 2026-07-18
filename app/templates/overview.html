@@ -275,7 +275,7 @@
       {% call hero_stat('Monthly plan') %}<strong class="accent-color">£{{ '{:,.0f}'.format(metrics.monthly_total) }}</strong><small class="text-muted"> / mo</small>{% endcall %}
     {% endif %}
     {% if has_profile %}
-      {% call hero_stat('Retirement forecast') %}<strong title="Future estimate based on your current balances, regular payments, and planning numbers in Settings. It is not a guarantee.">£{{ '{:,.0f}'.format(metrics.projected_total) }}</strong><small class="text-muted"> / {{ assumptions.retirement_age }} yo</small>{% endcall %}
+      {% call hero_stat('Retirement forecast', stat_id='overview-stat-retirement') %}<strong title="Future estimate based on your current balances, regular payments, and planning numbers in Settings. It is not a guarantee.">£{{ '{:,.0f}'.format(metrics.projected_total) }}</strong><small class="text-muted"> / {{ assumptions.retirement_age }} yo</small>{% endcall %}
     {% endif %}
   </div>
   {% if has_profile %}
@@ -322,7 +322,7 @@
   {% endif %}
 </section>
 
-<details class="overview-compact-details overview-compact-only mb-1" open>
+<details class="overview-compact-details overview-compact-only mb-1">
   <summary>Where you stand now</summary>
   <div class="overview-compact-panel">
     <div class="section-header mb-05 overview-access-header">
@@ -332,29 +332,28 @@
       </div>
       <a href="/planning/" class="link-accent text-sm">Review planning</a>
     </div>
-    <p class="helper-text">Use this as the quick summary: what you can usually reach before pension age, what has conditions, and what is doing longer-term retirement work.</p>
+    <p class="helper-text">Quick summary: what you can usually reach before pension age, what has conditions, and what is doing longer-term retirement work.</p>
     <div class="card-grid overview-access-grid">
       <div class="card overview-access-mini-card">
         <p class="eyebrow">Accessible now</p>
-        <p class="helper-text m-0">{{ '{:.0f}'.format(access_summary.accessible_pct) }}% of your current total is usually reachable before pension age. ISA, cash, taxable accounts, Premium Bonds and similar accounts sit here.</p>
         <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.accessible_cash_current) }}</p>
-        <p class="helper-text m-0">Cash accessible — money you can usually reach without selling investments first.</p>
+        <p class="helper-text m-0">Cash</p>
         <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.accessible_invested_current) }}</p>
-        <p class="helper-text m-0">Invested accessible — still reachable, but usually by selling invested holdings.</p>
+        <p class="helper-text m-0">Invested</p>
       </div>
       {% if access_summary.restricted_current > 0 %}
       <div class="card overview-access-mini-card">
         <p class="eyebrow">Restricted</p>
         <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.restricted_current) }}</p>
-        <p class="helper-text m-0">Money with rules, penalties, or special conditions such as a Lifetime ISA.</p>
+        <p class="helper-text m-0">Money with conditions</p>
       </div>
       {% endif %}
       <div class="card overview-access-mini-card">
         <p class="eyebrow">Locked for later</p>
         {% if access_summary.locked_current > 0 %}
-        <p class="helper-text m-0">Pension-style money that is building for later rather than near-term flexibility. When you have locked money, the top summary keeps the headline amount visible.</p>
+        <p class="overview-access-value">£{{ '{:,.0f}'.format(access_summary.locked_current) }}</p>
         {% else %}
-        <p class="helper-text m-0">Pension-style money will appear here once you start building it.</p>
+        <p class="helper-text m-0">Pension money will appear here once you start building it.</p>
         {% endif %}
       </div>
     </div>

@@ -131,7 +131,8 @@ def test_overview_first_account_state_hides_empty_portfolio_panel(app, client, m
     assert "Set your first goal or do your first monthly update" not in html
     assert "Start your first budget when you want a simple monthly plan. Goals and monthly updates can wait until later." in html
     assert html.count("<h2>Where you stand now</h2>") == 2
-    assert html.count("Use this as the quick summary") == 2
+    assert html.count("Use this as the quick summary") == 1
+    assert html.count("Quick summary") == 1
     assert "Future estimates use the planning numbers in Settings. They are not guarantees." in html
     assert "Scenario estimate uses your current balances, contribution settings, and your scenario estimate assumptions. It is not a guarantee." not in html
     assert "Use this as the quick truth" not in html
@@ -756,12 +757,11 @@ def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
     assert "£0" in html
     assert "£2,000" in html
     assert "17% of your current total is usually reachable before pension age" in html
-    assert html.count("ISA, cash, taxable accounts, Premium Bonds and similar accounts sit here.") == 2
+    assert html.count("ISA, cash, taxable accounts, Premium Bonds and similar accounts sit here.") == 1
     assert "ISA, cash, GIA, Premium Bonds and similar accounts sit here." not in html
     assert "When you have locked money, the top summary keeps the headline amount visible." in html
     assert "Next accessible milestone:" in html
     assert "£20,000" in html
-
 
 
 def test_overview_hides_completed_accessible_milestone_nudge(app, client, make_user):
