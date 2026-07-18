@@ -2303,7 +2303,7 @@ button.button-danger:focus {
     gap: 0.35rem;
   }
   /* On mobile, hide the less critical stats to avoid cramming 5 into 2 cols */
-  .hero-strip-stat.overview-stat-retirement {
+  #overview-stat-retirement {
     display: none;
   }
   /* In the 2-col mobile grid, "MONTHLY CONTRIBUTIONS" and "PROJECTED AT
@@ -2402,7 +2402,8 @@ button.button-danger:focus {
   }
 
   .accounts-hero-actions,
-  .debts-hero-actions {
+  .debts-hero-actions,
+  .overview-hero-actions {
     width: 100%;
     flex: 1 0 100%;
     order: 2;
