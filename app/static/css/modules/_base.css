@@ -2302,6 +2302,10 @@ button.button-danger:focus {
     padding: 0.5rem 0.25rem;
     gap: 0.35rem;
   }
+  /* On mobile, hide the less critical stats to avoid cramming 5 into 2 cols */
+  .hero-strip-stat.overview-stat-retirement {
+    display: none;
+  }
   /* In the 2-col mobile grid, "MONTHLY CONTRIBUTIONS" and "PROJECTED AT
      RETIREMENT" don't fit on one line. Allow the label to wrap to two
      lines and shrink it slightly so neighbours don't bleed into one
@@ -2912,6 +2916,19 @@ button.button-danger:focus {
   opacity: 0.85;
   font-weight: 500;
   font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .change-breakdown {
+    gap: 0.3rem;
+  }
+  .change-breakdown .change-chip {
+    font-size: 0.82rem;
+    padding: 0.25rem 0.55rem;
+  }
+  .change-breakdown .change-chip-label {
+    font-size: 0.75rem;
+  }
 }
 
 /* Per-row "+£X into pot" chip on the Monthly Update Expected Contributions list. */

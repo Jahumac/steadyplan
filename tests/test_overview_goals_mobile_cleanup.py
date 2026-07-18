@@ -177,9 +177,10 @@ def test_overview_moves_portfolio_value_up_and_uses_mobile_details_sections(app,
     html = resp.get_data(as_text=True)
 
     assert 'class="card mb-1 overview-portfolio-card"' in html
-    assert '<details class="overview-compact-details overview-compact-only mb-1" open>' in html
+    assert '<details class="overview-compact-details overview-compact-only mb-1">' in html
     assert '<summary>Where you stand now</summary>' in html
-    assert html.count('<details class="overview-compact-details overview-compact-only mb-1" open>') == 2
+    assert html.count('<details class="overview-compact-details overview-compact-only mb-1" open>') == 1
+    assert html.count('<details class="overview-compact-details overview-compact-only mb-1">') == 3
     assert html.count('<h2>Where you stand now</h2>') == 2
     assert 'Accessible vs locked' not in html
     assert '<summary>Goal progress</summary>' in html
