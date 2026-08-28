@@ -10,6 +10,7 @@ from app.calculations import (
     apply_pension_carry_forward,
     contribution_breakdown,
     is_pension_account,
+    month_key_to_index,
     pension_allowance_limits,
 )
 from app.utils import optional_float, optional_int, valid_month_key

@@ -371,7 +371,7 @@ def _run_price_update_for_user(app, user_id, slot_name="auto"):
         for result in price_results:
             if result.get("success") and result.get("price") is not None:
                 try:
-                    sync_holding_prices_from_catalogue(result["id"], result["price"], result["currency"])
+                    sync_holding_prices_from_catalogue(result["id"], user_id, result["price"], result["currency"])
                 except Exception as e:
                     logger.warning(f"sync_holding_prices_from_catalogue failed for {result.get('ticker')}: {e}")
 

@@ -1218,7 +1218,7 @@ def _add_holding_by_ticker(uid, account_id, ticker, units):
         "asset_type": asset_type, "bucket": "Global Equity", "notes": "",
     }, uid)
     update_catalogue_price(
-        catalogue_id, price_raw, currency,
+        catalogue_id, uid, price_raw, currency,
         price_data.get("change_pct"),
         datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     )
@@ -1243,7 +1243,7 @@ def _add_holding_manual(uid, account_id, name, ticker, asset_type, units, price)
         "asset_type": asset_type, "bucket": "Other", "notes": "",
     }, uid)
     update_catalogue_price(
-        catalogue_id, price, "GBP", None,
+        catalogue_id, uid, price, "GBP", None,
         datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
     )
     if ticker:
@@ -1674,12 +1674,13 @@ def account_edit_holding(account_id, holding_id):
     if price is not None and existing["holding_catalogue_id"]:
         update_catalogue_price(
             existing["holding_catalogue_id"],
+            current_user.id,
             price,
             "GBP",
             None,
             datetime.now(timezone.utc).isoformat()
         )
-        sync_holding_prices_from_catalogue(existing["holding_catalogue_id"], price, "GBP")
+        sync_holding_prices_from_catalogue(existing["holding_catalogue_id"], current_user.id, price, "GBP")
 
     uid = current_user.id
     holdings_totals = fetch_holding_totals_by_account(uid)
