@@ -1269,7 +1269,7 @@ def test_account_list_refreshes_linked_trading212_summary_before_render(app, cli
             uid,
         )
 
-    def fake_fetch_trading212_account_summary(*, api_key, api_secret, environment):
+    def fake_fetch_trading212_account_summary(*, api_key, api_secret, environment, timeout=12):
         calls.append((api_key, api_secret, environment))
         return {
             "environment": environment,

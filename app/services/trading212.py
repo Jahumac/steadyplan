@@ -162,12 +162,13 @@ def _friendly_http_error(status_code, body, *, environment):
     return f"Trading 212 returned HTTP {status_code}."
 
 
-def fetch_trading212_account_summary(*, api_key, api_secret, environment):
+def fetch_trading212_account_summary(*, api_key, api_secret, environment, timeout=12):
     data, env = _request_json(
         "/api/v0/equity/account/summary",
         api_key=api_key,
         api_secret=api_secret,
         environment=environment,
+        timeout=timeout,
     )
     cash = data.get("cash") or {}
     investments = data.get("investments") or {}

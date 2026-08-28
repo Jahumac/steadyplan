@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from urllib.parse import parse_qs, urlparse
 
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
@@ -260,6 +260,12 @@ def _linked_broker_summary_refresh_enabled():
     return current_app.config.get("REFRESH_LINKED_BROKER_SUMMARIES_ON_ACCOUNTS", True)
 
 
+# Bounds for the synchronous Trading 212 refresh on the accounts page. Kept
+# deliberately tight so a slow/unreachable broker can never stall the render.
+_BROKER_REFRESH_REQUEST_TIMEOUT_SECONDS = 5
+_BROKER_REFRESH_BUDGET_SECONDS = 8
+
+
 def _broker_summary_refresh_due(connection, *, now=None):
     if not connection:
         return False
@@ -271,7 +277,13 @@ def _broker_summary_refresh_due(connection, *, now=None):
 
 
 def _refresh_linked_trading212_summaries(user_id, rows, trading212_connections):
-    """Refresh stale linked Trading 212 account totals before account cards render."""
+    """Refresh stale linked Trading 212 account totals before account cards render.
+
+    Bounded so a slow/unreachable broker can never block the page render: each
+    request uses a short timeout and the whole refresh stops once a total time
+    budget is exceeded, leaving any remaining stale connections to be refreshed
+    on a later page load.
+    """
     if not _linked_broker_summary_refresh_enabled():
         return trading212_connections
 
@@ -285,7 +297,10 @@ def _refresh_linked_trading212_summaries(user_id, rows, trading212_connections):
             linked_connection_ids.append(connection_id)
 
     refreshed = dict(trading212_connections or {})
+    deadline = datetime.now(timezone.utc) + timedelta(seconds=_BROKER_REFRESH_BUDGET_SECONDS)
     for connection_id in linked_connection_ids:
+        if datetime.now(timezone.utc) >= deadline:
+            break
         connection = refreshed.get(connection_id) or fetch_broker_connection(connection_id, user_id)
         if not connection or connection.get("provider") != PROVIDER_TRADING212:
             continue
@@ -298,6 +313,7 @@ def _refresh_linked_trading212_summaries(user_id, rows, trading212_connections):
                 api_key=api_key,
                 api_secret=api_secret,
                 environment=connection.get("environment") or "live",
+                timeout=_BROKER_REFRESH_REQUEST_TIMEOUT_SECONDS,
             )
             cash_val = float(summary.get("available_to_trade") or 0) + float(summary.get("cash_in_pies") or 0) + float(summary.get("cash_reserved_for_orders") or 0)
             holdings_val = float(summary.get("investments_current_value") or 0)
