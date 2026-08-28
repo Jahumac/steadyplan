@@ -2702,6 +2702,12 @@
 
       if (!toggle || !bar) return;
 
+      // The bar is hidden on first load by the `.hidden` CSS class, but the
+      // toggle below reads `bar.style.display` (inline style), which is empty
+      // until the first interaction. Normalise to inline style so the first
+      // click opens the bar instead of being swallowed as a no-op close.
+      if (bar.style.display === '') bar.style.display = 'none';
+
       function closeForm() {
         bar.style.display = 'none';
         toggle.textContent = '+ Add holding';
