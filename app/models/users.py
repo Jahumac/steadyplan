@@ -184,6 +184,7 @@ def delete_user(user_id):
                 "scheduler_runs",
                 "portfolio_daily_snapshots",
                 "custom_tags",
+                "hidden_tags",
                 "assistant_audit_events",
                 "api_tokens",
                 "broker_connections",

@@ -407,7 +407,7 @@ def seed(username="demo"):
                     "holdings_updated": 1 if is_holdings else 0,
                     "balance_updated": 1 if is_manual else 0,
                     "notes": "",
-                })
+                }, uid)
 
             # Mark all as complete except the current month (leave in_progress)
             if month_key == MONTHS[-1]:
