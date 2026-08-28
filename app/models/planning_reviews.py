@@ -216,7 +216,7 @@ def update_monthly_review_notes(review_id, notes, user_id):
         conn.commit()
 
 
-def update_monthly_review_item(payload):
+def update_monthly_review_item(payload, user_id):
     with get_connection() as conn:
         conn.execute(
             """
@@ -227,6 +227,7 @@ def update_monthly_review_item(payload):
                 balance_updated = ?,
                 notes = ?
             WHERE id = ?
+              AND review_id IN (SELECT id FROM monthly_reviews WHERE user_id = ?)
             """,
             (
                 payload["expected_contribution"],
@@ -235,6 +236,7 @@ def update_monthly_review_item(payload):
                 payload["balance_updated"],
                 payload["notes"],
                 payload["id"],
+                user_id,
             ),
         )
         conn.commit()

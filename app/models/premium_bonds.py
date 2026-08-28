@@ -5,22 +5,26 @@ from ._conn import get_connection
 from .accounts import PREMIUM_BONDS_MAX_BALANCE
 
 
-def _adjust_account_balance(conn, account_id, delta):
+def _adjust_account_balance(conn, account_id, user_id, delta):
     """Add `delta` to the account's current_value, clamped to [0, £50k].
 
     NS&I credits prize winnings to the bond holding when there's room
     under the £50,000 cap; anything that would push the balance over the
     cap is paid out as cash (and is therefore not added here).
+
+    Scoped to user_id so a prize can never mutate another user's account.
     """
     row = conn.execute(
-        "SELECT current_value FROM accounts WHERE id = ?", (account_id,)
+        "SELECT current_value FROM accounts WHERE id = ? AND user_id = ?",
+        (account_id, user_id),
     ).fetchone()
     if not row:
         return
     current = float(row["current_value"] or 0)
     new = max(0.0, min(current + delta, PREMIUM_BONDS_MAX_BALANCE))
     conn.execute(
-        "UPDATE accounts SET current_value = ? WHERE id = ?", (new, account_id)
+        "UPDATE accounts SET current_value = ? WHERE id = ? AND user_id = ?",
+        (new, account_id, user_id),
     )
 
 
@@ -34,8 +38,8 @@ def log_prize(account_id, user_id, month_key, prize_amount):
     with get_connection() as conn:
         previous = conn.execute(
             "SELECT prize_amount FROM premium_bonds_prizes "
-            "WHERE account_id = ? AND month_key = ?",
-            (account_id, month_key),
+            "WHERE account_id = ? AND month_key = ? AND user_id = ?",
+            (account_id, month_key, user_id),
         ).fetchone()
         previous_amount = float(previous["prize_amount"]) if previous else 0.0
 
@@ -50,7 +54,7 @@ def log_prize(account_id, user_id, month_key, prize_amount):
             (user_id, account_id, month_key, prize_amount,
              datetime.now(timezone.utc).isoformat()),
         )
-        _adjust_account_balance(conn, account_id, float(prize_amount) - previous_amount)
+        _adjust_account_balance(conn, account_id, user_id, float(prize_amount) - previous_amount)
         conn.commit()
 
 
@@ -117,6 +121,6 @@ def delete_prize(prize_id, user_id):
             (prize_id, user_id),
         )
         _adjust_account_balance(
-            conn, row["account_id"], -float(row["prize_amount"] or 0)
+            conn, row["account_id"], user_id, -float(row["prize_amount"] or 0)
         )
         conn.commit()
