@@ -276,7 +276,7 @@ def seed(username="demo"):
                 "asset_type": asset_type,
                 "bucket": bucket,
             }, uid)
-            update_catalogue_price(cid, price, currency, 0.0, NOW)
+            update_catalogue_price(cid, uid, price, currency, 0.0, NOW)
             cat_ids[ticker] = (cid, price)
 
         # ISA: 80% VHVG, 20% VFEG

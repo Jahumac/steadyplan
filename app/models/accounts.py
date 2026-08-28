@@ -302,25 +302,26 @@ def create_account(payload, user_id):
 
 # ── Catalogue prices ──────────────────────────────────────────────────────────
 
-def update_catalogue_price(catalogue_id, price, currency, change_pct, updated_at):
+def update_catalogue_price(catalogue_id, user_id, price, currency, change_pct, updated_at):
     with get_connection() as conn:
         conn.execute(
             """
             UPDATE holding_catalogue
             SET last_price = ?, price_currency = ?, price_change_pct = ?, price_updated_at = ?
-            WHERE id = ?
+            WHERE id = ? AND user_id = ?
             """,
-            (price, currency, change_pct, updated_at, catalogue_id),
+            (price, currency, change_pct, updated_at, catalogue_id, user_id),
         )
         conn.commit()
 
 
-def sync_holding_prices_from_catalogue(catalogue_id, price, currency):
+def sync_holding_prices_from_catalogue(catalogue_id, user_id, price, currency):
     """Propagate a refreshed catalogue price to all account holdings linked to it.
 
     Converts non-GBP holdings (USD, EUR, GBp) to GBP automatically.
     Updates both the per-unit price and the total value (units × price) on every
-    holdings row that has holding_catalogue_id = catalogue_id.
+    holdings row that has holding_catalogue_id = catalogue_id and belongs to an
+    account owned by user_id.
     """
     from app.calculations import convert_to_gbp
     from app.services.prices import fetch_fx_rates
@@ -331,8 +332,13 @@ def sync_holding_prices_from_catalogue(catalogue_id, price, currency):
 
     with get_connection() as conn:
         rows = conn.execute(
-            "SELECT id, units FROM holdings WHERE holding_catalogue_id = ?",
-            (catalogue_id,),
+            """
+            SELECT h.id, h.units
+            FROM holdings h
+            JOIN accounts a ON a.id = h.account_id
+            WHERE h.holding_catalogue_id = ? AND a.user_id = ?
+            """,
+            (catalogue_id, user_id),
         ).fetchall()
         for row in rows:
             units = float(row["units"] or 0)

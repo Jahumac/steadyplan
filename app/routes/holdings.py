@@ -344,8 +344,8 @@ def api_save_price():
             currency_raw_s = currency_raw or "GBP"
             change_pct_f = float(change_pct) if change_pct is not None else None
 
-            update_catalogue_price(catalogue_id_int, price_raw_f, currency_raw_s, change_pct_f, updated_at)
-            sync_holding_prices_from_catalogue(catalogue_id_int, price_raw_f, currency_raw_s)
+            update_catalogue_price(catalogue_id_int, current_user.id, price_raw_f, currency_raw_s, change_pct_f, updated_at)
+            sync_holding_prices_from_catalogue(catalogue_id_int, current_user.id, price_raw_f, currency_raw_s)
 
             uid = current_user.id
             accounts = fetch_all_accounts(uid)
