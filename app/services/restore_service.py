@@ -172,7 +172,13 @@ def restore_backup_for_user(user_id, backup_payload, *, conn=None):
             "monthly_reviews": {},
         }
         try:
-            conn.execute("BEGIN")
+            # Only open an explicit transaction if one isn't already active.
+            # get_connection() returns the request-scoped g.db connection, which
+            # may already have an implicit transaction open from a prior read;
+            # issuing BEGIN then raises "cannot start a transaction within a
+            # transaction".
+            if not conn.in_transaction:
+                conn.execute("BEGIN")
 
             deleted = _delete_user_data(conn, user_id)
 
