@@ -1809,6 +1809,24 @@ def budget_debts_export():
 
     wb = Workbook()
 
+    def _safe_sheet_title(base, used):
+        s = (base or "Sheet").strip()
+        s = "".join("-" if ch in (":", "\\", "/", "?", "*", "[", "]") else ch for ch in s)
+        s = s.strip().strip("'")[:31]
+        if not s:
+            s = "Sheet"
+        if s not in used:
+            used.add(s)
+            return s
+        i = 2
+        while True:
+            suffix = f" {i}"
+            candidate = (s[:31 - len(suffix)] + suffix)[:31]
+            if candidate not in used:
+                used.add(candidate)
+                return candidate
+            i += 1
+
     # ════════════════════════════════════════════════════════════════════════
     # Sheet 1 — Summary
     # ════════════════════════════════════════════════════════════════════════
@@ -1846,6 +1864,7 @@ def budget_debts_export():
     # ════════════════════════════════════════════════════════════════════════
     # Per-debt sheets — one tab per scenario
     # ════════════════════════════════════════════════════════════════════════
+    used_titles = {sheet.title for sheet in wb.worksheets}
     for d in debt_cards:
         if not d["months_remaining"]:
             continue
@@ -1869,7 +1888,7 @@ def budget_debts_export():
             interest_saved = (d["total_interest"] or 0) - total_interest if extra > 0 else 0
 
             # Tab name: e.g. "Car Loan — Base", "Car Loan — +£50"
-            tab = f"{d['name'][:20]} — {label}"
+            tab = _safe_sheet_title(f"{d['name'][:20]} — {label}", used_titles)
             ws2 = wb.create_sheet(title=tab)
 
             # Title

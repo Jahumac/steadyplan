@@ -1,4 +1,5 @@
 import json
+import re
 
 
 MONTHLY_REVIEW_CHECKLIST_ITEMS = [
@@ -34,7 +35,18 @@ def parse_monthly_review_notes(raw_notes):
 
                 return {"notes": notes, "checked": checked_set, "is_structured": True}
 
-        return {"notes": "", "checked": set(), "is_structured": True}
+        # The magic key is present but the JSON is malformed or the version
+        # mismatches. Salvage the user's note text from the corrupted payload
+        # so it isn't silently discarded, but never leak the internal marker
+        # into the UI.
+        m = re.search(r'"notes"\s*:\s*"((?:[^"\\]|\\.)*)"', raw_notes)
+        if m:
+            try:
+                notes = json.loads('"' + m.group(1) + '"')
+            except Exception:
+                notes = m.group(1)
+            return {"notes": notes, "checked": set(), "is_structured": False}
+        return {"notes": "", "checked": set(), "is_structured": False}
 
     return {"notes": raw_notes, "checked": set(), "is_structured": False}
 

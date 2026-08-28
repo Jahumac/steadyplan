@@ -150,6 +150,31 @@ def _title_cell(ws, row_num, text, col_span=1):
         ws.merge_cells(start_row=row_num, start_column=1, end_row=row_num, end_column=col_span)
 
 
+def _safe_sheet_title(base, used):
+    r"""Return a valid, unique Excel sheet title derived from `base`.
+
+    Strips characters openpyxl forbids in sheet names (``: \ / ? * [ ]``),
+    trims to 31 chars, falls back to "Sheet" when empty, and appends a
+    numeric suffix when the title collides with one already in `used`.
+    """
+    s = (base or "Sheet").strip()
+    s = "".join("-" if ch in (":", "\\", "/", "?", "*", "[", "]") else ch for ch in s)
+    s = s.strip().strip("'")[:31]
+    if not s:
+        s = "Sheet"
+    if s not in used:
+        used.add(s)
+        return s
+    i = 2
+    while True:
+        suffix = f" {i}"
+        candidate = (s[:31 - len(suffix)] + suffix)[:31]
+        if candidate not in used:
+            used.add(candidate)
+            return candidate
+        i += 1
+
+
 def _tax_year_label_for_month_key(month_key, assumptions=None):
     """Return the UK tax-year label for a projected contribution month.
 
@@ -490,10 +515,11 @@ def export_projections():
     _data_row(ws3, total_months + 5, ["Retirement", total_projected], bold=True, num_formats={2: GBP0})
 
     # ── Per-account sheets: year-by-year for each account ─────────────────
+    used_titles = {sheet.title for sheet in wb.worksheets}
     for acc in accounts:
-        # Sanitise name for Excel sheet title (max 31 chars, no special chars)
-        safe_name = acc["name"][:28].replace("/", "-").replace("\\", "-").replace("*", "").replace("?", "").replace("[", "(").replace("]", ")")
-        ws_acc = wb.create_sheet(safe_name)
+        # Sanitise name for Excel sheet title (max 31 chars, no special chars,
+        # deduplicated against existing sheets).
+        ws_acc = wb.create_sheet(_safe_sheet_title(acc["name"], used_titles))
 
         acc_growth = account_growth_rate(acc, assumptions)
         acc_gross = account_gross_growth_rate(acc, assumptions)
