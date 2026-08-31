@@ -8,6 +8,35 @@
 {% set month_strip_class = 'month-strip-mobile-hidden' %}
 {% include '_month_strip.html' %}
 
+{# ── Collapsible period picker ─────────────────────────────────────────── #}
+<details class="panel mb-1" id="cal-period-picker" {% if request.args.get('range') %}open{% endif %}>
+  <summary class="section-header cursor-pointer" style="list-style:none;">
+    <div>
+      <p class="eyebrow">Period</p>
+      <h3 class="m-0 text-base">Showing {{ from_month }} → {{ to_month }}</h3>
+    </div>
+    <span class="badge badge-meta">Change period</span>
+  </summary>
+  <div class="badge-row mt-075" style="flex-wrap:wrap;">
+    <a class="badge {% if request.args.get('range') == 'this_tax_year' or not request.args.get('range') %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='this_tax_year') }}">This tax year</a>
+    <a class="badge {% if request.args.get('range') == 'next_12' %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='next_12') }}">Next 12 months</a>
+    <a class="badge {% if request.args.get('range') == 'calendar_year' %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='calendar_year') }}">Calendar year</a>
+    <a class="badge {% if request.args.get('range') == 'till_retirement' %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='till_retirement') }}">Till retirement</a>
+  </div>
+  <form method="get" action="{{ url_for('budget.contribution_calendar') }}" class="settings-form mt-075" style="display:flex; gap:0.5rem; align-items:flex-end; flex-wrap:wrap;">
+    <label class="m-0">
+      <span class="text-xxs">From month</span>
+      <input type="month" name="from_month" value="{{ from_month }}" class="input-standard text-xs">
+    </label>
+    <label class="m-0">
+      <span class="text-xxs">To month</span>
+      <input type="month" name="to_month" value="{{ to_month }}" class="input-standard text-xs">
+    </label>
+    <input type="hidden" name="range" value="custom">
+    <button type="submit" class="badge badge-primary-action">Apply custom range</button>
+  </form>
+</details>
+
 <section class="card highlight mb-1 contribution-calendar-hero month-accent-{{ current_month_num }}">
   <div class="hero-top">
     <div>

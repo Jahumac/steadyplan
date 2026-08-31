@@ -878,3 +878,62 @@ def test_calendar_past_cells_are_locked_and_show_actual(app, make_user):
         assert cell["is_past"] is True
         assert float(cell["actual_amount"]) == 350.0
         assert cell["is_confirmed"] is True
+
+
+def test_calendar_range_presets_resolve(monkeypatch):
+    from app.routes import budget as budget_routes
+
+    class FakeDate(real_date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 8, 31)
+
+    monkeypatch.setattr(budget_routes, "date", FakeDate)
+
+    # this_tax_year: Aug 2026 → Apr 2026 .. Mar 2027
+    f, t, k = budget_routes._resolve_calendar_range("this_tax_year", None, None, None)
+    assert (f, t, k) == ("2026-04", "2027-03", "this_tax_year")
+
+    # next_12: Aug 2026 → Jul 2027
+    f, t, k = budget_routes._resolve_calendar_range("next_12", None, None, None)
+    assert (f, t, k) == ("2026-08", "2027-07", "next_12")
+
+    # calendar_year: 2026-01 .. 2026-12
+    f, t, k = budget_routes._resolve_calendar_range("calendar_year", None, None, None)
+    assert (f, t, k) == ("2026-01", "2026-12", "calendar_year")
+
+    # custom with explicit range
+    f, t, k = budget_routes._resolve_calendar_range("custom", "2030-01", "2035-12", None)
+    assert (f, t, k) == ("2030-01", "2035-12", "custom")
+
+
+def test_calendar_range_till_retirement_uses_dob(monkeypatch):
+    from app.routes import budget as budget_routes
+
+    class FakeDate(real_date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 8, 31)
+
+    monkeypatch.setattr(budget_routes, "date", FakeDate)
+
+    assumptions = {"date_of_birth": "1982-05-15", "retirement_age": 60}
+    f, t, k = budget_routes._resolve_calendar_range("till_retirement", None, None, assumptions)
+    # DOB 1982-05-15 + 60 = 2042-05
+    assert (f, t, k) == ("2026-08", "2042-05", "till_retirement")
+
+
+def test_calendar_range_till_retirement_falls_back_without_dob(monkeypatch):
+    from app.routes import budget as budget_routes
+
+    class FakeDate(real_date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 8, 31)
+
+    monkeypatch.setattr(budget_routes, "date", FakeDate)
+
+    f, t, k = budget_routes._resolve_calendar_range("till_retirement", None, None, {})
+    # no DOB → fall back to this_tax_year
+    assert k == "this_tax_year"
+    assert f == "2026-04"
