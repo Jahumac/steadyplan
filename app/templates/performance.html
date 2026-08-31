@@ -256,6 +256,46 @@
 </section>
 {% endif %}
 
+{# ── Month by month ─────────────────────────────────────────────────── #}
+{% if performance_summary and performance_summary.table_rows %}
+<section class="card mb-1">
+  <div class="section-header mb-075">
+    <div>
+      <p class="eyebrow">Your history</p>
+      <h3>Month by month</h3>
+    </div>
+    <small class="text-muted">Most recent first</small>
+  </div>
+  <div class="table-scroll">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Month</th>
+        <th class="num">Opening</th>
+        <th class="num">Contributed</th>
+        <th class="num">Gain / Interest</th>
+        <th class="num">Closing</th>
+        <th class="num">Return</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in performance_summary.table_rows %}
+      <tr>
+        <td>{{ r.month_key }}</td>
+        <td class="num">£{{ '{:,.0f}'.format(r.opening) }}</td>
+        <td class="num">£{{ '{:,.0f}'.format(r.contribution) }}</td>
+        <td class="num {% if r.market_gain >= 0 %}perf-positive{% else %}perf-negative{% endif %}">{% if r.market_gain >= 0 %}+{% endif %}£{{ '{:,.0f}'.format(r.market_gain) }}</td>
+        <td class="num text-bold">£{{ '{:,.0f}'.format(r.closing) }}</td>
+        <td class="num {% if r.return_pct >= 0 %}perf-positive{% else %}perf-negative{% endif %}">{% if r.return_pct >= 0 %}+{% endif %}{{ '{:,.2f}'.format(r.return_pct) }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="helper-text mt-075">Your portfolio value at the end of each month, and what changed it. "Closing" is where you stood that month — hover the chart above for the exact daily value, or download the report for the full breakdown.</p>
+</section>
+{% endif %}
+
 {# ── By Account ────────────────────────────────────────────────────── #}
 {% if account_breakdown %}
 <section class="card">

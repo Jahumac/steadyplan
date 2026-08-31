@@ -129,7 +129,7 @@ DEFAULT_HOLDING_CATALOGUE = [  # kept for reference only — no longer auto-seed
     {"holding_name": "iShares Core MSCI World UCITS ETF (Acc)", "ticker": "SWDA", "asset_type": "ETF", "bucket": "Developed World Equity", "notes": "MSCI World, USD-based"},
     {"holding_name": "iShares MSCI All Country World UCITS ETF (Acc)", "ticker": "SSAC", "asset_type": "ETF", "bucket": "Global / All-World Equity", "notes": ""},
     {"holding_name": "iShares Core MSCI Emerging Markets IMI UCITS ETF", "ticker": "EMIM", "asset_type": "ETF", "bucket": "Emerging Markets Equity", "notes": ""},
-    {"holding_name": "HSBC FTSE All-World Index C Acc", "ticker": "0P00013P6I.L", "asset_type": "Fund", "bucket": "Global / All-World Equity", "notes": ""},
+    {"holding_name": "HSBC FTSE All-World Index C Acc", "ticker": "GB00BMJJJF91.L", "asset_type": "Fund", "bucket": "Global / All-World Equity", "notes": ""},
     {"holding_name": "Fidelity Index World Fund P Accumulation", "ticker": "", "asset_type": "Fund", "bucket": "Developed World Equity", "notes": "MSCI World tracker"},
     {"holding_name": "Fidelity Index Emerging Markets Fund P Accumulation", "ticker": "", "asset_type": "Fund", "bucket": "Emerging Markets Equity", "notes": ""},
     {"holding_name": "L&G International Index Trust I Acc", "ticker": "", "asset_type": "Fund", "bucket": "Developed World Equity", "notes": ""},
