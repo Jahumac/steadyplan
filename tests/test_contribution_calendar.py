@@ -769,3 +769,112 @@ def test_contribution_calendar_has_mobile_style_safeguards():
     assert "overflow-y: auto;" in css
     assert ".contribution-calendar-scroll:hover::-webkit-scrollbar" in css
     assert ".contribution-month-account-row" in css
+
+
+def test_calendar_cell_has_effective_amount_for_sipp(app, make_user):
+    """A SIPP cell should carry an 'into pot' amount = personal + 25% relief."""
+    uid, _, _ = make_user(username="cal-eff-sipp", password="password123")
+
+    with app.app_context():
+        from app.models import fetch_contribution_calendar, get_connection
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, monthly_contribution, current_value, valuation_mode, is_active)
+                VALUES (?, 'My SIPP', 'SIPP', 400, 0, 'manual', 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+        calendar = fetch_contribution_calendar(uid, "2026-06", "2026-06")
+        account = calendar["accounts"][0]
+        cell = account["months"][0]
+
+        # personal 400 + 25% relief = 500 into pot
+        assert float(cell["default_amount"]) == 400.0
+        assert float(cell["effective_amount"]) == 500.0
+
+
+def test_calendar_cell_effective_amount_uses_override(app, make_user):
+    """An override cell's 'into pot' amount should be computed from the override."""
+    uid, _, _ = make_user(username="cal-eff-override", password="password123")
+
+    with app.app_context():
+        from app.models import (
+            create_contribution_override,
+            fetch_contribution_calendar,
+            get_connection,
+        )
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, monthly_contribution, current_value, valuation_mode, is_active)
+                VALUES (?, 'My SIPP', 'SIPP', 400, 0, 'manual', 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+        create_contribution_override(
+            {
+                "account_id": account_id,
+                "from_month": "2026-06",
+                "to_month": "2026-06",
+                "override_amount": 200,
+                "reason": "from budget",
+            },
+            uid,
+        )
+
+        calendar = fetch_contribution_calendar(uid, "2026-06", "2026-06")
+        cell = calendar["accounts"][0]["months"][0]
+
+        # override 200 + 25% relief = 250 into pot
+        assert float(cell["override_amount"]) == 200.0
+        assert float(cell["effective_amount"]) == 250.0
+
+
+def test_calendar_past_cells_are_locked_and_show_actual(app, make_user):
+    """Past months should be marked is_past and carry the confirmed actual."""
+    uid, _, _ = make_user(username="cal-past-lock", password="password123")
+
+    with app.app_context():
+        from app.models import (
+            fetch_contribution_calendar,
+            fetch_or_create_monthly_review,
+            get_connection,
+            update_monthly_review,
+        )
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, monthly_contribution, current_value, valuation_mode, is_active)
+                VALUES (?, 'My SIPP', 'SIPP', 400, 0, 'manual', 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+        # Create a completed monthly review for a past month (2026-06)
+        review = fetch_or_create_monthly_review("2026-06", uid)
+        update_monthly_review(review["id"], "complete", "", uid)
+        with get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO monthly_review_items (review_id, account_id, expected_contribution, contribution_confirmed)
+                VALUES (?, ?, 350, 1)
+                """,
+                (review["id"], account_id),
+            )
+            conn.commit()
+
+        calendar = fetch_contribution_calendar(uid, "2026-06", "2026-06")
+        cell = calendar["accounts"][0]["months"][0]
+
+        assert cell["is_past"] is True
+        assert float(cell["actual_amount"]) == 350.0
+        assert cell["is_confirmed"] is True

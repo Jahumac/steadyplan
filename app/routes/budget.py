@@ -729,9 +729,9 @@ def contribution_calendar():
 
         return redirect(url_for("budget.contribution_calendar", **redirect_args))
 
-    calendar = fetch_contribution_calendar(uid, selected_from_month, selected_to_month)
-    plans = fetch_temporary_contribution_plans(uid)
     assumptions = fetch_assumptions(uid)
+    calendar = fetch_contribution_calendar(uid, selected_from_month, selected_to_month, assumptions=assumptions)
+    plans = fetch_temporary_contribution_plans(uid)
     pension_carry_forward_entries = fetch_pension_carry_forward(uid)
     allowance_frame = _build_contribution_allowance_frame(calendar, assumptions, pension_carry_forward_entries)
     month_columns = [

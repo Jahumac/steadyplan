@@ -1991,6 +1991,22 @@ tr[data-acct-type="gia"] td.calendar-matrix-cell .calendar-amount-input { color:
   background: rgba(255, 255, 255, 0.03) !important;
 }
 
+/* Past (locked) cells — read-only, dimmed, with a confirmed checkmark */
+.calendar-matrix-cell.cell-past .calendar-amount-input {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.calendar-matrix-cell .cal-confirmed {
+  position: absolute;
+  right: -15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent-2, #4ade80);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
 /* Overlap Cell Styling */
 .calendar-matrix-cell.cell-overlap {
   background: rgba(245, 158, 11, 0.12);
