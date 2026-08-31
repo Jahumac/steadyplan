@@ -312,9 +312,14 @@
       </label>
       <label>
         Start month
-        <input type="month" name="start_month" value="{{ from_month }}" required>
+        <input type="month" name="start_month" value="{{ from_month }}">
+      </label>
+      <label>
+        Or start at age
+        <input type="number" step="1" min="18" max="100" name="start_age" placeholder="e.g. 50">
       </label>
     </div>
+    <p class="helper-text">Set a start month, or a start age (e.g. "from age 50") — the age converts to a month using your date of birth. Leave the month blank if you use an age.</p>
     <div class="badge-row mt-1">
       <button type="submit" class="badge badge-primary-action">Add recurring rule</button>
     </div>

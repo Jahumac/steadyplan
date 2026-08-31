@@ -1018,3 +1018,18 @@ def test_recurring_rule_delete(app, make_user):
         deleted = delete_recurring_rule(uid, "Boost SIPP")
         assert deleted == 1
         assert len(fetch_recurring_rules(uid)) == 0
+
+
+def test_month_key_at_age_converts_dob(monkeypatch):
+    from app.routes import budget as budget_routes
+
+    assumptions = {"date_of_birth": "1982-05-15", "retirement_age": 60}
+    # DOB 1982-05-15 + age 50 = 2032-05
+    assert budget_routes._month_key_at_age(assumptions, 50) == "2032-05"
+
+
+def test_month_key_at_age_returns_none_without_dob():
+    from app.routes import budget as budget_routes
+
+    assert budget_routes._month_key_at_age({}, 50) is None
+    assert budget_routes._month_key_at_age(None, 50) is None

@@ -283,6 +283,21 @@ def _retirement_month_key(assumptions):
         return None
 
 
+def _month_key_at_age(assumptions, age):
+    """Return the 'YYYY-MM' when the user reaches `age`, or None if unknown."""
+    if not assumptions:
+        return None
+    dob = assumptions.get("date_of_birth")
+    if not dob:
+        return None
+    try:
+        dob_date = datetime.strptime(dob, "%Y-%m-%d").date()
+        year = dob_date.year + int(age)
+        return f"{year:04d}-{dob_date.month:02d}"
+    except (ValueError, TypeError):
+        return None
+
+
 def _resolve_calendar_range(range_key, from_month, to_month, assumptions):
     """Resolve a calendar range from a preset key or explicit from/to months.
 
@@ -788,7 +803,12 @@ def contribution_calendar():
             account_id = optional_int(request.form.get("account_id"), None)
             amount = optional_float(request.form.get("amount"), None, min_val=0.0)
             start_month = valid_month_key(request.form.get("start_month"))
+            start_age = optional_int(request.form.get("start_age"), None)
             pattern = (request.form.get("pattern") or "every_month").strip()
+
+            # Age-based entry: "from age 50" converts to a month key via DOB.
+            if start_age is not None and start_age > 0:
+                start_month = _month_key_at_age(assumptions, start_age)
 
             if not rule_name:
                 flash("Name the recurring rule so it can be found and removed later.", "error")
@@ -797,7 +817,7 @@ def contribution_calendar():
             elif amount is None:
                 flash("Enter a valid monthly amount.", "error")
             elif not start_month:
-                flash("Choose a valid start month.", "error")
+                flash("Choose a valid start month or start age.", "error")
             else:
                 created = create_recurring_rule(uid, rule_name, account_id, amount, start_month, pattern)
                 if created.get("ok"):
