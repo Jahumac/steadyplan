@@ -8,6 +8,35 @@
 {% set month_strip_class = 'month-strip-mobile-hidden' %}
 {% include '_month_strip.html' %}
 
+{# ── Collapsible period picker ─────────────────────────────────────────── #}
+<details class="panel mb-1" id="cal-period-picker" {% if request.args.get('range') %}open{% endif %}>
+  <summary class="section-header cursor-pointer" style="list-style:none;">
+    <div>
+      <p class="eyebrow">Period</p>
+      <h3 class="m-0 text-base">Showing {{ from_month }} → {{ to_month }}</h3>
+    </div>
+    <span class="badge badge-meta">Change period</span>
+  </summary>
+  <div class="badge-row mt-075" style="flex-wrap:wrap;">
+    <a class="badge {% if request.args.get('range') == 'this_tax_year' or not request.args.get('range') %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='this_tax_year') }}">This tax year</a>
+    <a class="badge {% if request.args.get('range') == 'next_12' %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='next_12') }}">Next 12 months</a>
+    <a class="badge {% if request.args.get('range') == 'calendar_year' %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='calendar_year') }}">Calendar year</a>
+    <a class="badge {% if request.args.get('range') == 'till_retirement' %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='till_retirement') }}">Till retirement</a>
+  </div>
+  <form method="get" action="{{ url_for('budget.contribution_calendar') }}" class="settings-form mt-075" style="display:flex; gap:0.5rem; align-items:flex-end; flex-wrap:wrap;">
+    <label class="m-0">
+      <span class="text-xxs">From month</span>
+      <input type="month" name="from_month" value="{{ from_month }}" class="input-standard text-xs">
+    </label>
+    <label class="m-0">
+      <span class="text-xxs">To month</span>
+      <input type="month" name="to_month" value="{{ to_month }}" class="input-standard text-xs">
+    </label>
+    <input type="hidden" name="range" value="custom">
+    <button type="submit" class="badge badge-primary-action">Apply custom range</button>
+  </form>
+</details>
+
 <section class="card highlight mb-1 contribution-calendar-hero month-accent-{{ current_month_num }}">
   <div class="hero-top">
     <div>
@@ -49,6 +78,7 @@
     </div>
     <div class="badge-row">
       <span class="badge badge-meta">ℹ️ Hover cells to see plan details</span>
+      <button type="button" class="badge badge-meta" id="cal-mode-toggle" data-cal-mode="pay" aria-pressed="false">Show: what I pay</button>
       <a href="{{ url_for('budget.export_contribution_calendar', from_month=from_month, to_month=to_month) }}" class="badge badge-primary-action" style="text-decoration: none;">Download Excel</a>
     </div>
   </div>
@@ -77,7 +107,7 @@
           <td class="num text-muted" style="vertical-align: middle;">£{{ '{:,.0f}'.format(account.monthly_contribution) }}</td>
           {% for month in month_columns %}
           {% set cell = account.months[loop.index0] %}
-          <td class="num calendar-matrix-cell"
+          <td class="num calendar-matrix-cell{% if cell.is_past %} cell-past{% endif %}"
               {% if cell.has_override %}
                 data-tooltip="{{ cell.source_label }}{% if cell.plan_name %} · {{ cell.plan_name }}{% elif cell.reason %} · {{ cell.reason }}{% endif %}"
               {% endif %}>
@@ -89,9 +119,13 @@
                      style="width: 100px; padding-left: 24px; text-align: right; background: transparent; border: 1px solid transparent; border-radius: 4px; transition: border-color 0.2s, background-color 0.2s;"
                      data-account-id="{{ account.id }}" 
                      data-month-key="{{ month.key }}"
+                     data-pay="{% if cell.has_override %}{{ '{:.2f}'.format(cell.override_amount) }}{% else %}{{ '{:.2f}'.format(cell.default_amount) }}{% endif %}"
+                     data-land="{{ '{:.2f}'.format(cell.effective_amount) }}"
                      value="{% if cell.has_override %}{{ '{:.2f}'.format(cell.override_amount) }}{% else %}{{ '{:.2f}'.format(cell.default_amount) }}{% endif %}"
                      placeholder="{{ '{:.2f}'.format(cell.default_amount) }}"
+                     {% if cell.is_past %}readonly{% endif %}
               />
+              {% if cell.is_past and cell.is_confirmed %}<span class="cal-confirmed" title="Confirmed in monthly review">✓</span>{% endif %}
               <span class="save-indicator" id="ind-cal-{{ account.id }}-{{ month.key }}" style="position: absolute; right: -15px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; opacity: 0; transition: opacity 0.3s;"></span>
             </div>
           </td>

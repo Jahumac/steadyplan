@@ -801,6 +801,36 @@
       });
     })();
 
+    // 11.6 Contribution Calendar "into pot" toggle
+    (function initCalendarModeToggle() {
+      var toggle = document.getElementById('cal-mode-toggle');
+      if (!toggle) return;
+
+      var inputs = document.querySelectorAll('.calendar-amount-input[data-land]');
+
+      function applyMode(mode) {
+        inputs.forEach(function(input) {
+          if (mode === 'land') {
+            input.value = input.dataset.land;
+            input.readOnly = true;
+            input.style.opacity = '0.7';
+          } else {
+            input.value = input.dataset.pay;
+            input.readOnly = false;
+            input.style.opacity = '';
+          }
+        });
+        toggle.textContent = mode === 'land' ? 'Show: what lands in account' : 'Show: what I pay';
+        toggle.setAttribute('data-cal-mode', mode);
+        toggle.setAttribute('aria-pressed', mode === 'land' ? 'true' : 'false');
+      }
+
+      toggle.addEventListener('click', function() {
+        var next = toggle.getAttribute('data-cal-mode') === 'land' ? 'pay' : 'land';
+        applyMode(next);
+      });
+    })();
+
     // 12. Monthly Review Logic
     (function initMonthlyReview() {
       var reviewSection = document.querySelector('.monthly-review-container');
