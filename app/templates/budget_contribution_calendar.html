@@ -5,9 +5,6 @@
 {% set active_key = 'contribution_calendar' %}
 {% include '_budget_subnav.html' %}
 
-{% set month_strip_class = 'month-strip-mobile-hidden' %}
-{% include '_month_strip.html' %}
-
 {# ── Collapsible period picker ─────────────────────────────────────────── #}
 <details class="panel mb-1" id="cal-period-picker" {% if request.args.get('range') %}open{% endif %}>
   <summary class="section-header cursor-pointer" style="list-style:none;">
@@ -18,8 +15,8 @@
     <span class="badge badge-meta">Change period</span>
   </summary>
   <div class="badge-row mt-075" style="flex-wrap:wrap;">
-    <a class="badge {% if request.args.get('range') == 'this_tax_year' or not request.args.get('range') %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='this_tax_year') }}">This tax year</a>
-    <a class="badge {% if request.args.get('range') == 'next_12' %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='next_12') }}">Next 12 months</a>
+    <a class="badge {% if request.args.get('range') == 'this_tax_year' %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='this_tax_year') }}">This tax year</a>
+    <a class="badge {% if request.args.get('range') == 'next_12' or not request.args.get('range') %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='next_12') }}">Next 12 months</a>
     <a class="badge {% if request.args.get('range') == 'calendar_year' %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='calendar_year') }}">Calendar year</a>
     <a class="badge {% if request.args.get('range') == 'till_retirement' %}badge-primary-action{% else %}badge-meta{% endif %}" href="{{ url_for('budget.contribution_calendar', range='till_retirement') }}">Till retirement</a>
   </div>
