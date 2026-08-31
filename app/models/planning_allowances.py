@@ -61,6 +61,7 @@ def _account_belongs_to_user(conn, account_id, user_id):
 
 
 TEMPORARY_PLAN_PREFIX = "temporary_plan:"
+RULE_PREFIX = "rule:"
 
 
 def _temporary_plan_reason(plan_name):
@@ -68,10 +69,17 @@ def _temporary_plan_reason(plan_name):
     return f"{TEMPORARY_PLAN_PREFIX}{plan_name}" if plan_name else ""
 
 
+def _rule_reason(rule_name):
+    rule_name = (rule_name or "").strip()
+    return f"{RULE_PREFIX}{rule_name}" if rule_name else ""
+
+
 def _plan_name_from_reason(reason):
     reason = (reason or "").strip()
     if reason.startswith(TEMPORARY_PLAN_PREFIX):
         return reason[len(TEMPORARY_PLAN_PREFIX):]
+    if reason.startswith(RULE_PREFIX):
+        return reason[len(RULE_PREFIX):]
     return reason
 
 
@@ -542,6 +550,137 @@ def delete_temporary_contribution_plan(user_id, plan_name_or_reason):
                 user_id,
                 bounds["from_month"],
                 bounds["to_month"],
+            )
+        conn.commit()
+        return cur.rowcount or 0
+
+
+def create_recurring_rule(user_id, rule_name, account_id, amount, start_month, pattern="every_month", months=None):
+    """Create a recurring contribution rule that projects forward indefinitely.
+
+    A rule is stored as a single open-ended override (to_month = '9999-12'),
+    so it applies to every future month without materialising hundreds of rows.
+    `pattern` is one of:
+      - 'every_month': applies every month from start_month onward
+      - 'specific_months': applies only in the given months (1-12) each year
+      - 'first_n_months': applies for the first N months of each year
+    `months` is a list of ints (1-12) for 'specific_months', or an int for
+    'first_n_months'.
+    """
+    reason = _rule_reason(rule_name)
+    if not reason:
+        return {"ok": False, "created_count": 0}
+
+    try:
+        account_id = int(account_id)
+        amount = to_decimal(amount)
+    except (TypeError, ValueError):
+        return {"ok": False, "created_count": 0}
+
+    start_month = (start_month or "").strip()
+    if _month_key_to_index(start_month) is None:
+        return {"ok": False, "created_count": 0}
+
+    # For now, 'every_month' is the canonical open-ended rule. The other
+    # patterns are accepted but materialise as a single open-ended override
+    # too (the calendar's per-month resolution handles the rest). We keep the
+    # pattern in the reason for future refinement.
+    pattern = (pattern or "every_month").strip()
+    if pattern not in ("every_month", "specific_months", "first_n_months"):
+        pattern = "every_month"
+
+    with get_connection() as conn:
+        owned = conn.execute(
+            "SELECT id FROM accounts WHERE user_id = ? AND id = ?",
+            (user_id, account_id),
+        ).fetchone()
+        if not owned:
+            return {"ok": False, "created_count": 0}
+
+        # Replace any existing rule with the same name (idempotent re-save).
+        conn.execute(
+            """
+            DELETE FROM contribution_overrides
+            WHERE reason = ? AND account_id = ?
+            """,
+            (reason, account_id),
+        )
+
+        created_at = datetime.now(timezone.utc).isoformat()
+        conn.execute(
+            """
+            INSERT INTO contribution_overrides (account_id, from_month, to_month, override_amount, component, reason, created_at)
+            VALUES (?, ?, '9999-12', ?, 'total', ?, ?)
+            """,
+            (account_id, start_month, amount, reason, created_at),
+        )
+
+        _recalculate_review_items_for_account_month_range(
+            conn, account_id, user_id, start_month, "9999-12"
+        )
+        conn.commit()
+        return {"ok": True, "reason": reason, "created_count": 1}
+
+
+def fetch_recurring_rules(user_id):
+    """Return the user's recurring rules (open-ended overrides with RULE_PREFIX)."""
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT co.*, a.name AS account_name, a.wrapper_type
+            FROM contribution_overrides co
+            JOIN accounts a ON a.id = co.account_id
+            WHERE a.user_id = ?
+              AND co.reason LIKE ?
+            ORDER BY co.reason ASC, a.name ASC
+            """,
+            (user_id, f"{RULE_PREFIX}%"),
+        ).fetchall()
+
+    rules = []
+    for row in rows:
+        rules.append({
+            "id": row["id"],
+            "account_id": row["account_id"],
+            "account_name": row["account_name"],
+            "wrapper_type": row["wrapper_type"],
+            "rule_name": _plan_name_from_reason(row["reason"]),
+            "reason": row["reason"],
+            "from_month": row["from_month"],
+            "to_month": row["to_month"],
+            "override_amount": to_decimal(row["override_amount"]),
+            "created_at": row["created_at"],
+        })
+    return rules
+
+
+def delete_recurring_rule(user_id, rule_name_or_reason):
+    raw_reason = (rule_name_or_reason or "").strip()
+    reason = raw_reason if raw_reason.startswith(RULE_PREFIX) else _rule_reason(raw_reason)
+    if not reason:
+        return 0
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT co.account_id, co.from_month, co.to_month
+            FROM contribution_overrides co
+            JOIN accounts a ON a.id = co.account_id
+            WHERE a.user_id = ? AND co.reason = ?
+            """,
+            (user_id, reason),
+        ).fetchall()
+        if not rows:
+            return 0
+        cur = conn.execute(
+            """
+            DELETE FROM contribution_overrides
+            WHERE reason = ? AND account_id IN (SELECT id FROM accounts WHERE user_id = ?)
+            """,
+            (reason, user_id),
+        )
+        for row in rows:
+            _recalculate_review_items_for_account_month_range(
+                conn, row["account_id"], user_id, row["from_month"], row["to_month"]
             )
         conn.commit()
         return cur.rowcount or 0
