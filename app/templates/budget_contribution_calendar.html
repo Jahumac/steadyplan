@@ -239,6 +239,88 @@
   {% endif %}
 </section>
 
+{# ── Recurring rules ─────────────────────────────────────────────────── #}
+<section class="panel mb-1">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Long-term</p>
+      <h3>Recurring rules</h3>
+    </div>
+  </div>
+  <p class="helper-text">A recurring rule applies every month from its start date onward — no end date. Use it for a permanent change like "£600/mo to SIPP from now on". It projects forward indefinitely, so you don't have to type every month by hand.</p>
+
+  {% if recurring_rules %}
+  <div class="table-scroll mt-075">
+    <table class="mini-table">
+      <thead>
+        <tr>
+          <th>Rule</th>
+          <th>Account</th>
+          <th>From</th>
+          <th class="text-right">Amount</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rule in recurring_rules %}
+        <tr>
+          <td>{{ rule.rule_name }}</td>
+          <td>{{ rule.account_name }}{% if rule.wrapper_type %} · {{ rule.wrapper_type }}{% endif %}</td>
+          <td>{{ rule.from_month }}</td>
+          <td class="text-right">£{{ '{:,.2f}'.format(rule.override_amount) }}</td>
+          <td class="text-right">
+            <form method="post" class="form-reset">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="form_name" value="delete_recurring_rule">
+              <input type="hidden" name="reason" value="{{ rule.reason }}">
+              <input type="hidden" name="from_month" value="{{ from_month }}">
+              <input type="hidden" name="to_month" value="{{ to_month }}">
+              <button type="submit" class="badge badge-danger">Remove</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="helper-text">No recurring rules yet.</p>
+  {% endif %}
+
+  <form method="post" class="settings-form contribution-calendar-form mt-075">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="form_name" value="create_recurring_rule">
+    <input type="hidden" name="from_month" value="{{ from_month }}">
+    <input type="hidden" name="to_month" value="{{ to_month }}">
+    <div class="form-grid mb-1">
+      <label>
+        Rule name
+        <input type="text" name="rule_name" placeholder="e.g. Boost SIPP" required>
+      </label>
+      <label>
+        Account
+        <select name="account_id" required>
+          <option value="">Choose account…</option>
+          {% for account in calendar.accounts %}
+          <option value="{{ account.id }}">{{ account.name }}{% if account.wrapper_type %} · {{ account.wrapper_type }}{% endif %}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        Monthly amount
+        <input type="number" step="0.01" min="0" name="amount" placeholder="600" required>
+      </label>
+      <label>
+        Start month
+        <input type="month" name="start_month" value="{{ from_month }}" required>
+      </label>
+    </div>
+    <div class="badge-row mt-1">
+      <button type="submit" class="badge badge-primary-action">Add recurring rule</button>
+    </div>
+  </form>
+</section>
+
 {# ── Actions Grid: Create Plan and Fast Setup side-by-side ── #}
 <div class="card-grid mb-1">
   <section class="panel">

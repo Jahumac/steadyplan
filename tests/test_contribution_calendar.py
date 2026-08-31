@@ -952,3 +952,69 @@ def test_calendar_range_default_is_next_12(monkeypatch):
     # no range key → default to next 12 months (future-focused)
     f, t, k = budget_routes._resolve_calendar_range("", None, None, None)
     assert (f, t, k) == ("2026-08", "2027-07", "next_12")
+
+
+def test_recurring_rule_projects_forward_indefinitely(app, make_user):
+    """A recurring rule should apply to a far-future month via an open-ended override."""
+    uid, _, _ = make_user(username="rule-forward", password="password123")
+
+    with app.app_context():
+        from app.models import (
+            create_recurring_rule,
+            fetch_contribution_calendar,
+            fetch_recurring_rules,
+            get_connection,
+        )
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, monthly_contribution, current_value, valuation_mode, is_active)
+                VALUES (?, 'My SIPP', 'SIPP', 400, 0, 'manual', 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+        result = create_recurring_rule(uid, "Boost SIPP", account_id, 600, "2026-09")
+        assert result["ok"] is True
+
+        rules = fetch_recurring_rules(uid)
+        assert len(rules) == 1
+        assert rules[0]["rule_name"] == "Boost SIPP"
+        assert rules[0]["to_month"] == "9999-12"
+
+        # The rule should apply to a far-future month (e.g. 2030-01)
+        calendar = fetch_contribution_calendar(uid, "2030-01", "2030-01")
+        cell = calendar["accounts"][0]["months"][0]
+        assert cell["has_override"] is True
+        assert float(cell["override_amount"]) == 600.0
+
+
+def test_recurring_rule_delete(app, make_user):
+    uid, _, _ = make_user(username="rule-delete", password="password123")
+
+    with app.app_context():
+        from app.models import (
+            create_recurring_rule,
+            delete_recurring_rule,
+            fetch_recurring_rules,
+            get_connection,
+        )
+
+        with get_connection() as conn:
+            account_id = conn.execute(
+                """
+                INSERT INTO accounts (user_id, name, wrapper_type, monthly_contribution, current_value, valuation_mode, is_active)
+                VALUES (?, 'My SIPP', 'SIPP', 400, 0, 'manual', 1)
+                """,
+                (uid,),
+            ).lastrowid
+            conn.commit()
+
+        create_recurring_rule(uid, "Boost SIPP", account_id, 600, "2026-09")
+        assert len(fetch_recurring_rules(uid)) == 1
+
+        deleted = delete_recurring_rule(uid, "Boost SIPP")
+        assert deleted == 1
+        assert len(fetch_recurring_rules(uid)) == 0

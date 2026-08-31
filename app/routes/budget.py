@@ -21,11 +21,13 @@ from app.models import (
     create_budget_item,
     create_budget_section,
     create_temporary_contribution_plan,
+    create_recurring_rule,
     create_debt,
     delete_budget_item,
     delete_budget_items_by_section,
     delete_budget_section,
     delete_temporary_contribution_plan,
+    delete_recurring_rule,
     delete_debt,
     fetch_account,
     fetch_all_accounts,
@@ -37,6 +39,7 @@ from app.models import (
     fetch_budget_trend,
     fetch_contribution_calendar,
     fetch_temporary_contribution_plans,
+    fetch_recurring_rules,
     fetch_all_active_overrides,
     fetch_assumptions,
     fetch_debt,
@@ -780,11 +783,44 @@ def contribution_calendar():
                 flash("That temporary plan was not found.", "error")
             return redirect(url_for("budget.contribution_calendar", **redirect_args))
 
+        if form_name == "create_recurring_rule":
+            rule_name = (request.form.get("rule_name") or "").strip()
+            account_id = optional_int(request.form.get("account_id"), None)
+            amount = optional_float(request.form.get("amount"), None, min_val=0.0)
+            start_month = valid_month_key(request.form.get("start_month"))
+            pattern = (request.form.get("pattern") or "every_month").strip()
+
+            if not rule_name:
+                flash("Name the recurring rule so it can be found and removed later.", "error")
+            elif account_id is None:
+                flash("Choose which account the rule belongs to.", "error")
+            elif amount is None:
+                flash("Enter a valid monthly amount.", "error")
+            elif not start_month:
+                flash("Choose a valid start month.", "error")
+            else:
+                created = create_recurring_rule(uid, rule_name, account_id, amount, start_month, pattern)
+                if created.get("ok"):
+                    flash(f"Saved recurring rule '{rule_name}' — it applies every month from {start_month} onward.", "success")
+                else:
+                    flash("Could not save that recurring rule.", "error")
+            return redirect(url_for("budget.contribution_calendar", **redirect_args))
+
+        if form_name == "delete_recurring_rule":
+            reason = (request.form.get("reason") or request.form.get("rule_name") or "").strip()
+            deleted = delete_recurring_rule(uid, reason)
+            if deleted:
+                flash(f"Removed {deleted} recurring rule row{'s' if deleted != 1 else ''}.", "success")
+            else:
+                flash("That recurring rule was not found.", "error")
+            return redirect(url_for("budget.contribution_calendar", **redirect_args))
+
         return redirect(url_for("budget.contribution_calendar", **redirect_args))
 
     assumptions = fetch_assumptions(uid)
     calendar = fetch_contribution_calendar(uid, selected_from_month, selected_to_month, assumptions=assumptions)
     plans = fetch_temporary_contribution_plans(uid)
+    recurring_rules = fetch_recurring_rules(uid)
     pension_carry_forward_entries = fetch_pension_carry_forward(uid)
     allowance_frame = _build_contribution_allowance_frame(calendar, assumptions, pension_carry_forward_entries)
     month_columns = [
@@ -800,6 +836,7 @@ def contribution_calendar():
         calendar=calendar,
         allowance_frame=allowance_frame,
         plans=plans,
+        recurring_rules=recurring_rules,
         active_page="budget",
         monthly_update_href=url_for("monthly_review.monthly_review", month=selected_from_month),
     )
