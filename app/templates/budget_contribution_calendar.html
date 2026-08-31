@@ -78,7 +78,7 @@
           <td class="num text-muted" style="vertical-align: middle;">£{{ '{:,.0f}'.format(account.monthly_contribution) }}</td>
           {% for month in month_columns %}
           {% set cell = account.months[loop.index0] %}
-          <td class="num calendar-matrix-cell"
+          <td class="num calendar-matrix-cell{% if cell.is_past %} cell-past{% endif %}"
               {% if cell.has_override %}
                 data-tooltip="{{ cell.source_label }}{% if cell.plan_name %} · {{ cell.plan_name }}{% elif cell.reason %} · {{ cell.reason }}{% endif %}"
               {% endif %}>
@@ -94,7 +94,9 @@
                      data-land="{{ '{:.2f}'.format(cell.effective_amount) }}"
                      value="{% if cell.has_override %}{{ '{:.2f}'.format(cell.override_amount) }}{% else %}{{ '{:.2f}'.format(cell.default_amount) }}{% endif %}"
                      placeholder="{{ '{:.2f}'.format(cell.default_amount) }}"
+                     {% if cell.is_past %}readonly{% endif %}
               />
+              {% if cell.is_past and cell.is_confirmed %}<span class="cal-confirmed" title="Confirmed in monthly review">✓</span>{% endif %}
               <span class="save-indicator" id="ind-cal-{{ account.id }}-{{ month.key }}" style="position: absolute; right: -15px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; opacity: 0; transition: opacity 0.3s;"></span>
             </div>
           </td>
