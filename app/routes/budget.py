@@ -291,7 +291,6 @@ def _resolve_calendar_range(range_key, from_month, to_month, assumptions):
       - custom: explicit from/to (falls back to default if missing)
     """
     today = date.today()
-    default_from, default_to = _default_contribution_calendar_range()
 
     if range_key == "this_tax_year":
         start_year = today.year if today.month >= 4 else today.year - 1
@@ -309,13 +308,15 @@ def _resolve_calendar_range(range_key, from_month, to_month, assumptions):
         ret_m = _retirement_month_key(assumptions)
         if ret_m:
             return today.strftime("%Y-%m"), ret_m, range_key
-        # Fall back to default if retirement date is unknown
-        return default_from, default_to, "this_tax_year"
+        # Fall back to next 12 months if retirement date is unknown
+        from_m = today.strftime("%Y-%m")
+        return from_m, add_months_to_key(from_m, 11), "next_12"
 
-    # custom (or unknown): use explicit from/to, else default
+    # custom (or unknown): use explicit from/to, else default to next 12 months
     if from_month and to_month and from_month <= to_month:
         return from_month, to_month, "custom"
-    return default_from, default_to, "this_tax_year"
+    from_m = today.strftime("%Y-%m")
+    return from_m, add_months_to_key(from_m, 11), "next_12"
 
 
 def _tax_year_label_for_month(month_key):

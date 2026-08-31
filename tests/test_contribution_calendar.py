@@ -723,9 +723,9 @@ def test_contribution_calendar_page_loads(app, client, make_user, monkeypatch):
     assert "month-accent-" in html
     assert "contribution-calendar-hero" in html
     assert "settings-form contribution-calendar-form" in html
-    assert "2026-04" in html
-    assert "2028-03" in html
-    assert "24 months" in html
+    assert "2026-06" in html
+    assert "2027-05" in html
+    assert "12 months" in html
     assert "ISA total planned" in html
     assert "Cash ISA" in html
     assert "Stocks &amp; Shares ISA" in html
@@ -934,6 +934,21 @@ def test_calendar_range_till_retirement_falls_back_without_dob(monkeypatch):
     monkeypatch.setattr(budget_routes, "date", FakeDate)
 
     f, t, k = budget_routes._resolve_calendar_range("till_retirement", None, None, {})
-    # no DOB → fall back to this_tax_year
-    assert k == "this_tax_year"
-    assert f == "2026-04"
+    # no DOB → fall back to next_12
+    assert k == "next_12"
+    assert f == "2026-08"
+
+
+def test_calendar_range_default_is_next_12(monkeypatch):
+    from app.routes import budget as budget_routes
+
+    class FakeDate(real_date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 8, 31)
+
+    monkeypatch.setattr(budget_routes, "date", FakeDate)
+
+    # no range key → default to next 12 months (future-focused)
+    f, t, k = budget_routes._resolve_calendar_range("", None, None, None)
+    assert (f, t, k) == ("2026-08", "2027-07", "next_12")
