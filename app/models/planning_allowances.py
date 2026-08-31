@@ -1,6 +1,6 @@
 """Allowance tracking: ISA, pension, dividend, CGT, carry-forward, overrides."""
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from app.calculations import (
     to_decimal,
     add_months_to_key,
@@ -603,6 +603,27 @@ def fetch_contribution_calendar(user_id, from_month, to_month, assumptions=None)
             for row in override_rows:
                 overrides_by_account[int(row["account_id"])].append(dict(row))
 
+        # Monthly-review actuals: what was actually confirmed for past months.
+        actuals_by_account_month = {}
+        if account_ids:
+            placeholders = ", ".join("?" for _ in account_ids)
+            actual_rows = conn.execute(
+                f"""
+                SELECT mri.account_id, mr.month_key, mri.expected_contribution,
+                       mri.contribution_confirmed
+                FROM monthly_review_items mri
+                JOIN monthly_reviews mr ON mr.id = mri.review_id
+                WHERE mr.user_id = ?
+                  AND mri.account_id IN ({placeholders})
+                  AND mr.month_key >= ?
+                  AND mr.month_key <= ?
+                """,
+                (user_id, *account_ids, from_month, to_month),
+            ).fetchall()
+            for row in actual_rows:
+                actuals_by_account_month[(int(row["account_id"]), row["month_key"])] = row
+
+    current_month_key = date.today().strftime("%Y-%m")
     overlap_count = 0
     calendar_accounts = []
     for account in accounts:
@@ -632,10 +653,23 @@ def fetch_contribution_calendar(user_id, from_month, to_month, assumptions=None)
             effective_amount = to_decimal(
                 contribution_breakdown(_adj, assumptions)["total_into_pot"]
             )
+            actual_row = actuals_by_account_month.get((account_id, month_key))
+            is_past = month_key < current_month_key
             month_cells.append({
                 "month_key": month_key,
                 "default_amount": default_amount,
                 "effective_amount": effective_amount,
+                "is_past": is_past,
+                "actual_amount": (
+                    to_decimal(actual_row["expected_contribution"])
+                    if actual_row is not None
+                    else None
+                ),
+                "is_confirmed": (
+                    bool(actual_row["contribution_confirmed"])
+                    if actual_row is not None
+                    else False
+                ),
                 "has_override": selected is not None,
                 "override_amount": to_decimal(selected["override_amount"]) if selected is not None else None,
                 "reason": selected_reason,
