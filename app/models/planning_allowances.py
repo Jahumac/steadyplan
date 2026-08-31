@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from app.calculations import (
     to_decimal,
     add_months_to_key,
+    contribution_breakdown,
     select_best_matching_override,
 )
 from ._conn import get_connection
@@ -546,7 +547,7 @@ def delete_temporary_contribution_plan(user_id, plan_name_or_reason):
         return cur.rowcount or 0
 
 
-def fetch_contribution_calendar(user_id, from_month, to_month):
+def fetch_contribution_calendar(user_id, from_month, to_month, assumptions=None):
     month_keys = _month_keys_between(from_month, to_month)
     if not month_keys:
         return {"months": [], "accounts": [], "overlap_count": 0}
@@ -618,9 +619,23 @@ def fetch_contribution_calendar(user_id, from_month, to_month):
             if len(active_rows) > 1:
                 overlap_count += 1
             selected_reason = selected["reason"] if selected is not None else ""
+            # "Into pot" amount: what actually lands in the account after tax
+            # relief, LISA bonus, employer contribution and fees. Uses the
+            # cell's personal amount (override if present, else default).
+            personal_for_cell = (
+                to_decimal(selected["override_amount"])
+                if selected is not None
+                else default_amount
+            )
+            _adj = dict(account)
+            _adj["monthly_contribution"] = personal_for_cell
+            effective_amount = to_decimal(
+                contribution_breakdown(_adj, assumptions)["total_into_pot"]
+            )
             month_cells.append({
                 "month_key": month_key,
                 "default_amount": default_amount,
+                "effective_amount": effective_amount,
                 "has_override": selected is not None,
                 "override_amount": to_decimal(selected["override_amount"]) if selected is not None else None,
                 "reason": selected_reason,
