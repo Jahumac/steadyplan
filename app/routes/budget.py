@@ -264,6 +264,60 @@ def _default_contribution_calendar_range():
     return start_month, end_month
 
 
+def _retirement_month_key(assumptions):
+    """Return the 'YYYY-MM' of the user's retirement month, or None if unknown."""
+    if not assumptions:
+        return None
+    dob = assumptions.get("date_of_birth")
+    retirement_age = assumptions.get("retirement_age")
+    if not dob or not retirement_age:
+        return None
+    try:
+        dob_date = datetime.strptime(dob, "%Y-%m-%d").date()
+        retire_year = dob_date.year + int(retirement_age)
+        return f"{retire_year:04d}-{dob_date.month:02d}"
+    except (ValueError, TypeError):
+        return None
+
+
+def _resolve_calendar_range(range_key, from_month, to_month, assumptions):
+    """Resolve a calendar range from a preset key or explicit from/to months.
+
+    Returns (from_month, to_month, range_key). Presets:
+      - this_tax_year: current tax year (Apr 6 → Apr 5)
+      - next_12: next 12 months from now
+      - calendar_year: current calendar year (Jan → Dec)
+      - till_retirement: now → retirement month
+      - custom: explicit from/to (falls back to default if missing)
+    """
+    today = date.today()
+    default_from, default_to = _default_contribution_calendar_range()
+
+    if range_key == "this_tax_year":
+        start_year = today.year if today.month >= 4 else today.year - 1
+        return f"{start_year}-04", f"{start_year + 1}-03", range_key
+
+    if range_key == "next_12":
+        from_m = today.strftime("%Y-%m")
+        to_m = add_months_to_key(from_m, 11)
+        return from_m, to_m, range_key
+
+    if range_key == "calendar_year":
+        return f"{today.year:04d}-01", f"{today.year:04d}-12", range_key
+
+    if range_key == "till_retirement":
+        ret_m = _retirement_month_key(assumptions)
+        if ret_m:
+            return today.strftime("%Y-%m"), ret_m, range_key
+        # Fall back to default if retirement date is unknown
+        return default_from, default_to, "this_tax_year"
+
+    # custom (or unknown): use explicit from/to, else default
+    if from_month and to_month and from_month <= to_month:
+        return from_month, to_month, "custom"
+    return default_from, default_to, "this_tax_year"
+
+
 def _tax_year_label_for_month(month_key):
     year = int(month_key[:4])
     month = int(month_key[5:7])
@@ -579,22 +633,20 @@ def budget():
 @login_required
 def contribution_calendar():
     uid = current_user.id
-    default_from_month, default_to_month = _default_contribution_calendar_range()
-    selected_from_month = valid_month_key(request.values.get("from_month")) or default_from_month
-    raw_to_month = valid_month_key(request.values.get("to_month"))
-    if raw_to_month:
-        selected_to_month = raw_to_month
-    elif selected_from_month == default_from_month:
-        selected_to_month = default_to_month
-    else:
-        selected_to_month = add_months_to_key(selected_from_month, 23)
-    if selected_to_month < selected_from_month:
-        selected_to_month = add_months_to_key(selected_from_month, 23)
+    assumptions = fetch_assumptions(uid)
+    range_key = (request.values.get("range") or "").strip()
+    raw_from = valid_month_key(request.values.get("from_month"))
+    raw_to = valid_month_key(request.values.get("to_month"))
+    selected_from_month, selected_to_month, resolved_range = _resolve_calendar_range(
+        range_key, raw_from, raw_to, assumptions
+    )
 
     redirect_args = {
         "from_month": selected_from_month,
         "to_month": selected_to_month,
     }
+    if resolved_range and resolved_range != "custom":
+        redirect_args["range"] = resolved_range
 
     if request.method == "POST":
         form_name = (request.form.get("form_name") or "").strip()
