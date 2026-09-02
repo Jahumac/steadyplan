@@ -244,6 +244,33 @@ def broker_connection_last_tested_label(value):
     return value or "No broker snapshot check yet"
 
 
+_MANUAL_BROKER_COOLDOWN_SECONDS = 30
+
+
+def _broker_manual_action_on_cooldown(connection):
+    """Return a cooldown message if the connection was tested too recently.
+
+    Prevents a frustrated double-click on Preview/Retest from hammering the
+    broker and re-triggering its per-account rate limit.
+    """
+    if not connection:
+        return None
+    last_tested = connection.get("last_tested_at")
+    if not last_tested:
+        return None
+    try:
+        last_dt = datetime.fromisoformat(str(last_tested).replace("Z", "+00:00"))
+        if last_dt.tzinfo is None:
+            last_dt = last_dt.replace(tzinfo=timezone.utc)
+        elapsed = (datetime.now(timezone.utc) - last_dt).total_seconds()
+    except (ValueError, TypeError):
+        return None
+    if elapsed < _MANUAL_BROKER_COOLDOWN_SECONDS:
+        wait = int(_MANUAL_BROKER_COOLDOWN_SECONDS - elapsed) + 1
+        return f"Please wait ~{wait}s before another broker check to avoid rate-limiting."
+    return None
+
+
 def trading212_access_mode_label(value):
     if (value or "").strip().lower() == "read_only":
         return "Read-only"
@@ -1279,6 +1306,11 @@ def retest_trading212(connection_id):
         flash(trading212_connection_not_found_message(), "error")
         return _settings_trading212_redirect()
 
+    cooldown = _broker_manual_action_on_cooldown(connection)
+    if cooldown:
+        flash(cooldown, "error")
+        return _settings_trading212_redirect()
+
     try:
         api_key = decrypt_trading212_credential(connection.get("api_key_ciphertext"))
         api_secret = decrypt_trading212_credential(connection.get("api_secret_ciphertext"))
@@ -1324,6 +1356,11 @@ def preview_trading212(connection_id):
     connection = fetch_broker_connection(connection_id, current_user.id)
     if connection is None or connection.get("provider") != PROVIDER_TRADING212:
         flash(trading212_connection_not_found_message(), "error")
+        return _settings_trading212_redirect()
+
+    cooldown = _broker_manual_action_on_cooldown(connection)
+    if cooldown:
+        flash(cooldown, "error")
         return _settings_trading212_redirect()
 
     try:

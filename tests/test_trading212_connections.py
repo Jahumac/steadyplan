@@ -21,6 +21,7 @@ from app.models import (
 )
 from app.services.trading212 import (
     Trading212ConnectionError,
+    _friendly_http_error,
     decrypt_trading212_credential,
     encrypt_trading212_credential,
     fetch_trading212_account_summary,
@@ -2701,6 +2702,81 @@ def test_retest_trading212_failure_updates_status(app, client, make_user, monkey
         assert row is not None
         assert row["status"] == "error"
         assert row["last_error"] == "Trading 212 rate-limited the request. Please wait a moment and try again."
+
+
+def test_friendly_http_error_429_includes_reset_time():
+    import time
+    from datetime import datetime, timezone
+
+    reset_ts = int(time.time()) + 300
+    msg = _friendly_http_error(
+        429,
+        "",
+        environment="live",
+        headers={"x-ratelimit-reset": str(reset_ts)},
+    )
+    assert "resets in about" in msg
+    assert "min" in msg
+
+
+def test_friendly_http_error_429_without_header_mentions_five_minutes():
+    msg = _friendly_http_error(429, "", environment="live", headers={})
+    assert "~5 minutes" in msg
+
+
+def test_manual_broker_action_cooldown_blocks_rapid_retest(app, client, make_user, monkeypatch):
+    from datetime import datetime, timezone
+
+    uid, username, password = make_user(username="t212-cooldown")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    with app.app_context():
+        connection = upsert_broker_connection(
+            user_id=uid,
+            provider=PROVIDER_TRADING212,
+            environment="demo",
+            label="Trading 212 Demo",
+            access_mode="read_only",
+            api_key_ciphertext=encrypt_trading212_credential("demo-key-1111"),
+            api_secret_ciphertext=encrypt_trading212_credential("demo-secret-2222"),
+            status="connected",
+            last_tested_at=datetime.now(timezone.utc).isoformat(),
+            external_account_id="123",
+            external_account_currency="GBP",
+            external_total_value=10.0,
+        )
+        cid = connection["id"]
+
+    called = {"n": 0}
+
+    def fake_probe(*, api_key, api_secret, environment):
+        called["n"] += 1
+        return {
+            "ok": True,
+            "message": "ok",
+            "summary": {
+                "environment": "demo",
+                "account_id": "123",
+                "currency": "GBP",
+                "available_to_trade": 0,
+                "cash_in_pies": 0,
+                "cash_reserved_for_orders": 0,
+                "investments_current_value": 10.0,
+                "investments_total_cost": 10.0,
+                "investments_unrealized_profit_loss": 0,
+                "investments_realized_profit_loss": 0,
+                "total_value": 10.0,
+                "fetched_at": datetime.now(timezone.utc).isoformat(),
+            },
+        }
+
+    monkeypatch.setattr("app.routes.settings.probe_trading212_connection", fake_probe)
+
+    resp = client.post(f"/settings/trading212/{cid}/retest", data={}, follow_redirects=True)
+    assert resp.status_code == 200
+    body = resp.data.decode("utf-8", errors="ignore")
+    assert "wait" in body.lower()
+    assert called["n"] == 0  # blocked by cooldown, no API call made
 
 
 def test_preview_trading212_snapshot_renders_matches_without_writing_data(app, client, make_user, monkeypatch):
