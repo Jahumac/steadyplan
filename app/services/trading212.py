@@ -133,13 +133,14 @@ def _request_json(path, *, api_key, api_secret, environment, timeout=12):
             body = exc.read().decode("utf-8", errors="replace")
         except Exception:
             body = ""
-        raise Trading212ConnectionError(_friendly_http_error(exc.code, body, environment=env)) from exc
+        headers = exc.headers or {}
+        raise Trading212ConnectionError(_friendly_http_error(exc.code, body, environment=env, headers=headers)) from exc
     except urllib.error.URLError as exc:
         reason = getattr(exc, "reason", exc)
         raise Trading212ConnectionError(f"Trading 212 connection failed: {reason}") from exc
 
 
-def _friendly_http_error(status_code, body, *, environment):
+def _friendly_http_error(status_code, body, *, environment, headers=None):
     parsed_message = None
     if body:
         try:
@@ -156,7 +157,18 @@ def _friendly_http_error(status_code, body, *, environment):
             f"and remember the broker currently limits the Public API to Invest and Stocks ISA accounts.{extra}"
         )
     if status_code == 429:
-        return "Trading 212 rate-limited the request. Please wait a moment and try again."
+        reset_ts = (headers or {}).get("x-ratelimit-reset")
+        if reset_ts:
+            try:
+                reset_dt = datetime.fromtimestamp(int(reset_ts), tz=timezone.utc)
+                wait = max(1, int((reset_dt - datetime.now(timezone.utc)).total_seconds()))
+                return (
+                    f"Trading 212 rate-limited the request. It resets in about "
+                    f"{wait // 60} min {wait % 60}s — please wait before retrying."
+                )
+            except (ValueError, TypeError, OSError):
+                pass
+        return "Trading 212 rate-limited the request. It typically resets within ~5 minutes — please wait before retrying."
     if parsed_message:
         return f"Trading 212 returned HTTP {status_code}: {parsed_message}"
     return f"Trading 212 returned HTTP {status_code}."
