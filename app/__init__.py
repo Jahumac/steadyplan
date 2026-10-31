@@ -254,6 +254,13 @@ def create_app():
         # Content Security Policy (CSP)
         # Stricter policy: scripts only from self and trusted CDN.
         # Inline JS removed from base.html to allow 'unsafe-inline' removal if possible.
+        #
+        # NOTE: there used to be a branch here that relaxed the policy to
+        # 'unsafe-inline' + 'unsafe-eval' for any path ending in "sandbox.html",
+        # for the Babel-based React demo. That demo is served by the public site
+        # (Cloudflare Pages), not by Flask — /sandbox.html is a 404 here — so the
+        # branch was unreachable. It was removed rather than left as a latent way
+        # to weaken CSP on the app if such a path ever did resolve.
         csp = (
             "default-src 'self'; "
             "script-src 'self' https://cdnjs.cloudflare.com; "
@@ -262,18 +269,6 @@ def create_app():
             "img-src 'self' data:; "
             "connect-src 'self';"
         )
-
-        # The Sandbox uses Babel standalone for client-side React transpilation, 
-        # which fundamentally requires 'unsafe-inline' and 'unsafe-eval'.
-        if request.path.endswith("sandbox.html"):
-            csp = (
-                "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; "
-                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-                "font-src 'self' https://fonts.gstatic.com; "
-                "img-src 'self' data:; "
-                "connect-src 'self';"
-            )
 
         response.headers["Content-Security-Policy"] = csp
 
