@@ -157,7 +157,10 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     html = response.get_data(as_text=True)
 
     assert '<section class="budget-year-strip month-strip-global month-strip-mobile-hidden' in html
-    assert 'class="badge-row"' in html
+    # Assert the semantic hook, not the exact attribute string: this row is the
+    # "primary actions moved into the hero" behaviour under test, and utility
+    # classes get appended to it (e.g. "badge-row accounts-hero-actions").
+    assert "accounts-hero-actions" in html
     assert 'href="/accounts/?mode=create">+ Add account</a>' in html
     assert 'href="/accounts/?mode=create&amp;focus=first_account"' not in html
     assert 'href="/accounts/balances/bulk?month_key=' in html
@@ -167,7 +170,7 @@ def test_accounts_page_moves_primary_actions_into_hero_for_mobile_cleanup(app, c
     assert '£1,300/mo' not in html
     assert '<div class="row-end">' not in html
 
-    hero_idx = html.index('class="badge-row"')
+    hero_idx = html.index("accounts-hero-actions")
     add_idx = html.index('href="/accounts/?mode=create">+ Add account</a>')
     grid_idx = html.index('class="acct-grid"')
 
