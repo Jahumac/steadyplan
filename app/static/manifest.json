@@ -1,12 +1,18 @@
 {
+  "id": "/?source=pwa",
   "name": "SteadyPlan",
   "short_name": "SteadyPlan",
   "description": "Self-hosted UK finance cockpit for long-term planning",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "orientation": "portrait-primary",
+  "lang": "en-GB",
+  "dir": "ltr",
+  "categories": ["finance", "productivity"],
   "icons": [
     {
       "src": "/static/icons/icon-192.png",
@@ -19,6 +25,26 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Accounts",
+      "short_name": "Accounts",
+      "description": "Where you stand, account by account",
+      "url": "/accounts/"
+    },
+    {
+      "name": "Monthly update",
+      "short_name": "Update",
+      "description": "Review this month's balances and contributions",
+      "url": "/monthly-review/"
+    },
+    {
+      "name": "Budget",
+      "short_name": "Budget",
+      "description": "Where your money is going",
+      "url": "/budget/"
     }
   ]
 }

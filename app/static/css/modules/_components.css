@@ -725,6 +725,22 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
+/* PWA install affordance — only revealed when the browser reports the app is
+   installable (see the beforeinstallprompt handler in app.js). */
+.pwa-install {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  border: 0;
+  font-family: inherit;
+  white-space: nowrap;
+}
+/* Must beat .pwa-install's own display rule regardless of CSS load order. */
+.pwa-install.hidden {
+  display: none;
+}
+
 /* Mobile */
 @media (max-width: 680px) {
   .auth-shell {
