@@ -85,12 +85,48 @@ def test_install_button_is_inside_the_authenticated_guard(app):
     assert 'id="pwa-install-btn"' in guarded_region
 
 
-def test_install_prompt_wiring_exists_in_scripts(app):
-    """The button is inert without the beforeinstallprompt handler in app.js."""
-    js = (Path(app.static_folder) / "js" / "app.js").read_text(encoding="utf-8")
+def test_install_prompt_wiring_exists_in_pwa_script(app):
+    """The button is inert without the beforeinstallprompt handler."""
+    js = (Path(app.static_folder) / "js" / "pwa.js").read_text(encoding="utf-8")
     assert "beforeinstallprompt" in js
     assert "appinstalled" in js
     assert "pwa-install-btn" in js
     # Prompt replay on click, and suppression once installed/standalone.
     assert "prompt()" in js
     assert "display-mode: standalone" in js
+    # Service worker registration lives here too, so the login page can use it.
+    assert "serviceWorker" in js
+    assert "/sw.js" in js
+
+
+def test_login_page_is_installable(app, client):
+    """The login page must advertise the manifest and register the service worker.
+
+    Without this Chrome will not offer to install the app until after first sign-in,
+    which is the wrong moment to ask someone standing at a login screen on a phone.
+    """
+    html = client.get("/login").get_data(as_text=True)
+
+    assert 'rel="manifest"' in html
+    assert "manifest.json" in html
+    assert "js/pwa.js" in html
+    assert 'name="theme-color"' in html
+    assert "apple-touch-icon" in html
+
+
+def test_app_pages_still_load_pwa_script(app, client, make_user):
+    uid, username, password = make_user(username="pwa-appjs", password="password123")
+    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
+
+    html = client.get("/").get_data(as_text=True)
+    assert "js/pwa.js" in html
+    assert 'rel="manifest"' in html
+
+
+def test_pwa_script_is_served_and_cached_by_the_service_worker(app, client):
+    assert client.get("/static/js/pwa.js").status_code == 200
+
+    sw = (Path(app.static_folder) / "sw.js").read_text(encoding="utf-8")
+    assert "/static/js/pwa.js" in sw
+    # Cache name must be bumped whenever the shell changes, or clients keep the old one.
+    assert "steadyplan-cache-v5" in sw

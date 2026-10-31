@@ -12,12 +12,13 @@
  * CSS/JS instead of running stale shell assets indefinitely.
  */
 
-const CACHE_NAME = 'steadyplan-cache-v4';
+const CACHE_NAME = 'steadyplan-cache-v5';
 
 /* App shell files to pre-cache on install */
 const APP_SHELL = [
   '/static/css/styles.css',
   '/static/js/charts.js',
+  '/static/js/pwa.js',
   '/static/manifest.json',
   '/static/icons/icon-180.png',
   '/static/icons/icon-192.png',
