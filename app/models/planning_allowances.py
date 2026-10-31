@@ -330,6 +330,28 @@ def fetch_contribution_overrides_for_reason(account_id, user_id, reason):
         ).fetchall()
 
 
+def fetch_plan_editor_overrides(account_id, user_id):
+    """Overrides that represent a *standing* plan change for this account.
+
+    These are the rows a plan editor wrote, as opposed to one-off month tweaks or
+    dated temporary plans: legacy ``schedule`` segments (projections' old Payment
+    plan editor) and ``rule:<name>`` recurring rules (payment calendar). Used by the
+    read-only plan summary on the projections page so it agrees with the calendar.
+    """
+    with get_connection() as conn:
+        if not _account_belongs_to_user(conn, account_id, user_id):
+            return []
+        return conn.execute(
+            """
+            SELECT * FROM contribution_overrides
+            WHERE account_id = ?
+              AND (reason = 'schedule' OR reason LIKE 'rule:%')
+            ORDER BY from_month ASC
+            """,
+            (account_id,),
+        ).fetchall()
+
+
 def delete_contribution_overrides_for_reason(account_id, user_id, reason):
     with get_connection() as conn:
         deleted = _delete_overrides_for_reason(conn, account_id, user_id, reason)
