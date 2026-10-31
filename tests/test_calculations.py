@@ -305,3 +305,87 @@ def test_pension_projection_respects_reviewed_skip_in_year_end_projection():
 
     assert usage["pension_used"] == 200
     assert usage["projected_total"] == 1100
+
+
+# ── effective_personal_contribution: the single contribution resolver ────────
+#
+# Precedence must be: confirmed review amount > narrowest matching override >
+# account default. Every surface (allowances, projections, budget, reviews,
+# export) reads through here, so these tests are the contract.
+
+
+def _override(from_month, to_month, amount, override_id=1):
+    return {
+        "id": override_id,
+        "from_month": from_month,
+        "to_month": to_month,
+        "override_amount": amount,
+    }
+
+
+def test_effective_personal_contribution_falls_back_to_account_default():
+    from app.calculations import effective_personal_contribution
+
+    assert effective_personal_contribution(1, 300, "2026-06") == 300
+    assert effective_personal_contribution(1, 300, "2026-06", [], {}) == 300
+
+
+def test_effective_personal_contribution_prefers_override_over_default():
+    from app.calculations import effective_personal_contribution
+
+    rows = [_override("2026-01", "2026-12", 250)]
+    assert effective_personal_contribution(1, 300, "2026-06", rows) == 250.0
+
+
+def test_effective_personal_contribution_ignores_override_outside_its_span():
+    from app.calculations import effective_personal_contribution
+
+    rows = [_override("2026-01", "2026-03", 250)]
+    assert effective_personal_contribution(1, 300, "2026-06", rows) == 300
+
+
+def test_effective_personal_contribution_prefers_narrowest_override():
+    from app.calculations import effective_personal_contribution
+
+    rows = [
+        _override("2026-01", "2026-12", 250, override_id=1),   # 12 months
+        _override("2026-06", "2026-06", 999, override_id=2),   # 1 month
+    ]
+    assert effective_personal_contribution(1, 300, "2026-06", rows) == 999.0
+
+
+def test_effective_personal_contribution_confirmed_review_beats_override():
+    from app.calculations import effective_personal_contribution
+
+    rows = [_override("2026-01", "2026-12", 250)]
+    reviews = {(1, "2026-06"): 180.0}
+    assert effective_personal_contribution(1, 300, "2026-06", rows, reviews) == 180.0
+
+
+def test_effective_personal_contribution_confirmed_zero_is_respected():
+    """A confirmed £0 (user skipped that month) must not fall through to the
+    override or the default — 0 is a real answer, not a missing value."""
+    from app.calculations import effective_personal_contribution
+
+    rows = [_override("2026-01", "2026-12", 250)]
+    reviews = {(1, "2026-06"): 0.0}
+    assert effective_personal_contribution(1, 300, "2026-06", rows, reviews) == 0.0
+
+
+def test_effective_personal_contribution_zero_override_is_respected():
+    from app.calculations import effective_personal_contribution
+
+    rows = [_override("2026-06", "2026-06", 0)]
+    assert effective_personal_contribution(1, 300, "2026-06", rows) == 0.0
+
+
+def test_effective_personal_contribution_review_is_keyed_per_account_and_month():
+    from app.calculations import effective_personal_contribution
+
+    reviews = {(2, "2026-06"): 55.0}
+    # Right month, wrong account -> default.
+    assert effective_personal_contribution(1, 300, "2026-06", [], reviews) == 300
+    # Right account, wrong month -> default.
+    assert effective_personal_contribution(2, 300, "2026-07", [], reviews) == 300
+    # Exact match -> review amount.
+    assert effective_personal_contribution(2, 300, "2026-06", [], reviews) == 55.0

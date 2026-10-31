@@ -1227,7 +1227,27 @@ def _tax_year_contribution_month_keys(today, salary_day):
 
 
 
-def _effective_personal_amount_for_month(account_id, monthly_default, month_key, override_rows=None, review_amount_map=None):
+def effective_personal_contribution(
+    account_id,
+    monthly_default,
+    month_key,
+    override_rows=None,
+    review_amount_map=None,
+):
+    """The single answer to "what does this account get in this month?".
+
+    Precedence, highest first:
+
+    1. A confirmed monthly-review amount for ``(account_id, month_key)`` —
+       the user has looked at real money and confirmed it.
+    2. The narrowest matching contribution override (see
+       ``select_best_matching_override``) — a plan the user entered.
+    3. ``monthly_default`` — the account's standing monthly contribution.
+
+    Every caller must route through here rather than re-implementing the
+    chain. Duplicated copies of this precedence are how two surfaces end up
+    disagreeing about the same month.
+    """
     review_amount_map = review_amount_map or {}
     rkey = (account_id, month_key)
     if rkey in review_amount_map:
@@ -1328,11 +1348,11 @@ def calculate_isa_usage(
             monthly = to_float(acc.get("monthly_contribution") or 0)
         override_rows = override_map.get(acc["id"], [])
         total = sum(
-            _effective_personal_amount_for_month(acc["id"], monthly, mk, override_rows, review_amount_map)
+            effective_personal_contribution(acc["id"], monthly, mk, override_rows, review_amount_map)
             for mk in month_keys
         )
         projected = sum(
-            _effective_personal_amount_for_month(acc["id"], monthly, mk, override_rows, review_amount_map)
+            effective_personal_contribution(acc["id"], monthly, mk, override_rows, review_amount_map)
             for mk in projection_month_keys
         )
         entry = {
@@ -1518,7 +1538,7 @@ def calculate_pension_usage(
 
         for mk in month_keys:
             personal = float(
-                _effective_personal_amount_for_month(int(acc["id"]), default_personal, mk, override_rows, review_amount_map)
+                effective_personal_contribution(int(acc["id"]), default_personal, mk, override_rows, review_amount_map)
                 or 0
             )
             if personal <= 0:
@@ -1545,7 +1565,7 @@ def calculate_pension_usage(
         projected = 0.0
         for mk in projection_month_keys:
             personal = float(
-                _effective_personal_amount_for_month(int(acc["id"]), default_personal, mk, override_rows, review_amount_map)
+                effective_personal_contribution(int(acc["id"]), default_personal, mk, override_rows, review_amount_map)
                 or 0
             )
             if personal <= 0:
