@@ -1258,6 +1258,29 @@ def effective_personal_contribution(
     return monthly_default
 
 
+def planned_contribution_for_month(overrides, month_key, fallback_amount):
+    """What the **plan** says for this month, ignoring later confirmed actuals.
+
+    This is deliberately *not* ``effective_personal_contribution``. The two
+    answer different questions:
+
+    - ``planned_contribution_for_month`` — "what was planned?" Used to seed a
+      monthly-review item's expected contribution, to recalculate that seed
+      when overrides change, and for the projections/export schedule views.
+    - ``effective_personal_contribution`` — "what actually lands?" A confirmed
+      review wins over the plan, because the user has seen real money.
+
+    Keeping them separate is required, not incidental: seeding a review from
+    its own confirmed value would be circular.
+
+    Returns Decimal.
+    """
+    selected = select_best_matching_override(overrides or [], month_key)
+    if selected is not None:
+        return to_decimal(selected["override_amount"])
+    return to_decimal(fallback_amount)
+
+
 def calculate_isa_usage(
     accounts,
     ad_hoc_contributions,
