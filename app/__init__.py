@@ -232,7 +232,23 @@ def create_app():
                 mtime = 0
             return url_for("static", filename=filename, v=mtime)
 
-        return {"static_v": static_v}
+        def sw_url():
+            """Versioned URL for the service worker, on the root path.
+
+            Must stay at /sw.js, NOT /static/sw.js: a service worker's default scope
+            is its own directory, so serving it from /static/ scopes it to /static/
+            and leaves every app page uncontrolled. The ?v=<mtime> param exists
+            because a CDN caches .js and would otherwise serve a stale worker
+            forever — the path stays / for scope, the query busts the cache.
+            """
+            path = os.path.join(app.static_folder, "sw.js")
+            try:
+                mtime = int(os.path.getmtime(path))
+            except OSError:
+                mtime = 0
+            return url_for("service_worker", v=mtime)
+
+        return {"static_v": static_v, "sw_url": sw_url}
 
     # ── Security headers ────────────────────────────────────────────────────
     @app.after_request

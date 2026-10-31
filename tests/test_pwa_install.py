@@ -132,21 +132,30 @@ def test_pwa_script_is_served_and_cached_by_the_service_worker(app, client):
     assert "steadyplan-cache-v5" in sw
 
 
-def test_service_worker_url_is_cache_busted(app, client):
-    """A CDN caches .js by default and was serving a day-old /sw.js.
+def test_service_worker_url_is_cache_busted_and_root_scoped(app, client):
+    """The worker must stay at /sw.js — and still carry a cache-buster.
 
-    Without a per-build URL a deployed service-worker update never reaches clients,
-    so the app can never update itself. The template must pass a versioned URL.
+    Two failure modes are pinned here:
+    1. A CDN caches .js and was serving a day-old worker, so updates never reached
+       clients. Fixed with a ?v=<mtime> query.
+    2. Putting it under /static/ (via url_for('static', ...)) scopes the worker to
+       /static/ only, so it controls no app page at all. The path must stay root.
     """
     import re
 
-    for path in ("/login",):
-        html = client.get(path).get_data(as_text=True)
-        match = re.search(r'data-sw-url="([^"]+)"', html)
-        assert match, f"no data-sw-url on {path}"
-        url = match.group(1)
-        assert "sw.js" in url
-        assert "?v=" in url, "service worker URL must carry a cache-busting ?v= param"
+    html = client.get("/login").get_data(as_text=True)
+    match = re.search(r'data-sw-url="([^"]+)"', html)
+    assert match, "no data-sw-url on the login page"
+    url = match.group(1)
+
+    assert url.startswith("/sw.js"), f"service worker must be root-scoped, got {url}"
+    assert "/static/sw.js" not in url, "serving the worker from /static/ scopes it to /static/"
+    assert "?v=" in url, "service worker URL must carry a cache-busting ?v= param"
+
+    # The root route must actually serve it.
+    resp = client.get("/sw.js")
+    assert resp.status_code == 200
+    assert "javascript" in resp.headers.get("Content-Type", "")
 
     js = (Path(app.static_folder) / "js" / "pwa.js").read_text(encoding="utf-8")
     assert "data-sw-url" in js
