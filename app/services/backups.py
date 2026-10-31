@@ -128,13 +128,20 @@ def _update_latest_symlink(backup_dir: Path, newest: Path) -> None:
 
 
 def list_backups(data_dir: Path) -> list[dict]:
+    """Return backup files ordered oldest → newest **by modification time**.
+
+    Ordering by name is wrong: one-off snapshots such as
+    ``finance-pre-restore-*.db`` sort after ``finance-YYYY-MM-DD.db``
+    alphabetically, so a stale August snapshot came out as "the newest backup"
+    and callers taking ``[-1]`` reported it as the last backup forever.
+    """
     backup_dir = data_dir / "backups"
     if not backup_dir.exists():
         return []
+    files = [p for p in backup_dir.glob("finance*.db") if not p.is_symlink()]
+    files.sort(key=lambda p: p.stat().st_mtime)
     out = []
-    for p in sorted(backup_dir.glob("finance*.db")):
-        if p.is_symlink():
-            continue
+    for p in files:
         stat = p.stat()
         out.append({
             "name": p.name,
