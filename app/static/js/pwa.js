@@ -12,8 +12,15 @@
   'use strict';
 
   /* ── Service worker ──────────────────────────────────────────────────── */
+  /* The script URL carries a ?v=<mtime> cache-buster supplied by the template.
+     This matters behind a CDN: Cloudflare caches .js by default and was serving
+     a day-old /sw.js, so a deployed service-worker update could never reach
+     clients. A per-build URL gives it a fresh cache key every time. */
+  var pwaInit = document.getElementById('pwa-init');
+  var swUrl = (pwaInit && pwaInit.getAttribute('data-sw-url')) || '/sw.js';
+
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register(swUrl)
       .then(reg => { setInterval(() => reg.update(), 60 * 60 * 1000); })
       .catch(() => { });
   }

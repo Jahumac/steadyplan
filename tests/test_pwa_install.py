@@ -130,3 +130,24 @@ def test_pwa_script_is_served_and_cached_by_the_service_worker(app, client):
     assert "/static/js/pwa.js" in sw
     # Cache name must be bumped whenever the shell changes, or clients keep the old one.
     assert "steadyplan-cache-v5" in sw
+
+
+def test_service_worker_url_is_cache_busted(app, client):
+    """A CDN caches .js by default and was serving a day-old /sw.js.
+
+    Without a per-build URL a deployed service-worker update never reaches clients,
+    so the app can never update itself. The template must pass a versioned URL.
+    """
+    import re
+
+    for path in ("/login",):
+        html = client.get(path).get_data(as_text=True)
+        match = re.search(r'data-sw-url="([^"]+)"', html)
+        assert match, f"no data-sw-url on {path}"
+        url = match.group(1)
+        assert "sw.js" in url
+        assert "?v=" in url, "service worker URL must carry a cache-busting ?v= param"
+
+    js = (Path(app.static_folder) / "js" / "pwa.js").read_text(encoding="utf-8")
+    assert "data-sw-url" in js
+    assert "getElementById('pwa-init')" in js
