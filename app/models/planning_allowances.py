@@ -6,6 +6,7 @@ from app.calculations import (
     add_months_to_key,
     contribution_breakdown,
     select_best_matching_override,
+    planned_contribution_for_month,
 )
 from ._conn import get_connection
 
@@ -884,10 +885,7 @@ def _effective_override_amount_for_month(conn, account_id, month_key, fallback_a
         """,
         (account_id, month_key, month_key),
     ).fetchall()
-    selected = select_best_matching_override(rows, month_key)
-    if selected is not None:
-        return to_decimal(selected["override_amount"])
-    return to_decimal(fallback_amount)
+    return planned_contribution_for_month(rows, month_key, fallback_amount)
 
 
 def _recalculate_review_items_for_account_month_range(conn, account_id, user_id, from_month, to_month):

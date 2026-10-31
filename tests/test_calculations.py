@@ -389,3 +389,52 @@ def test_effective_personal_contribution_review_is_keyed_per_account_and_month()
     assert effective_personal_contribution(2, 300, "2026-07", [], reviews) == 300
     # Exact match -> review amount.
     assert effective_personal_contribution(2, 300, "2026-06", [], reviews) == 55.0
+
+
+# ── planned_contribution_for_month: the plan-tier resolver ───────────────────
+#
+# Two resolvers, two different questions. These tests keep them from being
+# "helpfully" merged later, which would be circular for review seeding.
+
+
+def test_planned_contribution_prefers_override():
+    from decimal import Decimal
+    from app.calculations import planned_contribution_for_month
+
+    rows = [_override("2026-01", "2026-12", 250)]
+    assert planned_contribution_for_month(rows, "2026-06", 300) == Decimal("250.0")
+
+
+def test_planned_contribution_falls_back_to_fallback_amount():
+    from decimal import Decimal
+    from app.calculations import planned_contribution_for_month
+
+    assert planned_contribution_for_month([], "2026-06", 300) == Decimal("300.0")
+    assert planned_contribution_for_month(None, "2026-06", 300) == Decimal("300.0")
+
+
+def test_planned_contribution_returns_decimal_not_float():
+    """Money math downstream compares Decimals; a float here breaks that."""
+    from decimal import Decimal
+    from app.calculations import planned_contribution_for_month
+
+    result = planned_contribution_for_month([_override("2026-06", "2026-06", 12.5)], "2026-06", 0)
+    assert isinstance(result, Decimal)
+
+
+def test_plan_and_actual_resolvers_answer_different_questions():
+    """The plan tier must ignore confirmed reviews; the actual tier must honour them.
+
+    Seeding a review item from its own confirmed value would be circular, which
+    is exactly why these are two functions and not one.
+    """
+    from app.calculations import (
+        effective_personal_contribution,
+        planned_contribution_for_month,
+    )
+
+    rows = [_override("2026-01", "2026-12", 250)]
+    reviews = {(1, "2026-06"): 180.0}
+
+    assert planned_contribution_for_month(rows, "2026-06", 300) == 250
+    assert effective_personal_contribution(1, 300, "2026-06", rows, reviews) == 180.0

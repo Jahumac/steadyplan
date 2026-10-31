@@ -1,7 +1,7 @@
 """Monthly reviews: fetch, create, update, review items, contribution flags."""
 from app.calculations import (
     to_decimal,
-    select_best_matching_override,
+    planned_contribution_for_month,
 )
 from ._conn import get_connection
 from .accounts import fetch_all_accounts
@@ -27,10 +27,7 @@ def _fetch_all_overrides_for_user(conn, user_id, month_key):
 
 def _expected_contribution_from_bulk(account_id, overrides_by_acc, month_key, fallback_val):
     overrides = overrides_by_acc.get(int(account_id), [])
-    selected = select_best_matching_override(overrides, month_key)
-    if selected is not None:
-        return to_decimal(selected["override_amount"])
-    return to_decimal(fallback_val)
+    return planned_contribution_for_month(overrides, month_key, fallback_val)
 
 
 def fetch_or_create_monthly_review(month_key, user_id):
