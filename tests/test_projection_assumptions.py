@@ -103,7 +103,8 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Each account at retirement (scenario estimate)" not in body
     assert "See how each account could look at age 60" in body
     assert "Scenario estimates for each account at age 60" not in body
-    assert body.count("Change monthly payments by month") == 2
+    assert body.count("Standing changes to your monthly payment") == 2
+    assert "Change monthly payments by month" not in body
     assert "Change monthly payments by age" not in body
     assert "Change contributions at certain ages" not in body
     assert "Projected values for each account at age 60" not in body
@@ -132,7 +133,8 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
     assert "Monthly total" not in body
     assert "Try different retirement ages, growth rates, or starting monthly payments to see how the future estimate changes. Saved month-by-month payment schedules stay in your plan baseline; changes here are temporary and not saved." in body
     assert "Try different retirement ages, growth rates, or monthly payments to see how the future estimate changes. Nothing here is saved unless you save changes elsewhere." not in body
-    assert body.count("Add rows like “from September 2030 → £600 a month”. This saves to your plan and updates the future estimate.") == 2
+    assert body.count("Read-only here. Your plan is edited in one place:") == 2
+    assert "Add rows like “from September 2030 → £600 a month”. This saves to your plan and updates the future estimate." not in body
     assert "Add rows like “from age 50 → £600 a month”. This saves to your plan and updates the future estimate." not in body
     assert "£600/mo" not in body
     assert "· £500 a month" in body

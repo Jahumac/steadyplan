@@ -1,5 +1,4 @@
-import calendar
-from datetime import date, datetime
+from datetime import date
 
 from flask import Blueprint, jsonify, render_template, request
 from flask_login import current_user, login_required
@@ -23,14 +22,12 @@ from app.calculations import (
     years_to_retirement,
 )
 from app.models import (
-    create_contribution_override,
-    delete_contribution_overrides_for_reason,
     fetch_account,
     fetch_all_accounts,
     fetch_all_goals,
     fetch_assumptions,
     fetch_contribution_overrides,
-    fetch_contribution_overrides_for_reason,
+    fetch_plan_editor_overrides,
     fetch_holding_totals_by_account,
 )
 
@@ -71,37 +68,6 @@ def _year_by_year_chart(accounts, assumptions):
         values.append(round(total, 0))
 
     return labels, values
-
-
-def _month_key_from_date(d):
-    return f"{d.year:04d}-{d.month:02d}"
-
-
-def _date_at_age(dob_str, age):
-    if not dob_str:
-        return None
-    try:
-        dob = datetime.strptime(dob_str, "%Y-%m-%d").date()
-    except (ValueError, TypeError):
-        return None
-    try:
-        year = int(dob.year + int(age))
-    except (TypeError, ValueError):
-        return None
-    day = min(dob.day, calendar.monthrange(year, dob.month)[1])
-    return date(year, dob.month, day)
-
-
-def _normalise_month_key(month_key):
-    if not month_key:
-        return None
-    try:
-        y, m = [int(x) for x in str(month_key).split("-")]
-        if y < 1900 or m < 1 or m > 12:
-            return None
-    except (ValueError, TypeError):
-        return None
-    return f"{y:04d}-{m:02d}"
 
 
 def _age_at_month_key(dob_str, month_key):
@@ -289,9 +255,21 @@ def api_account_series():
     return jsonify({"ok": True, "points": points})
 
 
-@projections_bp.route("/api/account-schedule", methods=["GET", "POST"])
+@projections_bp.route("/api/account-schedule", methods=["GET"])
 @login_required
 def api_account_schedule():
+    """Read-only view of the standing changes to this account's monthly payment.
+
+    The projections page used to be a *second* editor of ``contribution_overrides``,
+    writing rows with ``reason='schedule'`` while the payment calendar wrote
+    ``temporary_plan:*`` and ``rule:*`` to the same table. Two editors, one table:
+    whichever one you touched last silently won, and the two surfaces could disagree
+    about the same month.
+
+    The calendar is now the only editor. This endpoint only reads, and it reads the
+    rows a plan editor actually wrote (legacy ``schedule`` segments plus calendar
+    recurring rules), so it reflects what the calendar says.
+    """
     uid = current_user.id
     assumptions = fetch_assumptions(uid)
     if not assumptions:
@@ -299,117 +277,39 @@ def api_account_schedule():
 
     dob = assumptions.get("date_of_birth") if isinstance(assumptions, dict) else assumptions["date_of_birth"]
 
-    if request.method == "GET":
-        account_id = request.args.get("account_id", type=int)
-        if not account_id:
-            return jsonify({"ok": False, "error": "account_id required"}), 400
-        account = fetch_account(account_id, uid)
-        if not account:
-            return jsonify({"ok": False, "error": "account not found"}), 404
-        overrides = fetch_contribution_overrides_for_reason(account_id, uid, "schedule")
-        grouped = {}
-        for ov in overrides:
-            mk = ov.get("from_month") if isinstance(ov, dict) else ov["from_month"]
-            if not mk:
-                continue
-            grouped.setdefault(mk, []).append(ov)
-        rules = []
-        for mk in sorted(grouped.keys()):
-            selected = select_best_matching_override(grouped[mk], mk)
-            amount = float(selected["override_amount"] or 0) if selected is not None else float(account.get("monthly_contribution") or 0)
-            rule = {
-                "from_month": mk,
-                "start_month": mk,
-                "start_age": int(_age_at_month_key(dob, mk)) if dob else None,
-                "amount": amount,
-            }
-            rules.append(rule)
-        return jsonify({"ok": True, "rules": rules, "has_dob": bool(dob), "cash_park_enabled": False})
-
-    data = request.get_json(silent=True) or {}
-    account_id_raw = data.get("account_id")
-    if not account_id_raw:
+    account_id = request.args.get("account_id", type=int)
+    if not account_id:
         return jsonify({"ok": False, "error": "account_id required"}), 400
-    try:
-        account_id = int(account_id_raw)
-    except (TypeError, ValueError):
-        return jsonify({"ok": False, "error": "account_id must be a valid account"}), 400
     account = fetch_account(account_id, uid)
     if not account:
         return jsonify({"ok": False, "error": "account not found"}), 404
 
-    if "rules" not in data or not isinstance(data.get("rules"), list):
-        return jsonify({"ok": False, "error": "rules must be a list"}), 400
-    rules_in = data["rules"]
-    cleaned = []
-    for r in rules_in:
-        if not isinstance(r, dict):
-            return jsonify({"ok": False, "error": "each schedule row must be an object"}), 400
-        start_month = _normalise_month_key(r.get("start_month") or r.get("from_month"))
-        try:
-            amount = float(r.get("amount") or 0)
-        except (TypeError, ValueError):
-            amount = 0.0
-        if start_month:
-            cleaned.append((start_month, amount))
+    overrides = fetch_plan_editor_overrides(account_id, uid)
+    grouped = {}
+    for ov in overrides:
+        mk = ov.get("from_month") if isinstance(ov, dict) else ov["from_month"]
+        if not mk:
             continue
-        if not dob:
-            continue
-        start_age_raw = r.get("start_age")
-        if start_age_raw is None:
-            continue
-        try:
-            start_age = int(float(start_age_raw))
-        except (TypeError, ValueError):
-            continue
-        if start_age <= 0:
-            continue
-        d = _date_at_age(dob, start_age)
-        mk = _month_key_from_date(d) if d else None
-        if mk:
-            cleaned.append((mk, amount))
-
-    start_month = projection_start_month_key(assumptions)
-    normalised = []
-    for mk, amount in cleaned:
-        if mk < start_month:
-            mk = start_month
-        normalised.append((mk, amount))
-    normalised.sort(key=lambda x: x[0])
-    uniq = []
-    seen = set()
-    for mk, amount in normalised:
-        if mk in seen:
-            continue
-        seen.add(mk)
-        uniq.append((mk, amount))
-
-    if rules_in and not uniq:
-        return jsonify({"ok": False, "error": "at least one valid schedule row is required"}), 400
-    if not uniq:
-        delete_contribution_overrides_for_reason(account_id, uid, "schedule")
-        return jsonify({"ok": True})
-
-    delete_contribution_overrides_for_reason(account_id, uid, "schedule")
-
-    for i, (from_m, amount) in enumerate(uniq):
-        next_m = uniq[i + 1][0] if i + 1 < len(uniq) else None
-        to_m = add_months_to_key(next_m, -1) if next_m else "9999-12"
-        if to_m < from_m:
-            continue
-        create_contribution_override(
-            {
-                "account_id": account_id,
-                "from_month": from_m,
-                "to_month": to_m,
-                "override_amount": amount,
-                "component": "total",
-                "reason": "schedule",
-            },
-            user_id=uid,
-        )
-
-    return jsonify({"ok": True})
+        grouped.setdefault(mk, []).append(ov)
+    rules = []
+    for mk in sorted(grouped.keys()):
+        selected = select_best_matching_override(grouped[mk], mk)
+        amount = float(selected["override_amount"] or 0) if selected is not None else float(account.get("monthly_contribution") or 0)
+        rule = {
+            "from_month": mk,
+            "start_month": mk,
+            "start_age": int(_age_at_month_key(dob, mk)) if dob else None,
+            "amount": amount,
+        }
+        rules.append(rule)
+    return jsonify({
+        "ok": True,
+        "rules": rules,
+        "has_dob": bool(dob),
+        "cash_park_enabled": False,
+        "read_only": True,
+        "edit_url": "/budget/contribution-calendar",
+    })
 
 
 @projections_bp.route("/")
