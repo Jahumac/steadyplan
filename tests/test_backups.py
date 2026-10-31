@@ -103,6 +103,36 @@ def test_list_backups_returns_empty_when_no_dir(tmp_path):
     assert list_backups(tmp_path) == []
 
 
+def test_list_backups_orders_chronologically_not_alphabetically(tmp_path):
+    """A stale one-off snapshot must not masquerade as the newest backup.
+
+    ``finance-pre-*`` sorts after ``finance-YYYY-MM-DD.db`` alphabetically, so
+    filename ordering made callers that take ``[-1]`` report an old snapshot as
+    "last backup" indefinitely. Order by mtime instead.
+    """
+    import os
+
+    from app.services.backups import list_backups
+
+    backup_dir = tmp_path / "backups"
+    backup_dir.mkdir()
+
+    # Written first, but the newest by name — must NOT come last.
+    stale = backup_dir / "finance-pre-history-clear-20260831-085129.db"
+    stale.write_bytes(b"old")
+    os.utime(stale, (1_700_000_000, 1_700_000_000))  # 2023-11
+
+    daily = backup_dir / "finance-2026-10-31.db"
+    daily.write_bytes(b"new")
+    os.utime(daily, (1_800_000_000, 1_800_000_000))  # 2027-01
+
+    rows = list_backups(tmp_path)
+
+    assert [r["name"] for r in rows] == [stale.name, daily.name]
+    assert rows[-1]["name"] == daily.name
+    assert rows[-1]["modified"] == datetime.fromtimestamp(1_800_000_000).isoformat()
+
+
 def test_diagnostics_renders_backup_panel_when_no_backups_exist(app, client, make_user, tmp_path):
     app.config["DATA_DIR"] = tmp_path
     uid, username, password = make_user(username="diag-admin", is_admin=True)
