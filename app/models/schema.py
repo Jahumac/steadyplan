@@ -1235,6 +1235,43 @@ def _run_migrations(conn):
         except Exception as e:
             _log_migration_error(e)
 
+    # ── Drop leftover *_new tables from completed table-swap migrations ──
+    # v7_cascading_deletes (and the per-domain equivalents) swap a table by
+    # creating {table}_new, copying, dropping the original and renaming. If the
+    # copy raises part-way the *_new table survives as orphan residue that no
+    # code reads — leaving two candidate answers to "what accounts exist".
+    # These migrations are already recorded for existing DBs and can never
+    # re-run, so clean the residue up once, forward-only.
+    if not conn.execute(
+        "SELECT 1 FROM schema_migrations WHERE name = 'v12_drop_ghost_tables'"
+    ).fetchone():
+        try:
+            for ghost in [
+                "accounts_new",
+                "holdings_new",
+                "holding_catalogue_new",
+                "monthly_reviews_new",
+                "monthly_review_items_new",
+                "budget_sections_new",
+                "assumptions_new",
+                "broker_connections_new",
+                "broker_sync_events_new",
+                "api_tokens_new",
+                "custom_tags_new",
+                "debts_new",
+                "pension_contributions_new",
+                "contribution_overrides_new",
+                "account_daily_snapshots_new",
+                "scheduler_runs_new",
+            ]:
+                conn.execute(f"DROP TABLE IF EXISTS {ghost}")
+            conn.execute(
+                "INSERT OR IGNORE INTO schema_migrations (name) VALUES ('v12_drop_ghost_tables')"
+            )
+            conn.commit()
+        except Exception as e:
+            _log_migration_error(e)
+
 
 def _ensure_indexes(conn):
     """Create performance indexes. All statements are idempotent (IF NOT EXISTS)."""
