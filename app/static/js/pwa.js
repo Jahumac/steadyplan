@@ -23,6 +23,18 @@
     navigator.serviceWorker.register(swUrl)
       .then(reg => { setInterval(() => reg.update(), 60 * 60 * 1000); })
       .catch(() => { });
+
+    /* One-off cleanup: an earlier build registered the worker from /static/sw.js,
+       which scopes it to /static/ only, so it could serve stale assets from under
+       /static/ without ever controlling a page. Drop any such registration. */
+    navigator.serviceWorker.getRegistrations().then(function (regs) {
+      regs.forEach(function (reg) {
+        var script = (reg.active && reg.active.scriptURL) || '';
+        if (reg.scope && reg.scope.indexOf('/static/') !== -1 && script.indexOf('/static/sw.js') !== -1) {
+          reg.unregister();
+        }
+      });
+    }).catch(function () { });
   }
 
   /* ── Install prompt ────────────────────────────────────────────────────
