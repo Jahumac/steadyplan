@@ -686,6 +686,13 @@ def _project_account_month_by_month(account, assumptions, month_count, rate):
         cash_value *= (1 + monthly_cash_rate)
         if not is_lisa or (current_age + idx / 12.0) < 50:
             invested_value += projection_monthly_contribution(account, assumptions, idx)
+        # One-off lump sums and their government bonuses land on specific months.
+        # Attached as _one_off_inflows (same pattern as _contribution_overrides).
+        if start_month:
+            month_key = add_months_to_key(start_month, idx)
+            for inflow in _safe_get(account, "_one_off_inflows", None) or []:
+                if _safe_get(inflow, "month_key") == month_key:
+                    invested_value += to_float(_safe_get(inflow, "amount", 0))
         # Premium Bonds can't compound past £50k — NS&I would pay overflow
         # as cash prizes, so the balance line stays flat at the cap.
         total_value = invested_value + cash_value

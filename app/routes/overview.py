@@ -32,6 +32,8 @@ from app.calculations import (
     days_until_tax_year_end,
 )
 from app.models import (
+    fetch_isa_one_off_inflows,
+    group_inflows_by_account,
     build_debt_card,
     fetch_all_accounts,
     fetch_all_active_overrides,
@@ -194,11 +196,13 @@ def overview():
 
     accounts = []
     start_month = projection_start_month_key(assumptions)
+    one_off_inflows_by_account = group_inflows_by_account(fetch_isa_one_off_inflows(uid))
     for account in raw_accounts:
         row = dict(account)
         row["current_value"] = effective_account_value(account, holdings_totals)
         row["_contribution_overrides"] = fetch_contribution_overrides(account["id"])
         row["_projection_start_month"] = start_month
+        row["_one_off_inflows"] = one_off_inflows_by_account.get(int(account["id"]), [])
         accounts.append(row)
 
     invested_total = total_invested(accounts, holdings_totals)
