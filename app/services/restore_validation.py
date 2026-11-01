@@ -244,10 +244,7 @@ def validate_restore_backup_json(json_bytes):
         "cash_flow_events",
         "isa_contributions",
         "pension_contributions",
-        "dividend_records",
-        "cgt_disposals",
         "pension_carry_forward",
-        "allowance_tracking",
         "premium_bonds_prizes",
     ]
     for k in required_planning:
@@ -258,10 +255,7 @@ def validate_restore_backup_json(json_bytes):
     cash_flow_events = (planning or {}).get("cash_flow_events") or []
     isa_contributions = (planning or {}).get("isa_contributions") or []
     pension_contributions = (planning or {}).get("pension_contributions") or []
-    dividend_records = (planning or {}).get("dividend_records") or []
-    cgt_disposals = (planning or {}).get("cgt_disposals") or []
     pension_carry_forward = (planning or {}).get("pension_carry_forward") or []
-    allowance_tracking = (planning or {}).get("allowance_tracking") or []
     premium_bonds_prizes = (planning or {}).get("premium_bonds_prizes") or []
 
     if "planning" in payload:
@@ -270,10 +264,7 @@ def validate_restore_backup_json(json_bytes):
             ("planning.cash_flow_events", cash_flow_events),
             ("planning.isa_contributions", isa_contributions),
             ("planning.pension_contributions", pension_contributions),
-            ("planning.dividend_records", dividend_records),
-            ("planning.cgt_disposals", cgt_disposals),
             ("planning.pension_carry_forward", pension_carry_forward),
-            ("planning.allowance_tracking", allowance_tracking),
             ("planning.premium_bonds_prizes", premium_bonds_prizes),
         ]:
             if not _is_list(val):
@@ -536,39 +527,6 @@ def validate_restore_backup_json(json_bytes):
         elif aid not in account_ids:
             errors.append("Invalid planning.pension_contributions[].account_id (references missing account).")
 
-    for idx, dr in enumerate(dividend_records or []):
-        if not _is_mapping(dr):
-            errors.append("Invalid planning.dividend_records entry (must be an object).")
-            continue
-        if _non_empty_str(dr.get("dividend_date")) is None:
-            errors.append(f"Missing planning.dividend_records[{idx}].dividend_date.")
-        if not _is_number(dr.get("amount")):
-            errors.append(f"Invalid planning.dividend_records[{idx}].amount (must be a number).")
-        aid = dr.get("account_id")
-        if not isinstance(aid, int):
-            errors.append("Invalid planning.dividend_records[].account_id (must be an integer).")
-        elif aid not in account_ids:
-            errors.append("Invalid planning.dividend_records[].account_id (references missing account).")
-
-    for idx, cd in enumerate(cgt_disposals or []):
-        if not _is_mapping(cd):
-            errors.append("Invalid planning.cgt_disposals entry (must be an object).")
-            continue
-        if _non_empty_str(cd.get("disposal_date")) is None:
-            errors.append(f"Missing planning.cgt_disposals[{idx}].disposal_date.")
-        if _non_empty_str(cd.get("asset_name")) is None:
-            errors.append(f"Missing planning.cgt_disposals[{idx}].asset_name.")
-        if not _is_number(cd.get("proceeds")):
-            errors.append(f"Invalid planning.cgt_disposals[{idx}].proceeds (must be a number).")
-        if not _is_number(cd.get("cost_basis")):
-            errors.append(f"Invalid planning.cgt_disposals[{idx}].cost_basis (must be a number).")
-        if "account_id" in cd:
-            aid = cd.get("account_id")
-            if aid is not None and not isinstance(aid, int):
-                errors.append("Invalid planning.cgt_disposals[].account_id (must be integer or null).")
-            elif isinstance(aid, int) and aid not in account_ids:
-                errors.append("Invalid planning.cgt_disposals[].account_id (references missing account).")
-
     seen_carry_forward_tax_years = set()
     for idx, pcf in enumerate(pension_carry_forward or []):
         if not _is_mapping(pcf):
@@ -599,13 +557,6 @@ def validate_restore_backup_json(json_bytes):
             errors.append(f"Missing planning.premium_bonds_prizes[{idx}].month_key.")
         if "prize_amount" in pb and not _is_number(pb.get("prize_amount")):
             errors.append(f"Invalid planning.premium_bonds_prizes[{idx}].prize_amount (must be a number).")
-
-    for idx, at in enumerate(allowance_tracking or []):
-        if not _is_mapping(at):
-            errors.append("Invalid planning.allowance_tracking entry (must be an object).")
-            continue
-        if _non_empty_str(at.get("tax_year")) is None:
-            errors.append(f"Missing planning.allowance_tracking[{idx}].tax_year.")
 
     for idx, g in enumerate(goals or []):
         if not _is_mapping(g):
@@ -710,10 +661,7 @@ def validate_restore_backup_json(json_bytes):
             "cash_flow_events": len(cash_flow_events or []),
             "isa_contributions": len(isa_contributions or []),
             "pension_contributions": len(pension_contributions or []),
-            "dividend_records": len(dividend_records or []),
-            "cgt_disposals": len(cgt_disposals or []),
             "pension_carry_forward": len(pension_carry_forward or []),
-            "allowance_tracking": len(allowance_tracking or []),
             "premium_bonds_prizes": len(premium_bonds_prizes or []),
         },
     }

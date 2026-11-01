@@ -14,8 +14,6 @@ from ._conn import get_connection
 # Re-export submodule functions so __init__.py only needs to import from here
 from .planning_assumptions import fetch_assumptions, update_assumptions
 from .planning_allowances import (
-    fetch_allowance_tracking,
-    upsert_allowance_tracking,
     add_isa_contribution,
     set_isa_bonus_received,
     fetch_isa_one_off_inflows,
@@ -25,12 +23,6 @@ from .planning_allowances import (
     add_pension_contribution,
     fetch_pension_contributions,
     delete_pension_contribution,
-    add_dividend_record,
-    fetch_dividend_records,
-    delete_dividend_record,
-    add_cgt_disposal,
-    fetch_cgt_disposals,
-    delete_cgt_disposal,
     fetch_pension_carry_forward,
     upsert_pension_carry_forward,
     delete_pension_carry_forward,
@@ -339,10 +331,7 @@ def reset_all_user_data(user_id):
         conn.execute("DELETE FROM holding_catalogue WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM isa_contributions WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM pension_contributions WHERE user_id = ?", (user_id,))
-        conn.execute("DELETE FROM dividend_records WHERE user_id = ?", (user_id,))
-        conn.execute("DELETE FROM cgt_disposals WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM pension_carry_forward WHERE user_id = ?", (user_id,))
-        conn.execute("DELETE FROM allowance_tracking WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM portfolio_daily_snapshots WHERE user_id = ?", (user_id,))
         conn.execute(
             "DELETE FROM monthly_review_items WHERE review_id IN "

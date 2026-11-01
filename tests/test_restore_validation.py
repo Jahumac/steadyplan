@@ -37,10 +37,7 @@ def _count_rows(app):
                 "cash_flow_events",
                 "isa_contributions",
                 "pension_contributions",
-                "dividend_records",
-                "cgt_disposals",
                 "pension_carry_forward",
-                "allowance_tracking",
                 "contribution_overrides",
                 "premium_bonds_prizes",
             ]
@@ -80,13 +77,6 @@ def exported_json_bytes(app, client, make_user):
                 """,
                 (uid, a1, a2),
             )
-            conn.execute(
-                """
-                INSERT INTO allowance_tracking (user_id, tax_year, isa_used, lisa_used, notes)
-                VALUES (?, '2026-27', 123, 45, 'mine')
-                """,
-                (uid,),
-            )
             conn.commit()
 
     resp = client.get("/settings/export.json")
@@ -104,7 +94,6 @@ def test_restore_validation_valid_export_passes_and_no_db_writes(app, exported_j
     assert result["export_schema_version"] == 1
     assert result["exported_at"]
     assert result["counts"]["accounts"] >= 2
-    assert result["counts"]["planning"]["allowance_tracking"] >= 1
     assert result["errors"] == []
     assert before == after
 
@@ -214,15 +203,6 @@ def test_restore_validation_invalid_isa_contributions_account_reference_rejected
     assert any("planning.isa_contributions[].account_id" in e and "missing account" in e for e in result["errors"])
 
 
-def test_restore_validation_invalid_dividend_records_account_reference_rejected(exported_json_bytes):
-    payload = json.loads(exported_json_bytes.decode("utf-8"))
-    payload["planning"]["dividend_records"].append(
-        {"id": 1, "account_id": 999999, "amount": 3, "dividend_date": "2026-06-01"}
-    )
-    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
-    assert result["valid"] is False
-    assert any("planning.dividend_records[].account_id" in e and "missing account" in e for e in result["errors"])
-
 
 def test_restore_validation_invalid_pension_contributions_account_reference_rejected(exported_json_bytes):
     payload = json.loads(exported_json_bytes.decode("utf-8"))
@@ -286,9 +266,6 @@ def test_restore_validation_account_linked_references_valid_pass(exported_json_b
 
     payload["planning"]["isa_contributions"].append(
         {"id": 1, "account_id": aid, "amount": 10, "contribution_date": "2026-06-01"}
-    )
-    payload["planning"]["dividend_records"].append(
-        {"id": 1, "account_id": aid, "amount": 3, "dividend_date": "2026-06-01"}
     )
 
     payload["history"]["monthly_reviews"].append({"id": 123, "month_key": "2026-05"})

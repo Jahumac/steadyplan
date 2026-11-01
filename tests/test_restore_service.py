@@ -76,13 +76,6 @@ def _seed_exportable_data(app, user_id, *, account_names=("A1", "A2")):
                 """,
                 (user_id, a1, a2),
             )
-            conn.execute(
-                """
-                INSERT INTO allowance_tracking (user_id, tax_year, isa_used, lisa_used, notes)
-                VALUES (?, '2026-27', 123, 45, 'mine')
-                """,
-                (user_id,),
-            )
 
             conn.execute(
                 """
@@ -166,20 +159,6 @@ def _seed_exportable_data(app, user_id, *, account_names=("A1", "A2")):
             )
             conn.execute(
                 """
-                INSERT INTO dividend_records (user_id, account_id, amount, dividend_date, note)
-                VALUES (?, ?, 3, '2026-06-01', 'div')
-                """,
-                (user_id, a1),
-            )
-            conn.execute(
-                """
-                INSERT INTO cgt_disposals (user_id, disposal_date, asset_name, proceeds, cost_basis, note, account_id)
-                VALUES (?, '2026-06-01', 'ABC', 100, 50, 'cgt', ?)
-                """,
-                (user_id, a1),
-            )
-            conn.execute(
-                """
                 INSERT INTO pension_carry_forward (user_id, tax_year, unused_allowance)
                 VALUES (?, '2025-26', 5000)
                 """,
@@ -211,9 +190,6 @@ def _count_user_rows(app, user_id):
                         (user_id,),
                     ).fetchone()["c"]
                 ),
-                "allowance_tracking": int(
-                    conn.execute("SELECT COUNT(*) AS c FROM allowance_tracking WHERE user_id = ?", (user_id,)).fetchone()["c"]
-                ),
                 "cash_flow_events": int(
                     conn.execute("SELECT COUNT(*) AS c FROM cash_flow_events WHERE user_id = ?", (user_id,)).fetchone()["c"]
                 ),
@@ -241,10 +217,7 @@ def _wipe_user_data(app, user_id):
             conn.execute("DELETE FROM cash_flow_events WHERE user_id = ?", (user_id,))
             conn.execute("DELETE FROM isa_contributions WHERE user_id = ?", (user_id,))
             conn.execute("DELETE FROM pension_contributions WHERE user_id = ?", (user_id,))
-            conn.execute("DELETE FROM dividend_records WHERE user_id = ?", (user_id,))
-            conn.execute("DELETE FROM cgt_disposals WHERE user_id = ?", (user_id,))
             conn.execute("DELETE FROM pension_carry_forward WHERE user_id = ?", (user_id,))
-            conn.execute("DELETE FROM allowance_tracking WHERE user_id = ?", (user_id,))
             conn.execute("DELETE FROM premium_bonds_prizes WHERE user_id = ?", (user_id,))
             conn.execute(
                 "DELETE FROM contribution_overrides WHERE account_id IN (SELECT id FROM accounts WHERE user_id = ?)",
@@ -288,10 +261,6 @@ def test_restore_service_valid_backup_restores_current_user_only(app, client, ma
                 """,
                 (uid1,),
             )
-            conn.execute(
-                "INSERT INTO allowance_tracking (user_id, tax_year, isa_used) VALUES (?, '2099-00', 1)",
-                (uid1,),
-            )
             conn.commit()
 
     before_u2 = _count_user_rows(app, uid2)
@@ -313,12 +282,6 @@ def test_restore_service_valid_backup_restores_current_user_only(app, client, ma
             names = {r["name"] for r in conn.execute("SELECT name FROM accounts WHERE user_id = ?", (uid1,)).fetchall()}
             assert "EXTRA" not in names
             assert "A1" in names and "A2" in names
-
-            allowance = conn.execute(
-                "SELECT tax_year, user_id FROM allowance_tracking WHERE tax_year = '2026-27'"
-            ).fetchone()
-            assert allowance is not None
-            assert int(allowance["user_id"]) == uid1
 
             a1_id = conn.execute(
                 "SELECT id FROM accounts WHERE user_id = ? AND name = 'A1'",
@@ -347,8 +310,6 @@ def test_restore_service_imported_user_id_is_ignored(app, client, make_user):
 
     for a in payload.get("accounts", []):
         a["user_id"] = uid2
-    for at in payload.get("planning", {}).get("allowance_tracking", []):
-        at["user_id"] = None
     for c in payload.get("holding_catalogue", []):
         c["user_id"] = uid2
     for pds in payload.get("history", {}).get("portfolio_daily_snapshots", []):
@@ -374,10 +335,6 @@ def test_restore_service_imported_user_id_is_ignored(app, client, make_user):
             ).fetchone()
             assert conn.execute(
                 "SELECT 1 FROM holding_catalogue WHERE user_id = ?",
-                (uid1,),
-            ).fetchone()
-            assert conn.execute(
-                "SELECT 1 FROM allowance_tracking WHERE user_id = ? AND tax_year = '2026-27'",
                 (uid1,),
             ).fetchone()
             assert conn.execute(
@@ -420,10 +377,6 @@ def test_restore_service_failure_midway_rolls_back_completely(app, client, make_
                 INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution)
                 VALUES (?, 'OLD1', 'cash', 1, 1)
                 """,
-                (uid,),
-            )
-            conn.execute(
-                "INSERT INTO allowance_tracking (user_id, tax_year, isa_used) VALUES (?, '2099-00', 1)",
                 (uid,),
             )
             conn.commit()

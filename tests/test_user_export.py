@@ -85,26 +85,6 @@ def test_settings_export_json_download(app, client, make_user):
                 """,
                 (uid, acct_id),
             )
-            conn.execute(
-                """
-                INSERT INTO allowance_tracking (user_id, tax_year, isa_used, lisa_used, notes)
-                VALUES (?, '2026-27', 123, 45, 'mine')
-                """,
-                (uid,),
-            )
-            conn.execute(
-                """
-                INSERT INTO allowance_tracking (user_id, tax_year, isa_used, lisa_used, notes)
-                VALUES (?, '2026-27', 999, 88, 'theirs')
-                """,
-                (other_uid,),
-            )
-            conn.execute(
-                """
-                INSERT INTO allowance_tracking (user_id, tax_year, isa_used, lisa_used, notes)
-                VALUES (NULL, '2026-27', 555, 66, 'legacy')
-                """
-            )
             conn.commit()
 
     _login(client, username, password)
@@ -135,7 +115,5 @@ def test_settings_export_json_download(app, client, make_user):
     assert payload["history"]["monthly_snapshots"]
     assert payload["planning"]["contribution_overrides"]
     assert payload["planning"]["cash_flow_events"]
-    assert "allowance_tracking" in payload["planning"]
-    assert any(r["tax_year"] == "2026-27" and r["isa_used"] == 123 for r in payload["planning"]["allowance_tracking"])
-    assert not any(r.get("notes") == "theirs" for r in payload["planning"]["allowance_tracking"])
-    assert not any(r.get("notes") == "legacy" for r in payload["planning"]["allowance_tracking"])
+    # allowance_tracking was dropped as an unused ledger (v13) — it must not reappear
+    assert "allowance_tracking" not in payload["planning"]

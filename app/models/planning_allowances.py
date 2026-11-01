@@ -11,47 +11,6 @@ from app.calculations import (
 from ._conn import get_connection
 
 
-# ── Allowance tracking row ────────────────────────────────────────────────────
-
-def fetch_allowance_tracking(user_id=None):
-    """Return the most recent allowance_tracking row for a user."""
-    with get_connection() as conn:
-        if not user_id:
-            return None
-        return conn.execute(
-            "SELECT * FROM allowance_tracking WHERE user_id = ? ORDER BY id DESC LIMIT 1",
-            (user_id,),
-        ).fetchone()
-
-
-def upsert_allowance_tracking(user_id, tax_year, isa_used=0.0, lisa_used=0.0, notes=None):
-    """Insert or update a user's allowance tracking row for a tax year."""
-    with get_connection() as conn:
-        existing = conn.execute(
-            "SELECT id FROM allowance_tracking WHERE user_id = ? AND tax_year = ?",
-            (user_id, tax_year),
-        ).fetchone()
-        if existing:
-            conn.execute(
-                """
-                UPDATE allowance_tracking
-                SET isa_used = ?, lisa_used = ?, notes = ?
-                WHERE id = ? AND user_id = ?
-                """,
-                (isa_used, lisa_used, notes, existing["id"], user_id),
-            )
-        else:
-            conn.execute(
-                """
-                INSERT INTO allowance_tracking (user_id, tax_year, isa_used, lisa_used, notes)
-                VALUES (?, ?, ?, ?, ?)
-                """,
-                (user_id, tax_year, isa_used, lisa_used, notes),
-            )
-        conn.commit()
-        return True
-
-
 # ── ISA contributions ─────────────────────────────────────────────────────────
 
 def _account_belongs_to_user(conn, account_id, user_id):
@@ -269,88 +228,7 @@ def delete_pension_contribution(contribution_id, user_id):
 
 # ── Dividend records ──────────────────────────────────────────────────────────
 
-def add_dividend_record(user_id, account_id, amount, dividend_date, note=None):
-    with get_connection() as conn:
-        if not _account_belongs_to_user(conn, account_id, user_id):
-            return False
-        conn.execute(
-            """
-            INSERT INTO dividend_records (user_id, account_id, amount, dividend_date, note)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (user_id, account_id, amount, dividend_date, note),
-        )
-        conn.commit()
-        return True
-
-
-def fetch_dividend_records(user_id, tax_year_start, tax_year_end):
-    with get_connection() as conn:
-        return conn.execute(
-            """
-            SELECT d.*, a.name AS account_name, a.wrapper_type
-            FROM dividend_records d
-            JOIN accounts a ON a.id = d.account_id
-            WHERE d.user_id = ?
-              AND a.user_id = d.user_id
-              AND d.dividend_date >= ?
-              AND d.dividend_date <= ?
-            ORDER BY d.dividend_date DESC
-            """,
-            (user_id, tax_year_start, tax_year_end),
-        ).fetchall()
-
-
-def delete_dividend_record(record_id, user_id):
-    with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM dividend_records WHERE id = ? AND user_id = ?",
-            (record_id, user_id),
-        )
-        conn.commit()
-
-
 # ── CGT disposals ─────────────────────────────────────────────────────────────
-
-def add_cgt_disposal(user_id, disposal_date, asset_name, proceeds, cost_basis, note=None, account_id=None):
-    with get_connection() as conn:
-        if account_id is not None and not _account_belongs_to_user(conn, account_id, user_id):
-            return False
-        conn.execute(
-            """
-            INSERT INTO cgt_disposals (user_id, disposal_date, asset_name, proceeds, cost_basis, note, account_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (user_id, disposal_date, asset_name, proceeds, cost_basis, note, account_id),
-        )
-        conn.commit()
-        return True
-
-
-def fetch_cgt_disposals(user_id, tax_year_start, tax_year_end):
-    with get_connection() as conn:
-        return conn.execute(
-            """
-            SELECT c.*, a.name AS account_name
-            FROM cgt_disposals c
-            LEFT JOIN accounts a ON a.id = c.account_id AND a.user_id = c.user_id
-            WHERE c.user_id = ?
-              AND c.disposal_date >= ?
-              AND c.disposal_date <= ?
-            ORDER BY c.disposal_date DESC
-            """,
-            (user_id, tax_year_start, tax_year_end),
-        ).fetchall()
-
-
-def delete_cgt_disposal(disposal_id, user_id):
-    with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM cgt_disposals WHERE id = ? AND user_id = ?",
-            (disposal_id, user_id),
-        )
-        conn.commit()
-
 
 # ── Pension carry-forward ─────────────────────────────────────────────────────
 

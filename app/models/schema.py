@@ -129,15 +129,6 @@ CREATE TABLE IF NOT EXISTS monthly_snapshots (
     FOREIGN KEY(account_id) REFERENCES accounts(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS allowance_tracking (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    tax_year TEXT NOT NULL,
-    isa_used REAL DEFAULT 0,
-    lisa_used REAL DEFAULT 0,
-    notes TEXT
-);
-
 CREATE TABLE IF NOT EXISTS monthly_reviews (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -239,27 +230,6 @@ CREATE TABLE IF NOT EXISTS pension_contributions (
     amount REAL NOT NULL,
     kind TEXT NOT NULL DEFAULT 'personal',
     contribution_date TEXT NOT NULL,
-    note TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS dividend_records (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-    amount REAL NOT NULL,
-    dividend_date TEXT NOT NULL,
-    note TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
-CREATE TABLE IF NOT EXISTS cgt_disposals (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    disposal_date TEXT NOT NULL,
-    asset_name TEXT NOT NULL,
-    proceeds REAL NOT NULL,
-    cost_basis REAL NOT NULL,
     note TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -700,38 +670,6 @@ def _run_migrations(conn):
             "INSERT INTO schema_migrations (name) VALUES ('v5_budget_sections_per_user')"
         )
 
-    # ── v9: allowance_tracking user ownership ────────────────────────────
-    if not conn.execute(
-        "SELECT 1 FROM schema_migrations WHERE name = 'v9_allowance_tracking_user'"
-    ).fetchone():
-        try:
-            conn.execute("ALTER TABLE allowance_tracking ADD COLUMN user_id INTEGER REFERENCES users(id)")
-        except Exception as e:
-            _log_migration_error(e)
-
-        try:
-            users = conn.execute("SELECT id FROM users ORDER BY id ASC").fetchall()
-            if len(users) == 1:
-                conn.execute(
-                    "UPDATE allowance_tracking SET user_id = ? WHERE user_id IS NULL",
-                    (users[0]["id"],),
-                )
-        except Exception as e:
-            _log_migration_error(e)
-
-        try:
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_allowance_tracking_user_tax_year "
-                "ON allowance_tracking(user_id, tax_year)"
-            )
-        except Exception as e:
-            _log_migration_error(e)
-
-        conn.execute(
-            "INSERT OR IGNORE INTO schema_migrations (name) VALUES ('v9_allowance_tracking_user')"
-        )
-        conn.commit()
-
     # ── Add salary_day and update_day to assumptions ────────────────────
     for col in [
         "salary_day INTEGER DEFAULT 0",
@@ -976,12 +914,6 @@ def _run_migrations(conn):
         except Exception as e:
             _log_migration_error(e)
 
-    # ── cgt_disposals: add optional account_id ───────────────────────────
-    try:
-        conn.execute("ALTER TABLE cgt_disposals ADD COLUMN account_id INTEGER REFERENCES accounts(id)")
-    except Exception as e:
-        _log_migration_error(e)
-
     # ── Debts tracker ────────────────────────────────────────────────────
     conn.execute("""
         CREATE TABLE IF NOT EXISTS debts (
@@ -1208,7 +1140,7 @@ def _run_migrations(conn):
             child_tables = (
                 "holdings", "monthly_snapshots", "monthly_review_items",
                 "contribution_overrides", "isa_contributions",
-                "pension_contributions", "dividend_records",
+                "pension_contributions",
                 "premium_bonds_prizes", "account_daily_snapshots",
             )
             for aid in stale_ids:
@@ -1217,13 +1149,6 @@ def _run_migrations(conn):
                         conn.execute(f"DELETE FROM {tbl} WHERE account_id = ?", (aid,))
                     except Exception:
                         pass  # table may not exist on older DBs
-                try:
-                    conn.execute(
-                        "UPDATE cgt_disposals SET account_id = NULL WHERE account_id = ?",
-                        (aid,),
-                    )
-                except Exception:
-                    pass
                 try:
                     conn.execute(
                         "UPDATE budget_items SET linked_account_id = NULL WHERE linked_account_id = ?",
@@ -1291,6 +1216,22 @@ def _run_migrations(conn):
         except Exception as e:
             _log_migration_error(e)
 
+    # v13: three bookkeeping ledgers that never held a row in production. Their UI was
+    # removed first (PR #1030); this drops the storage. Forward-only — restoring an
+    # older backup simply ignores these keys.
+    if not conn.execute(
+        "SELECT 1 FROM schema_migrations WHERE name = 'v13_drop_unused_tracking_tables'"
+    ).fetchone():
+        try:
+            for stale in ("allowance_tracking", "dividend_records", "cgt_disposals"):
+                conn.execute(f"DROP TABLE IF EXISTS {stale}")
+            conn.execute(
+                "INSERT OR IGNORE INTO schema_migrations (name) VALUES ('v13_drop_unused_tracking_tables')"
+            )
+            conn.commit()
+        except Exception as e:
+            _log_migration_error(e)
+
 
 def _ensure_indexes(conn):
     """Create performance indexes. All statements are idempotent (IF NOT EXISTS)."""
@@ -1321,8 +1262,6 @@ def _ensure_indexes(conn):
         "CREATE INDEX IF NOT EXISTS idx_isa_contributions_account ON isa_contributions(account_id)",
         "CREATE INDEX IF NOT EXISTS idx_pension_contributions_user ON pension_contributions(user_id, contribution_date)",
         "CREATE INDEX IF NOT EXISTS idx_pension_contributions_account ON pension_contributions(account_id)",
-        "CREATE INDEX IF NOT EXISTS idx_dividend_records_user ON dividend_records(user_id, dividend_date)",
-        "CREATE INDEX IF NOT EXISTS idx_dividend_records_account ON dividend_records(account_id)",
         "CREATE INDEX IF NOT EXISTS idx_scheduler_runs_user_date ON scheduler_runs(user_id, run_date)",
         "CREATE INDEX IF NOT EXISTS idx_portfolio_daily_user_date ON portfolio_daily_snapshots(user_id, snapshot_date)",
         "CREATE INDEX IF NOT EXISTS idx_custom_tags_user ON custom_tags(user_id)",
@@ -1332,8 +1271,6 @@ def _ensure_indexes(conn):
         "CREATE INDEX IF NOT EXISTS idx_assistant_audit_token ON assistant_audit_events(token_id)",
         "CREATE INDEX IF NOT EXISTS idx_broker_sync_events_connection_created ON broker_sync_events(connection_id, created_at)",
         "CREATE INDEX IF NOT EXISTS idx_broker_sync_events_user_created ON broker_sync_events(user_id, created_at)",
-        "CREATE INDEX IF NOT EXISTS idx_cgt_disposals_user ON cgt_disposals(user_id, disposal_date)",
-        "CREATE INDEX IF NOT EXISTS idx_cgt_disposals_account ON cgt_disposals(account_id)",
         "CREATE INDEX IF NOT EXISTS idx_account_daily_account_date ON account_daily_snapshots(account_id, snapshot_date)",
     ]:
         try:

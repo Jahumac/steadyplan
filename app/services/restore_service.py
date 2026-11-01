@@ -45,10 +45,7 @@ def _delete_user_data(conn, user_id):
     out["cash_flow_events"] = _del("DELETE FROM cash_flow_events WHERE user_id = ?", (user_id,))
     out["isa_contributions"] = _del("DELETE FROM isa_contributions WHERE user_id = ?", (user_id,))
     out["pension_contributions"] = _del("DELETE FROM pension_contributions WHERE user_id = ?", (user_id,))
-    out["dividend_records"] = _del("DELETE FROM dividend_records WHERE user_id = ?", (user_id,))
-    out["cgt_disposals"] = _del("DELETE FROM cgt_disposals WHERE user_id = ?", (user_id,))
     out["pension_carry_forward"] = _del("DELETE FROM pension_carry_forward WHERE user_id = ?", (user_id,))
-    out["allowance_tracking"] = _del("DELETE FROM allowance_tracking WHERE user_id = ?", (user_id,))
 
     out["premium_bonds_prizes"] = _del("DELETE FROM premium_bonds_prizes WHERE user_id = ?", (user_id,))
 
@@ -147,10 +144,7 @@ def restore_backup_for_user(user_id, backup_payload, *, conn=None):
     cash_flow_events = planning.get("cash_flow_events") or []
     isa_contributions = planning.get("isa_contributions") or []
     pension_contributions = planning.get("pension_contributions") or []
-    dividend_records = planning.get("dividend_records") or []
-    cgt_disposals = planning.get("cgt_disposals") or []
     pension_carry_forward = planning.get("pension_carry_forward") or []
-    allowance_tracking = planning.get("allowance_tracking") or []
     premium_bonds_prizes = planning.get("premium_bonds_prizes") or []
 
     if conn is None:
@@ -388,32 +382,6 @@ def restore_backup_for_user(user_id, backup_payload, *, conn=None):
                 )
             inserted["pension_contributions"] = len(pension_contributions)
 
-            for dr in dividend_records:
-                _insert_row(
-                    conn,
-                    "dividend_records",
-                    dr,
-                    overrides={"user_id": user_id},
-                    ignore_columns={"id"},
-                    remap={"account_id": id_maps["accounts"]},
-                )
-            inserted["dividend_records"] = len(dividend_records)
-
-            cgt_cols = _table_columns(conn, "cgt_disposals")
-            for cd in cgt_disposals:
-                remap = {}
-                if "account_id" in cgt_cols:
-                    remap["account_id"] = id_maps["accounts"]
-                _insert_row(
-                    conn,
-                    "cgt_disposals",
-                    cd,
-                    overrides={"user_id": user_id},
-                    ignore_columns={"id"},
-                    remap=remap,
-                )
-            inserted["cgt_disposals"] = len(cgt_disposals)
-
             for pcf in pension_carry_forward:
                 _insert_row(
                     conn,
@@ -423,16 +391,6 @@ def restore_backup_for_user(user_id, backup_payload, *, conn=None):
                     ignore_columns={"id"},
                 )
             inserted["pension_carry_forward"] = len(pension_carry_forward)
-
-            for at in allowance_tracking:
-                _insert_row(
-                    conn,
-                    "allowance_tracking",
-                    at,
-                    overrides={"user_id": user_id},
-                    ignore_columns={"id"},
-                )
-            inserted["allowance_tracking"] = len(allowance_tracking)
 
             for pb in premium_bonds_prizes:
                 _insert_row(
