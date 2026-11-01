@@ -243,7 +243,6 @@ def validate_restore_backup_json(json_bytes):
         "contribution_overrides",
         "cash_flow_events",
         "isa_contributions",
-        "pension_carry_forward",
         "premium_bonds_prizes",
     ]
     for k in required_planning:
@@ -253,7 +252,6 @@ def validate_restore_backup_json(json_bytes):
     contribution_overrides = (planning or {}).get("contribution_overrides") or []
     cash_flow_events = (planning or {}).get("cash_flow_events") or []
     isa_contributions = (planning or {}).get("isa_contributions") or []
-    pension_carry_forward = (planning or {}).get("pension_carry_forward") or []
     premium_bonds_prizes = (planning or {}).get("premium_bonds_prizes") or []
 
     if "planning" in payload:
@@ -261,7 +259,6 @@ def validate_restore_backup_json(json_bytes):
             ("planning.contribution_overrides", contribution_overrides),
             ("planning.cash_flow_events", cash_flow_events),
             ("planning.isa_contributions", isa_contributions),
-            ("planning.pension_carry_forward", pension_carry_forward),
             ("planning.premium_bonds_prizes", premium_bonds_prizes),
         ]:
             if not _is_list(val):
@@ -508,22 +505,6 @@ def validate_restore_backup_json(json_bytes):
         elif aid not in account_ids:
             errors.append("Invalid planning.isa_contributions[].account_id (references missing account).")
 
-    seen_carry_forward_tax_years = set()
-    for idx, pcf in enumerate(pension_carry_forward or []):
-        if not _is_mapping(pcf):
-            errors.append("Invalid planning.pension_carry_forward entry (must be an object).")
-            continue
-        ty = _non_empty_str(pcf.get("tax_year"))
-        if not ty:
-            errors.append(f"Missing planning.pension_carry_forward[{idx}].tax_year.")
-        if not _is_number(pcf.get("unused_allowance")):
-            errors.append(f"Invalid planning.pension_carry_forward[{idx}].unused_allowance (must be a number).")
-        if ty:
-            if ty in seen_carry_forward_tax_years:
-                errors.append(f"Duplicate planning.pension_carry_forward[].tax_year: {ty}.")
-            else:
-                seen_carry_forward_tax_years.add(ty)
-
     for idx, pb in enumerate(premium_bonds_prizes or []):
         if not _is_mapping(pb):
             errors.append("Invalid planning.premium_bonds_prizes entry (must be an object).")
@@ -641,7 +622,6 @@ def validate_restore_backup_json(json_bytes):
             "contribution_overrides": len(contribution_overrides or []),
             "cash_flow_events": len(cash_flow_events or []),
             "isa_contributions": len(isa_contributions or []),
-            "pension_carry_forward": len(pension_carry_forward or []),
             "premium_bonds_prizes": len(premium_bonds_prizes or []),
         },
     }

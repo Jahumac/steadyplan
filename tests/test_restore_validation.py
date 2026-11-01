@@ -36,7 +36,6 @@ def _count_rows(app):
                 "monthly_review_items",
                 "cash_flow_events",
                 "isa_contributions",
-                "pension_carry_forward",
                 "contribution_overrides",
                 "premium_bonds_prizes",
             ]
@@ -287,16 +286,6 @@ def test_restore_validation_duplicate_monthly_review_month_key_rejected(exported
     assert any("Duplicate history.monthly_reviews[].month_key" in e for e in result["errors"])
 
 
-def test_restore_validation_duplicate_pension_carry_forward_tax_year_rejected(exported_json_bytes):
-    payload = json.loads(exported_json_bytes.decode("utf-8"))
-    payload["planning"]["pension_carry_forward"] = [
-        {"id": 1, "tax_year": "2025-26", "unused_allowance": 1},
-        {"id": 2, "tax_year": "2025-26", "unused_allowance": 2},
-    ]
-    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
-    assert result["valid"] is False
-    assert any("Duplicate planning.pension_carry_forward[].tax_year" in e for e in result["errors"])
-
 
 def test_restore_validation_uniqueness_distinct_values_pass(exported_json_bytes):
     payload = json.loads(exported_json_bytes.decode("utf-8"))
@@ -307,10 +296,6 @@ def test_restore_validation_uniqueness_distinct_values_pass(exported_json_bytes)
     payload["history"]["monthly_reviews"] = [
         {"id": 1, "month_key": "2026-05"},
         {"id": 2, "month_key": "2026-06"},
-    ]
-    payload["planning"]["pension_carry_forward"] = [
-        {"id": 1, "tax_year": "2024-25", "unused_allowance": 100},
-        {"id": 2, "tax_year": "2025-26", "unused_allowance": 200},
     ]
     result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
     assert result["valid"] is True

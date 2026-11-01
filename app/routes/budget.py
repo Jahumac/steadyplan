@@ -7,7 +7,6 @@ import pandas as pd
 
 from app.calculations import (
     add_months_to_key,
-    apply_pension_carry_forward,
     contribution_breakdown,
     is_pension_account,
     month_key_to_index,
@@ -44,7 +43,6 @@ from app.models import (
     fetch_assumptions,
     fetch_debt,
     fetch_months_with_budget_entries,
-    fetch_pension_carry_forward,
     fetch_prior_month_budget_entries,
     update_account,
     update_budget_item,
@@ -368,14 +366,11 @@ def _is_premium_bonds_account(account):
     return is_premium_bonds_account(account)
 
 
-def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_forward_entries=None):
+def _build_contribution_allowance_frame(calendar, assumptions):
     isa_allowance = float(assumptions["isa_allowance"]) if assumptions else 20000.0
     lisa_allowance = float(assumptions["lisa_allowance"]) if assumptions else 4000.0
     assumptions_map = dict(assumptions) if assumptions else {}
-    pension_limits = apply_pension_carry_forward(
-        pension_allowance_limits(assumptions_map),
-        pension_carry_forward_entries or [],
-    )
+    pension_limits = pension_allowance_limits(assumptions_map)
     pension_allowance = float(pension_limits.get("effective_allowance") or 0.0)
     pension_salary_cap = min(
         float(assumptions_map.get("annual_income") or 0.0),
@@ -432,7 +427,6 @@ def _build_contribution_allowance_frame(calendar, assumptions, pension_carry_for
         row["pension_personal_relief_limit"] = float(pension_limits.get("personal_relief_limit") or 0.0)
         row["pension_personal_tax_relief_cap"] = min(row["pension_personal_relief_limit"], row["pension_allowance"])
         row["pension_display_cap"] = pension_salary_cap or row["pension_personal_tax_relief_cap"] or row["pension_allowance"]
-        row["pension_carry_forward_total"] = float(pension_limits.get("carry_forward_total") or 0.0)
         row["pension_mpaa_enabled"] = bool(pension_limits.get("mpaa_enabled"))
         row["isa_remaining"] = isa_allowance - row["isa_planned"]
         row["lisa_remaining"] = lisa_allowance - row["lisa_planned"]
@@ -841,8 +835,7 @@ def contribution_calendar():
     calendar = fetch_contribution_calendar(uid, selected_from_month, selected_to_month, assumptions=assumptions)
     plans = fetch_temporary_contribution_plans(uid)
     recurring_rules = fetch_recurring_rules(uid)
-    pension_carry_forward_entries = fetch_pension_carry_forward(uid)
-    allowance_frame = _build_contribution_allowance_frame(calendar, assumptions, pension_carry_forward_entries)
+    allowance_frame = _build_contribution_allowance_frame(calendar, assumptions)
     month_columns = [
         {"key": month_key, "label": datetime.strptime(month_key, "%Y-%m").strftime("%b %Y")}
         for month_key in calendar["months"]

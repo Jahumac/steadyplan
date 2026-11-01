@@ -223,15 +223,6 @@ CREATE TABLE IF NOT EXISTS isa_contributions (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE TABLE IF NOT EXISTS pension_carry_forward (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    tax_year TEXT NOT NULL,
-    unused_allowance REAL NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    UNIQUE(user_id, tax_year)
-);
-
 CREATE TABLE IF NOT EXISTS schema_migrations (
     name TEXT PRIMARY KEY,
     applied_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -1215,6 +1206,20 @@ def _run_migrations(conn):
             conn.execute("DROP TABLE IF EXISTS pension_contributions")
             conn.execute(
                 "INSERT OR IGNORE INTO schema_migrations (name) VALUES ('v14_drop_pension_contributions')"
+            )
+            conn.commit()
+        except Exception as e:
+            _log_migration_error(e)
+
+    # v15: pension carry-forward was never used (0 rows). The effective annual allowance
+    # is now simply the annual allowance (or MPAA when enabled).
+    if not conn.execute(
+        "SELECT 1 FROM schema_migrations WHERE name = 'v15_drop_pension_carry_forward'"
+    ).fetchone():
+        try:
+            conn.execute("DROP TABLE IF EXISTS pension_carry_forward")
+            conn.execute(
+                "INSERT OR IGNORE INTO schema_migrations (name) VALUES ('v15_drop_pension_carry_forward')"
             )
             conn.commit()
         except Exception as e:

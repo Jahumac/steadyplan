@@ -20,9 +20,6 @@ from .planning_allowances import (
     group_inflows_by_account,
     fetch_isa_contributions,
     delete_isa_contribution,
-    fetch_pension_carry_forward,
-    upsert_pension_carry_forward,
-    delete_pension_carry_forward,
     fetch_contribution_overrides,
     fetch_contribution_overrides_for_accounts,
     fetch_contribution_overrides_for_reason,
@@ -327,7 +324,6 @@ def reset_all_user_data(user_id):
         conn.execute("DELETE FROM assumptions WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM holding_catalogue WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM isa_contributions WHERE user_id = ?", (user_id,))
-        conn.execute("DELETE FROM pension_carry_forward WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM portfolio_daily_snapshots WHERE user_id = ?", (user_id,))
         conn.execute(
             "DELETE FROM monthly_review_items WHERE review_id IN "

@@ -44,7 +44,6 @@ def _delete_user_data(conn, user_id):
 
     out["cash_flow_events"] = _del("DELETE FROM cash_flow_events WHERE user_id = ?", (user_id,))
     out["isa_contributions"] = _del("DELETE FROM isa_contributions WHERE user_id = ?", (user_id,))
-    out["pension_carry_forward"] = _del("DELETE FROM pension_carry_forward WHERE user_id = ?", (user_id,))
 
     out["premium_bonds_prizes"] = _del("DELETE FROM premium_bonds_prizes WHERE user_id = ?", (user_id,))
 
@@ -142,7 +141,6 @@ def restore_backup_for_user(user_id, backup_payload, *, conn=None):
     contribution_overrides = planning.get("contribution_overrides") or []
     cash_flow_events = planning.get("cash_flow_events") or []
     isa_contributions = planning.get("isa_contributions") or []
-    pension_carry_forward = planning.get("pension_carry_forward") or []
     premium_bonds_prizes = planning.get("premium_bonds_prizes") or []
 
     if conn is None:
@@ -370,15 +368,6 @@ def restore_backup_for_user(user_id, backup_payload, *, conn=None):
             inserted["isa_contributions"] = len(isa_contributions)
 
 
-            for pcf in pension_carry_forward:
-                _insert_row(
-                    conn,
-                    "pension_carry_forward",
-                    pcf,
-                    overrides={"user_id": user_id},
-                    ignore_columns={"id"},
-                )
-            inserted["pension_carry_forward"] = len(pension_carry_forward)
 
             for pb in premium_bonds_prizes:
                 _insert_row(
