@@ -41,6 +41,7 @@ def _goal_payload_from_form(form):
         "goal_type": form.get("goal_type", "Tagged Goal").strip(),
         "selected_tags": ", ".join(tag_values),
         "notes": form.get("notes", "").strip(),
+        "target_date": (form.get("target_date") or "").strip(),
     }
 
 
@@ -82,22 +83,41 @@ def _build_projection_source_summary(goal, included_accounts, assumptions, month
     return summary
 
 
-def _build_goal_card(goal, accounts, holdings_totals, assumptions=None, one_off_inflows_by_account=None):
+def _included_accounts_for_goal(goal, accounts, holdings_totals, one_off_inflows_by_account=None):
+    """The accounts a goal draws on, already prepared for the projection engine.
+
+    Single source of truth for "which money counts towards this goal". Reused by the
+    Goal cards and by the House page so the two can never disagree.
+    """
     selected_tags = _split_tags(goal["selected_tags"]) if "selected_tags" in goal else []
-    included_accounts = []
     one_off_inflows_by_account = one_off_inflows_by_account or {}
 
+    included_accounts = []
     for account in accounts:
         account_tags = _split_tags(account["tags"]) if "tags" in account else []
-        if selected_tags and any(tag in account_tags for tag in selected_tags):
-            # Mirror what the Projections page does: override current_value with
-            # the effective value (so holdings-based accounts use live holdings totals)
-            row = dict(account)
-            row["current_value"] = effective_account_value(account, holdings_totals)
-            # One-off lump sums + expected LISA bonus, so a deposit built from
-            # annual top-ups is projectable instead of returning "no estimate".
-            row["_one_off_inflows"] = one_off_inflows_by_account.get(int(account["id"]), [])
-            included_accounts.append(row)
+        if not selected_tags or not any(tag in account_tags for tag in selected_tags):
+            continue
+        # Mirror what the Projections page does: override current_value with
+        # the effective value (so holdings-based accounts use live holdings totals)
+        row = dict(account)
+        row["current_value"] = effective_account_value(account, holdings_totals)
+        # One-off lump sums + expected LISA bonus, so a deposit built from
+        # annual top-ups is projectable instead of returning "no estimate".
+        # Prefer the caller's map, but never silently drop inflows that are already
+        # attached to the account dict — otherwise a prepared account loses them.
+        inflows = one_off_inflows_by_account.get(int(account["id"]))
+        if inflows is None:
+            inflows = account.get("_one_off_inflows") or []
+        row["_one_off_inflows"] = inflows
+        included_accounts.append(row)
+    return included_accounts
+
+
+def _build_goal_card(goal, accounts, holdings_totals, assumptions=None, one_off_inflows_by_account=None):
+    selected_tags = _split_tags(goal["selected_tags"]) if "selected_tags" in goal else []
+    included_accounts = _included_accounts_for_goal(
+        goal, accounts, holdings_totals, one_off_inflows_by_account
+    )
 
     current_total = sum(a["current_value"] for a in included_accounts)
     target = float(goal["target_value"] or 0)

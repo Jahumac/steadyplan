@@ -64,7 +64,8 @@ CREATE TABLE IF NOT EXISTS goals (
     target_value REAL NOT NULL,
     goal_type TEXT,
     selected_tags TEXT DEFAULT '',
-    notes TEXT
+    notes TEXT,
+    target_date TEXT
 );
 
 CREATE TABLE IF NOT EXISTS assumptions (
@@ -425,6 +426,10 @@ def _run_migrations(conn):
         "ALTER TABLE holdings ADD COLUMN holding_catalogue_id INTEGER",
         "ALTER TABLE holdings ADD COLUMN book_cost REAL",
         "ALTER TABLE goals ADD COLUMN selected_tags TEXT DEFAULT ''",
+        # When the money is needed. Without this a goal could only ever say
+        # "you will get there in N months" — never "you will be short by £X on
+        # your completion date", which is the question a house buyer asks.
+        "ALTER TABLE goals ADD COLUMN target_date TEXT",
         "ALTER TABLE monthly_snapshots ADD COLUMN month_key TEXT",
     ]:
         try:
