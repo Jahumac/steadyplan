@@ -1056,16 +1056,6 @@ def test_isa_contribution_rejects_invalid_date(app, client, token):
     assert resp.get_json()["error"] == "bad_request"
 
 
-def test_pension_contribution_rejects_bad_kind(app, client, token):
-    resp = client.post(
-        "/api/v1/contributions/pension",
-        json={"account_id": 1, "amount": 100, "date": "2026-04-10", "kind": "wat"},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert resp.status_code == 400
-
-
-# ── Monthly review completion ────────────────────────────────────────────────
 
 def test_complete_monthly_review_bad_month_key(client, token):
     resp = client.post(

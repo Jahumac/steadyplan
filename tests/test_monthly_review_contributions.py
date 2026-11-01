@@ -453,7 +453,6 @@ def test_pension_usage_respects_overrides_and_completed_review_and_ignores_draft
         ]
         usage = calculate_pension_usage(
             accounts,
-            ad_hoc_contributions=[],
             assumptions={"tax_band": "basic"},
             today=today,
             salary_day=salary_day,
@@ -479,7 +478,6 @@ def test_pension_usage_respects_overrides_and_completed_review_and_ignores_draft
         review_rows = fetch_completed_tax_year_contributions(uid, "2026-04", "2027-03")
         usage = calculate_pension_usage(
             accounts,
-            ad_hoc_contributions=[],
             assumptions={"tax_band": "basic"},
             today=today,
             salary_day=salary_day,
@@ -504,7 +502,6 @@ def test_pension_usage_respects_overrides_and_completed_review_and_ignores_draft
         review_rows = fetch_completed_tax_year_contributions(uid, "2026-04", "2027-03")
         usage = calculate_pension_usage(
             accounts,
-            ad_hoc_contributions=[],
             assumptions={"tax_band": "basic"},
             today=today,
             salary_day=salary_day,
@@ -538,7 +535,6 @@ def test_pension_usage_salary_sacrifice_counts_into_pot_as_employer(app, make_us
         ]
         usage = calculate_pension_usage(
             accounts,
-            ad_hoc_contributions=[],
             assumptions={"tax_band": "basic"},
             today=today,
             salary_day=salary_day,

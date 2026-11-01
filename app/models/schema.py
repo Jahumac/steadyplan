@@ -223,17 +223,6 @@ CREATE TABLE IF NOT EXISTS isa_contributions (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE TABLE IF NOT EXISTS pension_contributions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-    amount REAL NOT NULL,
-    kind TEXT NOT NULL DEFAULT 'personal',
-    contribution_date TEXT NOT NULL,
-    note TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 CREATE TABLE IF NOT EXISTS pension_carry_forward (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -861,19 +850,6 @@ def _run_migrations(conn):
     """)
 
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS pension_contributions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL REFERENCES users(id),
-            account_id INTEGER NOT NULL REFERENCES accounts(id),
-            amount REAL NOT NULL,
-            kind TEXT NOT NULL DEFAULT 'personal',
-            contribution_date TEXT NOT NULL,
-            note TEXT,
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        )
-    """)
-
-    conn.execute("""
         CREATE TABLE IF NOT EXISTS api_tokens (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL REFERENCES users(id),
@@ -1140,7 +1116,6 @@ def _run_migrations(conn):
             child_tables = (
                 "holdings", "monthly_snapshots", "monthly_review_items",
                 "contribution_overrides", "isa_contributions",
-                "pension_contributions",
                 "premium_bonds_prizes", "account_daily_snapshots",
             )
             for aid in stale_ids:
@@ -1203,7 +1178,6 @@ def _run_migrations(conn):
                 "api_tokens_new",
                 "custom_tags_new",
                 "debts_new",
-                "pension_contributions_new",
                 "contribution_overrides_new",
                 "account_daily_snapshots_new",
                 "scheduler_runs_new",
@@ -1227,6 +1201,20 @@ def _run_migrations(conn):
                 conn.execute(f"DROP TABLE IF EXISTS {stale}")
             conn.execute(
                 "INSERT OR IGNORE INTO schema_migrations (name) VALUES ('v13_drop_unused_tracking_tables')"
+            )
+            conn.commit()
+        except Exception as e:
+            _log_migration_error(e)
+
+    # v14: ad-hoc pension top-ups were never used (0 rows in production). Monthly
+    # pension contributions still come from the accounts themselves.
+    if not conn.execute(
+        "SELECT 1 FROM schema_migrations WHERE name = 'v14_drop_pension_contributions'"
+    ).fetchone():
+        try:
+            conn.execute("DROP TABLE IF EXISTS pension_contributions")
+            conn.execute(
+                "INSERT OR IGNORE INTO schema_migrations (name) VALUES ('v14_drop_pension_contributions')"
             )
             conn.commit()
         except Exception as e:
@@ -1260,8 +1248,6 @@ def _ensure_indexes(conn):
         "CREATE INDEX IF NOT EXISTS idx_cash_flow_events_user_date ON cash_flow_events(user_id, event_date)",
         "CREATE INDEX IF NOT EXISTS idx_isa_contributions_user ON isa_contributions(user_id, contribution_date)",
         "CREATE INDEX IF NOT EXISTS idx_isa_contributions_account ON isa_contributions(account_id)",
-        "CREATE INDEX IF NOT EXISTS idx_pension_contributions_user ON pension_contributions(user_id, contribution_date)",
-        "CREATE INDEX IF NOT EXISTS idx_pension_contributions_account ON pension_contributions(account_id)",
         "CREATE INDEX IF NOT EXISTS idx_scheduler_runs_user_date ON scheduler_runs(user_id, run_date)",
         "CREATE INDEX IF NOT EXISTS idx_portfolio_daily_user_date ON portfolio_daily_snapshots(user_id, snapshot_date)",
         "CREATE INDEX IF NOT EXISTS idx_custom_tags_user ON custom_tags(user_id)",

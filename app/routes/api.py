@@ -36,7 +36,6 @@ from app.models import (
     ASSISTANT_SCOPE_BUDGET_WRITE,
     ASSISTANT_SCOPE_READ,
     add_isa_contribution,
-    add_pension_contribution,
     authenticate_api_token,
     fetch_account,
     fetch_all_accounts,
@@ -541,42 +540,6 @@ def log_isa_contribution():
 
     add_isa_contribution(g.api_user.id, account_id_int, amount, contribution_date,
                          payload.get("note"))
-    return jsonify({"ok": True}), 201
-
-
-@api_bp.route("/contributions/pension", methods=["POST"])
-@api_auth_required
-@general_api_required
-def log_pension_contribution():
-    payload = request.get_json(silent=True) or {}
-    account_id = payload.get("account_id")
-    
-    # Validate account_id is a positive integer
-    if not account_id or not isinstance(account_id, (int, str)) or int(account_id) <= 0:
-        return _err("bad_request", "Valid account_id required", 400)
-    
-    amount = _parse_amount(payload.get("amount"))
-    contribution_date = valid_date(payload.get("date"))
-    kind = (payload.get("kind") or "personal").strip()
-
-    if amount is None or not account_id or not contribution_date:
-        return _err("bad_request",
-                    "account_id, amount (>= 0), and date (YYYY-MM-DD) required", 400)
-    if kind not in ("personal", "employer", "salary_sacrifice"):
-        return _err("bad_request",
-                    "kind must be one of: personal, employer, salary_sacrifice", 400)
-    
-    account_id_int = int(account_id)
-    account = fetch_account(account_id_int, g.api_user.id)
-    if account is None:
-        return _err("not_found", "Account not found", 404)
-    
-    # Additional validation to ensure account belongs to user
-    if int(account.get('user_id') or 0) != g.api_user.id:
-        return _err("not_found", "Account not found", 404)
-
-    add_pension_contribution(g.api_user.id, account_id_int, amount, kind,
-                             contribution_date, payload.get("note"))
     return jsonify({"ok": True}), 201
 
 

@@ -36,7 +36,6 @@ def _count_rows(app):
                 "monthly_review_items",
                 "cash_flow_events",
                 "isa_contributions",
-                "pension_contributions",
                 "pension_carry_forward",
                 "contribution_overrides",
                 "premium_bonds_prizes",
@@ -203,15 +202,6 @@ def test_restore_validation_invalid_isa_contributions_account_reference_rejected
     assert any("planning.isa_contributions[].account_id" in e and "missing account" in e for e in result["errors"])
 
 
-
-def test_restore_validation_invalid_pension_contributions_account_reference_rejected(exported_json_bytes):
-    payload = json.loads(exported_json_bytes.decode("utf-8"))
-    payload["planning"]["pension_contributions"].append(
-        {"id": 1, "account_id": 999999, "amount": 20, "contribution_date": "2026-06-01", "kind": "personal"}
-    )
-    result = validate_restore_backup_json(json.dumps(payload).encode("utf-8"))
-    assert result["valid"] is False
-    assert any("planning.pension_contributions[].account_id" in e and "missing account" in e for e in result["errors"])
 
 
 def test_restore_validation_invalid_premium_bonds_prizes_account_reference_rejected(exported_json_bytes):

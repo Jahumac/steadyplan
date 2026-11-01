@@ -530,19 +530,12 @@ def test_alice_cannot_add_allowance_rows_for_bobs_account(app, client, two_users
         "amount": "100",
         "contribution_date": "2026-04-10",
     })
-    client.post("/allowance/pension/add", data={
-        "account_id": two_users["bob"]["account"],
-        "amount": "100",
-        "kind": "personal",
-        "contribution_date": "2026-04-10",
-    })
 
     with app.app_context():
         from app.models import get_connection
         with get_connection() as conn:
             isa = conn.execute("SELECT COUNT(*) AS c FROM isa_contributions").fetchone()["c"]
-            pensions = conn.execute("SELECT COUNT(*) AS c FROM pension_contributions").fetchone()["c"]
-    assert (isa, pensions) == (0, 0)
+    assert isa == 0
 
 
 def test_allowance_post_routes_reject_wrong_account_types(app, client, make_user):
@@ -581,20 +574,14 @@ def test_allowance_post_routes_reject_wrong_account_types(app, client, make_user
         data={"account_id": taxable, "amount": "100", "contribution_date": "2026-04-10"},
         follow_redirects=True,
     )
-    client.post(
-        "/allowance/pension/add",
-        data={"account_id": isa, "amount": "100", "kind": "personal", "contribution_date": "2026-04-10"},
-        follow_redirects=True,
-    )
 
     with app.app_context():
         from app.models import get_connection
 
         with get_connection() as conn:
             isa_rows = conn.execute("SELECT COUNT(*) AS c FROM isa_contributions WHERE user_id = ?", (uid,)).fetchone()["c"]
-            pension_rows = conn.execute("SELECT COUNT(*) AS c FROM pension_contributions WHERE user_id = ?", (uid,)).fetchone()["c"]
 
-    assert (int(isa_rows), int(pension_rows)) == (0, 0)
+    assert int(isa_rows) == 0
 
 
 

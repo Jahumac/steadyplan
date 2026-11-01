@@ -243,7 +243,6 @@ def validate_restore_backup_json(json_bytes):
         "contribution_overrides",
         "cash_flow_events",
         "isa_contributions",
-        "pension_contributions",
         "pension_carry_forward",
         "premium_bonds_prizes",
     ]
@@ -254,7 +253,6 @@ def validate_restore_backup_json(json_bytes):
     contribution_overrides = (planning or {}).get("contribution_overrides") or []
     cash_flow_events = (planning or {}).get("cash_flow_events") or []
     isa_contributions = (planning or {}).get("isa_contributions") or []
-    pension_contributions = (planning or {}).get("pension_contributions") or []
     pension_carry_forward = (planning or {}).get("pension_carry_forward") or []
     premium_bonds_prizes = (planning or {}).get("premium_bonds_prizes") or []
 
@@ -263,7 +261,6 @@ def validate_restore_backup_json(json_bytes):
             ("planning.contribution_overrides", contribution_overrides),
             ("planning.cash_flow_events", cash_flow_events),
             ("planning.isa_contributions", isa_contributions),
-            ("planning.pension_contributions", pension_contributions),
             ("planning.pension_carry_forward", pension_carry_forward),
             ("planning.premium_bonds_prizes", premium_bonds_prizes),
         ]:
@@ -511,22 +508,6 @@ def validate_restore_backup_json(json_bytes):
         elif aid not in account_ids:
             errors.append("Invalid planning.isa_contributions[].account_id (references missing account).")
 
-    for idx, pc in enumerate(pension_contributions or []):
-        if not _is_mapping(pc):
-            errors.append("Invalid planning.pension_contributions entry (must be an object).")
-            continue
-        if _non_empty_str(pc.get("contribution_date")) is None:
-            errors.append(f"Missing planning.pension_contributions[{idx}].contribution_date.")
-        if not _is_number(pc.get("amount")):
-            errors.append(f"Invalid planning.pension_contributions[{idx}].amount (must be a number).")
-        if "kind" in pc and _non_empty_str(pc.get("kind")) is None:
-            errors.append(f"Invalid planning.pension_contributions[{idx}].kind (must be a non-empty string).")
-        aid = pc.get("account_id")
-        if not isinstance(aid, int):
-            errors.append("Invalid planning.pension_contributions[].account_id (must be an integer).")
-        elif aid not in account_ids:
-            errors.append("Invalid planning.pension_contributions[].account_id (references missing account).")
-
     seen_carry_forward_tax_years = set()
     for idx, pcf in enumerate(pension_carry_forward or []):
         if not _is_mapping(pcf):
@@ -660,7 +641,6 @@ def validate_restore_backup_json(json_bytes):
             "contribution_overrides": len(contribution_overrides or []),
             "cash_flow_events": len(cash_flow_events or []),
             "isa_contributions": len(isa_contributions or []),
-            "pension_contributions": len(pension_contributions or []),
             "pension_carry_forward": len(pension_carry_forward or []),
             "premium_bonds_prizes": len(premium_bonds_prizes or []),
         },

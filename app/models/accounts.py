@@ -39,7 +39,6 @@ _ACCOUNT_CHILD_TABLES = (
     "monthly_review_items",
     "contribution_overrides",
     "isa_contributions",
-    "pension_contributions",
     "premium_bonds_prizes",
     "account_daily_snapshots",
 )

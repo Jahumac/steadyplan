@@ -289,7 +289,6 @@ def test_pension_projection_respects_reviewed_skip_in_year_end_projection():
 
     usage = calculate_pension_usage(
         accounts,
-        ad_hoc_contributions=[],
         assumptions={"tax_band": "basic"},
         today=date(2026, 6, 30),
         salary_day=28,
