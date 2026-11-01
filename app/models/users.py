@@ -263,7 +263,6 @@ def delete_user(user_id):
                 "portfolio_daily_snapshots",
                 "custom_tags",
                 "hidden_tags",
-                "assistant_audit_events",
                 "api_tokens",
                 "broker_connections",
                 "budget_items",
@@ -302,17 +301,7 @@ def delete_user(user_id):
 # Assistant tokens are intentionally narrower and scope-limited.
 
 API_TOKEN_KIND_GENERAL = "general"
-API_TOKEN_KIND_ASSISTANT = "assistant"
-VALID_API_TOKEN_KINDS = {API_TOKEN_KIND_GENERAL, API_TOKEN_KIND_ASSISTANT}
-
-ASSISTANT_SCOPE_READ = "assistant:read"
-ASSISTANT_SCOPE_BUDGET_WRITE = "assistant:budget_write"
-ASSISTANT_SCOPE_TRANSACTIONS_WRITE = "assistant:transactions_write"
-VALID_ASSISTANT_SCOPES = (
-    ASSISTANT_SCOPE_READ,
-    ASSISTANT_SCOPE_BUDGET_WRITE,
-    ASSISTANT_SCOPE_TRANSACTIONS_WRITE,
-)
+VALID_API_TOKEN_KINDS = {API_TOKEN_KIND_GENERAL}
 
 
 def _hash_token(token):
@@ -323,15 +312,6 @@ def _hash_token(token):
 def _normalise_token_kind(token_kind):
     kind = (token_kind or API_TOKEN_KIND_GENERAL).strip().lower()
     return kind if kind in VALID_API_TOKEN_KINDS else API_TOKEN_KIND_GENERAL
-
-
-def _normalise_assistant_scopes(scopes):
-    values = []
-    for scope in (scopes or []):
-        scope_text = str(scope or "").strip().lower()
-        if scope_text in VALID_ASSISTANT_SCOPES and scope_text not in values:
-            values.append(scope_text)
-    return values or [ASSISTANT_SCOPE_READ]
 
 
 def _serialise_scopes(scopes):
@@ -351,7 +331,7 @@ def create_api_token(user_id, label=None, token_kind=API_TOKEN_KIND_GENERAL, sco
     import secrets
 
     kind = _normalise_token_kind(token_kind)
-    raw_scopes = _normalise_assistant_scopes(scopes) if kind == API_TOKEN_KIND_ASSISTANT else []
+    raw_scopes = []   # assistant tokens are gone; kept for the api_tokens column
     token = secrets.token_hex(32)
     hashed = _hash_token(token)
     with get_connection() as conn:
@@ -364,51 +344,6 @@ def create_api_token(user_id, label=None, token_kind=API_TOKEN_KIND_GENERAL, sco
         )
         conn.commit()
     return token
-
-
-
-def log_assistant_audit_event(
-    user_id,
-    *,
-    token_id=None,
-    token_label=None,
-    token_kind=None,
-    action_type,
-    endpoint,
-    target_type=None,
-    target_id=None,
-    target_label=None,
-    month_key=None,
-    before_state=None,
-    after_state=None,
-):
-    import json
-
-    with get_connection() as conn:
-        conn.execute(
-            """
-            INSERT INTO assistant_audit_events (
-                user_id, token_id, token_label, token_kind,
-                action_type, endpoint, target_type, target_id, target_label,
-                month_key, before_state, after_state
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                user_id,
-                token_id,
-                token_label,
-                _normalise_token_kind(token_kind),
-                action_type,
-                endpoint,
-                target_type,
-                target_id,
-                target_label,
-                month_key,
-                json.dumps(before_state or {}, sort_keys=True),
-                json.dumps(after_state or {}, sort_keys=True),
-            ),
-        )
-        conn.commit()
 
 
 
@@ -484,55 +419,6 @@ def fetch_api_tokens(user_id, token_kind=None):
         item = dict(row)
         item["token_kind"] = _normalise_token_kind(item.get("token_kind"))
         item["scopes"] = _deserialise_scopes(item.get("scopes"))
-        out.append(item)
-    return out
-
-
-
-def fetch_assistant_audit_events(user_id, limit=20):
-    import json
-
-    try:
-        safe_limit = max(1, min(int(limit or 20), 100))
-    except (TypeError, ValueError):
-        safe_limit = 20
-
-    with get_connection() as conn:
-        rows = conn.execute(
-            """
-            SELECT
-                e.id,
-                e.user_id,
-                e.token_id,
-                e.token_label,
-                COALESCE(e.token_kind, ?) AS token_kind,
-                e.action_type,
-                e.endpoint,
-                e.target_type,
-                e.target_id,
-                e.target_label,
-                e.month_key,
-                e.before_state,
-                e.after_state,
-                e.created_at
-            FROM assistant_audit_events e
-            WHERE e.user_id = ?
-            ORDER BY e.created_at DESC, e.id DESC
-            LIMIT ?
-            """,
-            (API_TOKEN_KIND_ASSISTANT, user_id, safe_limit),
-        ).fetchall()
-
-    out = []
-    for row in rows:
-        item = dict(row)
-        item["token_kind"] = _normalise_token_kind(item.get("token_kind"))
-        for field in ("before_state", "after_state"):
-            raw = item.get(field)
-            try:
-                item[field] = json.loads(raw) if raw else {}
-            except Exception:
-                item[field] = {}
         out.append(item)
     return out
 

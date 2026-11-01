@@ -630,34 +630,12 @@ def test_user_reset_clears_premium_bonds_and_aux_user_state(app, two_users):
                 (two_users["bob"]["uid"],),
             )
             conn.execute(
-                "INSERT INTO api_tokens (user_id, token, label, token_kind, scopes) VALUES (?, 'alice-token', 'Alice token', 'assistant', 'assistant:read')",
+                "INSERT INTO api_tokens (user_id, token, label) VALUES (?, 'alice-token', 'Alice token')",
                 (two_users["alice"]["uid"],),
             )
             conn.execute(
-                "INSERT INTO api_tokens (user_id, token, label, token_kind, scopes) VALUES (?, 'bob-token', 'Bob token', 'assistant', 'assistant:read')",
+                "INSERT INTO api_tokens (user_id, token, label) VALUES (?, 'bob-token', 'Bob token')",
                 (two_users["bob"]["uid"],),
-            )
-            alice_token_id = conn.execute(
-                "SELECT id FROM api_tokens WHERE token = 'alice-token'"
-            ).fetchone()["id"]
-            bob_token_id = conn.execute(
-                "SELECT id FROM api_tokens WHERE token = 'bob-token'"
-            ).fetchone()["id"]
-            conn.execute(
-                """
-                INSERT INTO assistant_audit_events
-                    (user_id, token_id, token_label, token_kind, action_type, endpoint, before_state, after_state)
-                VALUES (?, ?, 'Alice token', 'assistant', 'read', '/api/assistant/month-summary', '{}', '{}')
-                """,
-                (two_users["alice"]["uid"], alice_token_id),
-            )
-            conn.execute(
-                """
-                INSERT INTO assistant_audit_events
-                    (user_id, token_id, token_label, token_kind, action_type, endpoint, before_state, after_state)
-                VALUES (?, ?, 'Bob token', 'assistant', 'read', '/api/assistant/month-summary', '{}', '{}')
-                """,
-                (two_users["bob"]["uid"], bob_token_id),
             )
             conn.commit()
 
@@ -679,9 +657,6 @@ def test_user_reset_clears_premium_bonds_and_aux_user_state(app, two_users):
             token_rows = conn.execute(
                 "SELECT user_id, token FROM api_tokens ORDER BY user_id ASC"
             ).fetchall()
-            audit_rows = conn.execute(
-                "SELECT user_id, token_label FROM assistant_audit_events ORDER BY user_id ASC"
-            ).fetchall()
             account_rows = conn.execute(
                 "SELECT user_id, name FROM accounts ORDER BY user_id ASC"
             ).fetchall()
@@ -691,7 +666,6 @@ def test_user_reset_clears_premium_bonds_and_aux_user_state(app, two_users):
         assert custom_rows == [{"user_id": two_users["bob"]["uid"], "tag": 'manual-tag'}]
         assert scheduler_rows == [{"user_id": two_users["bob"]["uid"], "slot": 'morning'}]
         assert token_rows == [{"user_id": two_users["bob"]["uid"], "token": 'bob-token'}]
-        assert audit_rows == [{"user_id": two_users["bob"]["uid"], "token_label": 'Bob token'}]
         assert account_rows == [{"user_id": two_users["bob"]["uid"], "name": 'Bob ISA'}]
 
 

@@ -587,10 +587,10 @@
     </div>
     <div class="simple-list-item" data-tab-target="integrations" style="cursor:pointer;">
       <div>
-        <strong>Assistant and broker review</strong>
-        <p>Optional assistant access and read-only Trading 212 broker snapshot review.</p>
+        <strong>Broker review</strong>
+        <p>Read-only Trading 212 broker snapshot review.</p>
       </div>
-      <a href="#connections-tokens" data-tab-target="integrations">Review optional access</a>
+      <a href="#trading212-access" data-tab-target="integrations">Review broker access</a>
     </div>
     <div class="simple-list-item" data-href="/settings/?mode=diagnostics" style="cursor:pointer;">
       <div>
@@ -837,62 +837,6 @@
 
 <div id="tab-integrations" class="settings-tab-content">
 <div class="plan-dashboard-grid">
-  <!-- Assistant Access Panel -->
-  <section class="panel mt-1" id="connections-tokens">
-    <div class="section-header">
-      <div>
-        <p class="eyebrow">Personal Pip access</p>
-        <h3>Create a scoped token only if you run your own Pip setup</h3>
-      </div>
-    </div>
-    <div class="plan-card-body m-0 p-0" style="display:flex;flex-direction:column;gap:0.5rem;height:100%;">
-      <p class="helper-text text-xs">
-        Most people can ignore this section. It is for Janusz-style personal Pip setups that need a separate assistant token you can replace or revoke here.
-      </p>
-      <p class="helper-text text-xs mt-02" style="font-size:0.75rem; line-height:1.3;">
-        Read-only access answers portfolio, budget, and affordability questions without changing your data. Budget write adds one narrow action today: updating a single month's amount on an existing manual, unlinked budget item.
-      </p>
-
-      {% if assistant_token_secret %}
-      <div style="margin-top:0.3rem;padding:0.6rem;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);">
-        <strong class="text-xs">{{ assistant_token_secret_heading(assistant_token_secret.action) }}</strong>
-        <p class="helper-text text-xs m-0 mt-01 mb-02">Copy this now. SteadyPlan only shows this token once.</p>
-        <div class="text-sm mb-04" >Label: <strong>{{ assistant_token_label(assistant_token_secret.label) }}</strong></div>
-        <div class="text-sm mb-04" >Permissions: {{ assistant_scope_labels(assistant_token_secret.scopes)|join(', ') }}</div>
-        <code data-assistant-token-value="{{ assistant_token_secret.value }}" style="display:block;overflow:auto;padding:0.4rem;font-size:0.75rem;border-radius:6px;background:rgba(0,0,0,0.2);">{{ assistant_token_secret.value }}</code>
-      </div>
-      {% endif %}
-
-      <form method="post" action="/settings/assistant-access/create" class="settings-form m-0 mt-auto" >
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div style="display:flex; flex-direction:column; gap:0.4rem;">
-          <label class="m-0">
-            <span>Local token label</span>
-            <input type="text" name="label" value="Pip" class="input-standard text-xs w-100" style="padding:0.4rem 0.6rem;" maxlength="64">
-            <small class="form-hint text-xxs" style="font-size:0.7rem;">Optional local label so you can recognise this saved token later.</small>
-          </label>
-          
-          <span class="text-xs font-semibold mt-01">Permissions</span>
-          <div style="display:grid;gap:0.3rem;">
-            {% for scope in assistant_scope_options %}
-            <label class="m-0" style="display:block;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);">
-              <div style="display:flex;gap:0.4rem;align-items:flex-start;">
-                <input type="checkbox" name="scopes" value="{{ scope.key }}" {{ 'checked' if scope.key == 'assistant:read' else '' }}>
-                <span class="text-xs">
-                  <strong>{{ scope.label }}</strong><br>
-                  <small class="form-hint text-xxs" style="font-size:0.65rem;line-height:1.1;">{{ scope.hint }}</small>
-                </span>
-              </div>
-            </label>
-            {% endfor %}
-          </div>
-          
-          <button type="submit" class="badge badge-primary-action w-100 mt-02">Create assistant token</button>
-        </div>
-      </form>
-    </div>
-  </section>
-
   <!-- Trading 212 Connection Panel -->
   <section class="panel mt-1" id="trading212-access">
     <div class="section-header">
@@ -950,97 +894,6 @@
 </div>
 
 <!-- Saved Connections and Tokens tables (Full-width below the grid) -->
-{% if assistant_tokens %}
-<section class="panel mt-1">
-  <div class="section-header">
-    <div>
-      <h3>Saved assistant tokens</h3>
-    </div>
-  </div>
-  <p class="helper-text mb-045" >Replace token issues a new raw token value once and disables the old one. Revoke token disables it immediately.</p>
-  <div class="table-scroll">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Token label</th>
-          <th>Permissions</th>
-          <th>Created on</th>
-          <th>Last used</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for token in assistant_tokens %}
-        <tr>
-          <td>{{ assistant_token_label(token.label) }}</td>
-          <td>{{ assistant_scope_labels(token.scopes)|join(', ') }}</td>
-          <td>{{ token.created_at or '—' }}</td>
-          <td>{{ assistant_token_last_used_label(token.last_used_at) }}</td>
-          <td class="num">
-            <div class="flex flex-end gap-05 flex-wrap" >
-              <form class="m-0" method="post" action="/settings/assistant-access/{{ token.id }}/regenerate" >
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="badge">Replace token now</button>
-              </form>
-              <form class="m-0" method="post" action="/settings/assistant-access/{{ token.id }}/revoke" >
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="badge badge-danger">Revoke token</button>
-              </form>
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
-{% endif %}
-
-{% if assistant_audit_events %}
-<section class="panel mt-1">
-  <div class="section-header">
-    <div>
-      <h3>Recent assistant activity</h3>
-    </div>
-  </div>
-  <div class="table-scroll">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>When</th>
-          <th>Token</th>
-          <th>Action</th>
-          <th>Target</th>
-          <th>Change</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for event in assistant_audit_events %}
-        <tr>
-          <td>{{ event.created_at or '—' }}</td>
-          <td>{{ assistant_token_label(event.token_label) }}</td>
-          <td>{{ assistant_action_label(event.action_type) }}</td>
-          <td>
-            {{ assistant_target_label(event.target_label, event.target_type) }}
-            {% if event.month_key %}<div class="helper-text mt-02" >{{ event.month_key }}</div>{% endif %}
-          </td>
-          <td>
-            {% set before_amount = event.before_state.get('amount') %}
-            {% set after_amount = event.after_state.get('amount') %}
-            {% if before_amount is not none and after_amount is not none %}
-              {{ assistant_amount_change_label(before_amount, after_amount) }}
-            {% else %}
-              —
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</section>
-{% endif %}
-
 {% if not assistant_tokens and not assistant_audit_events %}
 <p class="helper-text mt-1">No assistant token set up here. SteadyPlan works normally if you leave this section unused.</p>
 {% endif %}

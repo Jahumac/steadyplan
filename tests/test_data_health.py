@@ -399,8 +399,8 @@ def test_settings_groups_trust_surfaces_at_a_glance(app, client, make_user):
     assert "Restore check" in html
     assert "SQLite backup health" in html
     assert "Optional access" in html
-    assert "Assistant and broker review" in html
-    assert "Optional assistant access and read-only Trading 212 broker snapshot review." in html
+    assert "Broker review" in html   # assistant access was removed (v16)
+    assert "Read-only Trading 212 broker snapshot review." in html
     assert "Connections &amp; tokens" not in html
     assert "Optional assistant access and read-only broker snapshot connections." not in html
     assert "Diagnostics and system posture" in html
@@ -414,10 +414,12 @@ def test_settings_groups_trust_surfaces_at_a_glance(app, client, make_user):
     admin_idx = after_glance.index("User Management")
     data_idx = after_glance.index("<h3>Data ownership</h3>")
     export_idx = after_glance.index("<h3>Download a per-user JSON export</h3>")
-    assistant_idx = after_glance.index("<h3>Create a scoped token only if you run your own Pip setup</h3>")
+    broker_idx = after_glance.index("<h3>Save a broker snapshot connection</h3>")
     danger_idx = after_glance.index("<h3>Delete this user's finance data</h3>")
 
-    assert planning_idx < admin_idx < data_idx < export_idx < assistant_idx < danger_idx
+    # ordering of the safety surfaces; the assistant token panel used to sit between
+    # the export and the danger zone and was removed in v16.
+    assert planning_idx < admin_idx < data_idx < export_idx < broker_idx < danger_idx
 
 
 def test_settings_explains_backup_restore_scope_at_a_glance(app, client, make_user):

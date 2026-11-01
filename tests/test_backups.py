@@ -546,11 +546,11 @@ def test_settings_glance_groups_recovery_links_and_anchors():
     assert 'href="#json-export"' in body
     assert 'href="#restore-check"' in body
     assert 'href="/settings/?mode=diagnostics#sqlite-backups"' in body
-    assert 'href="#connections-tokens"' in body
+    assert 'href="#trading212-access"' in body
     assert '<section class="panel mt-1" id="data-ownership">' in body
     assert '<section class="panel mt-1" id="json-export">' in body
     assert '<section class="panel mt-1" id="restore-check">' in body
-    assert '<section class="panel mt-1" id="connections-tokens">' in body
+    assert '<section class="panel mt-1" id="trading212-access">' in body
     assert '<span class="text-muted">Below</span>' not in body
     assert '<span class="text-muted">Optional</span>' not in body
 
