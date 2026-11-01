@@ -18,12 +18,6 @@ from pathlib import Path
 
 from app.extensions import limiter
 from app.calculations import effective_account_value, is_price_stale
-from app.services.assistant_access import assistant_scope_label
-from app.services.assistant_api import (
-    build_assistant_affordability,
-    build_assistant_month_summary,
-    build_assistant_portfolio_overview,
-)
 from app.services.backups import list_backups
 from app.services.financial_truth import apply_account_balance_update
 from app.services.monthly_review_checklist import (
@@ -32,9 +26,6 @@ from app.services.monthly_review_checklist import (
 )
 from app.utils import valid_date, valid_month_key
 from app.models import (
-    API_TOKEN_KIND_ASSISTANT,
-    ASSISTANT_SCOPE_BUDGET_WRITE,
-    ASSISTANT_SCOPE_READ,
     add_isa_contribution,
     authenticate_api_token,
     fetch_account,
@@ -52,7 +43,6 @@ from app.models import (
     fetch_monthly_review_items,
     get_connection,
     ensure_monthly_review_items,
-    log_assistant_audit_event,
     update_account,
     update_monthly_review,
     upsert_budget_entry,
@@ -87,39 +77,6 @@ def api_auth_required(fn):
             return _err("invalid_token", "Token not recognised", 401)
         g.api_user = auth["user"]
         g.api_token = auth["token"]
-        return fn(*args, **kwargs)
-
-    return wrapper
-
-
-def assistant_scope_required(scope):
-    def decorator(fn):
-        @wraps(fn)
-        def wrapper(*args, **kwargs):
-            token_info = getattr(g, "api_token", {}) or {}
-            if token_info.get("token_kind") != API_TOKEN_KIND_ASSISTANT:
-                return fn(*args, **kwargs)
-            scopes = set(token_info.get("scopes") or [])
-            if scope not in scopes:
-                scope_label = assistant_scope_label(scope)
-                return _err("insufficient_scope", f"This assistant token needs the {scope_label} permission.", 403)
-            return fn(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-def general_api_required(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        token_info = getattr(g, "api_token", {}) or {}
-        if token_info.get("token_kind") == API_TOKEN_KIND_ASSISTANT:
-            return _err(
-                "insufficient_scope",
-                "This assistant token is limited to assistant endpoints. Use a general API token for raw read/write endpoints.",
-                403,
-            )
         return fn(*args, **kwargs)
 
     return wrapper
@@ -176,7 +133,6 @@ def _goal_to_dict(row):
 
 @api_bp.route("/me")
 @api_auth_required
-@assistant_scope_required(ASSISTANT_SCOPE_READ)
 @_limit("60 per minute")
 def me():
     u = g.api_user
@@ -191,7 +147,6 @@ def me():
 
 @api_bp.route("/accounts")
 @api_auth_required
-@general_api_required
 @_limit("60 per minute")
 def list_accounts():
     rows = fetch_all_accounts(g.api_user.id)
@@ -200,7 +155,6 @@ def list_accounts():
 
 @api_bp.route("/accounts/<int:account_id>")
 @api_auth_required
-@general_api_required
 @_limit("60 per minute")
 def get_account(account_id):
     row = fetch_account(account_id, g.api_user.id)
@@ -213,7 +167,6 @@ def get_account(account_id):
 
 @api_bp.route("/holdings")
 @api_auth_required
-@general_api_required
 @_limit("60 per minute")
 def list_holdings():
     rows = fetch_all_holdings(g.api_user.id)
@@ -222,7 +175,6 @@ def list_holdings():
 
 @api_bp.route("/goals")
 @api_auth_required
-@general_api_required
 @_limit("60 per minute")
 def list_goals():
     rows = fetch_all_goals(g.api_user.id)
@@ -231,7 +183,6 @@ def list_goals():
 
 @api_bp.route("/overview")
 @api_auth_required
-@general_api_required
 @_limit("60 per minute")
 def overview():
     accounts = fetch_all_accounts(g.api_user.id)
@@ -247,7 +198,6 @@ def overview():
 
 @api_bp.route("/budget/<month_key>")
 @api_auth_required
-@general_api_required
 @_limit("60 per minute")
 def get_budget(month_key):
     if not valid_month_key(month_key):
@@ -277,52 +227,12 @@ def get_budget(month_key):
 
 @api_bp.route("/assumptions")
 @api_auth_required
-@general_api_required
 def get_assumptions():
     row = fetch_assumptions(g.api_user.id)
     if row is None:
         return jsonify({})
     # Return as dict; Row → dict is fine since all columns are primitive.
     return jsonify(dict(row))
-
-
-@api_bp.route("/assistant/month-summary/<month_key>")
-@api_auth_required
-@assistant_scope_required(ASSISTANT_SCOPE_READ)
-@_limit("60 per minute")
-def assistant_month_summary(month_key):
-    parsed_month = _parse_api_month_key(month_key)
-    if parsed_month is None:
-        return _err("bad_request", "month_key must be YYYY-MM", 400)
-    return jsonify(build_assistant_month_summary(g.api_user.id, parsed_month))
-
-
-@api_bp.route("/assistant/portfolio-overview")
-@api_auth_required
-@assistant_scope_required(ASSISTANT_SCOPE_READ)
-@_limit("60 per minute")
-def assistant_portfolio_overview():
-    return jsonify(build_assistant_portfolio_overview(g.api_user.id))
-
-
-@api_bp.route("/assistant/affordability/<month_key>")
-@api_auth_required
-@assistant_scope_required(ASSISTANT_SCOPE_READ)
-@_limit("60 per minute")
-def assistant_affordability(month_key):
-    parsed_month = _parse_api_month_key(month_key)
-    if parsed_month is None:
-        return _err("bad_request", "month_key must be YYYY-MM", 400)
-
-    amount = _parse_positive_amount(request.args.get("amount"))
-    if amount is None:
-        return _err("bad_request", "amount query parameter must be a positive number", 400)
-
-    spread_months = _parse_positive_int(request.args.get("spread_months", "1"))
-    if spread_months is None:
-        return _err("bad_request", "spread_months query parameter must be an integer >= 1", 400)
-
-    return jsonify(build_assistant_affordability(g.api_user.id, parsed_month, amount, spread_months))
 
 
 # ── Write endpoints ──────────────────────────────────────────────────────────
@@ -397,84 +307,8 @@ def _validate_and_convert_account_id(account_id):
 
 
 
-def _assistant_budget_row_for_month(user_id, month_key, item_id):
-    month_summary = build_assistant_month_summary(user_id, month_key)
-    for section in month_summary.get("sections", []):
-        for row in section.get("rows", []):
-            if int(row.get("id") or 0) == int(item_id):
-                return row
-    return None
-
-
-@api_bp.route("/assistant/budget-items/<int:item_id>/month-entry", methods=["POST"])
-@api_auth_required
-@assistant_scope_required(ASSISTANT_SCOPE_BUDGET_WRITE)
-@_limit("30 per minute")
-def assistant_update_budget_entry(item_id):
-    payload = request.get_json(silent=True) or {}
-    month_key = _parse_api_month_key(payload.get("month"))
-    if month_key is None:
-        return _err("bad_request", "month must be YYYY-MM", 400)
-
-    amount = _parse_amount(payload.get("amount"))
-    if amount is None:
-        return _err("bad_request", "amount (number >= 0) required", 400)
-
-    item = fetch_budget_item(item_id, g.api_user.id)
-    if item is None or int(item.get("is_active") or 0) != 1:
-        return _err("not_found", "Budget item not found", 404)
-    if item.get("linked_account_id") or item.get("linked_debt_id"):
-        return _err(
-            "bad_request",
-            "This assistant write endpoint only supports manual unlinked budget items.",
-            400,
-        )
-
-    previous_row = _assistant_budget_row_for_month(g.api_user.id, month_key, item_id)
-    previous_amount = float(previous_row.get("amount") or 0) if previous_row else float(item.get("default_amount") or 0)
-    previous_source = previous_row.get("source") if previous_row else "default"
-
-    upsert_budget_entry(month_key, item_id, amount, g.api_user.id)
-    log_assistant_audit_event(
-        g.api_user.id,
-        token_id=g.api_token.get("id"),
-        token_label=g.api_token.get("label"),
-        token_kind=g.api_token.get("token_kind"),
-        action_type="budget_item_month_entry_updated",
-        endpoint=request.path,
-        target_type="budget_item",
-        target_id=item["id"],
-        target_label=item["name"],
-        month_key=month_key,
-        before_state={
-            "amount": previous_amount,
-            "source": previous_source,
-            "section": item["section"],
-        },
-        after_state={
-            "amount": amount,
-            "source": "manual_override",
-            "section": item["section"],
-        },
-    )
-
-    return jsonify({
-        "ok": True,
-        "month": month_key,
-        "amount": amount,
-        "previous_amount": previous_amount,
-        "previous_source": previous_source,
-        "budget_item": {
-            "id": item["id"],
-            "name": item["name"],
-            "section": item["section"],
-        },
-    })
-
-
 @api_bp.route("/accounts/<int:account_id>/balance", methods=["POST"])
 @api_auth_required
-@general_api_required
 def update_account_balance(account_id):
     """Update a manual-valuation account's current balance. Also records
     a monthly snapshot so performance history stays consistent with the
@@ -513,7 +347,6 @@ def update_account_balance(account_id):
 
 @api_bp.route("/contributions/isa", methods=["POST"])
 @api_auth_required
-@general_api_required
 def log_isa_contribution():
     payload = request.get_json(silent=True) or {}
     account_id = payload.get("account_id")
@@ -545,7 +378,6 @@ def log_isa_contribution():
 
 @api_bp.route("/monthly-review/<month_key>/complete", methods=["POST"])
 @api_auth_required
-@general_api_required
 def complete_monthly_review(month_key):
     """Mark a monthly review as complete and snapshot every account's
     current effective value for that month. Mirrors the web UI's

@@ -272,23 +272,6 @@ CREATE TABLE IF NOT EXISTS api_tokens (
     last_used_at TEXT
 );
 
-CREATE TABLE IF NOT EXISTS assistant_audit_events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token_id INTEGER REFERENCES api_tokens(id) ON DELETE SET NULL,
-    token_label TEXT,
-    token_kind TEXT NOT NULL DEFAULT 'assistant',
-    action_type TEXT NOT NULL,
-    endpoint TEXT NOT NULL,
-    target_type TEXT,
-    target_id INTEGER,
-    target_label TEXT,
-    month_key TEXT,
-    before_state TEXT NOT NULL DEFAULT '{}',
-    after_state TEXT NOT NULL DEFAULT '{}',
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
 CREATE TABLE IF NOT EXISTS broker_connections (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -853,25 +836,6 @@ def _run_migrations(conn):
         )
     """)
 
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS assistant_audit_events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-            token_id INTEGER REFERENCES api_tokens(id) ON DELETE SET NULL,
-            token_label TEXT,
-            token_kind TEXT NOT NULL DEFAULT 'assistant',
-            action_type TEXT NOT NULL,
-            endpoint TEXT NOT NULL,
-            target_type TEXT,
-            target_id INTEGER,
-            target_label TEXT,
-            month_key TEXT,
-            before_state TEXT NOT NULL DEFAULT '{}',
-            after_state TEXT NOT NULL DEFAULT '{}',
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        )
-    """)
-
     for col_sql in [
         "ALTER TABLE api_tokens ADD COLUMN token_kind TEXT NOT NULL DEFAULT 'general'",
         "ALTER TABLE api_tokens ADD COLUMN scopes TEXT NOT NULL DEFAULT ''",
@@ -1225,6 +1189,22 @@ def _run_migrations(conn):
         except Exception as e:
             _log_migration_error(e)
 
+    # v16: the assistant API was removed. Its audit trail goes with it, and any
+    # assistant-kind token (one existed, "Loki", unused since June) is deleted so no
+    # orphan credential outlives the endpoints it authenticated.
+    if not conn.execute(
+        "SELECT 1 FROM schema_migrations WHERE name = 'v16_drop_assistant_api'"
+    ).fetchone():
+        try:
+            conn.execute("DROP TABLE IF EXISTS assistant_audit_events")
+            conn.execute("DELETE FROM api_tokens WHERE token_kind = 'assistant'")
+            conn.execute(
+                "INSERT OR IGNORE INTO schema_migrations (name) VALUES ('v16_drop_assistant_api')"
+            )
+            conn.commit()
+        except Exception as e:
+            _log_migration_error(e)
+
 
 def _ensure_indexes(conn):
     """Create performance indexes. All statements are idempotent (IF NOT EXISTS)."""
@@ -1258,8 +1238,6 @@ def _ensure_indexes(conn):
         "CREATE INDEX IF NOT EXISTS idx_custom_tags_user ON custom_tags(user_id)",
         "CREATE INDEX IF NOT EXISTS idx_api_tokens_token ON api_tokens(token)",
         "CREATE INDEX IF NOT EXISTS idx_api_tokens_user ON api_tokens(user_id)",
-        "CREATE INDEX IF NOT EXISTS idx_assistant_audit_user_created ON assistant_audit_events(user_id, created_at)",
-        "CREATE INDEX IF NOT EXISTS idx_assistant_audit_token ON assistant_audit_events(token_id)",
         "CREATE INDEX IF NOT EXISTS idx_broker_sync_events_connection_created ON broker_sync_events(connection_id, created_at)",
         "CREATE INDEX IF NOT EXISTS idx_broker_sync_events_user_created ON broker_sync_events(user_id, created_at)",
         "CREATE INDEX IF NOT EXISTS idx_account_daily_account_date ON account_daily_snapshots(account_id, snapshot_date)",

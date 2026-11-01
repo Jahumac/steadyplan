@@ -9,19 +9,6 @@ from flask import Blueprint, Response, current_app, flash, redirect, render_temp
 from flask_login import current_user, login_required
 
 from app.calculations import current_age_from_assumptions
-from app.services.assistant_access import (
-    assistant_action_label,
-    assistant_amount_change_label,
-    assistant_scope_labels,
-    assistant_scope_options,
-    assistant_target_label,
-    assistant_token_label,
-    assistant_token_last_used_label,
-    assistant_token_secret_heading,
-    normalise_requested_assistant_scopes,
-    pop_plaintext_assistant_token,
-    stash_plaintext_assistant_token,
-)
 from app.services.backups import list_backups, run_backup
 from app.services.csv_parsers import match_parsed_to_holdings
 from app.services.restore_service import RestoreValidationError, restore_backup_for_user
@@ -48,15 +35,12 @@ from app.services.trading212 import (
 )
 from app.utils import optional_float, optional_int, valid_date
 from app.models import (
-    API_TOKEN_KIND_ASSISTANT,
-    ASSISTANT_SCOPE_READ,
     PROVIDER_TRADING212,
     add_holding,
     create_api_token,
     delete_broker_connection,
     fetch_api_token,
     fetch_api_tokens,
-    fetch_assistant_audit_events,
     fetch_account,
     fetch_all_accounts,
     fetch_assumptions,
@@ -737,9 +721,6 @@ def _select_rows(conn, sql, params):
 def _settings_template_context(uid, *, assumptions=None, computed_age=None, diagnostics=None, page_mode="view", **extra):
     assumptions = assumptions if assumptions is not None else fetch_assumptions(uid)
     computed_age = computed_age if computed_age is not None else (int(current_age_from_assumptions(assumptions)) if assumptions else 0)
-    assistant_tokens = fetch_api_tokens(uid, token_kind=API_TOKEN_KIND_ASSISTANT)
-    assistant_audit_events = fetch_assistant_audit_events(uid, limit=12)
-    assistant_token_secret = pop_plaintext_assistant_token(session)
     trading212_connections = _prepare_trading212_connections(
         fetch_broker_connections(uid, provider=PROVIDER_TRADING212)
     )
@@ -749,17 +730,6 @@ def _settings_template_context(uid, *, assumptions=None, computed_age=None, diag
         "diagnostics": diagnostics,
         "page_mode": page_mode,
         "active_page": "settings",
-        "assistant_tokens": assistant_tokens,
-        "assistant_audit_events": assistant_audit_events,
-        "assistant_scope_options": assistant_scope_options(),
-        "assistant_scope_labels": assistant_scope_labels,
-        "assistant_action_label": assistant_action_label,
-        "assistant_amount_change_label": assistant_amount_change_label,
-        "assistant_target_label": assistant_target_label,
-        "assistant_token_label": assistant_token_label,
-        "assistant_token_last_used_label": assistant_token_last_used_label,
-        "assistant_token_secret_heading": assistant_token_secret_heading,
-        "assistant_token_secret": assistant_token_secret,
         "trading212_connections": trading212_connections,
         "trading212_environment_options": trading212_environment_options(),
         "trading212_environment_label": trading212_environment_label,
@@ -1157,61 +1127,6 @@ def settings():
             page_mode=page_mode,
         ),
     )
-
-
-@settings_bp.route("/assistant-access/create", methods=["POST"])
-@login_required
-def create_assistant_access_token():
-    label = request.form.get("label", "").strip() or "Pip"
-    scopes = normalise_requested_assistant_scopes(request.form.getlist("scopes"))
-    token = create_api_token(
-        current_user.id,
-        label=label,
-        token_kind=API_TOKEN_KIND_ASSISTANT,
-        scopes=scopes,
-    )
-    stash_plaintext_assistant_token(session, token=token, label=label, scopes=scopes, action="created")
-    flash("Assistant token created. Copy it now — it will only be shown once.", "success")
-    return redirect(url_for("settings.settings"))
-
-
-@settings_bp.route("/assistant-access/<int:token_id>/regenerate", methods=["POST"])
-@login_required
-def regenerate_assistant_access_token(token_id):
-    existing = fetch_api_token(token_id, current_user.id, token_kind=API_TOKEN_KIND_ASSISTANT)
-    if existing is None:
-        flash("Assistant token not found.", "error")
-        return redirect(url_for("settings.settings"))
-
-    new_token = create_api_token(
-        current_user.id,
-        label=existing.get("label") or "Pip",
-        token_kind=API_TOKEN_KIND_ASSISTANT,
-        scopes=existing.get("scopes") or [ASSISTANT_SCOPE_READ],
-    )
-    revoke_api_token(token_id, current_user.id)
-    stash_plaintext_assistant_token(
-        session,
-        token=new_token,
-        label=existing.get("label") or "Pip",
-        scopes=existing.get("scopes") or [ASSISTANT_SCOPE_READ],
-        action="regenerated",
-    )
-    flash("Assistant token replaced. The old token no longer works, and the new raw token is only shown once.", "success")
-    return redirect(url_for("settings.settings"))
-
-
-@settings_bp.route("/assistant-access/<int:token_id>/revoke", methods=["POST"])
-@login_required
-def revoke_assistant_access_token(token_id):
-    existing = fetch_api_token(token_id, current_user.id, token_kind=API_TOKEN_KIND_ASSISTANT)
-    if existing is None:
-        flash("Assistant token not found.", "error")
-        return redirect(url_for("settings.settings"))
-
-    revoke_api_token(token_id, current_user.id)
-    flash("Assistant token revoked. It no longer works.", "success")
-    return redirect(url_for("settings.settings"))
 
 
 def _settings_trading212_redirect():

@@ -36,11 +36,7 @@ from .premium_bonds import (
 
 # Users + API tokens
 from .users import (
-    API_TOKEN_KIND_ASSISTANT,
     API_TOKEN_KIND_GENERAL,
-    ASSISTANT_SCOPE_BUDGET_WRITE,
-    ASSISTANT_SCOPE_READ,
-    ASSISTANT_SCOPE_TRANSACTIONS_WRITE,
     User,
     authenticate_api_token,
     count_users,
@@ -53,11 +49,9 @@ from .users import (
     unlink_household_member,
     fetch_api_token,
     fetch_api_tokens,
-    fetch_assistant_audit_events,
     fetch_user_by_api_token,
     get_user_by_id,
     get_user_by_username,
-    log_assistant_audit_event,
     revoke_api_token,
     update_user,
 )
