@@ -51,7 +51,7 @@ def test_provider_transfer_moves_value_without_archiving_source_history(app, cli
     body = page.data.decode("utf-8", errors="ignore")
     assert "Move this account to another provider/account" in body
     assert "does not count the movement as a new contribution or allowance use" in body
-    assert "Track deposits, withdrawals and one-off cash movements" in body
+    assert "Records money" in body
     assert "use the Account transfer panel above so both sides stay linked and allowance-neutral" in body
     assert "Cash transfer out" in body
     assert "Track deposits, withdrawals and transfers" not in body

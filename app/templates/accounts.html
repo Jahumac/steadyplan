@@ -874,11 +874,17 @@
         <section class="panel panel-sm mt-1">
           <div class="section-header">
             <div>
-              <p class="eyebrow">Cash Flow</p>
+              <p class="eyebrow">Balance movement</p>
               <h3>Transfers &amp; withdrawals</h3>
             </div>
           </div>
-          <p class="helper-text">Track deposits, withdrawals and one-off cash movements. For full provider/account moves, use the Account transfer panel above so both sides stay linked and allowance-neutral.</p>
+          <p class="helper-text">
+            Records money <strong>moving between accounts or out of one</strong> — it changes the balance only.
+            It does <strong>not</strong> count towards your ISA or Lifetime ISA allowance and does not earn a LISA bonus.
+            To log a contribution that uses allowance, use
+            <a href="/allowance/#isa-log-panel" class="link-accent">Allowances → Log contribution</a>.
+            For full provider/account moves, use the Account transfer panel above so both sides stay linked and allowance-neutral.
+          </p>
 
           <form method="post" action="/accounts/{{ selected.id }}/cash-events/add" class="settings-form mt-075">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
