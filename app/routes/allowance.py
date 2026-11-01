@@ -16,6 +16,10 @@ from app.calculations import (
     uk_tax_year_start,
     uk_tax_year_end,
     ISA_WRAPPER_TYPES,
+    LISA_ANNUAL_CAP,
+    LISA_WRAPPER_TYPES,
+    lisa_bonus_arrival_month,
+    lisa_bonus_by_contribution,
 )
 from app.models import (
     add_cgt_disposal,
@@ -46,6 +50,44 @@ from app.models import (
 CGT_ANNUAL_EXEMPTION = 3000.0  # 2025-26 tax year
 
 allowance_bp = Blueprint("allowance", __name__)
+
+
+def _isa_usage_for_now(uid):
+    """Current tax-year ISA/LISA usage.
+
+    Shared by the overview render and the lump-sum guard so the figure the page
+    shows and the figure the guard enforces cannot drift apart.
+    """
+    now_date = datetime.now().date()
+    accounts = fetch_all_accounts(uid)
+    assumptions = fetch_assumptions(uid)
+
+    try:
+        salary_day = int(assumptions["salary_day"]) if assumptions and assumptions["salary_day"] else 0
+    except (KeyError, TypeError):
+        salary_day = 0
+
+    ty_start_date = uk_tax_year_start(now_date)
+    ty_end_date = uk_tax_year_end(now_date)
+    ty_start = ty_start_date.isoformat()
+    ty_end = ty_end_date.isoformat()
+
+    current_age = current_age_from_assumptions(assumptions) if assumptions else 0
+    usage = calculate_isa_usage(
+        accounts,
+        fetch_isa_contributions(uid, ty_start, ty_end),
+        now_date,
+        salary_day,
+        isa_overrides=fetch_isa_overrides_for_tax_year(uid, ty_start, ty_end),
+        review_contributions=fetch_completed_tax_year_contributions(
+            uid,
+            ty_start_date.strftime("%Y-%m"),
+            ty_end_date.strftime("%Y-%m"),
+        ),
+        allowance_events=fetch_isa_allowance_cash_flow_events(uid, ty_start, ty_end),
+        lisa_contributions_allowed=(not current_age or current_age < 50),
+    )
+    return usage, current_age
 
 
 @allowance_bp.route("/")
@@ -184,6 +226,8 @@ def allowance_overview():
         pension_progress=allowance_progress(pension_usage["pension_used"], pension_limits_with_carry["effective_allowance"]),
         carry_forward_entries=carry_forward_entries,
         contributions=ad_hoc,
+        contribution_bonus=lisa_bonus_by_contribution(ad_hoc, usage.get("monthly_lisa", 0.0)),
+        contribution_bonus_month={c["id"]: lisa_bonus_arrival_month(c["contribution_date"]) for c in ad_hoc},
         pension_contributions=pension_contribs,
         isa_accounts=isa_accounts,
         pension_accounts=pension_accounts,
@@ -233,6 +277,29 @@ def add_contribution():
     if not acc or (acc.get("wrapper_type") or "") not in ISA_WRAPPER_TYPES:
         flash("Please select one of your ISA accounts.", "error")
         return redirect(url_for("allowance.allowance_overview"))
+
+    # Lifetime ISA has a hard £4,000 annual cap that is separate from (and inside)
+    # the overall ISA allowance. Contributing past it is not merely "no bonus" —
+    # a provider will reject the excess, so refuse it here with the real numbers.
+    if (acc.get("wrapper_type") or "") in LISA_WRAPPER_TYPES:
+        usage, current_age = _isa_usage_for_now(uid)
+
+        lisa_used = float(usage.get("lisa_used") or 0.0)
+        remaining = max(LISA_ANNUAL_CAP - lisa_used, 0.0)
+        if amount > remaining + 0.005:
+            flash(
+                "Lifetime ISA limit reached: £{:,.2f} of £{:,.0f} already used this tax year, "
+                "so only £{:,.2f} is left. £{:,.2f} would exceed the annual limit and the "
+                "provider would reject the excess.".format(lisa_used, LISA_ANNUAL_CAP, remaining, amount),
+                "error",
+            )
+            return redirect(url_for("allowance.allowance_overview"))
+        if current_age and current_age >= 50:
+            flash(
+                "You are 50 or over, so no new Lifetime ISA contributions can be made.",
+                "error",
+            )
+            return redirect(url_for("allowance.allowance_overview"))
 
     add_isa_contribution(uid, account_id, amount, contribution_date, note)
     flash(f"Recorded £{amount:,.2f} top-up.", "success")
