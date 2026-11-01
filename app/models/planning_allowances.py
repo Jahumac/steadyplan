@@ -128,7 +128,7 @@ def fetch_isa_one_off_inflows(user_id):
     with get_connection() as conn:
         rows = conn.execute(
             """
-            SELECT c.id, c.account_id, c.amount, c.contribution_date, a.wrapper_type
+            SELECT c.id, c.account_id, c.amount, c.contribution_date, c.bonus_received_on, a.wrapper_type
             FROM isa_contributions c
             JOIN accounts a ON a.id = c.account_id
             WHERE c.user_id = ?
@@ -157,6 +157,10 @@ def fetch_isa_one_off_inflows(user_id):
                 "kind": "contribution",
             })
             bonus = bonus_by_id.get(row.get("id")) or 0.0
+            # A ticked "bonus arrived" means the money is already inside the account
+            # balance. Projecting it again would count it twice.
+            if row.get("bonus_received_on"):
+                continue
             if bonus and (row.get("wrapper_type") or "") in LISA_WRAPPER_TYPES:
                 inflows.append({
                     "account_id": int(row["account_id"]),

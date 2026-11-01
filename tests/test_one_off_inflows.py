@@ -156,3 +156,24 @@ def test_non_lisa_contributions_get_no_bonus_inflow(app, make_user):
         inflows = fetch_isa_one_off_inflows(uid)
 
     assert [i["kind"] for i in inflows] == ["contribution"]
+
+
+def test_ticking_bonus_received_stops_it_being_projected_again(app, make_user):
+    """Once the bonus lands it is inside the balance — projecting it again doubles it."""
+    from app.models import (
+        create_account, add_isa_contribution, fetch_isa_one_off_inflows,
+        fetch_isa_contributions, set_isa_bonus_received,
+    )
+
+    uid, _, _ = make_user(username="inflow-tick", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload("My Lifetime ISA", "Lifetime ISA"), uid)
+        add_isa_contribution(uid, account_id, 4000, "2026-06-01")
+
+        before = fetch_isa_one_off_inflows(uid)
+        contribution_id = fetch_isa_contributions(uid, "2026-04-06", "2027-04-05")[0]["id"]
+        set_isa_bonus_received(contribution_id, uid, True)
+        after = fetch_isa_one_off_inflows(uid)
+
+    assert [i["kind"] for i in before] == ["contribution", "bonus"]
+    assert [i["kind"] for i in after] == ["contribution"], "a received bonus must not project again"
