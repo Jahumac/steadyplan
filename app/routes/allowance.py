@@ -188,7 +188,7 @@ def allowance_overview():
         taxable_accounts=taxable_accounts,
         today=now_date.isoformat(),
         current_month=now_date.strftime("%Y-%m"),
-        active_page="budget",
+        active_page="allowance",
         lisa_age_warning=lisa_age_warning,
         lisa_months_remaining=lisa_months_remaining,
         has_lisa=has_lisa,
