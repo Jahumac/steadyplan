@@ -903,11 +903,6 @@ def _user_export_payload(user_id):
             "SELECT * FROM isa_contributions WHERE user_id = ? ORDER BY contribution_date ASC, id ASC",
             (user_id,),
         )
-        pension_contributions = _select_rows(
-            conn,
-            "SELECT * FROM pension_contributions WHERE user_id = ? ORDER BY contribution_date ASC, id ASC",
-            (user_id,),
-        )
         pension_carry_forward = _select_rows(
             conn,
             "SELECT * FROM pension_carry_forward WHERE user_id = ? ORDER BY tax_year ASC, id ASC",
@@ -966,7 +961,6 @@ def _user_export_payload(user_id):
             "contribution_overrides": contribution_overrides,
             "cash_flow_events": cash_flow_events,
             "isa_contributions": isa_contributions,
-            "pension_contributions": pension_contributions,
             "pension_carry_forward": pension_carry_forward,
             "premium_bonds_prizes": premium_bonds_prizes,
         },

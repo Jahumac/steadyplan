@@ -57,7 +57,6 @@ from app.models import (
     fetch_isa_contributions,
     fetch_monthly_performance_data,
     fetch_monthly_performance_data_by_account,
-    fetch_pension_contributions,
     fetch_prior_month_budget_entries,
 )
 from app.models.accounts import PREMIUM_BONDS_MAX_BALANCE, is_premium_bonds_account
@@ -1236,23 +1235,11 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
     ty_start_iso = date(start_year, 4, 6).isoformat()
     ty_end_iso = date(start_year + 1, 4, 5).isoformat()
     isa_logs = fetch_isa_contributions(uid, ty_start_iso, ty_end_iso) or []
-    pension_logs = fetch_pension_contributions(uid, ty_start_iso, ty_end_iso) or []
 
     isa_logged_by_account = {}
     for r in isa_logs:
         aid = int(r["account_id"])
         isa_logged_by_account[aid] = isa_logged_by_account.get(aid, 0.0) + float(r["amount"] or 0)
-
-    pension_logged_personal_gross_by_account = {}
-    pension_logged_employer_by_account = {}
-    for r in pension_logs:
-        aid = int(r["account_id"])
-        kind = (r.get("kind") or "personal").strip().lower()
-        amt = float(r["amount"] or 0)
-        if kind == "employer":
-            pension_logged_employer_by_account[aid] = pension_logged_employer_by_account.get(aid, 0.0) + amt
-        else:
-            pension_logged_personal_gross_by_account[aid] = pension_logged_personal_gross_by_account.get(aid, 0.0) + amt
 
     def _sum_formula(refs):
         refs = [r for r in refs if r]
@@ -1322,7 +1309,7 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
     for aid, acc in sorted(account_map.items(), key=lambda kv: kv[1].get("name") or ""):
         has_budget = bool(account_to_item_ids.get(aid))
         has_isa_logs = float(isa_logged_by_account.get(aid, 0.0) or 0) > 0
-        has_pension_logs = float(pension_logged_personal_gross_by_account.get(aid, 0.0) or 0) > 0 or float(pension_logged_employer_by_account.get(aid, 0.0) or 0) > 0
+        has_pension_logs = False   # ad-hoc pension top-ups are no longer recorded
         has_employer_plan = float(acc.get("employer_contribution") or 0) > 0
         if not (has_budget or has_isa_logs or has_pension_logs or has_employer_plan):
             continue
@@ -1342,8 +1329,8 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
         planned_into_pot = f"={planned_personal_cell}+D{row}+E{row}+F{row}"
 
         logged_isa_personal = float(isa_logged_by_account.get(aid, 0.0) or 0.0)
-        pension_gross = float(pension_logged_personal_gross_by_account.get(aid, 0.0) or 0.0)
-        pension_employer = float(pension_logged_employer_by_account.get(aid, 0.0) or 0.0)
+        pension_gross = 0.0        # ad-hoc pension top-ups are no longer recorded
+        pension_employer = 0.0
 
         logged_personal = logged_isa_personal
         logged_tax_relief = 0.0
@@ -1437,7 +1424,7 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
         is_lisa = wrapper in LISA_WRAPPER_TYPES
         employer_m = float(acc.get("employer_contribution") or 0.0) if is_pension else 0.0
 
-        if not item_ids and employer_m <= 0 and float(isa_logged_by_account.get(aid, 0.0) or 0) <= 0 and float(pension_logged_personal_gross_by_account.get(aid, 0.0) or 0) <= 0 and float(pension_logged_employer_by_account.get(aid, 0.0) or 0) <= 0:
+        if not item_ids and employer_m <= 0 and float(isa_logged_by_account.get(aid, 0.0) or 0) <= 0:
             continue
 
         example = "—"
@@ -1576,32 +1563,6 @@ def _write_investment_tracking_sheet(ws, uid, start_year, accounts, items, month
         acc = account_map.get(aid, {})
         if (acc.get("wrapper_type") or "") in LISA_WRAPPER_TYPES:
             lisa_personal_by_month_logged[mk] += amt
-
-    for rlog in pension_logs:
-        ds = str(rlog.get("contribution_date") or "")[:10]
-        try:
-            d = datetime.strptime(ds, "%Y-%m-%d").date()
-        except Exception:
-            continue
-        mk = f"{d.year:04d}-{d.month:02d}"
-        if mk not in pension_employer_by_month:
-            continue
-        aid = int(rlog["account_id"])
-        acc = account_map.get(aid, {})
-        wrapper = (acc.get("wrapper_type") or "").strip()
-        is_pension = is_pension_account(acc)
-        method = (acc.get("contribution_method") or "standard").strip().lower()
-        relief_at_source = ("SIPP" in wrapper) or (is_pension and method != "salary_sacrifice")
-        kind = (rlog.get("kind") or "personal").strip().lower()
-        amt = float(rlog["amount"] or 0)
-        if kind == "employer":
-            pension_employer_by_month[mk] += amt
-        else:
-            if relief_at_source:
-                pension_personal_net_by_month[mk] += amt * 0.8
-                pension_tax_relief_by_month[mk] += amt * 0.2
-            else:
-                pension_personal_net_by_month[mk] += amt
 
     logged_running_total_cell = None
     logged_lisa_running_cell = None

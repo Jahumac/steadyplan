@@ -185,47 +185,6 @@ def delete_isa_contribution(contribution_id, user_id):
 
 # ── Pension contributions ─────────────────────────────────────────────────────
 
-def add_pension_contribution(user_id, account_id, amount, kind, contribution_date, note=None):
-    with get_connection() as conn:
-        if not _account_belongs_to_user(conn, account_id, user_id):
-            return False
-        conn.execute(
-            """
-            INSERT INTO pension_contributions (user_id, account_id, amount, kind, contribution_date, note)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            (user_id, account_id, amount, kind, contribution_date, note),
-        )
-        conn.commit()
-        return True
-
-
-def fetch_pension_contributions(user_id, tax_year_start, tax_year_end):
-    with get_connection() as conn:
-        return conn.execute(
-            """
-            SELECT c.*, a.name AS account_name, a.wrapper_type
-            FROM pension_contributions c
-            JOIN accounts a ON a.id = c.account_id
-            WHERE c.user_id = ?
-              AND a.user_id = c.user_id
-              AND c.contribution_date >= ?
-              AND c.contribution_date <= ?
-            ORDER BY c.contribution_date DESC
-            """,
-            (user_id, tax_year_start, tax_year_end),
-        ).fetchall()
-
-
-def delete_pension_contribution(contribution_id, user_id):
-    with get_connection() as conn:
-        conn.execute(
-            "DELETE FROM pension_contributions WHERE id = ? AND user_id = ?",
-            (contribution_id, user_id),
-        )
-        conn.commit()
-
-
 # ── Dividend records ──────────────────────────────────────────────────────────
 
 # ── CGT disposals ─────────────────────────────────────────────────────────────

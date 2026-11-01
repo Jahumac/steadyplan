@@ -51,7 +51,6 @@ from app.models import (
     fetch_holding_totals_by_account,
     fetch_holdings_for_account,
     fetch_isa_contributions,
-    fetch_pension_contributions,
     fetch_prizes,
     fetch_prizes_tax_year,
     fetch_user_tags,
@@ -490,9 +489,6 @@ def _render_accounts_page(user_id, selected=None, detail_mode="view", position_e
     ty_end_iso = uk_tax_year_end(today).isoformat()
     tax_year_logged = {}
     for c in fetch_isa_contributions(user_id, ty_start_iso, ty_end_iso) or []:
-        aid = int(c["account_id"])
-        tax_year_logged[aid] = tax_year_logged.get(aid, 0.0) + float(c["amount"] or 0)
-    for c in fetch_pension_contributions(user_id, ty_start_iso, ty_end_iso) or []:
         aid = int(c["account_id"])
         tax_year_logged[aid] = tax_year_logged.get(aid, 0.0) + float(c["amount"] or 0)
 

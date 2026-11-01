@@ -24,9 +24,7 @@ from app.calculations import (
 from app.models import (
     add_isa_contribution,
     set_isa_bonus_received,
-    add_pension_contribution,
     delete_isa_contribution,
-    delete_pension_contribution,
     delete_pension_carry_forward,
     fetch_all_accounts,
     fetch_account,
@@ -36,7 +34,6 @@ from app.models import (
     fetch_isa_overrides_for_tax_year,
     fetch_pension_overrides_for_tax_year,
     fetch_pension_carry_forward,
-    fetch_pension_contributions,
     fetch_tax_year_contributions,
     fetch_completed_tax_year_contributions,
     upsert_pension_carry_forward,
@@ -154,7 +151,6 @@ def allowance_overview():
     # ISA accounts for the dropdown
     isa_accounts = [a for a in accounts if (a["wrapper_type"] or "") in ISA_WRAPPER_TYPES]
 
-    pension_contribs = fetch_pension_contributions(uid, ty_start, ty_end)
     pension_overrides = fetch_pension_overrides_for_tax_year(uid, ty_start, ty_end)
     pension_review_contribs = fetch_completed_tax_year_contributions(
         uid,
@@ -163,7 +159,6 @@ def allowance_overview():
     )
     pension_usage = calculate_pension_usage(
         accounts,
-        pension_contribs,
         assumptions,
         now_date,
         salary_day,
@@ -180,18 +175,6 @@ def allowance_overview():
     )
 
     taxable_accounts = [a for a in accounts if (a["wrapper_type"] or "") not in ISA_WRAPPER_TYPES and not is_pension_account(dict(a))]
-
-    # ── Pension tax relief estimate ──────────────────────────────────────────
-    tax_band = (assumptions["tax_band"] if assumptions and assumptions["tax_band"] else "basic") or "basic"
-    personal_pension_total = sum(
-        float(c["amount"] or 0) for c in pension_contribs
-        if (c["kind"] or "personal") == "personal"
-    )
-    # Gross contribution entered by user; basic rate relief = 20% of gross
-    basic_relief = personal_pension_total * 0.20
-    extra_relief = personal_pension_total * 0.20 if tax_band == "higher" else (
-        personal_pension_total * 0.25 if tax_band == "additional" else 0.0
-    )
 
     # ── CGT disposals ────────────────────────────────────────────────────────
 
@@ -211,17 +194,12 @@ def allowance_overview():
         contributions=ad_hoc,
         contribution_bonus=lisa_bonus_by_contribution(ad_hoc, usage.get("monthly_lisa", 0.0)),
         contribution_bonus_month={c["id"]: lisa_bonus_arrival_month(c["contribution_date"]) for c in ad_hoc},
-        pension_contributions=pension_contribs,
         isa_accounts=isa_accounts,
         pension_accounts=pension_accounts,
         taxable_accounts=taxable_accounts,
         today=now_date.isoformat(),
         current_month=now_date.strftime("%Y-%m"),
         active_page="budget",
-        tax_band=tax_band,
-        personal_pension_total=personal_pension_total,
-        basic_relief=basic_relief,
-        extra_relief=extra_relief,
         lisa_age_warning=lisa_age_warning,
         lisa_months_remaining=lisa_months_remaining,
         has_lisa=has_lisa,
@@ -298,46 +276,6 @@ def toggle_bonus_received(contribution_id):
 @login_required
 def remove_contribution(contribution_id):
     delete_isa_contribution(contribution_id, current_user.id)
-    flash("Contribution removed.", "success")
-    return redirect(url_for("allowance.allowance_overview"))
-
-
-@allowance_bp.route("/pension/add", methods=["POST"])
-@login_required
-def add_pension_topup():
-    uid = current_user.id
-    account_id = request.form.get("account_id", type=int)
-    amount = request.form.get("amount", type=float)
-    kind = (request.form.get("kind") or "personal").strip().lower()
-    raw_date = request.form.get("contribution_date")
-    contribution_date = valid_date(raw_date) or (None if raw_date else datetime.now().date().isoformat())
-    note = request.form.get("note", "").strip() or None
-
-    if not account_id or not amount or amount <= 0:
-        flash("Please select an account and enter a valid amount.", "error")
-        return redirect(url_for("allowance.allowance_overview"))
-
-    if not contribution_date:
-        flash("Please enter a valid date.", "error")
-        return redirect(url_for("allowance.allowance_overview"))
-
-    if kind not in ("personal", "employer"):
-        kind = "personal"
-
-    acc = fetch_account(account_id, uid)
-    if not acc or not is_pension_account(dict(acc)):
-        flash("Please select one of your pension accounts.", "error")
-        return redirect(url_for("allowance.allowance_overview"))
-
-    add_pension_contribution(uid, account_id, amount, kind, contribution_date, note)
-    flash(f"Recorded £{amount:,.2f} pension contribution.", "success")
-    return redirect(url_for("allowance.allowance_overview"))
-
-
-@allowance_bp.route("/pension/delete/<int:contribution_id>", methods=["POST"])
-@login_required
-def remove_pension_topup(contribution_id):
-    delete_pension_contribution(contribution_id, current_user.id)
     flash("Contribution removed.", "success")
     return redirect(url_for("allowance.allowance_overview"))
 

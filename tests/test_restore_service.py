@@ -152,13 +152,6 @@ def _seed_exportable_data(app, user_id, *, account_names=("A1", "A2")):
             )
             conn.execute(
                 """
-                INSERT INTO pension_contributions (user_id, account_id, amount, kind, contribution_date, note)
-                VALUES (?, ?, 20, 'personal', '2026-06-01', 'pension')
-                """,
-                (user_id, a1),
-            )
-            conn.execute(
-                """
                 INSERT INTO pension_carry_forward (user_id, tax_year, unused_allowance)
                 VALUES (?, '2025-26', 5000)
                 """,
@@ -216,7 +209,6 @@ def _wipe_user_data(app, user_id):
             conn.execute("DELETE FROM account_daily_snapshots WHERE user_id = ?", (user_id,))
             conn.execute("DELETE FROM cash_flow_events WHERE user_id = ?", (user_id,))
             conn.execute("DELETE FROM isa_contributions WHERE user_id = ?", (user_id,))
-            conn.execute("DELETE FROM pension_contributions WHERE user_id = ?", (user_id,))
             conn.execute("DELETE FROM pension_carry_forward WHERE user_id = ?", (user_id,))
             conn.execute("DELETE FROM premium_bonds_prizes WHERE user_id = ?", (user_id,))
             conn.execute(

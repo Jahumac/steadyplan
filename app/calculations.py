@@ -1602,7 +1602,6 @@ def is_pension_account(account):
 
 def calculate_pension_usage(
     accounts,
-    ad_hoc_contributions,
     assumptions=None,
     today=None,
     salary_day=0,
@@ -1718,40 +1717,10 @@ def calculate_pension_usage(
             "adhoc_employer": 0.0,
         })
 
-    adhoc_total = 0.0
-    adhoc_personal = 0.0
-    adhoc_employer = 0.0
-
-    for c in ad_hoc_contributions:
-        amt = float(c["amount"])
-        kind = (c.get("kind") or "personal").strip().lower()
-        adhoc_total += amt
-        if kind == "employer":
-            adhoc_employer += amt
-        else:
-            adhoc_personal += amt
-
-        for entry in breakdown:
-            if entry["account_id"] == c["account_id"]:
-                entry["adhoc_total"] += amt
-                if kind == "employer":
-                    entry["adhoc_employer"] += amt
-                else:
-                    entry["adhoc_personal"] += amt
-                break
-
-    used_total += adhoc_total
-    used_personal += adhoc_personal
-    used_employer += adhoc_employer
-    projected_total += adhoc_total
-
     return {
         "pension_used": used_total,
         "pension_personal_used": used_personal,
         "pension_employer_used": used_employer,
-        "adhoc_total": adhoc_total,
-        "adhoc_personal": adhoc_personal,
-        "adhoc_employer": adhoc_employer,
         "projected_total": projected_total,
         "months": months,
         "total_months": total_months,

@@ -51,7 +51,6 @@ from app.models import (
     fetch_pension_carry_forward,
     fetch_monthly_review,
     fetch_monthly_review_items,
-    fetch_pension_contributions,
     fetch_latest_price_update,
     fetch_net_worth_history,
     fetch_primary_goal,
@@ -313,7 +312,6 @@ def overview():
     isa_used = isa_usage["isa_used"]
     lisa_used = isa_usage["lisa_used"]
 
-    pension_contribs = fetch_pension_contributions(uid, ty_start, ty_end)
     pension_overrides = fetch_pension_overrides_for_tax_year(uid, ty_start, ty_end)
     pension_review_contribs = fetch_completed_tax_year_contributions(
         uid,
@@ -322,7 +320,6 @@ def overview():
     )
     pension_usage = calculate_pension_usage(
         raw_accounts,
-        pension_contribs,
         assumptions,
         now_date,
         salary_day,
