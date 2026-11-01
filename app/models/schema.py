@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     is_admin INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    household_id INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS accounts (
@@ -430,6 +431,9 @@ def _run_migrations(conn):
         # "you will get there in N months" — never "you will be short by £X on
         # your completion date", which is the question a house buyer asks.
         "ALTER TABLE goals ADD COLUMN target_date TEXT",
+        # Users sharing a household_id see each other's accounts on joint views
+        # (the House page). NULL means solo — nothing is shared implicitly.
+        "ALTER TABLE users ADD COLUMN household_id INTEGER",
         "ALTER TABLE monthly_snapshots ADD COLUMN month_key TEXT",
     ]:
         try:

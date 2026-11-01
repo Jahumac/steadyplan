@@ -177,3 +177,165 @@ def test_house_page_is_in_the_navigation(auth_client):
     resp = auth_client.get("/goals/")
     assert resp.status_code == 200
     assert b'href="/house/"' in resp.data
+
+
+# ── household ───────────────────────────────────────────────────────────────
+
+def test_a_solo_user_has_a_household_of_one(app, make_user):
+    from app.models import fetch_household_members
+
+    uid, uname, _ = make_user(username="solo", password="password123")
+    with app.app_context():
+        members = fetch_household_members(uid)
+    assert [m["username"] for m in members] == [uname]
+
+
+def test_linking_adds_both_sides(app, make_user):
+    from app.models import fetch_household_members, link_household_member
+
+    a, aname, _ = make_user(username="partner-a", password="password123")
+    b, bname, _ = make_user(username="partner-b", password="password123")
+    with app.app_context():
+        ok, msg = link_household_member(a, bname)
+        assert ok, msg
+        assert {m["username"] for m in fetch_household_members(a)} == {aname, bname}
+        # the link is symmetric — b sees a too
+        assert {m["username"] for m in fetch_household_members(b)} == {aname, bname}
+
+
+def test_linking_an_unknown_username_is_refused(app, make_user):
+    from app.models import link_household_member
+
+    uid, _, _ = make_user(username="partner-c", password="password123")
+    with app.app_context():
+        ok, msg = link_household_member(uid, "nobody-here")
+    assert not ok
+    assert "No user called" in msg
+
+
+def test_you_cannot_link_yourself(app, make_user):
+    from app.models import link_household_member
+
+    uid, uname, _ = make_user(username="partner-d", password="password123")
+    with app.app_context():
+        ok, _ = link_household_member(uid, uname)
+    assert not ok
+
+
+def test_two_existing_households_are_not_merged(app, make_user):
+    """Merging silently would expose one group's accounts to another."""
+    from app.models import link_household_member
+
+    a, aname, _ = make_user(username="hh-a", password="password123")
+    b, bname, _ = make_user(username="hh-b", password="password123")
+    c, cname, _ = make_user(username="hh-c", password="password123")
+    d, dname, _ = make_user(username="hh-d", password="password123")
+    with app.app_context():
+        assert link_household_member(a, bname)[0]      # household 1: a + b
+        assert link_household_member(c, dname)[0]      # household 2: c + d
+        ok, msg = link_household_member(c, aname)      # try to merge them
+    assert not ok
+    assert "different household" in msg
+
+
+def test_a_solo_user_may_join_an_existing_household(app, make_user):
+    """Joining is not merging: the solo user has nothing to expose."""
+    from app.models import fetch_household_members, link_household_member
+
+    a, aname, _ = make_user(username="hh-f", password="password123")
+    b, bname, _ = make_user(username="hh-g", password="password123")
+    c, cname, _ = make_user(username="hh-h", password="password123")
+    with app.app_context():
+        assert link_household_member(a, bname)[0]
+        ok, msg = link_household_member(c, aname)
+        assert ok, msg
+        assert {m["username"] for m in fetch_household_members(c)} == {aname, bname, cname}
+
+
+def test_unlinking_the_second_member_clears_the_household(app, make_user):
+    from app.models import (
+        fetch_household_members, link_household_member, unlink_household_member,
+    )
+
+    a, aname, _ = make_user(username="hh-d", password="password123")
+    b, bname, _ = make_user(username="hh-e", password="password123")
+    with app.app_context():
+        link_household_member(a, bname)
+        ok, msg = unlink_household_member(a, b)
+        assert ok, msg
+        assert [m["username"] for m in fetch_household_members(a)] == [aname]
+        assert [m["username"] for m in fetch_household_members(b)] == [bname]
+
+
+def test_house_page_sums_accounts_across_the_household(app, client, make_user):
+    """The whole point: one joint number, not two halves added up by hand."""
+    from app.models import (
+        create_account, create_goal, fetch_assumptions, link_household_member, update_assumptions,
+    )
+
+    a, aname, pw = make_user(username="joint-a", password="password123")
+    b, bname, _ = make_user(username="joint-b", password="password123")
+
+    def mk(name, value):
+        return {"id": None, "name": name, "provider": "P", "wrapper_type": "Lifetime ISA",
+                "category": "Investment", "tags": "House", "current_value": value,
+                "monthly_contribution": 0, "monthly_cash_park": 0, "pension_contribution_day": 0,
+                "goal_value": None, "valuation_mode": "manual", "growth_mode": "custom",
+                "growth_rate_override": 0.038, "owner": "", "is_active": 1, "notes": "",
+                "last_updated": "2026-11-01", "employer_contribution": 0,
+                "contribution_method": "standard", "annual_fee_pct": 0, "platform_fee_pct": 0,
+                "platform_fee_flat": 0, "platform_fee_cap": 0, "fund_fee_pct": 0,
+                "contribution_fee_pct": 0, "uninvested_cash": 0, "cash_interest_rate": 0.038,
+                "interest_payment_day": 0}
+
+    with app.app_context():
+        for uid in (a, b):
+            s = dict(fetch_assumptions(uid))
+            s.update({"annual_growth_rate": 0.07, "salary_day": 28, "current_age": 43,
+                      "date_of_birth": "1982-11-24", "retirement_age": 60})
+            update_assumptions(s, uid)
+        create_account(mk("A LISA", 4000.0), a)
+        create_account(mk("B LISA", 1000.0), b)
+        create_goal({"name": "House", "target_value": 25000.0, "goal_type": "Tagged Goal",
+                     "selected_tags": "House", "notes": "", "target_date": "2029-05-01"}, a)
+        link_household_member(a, bname)
+
+    client.post("/login", data={"username": aname, "password": pw})
+    html = client.get("/house/").get_data(as_text=True)
+    assert "£5,000" in html, "joint total must include the other member's account"
+    assert bname in html
+
+
+def test_an_unlinked_users_accounts_do_not_leak(app, client, make_user):
+    from app.models import create_account, create_goal, fetch_assumptions, update_assumptions
+
+    a, aname, pw = make_user(username="leak-a", password="password123")
+    b, bname, _ = make_user(username="leak-b", password="password123")
+
+    def mk(name, value):
+        return {"id": None, "name": name, "provider": "P", "wrapper_type": "Lifetime ISA",
+                "category": "Investment", "tags": "House", "current_value": value,
+                "monthly_contribution": 0, "monthly_cash_park": 0, "pension_contribution_day": 0,
+                "goal_value": None, "valuation_mode": "manual", "growth_mode": "custom",
+                "growth_rate_override": 0.038, "owner": "", "is_active": 1, "notes": "",
+                "last_updated": "2026-11-01", "employer_contribution": 0,
+                "contribution_method": "standard", "annual_fee_pct": 0, "platform_fee_pct": 0,
+                "platform_fee_flat": 0, "platform_fee_cap": 0, "fund_fee_pct": 0,
+                "contribution_fee_pct": 0, "uninvested_cash": 0, "cash_interest_rate": 0.038,
+                "interest_payment_day": 0}
+
+    with app.app_context():
+        for uid in (a, b):
+            s = dict(fetch_assumptions(uid))
+            s.update({"annual_growth_rate": 0.07, "salary_day": 28, "current_age": 43,
+                      "date_of_birth": "1982-11-24", "retirement_age": 60})
+            update_assumptions(s, uid)
+        create_account(mk("A LISA", 4000.0), a)
+        create_account(mk("B LISA", 9999.0), b)
+        create_goal({"name": "House", "target_value": 25000.0, "goal_type": "Tagged Goal",
+                     "selected_tags": "House", "notes": "", "target_date": "2029-05-01"}, a)
+
+    client.post("/login", data={"username": aname, "password": pw})
+    html = client.get("/house/").get_data(as_text=True)
+    assert "£9,999" not in html
+    assert "£4,000" in html
