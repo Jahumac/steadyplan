@@ -4,6 +4,7 @@
     {% if active_key != 'projections' %}<a class="badge" href="/projections/">Future estimates</a>{% endif %}
     {% if active_key != 'performance' %}<a class="badge" href="/performance/">Performance</a>{% endif %}
     {% if active_key != 'contributions' %}<a class="badge" href="/performance/contributions/">Contribution history</a>{% endif %}
+    {% if active_key != 'house' %}<a class="badge" href="/house/">House</a>{% endif %}
   </div>
 </section>
 <nav class="subnav subnav-page subnav-goals">
@@ -11,4 +12,5 @@
   <a href="/projections/"{% if active_key == 'projections' %} class="subnav-active"{% endif %}>Future estimates</a>
   <a href="/performance/"{% if active_key == 'performance' %} class="subnav-active"{% endif %}>Performance</a>
   <a href="/performance/contributions/"{% if active_key == 'contributions' %} class="subnav-active"{% endif %}>Contribution history</a>
+  <a href="/house/"{% if active_key == 'house' %} class="subnav-active"{% endif %}>House</a>
 </nav>

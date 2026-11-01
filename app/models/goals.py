@@ -37,8 +37,8 @@ def create_goal(payload, user_id):
     with get_connection() as conn:
         cursor = conn.execute(
             """
-            INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO goals (user_id, name, target_value, goal_type, selected_tags, notes, target_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
@@ -47,6 +47,7 @@ def create_goal(payload, user_id):
                 payload.get("goal_type", ""),
                 payload.get("selected_tags", ""),
                 payload.get("notes", ""),
+                payload.get("target_date") or None,
             ),
         )
         conn.commit()
@@ -64,7 +65,8 @@ def update_goal(payload, user_id):
                 target_value = ?,
                 goal_type = ?,
                 selected_tags = ?,
-                notes = ?
+                notes = ?,
+                target_date = ?
             WHERE id = ? AND user_id = ?
             """,
             (
@@ -73,6 +75,7 @@ def update_goal(payload, user_id):
                 payload.get("goal_type", ""),
                 payload.get("selected_tags", ""),
                 payload.get("notes", ""),
+                payload.get("target_date") or None,
                 payload["id"],
                 user_id,
             ),

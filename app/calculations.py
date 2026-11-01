@@ -319,7 +319,10 @@ def _tax_year_start_for_month_key(month_key, assumptions=None):
 
 
 def _lisa_projected_prior_personal_in_tax_year(account, assumptions, month_index):
-    start_month = _safe_get(account, "_projection_start_month")
+    # Fall back to the assumptions-derived start month: an account dict that has not
+    # been through the route layer must still get its lump sums applied, otherwise a
+    # one-off-funded projection silently comes out as monthly-only.
+    start_month = _safe_get(account, "_projection_start_month") or projection_start_month_key(assumptions)
     if not start_month or month_index <= 0:
         return 0.0
 
@@ -337,7 +340,10 @@ def _lisa_projected_prior_personal_in_tax_year(account, assumptions, month_index
 
 
 def _lisa_projected_prior_invested_in_tax_year(account, assumptions, month_index):
-    start_month = _safe_get(account, "_projection_start_month")
+    # Fall back to the assumptions-derived start month: an account dict that has not
+    # been through the route layer must still get its lump sums applied, otherwise a
+    # one-off-funded projection silently comes out as monthly-only.
+    start_month = _safe_get(account, "_projection_start_month") or projection_start_month_key(assumptions)
     if not start_month or month_index <= 0:
         return 0.0
 
@@ -361,7 +367,10 @@ def projected_contribution_breakdown(account, assumptions=None, month_index=0):
     a £4,000 projected month earns a £1,000 Lifetime ISA bonus in that month,
     rather than being treated as a £4,000/month annualised contribution.
     """
-    start_month = _safe_get(account, "_projection_start_month")
+    # Fall back to the assumptions-derived start month: an account dict that has not
+    # been through the route layer must still get its lump sums applied, otherwise a
+    # one-off-funded projection silently comes out as monthly-only.
+    start_month = _safe_get(account, "_projection_start_month") or projection_start_month_key(assumptions)
     month_key = add_months_to_key(start_month, month_index) if start_month else None
     adjusted = dict(account)
     personal = projected_personal_contribution(account, month_key) if month_key else to_float(_safe_get(account, "monthly_contribution", 0))
@@ -397,7 +406,10 @@ def projected_contribution_breakdown(account, assumptions=None, month_index=0):
 
 
 def projected_invested_contribution_breakdown(account, assumptions=None, month_index=0):
-    start_month = _safe_get(account, "_projection_start_month")
+    # Fall back to the assumptions-derived start month: an account dict that has not
+    # been through the route layer must still get its lump sums applied, otherwise a
+    # one-off-funded projection silently comes out as monthly-only.
+    start_month = _safe_get(account, "_projection_start_month") or projection_start_month_key(assumptions)
     month_key = add_months_to_key(start_month, month_index) if start_month else None
     adjusted = dict(account)
     invested_personal = (
@@ -679,7 +691,10 @@ def _project_account_month_by_month(account, assumptions, month_count, rate):
     is_lisa = account["wrapper_type"] == "Lifetime ISA"
     is_pb = is_premium_bonds_account(account)
     months = max(int(month_count), 0)
-    start_month = _safe_get(account, "_projection_start_month")
+    # Fall back to the assumptions-derived start month: an account dict that has not
+    # been through the route layer must still get its lump sums applied, otherwise a
+    # one-off-funded projection silently comes out as monthly-only.
+    start_month = _safe_get(account, "_projection_start_month") or projection_start_month_key(assumptions)
 
     for idx in range(months):
         invested_value *= (1 + monthly_rate)
@@ -756,7 +771,7 @@ def projected_accounts(accounts, assumptions):
         current = to_float(account["current_value"])
         personal = to_float(account.get("monthly_contribution") or 0)
         first_month_override = None
-        start_month = _safe_get(account, "_projection_start_month")
+        start_month = _safe_get(account, "_projection_start_month") or projection_start_month_key(assumptions)
         if start_month:
             first_month_override = contribution_override_for_month(account, start_month)
         contribution_account = dict(account)

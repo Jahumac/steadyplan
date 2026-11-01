@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% from '_macros.html' import empty_state %}
+{% block title %}House · SteadyPlan{% endblock %}
+{% block content %}
+
+{% set active_key = 'house' %}
+{% include '_goals_subnav.html' %}
+
+<section class="card highlight mb-1">
+  <div class="hero-top">
+    <div>
+      <p class="eyebrow">House deposit</p>
+      {% if plan.state == 'ok' %}
+        <h2 class="hero-value">£{{ '{:,.0f}'.format(plan.current) }}</h2>
+        <p class="hero-subtitle">
+          of £{{ '{:,.0f}'.format(plan.target) }} needed{% if plan.target_date %} by {{ plan.target_date.strftime('%B %Y') }}{% endif %}
+        </p>
+      {% else %}
+        <h2 class="hero-value">Not set up yet</h2>
+        <p class="hero-subtitle">Point a goal at your house accounts and give it a date.</p>
+      {% endif %}
+    </div>
+    {% if plan.state == 'ok' %}
+    <div class="hero-actions-col">
+      <div class="badge-row">
+        <a class="badge" href="{{ url_for('goals.goals') }}">Edit goal</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if plan.state == 'ok' %}
+  <div class="progress" role="progressbar"
+       aria-valuenow="{{ '{:.1f}'.format(plan.progress) }}" aria-valuemin="0" aria-valuemax="100"
+       aria-label="Deposit progress">
+    <div class="progress-bar" data-pct="{{ '{:.1f}'.format(plan.progress) }}"></div>
+  </div>
+  <small class="block mt-025">{{ '{:.1f}'.format(plan.progress) }}% of target ·
+    £{{ '{:,.0f}'.format(plan.remaining) }} still to find</small>
+  {% endif %}
+</section>
+
+{% if plan.state == 'no_goal' %}
+  {{ empty_state('No house goal yet',
+                 'Create a goal tagged “House”, put your Lifetime ISAs and any cash buffer in it, and set the date you need the money.',
+                 cta_text='+ Create a goal', cta_href='/goals/?mode=create') }}
+
+{% elif plan.state == 'ok' %}
+
+  {# ── The answer ───────────────────────────────────────────────────────── #}
+  {% if plan.status == 'reached' %}
+  <section class="panel mb-1">
+    <p class="eyebrow mt-0">Verdict</p>
+    <p class="text-success text-bold">Target already met — you have £{{ '{:,.0f}'.format(plan.current - plan.target) }} more than you need.</p>
+  </section>
+
+  {% elif plan.status == 'no_date' %}
+  <section class="panel mb-1">
+    <p class="eyebrow mt-0">Verdict</p>
+    <p class="text-bold">No date set, so I can't tell you whether you're on track.</p>
+    <p class="helper-text m-0">A target without a date is just a wish. Set one and this page will tell you whether you'll make it, and by how much you'll miss.</p>
+    <div class="badge-row mt-05">
+      <a class="badge badge-primary-action" href="{{ url_for('goals.goals') }}">Set a target date</a>
+    </div>
+  </section>
+
+  {% elif plan.status == 'past_due' %}
+  <section class="panel mb-1">
+    <p class="eyebrow mt-0">Verdict</p>
+    <p class="text-danger text-bold">Your target date has already passed.</p>
+    <p class="helper-text m-0">You have £{{ '{:,.0f}'.format(plan.current) }} against a £{{ '{:,.0f}'.format(plan.target) }} target — £{{ '{:,.0f}'.format(plan.gap) }} short. Move the date to something realistic and this page will show you the plan to get there.</p>
+  </section>
+
+  {% elif plan.status == 'on_track' %}
+  <section class="panel mb-1">
+    <p class="eyebrow mt-0">Verdict</p>
+    <p class="text-success text-bold">On track.</p>
+    <p class="helper-text m-0">
+      Projected <strong>£{{ '{:,.0f}'.format(plan.projected) }}</strong> by
+      {{ plan.target_date.strftime('%B %Y') }} — that's
+      <strong>£{{ '{:,.0f}'.format(-plan.gap) }}</strong> more than you need.
+    </p>
+  </section>
+
+  {% else %}
+  <section class="panel mb-1">
+    <p class="eyebrow mt-0">Verdict</p>
+    <p class="text-danger text-bold">Short by £{{ '{:,.0f}'.format(plan.gap) }}.</p>
+    <p class="helper-text m-0">
+      Projected <strong>£{{ '{:,.0f}'.format(plan.projected) }}</strong> by
+      {{ plan.target_date.strftime('%B %Y') }} against a £{{ '{:,.0f}'.format(plan.target) }} target.
+      That's {{ plan.months }} months away — about
+      <strong>£{{ '{:,.0f}'.format(plan.per_month_needed) }} a month</strong> extra to close it.
+    </p>
+  </section>
+  {% endif %}
+
+  {# ── What's funding it ────────────────────────────────────────────────── #}
+  <section class="panel mb-1">
+    <p class="eyebrow mt-0">Funding the deposit</p>
+    {% if plan.accounts %}
+    <table class="mini-table">
+      <thead>
+        <tr>
+          <th>Account</th>
+          <th class="text-right">Now</th>
+          <th class="text-right">Paying in</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for acc in plan.accounts %}
+        <tr>
+          <td>{{ acc.name }}<span class="badge badge-sm badge-meta">{{ acc.wrapper }}</span></td>
+          <td class="text-right">£{{ '{:,.0f}'.format(acc.current) }}</td>
+          <td class="text-right">
+            {% if acc.monthly %}£{{ '{:,.0f}'.format(acc.monthly) }}/mo{% elif acc.inflows %}Lump sums{% else %}–{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th>Total</th>
+          <th class="text-right">£{{ '{:,.0f}'.format(plan.current) }}</th>
+          <th class="text-right">{% if plan.monthly %}£{{ '{:,.0f}'.format(plan.monthly) }}/mo{% else %}–{% endif %}</th>
+        </tr>
+      </tfoot>
+    </table>
+    <p class="helper-text">
+      Accounts are the ones tagged with this goal's tags — change them in
+      <a href="{{ url_for('goals.goals') }}" class="link-accent">Goals</a>.
+      Lump sums and the Lifetime ISA bonus are applied on the month they land, so a
+      deposit built from annual top-ups projects correctly.
+    </p>
+    {% else %}
+    <p class="helper-text m-0">No accounts are tagged for this goal yet, so nothing is funding it.</p>
+    {% endif %}
+  </section>
+
+{% endif %}
+
+{% endblock %}
