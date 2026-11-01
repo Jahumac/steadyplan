@@ -102,6 +102,79 @@ def add_isa_contribution(user_id, account_id, amount, contribution_date, note=No
         return True
 
 
+def fetch_isa_one_off_inflows(user_id):
+    """Dated one-off ISA inflows, for the projection engine.
+
+    A logged lump sum is real money that lands on a date, plus (for a Lifetime ISA)
+    a 25% government bonus that arrives weeks later. The projection engine only ever
+    saw monthly contributions, so lump sums never moved a projection — which made a
+    house goal funded by lump sums impossible to estimate at all.
+
+    Returns a list of {account_id, month_key, amount, kind} where kind is
+    "contribution" or "bonus". Bonus allocation is done per tax year so the £4,000
+    annual cap (hence £1,000 bonus cap) is applied year by year, not across the
+    whole history.
+
+    Assumes no monthly LISA contributions when allocating the bonus. In a year with
+    both, that only affects *which* contribution owns the bonus, not the annual total.
+    """
+    from app.calculations import (
+        LISA_BONUS_DELAY_MONTHS,
+        LISA_WRAPPER_TYPES,
+        lisa_bonus_by_contribution,
+        uk_tax_year_start,
+    )
+
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT c.id, c.account_id, c.amount, c.contribution_date, a.wrapper_type
+            FROM isa_contributions c
+            JOIN accounts a ON a.id = c.account_id
+            WHERE c.user_id = ?
+            ORDER BY c.contribution_date ASC
+            """,
+            (user_id,),
+        ).fetchall()
+
+    by_tax_year = defaultdict(list)
+    for row in rows:
+        try:
+            d = datetime.strptime(str(row["contribution_date"])[:10], "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            continue
+        by_tax_year[uk_tax_year_start(d).isoformat()].append(dict(row))
+
+    inflows = []
+    for _year, group in by_tax_year.items():
+        bonus_by_id = lisa_bonus_by_contribution(group, monthly_lisa_total=0.0)
+        for row in group:
+            month_key = str(row["contribution_date"])[:7]
+            inflows.append({
+                "account_id": int(row["account_id"]),
+                "month_key": month_key,
+                "amount": float(row["amount"] or 0),
+                "kind": "contribution",
+            })
+            bonus = bonus_by_id.get(row.get("id")) or 0.0
+            if bonus and (row.get("wrapper_type") or "") in LISA_WRAPPER_TYPES:
+                inflows.append({
+                    "account_id": int(row["account_id"]),
+                    "month_key": add_months_to_key(month_key, LISA_BONUS_DELAY_MONTHS),
+                    "amount": float(bonus),
+                    "kind": "bonus",
+                })
+    return inflows
+
+
+def group_inflows_by_account(inflows):
+    """{account_id: [inflow, ...]} so accounts can carry their own inflows."""
+    grouped = defaultdict(list)
+    for inflow in inflows or []:
+        grouped[int(inflow["account_id"])].append(inflow)
+    return dict(grouped)
+
+
 def set_isa_bonus_received(contribution_id, user_id, received=True):
     """Mark (or clear) whether a Lifetime ISA government bonus has actually landed.
 

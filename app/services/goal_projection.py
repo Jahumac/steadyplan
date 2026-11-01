@@ -1,6 +1,14 @@
 from datetime import date
 
-from app.calculations import account_growth_rate, current_age_from_assumptions, projection_monthly_contribution, to_float
+from app.calculations import (
+    _safe_get,
+    account_growth_rate,
+    add_months_to_key,
+    current_age_from_assumptions,
+    projection_monthly_contribution,
+    projection_start_month_key,
+    to_float,
+)
 from app.models.accounts import PREMIUM_BONDS_MAX_BALANCE, is_premium_bonds_account
 
 
@@ -19,13 +27,17 @@ def project_goal(included_accounts, target, assumptions, today=None):
         return {"reached": True}
 
     total_monthly = sum(projection_monthly_contribution(a, assumptions, 0) for a in included_accounts)
-    if total_monthly <= 0:
+    # A goal funded purely by lump sums is still projectable — a house deposit built
+    # from annual LISA top-ups has no monthly contribution at all.
+    has_one_off = any(_safe_get(a, "_one_off_inflows", None) for a in included_accounts)
+    if total_monthly <= 0 and not has_one_off:
         return None
 
     MAX_MONTHS = 50 * 12
     month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     current_age = current_age_from_assumptions(assumptions)
     today = today or date.today()
+    default_start_month = projection_start_month_key(assumptions, today)
     account_states = [
         {
             "account": account,
@@ -33,6 +45,8 @@ def project_goal(included_accounts, target, assumptions, today=None):
             "monthly_rate": account_growth_rate(account, assumptions) / 12.0,
             "is_lisa": account["wrapper_type"] == "Lifetime ISA",
             "is_premium_bonds": is_premium_bonds_account(account),
+            "start_month": _safe_get(account, "_projection_start_month", None) or default_start_month,
+            "inflows": _safe_get(account, "_one_off_inflows", None) or [],
         }
         for account in included_accounts
     ]
@@ -44,6 +58,12 @@ def project_goal(included_accounts, target, assumptions, today=None):
             state["value"] *= (1 + state["monthly_rate"])
             if not state["is_lisa"] or (current_age + month_index / 12.0) < 50:
                 state["value"] += projection_monthly_contribution(state["account"], assumptions, month_index)
+            # One-off lump sums and their expected LISA bonus land on set months.
+            if state["inflows"] and state["start_month"]:
+                month_key = add_months_to_key(state["start_month"], month_index)
+                for inflow in state["inflows"]:
+                    if _safe_get(inflow, "month_key") == month_key:
+                        state["value"] += to_float(_safe_get(inflow, "amount", 0))
             if state["is_premium_bonds"] and state["value"] > PREMIUM_BONDS_MAX_BALANCE:
                 state["value"] = PREMIUM_BONDS_MAX_BALANCE
             projected += state["value"]

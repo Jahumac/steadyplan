@@ -12,6 +12,8 @@ from app.calculations import (
 )
 from app.utils import optional_float, optional_int, split_tags as _split_tags
 from app.models import (
+    fetch_isa_one_off_inflows,
+    group_inflows_by_account,
     fetch_assumptions,
     fetch_user_tags,
     create_goal,
@@ -80,9 +82,10 @@ def _build_projection_source_summary(goal, included_accounts, assumptions, month
     return summary
 
 
-def _build_goal_card(goal, accounts, holdings_totals, assumptions=None):
+def _build_goal_card(goal, accounts, holdings_totals, assumptions=None, one_off_inflows_by_account=None):
     selected_tags = _split_tags(goal["selected_tags"]) if "selected_tags" in goal else []
     included_accounts = []
+    one_off_inflows_by_account = one_off_inflows_by_account or {}
 
     for account in accounts:
         account_tags = _split_tags(account["tags"]) if "tags" in account else []
@@ -91,6 +94,9 @@ def _build_goal_card(goal, accounts, holdings_totals, assumptions=None):
             # the effective value (so holdings-based accounts use live holdings totals)
             row = dict(account)
             row["current_value"] = effective_account_value(account, holdings_totals)
+            # One-off lump sums + expected LISA bonus, so a deposit built from
+            # annual top-ups is projectable instead of returning "no estimate".
+            row["_one_off_inflows"] = one_off_inflows_by_account.get(int(account["id"]), [])
             included_accounts.append(row)
 
     current_total = sum(a["current_value"] for a in included_accounts)
@@ -175,17 +181,22 @@ def goals():
     holdings_totals = fetch_holding_totals_by_account(uid)
     start_month = projection_start_month_key(assumptions)
     overrides_by_account = fetch_contribution_overrides_for_accounts([account["id"] for account in accounts])
+    one_off_inflows_by_account = group_inflows_by_account(fetch_isa_one_off_inflows(uid))
     accounts = [
         {
             **dict(account),
             "_contribution_overrides": overrides_by_account.get(account["id"], []),
             "_projection_start_month": start_month,
+            "_one_off_inflows": one_off_inflows_by_account.get(int(account["id"]), []),
         }
         for account in accounts
     ]
     goal_rows = fetch_all_goals(uid)
 
-    goal_cards = [_build_goal_card(goal, accounts, holdings_totals, assumptions) for goal in goal_rows]
+    goal_cards = [
+        _build_goal_card(goal, accounts, holdings_totals, assumptions, one_off_inflows_by_account)
+        for goal in goal_rows
+    ]
 
     # Deduplicated total saved: sum each account at most once across all goals
     included_ids = set()
