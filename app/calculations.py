@@ -1281,6 +1281,67 @@ def planned_contribution_for_month(overrides, month_key, fallback_amount):
     return to_decimal(fallback_amount)
 
 
+# ── Lifetime ISA bonus timing ────────────────────────────────────────────────
+# The 25% bonus is not credited when you pay in. The provider claims it from HMRC,
+# and providers quote roughly 4-9 weeks after the contribution reaches the account.
+# We model the middle of that range and round up to whole months, because the app
+# plans monthly. Keep these in step if a provider's stated window differs.
+LISA_BONUS_DELAY_WEEKS = 6
+LISA_BONUS_DELAY_MONTHS = 2
+
+
+def lisa_bonus_arrival_month(contribution_date):
+    """Month key (YYYY-MM) in which the bonus for this contribution is expected.
+
+    Returns None for anything unparseable so callers can render a dash rather than
+    inventing a date.
+    """
+    if not contribution_date:
+        return None
+    try:
+        if isinstance(contribution_date, str):
+            d = datetime.strptime(str(contribution_date)[:10], "%Y-%m-%d").date()
+        else:
+            d = contribution_date
+    except (ValueError, TypeError):
+        return None
+    return add_months_to_key(f"{d.year:04d}-{d.month:02d}", LISA_BONUS_DELAY_MONTHS)
+
+
+def lisa_bonus_by_contribution(contributions, monthly_lisa_total=0.0, cap=LISA_ANNUAL_CAP):
+    """Map contribution id -> bonus earned, for Lifetime ISA rows only.
+
+    The 25% bonus is capped at £1,000/yr (25% of £4,000), so once the cap is used
+    later contributions earn nothing. The monthly plan takes the first slice of the
+    cap and one-off lump sums get the remainder, allocated in date order — the same
+    convention used for the annual totals in calculate_isa_usage.
+    """
+    rows = []
+    for c in contributions or []:
+        try:
+            wt = c["wrapper_type"] or ""
+        except (KeyError, TypeError):
+            wt = ""
+        if wt in LISA_WRAPPER_TYPES:
+            rows.append(c)
+
+    rows.sort(key=lambda x: str(_safe_get(x, "contribution_date") or ""))
+
+    room = max(cap - min(monthly_lisa_total, cap), 0.0)
+    out = {}
+    for c in rows:
+        cid = _safe_get(c, "id")
+        try:
+            amount = float(_safe_get(c, "amount", 0) or 0)
+        except (TypeError, ValueError):
+            amount = 0.0
+        take = min(amount, room)
+        room -= take
+        if cid is not None:
+            out[cid] = take * LISA_BONUS_RATE
+    return out
+
+
 def calculate_isa_usage(
     accounts,
     ad_hoc_contributions,
@@ -1414,9 +1475,27 @@ def calculate_isa_usage(
                 entry["adhoc_total"] += amt
                 break
 
+    # Lifetime ISA government bonus.
+    #
+    # The 25% bonus is capped at £1,000 a year, which falls out of the £4,000
+    # annual cap on eligible personal contributions. It has to be computed across
+    # monthly plan contributions AND one-off lump sums together — previously it was
+    # derived only from the monthly figure inside contribution_breakdown(), so a
+    # £4,000 lump sum produced no bonus anywhere in the app.
+    #
+    # In a year with both, the monthly plan is treated as taking the first slice of
+    # the cap and lump sums the remainder. Order matters in reality (chronological),
+    # but this keeps the total correct and only affects who "owns" the bonus.
+    eligible_total = min(monthly_lisa + adhoc_lisa, LISA_ANNUAL_CAP)
+    eligible_monthly = min(monthly_lisa, LISA_ANNUAL_CAP)
+    lisa_bonus_total = eligible_total * LISA_BONUS_RATE
+    adhoc_lisa_bonus = max(eligible_total - eligible_monthly, 0.0) * LISA_BONUS_RATE
+
     return {
         "isa_used": monthly_isa + adhoc_isa + allowance_adjustment_isa,
         "lisa_used": monthly_lisa + adhoc_lisa,
+        "lisa_bonus_total": lisa_bonus_total,
+        "adhoc_lisa_bonus": adhoc_lisa_bonus,
         "monthly_isa": monthly_isa,
         "monthly_lisa": monthly_lisa,
         "adhoc_isa": adhoc_isa,

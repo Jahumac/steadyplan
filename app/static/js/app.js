@@ -3131,3 +3131,79 @@ if (document.readyState !== 'loading') {
   document.addEventListener('DOMContentLoaded', initSettingsTabs);
 }
 
+
+/* ── Lifetime ISA lump-sum helper ──────────────────────────────────────────
+   On the allowance page, show what a one-off contribution actually earns. The
+   LISA bonus is 25% of eligible money, capped at £1,000 a year — i.e. 25% of the
+   first £4,000. Amounts beyond the remaining annual room earn nothing and would
+   be rejected by the provider, so say so before the form is submitted. */
+(function initLisaLumpSumHint() {
+  var form = document.querySelector('form[data-lisa-allowance]');
+  if (!form) return;
+
+  var accountEl = form.querySelector('[data-lump-sum-account]');
+  var amountEl = form.querySelector('[data-lump-sum-amount]');
+  var hintEl = form.querySelector('[data-lump-sum-lisa-hint]');
+  if (!accountEl || !amountEl || !hintEl) return;
+
+  var BONUS_RATE = 0.25;
+  var allowance = parseFloat(form.dataset.lisaAllowance) || 0;
+  var used = parseFloat(form.dataset.lisaUsed) || 0;
+
+  function gbp(n) {
+    return '£' + n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function update() {
+    var opt = accountEl.options[accountEl.selectedIndex];
+    var wrapper = opt ? (opt.getAttribute('data-wrapper') || '') : '';
+
+    if (wrapper !== 'Lifetime ISA') {
+      hintEl.classList.add('hidden');
+      hintEl.textContent = '';
+      return;
+    }
+
+    var amount = parseFloat(amountEl.value);
+    var room = Math.max(allowance - used, 0);
+
+    var parts = ['Lifetime ISA room left this tax year: ' + gbp(room) + ' of ' + gbp(allowance) + '.'];
+
+    if (isFinite(amount) && amount > 0) {
+      var eligible = Math.min(amount, room);
+      var bonus = eligible * BONUS_RATE;
+      if (eligible > 0) {
+        parts.push('This earns a ' + gbp(bonus) + ' government bonus.');
+      }
+      if (amount > room + 0.005) {
+        parts.push('That is ' + gbp(amount - room) + ' over the annual limit — the provider would reject the excess.');
+      }
+    } else {
+      parts.push('The 25% bonus is capped at £1,000 a year (25% of £4,000).');
+    }
+
+    hintEl.textContent = parts.join(' ');
+    hintEl.classList.remove('hidden');
+  }
+
+  accountEl.addEventListener('change', update);
+  amountEl.addEventListener('input', update);
+  update();
+})();
+
+/* ── Lifetime ISA bonus tick-box ───────────────────────────────────────────
+   Ticking "bonus arrived" submits the row's hidden form. Kept here rather than
+   as onchange="" on the input: CSP is script-src 'self', so inline event
+   handlers never run. */
+(function initBonusTicks() {
+  var boxes = document.querySelectorAll('[data-bonus-tick]');
+  for (var i = 0; i < boxes.length; i++) {
+    (function (box) {
+      box.addEventListener('change', function () {
+        var formId = box.getAttribute('form');
+        var form = formId ? document.getElementById(formId) : box.form;
+        if (form) form.submit();
+      });
+    })(boxes[i]);
+  }
+})();
