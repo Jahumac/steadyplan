@@ -54,6 +54,89 @@ def create_user(username, password, is_admin=False):
         return cursor.lastrowid
 
 
+def fetch_household_members(user_id):
+    """Everyone who shares a household with this user — always including themselves.
+
+    household_id is NULL for a solo user, so nothing is shared implicitly: two
+    accounts only see each other once someone has explicitly linked them.
+    """
+    with get_connection() as conn:
+        row = conn.execute(
+            "SELECT id, username, household_id FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        if row is None:
+            return []
+        if row["household_id"] is None:
+            return [{"id": row["id"], "username": row["username"]}]
+        rows = conn.execute(
+            "SELECT id, username FROM users WHERE household_id = ? ORDER BY id",
+            (row["household_id"],),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def link_household_member(user_id, username):
+    """Put another user into the caller's household.
+
+    Returns (ok, message). Refuses when the username is unknown, is the caller, or
+    already belongs to a different household — merging two households is deliberately
+    not automatic, because it would silently expose one group's accounts to another.
+    """
+    with get_connection() as conn:
+        me = conn.execute(
+            "SELECT id, username, household_id FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        if me is None:
+            return False, "You are not signed in."
+        target = conn.execute(
+            "SELECT id, username, household_id FROM users WHERE username = ?",
+            ((username or "").strip(),),
+        ).fetchone()
+        if target is None:
+            return False, f"No user called “{(username or '').strip()}”."
+        if target["id"] == me["id"]:
+            return False, "That is your own login."
+        if target["household_id"] is not None and me["household_id"] is not None \
+                and target["household_id"] != me["household_id"]:
+            return False, "That user already belongs to a different household."
+        if target["household_id"] is not None and target["household_id"] == me["household_id"]:
+            return False, f"{target['username']} is already in your household."
+
+        household_id = me["household_id"] or target["household_id"] or me["id"]
+        conn.execute("UPDATE users SET household_id = ? WHERE id IN (?, ?)",
+                     (household_id, me["id"], target["id"]))
+        conn.commit()
+        return True, f"{target['username']} added to your household."
+
+
+def unlink_household_member(user_id, member_id):
+    """Remove a member. When only one person is left, their household_id is cleared."""
+    with get_connection() as conn:
+        me = conn.execute(
+            "SELECT id, household_id FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+        if me is None or me["household_id"] is None:
+            return False, "You are not in a household."
+        if member_id == user_id:
+            return False, "Use the other user's login to leave."
+        target = conn.execute(
+            "SELECT id, username, household_id FROM users WHERE id = ?", (member_id,)
+        ).fetchone()
+        if target is None or target["household_id"] != me["household_id"]:
+            return False, "That user is not in your household."
+
+        conn.execute("UPDATE users SET household_id = NULL WHERE id = ?", (member_id,))
+        remaining = conn.execute(
+            "SELECT COUNT(*) AS n FROM users WHERE household_id = ?",
+            (me["household_id"],),
+        ).fetchone()["n"]
+        if remaining <= 1:
+            conn.execute("UPDATE users SET household_id = NULL WHERE household_id = ?",
+                         (me["household_id"],))
+        conn.commit()
+        return True, f"{target['username']} removed from your household."
+
+
 def count_users():
     with get_connection() as conn:
         return conn.execute("SELECT COUNT(*) AS n FROM users").fetchone()["n"]

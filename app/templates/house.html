@@ -110,7 +110,7 @@
       <tbody>
         {% for acc in plan.accounts %}
         <tr>
-          <td>{{ acc.name }}<span class="badge badge-sm badge-meta">{{ acc.wrapper }}</span></td>
+          <td>{{ acc.name }}{% if acc.owner %} <span class="text-muted text-xs">· {{ acc.owner }}</span>{% endif %}<span class="badge badge-sm badge-meta">{{ acc.wrapper }}</span></td>
           <td class="text-right">£{{ '{:,.0f}'.format(acc.current) }}</td>
           <td class="text-right">
             {% if acc.monthly %}£{{ '{:,.0f}'.format(acc.monthly) }}/mo{% elif acc.inflows %}Lump sums{% else %}–{% endif %}
@@ -135,6 +135,44 @@
     {% else %}
     <p class="helper-text m-0">No accounts are tagged for this goal yet, so nothing is funding it.</p>
     {% endif %}
+  </section>
+
+  {# ── Who's in this together ───────────────────────────────────────────── #}
+  <section class="panel mb-1">
+    <p class="eyebrow mt-0">Household</p>
+    {% if members|length > 1 %}
+      <p class="helper-text mb-075">This page adds up everyone in your household. Nothing is shared until you link a login here.</p>
+    {% else %}
+      <p class="helper-text mb-075">Right now this page only sees <strong>your</strong> accounts. Link your partner's login to see the joint deposit in one number — their tagged accounts join the total, and their Lifetime ISA bonus is included.</p>
+    {% endif %}
+    <ul class="text-sm">
+      {% for m in members %}
+      <li>
+        <strong>{{ m.username }}</strong>{% if m.id == current_user_id %} <span class="text-muted text-xs">(you)</span>{% endif %}
+        {% if m.id != current_user_id %}
+        <form method="post" action="{{ url_for('house.house') }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="unlink">
+          <input type="hidden" name="member_id" value="{{ m.id }}">
+          <button type="submit" class="badge badge-sm">Remove</button>
+        </form>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    <form method="post" action="{{ url_for('house.house') }}" class="settings-form mt-05">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="link">
+      <div class="form-grid">
+        <label class="form-full-col">
+          <span>Link a login by username</span>
+          <input type="text" name="username" placeholder="e.g. Samuelly" autocomplete="off">
+        </label>
+      </div>
+      <div class="row-end mt-05">
+        <button type="submit" class="badge badge-primary-action">Add to household</button>
+      </div>
+    </form>
   </section>
 
 {% endif %}

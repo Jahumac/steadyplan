@@ -10,7 +10,7 @@ same projection engine, so the numbers here can never disagree with Progress.
 """
 from datetime import date, datetime
 
-from flask import Blueprint, render_template
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.calculations import (
@@ -24,9 +24,12 @@ from app.models import (
     fetch_assumptions,
     fetch_contribution_overrides_for_accounts,
     fetch_holding_totals_by_account,
+    fetch_household_members,
     fetch_isa_one_off_inflows,
-    group_inflows_by_account,
+    link_household_member,
+    unlink_household_member,
 )
+from app.utils import optional_int
 from app.routes.goals import _included_accounts_for_goal
 from app.utils import split_tags as _split_tags
 
@@ -112,6 +115,7 @@ def build_house_plan(goal, accounts, holdings_totals, assumptions,
                 "current": a["current_value"],
                 "monthly": projection_monthly_contribution(a, assumptions, 0),
                 "inflows": len(a.get("_one_off_inflows") or []),
+                "owner": a.get("_owner", ""),
             }
             for a in included
         ],
@@ -150,17 +154,31 @@ def build_house_plan(goal, accounts, holdings_totals, assumptions,
     return plan
 
 
-def _load_accounts(uid):
-    """Accounts prepared exactly as the Goals page prepares them."""
-    assumptions = fetch_assumptions(uid)
-    accounts = fetch_all_accounts(uid)
-    holdings_totals = fetch_holding_totals_by_account(uid)
+def _load_accounts(uids):
+    """Accounts for every user in the household, prepared as the Goals page does."""
+    assumptions = None
+    accounts = []
+    holdings_totals = {}
+    inflows = {}
+
+    member_names = {m["id"]: m["username"] for m in fetch_household_members(uids[0])} if uids else {}
+    for uid in uids:
+        if assumptions is None:
+            assumptions = fetch_assumptions(uid)
+        holdings_totals.update(fetch_holding_totals_by_account(uid))
+        member_name = member_names.get(uid, "")
+        for inflow in fetch_isa_one_off_inflows(uid):
+            inflows.setdefault(int(inflow["account_id"]), []).append(inflow)
+        for account in fetch_all_accounts(uid):
+            row = dict(account)
+            row["_owner"] = member_names.get(uid, "")
+            accounts.append(row)
+
     start_month = projection_start_month_key(assumptions)
     overrides = fetch_contribution_overrides_for_accounts([a["id"] for a in accounts])
-    inflows = group_inflows_by_account(fetch_isa_one_off_inflows(uid))
     prepared = [
         {
-            **dict(account),
+            **account,
             "_contribution_overrides": overrides.get(account["id"], []),
             "_projection_start_month": start_month,
             "_one_off_inflows": inflows.get(int(account["id"]), []),
@@ -170,11 +188,30 @@ def _load_accounts(uid):
     return assumptions, prepared, holdings_totals, inflows
 
 
-@house_bp.route("/")
+@house_bp.route("/", methods=["GET", "POST"])
 @login_required
 def house():
     uid = current_user.id
-    assumptions, accounts, holdings_totals, inflows = _load_accounts(uid)
+
+    if request.method == "POST":
+        action = (request.form.get("action") or "").strip()
+        if action == "link":
+            ok, message = link_household_member(uid, request.form.get("username", ""))
+        elif action == "unlink":
+            ok, message = unlink_household_member(uid, optional_int(request.form.get("member_id")))
+        else:
+            ok, message = False, "Unknown action."
+        flash(message, "success" if ok else "error")
+        return redirect(url_for("house.house"))
+
+    members = fetch_household_members(uid)
+    uids = [m["id"] for m in members]
+    assumptions, accounts, holdings_totals, inflows = _load_accounts(uids)
+
     goal = find_house_goal(fetch_all_goals(uid))
-    plan = build_house_plan(goal, accounts, holdings_totals, assumptions, inflows)
-    return render_template("house.html", plan=plan, active_page="house")
+    plan = build_house_plan(goal, accounts, holdings_totals, assumptions)
+    plan["joint"] = len(members) > 1
+    return render_template(
+        "house.html", plan=plan, members=members, current_user_id=uid, active_page="house"
+    )
+
