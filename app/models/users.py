@@ -258,7 +258,6 @@ def delete_user(user_id):
 
             for table in [
                 "isa_contributions",
-                "pension_carry_forward",
                 "cash_flow_events",
                 "scheduler_runs",
                 "portfolio_daily_snapshots",

@@ -6,7 +6,6 @@ from flask_login import current_user, login_required
 from app.utils import valid_date, valid_tax_year
 from app.calculations import (
     allowance_progress,
-    apply_pension_carry_forward,
     calculate_isa_usage,
     calculate_pension_usage,
     current_age_from_assumptions,
@@ -25,7 +24,6 @@ from app.models import (
     add_isa_contribution,
     set_isa_bonus_received,
     delete_isa_contribution,
-    delete_pension_carry_forward,
     fetch_all_accounts,
     fetch_account,
     fetch_assumptions,
@@ -33,10 +31,8 @@ from app.models import (
     fetch_isa_allowance_cash_flow_events,
     fetch_isa_overrides_for_tax_year,
     fetch_pension_overrides_for_tax_year,
-    fetch_pension_carry_forward,
     fetch_tax_year_contributions,
     fetch_completed_tax_year_contributions,
-    upsert_pension_carry_forward,
 )
 
 
@@ -168,12 +164,6 @@ def allowance_overview():
     pension_limits = pension_allowance_limits(dict(assumptions) if assumptions else {})
     pension_accounts = [a for a in accounts if is_pension_account(dict(a))]
 
-    carry_forward_entries = fetch_pension_carry_forward(uid)
-    pension_limits_with_carry = apply_pension_carry_forward(
-        pension_limits,
-        carry_forward_entries,
-    )
-
     taxable_accounts = [a for a in accounts if (a["wrapper_type"] or "") not in ISA_WRAPPER_TYPES and not is_pension_account(dict(a))]
 
     # ── CGT disposals ────────────────────────────────────────────────────────
@@ -184,13 +174,12 @@ def allowance_overview():
         usage=usage,
         allowance_truth_checkpoint=allowance_truth_checkpoint,
         pension_usage=pension_usage,
-        pension_limits=pension_limits_with_carry,
+        pension_limits=pension_limits,
         isa_allowance=isa_allowance,
         lisa_allowance=lisa_allowance,
         isa_progress=allowance_progress(usage["isa_used"], isa_allowance),
         lisa_progress=allowance_progress(usage["lisa_used"], lisa_allowance),
-        pension_progress=allowance_progress(pension_usage["pension_used"], pension_limits_with_carry["effective_allowance"]),
-        carry_forward_entries=carry_forward_entries,
+        pension_progress=allowance_progress(pension_usage["pension_used"], pension_limits["effective_allowance"]),
         contributions=ad_hoc,
         contribution_bonus=lisa_bonus_by_contribution(ad_hoc, usage.get("monthly_lisa", 0.0)),
         contribution_bonus_month={c["id"]: lisa_bonus_arrival_month(c["contribution_date"]) for c in ad_hoc},
@@ -279,23 +268,3 @@ def remove_contribution(contribution_id):
     flash("Contribution removed.", "success")
     return redirect(url_for("allowance.allowance_overview"))
 
-
-@allowance_bp.route("/pension/carry-forward/add", methods=["POST"])
-@login_required
-def add_carry_forward():
-    tax_year = valid_tax_year(request.form.get("tax_year"))
-    unused = request.form.get("unused_allowance", type=float)
-    if not tax_year or unused is None or unused < 0:
-        flash("Please enter a valid tax year (e.g. 2023-24) and unused amount.", "error")
-        return redirect(url_for("allowance.allowance_overview") + "#pension")
-    upsert_pension_carry_forward(current_user.id, tax_year, unused)
-    flash(f"Recorded £{unused:,.0f} carry-forward from {tax_year}.", "success")
-    return redirect(url_for("allowance.allowance_overview") + "#pension")
-
-
-@allowance_bp.route("/pension/carry-forward/delete/<int:entry_id>", methods=["POST"])
-@login_required
-def remove_carry_forward(entry_id):
-    delete_pension_carry_forward(entry_id, current_user.id)
-    flash("Carry-forward entry removed.", "success")
-    return redirect(url_for("allowance.allowance_overview") + "#pension")

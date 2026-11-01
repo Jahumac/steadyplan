@@ -384,16 +384,15 @@ def test_contribution_calendar_allowance_frame_uses_same_pension_gross_logic_as_
             "pension_annual_allowance": 60000,
             "annual_income": 40000,
         },
-        [{"tax_year": "2023/24", "unused_allowance": 5000}],
     )
 
     assert len(frame) == 1
     # Workplace: (100 personal + 25 relief + 50 employer) * 2 = 350.
     # SIPP: (200 + 50 relief) + (300 + 75 relief) = 625.
     assert frame[0]["pension_planned"] == 975.0
-    assert frame[0]["pension_allowance"] == 65000.0
+    assert frame[0]["pension_allowance"] == 60000.0   # carry-forward removed (v15)
     assert frame[0]["pension_personal_relief_limit"] == 40000.0
-    assert frame[0]["pension_carry_forward_total"] == 5000.0
+    assert "pension_carry_forward_total" not in frame[0]
 
 
 def test_contribution_calendar_shows_isa_allowance_frame_for_planned_months(app, client, make_user):
