@@ -161,6 +161,7 @@ from .planning import (
     add_custom_tag,
     add_dividend_record,
     add_isa_contribution,
+    set_isa_bonus_received,
     add_pension_contribution,
     create_contribution_override,
     delete_cash_flow_event,

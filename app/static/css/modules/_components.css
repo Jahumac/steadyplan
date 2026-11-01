@@ -1460,3 +1460,15 @@
 .budget-amount-input[type=number] {
   -moz-appearance: textfield;
 }
+
+/* Lifetime ISA bonus tick — compact inline confirm in the top-ups table */
+.bonus-tick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.bonus-tick input { margin: 0; }

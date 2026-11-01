@@ -3190,3 +3190,20 @@ if (document.readyState !== 'loading') {
   amountEl.addEventListener('input', update);
   update();
 })();
+
+/* ── Lifetime ISA bonus tick-box ───────────────────────────────────────────
+   Ticking "bonus arrived" submits the row's hidden form. Kept here rather than
+   as onchange="" on the input: CSP is script-src 'self', so inline event
+   handlers never run. */
+(function initBonusTicks() {
+  var boxes = document.querySelectorAll('[data-bonus-tick]');
+  for (var i = 0; i < boxes.length; i++) {
+    (function (box) {
+      box.addEventListener('change', function () {
+        var formId = box.getAttribute('form');
+        var form = formId ? document.getElementById(formId) : box.form;
+        if (form) form.submit();
+      });
+    })(boxes[i]);
+  }
+})();

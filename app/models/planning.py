@@ -17,6 +17,7 @@ from .planning_allowances import (
     fetch_allowance_tracking,
     upsert_allowance_tracking,
     add_isa_contribution,
+    set_isa_bonus_received,
     fetch_isa_contributions,
     delete_isa_contribution,
     add_pension_contribution,

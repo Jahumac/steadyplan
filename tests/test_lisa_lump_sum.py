@@ -282,4 +282,78 @@ def test_allowance_page_shows_bonus_and_expected_month(app, client, make_user):
 
     assert "government bonus earned so far" in body
     assert "1,000.00" in body          # the bonus total
-    assert "expected 2026-08" in body  # six weeks later, at month resolution
+    # Six weeks after 1 Jun lands in August. Whether it reads "expected" or "due"
+    # depends on today's date, so assert the month rather than the wording.
+    assert "2026-08" in body
+
+
+# ── "Has the bonus arrived?" tick ───────────────────────────────────────────
+
+def test_bonus_can_be_marked_received_and_undone(app, client, make_user):
+    from app.models import create_account, add_isa_contribution
+    from app.models._conn import get_connection
+
+    uid, username, password = make_user(username="lisa-tick", password="password123")
+    _set_age(app, uid)
+    with app.app_context():
+        account_id = create_account(_account("My Lifetime ISA", "Lifetime ISA"), uid)
+        add_isa_contribution(uid, account_id, 4000, "2026-06-01")
+
+    with app.app_context():
+        with get_connection() as conn:
+            cid = conn.execute("SELECT id FROM isa_contributions").fetchone()["id"]
+
+    _login(client, username, password)
+
+    client.post(f"/allowance/bonus/{cid}", data={"received": "1"}, follow_redirects=True)
+    with app.app_context():
+        with get_connection() as conn:
+            row = conn.execute("SELECT bonus_received_on FROM isa_contributions WHERE id = ?", (cid,)).fetchone()
+    assert row["bonus_received_on"], "expected a received date to be recorded"
+
+    client.post(f"/allowance/bonus/{cid}", data={"received": "0"}, follow_redirects=True)
+    with app.app_context():
+        with get_connection() as conn:
+            row = conn.execute("SELECT bonus_received_on FROM isa_contributions WHERE id = ?", (cid,)).fetchone()
+    assert row["bonus_received_on"] is None
+
+
+def test_bonus_tick_is_scoped_to_the_owner(app, client, make_user):
+    """One user must not be able to tick another user's bonus."""
+    from app.models import create_account, add_isa_contribution
+    from app.models._conn import get_connection
+
+    owner_id, _, _ = make_user(username="lisa-owner", password="password123")
+    other_id, other_user, other_pass = make_user(username="lisa-other", password="password123")
+
+    with app.app_context():
+        account_id = create_account(_account("My Lifetime ISA", "Lifetime ISA"), owner_id)
+        add_isa_contribution(owner_id, account_id, 4000, "2026-06-01")
+        with get_connection() as conn:
+            cid = conn.execute("SELECT id FROM isa_contributions").fetchone()["id"]
+
+    _login(client, other_user, other_pass)
+    client.post(f"/allowance/bonus/{cid}", data={"received": "1"}, follow_redirects=True)
+
+    with app.app_context():
+        with get_connection() as conn:
+            row = conn.execute("SELECT bonus_received_on FROM isa_contributions WHERE id = ?", (cid,)).fetchone()
+    assert row["bonus_received_on"] is None, "another user must not be able to tick it"
+
+
+def test_allowance_page_renders_the_bonus_tickbox(app, client, make_user):
+    from app.models import create_account, add_isa_contribution
+
+    uid, username, password = make_user(username="lisa-tick-ui", password="password123")
+    _set_age(app, uid)
+    with app.app_context():
+        account_id = create_account(_account("My Lifetime ISA", "Lifetime ISA"), uid)
+        add_isa_contribution(uid, account_id, 4000, "2026-06-01")
+
+    _login(client, username, password)
+    body = client.get("/allowance/").get_data(as_text=True)
+
+    assert "data-bonus-tick" in body
+    assert "bonus arrived" in body
+    # CSP-safe: no inline event handlers anywhere in the page.
+    assert "onchange=" not in body

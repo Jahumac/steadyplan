@@ -102,6 +102,25 @@ def add_isa_contribution(user_id, account_id, amount, contribution_date, note=No
         return True
 
 
+def set_isa_bonus_received(contribution_id, user_id, received=True):
+    """Mark (or clear) whether a Lifetime ISA government bonus has actually landed.
+
+    Scoped to the owning user, because this writes money-adjacent state.
+    Returns True when a row was updated.
+    """
+    with get_connection() as conn:
+        cur = conn.execute(
+            """
+            UPDATE isa_contributions
+               SET bonus_received_on = ?
+             WHERE id = ? AND user_id = ?
+            """,
+            (date.today().isoformat() if received else None, contribution_id, user_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+
+
 def fetch_isa_contributions(user_id, tax_year_start, tax_year_end):
     with get_connection() as conn:
         return conn.execute(

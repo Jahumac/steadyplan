@@ -224,7 +224,28 @@
           <td>
             {% set bonus = (contribution_bonus or {}).get(c.id) %}
             {% if bonus %}
-            £{{ '{:,.2f}'.format(bonus) }}<small class="block text-muted">expected {{ (contribution_bonus_month or {}).get(c.id) or 'later' }}</small>
+              {% set due_month = (contribution_bonus_month or {}).get(c.id) %}
+              {% if c.bonus_received_on %}
+              <span class="text-muted">✓ £{{ '{:,.2f}'.format(bonus) }} received {{ c.bonus_received_on }}</span>
+              <form method="post" action="/allowance/bonus/{{ c.id }}" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="received" value="0">
+                <button type="submit" class="badge badge-sm" aria-label="Mark bonus as not received">undo</button>
+              </form>
+              {% else %}
+              £{{ '{:,.2f}'.format(bonus) }}
+              <small class="block {% if due_month and due_month <= current_month %}text-danger{% else %}text-muted{% endif %}">
+                {% if due_month and due_month <= current_month %}due{% else %}expected{% endif %} {{ due_month or 'later' }}
+              </small>
+              <label class="bonus-tick">
+                <input type="checkbox" form="bonus-form-{{ c.id }}" name="received" value="1" data-bonus-tick>
+                <span>bonus arrived</span>
+              </label>
+              <form method="post" action="/allowance/bonus/{{ c.id }}" id="bonus-form-{{ c.id }}" class="inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <noscript><button type="submit" class="badge badge-sm">mark received</button></noscript>
+              </form>
+              {% endif %}
             {% else %}–{% endif %}
           </td>
           <td>{{ c.note or '–' }}</td>

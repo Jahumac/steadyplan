@@ -1133,6 +1133,16 @@ def _run_migrations(conn):
             # Always re-enable foreign keys
             conn.execute("PRAGMA foreign_keys=ON")
 
+    # ── Lifetime ISA: record whether the government bonus actually landed ──
+    # The 25% bonus arrives weeks after the contribution (providers quote 4-9
+    # weeks), so the app tracks it as a thing to confirm rather than assuming it.
+    # Nullable date = not yet received; a date means confirmed on that day.
+    for col in ["bonus_received_on TEXT"]:
+        try:
+            conn.execute(f"ALTER TABLE isa_contributions ADD COLUMN {col}")
+        except Exception as e:
+            _log_migration_error(e)
+
     # ── Re-add columns lost by v7_cascading_deletes ─────────────────────
     # v7's accounts_new CREATE TABLE omits these two columns, so any DB
     # (including production) that ran v7 had them dropped. Add them back

@@ -24,6 +24,7 @@ from app.calculations import (
 from app.models import (
     add_cgt_disposal,
     add_isa_contribution,
+    set_isa_bonus_received,
     add_pension_contribution,
     add_dividend_record,
     delete_cgt_disposal,
@@ -237,6 +238,7 @@ def allowance_overview():
         dividend_records=dividend_records,
         taxable_accounts=taxable_accounts,
         today=now_date.isoformat(),
+        current_month=now_date.strftime("%Y-%m"),
         active_page="budget",
         tax_band=tax_band,
         personal_pension_total=personal_pension_total,
@@ -303,6 +305,21 @@ def add_contribution():
 
     add_isa_contribution(uid, account_id, amount, contribution_date, note)
     flash(f"Recorded £{amount:,.2f} top-up.", "success")
+    return redirect(url_for("allowance.allowance_overview"))
+
+
+@allowance_bp.route("/bonus/<int:contribution_id>", methods=["POST"])
+@login_required
+def toggle_bonus_received(contribution_id):
+    """Tick (or untick) that a Lifetime ISA government bonus has arrived."""
+    uid = current_user.id
+    received = (request.form.get("received") or "").strip() == "1"
+
+    if set_isa_bonus_received(contribution_id, uid, received=received):
+        flash("Lifetime ISA bonus marked as received." if received else "Lifetime ISA bonus marked as not received.", "success")
+    else:
+        flash("That contribution could not be found.", "error")
+
     return redirect(url_for("allowance.allowance_overview"))
 
 
