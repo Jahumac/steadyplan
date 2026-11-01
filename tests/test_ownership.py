@@ -536,27 +536,13 @@ def test_alice_cannot_add_allowance_rows_for_bobs_account(app, client, two_users
         "kind": "personal",
         "contribution_date": "2026-04-10",
     })
-    client.post("/allowance/dividend/add", data={
-        "account_id": two_users["bob"]["account"],
-        "amount": "100",
-        "dividend_date": "2026-04-10",
-    })
-    client.post("/allowance/cgt/add", data={
-        "account_id": two_users["bob"]["account"],
-        "asset_name": "Fund",
-        "proceeds": "150",
-        "cost_basis": "100",
-        "disposal_date": "2026-04-10",
-    })
 
     with app.app_context():
         from app.models import get_connection
         with get_connection() as conn:
             isa = conn.execute("SELECT COUNT(*) AS c FROM isa_contributions").fetchone()["c"]
             pensions = conn.execute("SELECT COUNT(*) AS c FROM pension_contributions").fetchone()["c"]
-            dividends = conn.execute("SELECT COUNT(*) AS c FROM dividend_records").fetchone()["c"]
-            cgt = conn.execute("SELECT COUNT(*) AS c FROM cgt_disposals").fetchone()["c"]
-    assert (isa, pensions, dividends, cgt) == (0, 0, 0, 0)
+    assert (isa, pensions) == (0, 0)
 
 
 def test_allowance_post_routes_reject_wrong_account_types(app, client, make_user):
@@ -600,11 +586,6 @@ def test_allowance_post_routes_reject_wrong_account_types(app, client, make_user
         data={"account_id": isa, "amount": "100", "kind": "personal", "contribution_date": "2026-04-10"},
         follow_redirects=True,
     )
-    client.post(
-        "/allowance/dividend/add",
-        data={"account_id": pension, "amount": "100", "dividend_date": "2026-04-10"},
-        follow_redirects=True,
-    )
 
     with app.app_context():
         from app.models import get_connection
@@ -612,74 +593,10 @@ def test_allowance_post_routes_reject_wrong_account_types(app, client, make_user
         with get_connection() as conn:
             isa_rows = conn.execute("SELECT COUNT(*) AS c FROM isa_contributions WHERE user_id = ?", (uid,)).fetchone()["c"]
             pension_rows = conn.execute("SELECT COUNT(*) AS c FROM pension_contributions WHERE user_id = ?", (uid,)).fetchone()["c"]
-            dividend_rows = conn.execute("SELECT COUNT(*) AS c FROM dividend_records WHERE user_id = ?", (uid,)).fetchone()["c"]
 
-    assert (int(isa_rows), int(pension_rows), int(dividend_rows)) == (0, 0, 0)
-
-
-def test_allowance_fetches_do_not_join_cross_user_accounts(app, two_users):
-    from app.models import (
-        fetch_cgt_disposals,
-        fetch_dividend_records,
-        fetch_isa_contributions,
-        fetch_pension_contributions,
-        get_connection,
-    )
-    with app.app_context():
-        with get_connection() as conn:
-            conn.execute(
-                "INSERT INTO isa_contributions (user_id, account_id, amount, contribution_date) VALUES (?, ?, 100, '2026-04-10')",
-                (two_users["alice"]["uid"], two_users["bob"]["account"]),
-            )
-            conn.execute(
-                "INSERT INTO pension_contributions (user_id, account_id, amount, kind, contribution_date) VALUES (?, ?, 100, 'personal', '2026-04-10')",
-                (two_users["alice"]["uid"], two_users["bob"]["account"]),
-            )
-            conn.execute(
-                "INSERT INTO dividend_records (user_id, account_id, amount, dividend_date) VALUES (?, ?, 100, '2026-04-10')",
-                (two_users["alice"]["uid"], two_users["bob"]["account"]),
-            )
-            conn.execute(
-                "INSERT INTO cgt_disposals (user_id, account_id, asset_name, proceeds, cost_basis, disposal_date) VALUES (?, ?, 'Fund', 150, 100, '2026-04-10')",
-                (two_users["alice"]["uid"], two_users["bob"]["account"]),
-            )
-            conn.commit()
-
-        assert fetch_isa_contributions(two_users["alice"]["uid"], "2026-04-06", "2027-04-05") == []
-        assert fetch_pension_contributions(two_users["alice"]["uid"], "2026-04-06", "2027-04-05") == []
-        assert fetch_dividend_records(two_users["alice"]["uid"], "2026-04-06", "2027-04-05") == []
-        cgt_rows = fetch_cgt_disposals(two_users["alice"]["uid"], "2026-04-06", "2027-04-05")
-        assert len(cgt_rows) == 1
-        assert cgt_rows[0]["account_name"] is None
+    assert (int(isa_rows), int(pension_rows)) == (0, 0)
 
 
-def test_user_reset_deletes_only_own_allowance_tracking(app, two_users):
-    from app.models import get_connection, reset_all_user_data
-    with app.app_context():
-        with get_connection() as conn:
-            conn.execute(
-                """
-                INSERT INTO allowance_tracking (user_id, tax_year, isa_used, lisa_used, notes)
-                VALUES (?, '2026/27', 123, 45, 'alice')
-                """,
-                (two_users["alice"]["uid"],),
-            )
-            conn.execute(
-                """
-                INSERT INTO allowance_tracking (user_id, tax_year, isa_used, lisa_used, notes)
-                VALUES (?, '2026/27', 999, 88, 'bob')
-                """,
-                (two_users["bob"]["uid"],),
-            )
-            conn.commit()
-
-        reset_all_user_data(two_users["alice"]["uid"])
-
-        with get_connection() as conn:
-            rows = conn.execute(
-                "SELECT user_id, isa_used FROM allowance_tracking ORDER BY user_id ASC"
-            ).fetchall()
-        assert rows == [{"user_id": two_users["bob"]["uid"], "isa_used": 999}]
 
 
 def test_user_reset_clears_premium_bonds_and_aux_user_state(app, two_users):

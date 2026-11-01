@@ -35,7 +35,6 @@ from app.models import (
     API_TOKEN_KIND_ASSISTANT,
     ASSISTANT_SCOPE_BUDGET_WRITE,
     ASSISTANT_SCOPE_READ,
-    add_dividend_record,
     add_isa_contribution,
     add_pension_contribution,
     authenticate_api_token,
@@ -578,38 +577,6 @@ def log_pension_contribution():
 
     add_pension_contribution(g.api_user.id, account_id_int, amount, kind,
                              contribution_date, payload.get("note"))
-    return jsonify({"ok": True}), 201
-
-
-@api_bp.route("/dividends", methods=["POST"])
-@api_auth_required
-@general_api_required
-def log_dividend():
-    payload = request.get_json(silent=True) or {}
-    account_id = payload.get("account_id")
-    
-    # Validate account_id is a positive integer
-    if not account_id or not isinstance(account_id, (int, str)) or int(account_id) <= 0:
-        return _err("bad_request", "Valid account_id required", 400)
-    
-    amount = _parse_amount(payload.get("amount"))
-    dividend_date = valid_date(payload.get("date"))
-
-    if amount is None or not account_id or not dividend_date:
-        return _err("bad_request",
-                    "account_id, amount (>= 0), and date (YYYY-MM-DD) required", 400)
-    
-    account_id_int = int(account_id)
-    account = fetch_account(account_id_int, g.api_user.id)
-    if account is None:
-        return _err("not_found", "Account not found", 404)
-    
-    # Additional validation to ensure account belongs to user
-    if int(account.get('user_id') or 0) != g.api_user.id:
-        return _err("not_found", "Account not found", 404)
-
-    add_dividend_record(g.api_user.id, account_id_int, amount, dividend_date,
-                        payload.get("note"))
     return jsonify({"ok": True}), 201
 
 

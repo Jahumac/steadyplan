@@ -31,7 +31,7 @@ def test_allowance_page_uses_lifetime_isa_heading(app, client, make_user):
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "Your UK tax allowances at a glance — ISA, Lifetime ISA, pension, and taxable account limits" in html
+    assert "Your UK tax allowances at a glance — ISA, Lifetime ISA and pension" in html
     assert ">Lifetime ISA used<" in html
     assert "<h3>ISA &amp; Lifetime ISA</h3>" in html
     assert "· includes Lifetime ISA</small>" in html

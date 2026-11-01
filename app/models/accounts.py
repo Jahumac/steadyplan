@@ -40,14 +40,12 @@ _ACCOUNT_CHILD_TABLES = (
     "contribution_overrides",
     "isa_contributions",
     "pension_contributions",
-    "dividend_records",
     "premium_bonds_prizes",
     "account_daily_snapshots",
 )
 
 # Tables that reference an account but should keep their rows (just nulled out).
 _ACCOUNT_NULLOUT_TABLES = (
-    ("cgt_disposals", "account_id"),
     ("budget_items", "linked_account_id"),
 )
 
