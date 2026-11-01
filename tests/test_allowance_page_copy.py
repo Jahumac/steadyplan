@@ -46,81 +46,6 @@ def test_allowance_page_uses_lifetime_isa_heading(app, client, make_user):
     assert 'aria-label="LISA allowance used"' not in html
 
 
-def test_allowance_page_uses_pension_annual_progress_label(app, client, make_user):
-    uid, username, password = make_user(username="allowance-pension-progress-label", password="password123")
-    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
-
-    with app.app_context():
-        fetch_assumptions(uid)
-        with get_connection() as conn:
-            conn.execute(
-                """
-                UPDATE assumptions
-                SET date_of_birth = '1990-01-01', salary_day = 1
-                WHERE user_id = ?
-                """,
-                (uid,),
-            )
-            conn.execute(
-                """
-                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
-                VALUES (?, 'Pension', 'SIPP', 1000, 200, 1, 'manual')
-                """,
-                (uid,),
-            )
-            conn.commit()
-
-    resp = client.get("/allowance/")
-    assert resp.status_code == 200
-    html = resp.get_data(as_text=True)
-
-    assert '<h2>Annual Allowance</h2>' in html
-    assert 'aria-label="Pension annual allowance used"' in html
-    assert 'aria-label="Pension allowance used"' not in html
-    assert "Tax year-end estimate:" in html
-    assert "Estimated by tax year end:" not in html
-    assert "On track:" not in html
-
-
-def test_allowance_page_uses_plain_basic_rate_relief_copy(app, client, make_user):
-    uid, username, password = make_user(username="allowance-basic-relief-copy", password="password123")
-    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
-
-    with app.app_context():
-        fetch_assumptions(uid)
-        with get_connection() as conn:
-            conn.execute(
-                """
-                UPDATE assumptions
-                SET date_of_birth = '1990-01-01', salary_day = 1, tax_band = 'basic'
-                WHERE user_id = ?
-                """,
-                (uid,),
-            )
-            account_id = conn.execute(
-                """
-                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
-                VALUES (?, 'Pension', 'SIPP', 1000, 100, 1, 'manual')
-                """,
-                (uid,),
-            ).lastrowid
-            conn.commit()
-
-    client.post(
-        "/allowance/pension/add",
-        data={"account_id": account_id, "amount": "100", "kind": "personal", "contribution_date": "2026-04-10"},
-        follow_redirects=False,
-    )
-
-    resp = client.get("/allowance/")
-    assert resp.status_code == 200
-    html = resp.get_data(as_text=True)
-
-    assert "Your provider adds a 20% basic-rate pension tax top-up." in html
-    assert "Your provider adds 20% basic-rate tax relief automatically." not in html
-    assert "Applied automatically by your provider at 20%." not in html
-    assert "Regular contributions are already included." in html
-    assert "Regular contributions are counted automatically." not in html
 
 
 def test_allowance_page_uses_plain_monthly_column_helper_copy(app, client, make_user):
@@ -169,38 +94,6 @@ def test_allowance_page_uses_plain_monthly_column_helper_copy(app, client, make_
     assert 'href="/accounts/" class="link-accent">monthly payment setting</a>' in html
 
 
-def test_allowance_page_uses_plain_taxable_account_labels(app, client, make_user):
-    uid, username, password = make_user(username="allowance-taxable-account-labels", password="password123")
-    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
-
-    with app.app_context():
-        fetch_assumptions(uid)
-        with get_connection() as conn:
-            conn.execute(
-                """
-                UPDATE assumptions
-                SET date_of_birth = '1990-01-01', salary_day = 1, dividend_allowance = 500
-                WHERE user_id = ?
-                """,
-                (uid,),
-            )
-            conn.commit()
-
-    resp = client.get("/allowance/")
-    assert resp.status_code == 200
-    html = resp.get_data(as_text=True)
-
-    assert "<h3>Taxable account limits</h3>" in html
-    assert "GIA Annual Limits" not in html
-    assert "taxable accounts only" in html
-    assert "GIA accounts only" not in html
-    assert "only log dividends from taxable accounts." in html
-    assert "only log GIA dividends." not in html
-    assert "No taxable investment accounts found." in html
-    assert "No taxable (GIA) accounts found." not in html
-    assert "Log asset sales from your taxable accounts" in html
-    assert "Log asset sales from your GIA" not in html
-
 
 def test_allowance_empty_states_link_to_first_account_focus(app, client, make_user):
     uid, username, password = make_user(username="allowance-first-account-focus", password="password123")
@@ -223,7 +116,9 @@ def test_allowance_empty_states_link_to_first_account_focus(app, client, make_us
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert html.count('/accounts/?mode=create&amp;focus=first_account') >= 5
+    # Only the ISA/LISA section remains on this page (pension + taxable-accounts
+    # panels were removed as unused), so two create-account links is the full set.
+    assert html.count('/accounts/?mode=create&amp;focus=first_account') >= 2
     assert '/accounts/?mode=create"' not in html
 
 
@@ -276,44 +171,6 @@ def test_allowance_page_shows_cash_flow_adjustment_column_for_explicit_isa_effec
     assert "£200 used more room from labelled subscriptions or replacements" in html
     assert "£150 restored room from labelled flexible withdrawals." in html
 
-
-def test_allowance_page_uses_plain_higher_rate_relief_copy(app, client, make_user):
-    uid, username, password = make_user(username="allowance-higher-relief-copy", password="password123")
-    client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
-
-    with app.app_context():
-        fetch_assumptions(uid)
-        with get_connection() as conn:
-            conn.execute(
-                """
-                UPDATE assumptions
-                SET date_of_birth = '1990-01-01', salary_day = 1, tax_band = 'higher'
-                WHERE user_id = ?
-                """,
-                (uid,),
-            )
-            account_id = conn.execute(
-                """
-                INSERT INTO accounts (user_id, name, wrapper_type, current_value, monthly_contribution, is_active, valuation_mode)
-                VALUES (?, 'Pension', 'SIPP', 1000, 100, 1, 'manual')
-                """,
-                (uid,),
-            ).lastrowid
-            conn.commit()
-
-    client.post(
-        "/allowance/pension/add",
-        data={"account_id": account_id, "amount": "100", "kind": "personal", "contribution_date": "2026-04-10"},
-        follow_redirects=False,
-    )
-
-    resp = client.get("/allowance/")
-    assert resp.status_code == 200
-    html = resp.get_data(as_text=True)
-
-    assert "Claim the extra relief through Self Assessment." in html
-    assert "Claim any extra relief through Self Assessment." not in html
-    assert "Claim extra relief via Self Assessment." not in html
 
 
 def test_allowance_page_spells_out_lifetime_isa_age_warning(app, client, make_user):

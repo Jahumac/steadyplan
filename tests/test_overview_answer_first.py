@@ -2282,10 +2282,12 @@ def test_overview_pension_allowance_card_uses_specific_review_cta(app, client, m
     assert "Pension Annual Allowance" not in html
     assert html.count("personal limit:") == 2
     assert "Personal limit:" not in html
-    assert 'href="/allowance/#pension"' in html
-    assert '>Review pension annual allowance</a>' in html
+    # The pension-allowance panel was removed from /allowance/ as unused, so this card
+    # must not deep-link to it and must not offer actions it can no longer complete.
+    assert '/allowance/#pension' not in html
+    assert '>Review pension annual allowance</a>' not in html
     assert '>Review pension allowance</a>' not in html
-    assert '>Record pension contribution</a>' in html
+    assert '>Record pension contribution</a>' not in html
     assert 'aria-label="Pension annual allowance used"' in html
     assert 'aria-label="Pension allowance used"' not in html
     assert 'href="/allowance/#pension" class="badge badge-sm">View breakdown</a>' not in html
