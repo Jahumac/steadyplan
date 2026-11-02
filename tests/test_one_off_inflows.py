@@ -116,8 +116,8 @@ def test_inflows_are_built_with_principal_and_dated_bonus(app, make_user):
     with app.app_context():
         account_id = create_account(_account_payload("My Lifetime ISA", "Lifetime ISA"), uid)
         add_isa_contribution(uid, account_id, 4000, "2026-06-01")
-
-        inflows = fetch_isa_one_off_inflows(uid)
+        # asked before the modelled arrival month, so the bonus keeps its own date
+        inflows = fetch_isa_one_off_inflows(uid, today=date(2026, 6, 2))
 
     principal = [i for i in inflows if i["kind"] == "contribution"]
     bonus = [i for i in inflows if i["kind"] == "bonus"]
@@ -177,3 +177,59 @@ def test_ticking_bonus_received_stops_it_being_projected_again(app, make_user):
 
     assert [i["kind"] for i in before] == ["contribution", "bonus"]
     assert [i["kind"] for i in after] == ["contribution"], "a received bonus must not project again"
+
+
+def test_an_overdue_unreceived_bonus_rolls_to_the_current_month(app, make_user):
+    """A bonus expected in the past but never ticked is outstanding, not gone.
+
+    Real case: June contributions whose 25% should have landed in August, with no
+    bonus line on the provider statement by November. Dropping it silently understated
+    the projected pot.
+    """
+    from app.models import create_account, add_isa_contribution, fetch_isa_one_off_inflows
+
+    uid, _, _ = make_user(username="inflow-overdue", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload("My Lifetime ISA", "Lifetime ISA"), uid)
+        add_isa_contribution(uid, account_id, 350, "2026-06-30")
+
+        late = fetch_isa_one_off_inflows(uid, today=date(2026, 11, 1))
+        on_time = fetch_isa_one_off_inflows(uid, today=date(2026, 7, 1))
+
+    bonuses = [i for i in late if i["kind"] == "bonus"]
+    assert len(bonuses) == 1
+    assert bonuses[0]["month_key"] == "2026-11", "overdue bonus must surface now, not vanish"
+    assert bonuses[0]["amount"] == 87.5
+
+    # looked at before the modelled arrival month, it keeps its original date
+    assert [i["month_key"] for i in on_time if i["kind"] == "bonus"] == ["2026-08"]
+
+
+def test_a_future_bonus_keeps_its_expected_month(app, make_user):
+    from app.models import create_account, add_isa_contribution, fetch_isa_one_off_inflows
+
+    uid, _, _ = make_user(username="inflow-future", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload("My Lifetime ISA", "Lifetime ISA"), uid)
+        add_isa_contribution(uid, account_id, 1000, "2026-11-01")
+        inflows = fetch_isa_one_off_inflows(uid, today=date(2026, 11, 15))
+
+    assert [i["month_key"] for i in inflows if i["kind"] == "bonus"] == ["2027-01"]
+
+
+def test_a_received_bonus_is_never_rolled(app, make_user):
+    """Ticking it means it is in the balance — rolling it would count it twice."""
+    from app.models import (
+        create_account, add_isa_contribution, fetch_isa_contributions,
+        fetch_isa_one_off_inflows, set_isa_bonus_received,
+    )
+
+    uid, _, _ = make_user(username="inflow-received", password="password123")
+    with app.app_context():
+        account_id = create_account(_account_payload("My Lifetime ISA", "Lifetime ISA"), uid)
+        add_isa_contribution(uid, account_id, 4000, "2026-06-30")
+        cid = fetch_isa_contributions(uid, "2026-04-06", "2027-04-05")[0]["id"]
+        set_isa_bonus_received(cid, uid, True)
+        inflows = fetch_isa_one_off_inflows(uid, today=date(2026, 11, 1))
+
+    assert [i["kind"] for i in inflows] == ["contribution"]
