@@ -61,7 +61,7 @@ def add_isa_contribution(user_id, account_id, amount, contribution_date, note=No
         return True
 
 
-def fetch_isa_one_off_inflows(user_id):
+def fetch_isa_one_off_inflows(user_id, today=None):
     """Dated one-off ISA inflows, for the projection engine.
 
     A logged lump sum is real money that lands on a date, plus (for a Lifetime ISA)
@@ -73,6 +73,10 @@ def fetch_isa_one_off_inflows(user_id):
     "contribution" or "bonus". Bonus allocation is done per tax year so the £4,000
     annual cap (hence £1,000 bonus cap) is applied year by year, not across the
     whole history.
+
+    A bonus is skipped once `bonus_received_on` is set (it is then inside the balance).
+    A bonus that was expected before this month but is still unticked is clamped to the
+    current month, because it is outstanding rather than already banked.
 
     Assumes no monthly LISA contributions when allocating the bonus. In a year with
     both, that only affects *which* contribution owns the bonus, not the annual total.
@@ -104,6 +108,7 @@ def fetch_isa_one_off_inflows(user_id):
             continue
         by_tax_year[uk_tax_year_start(d).isoformat()].append(dict(row))
 
+    current_month_key = (today or date.today()).strftime("%Y-%m")
     inflows = []
     for _year, group in by_tax_year.items():
         bonus_by_id = lisa_bonus_by_contribution(group, monthly_lisa_total=0.0)
@@ -121,9 +126,16 @@ def fetch_isa_one_off_inflows(user_id):
             if row.get("bonus_received_on"):
                 continue
             if bonus and (row.get("wrapper_type") or "") in LISA_WRAPPER_TYPES:
+                bonus_month = add_months_to_key(month_key, LISA_BONUS_DELAY_MONTHS)
+                # An expected bonus whose month has already passed but which has NOT
+                # been ticked as received is still outstanding. It must surface as
+                # "arriving now", not silently disappear because its modelled month is
+                # behind us — that understates the pot with no warning.
+                if bonus_month < current_month_key:
+                    bonus_month = current_month_key
                 inflows.append({
                     "account_id": int(row["account_id"]),
-                    "month_key": add_months_to_key(month_key, LISA_BONUS_DELAY_MONTHS),
+                    "month_key": bonus_month,
                     "amount": float(bonus),
                     "kind": "bonus",
                 })
