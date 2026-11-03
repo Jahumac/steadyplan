@@ -103,8 +103,7 @@ def test_contribution_summary_empty_state_uses_monthly_update_copy(auth_client):
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
 
-    assert "<title>Contribution history " in html
-    assert "<title>Contributions " not in html
+    assert "<title>House · SteadyPlan</title>" in html
     assert "Contribution history" in html
     assert "Month-by-month contribution history across all accounts" in html
     assert "Contribution Summary" not in html
@@ -588,7 +587,7 @@ def test_performance_template_explains_calculation_method():
     """Performance template includes honest explanation of calculation method."""
     from pathlib import Path
 
-    tpl_path = Path("app/templates/performance.html")
+    tpl_path = Path("app/templates/_history_panel.html")
     source = tpl_path.read_text().lower()
 
     # Should mention actual cash-flow dates or weighted approach

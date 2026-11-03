@@ -1,16 +1,6 @@
-{% extends "base.html" %}
 {% from '_macros.html' import hero_stat, empty_state %}
-{% block title %}Performance{% endblock %}
-{% block content %}
 
-{% set active_key = 'performance' %}
-{% set active_label = 'Performance' %}
-{% include '_goals_subnav.html' %}
-
-{# ── Month strip ─────────────────────────────────────────────────────────── #}
-{% set month_strip_class = 'month-strip-mobile-hidden' %}
-{% include '_month_strip.html' %}
-
+<div class="history-panel">
 {# ── Hero ────────────────────────────────────────────────────────────────── #}
 <section class="card highlight mb-1 month-accent-{{ current_month_num }}">
   <div class="hero-top">
@@ -543,5 +533,4 @@
   </div>
   {% endif %}
 </details>
-
-{% endblock %}
+</div>

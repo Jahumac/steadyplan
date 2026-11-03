@@ -47,27 +47,34 @@ def test_the_retirement_forecast_lives_inside_the_house_page(app, client, make_u
     assert 'id="projectionChartMobile"' in html
 
 
-def test_performance_marks_global_month_strip_for_mobile_hiding(app, client, make_user):
+def test_plan_vs_actual_lives_inside_the_house_page(app, client, make_user):
+    """It used to be a whole page. It is one collapsed section of Progress now."""
     _login_for_mobile_cleanup(client, make_user, "performance-mobile")
 
     resp = client.get("/performance/")
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/house/#history")
+
+    resp = client.get("/house/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-
-    assert '<section class="budget-year-strip month-strip-global month-strip-mobile-hidden' in html
+    assert 'id="history"' in html
     assert '<p class="eyebrow">Plan comparison</p>' in html
 
 
-def test_contribution_history_marks_global_month_strip_for_mobile_hiding(app, client, make_user):
+def test_contribution_history_lives_inside_the_house_page(app, client, make_user):
+    """It used to be a whole page. It is one collapsed section of Progress now."""
     _login_for_mobile_cleanup(client, make_user, "contrib-mobile")
 
     resp = client.get("/performance/contributions/")
+    assert resp.status_code == 302
+    assert resp.headers["Location"].endswith("/house/#contributions")
+
+    resp = client.get("/house/")
     assert resp.status_code == 200
     html = resp.get_data(as_text=True)
-
-    assert '<title>Contribution history ' in html
-    assert '<title>Contributions ' not in html
-    assert '<section class="budget-year-strip month-strip-global month-strip-mobile-hidden' in html
-    assert 'Contribution history' in html
+    assert 'id="contributions"' in html
     assert 'Month-by-month contribution history across all accounts' in html
     assert 'Contribution Summary' not in html
+
+

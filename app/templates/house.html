@@ -198,4 +198,53 @@
 </details>
 {% endif %}
 
+{# ── Plan vs actual (was its own page) ────────────────────────────────────── #}
+{% if history %}
+<details class="panel mb-1" id="history">
+  <summary><strong>How you've done</strong> · your balance against your plan</summary>
+  <p class="helper-text mt-075">
+    Where your real balance sits against where the plan said it would be, day by day.
+    Progress is not a league table — drifting off the line usually means a payment moved.
+  </p>
+  {% with has_data=history.has_data,
+          has_snapshot_history=history.has_snapshot_history,
+          snapshot_count=history.snapshot_count,
+          daily_labels=history.daily_labels,
+          daily_actual=history.daily_actual,
+          daily_plan=history.daily_plan,
+          assumed_rate_pct=history.assumed_rate_pct,
+          monthly_contribution_total=history.monthly_contribution_total,
+          planned_monthly_avg=history.planned_monthly_avg,
+          contribution_breakdown_rows=history.contribution_breakdown_rows,
+          account_reconciliation_rows=history.account_reconciliation_rows,
+          performance_summary=history.performance_summary,
+          account_perf=history.account_perf,
+          account_breakdown=history.account_breakdown,
+          plan_value=history.plan_value,
+          current_value=history.current_value,
+          current_monthly_update_href=history.current_monthly_update_href,
+          export_period_links=history.export_period_links,
+          performance_event_accounts=history.performance_event_accounts,
+          recent_performance_events=history.recent_performance_events %}
+  {% include '_history_panel.html' %}
+  {% endwith %}
+</details>
+{% endif %}
+
+{# ── Contribution history (was its own page) ─────────────────────────────── #}
+{% if contributions %}
+<details class="panel mb-1" id="contributions">
+  <summary><strong>Contribution history</strong> · what you planned vs what you confirmed</summary>
+  {% with accounts=contributions.accounts,
+          months=contributions.months,
+          month_labels=contributions.month_labels,
+          month_totals=contributions.month_totals,
+          tax_year=contributions.tax_year,
+          current_monthly_update_href=contributions.current_monthly_update_href %}
+  {% include '_contributions_panel.html' %}
+  {% endwith %}
+</details>
+{% endif %}
+
+
 {% endblock %}

@@ -8,7 +8,7 @@ def test_performance_page_keeps_zero_snapshot_empty_state(client, make_user):
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
 
     month_key = date.today().strftime("%Y-%m")
-    response = client.get("/performance/")
+    response = client.get("/house/")
     assert response.status_code == 200
     body = response.get_data(as_text=True)
 
@@ -28,7 +28,7 @@ def test_performance_page_acknowledges_first_snapshot(client, make_user):
         save_daily_snapshot(uid, 1000, date.today().isoformat())
 
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
-    response = client.get("/performance/")
+    response = client.get("/house/")
     assert response.status_code == 200
     body = response.get_data(as_text=True)
 
@@ -86,7 +86,7 @@ def test_performance_page_shows_imported_baseline_reconciliation(client, make_us
         save_daily_snapshot(uid, 1250, today.isoformat())
 
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
-    response = client.get("/performance/")
+    response = client.get("/house/")
     assert response.status_code == 200
     body = response.get_data(as_text=True)
 
@@ -147,7 +147,7 @@ def test_performance_page_renders_account_transfer_form(client, make_user):
         save_daily_snapshot(uid, 12000, today.isoformat())
 
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
-    response = client.get("/performance/")
+    response = client.get("/house/")
     assert response.status_code == 200
     body = response.get_data(as_text=True)
 
@@ -318,7 +318,7 @@ def test_performance_page_renders_historical_movement_form(client, make_user):
         save_daily_snapshot(uid, 800, today.isoformat())
 
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
-    response = client.get("/performance/")
+    response = client.get("/house/")
     assert response.status_code == 200
     body = response.get_data(as_text=True)
 
@@ -390,7 +390,7 @@ def test_performance_page_records_historical_movement_with_opening_baseline(clie
     assert event["note"] == "One-off PB audit top-up"
     assert event["allowance_effect"] == "performance_only"
 
-    page_after_real_event = client.get("/performance/")
+    page_after_real_event = client.get("/house/")
     page_body = page_after_real_event.get_data(as_text=True)
     assert "One-off PB audit top-up" in page_body
     assert "Account detail cash event" not in page_body
@@ -520,7 +520,7 @@ def test_performance_page_shows_account_reconciliation_breakdown(client, make_us
         save_daily_snapshot(uid, 1250, today.isoformat())
 
     client.post("/login", data={"username": username, "password": password}, follow_redirects=False)
-    response = client.get("/performance/")
+    response = client.get("/house/")
     assert response.status_code == 200
     body = response.get_data(as_text=True)
 
