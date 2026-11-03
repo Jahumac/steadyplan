@@ -14,7 +14,6 @@ from .routes.auth import auth_bp
 from .routes.overview import overview_bp
 from .routes.goals import goals_bp
 from .routes.house import house_bp
-from .routes.planning import planning_bp
 from .routes.projections import projections_bp
 from .routes.accounts import accounts_bp
 from .routes.holdings import holdings_bp
@@ -64,7 +63,6 @@ def create_app():
     app.register_blueprint(overview_bp)
     app.register_blueprint(goals_bp, url_prefix="/goals")
     app.register_blueprint(house_bp, url_prefix="/house")
-    app.register_blueprint(planning_bp, url_prefix="/planning")
     app.register_blueprint(projections_bp, url_prefix="/projections")
     app.register_blueprint(accounts_bp, url_prefix="/accounts")
     app.register_blueprint(holdings_bp, url_prefix="/holdings")
