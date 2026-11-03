@@ -45,8 +45,7 @@
     <nav>
       <a href="/" class="{% if active_page == 'overview' %}active{% endif %}">Overview</a>
       <a href="/accounts/" class="{% if active_page == 'accounts' %}active{% endif %}">Accounts</a>
-      <a href="/budget/" class="{% if active_page in ('budget', 'monthly_review') %}active{% endif %}">Budget</a>
-      <a href="/allowance/" class="{% if active_page == 'allowance' %}active{% endif %}">Allowances</a>
+      <a href="/budget/" class="{% if active_page in ('budget', 'monthly_review', 'allowance') %}active{% endif %}">Budget</a>
       <a href="/house/" class="{% if active_page in ('house', 'goals', 'projections', 'performance', 'contributions') %}active{% endif %}">Progress</a>
       <a href="/planning/" class="{% if active_page == 'planning' %}active{% endif %}">Planning</a>
       <a href="/settings/" class="{% if active_page in ('settings', 'users') %}active{% endif %}">Settings</a>
