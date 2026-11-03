@@ -75,6 +75,7 @@ def test_tabbed_pages_render_standard_tabs_without_turtle_icons(auth_client, pat
 
 def test_progress_group_pages_highlight_progress_in_shell_nav(auth_client):
     grouped_pages = {
+        "/house/": True,
         "/goals/": False,
         "/projections/": True,
         "/performance/": True,
@@ -86,10 +87,12 @@ def test_progress_group_pages_highlight_progress_in_shell_nav(auth_client):
 
         assert response.status_code == 200
         html = response.data.decode()
-        assert 'href="/goals/" class="active">Progress</a>' in html
+        assert 'href="/house/" class="active">Progress</a>' in html
+        # House is a tab inside Progress, not a second top-level nav entry.
+        assert 'class="active">House</a>' not in html
         if expects_subnav_goal_link:
             assert 'href="/goals/">Goals</a>' in html
-        assert 'href="/goals/" class="bottom-nav-item bottom-nav-active">' in html
+        assert 'href="/house/" class="bottom-nav-item bottom-nav-active">' in html
         assert '<span>Progress</span>' in html
 
 
