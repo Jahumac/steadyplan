@@ -743,7 +743,6 @@ def test_overview_surfaces_accessible_vs_locked_summary(app, client, make_user):
 
     assert html.count("<h2>Where you stand now</h2>") == 2
     assert "Accessible vs locked" not in html
-    assert "Review planning" in html
     assert "Open Planning" not in html
     assert "Where you stand now" in html
     assert "Where are you standing now" not in html

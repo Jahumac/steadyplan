@@ -12,7 +12,7 @@ def _desktop_nav_links(html):
     return [href for href in re.findall(r'<a href="([^"]+)"', nav) if href != "/logout"]
 
 
-def test_desktop_nav_is_six_destinations(auth_client):
+def test_desktop_nav_is_five_destinations(auth_client):
     html = auth_client.get("/", follow_redirects=True).get_data(as_text=True)
 
     assert _desktop_nav_links(html) == [
@@ -20,7 +20,6 @@ def test_desktop_nav_is_six_destinations(auth_client):
         "/accounts/",
         "/budget/",
         "/house/",
-        "/planning/",
         "/settings/",
     ]
 

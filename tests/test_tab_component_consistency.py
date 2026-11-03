@@ -23,7 +23,6 @@ MAIN_HERO_PATHS = [
     "/",
     "/accounts/",
     "/holdings/",
-    "/planning/",
 ]
 
 

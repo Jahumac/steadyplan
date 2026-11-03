@@ -432,46 +432,6 @@ def test_overview_projected_retirement_stat_has_estimate_qualifier(app, client, 
     assert "You can change those assumptions in <a href=\"/settings/?mode=edit\" class=\"link-accent\">Settings</a>." not in body
     assert "Projection based on your current balances, contribution settings, and assumptions in Settings." not in body
 
-
-def test_planning_page_uses_scenario_estimate_copy_for_retirement_outputs(app, client, make_user):
-    uid, username, password = make_user(username="planning-estimate-copy", password="password123")
-
-    with app.app_context():
-        from app.models import fetch_assumptions, get_connection
-
-        fetch_assumptions(uid)
-        with get_connection() as conn:
-            conn.execute(
-                "UPDATE assumptions SET date_of_birth = '1990-01-01', retirement_age = 60, annual_growth_rate = 0.07 WHERE user_id = ?",
-                (uid,),
-            )
-            conn.execute(
-                """
-                INSERT INTO accounts (user_id, name, wrapper_type, category, current_value, monthly_contribution, is_active, valuation_mode)
-                VALUES (?, 'ISA', 'Stocks & Shares ISA', 'ISA', 1000, 10, 1, 'manual')
-                """,
-                (uid,),
-            )
-            conn.commit()
-
-    _login(client, username, password)
-    resp = client.get("/planning/")
-    assert resp.status_code == 200
-    body = resp.data.decode("utf-8", errors="ignore")
-
-    assert "Retirement Estimate" in body
-    assert "Private pot estimate at retirement" not in body
-    assert "Locked for later" in body
-    assert "Locked later" not in body
-    assert "Uses your planning numbers in Settings and is not a guarantee." in body
-    assert "Scenario estimate at age 60 under current balances, contributions and growth assumptions. For planning only, not a guarantee." not in body
-    assert "Estimate at age 60 under current balances, contributions and growth assumptions." not in body
-    assert "Projected private pension and investment pot at age 60" in body
-    assert "Private pot estimate at age 60:" not in body
-    assert body.count("Future estimate at 60:") == 1
-    assert "Scenario estimate at 60:" not in body
-
-
 def test_goals_eta_helper_copy_present(app, client, make_user):
     uid, username, password = make_user(username="goals", password="password123")
 
