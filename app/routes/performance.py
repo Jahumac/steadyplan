@@ -234,10 +234,11 @@ def record_account_transfer():
     return redirect(url_for("performance.performance"))
 
 
-@performance_bp.route("/")
-@login_required
-def performance():
-    uid = current_user.id
+def build_performance_context(uid):
+    """Everything the performance panel needs.
+
+    The panel renders inside /house/ now; the standalone page redirects there.
+    """
     current_month_key = datetime.now().strftime('%Y-%m')
     refresh_account_snapshots_for_month(uid, current_month_key, require_existing_month=True)
     assumptions   = fetch_assumptions(uid)
@@ -597,36 +598,39 @@ def performance():
 
         account_breakdown.sort(key=lambda r: (1 if r.get("untracked") else 0, -(abs(r["diff"]) if r.get("diff") is not None else 0.0)))
 
-    return render_template(
-        "performance.html",
-        has_data=has_data,
-        has_snapshot_history=has_snapshot_history,
-        snapshot_count=snapshot_count,
-        daily_labels=daily_labels,
-        daily_actual=daily_actual,
-        daily_plan=daily_plan,
-        assumed_rate_pct=round(assumed_rate * 100, 1),
-        monthly_contribution_total=monthly_contribution_total,
-        planned_monthly_avg=planned_monthly_avg,
-        contribution_breakdown_rows=contribution_breakdown_rows,
-        account_reconciliation_rows=account_reconciliation_rows,
-        performance_summary=performance_summary,
-        account_perf=account_perf,
-        account_breakdown=account_breakdown,
-        plan_value=plan_value,
-        current_value=current_value,
-        current_monthly_update_href=current_monthly_update_href,
-        export_period_links=export_period_links,
-        performance_event_accounts=accounts,
-        recent_performance_events=_recent_performance_event_rows(accounts, uid),
-        active_page="performance",
-    )
+    return {
+        "has_data": has_data,
+        "has_snapshot_history": has_snapshot_history,
+        "snapshot_count": snapshot_count,
+        "daily_labels": daily_labels,
+        "daily_actual": daily_actual,
+        "daily_plan": daily_plan,
+        "assumed_rate_pct": round(assumed_rate * 100, 1),
+        "monthly_contribution_total": monthly_contribution_total,
+        "planned_monthly_avg": planned_monthly_avg,
+        "contribution_breakdown_rows": contribution_breakdown_rows,
+        "account_reconciliation_rows": account_reconciliation_rows,
+        "performance_summary": performance_summary,
+        "account_perf": account_perf,
+        "account_breakdown": account_breakdown,
+        "plan_value": plan_value,
+        "current_value": current_value,
+        "current_monthly_update_href": current_monthly_update_href,
+        "export_period_links": export_period_links,
+        "performance_event_accounts": accounts,
+        "recent_performance_events": _recent_performance_event_rows(accounts, uid),
+    }
 
 
-@performance_bp.route("/contributions/")
+@performance_bp.route("/")
 @login_required
-def contribution_summary():
-    uid = current_user.id
+def performance():
+    """The panel lives on /house/ now — keep the old URL working."""
+    return redirect("/house/#history")
+
+
+def build_contribution_summary_context(uid):
+    """Everything the contribution-history panel needs."""
     today = datetime.now().date()
     current_monthly_update_href = f"/monthly-review/?month={today.strftime('%Y-%m')}#expected-contributions"
     ty_start = uk_tax_year_start(today)
@@ -686,13 +690,18 @@ def contribution_summary():
             a["months"].get(mk, {}).get("expected", 0) for a in accounts
         )
 
-    return render_template(
-        "contribution_summary.html",
-        accounts=accounts,
-        months=months,
-        month_labels=month_labels,
-        month_totals=month_totals,
-        tax_year=uk_tax_year_label(today),
-        current_monthly_update_href=current_monthly_update_href,
-        active_page="performance",
-    )
+    return {
+        "accounts": accounts,
+        "months": months,
+        "month_labels": month_labels,
+        "month_totals": month_totals,
+        "tax_year": uk_tax_year_label(today),
+        "current_monthly_update_href": current_monthly_update_href,
+    }
+
+
+@performance_bp.route("/contributions/")
+@login_required
+def contribution_summary():
+    """The panel lives on /house/ now — keep the old URL working."""
+    return redirect("/house/#contributions")

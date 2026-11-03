@@ -31,6 +31,7 @@ from app.models import (
 )
 from app.utils import optional_int
 from app.routes.goals import _included_accounts_for_goal
+from app.routes.performance import build_contribution_summary_context, build_performance_context
 from app.routes.projections import build_projections_context
 from app.utils import split_tags as _split_tags
 
@@ -216,11 +217,15 @@ def house():
     # The retirement forecast used to be its own page. It renders here now, collapsed,
     # so the Progress group has one destination instead of four.
     forecast = build_projections_context(uid) if assumptions else None
+    history = build_performance_context(uid)
+    contributions = build_contribution_summary_context(uid)
 
     return render_template(
         "house.html",
         plan=plan,
         forecast=forecast,
+        history=history,
+        contributions=contributions,
         members=members,
         current_user_id=uid,
         active_page="house",
