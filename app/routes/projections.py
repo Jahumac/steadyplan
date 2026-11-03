@@ -1,6 +1,6 @@
 from datetime import date
 
-from flask import Blueprint, jsonify, render_template, request
+from flask import Blueprint, jsonify, redirect, request
 from flask_login import current_user, login_required
 
 from app.calculations import (
@@ -312,10 +312,12 @@ def api_account_schedule():
     })
 
 
-@projections_bp.route("/")
-@login_required
-def projections():
-    uid = current_user.id
+def build_projections_context(uid):
+    """Everything the future-estimates panel needs.
+
+    The panel is rendered inside /house/ now. The standalone page redirects there,
+    so this is the single source for both the numbers and the assumptions copy.
+    """
     raw_accounts = fetch_all_accounts(uid)
     assumptions = fetch_assumptions(uid)
     holdings_totals = fetch_holding_totals_by_account(uid)
@@ -359,13 +361,19 @@ def projections():
 
     assumption_summary = _projection_assumption_summary(assumptions, accounts, account_rows, metrics)
 
-    return render_template(
-        "projections.html",
-        metrics=metrics,
-        assumption_summary=assumption_summary,
-        account_rows=account_rows,
-        chart_labels=chart_labels,
-        chart_values=chart_values,
-        primary_goal=primary_goal,
-        active_page="projections",
-    )
+
+    return {
+        "metrics": metrics,
+        "assumption_summary": assumption_summary,
+        "account_rows": account_rows,
+        "chart_labels": chart_labels,
+        "chart_values": chart_values,
+        "primary_goal": primary_goal,
+    }
+
+
+@projections_bp.route("/")
+@login_required
+def projections():
+    """The panel lives on /house/ now — keep the old URL working."""
+    return redirect("/house/#forecast")

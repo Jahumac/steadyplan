@@ -24,8 +24,7 @@ def test_goals_page_moves_primary_action_into_hero_for_mobile_cleanup(app, clien
     assert '<section class="budget-year-strip month-strip-global month-strip-mobile-hidden' in html
     assert '<section class="subnav-mobile-family subnav-mobile-family-goals" aria-label="Progress views">' in html
     assert 'class="subnav-mobile-current"' not in html
-    assert 'href="/projections/">Future estimates</a>' in html
-    assert 'href="/projections/">Projections</a>' not in html
+    assert 'href="/projections/"' not in html  # the forecast now lives inside House
     assert 'class="hero-actions-col goals-hero-actions"' in html
     assert 'class="badge-row goals-hero-badges"' in html
     assert 'href="/goals/?mode=create&amp;focus=first_goal">+ Create goal</a>' in html

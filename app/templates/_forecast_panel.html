@@ -1,16 +1,6 @@
-{% extends 'base.html' %}
 {% from '_macros.html' import hero_stat %}
-{% block title %}Future estimates · SteadyPlan{% endblock %}
-{% block content %}
 
-{% set active_key = 'projections' %}
-{% set active_label = 'Future estimates' %}
-{% include '_goals_subnav.html' %}
-
-{# ── Month strip ─────────────────────────────────────────────────────────── #}
-{% set month_strip_class = 'month-strip-mobile-hidden' %}
-{% include '_month_strip.html' %}
-
+<div class="forecast-panel">
 {# ── Header ───────────────────────────────────────────────────────────────── #}
 <section class="card highlight mb-1 month-accent-{{ current_month_num }}">
   <div class="hero-top">
@@ -494,6 +484,4 @@
     </div>
   </div>
 </details>
-
-
-{% endblock %}
+</div>

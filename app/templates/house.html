@@ -178,4 +178,24 @@
 
 {% endif %}
 
+{# ── Retirement forecast (was its own page) ───────────────────────────────── #}
+{% if forecast and forecast.metrics and forecast.metrics.total_projected %}
+<details class="panel mb-1" id="forecast">
+  <summary><strong>Future estimates</strong> · rough retirement forecast for your own accounts</summary>
+  <p class="helper-text mt-075">
+    This is the long-range picture, not the deposit. It projects every account you own
+    to retirement using the planning numbers in Settings — it is not a guarantee, and
+    it is not financial advice.
+  </p>
+  {% with metrics=forecast.metrics,
+          assumption_summary=forecast.assumption_summary,
+          account_rows=forecast.account_rows,
+          chart_labels=forecast.chart_labels,
+          chart_values=forecast.chart_values,
+          primary_goal=forecast.primary_goal %}
+  {% include '_forecast_panel.html' %}
+  {% endwith %}
+</details>
+{% endif %}
+
 {% endblock %}

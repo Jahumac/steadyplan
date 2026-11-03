@@ -31,6 +31,7 @@ from app.models import (
 )
 from app.utils import optional_int
 from app.routes.goals import _included_accounts_for_goal
+from app.routes.projections import build_projections_context
 from app.utils import split_tags as _split_tags
 
 house_bp = Blueprint("house", __name__)
@@ -211,7 +212,17 @@ def house():
     goal = find_house_goal(fetch_all_goals(uid))
     plan = build_house_plan(goal, accounts, holdings_totals, assumptions)
     plan["joint"] = len(members) > 1
+
+    # The retirement forecast used to be its own page. It renders here now, collapsed,
+    # so the Progress group has one destination instead of four.
+    forecast = build_projections_context(uid) if assumptions else None
+
     return render_template(
-        "house.html", plan=plan, members=members, current_user_id=uid, active_page="house"
+        "house.html",
+        plan=plan,
+        forecast=forecast,
+        members=members,
+        current_user_id=uid,
+        active_page="house",
     )
 

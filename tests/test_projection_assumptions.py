@@ -43,12 +43,12 @@ def test_projections_page_shows_assumption_visibility(app, client, make_user):
             conn.commit()
 
     _login(client, username, password)
-    resp = client.get("/projections/")
+    resp = client.get("/house/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
 
-    assert "<title>Future estimates · SteadyPlan</title>" in body
-    assert "<title>Projections · SteadyPlan</title>" not in body
+    assert "<title>House · SteadyPlan</title>" in body
+    assert 'id="forecast"' in body
     assert '<p class="eyebrow">Future estimates</p>' in body
     assert '<p class="eyebrow">Projections</p>' not in body
     assert "Rough retirement estimate · age 60" in body
@@ -209,7 +209,7 @@ def test_try_different_scenario_uses_server_plan_values_as_baseline(app, client,
         expected_plan_value = projected_account_value(account, assumptions)
 
     _login(client, username, password)
-    resp = client.get("/projections/")
+    resp = client.get("/house/")
     assert resp.status_code == 200
     body = resp.get_data(as_text=True)
 
@@ -248,7 +248,7 @@ def test_projections_page_uses_lifetime_isa_bonus_wording(app, client, make_user
             conn.commit()
 
     _login(client, username, password)
-    resp = client.get("/projections/")
+    resp = client.get("/house/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert "Lifetime ISA bonus" in body
@@ -286,7 +286,7 @@ def test_projections_goal_callout_uses_scenario_estimate_wording(app, client, ma
             conn.commit()
 
     _login(client, username, password)
-    resp = client.get("/projections/")
+    resp = client.get("/house/")
     assert resp.status_code == 200
     body = resp.data.decode("utf-8", errors="ignore")
     assert 'Future estimate meets "FI target"' in body or 'Future estimate is below "FI target"' in body
